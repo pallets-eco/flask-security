@@ -249,6 +249,7 @@ class LoginForm(Form, NextFormMixin):
 
 class ConfirmRegisterForm(Form, RegisterFormMixin,
                           UniqueEmailFormMixin, NewPasswordFormMixin):
+    confirmation_needed = True
     pass
 
 
@@ -256,6 +257,7 @@ class RegisterForm(ConfirmRegisterForm, PasswordConfirmFormMixin,
                    NextFormMixin):
     def __init__(self, *args, **kwargs):
         super(RegisterForm, self).__init__(*args, **kwargs)
+        self.confirmation_needed = False
         if not self.next.data:
             self.next.data = request.args.get('next', '')
 

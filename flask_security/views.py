@@ -46,6 +46,7 @@ def _render_json(form, include_user=True, include_auth_token=False):
         has_user = hasattr(form, 'user') and form.user
         if include_user and has_user:
             response['user'] = dict(id=str(form.user.id))
+            response['user']['confirmation_needed'] = getattr(form, 'confirmation_needed', False)
         if include_auth_token and has_user:
             token = form.user.get_auth_token()
             response['user']['authentication_token'] = token
@@ -93,6 +94,10 @@ def logout():
 
     if current_user.is_authenticated:
         logout_user()
+    # No body is required - so check it is a POST and has a json content-type
+    if request.method == 'POST' and request.mimetype == 'application/json':
+        # fake a form.
+        return _render_json(_security.login_form(), include_user=False)
 
     return redirect(request.args.get('next', None) or
                     get_url(_security.post_logout_view))
@@ -330,7 +335,9 @@ def create_blueprint(state, import_name):
                    subdomain=state.subdomain,
                    template_folder='templates')
 
-    bp.route(state.logout_url, endpoint='logout')(logout)
+    bp.route(state.logout_url,
+             methods=['GET', 'POST'],
+             endpoint='logout')(logout)
 
     if state.passwordless:
         bp.route(state.login_url,
