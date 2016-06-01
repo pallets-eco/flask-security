@@ -8,7 +8,7 @@
     :copyright: (c) 2012-2019 by Matt Wright.
     :license: MIT, see LICENSE for more details.
 """
-
+import abc
 import base64
 import hashlib
 import hmac
@@ -563,3 +563,52 @@ def capture_flashes():
         yield flashes
     finally:
         message_flashed.disconnect(_on)
+
+
+class SmsSenderBaseClass(object):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def send_sms(self, from_number, to_number, msg):
+        """ Abstract method for sensing sms messages"""
+        return
+
+
+class DummySmsSender(SmsSenderBaseClass):
+    def send_sms(self, from_number, to_number, msg):
+        return
+
+
+class SmsSenderFactory(object):
+    senders = {
+
+        'Dummy': DummySmsSender
+    }
+
+    @classmethod
+    def createSender(cls, name, *args, **kwargs):
+        return cls.senders[name](*args, **kwargs)
+
+
+try:
+    from twilio.rest import TwilioRestClient
+
+    class TwilioSmsSender(SmsSenderBaseClass):
+        def __init__(self):
+            self.account_sid = config_value('TWO_FACTOR_SMS_SERVICE_CONFIG')['ACCOUNT_SID']
+            self.auth_token = config_value('TWO_FACTOR_SMS_SERVICE_CONFIG')['AUTH_TOKEN']
+
+        def send_sms(self, from_number, to_number, msg):
+            client = TwilioRestClient(self.account_sid, self.auth_token)
+            client.messages.create(
+                to=to_number,
+                from_=from_number,
+                body=msg,)
+
+    SmsSenderFactory.senders['Twilio'] = TwilioSmsSender
+except:
+    pass
+
