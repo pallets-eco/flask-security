@@ -133,6 +133,13 @@ class UserDatastore(object):
         kwargs['roles'] = roles
         return kwargs
 
+    def _is_numeric(self, value):
+        try:
+            int(value)
+        except (TypeError, ValueError):
+            return False
+        return True
+
     def get_user(self, id_or_email):
         """Returns a user matching the specified ID or email address."""
         raise NotImplementedError
@@ -239,21 +246,19 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
             from sqlalchemy.orm import joinedload
             user_model_query = user_model_query.options(joinedload('roles'))
 
-        if self._is_numeric(identifier):
-            return user_model_query.get(identifier)
+        rv = self.user_model.query.get(identifier)
+        if rv is not None:
+            return rv
+
+        # Not PK - iterate through other attributes and look for 'identifier'
         for attr in get_identity_attributes():
+            # Look for exact case-insensitive match - 'ilike' honors wild cards
+            # which isn't what we want.
             query = alchemyFn.lower(getattr(self.user_model, attr)) \
                 == alchemyFn.lower(identifier)
             rv = user_model_query.filter(query).first()
             if rv is not None:
                 return rv
-
-    def _is_numeric(self, value):
-        try:
-            int(value)
-        except (TypeError, ValueError):
-            return False
-        return True
 
     def find_user(self, **kwargs):
         query = self.user_model.query
@@ -310,12 +315,20 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
             return self.user_model.objects(id=identifier).first()
         except (ValidationError, ValueError):
             pass
+
+        is_numeric = self._is_numeric(identifier)
+
         for attr in get_identity_attributes():
-            query_key = '%s__iexact' % attr
+            query_key = attr if is_numeric else '%s__iexact' % attr
             query = {query_key: identifier}
-            rv = self.user_model.objects(**query).first()
-            if rv is not None:
-                return rv
+            try:
+                rv = self.user_model.objects(**query).first()
+                if rv is not None:
+                    return rv
+            except (ValidationError, ValueError):
+                # This can happen if identifier is a string but attribute is
+                # an int.
+                pass
 
     def find_user(self, **kwargs):
         try:
@@ -360,7 +373,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         from peewee import fn as peeweeFn
         try:
             return self.user_model.get(self.user_model.id == identifier)
-        except ValueError:
+        except (self.user_model.DoesNotExist, ValueError):
             pass
 
         for attr in get_identity_attributes():
@@ -368,7 +381,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
             try:
                 return self.user_model.get(
                     peeweeFn.Lower(column) == peeweeFn.Lower(identifier))
-            except self.user_model.DoesNotExist:
+            except (self.user_model.DoesNotExist, ValueError):
                 pass
 
     def find_user(self, **kwargs):
@@ -443,22 +456,21 @@ class PonyUserDatastore(PonyDatastore, UserDatastore):
 
     @with_pony_session
     def get_user(self, identifier):
-        if self._is_numeric(identifier):
+        from pony.orm.core import ObjectNotFound
+        try:
             return self.user_model[identifier]
+        except (ObjectNotFound, ValueError):
+            pass
 
         for attr in get_identity_attributes():
             # this is a nightmare, tl;dr we need to get the thing that
             # corresponds to email (usually)
-            user = self.user_model.get(**{attr: identifier})
-            if user is not None:
-                return user
-
-    def _is_numeric(self, value):
-        try:
-            int(value)
-        except ValueError:
-            return False
-        return True
+            try:
+                user = self.user_model.get(**{attr: identifier})
+                if user is not None:
+                    return user
+            except (TypeError, ValueError):
+                pass
 
     @with_pony_session
     def find_user(self, **kwargs):
