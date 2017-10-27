@@ -10,6 +10,8 @@ import base64
 import json
 import pytest
 
+import pytest
+
 from utils import authenticate, json_authenticate, logout
 
 try:
@@ -132,9 +134,10 @@ def test_authorized_access(client):
 def test_unauthorized_access(client, get_message):
     authenticate(client, "joe@lp.com")
     response = client.get("/admin", follow_redirects=True)
-    assert get_message('UNAUTHORIZED') in response.data
+    assert response.status_code == 403
 
 
+@pytest.mark.settings(unauthorized_view=lambda: None)
 def test_unauthorized_access_with_referrer(client, get_message):
     authenticate(client, 'joe@lp.com')
     response = client.get('/admin', headers={'referer': '/admin'})
@@ -154,6 +157,7 @@ def test_unauthorized_access_with_referrer(client, get_message):
     assert response.data.count(get_message('UNAUTHORIZED')) == 1
 
 
+@pytest.mark.settings(unauthorized_view='/')
 def test_roles_accepted(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
@@ -166,11 +170,13 @@ def test_roles_accepted(client):
     assert b'Home Page' in response.data
 
 
+@pytest.mark.settings(unauthorized_view='/')
 def test_unauthenticated_role_required(client, get_message):
     response = client.get('/admin', follow_redirects=True)
     assert get_message('UNAUTHORIZED') in response.data
 
 
+@pytest.mark.settings(unauthorized_view='/')
 def test_multiple_role_required(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
