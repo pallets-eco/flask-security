@@ -10,8 +10,6 @@ import base64
 import json
 import pytest
 
-import pytest
-
 from utils import authenticate, json_authenticate, logout
 
 try:
