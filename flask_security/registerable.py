@@ -9,6 +9,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+import urllib.parse
+
 from flask import current_app as app
 from werkzeug.local import LocalProxy
 
@@ -31,6 +33,11 @@ def register_user(**kwargs):
 
     if _security.confirmable:
         confirmation_link, token = generate_confirmation_link(user)
+        if _security.link_host:
+            # useful for testing when UI is separate from backend
+            link_parse = urllib.parse.urlsplit(confirmation_link)
+            confirmation_link = urllib.parse.urlunsplit(link_parse._replace(netloc=_security.link_host))
+
         do_flash(*get_message('CONFIRM_REGISTRATION', email=user.email))
 
     user_registered.send(app._get_current_object(),

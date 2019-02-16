@@ -10,6 +10,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+import urllib.parse
+
 from flask import current_app as app
 from werkzeug.local import LocalProxy
 
@@ -38,6 +40,10 @@ def send_confirmation_instructions(user):
     """
 
     confirmation_link, token = generate_confirmation_link(user)
+    if _security.link_host:
+        # useful for testing when UI is separate from backend
+        link_parse = urllib.parse.urlsplit(confirmation_link)
+        confirmation_link = urllib.parse.urlunsplit(link_parse._replace(netloc = _security.link_host))
 
     send_mail(config_value('EMAIL_SUBJECT_CONFIRM'), user.email,
               'confirmation_instructions', user=user,

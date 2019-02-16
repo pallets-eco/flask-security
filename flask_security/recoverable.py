@@ -9,6 +9,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+import urllib.parse
+
 from flask import current_app as app
 from werkzeug.local import LocalProxy
 
@@ -31,6 +33,10 @@ def send_reset_password_instructions(user):
     reset_link = url_for_security(
         'reset_password', token=token, _external=True
     )
+    if _security.link_host:
+        # useful for testing when UI is separate from backend
+        link_parse = urllib.parse.urlsplit(reset_link)
+        reset_link = urllib.parse.urlunsplit(link_parse._replace(netloc = _security.link_host))
 
     if config_value('SEND_PASSWORD_RESET_EMAIL'):
         send_mail(config_value('EMAIL_SUBJECT_PASSWORD_RESET'), user.email,

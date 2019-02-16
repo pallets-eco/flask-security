@@ -49,6 +49,7 @@ def _render_json(form, include_user=True, include_auth_token=False):
         if include_user and has_user:
             response['user'] = form.user.get_security_payload()
             response['user']['confirmation_needed'] = getattr(form, 'confirmation_needed', False)
+            response['user']['email'] = form.user.email
         if include_auth_token and has_user:
             token = form.user.get_auth_token()
             response['user']['authentication_token'] = token
@@ -279,9 +280,56 @@ def forgot_password():
 
 @anonymous_user_required
 def reset_password(token):
-    """View function that handles a reset password request."""
+    """View function that handles a reset password request.
+
+    This is called via GET usually as part of an email link and redirects to a reset-password form
+    It is called via POST to actually update the password (and then redirects to a post reset/login view)
+    If in either case the token is either invalid or expired it redirects to the 'forgot-password' form.
+
+    In the case of non-form based configuration:
+    For GET normal case - redirect to RESET_REDIRECT?token={token}
+    For GET invalid case - redirect to RESET_REDIRECT?error={error}
+    For POST normal/successful case - redirect to POST_RESET_VIEW or POST_LOGIN_VIEW
+    For POST error case return 400 with form.errors
+    """
 
     expired, invalid, user = reset_password_token_status(token)
+    form_class = _security.reset_password_form
+    if request.is_json:
+        form = form_class(MultiDict(request.get_json()))
+    else:
+        form = form_class()
+
+    if _security.reset_redirect:
+        # Allow for non-form based UIs
+        if expired:
+            # re-send email
+            send_reset_password_instructions(user)
+        if invalid or expired:
+            error_msg = 'invalid' if invalid else 'expired'
+            if request.method == 'GET':
+                # since this is usually from an email link - need to redirect so UI can get control
+                return redirect(get_url('{}?error={}'.format(_security.reset_redirect, error_msg)))
+            else:
+                form.errors = error_msg
+                return _render_json(form)
+        if request.method == 'GET':
+            return redirect(get_url('{}?token={}'.format(_security.reset_redirect, token)))
+
+        if form.validate_on_submit():
+            after_this_request(_commit)
+            update_password(user, form.password.data)
+            login_user(user)
+            if request.is_json:
+                login_form = _security.login_form(MultiDict({'email': user.email}))
+                setattr(login_form, 'user', user)
+                return _render_json(login_form, include_auth_token=True)
+            else:
+                return redirect(get_url(_security.post_reset_view) or
+                                get_url(_security.post_login_view))
+
+        # Form validation failed
+        return _render_json(form)
 
     if invalid:
         do_flash(*get_message('INVALID_RESET_PASSWORD_TOKEN'))
@@ -291,8 +339,6 @@ def reset_password(token):
                               within=_security.reset_password_within))
     if invalid or expired:
         return redirect(url_for('forgot_password'))
-
-    form = _security.reset_password_form()
 
     if form.validate_on_submit():
         after_this_request(_commit)

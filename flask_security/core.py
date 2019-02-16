@@ -62,6 +62,8 @@ _default_config = {
     'POST_CONFIRM_VIEW': None,
     'POST_RESET_VIEW': None,
     'POST_CHANGE_VIEW': None,
+    'RESET_REDIRECT': None,  # non-form based password reset API
+    'LINK_HOST': None,  # Useful to specify host:port for email links for testing where UI and backend are separate
     'UNAUTHORIZED_VIEW': lambda: None,
     'FORGOT_PASSWORD_TEMPLATE': 'security/forgot_password.html',
     'LOGIN_USER_TEMPLATE': 'security/login_user.html',
