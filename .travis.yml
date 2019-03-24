@@ -17,6 +17,7 @@ addons:
     packages:
       - gettext
       - libenchant-dev
+      - aspell-ca
       - aspell-en
       - aspell-da
       - aspell-de
