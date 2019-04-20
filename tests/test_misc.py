@@ -6,15 +6,18 @@
     Email functionality tests
 """
 
+import hashlib
+
 import pytest
+from utils import authenticate, init_app_with_options, populate_data
 
 from flask_security import Security
-from flask_security.forms import LoginForm, RegisterForm, ConfirmRegisterForm, \
-    SendConfirmationForm, PasswordlessLoginForm, ForgotPasswordForm, ResetPasswordForm, \
-    ChangePasswordForm, TextField, PasswordField, email_required, email_validator, valid_user_email
-from flask_security.utils import capture_reset_password_requests, md5, string_types
-
-from utils import authenticate, init_app_with_options, populate_data
+from flask_security.forms import ChangePasswordForm, ConfirmRegisterForm, \
+    ForgotPasswordForm, LoginForm, PasswordField, PasswordlessLoginForm, \
+    RegisterForm, ResetPasswordForm, SendConfirmationForm, StringField, \
+    email_required, email_validator, valid_user_email
+from flask_security.utils import capture_reset_password_requests, \
+    encode_string, hash_data, string_types, verify_hash
 
 
 @pytest.mark.recoverable()
@@ -41,17 +44,21 @@ def test_register_blueprint_flag(app, sqlalchemy_datastore):
 @pytest.mark.changeable()
 def test_basic_custom_forms(app, sqlalchemy_datastore):
     class MyLoginForm(LoginForm):
-        email = TextField('My Login Email Address Field')
+        email = StringField('My Login Email Address Field')
 
     class MyRegisterForm(RegisterForm):
-        email = TextField('My Register Email Address Field')
+        email = StringField('My Register Email Address Field')
 
     class MyForgotPasswordForm(ForgotPasswordForm):
-        email = TextField('My Forgot Email Address Field',
-                          validators=[email_required, email_validator, valid_user_email])
+        email = StringField(
+            'My Forgot Email Address Field',
+            validators=[
+                email_required,
+                email_validator,
+                valid_user_email])
 
     class MyResetPasswordForm(ResetPasswordForm):
-        password = TextField('My Reset Password Field')
+        password = StringField('My Reset Password Field')
 
     class MyChangePasswordForm(ChangePasswordForm):
         password = PasswordField('My Change Password Field')
@@ -96,10 +103,10 @@ def test_confirmable_custom_form(app, sqlalchemy_datastore):
     app.config['SECURITY_CONFIRMABLE'] = True
 
     class MyRegisterForm(ConfirmRegisterForm):
-        email = TextField('My Register Email Address Field')
+        email = StringField('My Register Email Address Field')
 
     class MySendConfirmationForm(SendConfirmationForm):
-        email = TextField('My Send Confirmation Email Address Field')
+        email = StringField('My Send Confirmation Email Address Field')
 
     app.security = Security(app,
                             datastore=sqlalchemy_datastore,
@@ -119,7 +126,7 @@ def test_passwordless_custom_form(app, sqlalchemy_datastore):
     app.config['SECURITY_PASSWORDLESS'] = True
 
     class MyPasswordlessLoginForm(PasswordlessLoginForm):
-        email = TextField('My Passwordless Email Address Field')
+        email = StringField('My Passwordless Email Address Field')
 
     app.security = Security(app,
                             datastore=sqlalchemy_datastore,
@@ -158,30 +165,67 @@ def test_invalid_hash_scheme(app, sqlalchemy_datastore, get_message):
 
 def test_change_hash_type(app, sqlalchemy_datastore):
     init_app_with_options(app, sqlalchemy_datastore, **{
+        'SECURITY_PASSWORD_HASH': 'plaintext',
+        'SECURITY_PASSWORD_SALT': None,
         'SECURITY_PASSWORD_SCHEMES': ['bcrypt', 'plaintext']
     })
 
     app.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
     app.config['SECURITY_PASSWORD_SALT'] = 'salty'
 
-    app.security = Security(app, datastore=sqlalchemy_datastore, register_blueprint=False)
+    app.security = Security(
+        app,
+        datastore=sqlalchemy_datastore,
+        register_blueprint=False)
 
     client = app.test_client()
 
-    response = client.post('/login', data=dict(email='matt@lp.com', password='password'))
+    response = client.post(
+        '/login',
+        data=dict(
+            email='matt@lp.com',
+            password='password'))
     assert response.status_code == 302
 
     response = client.get('/logout')
 
-    response = client.post('/login', data=dict(email='matt@lp.com', password='password'))
+    response = client.post(
+        '/login',
+        data=dict(
+            email='matt@lp.com',
+            password='password'))
     assert response.status_code == 302
 
 
-def test_md5():
-    data = md5(b'hello')
+@pytest.mark.settings(
+    hashing_schemes=['hex_md5'],
+    deprecated_hashing_schemes=[],
+)
+@pytest.mark.parametrize('data', [
+    u'hellö',
+    b'hello',
+])
+def test_legacy_hash(in_app_context, data):
+    legacy_hash = hashlib.md5(encode_string(data)).hexdigest()
+    new_hash = hash_data(data)
+    assert legacy_hash == new_hash
+
+
+def test_hash_data(in_app_context):
+    data = hash_data(b'hello')
     assert isinstance(data, string_types)
-    data = md5(u'hellö')
+    data = hash_data(u'hellö')
     assert isinstance(data, string_types)
+
+
+def test_verify_hash(in_app_context):
+    data = hash_data(u'hellö')
+    assert verify_hash(data, u'hellö') is True
+    assert verify_hash(data, u'hello') is False
+
+    legacy_data = hashlib.md5(encode_string(u'hellö')).hexdigest()
+    assert verify_hash(legacy_data, u'hellö') is True
+    assert verify_hash(legacy_data, u'hello') is False
 
 
 @pytest.mark.settings(password_salt=u'öööööööööööööööööööööööööööööööööö',
@@ -191,3 +235,48 @@ def test_password_unicode_password_salt(client):
     assert response.status_code == 302
     response = authenticate(client, follow_redirects=True)
     assert b'Hello matt@lp.com' in response.data
+
+
+def test_set_unauthorized_handler(app, client):
+    @app.security.unauthorized_handler
+    def unauthorized():
+        app.unauthorized_handler_set = True
+        return 'unauthorized-handler-set', 401
+
+    app.unauthorized_handler_set = False
+
+    authenticate(client, "joe@lp.com")
+    response = client.get("/admin", follow_redirects=True)
+
+    assert app.unauthorized_handler_set is True
+    assert b'unauthorized-handler-set' in response.data
+    assert response.status_code == 401
+
+
+@pytest.mark.registerable()
+def test_custom_forms_via_config(app, sqlalchemy_datastore):
+    class MyLoginForm(LoginForm):
+        email = StringField('My Login Email Address Field')
+
+    class MyRegisterForm(RegisterForm):
+        email = StringField('My Register Email Address Field')
+
+    app.config['SECURITY_LOGIN_FORM'] = MyLoginForm
+    app.config['SECURITY_REGISTER_FORM'] = MyRegisterForm
+
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+
+    client = app.test_client()
+
+    response = client.get('/login')
+    assert b'My Login Email Address Field' in response.data
+
+    response = client.get('/register')
+    assert b'My Register Email Address Field' in response.data
+
+
+@pytest.mark.babel(False)
+def test_without_babel(client):
+    response = client.get('/login')
+    assert b'Login' in response.data

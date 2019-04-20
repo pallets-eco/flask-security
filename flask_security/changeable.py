@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    flask.ext.security.changeable
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    flask_security.changeable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Flask-Security recoverable module
 
@@ -10,15 +10,14 @@
     :license: MIT, see LICENSE for more details.
 """
 
-from flask import current_app as app
+from flask import current_app
 from werkzeug.local import LocalProxy
 
 from .signals import password_changed
-from .utils import send_mail, encrypt_password, config_value
-
+from .utils import config_value, hash_password, send_mail
 
 # Convenient references
-_security = LocalProxy(lambda: app.extensions['security'])
+_security = LocalProxy(lambda: current_app.extensions['security'])
 
 _datastore = LocalProxy(lambda: _security.datastore)
 
@@ -37,9 +36,10 @@ def change_user_password(user, password):
     """Change the specified user's password
 
     :param user: The user to change_password
-    :param password: The unencrypted new password
+    :param password: The unhashed new password
     """
-    user.password = encrypt_password(password)
+    user.password = hash_password(password)
     _datastore.put(user)
     send_password_changed_notice(user)
-    password_changed.send(app._get_current_object(), user=user)
+    password_changed.send(current_app._get_current_object(),
+                          user=user)

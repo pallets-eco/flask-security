@@ -1,30 +1,37 @@
 # -*- coding: utf-8 -*-
 """
-    flask.ext.security.core
-    ~~~~~~~~~~~~~~~~~~~~~~~
+    flask_security.core
+    ~~~~~~~~~~~~~~~~~~~
 
     Flask-Security core module
 
     :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2017 by CERN.
+    :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
     :license: MIT, see LICENSE for more details.
 """
 
+from datetime import datetime
+
+import pkg_resources
 from flask import current_app, render_template
-from flask.ext.login import AnonymousUserMixin, UserMixin as BaseUserMixin, \
-    LoginManager, current_user
-from flask.ext.principal import Principal, RoleNeed, UserNeed, Identity, \
+from flask_babelex import Domain
+from flask_login import UserMixin as BaseUserMixin
+from flask_login import AnonymousUserMixin, LoginManager, current_user
+from flask_principal import Identity, Principal, RoleNeed, UserNeed, \
     identity_loaded
 from itsdangerous import URLSafeTimedSerializer
 from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy
-from werkzeug.security import safe_str_cmp
 
-from .utils import config_value as cv, get_config, md5, url_for_security, string_types
+from .forms import ChangePasswordForm, ConfirmRegisterForm, \
+    ForgotPasswordForm, LoginForm, PasswordlessLoginForm, RegisterForm, \
+    ResetPasswordForm, SendConfirmationForm
+from .utils import config_value as cv
+from .utils import _, get_config, hash_data, localize_callback, string_types, \
+    url_for_security, verify_hash
 from .views import create_blueprint
-from .forms import LoginForm, ConfirmRegisterForm, RegisterForm, \
-    ForgotPasswordForm, ChangePasswordForm, ResetPasswordForm, \
-    SendConfirmationForm, PasswordlessLoginForm
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions['security'])
@@ -33,11 +40,15 @@ _security = LocalProxy(lambda: current_app.extensions['security'])
 #: Default Flask-Security configuration
 _default_config = {
     'BLUEPRINT_NAME': 'security',
+    'CLI_ROLES_NAME': 'roles',
+    'CLI_USERS_NAME': 'users',
     'URL_PREFIX': None,
     'SUBDOMAIN': None,
     'FLASH_MESSAGES': True,
-    'PASSWORD_HASH': 'plaintext',
+    'I18N_DOMAIN': 'flask_security',
+    'PASSWORD_HASH': 'bcrypt',
     'PASSWORD_SALT': None,
+    'PASSWORD_SINGLE_HASH': False,
     'LOGIN_URL': '/login',
     'LOGOUT_URL': '/logout',
     'REGISTER_URL': '/register',
@@ -51,7 +62,7 @@ _default_config = {
     'POST_CONFIRM_VIEW': None,
     'POST_RESET_VIEW': None,
     'POST_CHANGE_VIEW': None,
-    'UNAUTHORIZED_VIEW': None,
+    'UNAUTHORIZED_VIEW': lambda: None,
     'FORGOT_PASSWORD_TEMPLATE': 'security/forgot_password.html',
     'LOGIN_USER_TEMPLATE': 'security/login_user.html',
     'REGISTER_USER_TEMPLATE': 'security/register_user.html',
@@ -67,27 +78,34 @@ _default_config = {
     'CHANGEABLE': False,
     'SEND_REGISTER_EMAIL': True,
     'SEND_PASSWORD_CHANGE_EMAIL': True,
+    'SEND_PASSWORD_RESET_EMAIL': True,
     'SEND_PASSWORD_RESET_NOTICE_EMAIL': True,
     'LOGIN_WITHIN': '1 days',
     'CONFIRM_EMAIL_WITHIN': '5 days',
     'RESET_PASSWORD_WITHIN': '5 days',
     'LOGIN_WITHOUT_CONFIRMATION': False,
-    'EMAIL_SENDER': 'no-reply@localhost',
+    'EMAIL_SENDER': LocalProxy(lambda: current_app.config.get(
+        'MAIL_DEFAULT_SENDER', 'no-reply@localhost'
+    )),
     'TOKEN_AUTHENTICATION_KEY': 'auth_token',
     'TOKEN_AUTHENTICATION_HEADER': 'Authentication-Token',
+    'TOKEN_MAX_AGE': None,
     'CONFIRM_SALT': 'confirm-salt',
     'RESET_SALT': 'reset-salt',
     'LOGIN_SALT': 'login-salt',
     'CHANGE_SALT': 'change-salt',
     'REMEMBER_SALT': 'remember-salt',
     'DEFAULT_REMEMBER_ME': False,
-    'DEFAULT_HTTP_AUTH_REALM': 'Login Required',
-    'EMAIL_SUBJECT_REGISTER': 'Welcome',
-    'EMAIL_SUBJECT_CONFIRM': 'Please confirm your email',
-    'EMAIL_SUBJECT_PASSWORDLESS': 'Login instructions',
-    'EMAIL_SUBJECT_PASSWORD_NOTICE': 'Your password has been reset',
-    'EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE': 'Your password has been changed',
-    'EMAIL_SUBJECT_PASSWORD_RESET': 'Password reset instructions',
+    'DEFAULT_HTTP_AUTH_REALM': _('Login Required'),
+    'EMAIL_SUBJECT_REGISTER': _('Welcome'),
+    'EMAIL_SUBJECT_CONFIRM': _('Please confirm your email'),
+    'EMAIL_SUBJECT_PASSWORDLESS': _('Login instructions'),
+    'EMAIL_SUBJECT_PASSWORD_NOTICE': _('Your password has been reset'),
+    'EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE': _(
+                                    'Your password has been changed'),
+    'EMAIL_SUBJECT_PASSWORD_RESET': _('Password reset instructions'),
+    'EMAIL_PLAINTEXT': True,
+    'EMAIL_HTML': True,
     'USER_IDENTITY_ATTRIBUTES': ['email'],
     'PASSWORD_SCHEMES': [
         'bcrypt',
@@ -99,79 +117,92 @@ _default_config = {
         # And always last one...
         'plaintext'
     ],
-    'DEPRECATED_PASSWORD_SCHEMES': ['auto']
+    'DEPRECATED_PASSWORD_SCHEMES': ['auto'],
+    'HASHING_SCHEMES': [
+        'sha256_crypt',
+        'hex_md5',
+    ],
+    'DEPRECATED_HASHING_SCHEMES': ['hex_md5'],
+    'DATETIME_FACTORY': datetime.utcnow,
 }
 
 #: Default Flask-Security messages
 _default_messages = {
     'UNAUTHORIZED': (
-        'You do not have permission to view this resource.', 'error'),
+        _('You do not have permission to view this resource.'), 'error'),
     'CONFIRM_REGISTRATION': (
-        'Thank you. Confirmation instructions have been sent to %(email)s.', 'success'),
-    'EMAIL_CONFIRMED': (
-        'Thank you. Your email has been confirmed.', 'success'),
-    'ALREADY_CONFIRMED': (
-        'Your email has already been confirmed.', 'info'),
-    'INVALID_CONFIRMATION_TOKEN': (
-        'Invalid confirmation token.', 'error'),
-    'EMAIL_ALREADY_ASSOCIATED': (
-        '%(email)s is already associated with an account.', 'error'),
-    'PASSWORD_MISMATCH': (
-        'Password does not match', 'error'),
-    'RETYPE_PASSWORD_MISMATCH': (
-        'Passwords do not match', 'error'),
-    'INVALID_REDIRECT': (
-        'Redirections outside the domain are forbidden', 'error'),
-    'PASSWORD_RESET_REQUEST': (
-        'Instructions to reset your password have been sent to %(email)s.', 'info'),
-    'PASSWORD_RESET_EXPIRED': (
-        'You did not reset your password within %(within)s. New instructions have been sent '
-        'to %(email)s.', 'error'),
-    'INVALID_RESET_PASSWORD_TOKEN': (
-        'Invalid reset password token.', 'error'),
-    'CONFIRMATION_REQUIRED': (
-        'Email requires confirmation.', 'error'),
-    'CONFIRMATION_REQUEST': (
-        'Confirmation instructions have been sent to %(email)s.', 'info'),
-    'CONFIRMATION_EXPIRED': (
-        'You did not confirm your email within %(within)s. New instructions to confirm your email '
-        'have been sent to %(email)s.', 'error'),
-    'LOGIN_EXPIRED': (
-        'You did not login within %(within)s. New instructions to login have been sent to '
-        '%(email)s.', 'error'),
-    'LOGIN_EMAIL_SENT': (
-        'Instructions to login have been sent to %(email)s.', 'success'),
-    'INVALID_LOGIN_TOKEN': (
-        'Invalid login token.', 'error'),
-    'DISABLED_ACCOUNT': (
-        'Account is disabled.', 'error'),
-    'EMAIL_NOT_PROVIDED': (
-        'Email not provided', 'error'),
-    'INVALID_EMAIL_ADDRESS': (
-        'Invalid email address', 'error'),
-    'PASSWORD_NOT_PROVIDED': (
-        'Password not provided', 'error'),
-    'PASSWORD_NOT_SET': (
-        'No password is set for this user', 'error'),
-    'PASSWORD_INVALID_LENGTH': (
-        'Password must be at least 6 characters', 'error'),
-    'USER_DOES_NOT_EXIST': (
-        'Specified user does not exist', 'error'),
-    'INVALID_PASSWORD': (
-        'Invalid password', 'error'),
-    'PASSWORDLESS_LOGIN_SUCCESSFUL': (
-        'You have successfuly logged in.', 'success'),
-    'PASSWORD_RESET': (
-        'You successfully reset your password and you have been logged in automatically.',
+        _('Thank you. Confirmation instructions '
+          'have been sent to %(email)s.'),
         'success'),
+    'EMAIL_CONFIRMED': (
+        _('Thank you. Your email has been confirmed.'), 'success'),
+    'ALREADY_CONFIRMED': (
+        _('Your email has already been confirmed.'), 'info'),
+    'INVALID_CONFIRMATION_TOKEN': (
+        _('Invalid confirmation token.'), 'error'),
+    'EMAIL_ALREADY_ASSOCIATED': (
+        _('%(email)s is already associated with an account.'), 'error'),
+    'PASSWORD_MISMATCH': (
+        _('Password does not match'), 'error'),
+    'RETYPE_PASSWORD_MISMATCH': (
+        _('Passwords do not match'), 'error'),
+    'INVALID_REDIRECT': (
+        _('Redirections outside the domain are forbidden'), 'error'),
+    'PASSWORD_RESET_REQUEST': (
+        _('Instructions to reset your password have been sent to %(email)s.'),
+        'info'),
+    'PASSWORD_RESET_EXPIRED': (
+        _('You did not reset your password within %(within)s. '
+          'New instructions have been sent to %(email)s.'), 'error'),
+    'INVALID_RESET_PASSWORD_TOKEN': (
+        _('Invalid reset password token.'), 'error'),
+    'CONFIRMATION_REQUIRED': (
+        _('Email requires confirmation.'), 'error'),
+    'CONFIRMATION_REQUEST': (
+        _('Confirmation instructions have been sent to %(email)s.'), 'info'),
+    'CONFIRMATION_EXPIRED': (
+        _('You did not confirm your email within %(within)s. '
+          'New instructions to confirm your email have been sent '
+          'to %(email)s.'), 'error'),
+    'LOGIN_EXPIRED': (
+        _('You did not login within %(within)s. New instructions to login '
+          'have been sent to %(email)s.'), 'error'),
+    'LOGIN_EMAIL_SENT': (
+        _('Instructions to login have been sent to %(email)s.'), 'success'),
+    'INVALID_LOGIN_TOKEN': (
+        _('Invalid login token.'), 'error'),
+    'DISABLED_ACCOUNT': (
+        _('Account is disabled.'), 'error'),
+    'EMAIL_NOT_PROVIDED': (
+        _('Email not provided'), 'error'),
+    'INVALID_EMAIL_ADDRESS': (
+        _('Invalid email address'), 'error'),
+    'PASSWORD_NOT_PROVIDED': (
+        _('Password not provided'), 'error'),
+    'PASSWORD_NOT_SET': (
+        _('No password is set for this user'), 'error'),
+    'PASSWORD_INVALID_LENGTH': (
+        _('Password must be at least 6 characters'), 'error'),
+    'USER_DOES_NOT_EXIST': (
+        _('Specified user does not exist'), 'error'),
+    'INVALID_PASSWORD': (
+        _('Invalid password'), 'error'),
+    'PASSWORDLESS_LOGIN_SUCCESSFUL': (
+        _('You have successfully logged in.'), 'success'),
+    'FORGOT_PASSWORD': (
+        _('Forgot password?'), 'info'),
+    'PASSWORD_RESET': (
+        _('You successfully reset your password and you have been logged in '
+          'automatically.'), 'success'),
     'PASSWORD_IS_THE_SAME': (
-        'Your new password must be different than your previous password.', 'error'),
+        _('Your new password must be different than your previous password.'),
+        'error'),
     'PASSWORD_CHANGE': (
-        'You successfully changed your password.', 'success'),
+        _('You successfully changed your password.'), 'success'),
     'LOGIN': (
-        'Please log in to access this page.', 'info'),
+        _('Please log in to access this page.'), 'info'),
     'REFRESH': (
-        'Please reauthenticate to access this page.', 'info'),
+        _('Please reauthenticate to access this page.'), 'info'),
 }
 
 _default_forms = {
@@ -190,19 +221,28 @@ def _user_loader(user_id):
     return _security.datastore.find_user(id=user_id)
 
 
-def _token_loader(token):
+def _request_loader(request):
+    header_key = _security.token_authentication_header
+    args_key = _security.token_authentication_key
+    header_token = request.headers.get(header_key, None)
+    token = request.args.get(args_key, header_token)
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        token = data.get(args_key, token)
+
     try:
-        data = _security.remember_token_serializer.loads(token)
+        data = _security.remember_token_serializer.loads(
+            token, max_age=_security.token_max_age)
         user = _security.datastore.find_user(id=data[0])
-        if user and safe_str_cmp(md5(user.password), data[1]):
+        if user and verify_hash(data[1], user.password):
             return user
     except:
         pass
-    return AnonymousUser()
+    return _security.login_manager.anonymous_user()
 
 
 def _identity_loader():
-    if not isinstance(current_user._get_current_object(), AnonymousUser):
+    if not isinstance(current_user._get_current_object(), AnonymousUserMixin):
         identity = Identity(current_user.id)
         return identity
 
@@ -211,22 +251,24 @@ def _on_identity_loaded(sender, identity):
     if hasattr(current_user, 'id'):
         identity.provides.add(UserNeed(current_user.id))
 
-    for role in current_user.roles:
+    for role in getattr(current_user, 'roles', []):
         identity.provides.add(RoleNeed(role.name))
 
     identity.user = current_user
 
 
-def _get_login_manager(app):
+def _get_login_manager(app, anonymous_user):
     lm = LoginManager()
-    lm.anonymous_user = AnonymousUser
+    lm.anonymous_user = anonymous_user or AnonymousUser
+    lm.localize_callback = localize_callback
     lm.login_view = '%s.login' % cv('BLUEPRINT_NAME', app=app)
     lm.user_loader(_user_loader)
-    lm.token_loader(_token_loader)
+    lm.request_loader(_request_loader)
 
     if cv('FLASH_MESSAGES', app=app):
         lm.login_message, lm.login_message_category = cv('MSG_LOGIN', app=app)
-        lm.needs_refresh_message, lm.needs_refresh_message_category = cv('MSG_REFRESH', app=app)
+        lm.needs_refresh_message, lm.needs_refresh_message_category = cv(
+            'MSG_REFRESH', app=app)
     else:
         lm.login_message = None
         lm.needs_refresh_message = None
@@ -247,8 +289,28 @@ def _get_pwd_context(app):
     deprecated = cv('DEPRECATED_PASSWORD_SCHEMES', app=app)
     if pw_hash not in schemes:
         allowed = (', '.join(schemes[:-1]) + ' and ' + schemes[-1])
-        raise ValueError("Invalid hash scheme %r. Allowed values are %s" % (pw_hash, allowed))
-    return CryptContext(schemes=schemes, default=pw_hash, deprecated=deprecated)
+        raise ValueError(
+            "Invalid password hashing scheme %r. Allowed values are %s" %
+            (pw_hash, allowed))
+    return CryptContext(
+        schemes=schemes,
+        default=pw_hash,
+        deprecated=deprecated)
+
+
+def _get_i18n_domain(app):
+    return Domain(
+        pkg_resources.resource_filename('flask_security', 'translations'),
+        domain=cv('I18N_DOMAIN', app=app)
+    )
+
+
+def _get_hashing_context(app):
+    schemes = cv('HASHING_SCHEMES', app=app)
+    deprecated = cv('DEPRECATED_HASHING_SCHEMES', app=app)
+    return CryptContext(
+        schemes=schemes,
+        deprecated=deprecated)
 
 
 def _get_serializer(app, name):
@@ -257,22 +319,25 @@ def _get_serializer(app, name):
     return URLSafeTimedSerializer(secret_key=secret_key, salt=salt)
 
 
-def _get_state(app, datastore, **kwargs):
+def _get_state(app, datastore, anonymous_user=None, **kwargs):
     for key, value in get_config(app).items():
         kwargs[key.lower()] = value
 
     kwargs.update(dict(
         app=app,
         datastore=datastore,
-        login_manager=_get_login_manager(app),
+        login_manager=_get_login_manager(app, anonymous_user),
         principal=_get_principal(app),
         pwd_context=_get_pwd_context(app),
+        hashing_context=_get_hashing_context(app),
+        i18n_domain=_get_i18n_domain(app),
         remember_token_serializer=_get_serializer(app, 'remember'),
         login_serializer=_get_serializer(app, 'login'),
         reset_serializer=_get_serializer(app, 'reset'),
         confirm_serializer=_get_serializer(app, 'confirm'),
         _context_processors={},
-        _send_mail_task=None
+        _send_mail_task=None,
+        _unauthorized_callback=None
     ))
 
     for key, value in _default_forms.items():
@@ -303,13 +368,14 @@ class RoleMixin(object):
 class UserMixin(BaseUserMixin):
     """Mixin for `User` model definitions"""
 
+    @property
     def is_active(self):
         """Returns `True` if the user is active."""
         return self.active
 
     def get_auth_token(self):
         """Returns the user's authentication token."""
-        data = [str(self.id), md5(self.password)]
+        data = [str(self.id), hash_data(self.password)]
         return _security.remember_token_serializer.dumps(data)
 
     def has_role(self, role):
@@ -320,6 +386,10 @@ class UserMixin(BaseUserMixin):
             return role in (role.name for role in self.roles)
         else:
             return role in self.roles
+
+    def get_security_payload(self):
+        """Serialize user object as response payload."""
+        return {'id': str(self.id)}
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -380,6 +450,9 @@ class _SecurityState(object):
     def send_mail_task(self, fn):
         self._send_mail_task = fn
 
+    def unauthorized_handler(self, fn):
+        self._unauthorized_callback = fn
+
 
 class Security(object):
     """The :class:`Security` class initializes the Flask-Security extension.
@@ -387,6 +460,7 @@ class Security(object):
     :param app: The application.
     :param datastore: An instance of a user datastore.
     """
+
     def __init__(self, app=None, datastore=None, **kwargs):
         self.app = app
         self.datastore = datastore
@@ -398,7 +472,8 @@ class Security(object):
                  login_form=None, confirm_register_form=None,
                  register_form=None, forgot_password_form=None,
                  reset_password_form=None, change_password_form=None,
-                 send_confirmation_form=None, passwordless_login_form=None):
+                 send_confirmation_form=None, passwordless_login_form=None,
+                 anonymous_user=None):
         """Initializes the Flask-Security extension for the specified
         application and datastore implentation.
 
@@ -406,7 +481,8 @@ class Security(object):
         :param datastore: An instance of a user datastore.
         :param register_blueprint: to register the Security blueprint or not.
         """
-        datastore = datastore or self.datastore
+        self.app = app
+        self.datastore = datastore
 
         for key, value in _default_config.items():
             app.config.setdefault('SECURITY_' + key, value)
@@ -416,7 +492,7 @@ class Security(object):
 
         identity_loaded.connect_via(app)(_on_identity_loaded)
 
-        state = _get_state(app, datastore,
+        state = _get_state(app, self.datastore,
                            login_form=login_form,
                            confirm_register_form=confirm_register_form,
                            register_form=register_form,
@@ -424,14 +500,27 @@ class Security(object):
                            reset_password_form=reset_password_form,
                            change_password_form=change_password_form,
                            send_confirmation_form=send_confirmation_form,
-                           passwordless_login_form=passwordless_login_form)
+                           passwordless_login_form=passwordless_login_form,
+                           anonymous_user=anonymous_user)
 
         if register_blueprint:
             app.register_blueprint(create_blueprint(state, __name__))
             app.context_processor(_context_processor)
 
+        @app.before_first_request
+        def _register_i18n():
+            if '_' not in app.jinja_env.globals:
+                app.jinja_env.globals['_'] = state.i18n_domain.gettext
+
         state.render_template = self.render_template
         app.extensions['security'] = state
+
+        if hasattr(app, 'cli'):
+            from .cli import users, roles
+            if state.cli_users_name:
+                app.cli.add_command(users, state.cli_users_name)
+            if state.cli_roles_name:
+                app.cli.add_command(roles, state.cli_roles_name)
 
         return state
 
