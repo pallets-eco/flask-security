@@ -10,7 +10,7 @@ tests_require = [
     'Flask-CLI>=0.4.0',
     'Flask-Mongoengine>=0.7.0',
     'Flask-Peewee>=0.6.5',
-    'Flask-SQLAlchemy>=1.0',
+    'Flask-SQLAlchemy>=2.3',
     'bcrypt>=1.0.2',
     'check-manifest>=0.25',
     'coverage>=4.0',
@@ -25,7 +25,7 @@ tests_require = [
     'pytest-pep8>=1.0.6',
     'pytest-translations>=1.0.4',
     'pytest>=3.0.5',
-    'sqlalchemy>=0.8.0',
+    'sqlalchemy>=1.1.0',
 ]
 
 extras_require = {
@@ -52,7 +52,7 @@ install_requires = [
     'Flask-Principal>=0.3.3',
     'Flask-WTF>=0.13.1',
     'Flask-BabelEx>=0.9.3',
-    'itsdangerous>=0.21',
+    'itsdangerous>=0.24',
     'passlib>=1.7',
 ]
 
@@ -89,6 +89,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Development Status :: 4 - Beta',
