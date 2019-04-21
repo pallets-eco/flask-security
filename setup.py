@@ -26,6 +26,7 @@ tests_require = [
     'pytest-translations>=2.0.0',
     'pytest>=3.3.0',
     'sqlalchemy>=1.1.0',
+    'werkzeug>=0.12.2'
 ]
 
 extras_require = {
