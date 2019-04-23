@@ -27,7 +27,7 @@ addons:
 
 matrix:
   allow_failures:
-    - python: pypy
+    - python: pypy3.5-6.0
 
 cache:
   - apt
