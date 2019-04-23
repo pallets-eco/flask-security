@@ -3,22 +3,31 @@ notifications:
 
 language: python
 
+dist: xenial
+
 python:
   - "2.7"
   - "3.5"
   - "3.6"
-  - "pypy"
+  - "3.7"
+  - pypy3.5-6.0
 
 addons:
   apt:
     packages:
       - libenchant-dev
+      - aspell-en
+      - aspell-da
+      - aspell-de
+      - aspell-es
+      - aspell-fr
+      - aspell-nl
+      - aspell-pt
+      - aspell-ru
 
 matrix:
   allow_failures:
-    - python: pypy
-
-sudo: false
+    - python: pypy3.5-6.0
 
 cache:
   - apt
@@ -36,19 +45,6 @@ before_install:
   - "travis_retry pip install twine wheel coveralls requirements-builder"
   - "requirements-builder -e all --level=min setup.py > .travis-lowest-requirements.txt"
   - "requirements-builder -e all --level=pypi setup.py > .travis-release-requirements.txt"
-  - |
-      if [ "$TRAVIS_PYTHON_VERSION" = "pypy" ]; then
-        export PYENV_ROOT="$HOME/.pyenv"
-        if [ -f "$PYENV_ROOT/bin/pyenv" ]; then
-          cd "$PYENV_ROOT" && git pull
-        else
-          rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
-        fi
-        export PYPY_VERSION="4.0.1"
-        "$PYENV_ROOT/bin/pyenv" install "pypy-$PYPY_VERSION"
-        virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
-        source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
-      fi
 
 install:
   - "pip install -r .travis-${REQUIREMENTS}-requirements.txt"
