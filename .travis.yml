@@ -55,6 +55,10 @@ script: python setup.py test
 after_script:
   - coveralls
 
+branches:
+  only:
+    - master
+
 deploy:
   provider: pypi
   user: jwag956
