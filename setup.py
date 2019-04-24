@@ -44,6 +44,8 @@ for reqs in extras_require.values():
 setup_requires = [
     'Babel>=1.3',
     'pytest-runner>=2.6.2',
+    'twine',
+    'wheel'
 ]
 
 install_requires = [
@@ -68,11 +70,14 @@ setup(
     license='MIT',
     author='Matt Wright',
     author_email='matt@nobien.net',
-    url='https://github.com/mattupstate/flask-security',
+    maintainer='Chris Wagner',
+    maintainer_email='jwag.wagner@gmail.com',
+    url='https://github.com/jwag956/flask-security',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
     platforms='any',
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
     extras_require=extras_require,
     install_requires=install_requires,
     setup_requires=setup_requires,
