@@ -23,6 +23,6 @@ It quickly adds security features to your Flask application.
 Resources
 ---------
 
-- `Documentation <https://flask-security.readthedocs.io/>`_
+- `Documentation <https://flask-security-too.readthedocs.io/>`_
 - `Issue Tracker <https://github.com/jwag956/flask-security/issues>`_
 - `Code <https://github.com/jwag956/flask-security/>`_
