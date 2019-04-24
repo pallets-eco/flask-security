@@ -7,10 +7,6 @@ dist: xenial
 
 python:
   - "2.7"
-  - "3.5"
-  - "3.6"
-  - "3.7"
-  - pypy3.5-6.0
 
 addons:
   apt:
@@ -68,7 +64,6 @@ deploy:
   on:
     repo: jwag956/flask-security
     tags: true
-    branch: master
     skip_cleanup: true
     python: "2.7"
     condition: $REQUIREMENTS = release
