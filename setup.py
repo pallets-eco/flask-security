@@ -2,9 +2,15 @@
 
 """Simple security for Flask apps."""
 
+import io
+import re
 from setuptools import find_packages, setup
 
-readme = open('README.rst').read()
+with io.open('README.rst', 'rt', encoding='utf8') as f:
+    readme = f.read()
+
+with io.open('flask_security/__init__.py', 'rt', encoding='utf8') as f:
+    version = re.search(r'__version__ = \'(.*?)\'', f.read()).group(1)
 
 tests_require = [
     'Flask-CLI>=0.4.0',
@@ -62,8 +68,8 @@ install_requires = [
 packages = find_packages()
 
 setup(
-    name='Flask-Security',
-    version='3.0.0',
+    name='Flask-Security-Too',
+    version=version,
     description=__doc__,
     long_description=readme,
     keywords='flask security',
