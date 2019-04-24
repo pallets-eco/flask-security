@@ -4,8 +4,8 @@ Flask-Security
 .. image:: https://img.shields.io/travis/jwag956/flask-security.svg
     :target: https://travis-ci.org/jwag956/flask-security
 
-.. image:: https://img.shields.io/coveralls/jwag956/flask-security.svg
-    :target: https://coveralls.io/r/jwag956/flask-security
+.. image:: https://coveralls.io/repos/github/jwag956/flask-security/badge.svg?branch=master
+    :target: https://coveralls.io/github/jwag956/flask-security?branch=master
 
 .. image:: https://img.shields.io/github/tag/jwag956/flask-security.svg
     :target: https://github.com/jwag956/flask-security/releases
