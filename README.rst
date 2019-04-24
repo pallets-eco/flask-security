@@ -1,7 +1,7 @@
 Flask-Security
 ===================
 
-.. image:: https://img.shields.io/travis/jwag956/flask-security.svg
+.. image:: https://travis-ci.org/jwag956/flask-security.svg?branch=master
     :target: https://travis-ci.org/jwag956/flask-security
 
 .. image:: https://coveralls.io/repos/github/jwag956/flask-security/badge.svg?branch=master
@@ -22,7 +22,7 @@ Flask-Security
     :target: https://flask-security-too.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-It quickly adds security features to your Flask application.
+Quickly add security features to your Flask application.
 
 Notes on this repo
 ------------------
@@ -31,7 +31,7 @@ This is a fork of mattupstate/flask-security starting with 3.0.0 master branch.
 Goals
 +++++
 * Regain momentum for this critical piece of the Flask eco-system. To that end the
-  the plan is to put of small, frequent releases starting with pulling the simplest
+  the plan is to put out small, frequent releases starting with pulling the simplest
   and most obvious changes that have already been vetted in the upstream version, as
   well as other pull requests.
 * Continue work to get Flask-Security to be usable from Single Page Applications,
