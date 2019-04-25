@@ -8,6 +8,9 @@ Version 3.0.1
 
 - Support 3.7 as part of CI
 - Rebrand to this forked repo
+- (#15) Build docs and translations as part of CI
+- (opr #767) Update customizing.rst (allanice001)
+- (opr #669) Fix for Read the Docs (jirikuncar)
 
 Version 3.0.0
 -------------
