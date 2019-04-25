@@ -50,7 +50,9 @@ install:
   - "pip install -r .travis-${REQUIREMENTS}-requirements.txt"
   - "pip install -e .[all]"
 
-script: python setup.py test
+script:
+  - python setup.py test
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then python setup.py build_sphinx compile_catalog; fi
 
 after_script:
   - coveralls
@@ -58,7 +60,7 @@ after_script:
 branches:
   only:
     - master
-    - /^\d+(\.\d+)*(-.*)*$/
+    - /^\d+(\.\d+)*(rc\d+)*$/
 
 deploy:
   provider: pypi
