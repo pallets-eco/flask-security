@@ -362,7 +362,7 @@ def get_within_delta(key, app=None):
         5 days
         10 minutes
 
-    :param key: The config value key without the 'SECURITY_' prefix
+    :param key: The config value key without the `SECURITY_` prefix
     :param app: Optional application to inspect. Defaults to Flask's
                 `current_app`
     """
