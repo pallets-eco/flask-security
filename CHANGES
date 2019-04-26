@@ -12,7 +12,7 @@ Version 3.0.1
 Version 3.0.0
 -------------
 
-Released TBD
+Released May 29th 2017
 
 - Fixed a bug when user clicking confirmation link after confirmation
   and expiration causes confirmation email to resend. (see #556)
