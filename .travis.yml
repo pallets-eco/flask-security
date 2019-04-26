@@ -15,6 +15,7 @@ python:
 addons:
   apt:
     packages:
+      - gettext
       - libenchant-dev
       - aspell-en
       - aspell-da
@@ -52,7 +53,15 @@ install:
 
 script:
   - python setup.py test
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then python setup.py build_sphinx compile_catalog; fi
+  - >
+    if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
+     python setup.py build_sphinx compile_catalog;
+     echo "Running msgcheck"
+     msgcheck -pwW flask_security/translations/*/LC_MESSAGES/flask_security.po;
+     # run it again with spelling - but dont die on errors
+     echo "Running msgcheck with spell check (ignoring errors)"
+     (msgcheck -pwW -s str --pwl flask_security/translations/pwl.txt flask_security/translations/*/LC_MESSAGES/flask_security.po; exit 0);
+    fi
 
 after_script:
   - coveralls

@@ -47,3 +47,6 @@ Session.vim
 
 # Idea
 .idea/
+
+# Mac
+.DS_Store/
