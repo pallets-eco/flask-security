@@ -6,8 +6,30 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 3.0.1
 --------------
 
+Released TBD
+
 - Support 3.7 as part of CI
 - Rebrand to this forked repo
+- (#15) Build docs and translations as part of CI
+- (#17) Move to msgcheck from pytest-translations
+- (opr #669) Fix for Read the Docs (jirikuncar)
+- (opr #710) Spanish translation (maukoquiroga)
+- (opr #712) i18n: improvements of German translations (eseifert)
+- (opr #713) i18n: add Portuguese (Brazilian) translation (dinorox)
+- (opr #719) docs: fix anchor links and typos (kesara)
+- (opr #751) i18n: fix missing space (abulte)
+- (opr #762) docs: fixed proxy import (lsmith)
+- (opr #767) Update customizing.rst (allanice001)
+- (opr #776) i18n: add Portuguese (Portugal) translation (micael-grilo)
+- (opr #791) Fix documentation for mattupstate#781 (fmerges)
+- (opr #796) Chinese translations (Steinkuo)
+- (opr #808) Clarify that a commit is needed after login_user (christophertull)
+- (opr #823) Add Turkish translation (Admicos)
+- (opr #831) Catalan translation (miceno)
+
+These are all documentation and i18n changes - NO code changes. All except the last 3 were accepted and reviewed by
+the original Flask-Security team.
+Thanks as always to all the contributors.
 
 Version 3.0.0
 -------------
