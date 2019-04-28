@@ -7,6 +7,7 @@
 """
 
 import base64
+import pytest
 
 from utils import authenticate, json_authenticate, logout
 
@@ -202,6 +203,15 @@ def test_http_auth(client):
     response = client.get('/http', headers={
         'Authorization': 'Basic %s' % base64.b64encode(
             b"joe@lp.com:password").decode('utf-8')
+    })
+    assert b'HTTP Authentication' in response.data
+
+
+@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=('email', 'username'))
+def test_http_auth_username(client):
+    response = client.get('/http', headers={
+        'Authorization': 'Basic %s' % base64.b64encode(
+            b"jill:password").decode('utf-8')
     })
     assert b'HTTP Authentication' in response.data
 
