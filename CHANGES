@@ -3,10 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 3.0.2
+-------------
+
+Released TBD
+
 Version 3.0.1
 --------------
 
-Released TBD
+Released April 28th 2019
 
 - Support 3.7 as part of CI
 - Rebrand to this forked repo
