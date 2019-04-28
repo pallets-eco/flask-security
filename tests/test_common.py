@@ -356,3 +356,12 @@ def test_sending_auth_token_with_json(client):
         headers={
             'Content-Type': 'application/json'})
     assert b'Token Authentication' in response.data
+
+
+def test_json_not_dict(client):
+    response = client.post(
+        '/json',
+        json=['thing1', 'thing2'],
+        headers={'Content-Type': 'application/json'},
+    )
+    assert response.status_code == 200

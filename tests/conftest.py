@@ -16,6 +16,8 @@ from datetime import datetime
 
 import pytest
 from flask import Flask, render_template
+from flask import jsonify
+from flask import request as flask_request
 from flask.json import JSONEncoder as BaseEncoder
 from flask_babelex import Babel
 from flask_mail import Mail
@@ -138,6 +140,10 @@ def app(request):
     @app.route('/page1')
     def page_1():
         return 'Page 1'
+
+    @app.route('/json', methods=['GET', 'POST'])
+    def echo_json():
+        return jsonify(flask_request.get_json())
     return app
 
 
