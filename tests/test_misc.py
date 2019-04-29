@@ -17,7 +17,7 @@ from flask_security.forms import ChangePasswordForm, ConfirmRegisterForm, \
     RegisterForm, ResetPasswordForm, SendConfirmationForm, StringField, \
     email_required, email_validator, valid_user_email
 from flask_security.utils import capture_reset_password_requests, \
-    encode_string, hash_data, string_types, verify_hash
+    encode_string, hash_data, send_mail, string_types, verify_hash
 
 
 @pytest.mark.recoverable()
@@ -280,3 +280,23 @@ def test_custom_forms_via_config(app, sqlalchemy_datastore):
 def test_without_babel(client):
     response = client.get('/login')
     assert b'Login' in response.data
+
+
+def test_no_email_sender(app):
+    """ Verify that if SECURITY_EMAIL_SENDER is default
+        (which is a local proxy) that send_mail picks up MAIL_DEFAULT_SENDER.
+    """
+    app.config['MAIL_DEFAULT_SENDER'] = 'test@testme.com'
+
+    class TestUser(object):
+        def __init__(self, email):
+            self.email = email
+    security = Security()
+    security.init_app(app)
+
+    with app.app_context():
+        user = TestUser('matt@lp.com')
+        with app.mail.record_messages() as outbox:
+            send_mail('Test Default Sender', user.email, 'welcome', user=user)
+        assert 1 == len(outbox)
+        assert 'test@testme.com' == outbox[0].sender
