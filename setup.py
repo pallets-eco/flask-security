@@ -32,7 +32,7 @@ tests_require = [
     'pytest-pep8>=1.0.6',
     'pytest>=3.3.0',
     'sqlalchemy>=1.1.0',
-    'werkzeug>=0.14.1'
+    'werkzeug>=0.12.2'
 ]
 
 extras_require = {
@@ -59,7 +59,7 @@ install_requires = [
     'Flask-Login>=0.3.0',
     'Flask-Mail>=0.9.1',
     'Flask-Principal>=0.4.0',
-    'Flask-WTF>=0.14.2',
+    'Flask-WTF>=0.13.1',
     'Flask-BabelEx>=0.9.3',
     'itsdangerous>=0.24',
     'passlib>=1.7',

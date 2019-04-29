@@ -7,6 +7,7 @@
 """
 
 import base64
+import json
 import pytest
 
 from utils import authenticate, json_authenticate, logout
@@ -361,7 +362,7 @@ def test_sending_auth_token_with_json(client):
 def test_json_not_dict(client):
     response = client.post(
         '/json',
-        json=['thing1', 'thing2'],
+        data=json.dumps(['thing1', 'thing2']),
         headers={'Content-Type': 'application/json'},
     )
     assert response.status_code == 200
