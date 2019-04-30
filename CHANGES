@@ -6,7 +6,25 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 3.0.2
 -------------
 
-Released TBD
+Released April 30th 2019
+
+- (opr #439) HTTP Auth respects SECURITY_USER_IDENTITY_ATTRIBUTES (pnpnpn)
+- (opr #660) csrf_enabled` deprecation fix (abulte)
+- (opr #671) Fix referrer loop in _get_unauthorized_view(). (nfvs)
+- (opr #675) Fix AttributeError in _request_loader (sbagan)
+- (opr #676) Fix timing attack on login form (cript0nauta)
+- (opr #683) Close db connection after running tests (reambus)
+- (opr #691) docs: add password salt to SQLAlchemy app example (KshitijKarthick)
+- (opr #692) utils: fix incorrect email sender type (switowski)
+- (opr #696) Fixed broken Click link (williamhatcher)
+- (opr #722) Fix password recovery confirmation on deleted user (kesara)
+- (opr #747) Update login_user.html (rickwest)
+- (opr #748) i18n: configurable the dirname domain (escudero)
+- (opr #835) adds relevant user to reset password form for validation purposes (fuhrysteve)
+
+These are bug fixes and a couple very small additions.
+No change in behavior and no new functionality.
+'opr#' is the original pull request from https://github.com/mattupstate/flask-security
 
 Version 3.0.1
 --------------
