@@ -51,6 +51,8 @@ def app(request):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     app.config['SECURITY_PASSWORD_SALT'] = 'salty'
+    # Make this plaintext for most tests - reduces unit test time by 50%
+    app.config['SECURITY_PASSWORD_HASH'] = 'plaintext'
 
     for opt in ['changeable', 'recoverable', 'registerable',
                 'trackable', 'passwordless', 'confirmable']:
@@ -154,7 +156,7 @@ def mongoengine_datastore(app):
     db_name = 'flask_security_test_%s' % str(time.time()).replace('.', '_')
     app.config['MONGODB_SETTINGS'] = {
         'db': db_name,
-        'host': 'localhost',
+        'host': 'mongomock://localhost',
         'port': 27017,
         'alias': db_name
     }
