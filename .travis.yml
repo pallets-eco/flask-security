@@ -35,9 +35,6 @@ cache:
   - apt
   - pip
 
-services:
-  - mongodb
-
 env:
   - REQUIREMENTS=lowest
   - REQUIREMENTS=release
