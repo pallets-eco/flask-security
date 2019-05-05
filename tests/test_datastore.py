@@ -7,7 +7,7 @@
 """
 
 from pytest import raises
-from utils import init_app_with_options
+from utils import init_app_with_options, get_num_queries
 
 from flask_security import RoleMixin, Security, UserMixin
 from flask_security.datastore import Datastore, UserDatastore
@@ -145,8 +145,13 @@ def test_create_user_with_roles(app, datastore):
         user = datastore.create_user(email='dude@lp.com', username='dude',
                                      password='password', roles=[role])
         datastore.commit()
+        current_nqueries = get_num_queries(datastore)
         user = datastore.find_user(email='dude@lp.com')
         assert user.has_role('admin') is True
+        end_nqueries = get_num_queries(datastore)
+        # Verify that getting user and role is just one DB query
+        assert current_nqueries is None\
+            or end_nqueries == (current_nqueries + 1)
 
 
 def test_delete_user(app, datastore):

@@ -10,6 +10,8 @@ from flask import Response as BaseResponse
 from flask import json
 
 from flask_security import Security
+from flask_security.datastore import SQLAlchemyUserDatastore,\
+    SQLAlchemySessionUserDatastore
 from flask_security.utils import encrypt_password
 
 _missing = object
@@ -100,3 +102,14 @@ def init_app_with_options(app, datastore, **options):
     app.config.update(**options)
     app.security = Security(app, datastore=datastore, **security_args)
     populate_data(app)
+
+
+def get_num_queries(datastore):
+    """ Return # of queries executed during test.
+    return None if datastore doesn't support this.
+    """
+    if isinstance(datastore, SQLAlchemyUserDatastore) and\
+            not isinstance(datastore, SQLAlchemySessionUserDatastore):
+        from flask_sqlalchemy import get_debug_queries
+        return len(get_debug_queries())
+    return None
