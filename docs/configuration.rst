@@ -21,7 +21,7 @@ Core
 ``SECURITY_URL_PREFIX``                  Specifies the URL prefix for the
                                          Flask-Security blueprint. Defaults to
                                          ``None``.
-``SECURITY_SUBDOMAIN``                   Specifies the subdomain for the 
+``SECURITY_SUBDOMAIN``                   Specifies the subdomain for the
                                          Flask-Security blueprint. Defaults to
                                          ``None``.
 ``SECURITY_FLASH_MESSAGES``              Specifies whether or not to flash
@@ -42,13 +42,14 @@ Core
                                          ``bcrypt``.
 ``SECURITY_PASSWORD_SALT``               Specifies the HMAC salt. Defaults to
                                          ``None``.
-``SECURITY_PASSWORD_SINGLE_HASH``        Specifies that passwords should only be
-                                         hashed once. By default, passwords are
+``SECURITY_PASSWORD_SINGLE_HASH``        A list of schemes that should not be hashed
+                                         twice. By default, passwords are
                                          hashed twice, first with
                                          ``SECURITY_PASSWORD_SALT``, and then
-                                         with a random salt. May be useful for
-                                         integrating with other applications.
-                                         Defaults to ``False``.
+                                         with a random salt.
+                                         Defaults to a list of known schemes
+                                         not working with double hashing
+                                         (`django_{digest}`, `plaintext`).
 ``SECURITY_HASHING_SCHEMES``             List of algorithms used for
                                          creating and validating tokens.
                                          Defaults to ``sha256_crypt``.
@@ -195,8 +196,8 @@ Feature Flags
 ``SECURITY_TRACKABLE``    Specifies if Flask-Security should track basic user
                           login statistics. If set to ``True``, ensure your
                           models have the required fields/attributes
-                          and make sure to commit changes after calling 
-                          ``login_user``. Be sure to use `ProxyFix <http://flask.pocoo.org/docs/0.10/deploying/wsgi-standalone/#proxy-setups>`_ if you are using a proxy. 
+                          and make sure to commit changes after calling
+                          ``login_user``. Be sure to use `ProxyFix <http://flask.pocoo.org/docs/0.10/deploying/wsgi-standalone/#proxy-setups>`_ if you are using a proxy.
                           Defaults to ``False``
 ``SECURITY_PASSWORDLESS`` Specifies if Flask-Security should enable the
                           passwordless login feature. If set to ``True``, users
