@@ -50,13 +50,14 @@ def create_roles(ds):
 
 
 def create_users(ds, count=None):
-    users = [('matt@lp.com', 'matt', 'password', ['admin'], True),
-             ('joe@lp.com', 'joe', 'password', ['editor'], True),
-             ('dave@lp.com', 'dave', 'password', ['admin', 'editor'], True),
-             ('jill@lp.com', 'jill', 'password', ['author'], True),
-             ('tiya@lp.com', 'tiya', 'password', [], False),
-             ('gene@lp.com', 'gene', 'password', [], True),
-             ('jess@lp.com', 'jess', None, [], True)]
+    users = [('matt@lp.com', 'matt', 'password', ['admin'], True, 123456),
+             ('joe@lp.com', 'joe', 'password', ['editor'], True, 234567),
+             ('dave@lp.com', 'dave', 'password', ['admin', 'editor'], True,
+              345678),
+             ('jill@lp.com', 'jill', 'password', ['author'], True, 456789),
+             ('tiya@lp.com', 'tiya', 'password', [], False, 567890),
+             ('gene@lp.com', 'gene', 'password', [], True, 889900),
+             ('jess@lp.com', 'jess', None, [], True, 678901)]
     count = count or len(users)
 
     for u in users[:count]:
@@ -69,7 +70,8 @@ def create_users(ds, count=None):
             email=u[0],
             username=u[1],
             password=pw,
-            active=u[4])
+            active=u[4],
+            security_number=u[5])
         ds.commit()
         for role in roles:
             ds.add_role_to_user(user, role)
@@ -108,8 +110,12 @@ def get_num_queries(datastore):
     """ Return # of queries executed during test.
     return None if datastore doesn't support this.
     """
-    if isinstance(datastore, SQLAlchemyUserDatastore) and\
-            not isinstance(datastore, SQLAlchemySessionUserDatastore):
+    if is_sqlalchemy(datastore):
         from flask_sqlalchemy import get_debug_queries
         return len(get_debug_queries())
     return None
+
+
+def is_sqlalchemy(datastore):
+    return isinstance(datastore, SQLAlchemyUserDatastore) and\
+            not isinstance(datastore, SQLAlchemySessionUserDatastore)

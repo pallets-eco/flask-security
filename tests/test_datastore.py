@@ -7,7 +7,7 @@
 """
 
 from pytest import raises
-from utils import init_app_with_options, get_num_queries
+from utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
 from flask_security import RoleMixin, Security, UserMixin
 from flask_security.datastore import Datastore, UserDatastore
@@ -83,7 +83,8 @@ def test_activate_returns_false_if_already_true():
 
 def test_get_user(app, datastore):
     init_app_with_options(app, datastore, **{
-        'SECURITY_USER_IDENTITY_ATTRIBUTES': ('email', 'username')
+        'SECURITY_USER_IDENTITY_ATTRIBUTES': ('email', 'username',
+                                              'security_number')
     })
 
     with app.app_context():
@@ -98,9 +99,30 @@ def test_get_user(app, datastore):
         user = datastore.get_user('matt')
         assert user is not None
 
-        # Regression check
+        # Regression check (make sure we don't match wildcards)
         user = datastore.get_user('%lp.com')
         assert user is None
+
+        # Verify that numeric non PK works
+        user = datastore.get_user(123456)
+        assert user is not None
+
+
+def test_find_user(app, datastore):
+    init_app_with_options(app, datastore)
+
+    with app.app_context():
+        user_id = datastore.find_user(email='gene@lp.com').id
+
+        current_nqueries = get_num_queries(datastore)
+        assert user_id == datastore.find_user(security_number=889900).id
+        end_nqueries = get_num_queries(datastore)
+        if current_nqueries is not None:
+            if is_sqlalchemy(datastore):
+                # This should have done just 1 query across all attrs.
+                assert end_nqueries == (current_nqueries + 1)
+
+        assert user_id == datastore.find_user(username='gene').id
 
 
 def test_find_role(app, datastore):
