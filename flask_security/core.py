@@ -28,20 +28,14 @@ from werkzeug.local import LocalProxy, Local
 
 from .forms import ChangePasswordForm, ConfirmRegisterForm, \
     ForgotPasswordForm, LoginForm, PasswordlessLoginForm, RegisterForm, \
-    ResetPasswordForm, SendConfirmationForm
+    ResetPasswordForm, SendConfirmationForm, TwoFactorVerifyCodeForm, \
+    TwoFactorSetupForm, TwoFactorChangeMethodVerifyPasswordForm, TwoFactorRescueForm
 from .utils import _
 from .utils import config_value as cv
 from .utils import get_config, hash_data, localize_callback, send_mail, \
     string_types, url_for_security, verify_and_update_password, verify_hash
 from .views import create_blueprint
-<<<<<<< HEAD
 from .cache import VerifyHashCache
-=======
-from .forms import LoginForm, ConfirmRegisterForm, RegisterForm, \
-    ForgotPasswordForm, ChangePasswordForm, ResetPasswordForm, \
-    SendConfirmationForm, PasswordlessLoginForm, TwoFactorVerifyCodeForm, \
-    TwoFactorSetupForm, TwoFactorChangeMethodVerifyPasswordForm, TwoFactorRescueForm
->>>>>>> Security two factor authentication feature
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions['security'])
@@ -163,11 +157,9 @@ _default_config = {
     ],
     'DEPRECATED_HASHING_SCHEMES': ['hex_md5'],
     'DATETIME_FACTORY': datetime.utcnow,
-<<<<<<< HEAD
     'USE_VERIFY_PASSWORD_CACHE': False,
     'VERIFY_HASH_CACHE_TTL': 60 * 5,
-    'VERIFY_HASH_CACHE_MAX_SIZE': 500
-=======
+    'VERIFY_HASH_CACHE_MAX_SIZE': 500,
     'TWO_FACTOR_ENABLED_METHODS': ['mail', 'google_authenticator', 'sms'],
     'TWO_FACTOR_URI_SERVICE_NAME': 'service_name',
     'TWO_FACTOR_SMS_SERVICE': 'Dummy',
@@ -176,7 +168,6 @@ _default_config = {
         'AUTH_TOKEN': None,
         'PHONE_NUMBER': None,
     }
->>>>>>> Security two factor authentication feature
 }
 
 #: Default Flask-Security messages
@@ -648,18 +639,18 @@ class Security(object):
                 app.cli.add_command(roles, state.cli_roles_name)
 
         # configuration mismatch check
-        if cv('TWO_FACTOR', app=app) is True and len(cv('TWO_FACTOR_ENABLED_METHODS', app=app))\
-                < 1:
+        if cv('TWO_FACTOR', app=app) is True and \
+           len(cv('TWO_FACTOR_ENABLED_METHODS', app=app)) < 1:
             raise ValueError()
 
         flag = False
         try:
-            from twilio.rest import TwilioRestClient
-            flag = True
+            import importlib.util as import_util
+            flag = import_util.find_spec('twilio')
         except:
             pass
 
-        if flag is False and cv('TWO_FACTOR_SMS_SERVICE', app=app) == 'Twilio':
+        if not flag and cv('TWO_FACTOR_SMS_SERVICE', app=app) == 'Twilio':
             raise ValueError()
 
         return state
