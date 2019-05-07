@@ -31,8 +31,9 @@ from .forms import ChangePasswordForm, ConfirmRegisterForm, \
     ResetPasswordForm, SendConfirmationForm
 from .utils import _
 from .utils import config_value as cv
-from .utils import get_config, hash_data, localize_callback, \
+from .utils import get_config, hash_data, localize_callback, send_mail,\
     string_types, url_for_security, verify_and_update_password, verify_hash
+
 from .views import create_blueprint
 
 # Convenient references
@@ -491,6 +492,8 @@ class Security(object):
     :param send_confirmation_form: set form for the send confirmation view
     :param passwordless_login_form: set form for the passwordless login view
     :param anonymous_user: class to use for anonymous user
+    :param render_template: function to use to render templates
+    :param send_mail: function to use to send email
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True,
@@ -506,7 +509,9 @@ class Security(object):
                             change_password_form=None,
                             send_confirmation_form=None,
                             passwordless_login_form=None,
-                            anonymous_user=None)
+                            anonymous_user=None,
+                            render_template=self.render_template,
+                            send_mail=self.send_mail)
         self._kwargs.update(kwargs)
 
         self._state = None  # set by init_app
@@ -547,7 +552,6 @@ class Security(object):
             if '_' not in app.jinja_env.globals:
                 app.jinja_env.globals['_'] = state.i18n_domain.gettext
 
-        state.render_template = self.render_template
         app.extensions['security'] = state
 
         if hasattr(app, 'cli'):
@@ -561,6 +565,9 @@ class Security(object):
 
     def render_template(self, *args, **kwargs):
         return render_template(*args, **kwargs)
+
+    def send_mail(self, *args, **kwargs):
+        return send_mail(*args, **kwargs)
 
     def __getattr__(self, name):
         return getattr(self._state, name, None)
