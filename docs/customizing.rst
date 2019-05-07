@@ -221,13 +221,11 @@ Custom send_mail method
 It's also possible to completely override the ``security.send_mail`` method to
 implement your own logic.
 
-For example, you might want to use an alternative email library like `Flask-Emails`:
+For example, you might want to use an alternative email library like `Flask-Emails`::
 
     from flask import Flask
     from flask_security import Security, SQLAlchemyUserDatastore
     from flask_emails import Message
-
-    security = Security()
 
     def create_app(config):
         """Initialize Flask instance."""
@@ -243,7 +241,7 @@ For example, you might want to use an alternative email library like `Flask-Emai
             message.send(mail_to=[recipient])
 
         datastore = SQLAlchemyUserDatastore(db, User, Role)
-        security_ctx.send_mail = custom_send_mail
+        Security(app, datastore, send_mail=custom_send_mail)
 
         return app
 
