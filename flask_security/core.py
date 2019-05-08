@@ -92,8 +92,10 @@ _default_config = {
     'CHANGE_PASSWORD_TEMPLATE': 'security/change_password.html',
     'SEND_CONFIRMATION_TEMPLATE': 'security/send_confirmation.html',
     'SEND_LOGIN_TEMPLATE': 'security/send_login.html',
-    'TWO_FACTOR_VERIFY_CODE_TEMPLATE': 'security/two_factor_verify_code.html',
-    'TWO_FACTOR_CHOOSE_METHOD_TEMPLATE': 'security/two_factor_choose_method.html',
+    'TWO_FACTOR_VERIFY_CODE_TEMPLATE':
+     'security/two_factor_verify_code.html',
+    'TWO_FACTOR_CHOOSE_METHOD_TEMPLATE':
+    'security/two_factor_choose_method.html',
     'TWO_FACTOR_CHANGE_METHOD_PASSWORD_CONFIRMATION_TEMPLATE':
         'security/two_factor_change_method_password_confimration.html',
     'CONFIRMABLE': False,
@@ -639,8 +641,8 @@ class Security(object):
                 app.cli.add_command(roles, state.cli_roles_name)
 
         # configuration mismatch check
-        if cv('TWO_FACTOR', app=app) is True and \
-           len(cv('TWO_FACTOR_ENABLED_METHODS', app=app)) < 1:
+        if cv('TWO_FACTOR', app=app) is True and\
+           len(cv('TWO_FACTOR_ENABLED_METHODS', app=app))< 1:
             raise ValueError()
 
         flag = False
