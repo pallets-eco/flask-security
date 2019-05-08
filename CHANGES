@@ -3,6 +3,38 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 3.1.0
+-------------
+
+Released TBD
+
+- Use Security.render_template in mails too (opr #487)
+- Optimize DB accesses by using an SQL JOIN when retrieving a user. (opr #679)
+- Add base template to security templates (opr #697)
+- datastore: get user by numeric identity attribute (opr #633)
+- bugfix: support application factory pattern (opr703)
+- Make SECURITY_PASSWORD_SINGLE_HASH a list of scheme ignoring double hash (opr #714)
+- Allow custom login_manager to be passed in to Flask-Security (opr #717)
+- Docs for OAauth2-based custom login manager (opr #727)
+- core: make the User model check the password (opr #779)
+- Customizable send_mail (opr #730)
+- core: fix default for UNAUTHORIZED_VIEW (opr #726)
+
+These should all be backwards compatible.
+
+Possible compatibility issues:
+
+- #487 - prior to this, render_template() was overiddable for views, but not
+emails. If anyone actually relied on this behavior, this has changed.
+- #703 - get factory pattern working again. There was a very complex dance between
+  Security() instantiation and init_app regarding kwargs. This has been rationalized (hopefully).
+
+Performance improvements:
+
+- #679 - for sqlalchemy, for each request, there would be 2 DB accesses - now
+  there is one.
+
+
 Version 3.0.2
 -------------
 
