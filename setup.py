@@ -70,6 +70,8 @@ install_requires = [
     'itsdangerous>=1.1.0',
     'passlib>=1.7.1',
     'cachetools>=3.1.0',
+    'pyqrcode>=1.2',
+    'onetimepass>=1.0.1',
 ]
 
 packages = find_packages()
