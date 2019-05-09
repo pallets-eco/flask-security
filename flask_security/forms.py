@@ -140,7 +140,7 @@ class NextFormMixin():
     def validate_next(self, field):
         if field.data and not validate_redirect_url(field.data):
             field.data = ''
-            flash(*get_message('INVALID_REDIRECT'))
+            do_flash(*get_message('INVALID_REDIRECT'))
             raise ValidationError(get_message('INVALID_REDIRECT')[0])
 
 
