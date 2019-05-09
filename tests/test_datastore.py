@@ -6,11 +6,13 @@
     Datastore tests
 """
 
+from mock import MagicMock, patch
 from pytest import raises
 from utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
 from flask_security import RoleMixin, Security, UserMixin
-from flask_security.datastore import Datastore, UserDatastore
+from flask_security.datastore import Datastore, UserDatastore, \
+    SQLAlchemyUserDatastore
 
 
 class User(UserMixin):
@@ -106,6 +108,26 @@ def test_get_user(app, datastore):
         # Verify that numeric non PK works
         user = datastore.get_user(123456)
         assert user is not None
+
+
+def test_get_user_raise(app, sqlalchemy_datastore):
+    """
+    Some drivers will raise exceptions if we attempt to query a
+    numeric column with a string value
+    """
+    from sqlalchemy.exc import DataError
+    init_app_with_options(app, sqlalchemy_datastore)
+
+    mock_query = MagicMock(name='querymock')
+    mock_query.options.return_value = mock_query
+    mock_query.filter.return_value.first.return_value = None
+    mock_query.get.side_effect = DataError('stmt', 'params',
+                                           SQLAlchemyUserDatastore)
+    with patch.object(sqlalchemy_datastore.user_model, 'query', mock_query):
+        with app.app_context():
+            user = sqlalchemy_datastore.get_user('1')
+            # this should be none (and not raise an exception)
+            assert user is None
 
 
 def test_find_user(app, datastore):
