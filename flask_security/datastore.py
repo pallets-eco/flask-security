@@ -241,20 +241,14 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
     def get_user(self, identifier):
         from sqlalchemy import func as alchemyFn
-        from sqlalchemy.exc import DataError
-
         user_model_query = self.user_model.query
         if hasattr(self.user_model, 'roles'):
             from sqlalchemy.orm import joinedload
             user_model_query = user_model_query.options(joinedload('roles'))
 
-        try:
-            rv = user_model_query.get(identifier)
-            if rv is not None:
-                return rv
-        except DataError:
-            # This can happen if trying a string against a numeric column
-            pass
+        rv = self.user_model.query.get(identifier)
+        if rv is not None:
+            return rv
 
         # Not PK - iterate through other attributes and look for 'identifier'
         for attr in get_identity_attributes():
@@ -262,12 +256,9 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
             # which isn't what we want.
             query = alchemyFn.lower(getattr(self.user_model, attr)) \
                 == alchemyFn.lower(identifier)
-            try:
-                rv = user_model_query.filter(query).first()
-                if rv is not None:
-                    return rv
-            except DataError:
-                pass
+            rv = user_model_query.filter(query).first()
+            if rv is not None:
+                return rv
 
     def find_user(self, **kwargs):
         query = self.user_model.query
