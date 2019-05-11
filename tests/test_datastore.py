@@ -82,9 +82,14 @@ def test_activate_returns_false_if_already_true():
 
 
 def test_get_user(app, datastore):
+    # The order of identity attributes is important for testing.
+    # drivers like psycopg2 will abort the transaction if they throw an
+    # error and not continue on so we want to check that case of passing in
+    # a string for a numeric field and being able to move onto the next
+    # column.
     init_app_with_options(app, datastore, **{
-        'SECURITY_USER_IDENTITY_ATTRIBUTES': ('email', 'username',
-                                              'security_number')
+        'SECURITY_USER_IDENTITY_ATTRIBUTES': ('email', 'security_number',
+                                              'username')
     })
 
     with app.app_context():
