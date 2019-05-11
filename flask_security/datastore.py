@@ -241,24 +241,46 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
     def get_user(self, identifier):
         from sqlalchemy import func as alchemyFn
+        from sqlalchemy import inspect
+        from sqlalchemy.sql import sqltypes
+
         user_model_query = self.user_model.query
         if hasattr(self.user_model, 'roles'):
             from sqlalchemy.orm import joinedload
             user_model_query = user_model_query.options(joinedload('roles'))
 
-        rv = self.user_model.query.get(identifier)
-        if rv is not None:
-            return rv
+        # To support both numeric and string primary keys, and support
+        # calling this routine with either a numeric value or a string
+        # we need to make sure the types basically match.
+        # psycopg2 for example will complain if we attempt to 'get' a
+        # numeric primary key with a string value.
+        # TODO: other datastores don't support this - they assume the only
+        # PK is user.id. That makes things easier but for backwards compat...
+        ins = inspect(self.user_model)
+        pk_type = ins.primary_key[0].type
+        pk_isnumeric = isinstance(pk_type, sqltypes.Integer)
+        # Are they both numeric or both NOT numeric
+        if pk_isnumeric == self._is_numeric(identifier):
+            rv = self.user_model.query.get(identifier)
+            if rv is not None:
+                return rv
 
         # Not PK - iterate through other attributes and look for 'identifier'
         for attr in get_identity_attributes():
-            # Look for exact case-insensitive match - 'ilike' honors wild cards
-            # which isn't what we want.
-            query = alchemyFn.lower(getattr(self.user_model, attr)) \
-                == alchemyFn.lower(identifier)
-            rv = user_model_query.filter(query).first()
-            if rv is not None:
-                return rv
+            column = getattr(self.user_model, attr)
+            attr_isnumeric = isinstance(column.type, sqltypes.Integer)
+
+            query = None
+            if attr_isnumeric and self._is_numeric(identifier):
+                query = column == identifier
+            elif not attr_isnumeric and not self._is_numeric(identifier):
+                # Look for exact case-insensitive match - 'ilike' honors
+                # wild cards which isn't what we want.
+                query = alchemyFn.lower(column) == alchemyFn.lower(identifier)
+            if query is not None:
+                rv = user_model_query.filter(query).first()
+                if rv is not None:
+                    return rv
 
     def find_user(self, **kwargs):
         query = self.user_model.query
@@ -371,16 +393,22 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
 
     def get_user(self, identifier):
         from peewee import fn as peeweeFn
+        from peewee import IntegerField
         try:
             return self.user_model.get(self.user_model.id == identifier)
         except (self.user_model.DoesNotExist, ValueError):
             pass
 
         for attr in get_identity_attributes():
+            # Read above for why we are checking types.
             column = getattr(self.user_model, attr)
+            attr_isnumeric = isinstance(column, IntegerField)
             try:
-                return self.user_model.get(
-                    peeweeFn.Lower(column) == peeweeFn.Lower(identifier))
+                if attr_isnumeric and self._is_numeric(identifier):
+                    return self.user_model.get(column == identifier)
+                elif not attr_isnumeric and not self._is_numeric(identifier):
+                    return self.user_model.get(
+                        peeweeFn.Lower(column) == peeweeFn.Lower(identifier))
             except (self.user_model.DoesNotExist, ValueError):
                 pass
 

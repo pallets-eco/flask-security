@@ -26,7 +26,9 @@ tests_require = [
     'mongomock>=3.14.0',
     'msgcheck>=2.9',
     'pony>=0.7.4',
+    'psycopg2>=2.7.4',
     'pydocstyle>=1.0.0',
+    'pymysql>=0.9.3',
     'pytest-cache>=1.0',
     'pytest-cov>=2.4.0',
     'pytest-flakes>=1.0.1',
@@ -34,6 +36,7 @@ tests_require = [
     'pytest-pep8>=1.0.6',
     'pytest>=3.3.0',
     'sqlalchemy>=1.1.0',
+    'sqlalchemy-utils>=0.33.0',
     'werkzeug>=0.12.2'
 ]
 

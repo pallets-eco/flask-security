@@ -13,6 +13,10 @@ import os
 import tempfile
 import time
 from datetime import datetime
+try:
+    from urlparse import urlsplit
+except ImportError:  # pragma: no cover
+    from urllib.parse import urlsplit
 
 import pytest
 from flask import Flask, render_template
@@ -149,8 +153,12 @@ def app(request):
     return app
 
 
-@pytest.yield_fixture()
-def mongoengine_datastore(app):
+@pytest.fixture()
+def mongoengine_datastore(request, app, tmpdir, realdburl):
+    return mongoengine_setup(request, app, tmpdir, realdburl)
+
+
+def mongoengine_setup(request, app, tmpdir, realdburl):
     from flask_mongoengine import MongoEngine
 
     db_name = 'flask_security_test_%s' % str(time.time()).replace('.', '_')
@@ -183,20 +191,31 @@ def mongoengine_datastore(app):
         roles = db.ListField(db.ReferenceField(Role), default=[])
         meta = {"db_alias": db_name}
 
-    yield MongoEngineUserDatastore(db, User, Role)
+    def tear_down():
+        with app.app_context():
+            db.connection.drop_database(db_name)
 
-    with app.app_context():
-        db.connection.drop_database(db_name)
+    request.addfinalizer(tear_down)
+
+    return MongoEngineUserDatastore(db, User, Role)
 
 
 @pytest.fixture()
-def sqlalchemy_datastore(request, app, tmpdir):
+def sqlalchemy_datastore(request, app, tmpdir, realdburl):
+    return sqlalchemy_setup(request, app, tmpdir, realdburl)
+
+
+def sqlalchemy_setup(request, app, tmpdir, realdburl):
     from flask_sqlalchemy import SQLAlchemy
 
-    f, path = tempfile.mkstemp(
-        prefix='flask-security-test-db', suffix='.db', dir=str(tmpdir))
+    if realdburl:
+        db_url, db_info = _setup_realdb(realdburl)
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    else:
+        f, path = tempfile.mkstemp(
+            prefix='flask-security-test-db', suffix='.db', dir=str(tmpdir))
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + path
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + path
     db = SQLAlchemy(app)
 
     roles_users = db.Table(
@@ -229,15 +248,23 @@ def sqlalchemy_datastore(request, app, tmpdir):
         db.create_all()
 
     def tear_down():
-        os.close(f)
-        os.remove(path)
+        if realdburl:
+            db.drop_all()
+            _teardown_realdb(db_info)
+        else:
+            os.close(f)
+            os.remove(path)
     request.addfinalizer(tear_down)
 
     return SQLAlchemyUserDatastore(db, User, Role)
 
 
 @pytest.fixture()
-def sqlalchemy_session_datastore(request, app, tmpdir):
+def sqlalchemy_session_datastore(request, app, tmpdir, realdburl):
+    return sqlalchemy_session_setup(request, app, tmpdir, realdburl)
+
+
+def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import scoped_session, sessionmaker, relationship, \
         backref
@@ -300,23 +327,43 @@ def sqlalchemy_session_datastore(request, app, tmpdir):
 
 
 @pytest.fixture()
-def peewee_datastore(request, app, tmpdir):
+def peewee_datastore(request, app, tmpdir, realdburl):
+    return peewee_setup(request, app, tmpdir, realdburl)
+
+
+def peewee_setup(request, app, tmpdir, realdburl):
     from peewee import TextField, DateTimeField, IntegerField, BooleanField, \
-        ForeignKeyField
+        ForeignKeyField, CharField
     from flask_peewee.db import Database
 
-    f, path = tempfile.mkstemp(
-        prefix='flask-security-test-db', suffix='.db', dir=str(tmpdir))
+    if realdburl:
+        engine_mapper = {
+            'postgres': 'peewee.PostgresqlDatabase',
+            'mysql': 'peewee.MySQLDatabase'
+        }
+        db_url, db_info = _setup_realdb(realdburl)
+        pieces = urlsplit(db_url)
+        db_config = {
+            'name': pieces.path[1:],
+            'engine': engine_mapper[pieces.scheme.split('+')[0]],
+            'user': pieces.username,
+            'passwd': pieces.password,
+            'host': pieces.hostname
+        }
+    else:
+        f, path = tempfile.mkstemp(
+            prefix='flask-security-test-db', suffix='.db', dir=str(tmpdir))
+        db_config = {
+            'name': path,
+            'engine': 'peewee.SqliteDatabase'
+        }
 
-    app.config['DATABASE'] = {
-        'name': path,
-        'engine': 'peewee.SqliteDatabase'
-    }
+    app.config['DATABASE'] = db_config
 
     db = Database(app)
 
     class Role(db.Model, RoleMixin):
-        name = TextField(unique=True)
+        name = CharField(unique=True, max_length=80)
         description = TextField(null=True)
 
     class User(db.Model, UserMixin):
@@ -345,9 +392,13 @@ def peewee_datastore(request, app, tmpdir):
             Model.create_table()
 
     def tear_down():
-        db.close_db(None)
-        os.close(f)
-        os.remove(path)
+        if realdburl:
+            db.close_db(None)
+            _teardown_realdb(db_info)
+        else:
+            db.close_db(None)
+            os.close(f)
+            os.remove(path)
 
     request.addfinalizer(tear_down)
 
@@ -355,7 +406,12 @@ def peewee_datastore(request, app, tmpdir):
 
 
 @pytest.fixture()
-def pony_datastore(request, app, tmpdir):
+def pony_datastore(request, app, tmpdir, realdburl):
+    return pony_setup(request, app, tmpdir, realdburl)
+
+
+def pony_setup(request, app, tmpdir, realdburl):
+
     from pony.orm import Database, Optional, Required, Set
     from pony.orm.core import SetInstance
 
@@ -384,13 +440,25 @@ def pony_datastore(request, app, tmpdir):
         def has_role(self, name):
             return name in {r.name for r in self.roles.copy()}
 
-    app.config['DATABASE'] = {
-        'name': ':memory:',
-        'engine': 'pony.SqliteDatabase'
-    }
+    if realdburl:
+        db_url, db_info = _setup_realdb(realdburl)
+        pieces = urlsplit(db_url)
+        db.bind(provider=pieces.scheme.split('+')[0], user=pieces.username,
+                password=pieces.password, host=pieces.hostname,
+                database=pieces.path[1:])
+    else:
+        app.config['DATABASE'] = {
+            'name': ':memory:',
+            'engine': 'pony.SqliteDatabase'
+        }
+        db.bind('sqlite', ':memory:', create_db=True)
 
-    db.bind('sqlite', ':memory:', create_db=True)
     db.generate_mapping(create_tables=True)
+
+    def tear_down():
+        if realdburl:
+            _teardown_realdb(db_info)
+    request.addfinalizer(tear_down)
 
     return PonyUserDatastore(db, User, Role)
 
@@ -461,21 +529,19 @@ def get_message(app):
                         'peewee', 'pony'])
 def datastore(
         request,
-        sqlalchemy_datastore,
-        sqlalchemy_session_datastore,
-        mongoengine_datastore,
-        peewee_datastore,
-        pony_datastore):
+        app,
+        tmpdir,
+        realdburl):
     if request.param == 'sqlalchemy':
-        rv = sqlalchemy_datastore
+        rv = sqlalchemy_setup(request, app, tmpdir, realdburl)
     elif request.param == 'sqlalchemy-session':
-        rv = sqlalchemy_session_datastore
+        rv = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
     elif request.param == 'mongoengine':
-        rv = mongoengine_datastore
+        rv = mongoengine_setup(request, app, tmpdir, realdburl)
     elif request.param == 'peewee':
-        rv = peewee_datastore
+        rv = peewee_setup(request, app, tmpdir, realdburl)
     elif request.param == 'pony':
-        rv = pony_datastore
+        rv = pony_setup(request, app, tmpdir, realdburl)
     return rv
 
 
@@ -493,3 +559,48 @@ def script_info(app, datastore):
         app.security = Security(app, datastore=datastore)
         return app
     return ScriptInfo(create_app=create_app)
+
+
+def pytest_addoption(parser):
+    parser.addoption("--realdburl", action="store", default=None,
+                     help="""Set url for using real database for testing.
+        For postgres: 'postgres://user:password@host/')""")
+
+
+@pytest.fixture(scope='session')
+def realdburl(request):
+    """
+    Support running datastore tests against a real DB.
+    For example psycopg2 is very strict about types in queries
+    compared to sqlite
+    To use postgres you need to of course run a postgres instance on localhost
+    then pass in an extra arg to pytest:
+    --realdburl postgres://<user>@localhost/
+    For mysql same - just download and add a root password.
+    --realdburl "mysql+pymysql://root:<password>@localhost/"
+    """
+    return request.config.option.realdburl
+
+
+def _setup_realdb(realdburl):
+    """
+    Called when we want to run unit tests against a real DB.
+    This is useful since different DB drivers are pickier about queries etc
+    (such as pyscopg2 and postgres)
+    """
+    from sqlalchemy import create_engine
+    from sqlalchemy_utils import database_exists, create_database
+
+    db_name = 'flask_security_test_%s' % str(time.time()).replace('.', '_')
+
+    db_uri = realdburl + db_name
+    engine = create_engine(db_uri)
+    if not database_exists(engine.url):
+        create_database(engine.url)
+    return db_uri, {'engine': engine}
+
+
+def _teardown_realdb(db_info):
+    from sqlalchemy_utils import drop_database
+
+    drop_database(db_info['engine'].url)
