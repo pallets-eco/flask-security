@@ -34,6 +34,10 @@ Performance improvements:
 - #679 - for sqlalchemy, for each request, there would be 2 DB accesses - now
   there is one.
 
+Testing:
+For datastores operations, Sqlalchemy, peewee, pony were all tested against sqlite,
+postgres, and mysql real databases.
+
 
 Version 3.0.2
 -------------
