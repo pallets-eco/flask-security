@@ -597,6 +597,7 @@ def _setup_realdb(realdburl):
     engine = create_engine(db_uri)
     if not database_exists(engine.url):
         create_database(engine.url)
+    print('Setting up real DB at ' + db_uri)
     return db_uri, {'engine': engine}
 
 
