@@ -25,7 +25,7 @@ These should all be backwards compatible.
 Possible compatibility issues:
 
 - #487 - prior to this, render_template() was overiddable for views, but not
-emails. If anyone actually relied on this behavior, this has changed.
+  emails. If anyone actually relied on this behavior, this has changed.
 - #703 - get factory pattern working again. There was a very complex dance between
   Security() instantiation and init_app regarding kwargs. This has been rationalized (hopefully).
 
