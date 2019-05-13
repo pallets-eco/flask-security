@@ -230,7 +230,7 @@ Template Paths
                                                the change method page for the two
                                                factor authentication process. Defaults
                                                to ``security/two_factor_change_method_
-                                               password_confimration.html``.
+                                               password_confirmation.html``.
 
 ============================================== =======================================
 

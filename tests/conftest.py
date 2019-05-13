@@ -317,6 +317,9 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         security_number = Column(Integer, unique=True)
         last_login_at = Column(DateTime())
         current_login_at = Column(DateTime())
+        two_factor_primary_method = Column(String(255), nullable=True)
+        totp_secret = Column(String(255), nullable=True)
+        phone_number = Column(String(255), nullable=True)
         last_login_ip = Column(String(100))
         current_login_ip = Column(String(100))
         login_count = Column(Integer)
@@ -396,13 +399,14 @@ def peewee_setup(request, app, tmpdir, realdburl):
     class UserRoles(db.Model):
         """ Peewee does not have built-in many-to-many support, so we have to
         create this mapping class to link users to roles."""
-        user = ForeignKeyField(User, related_name='roles')
-        role = ForeignKeyField(Role, related_name='users')
+        user = ForeignKeyField(User, backref='roles')
+        role = ForeignKeyField(Role, backref='users')
         name = property(lambda self: self.role.name)
         description = property(lambda self: self.role.description)
 
     with app.app_context():
         for Model in (Role, User, UserRoles):
+            Model.drop_table()
             Model.create_table()
 
     def tear_down():
@@ -444,6 +448,9 @@ def pony_setup(request, app, tmpdir, realdburl):
         password = Optional(str, nullable=True)
         last_login_at = Optional(datetime)
         current_login_at = Optional(datetime)
+        two_factor_primary_method = Optional(str, nullable=True)
+        totp_secret = Optional(str, nullable=True)
+        phone_number = Optional(str, nullable=True)
         last_login_ip = Optional(str)
         current_login_ip = Optional(str)
         login_count = Optional(int)
