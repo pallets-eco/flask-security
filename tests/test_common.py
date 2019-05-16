@@ -106,6 +106,13 @@ def test_logout(client):
     assert b'Home Page' in response.data
 
 
+def test_logout_post(client):
+    authenticate(client)
+    response = client.post('/logout', content_type='application/json')
+    assert response.status_code == 200
+    assert response.jdata['meta']['code'] == 200
+
+
 def test_logout_with_next(client, get_message):
     authenticate(client)
     response = client.get('/logout?next=http://google.com')

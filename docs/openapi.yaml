@@ -81,6 +81,25 @@ paths:
             Location:
               schema:
                 example: redirect(config_value('POST_LOGOUT_VIEW'))
+    post:
+      summary: Log out current user
+      responses:
+        200:
+          description: Successful logout
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [meta]
+                properties:
+                  meta:
+                    type: object
+                    required: [code]
+                    properties:
+                      code:
+                        type: integer
+                        example: 200
+                        description: Http status code
   /register:
     get:
       summary: Retrieve register form
