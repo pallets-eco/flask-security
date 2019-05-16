@@ -1,6 +1,11 @@
 API
 ===
 
+The external (json/form) API is described `here`_
+
+.. _here: _static/openapi_view.html
+
+
 Core
 ----
 .. autoclass:: flask_security.core.Security

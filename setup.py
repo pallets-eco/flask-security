@@ -95,6 +95,7 @@ setup(
     tests_require=tests_require,
     classifiers=[
         'Environment :: Web Environment',
+        'Framework :: Flask',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
