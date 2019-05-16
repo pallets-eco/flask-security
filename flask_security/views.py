@@ -95,6 +95,10 @@ def logout():
     if current_user.is_authenticated:
         logout_user()
 
+    # No body is required - so if a POST and json - return OK
+    if request.method == 'POST' and request.is_json:
+        return jsonify(dict(meta=dict(code=200)))
+
     return redirect(get_post_logout_redirect())
 
 
@@ -345,7 +349,9 @@ def create_blueprint(state, import_name):
                    subdomain=state.subdomain,
                    template_folder='templates')
 
-    bp.route(state.logout_url, endpoint='logout')(logout)
+    bp.route(state.logout_url,
+             methods=['GET', 'POST'],
+             endpoint='logout')(logout)
 
     if state.passwordless:
         bp.route(state.login_url,
