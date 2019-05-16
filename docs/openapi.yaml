@@ -1,0 +1,235 @@
+openapi: 3.0.0
+info:
+  description: |
+    Default API for Flask-Security.
+    N.B. This is preliminary.
+    Since Flask-Security is middleware, with many possible configurations this is a
+    guide to how the APIs will behave using standard defaults.
+  version: 1.0.0
+  title: "Flask-Security External API"
+  contact:
+    url: https://github.com/jwag956/flask-security
+  license:
+    name: MIT
+    url: https://github.com/jwag956/flask-security/blob/master/LICENSE
+paths:
+  /login:
+    get:
+      summary: Retrieve login form
+      responses:
+        200:
+          description: Login form
+          content:
+            text/html:
+              schema:
+                example: render_template(config_value('LOGIN_USER_TEMPLATE')
+    post:
+      summary: Login to application
+      description: Supports both json and form request types
+      parameters:
+        - name: next
+          in: query
+          description: >
+              URL to redirect to on successful registration. Ignored for json request.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Login"
+          application/x-www-form-urlencoded:
+            schema:             
+              $ref: "#/components/schemas/Login"
+      responses:
+        200:
+          description: Login response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+            text/html:
+              schema:
+                description: Unsuccessful login
+                example: render_template(config_value('LOGIN_USER_TEMPLATE') with error values
+        302:
+          description: >
+            Successful login with form data body.
+            redirect('next') or redirect(config_value('POST_LOGIN_VIEW'))
+          headers:
+            Location:
+              description: redirect
+              schema:
+                type: string
+                example: redirect(config_value('POST_LOGIN_VIEW'))
+        400:
+          description: Errors while validating login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /logout:
+    get:
+      summary: Log out current user
+      responses:
+        302:
+          description: >
+            Successful logout
+            redirect(config_value('POST_LOGOUT_VIEW'))
+          headers:
+            Location:
+              schema:
+                example: redirect(config_value('POST_LOGOUT_VIEW'))
+  /register:
+    get:
+      summary: Retrieve register form
+      responses:
+        200:
+          description: Register form
+          content:
+            text/html:
+              schema:
+                example: render_template(config_value('REGISTER_USER_TEMPLATE')
+    post:
+      summary: Register with application
+      description: Supports both json and form request types
+      parameters:
+        - name: next
+          in: query
+          description: >
+              URL to redirect to on successful registration. Ignored for json request.
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Register"
+          application/x-www-form-urlencoded:
+            schema:             
+              $ref: "#/components/schemas/RegisterForm"
+      responses:
+        200:
+          description: Register response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+            text/html:
+              schema:
+                description: Unsuccessful registration
+                example: render_template(config_value('REGISTER_USER_TEMPLATE') with error values
+        302:
+          description: >
+            Successful registration with form data body.
+            redirect('next') or redirect(config_value('POST_REGISTER_VIEW'))
+          headers:
+            Location:
+              description: redirect
+              schema:
+                type: string
+                example: redirect(config_value('POST_REGISTER_VIEW'))
+        400:
+          description: Errors while validating registration form
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"  
+components:
+  schemas:
+    Login:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          description: >
+            user identifier. This is by default an email address, but can be any (unique)
+            field that is part of the User model and is defined in the USER_IDENTITY_ATTRIBUTES configuration variable. It will also match against numeric User model fields.
+        password:
+          type: string
+          description: Password
+        remember_me:
+          type: boolean
+          description: >
+            If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
+    DefaultJsonResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          type: object
+          required: [id]
+          description: >
+            By default just 'id' and 'authentication_token' are returned. However by overriding User::get_security_payload() any attributes of the User model can be returned.
+          properties:
+            id:
+              type: integer
+              example: 42
+              description: Unique user id (primary key)
+            authentication_token:
+              type: string
+              description: Token to be used in future token-based API calls.
+    DefaultJsonErrorResponse:
+      type: object
+      required: [meta, response]
+      properties:
+        meta:
+          type: object
+          required: [code]
+          properties:
+            code:
+              type: integer
+              example: 400
+              description: Http status code
+        response:
+          type: object
+          required: [errors]
+          properties:
+            errors:
+              type: object
+              description: Errors per input/form field
+              properties:
+                email:
+                  type: array
+                  items:
+                    type: string
+                    example: Email requires confirmation.
+                    description: Error message (localized)
+    Register:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          description: >
+            user identifier. This is by default an email address, but can be any (unique)
+            field that is part of the User model and is defined in the USER_IDENTITY_ATTRIBUTES configuration variable. It will also match against numeric User model fields.
+        password:
+          type: string
+          description: Password
+    RegisterForm:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          description: >
+            user identifier. This is by default an email address, but can be any (unique)
+            field that is part of the User model and is defined in the USER_IDENTITY_ATTRIBUTES configuration variable. It will also match against numeric User model fields.
+        password:
+          type: string
+          description: Password
+        password_confirm:
+          type: string
+          description: >
+            If present, must re-type in password. This will not be present if the SECURITY_CONFIRM configuration is true.
+        next:
+          type: string
+          description: >
+            Redirect URL. Overrides POST_REGISTER_VIEW
+
+    
