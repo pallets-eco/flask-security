@@ -85,8 +85,8 @@ def test_verify_password_cache_init(app):
         assert len(vhc._cache) == 0
         assert vhc._cache.ttl == 60 * 5
         assert vhc._cache.maxsize == 500
-        app.config["VERIFY_HASH_CACHE_TTL"] = 10
-        app.config["VERIFY_HASH_CACHE_MAX_SIZE"] = 10
+        app.config["SECURITY_VERIFY_HASH_CACHE_TTL"] = 10
+        app.config["SECURITY_VERIFY_HASH_CACHE_MAX_SIZE"] = 10
         vhc = VerifyHashCache()
         assert vhc._cache.ttl == 10
         assert vhc._cache.maxsize == 10
@@ -117,8 +117,9 @@ def test_request_loader_not_using_cache(app):
 
 def test_request_loader_using_cache(app):
     with app.app_context():
-        app.config["USE_VERIFY_PASSWORD_CACHE"] = True
+        app.config["SECURITY_USE_VERIFY_PASSWORD_CACHE"] = True
         app.extensions["security"] = MockExtensionSecurity()
         _request_loader(MockRequest())
         assert local_cache.verify_hash_cache is not None
-        assert local_cache.verify_hash_cache.has_verify_hash_cache(MockUser(1, "token"))
+        assert local_cache.verify_hash_cache.has_verify_hash_cache(
+            MockUser(1, "token"))

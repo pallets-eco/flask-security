@@ -140,6 +140,9 @@ _default_config = {
     ],
     'DEPRECATED_HASHING_SCHEMES': ['hex_md5'],
     'DATETIME_FACTORY': datetime.utcnow,
+    'USE_VERIFY_PASSWORD_CACHE': False,
+    'VERIFY_HASH_CACHE_TTL': 60 * 5,
+    'VERIFY_HASH_CACHE_MAX_SIZE': 500
 }
 
 #: Default Flask-Security messages
@@ -247,7 +250,7 @@ def _request_loader(request):
         if isinstance(data, dict):
             token = data.get(args_key, token)
 
-    use_cache = current_app.config.get('USE_VERIFY_PASSWORD_CACHE')
+    use_cache = cv('USE_VERIFY_PASSWORD_CACHE')
 
     try:
         data = _security.remember_token_serializer.loads(

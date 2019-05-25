@@ -1,5 +1,17 @@
-from flask import current_app
+# -*- coding: utf-8 -*-
+"""
+    flask_security.cache
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Flask-Security token cache module
+
+    :copyright: (c) 2019.
+    :license: MIT, see LICENSE for more details.
+"""
+
 from cachetools import TTLCache
+
+from .utils import config_value
 
 
 class VerifyHashCache:
@@ -9,8 +21,8 @@ class VerifyHashCache:
     run on few processes as cache is only shared between threads."""
 
     def __init__(self):
-        ttl = current_app.config.get("VERIFY_HASH_CACHE_TTL", 60 * 5)
-        max_size = current_app.config.get("VERIFY_HASH_CACHE_MAX_SIZE", 500)
+        ttl = config_value("VERIFY_HASH_CACHE_TTL", default=(60*5))
+        max_size = config_value("VERIFY_HASH_CACHE_MAX_SIZE", default=500)
         self._cache = TTLCache(max_size, ttl)
 
     def has_verify_hash_cache(self, user):
