@@ -2,12 +2,22 @@ openapi: 3.0.0
 info:
   description: |
     Default API for Flask-Security.
-    N.B. This is preliminary.
+    
+    __N.B. This is preliminary.__
+    
     Since Flask-Security is middleware, with many possible configurations this is a
     guide to how the APIs will behave using standard defaults.
+    
+    _Be aware that the current renderer is great! but has some limitations._ 
+    In particular
+    it can't represent both form input and JSON input - but all APIs take both. Also
+    it currently doesn't render 'examples' correctly.
+    
+    You can download the latest spec from: https://github.com/jwag956/flask-security/blob/master/docs/openapi.yaml
   version: 1.0.0
   title: "Flask-Security External API"
   contact:
+    name: Flask-Security-Too
     url: https://github.com/jwag956/flask-security
   license:
     name: MIT
@@ -22,7 +32,7 @@ paths:
           content:
             text/html:
               schema:
-                example: render_template(config_value('LOGIN_USER_TEMPLATE')
+                example: render_template(cv('LOGIN_USER_TEMPLATE')
     post:
       summary: Login to application
       description: Supports both json and form request types
@@ -52,17 +62,17 @@ paths:
             text/html:
               schema:
                 description: Unsuccessful login
-                example: render_template(config_value('LOGIN_USER_TEMPLATE') with error values
+                example: render_template(cv('LOGIN_USER_TEMPLATE') with error values
         302:
           description: >
-            Successful login with form data body.
+            Success or failure with form data body.
             redirect('next') or redirect(config_value('POST_LOGIN_VIEW'))
           headers:
             Location:
               description: redirect
               schema:
                 type: string
-                example: redirect(config_value('POST_LOGIN_VIEW'))
+                example: redirect(cv('POST_LOGIN_VIEW'))
         400:
           description: Errors while validating login
           content:
@@ -74,13 +84,12 @@ paths:
       summary: Log out current user
       responses:
         302:
-          description: >
-            Successful logout
-            redirect(config_value('POST_LOGOUT_VIEW'))
+          description: Successful logout
           headers:
             Location:
+              description: redirect(cv('POST_LOGOUT_VIEW'))
               schema:
-                example: redirect(config_value('POST_LOGOUT_VIEW'))
+                example: redirect(cv('POST_LOGOUT_VIEW'))
     post:
       summary: Log out current user
       responses:
@@ -109,7 +118,7 @@ paths:
           content:
             text/html:
               schema:
-                example: render_template(config_value('REGISTER_USER_TEMPLATE')
+                example: render_template(cv('REGISTER_USER_TEMPLATE')
     post:
       summary: Register with application
       description: Supports both json and form request types
@@ -140,23 +149,112 @@ paths:
             text/html:
               schema:
                 description: Unsuccessful registration
-                example: render_template(config_value('REGISTER_USER_TEMPLATE') with error values
+                example: render_template(cv('REGISTER_USER_TEMPLATE') with error values
         302:
           description: >
             Successful registration with form data body.
-            redirect('next') or redirect(config_value('POST_REGISTER_VIEW'))
           headers:
             Location:
-              description: redirect
+              description: redirect to cv('next') or cv('POST_REGISTER_VIEW')
               schema:
                 type: string
-                example: redirect(config_value('POST_REGISTER_VIEW'))
         400:
           description: Errors while validating registration form
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"  
+  /reset/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Request to reset password.
+      description: >
+        This is the result of getting a reset-password link and is usually
+        the result of clicking the link from a reset-password email.
+        If cv('REDIRECT_BEHAVIOR') == 'spa' then a 302 is always returned.
+      responses:
+        200:
+          description: Reset password form
+          content:
+            text/html:
+              schema:
+                example: render_template(cv('RESET_PASSWORD_TEMPLATE'))
+        302:
+          description: >
+            Redirects depending on success/error and whether 
+            cv('REDIRECT_BEHAVIOR') == 'spa'.
+          headers:
+            Location:
+              description: |
+                On spa-success: cv('RESET_VIEW')?token={token}&email={email}
+                
+                On spa-error-expired: cv('RESET_ERROR_VIEW')?error={msg}&email={email}
+                
+                On spa-error-invalid-token: cv('RESET_ERROR_VIEW')?error={msg}
+                
+                On default-error: redirect(cv('FORGOT_PASSWORD'))
+              schema:
+                type: string
+              examples:
+                spa-success:
+                  value: cv('RESET_VIEW')?token={token}&email={email}
+                spa-error-expired:
+                  value: cv('RESET_ERROR_VIEW')?error={msg}&email={email}
+                spa-error-invalid-token:
+                  value: cv('RESET_ERROR_VIEW')?error={msg}
+                default-error:
+                  value: redirect(cv('FORGOT_PASSWORD'))
+    post:
+      summary: Reset password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPassword"
+          application/x-www-form-urlencoded:
+            schema:             
+              $ref: "#/components/schemas/ResetPassword"
+      responses:
+        200:
+          description: Reset response.
+          content:
+            text/html:
+              schema:
+                description: Reset form validation error.
+                example: render_template(cv('RESET_PASSWORD_TEMPLATE') with error values
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        302:
+          description: Password has been reset or validation error (non-json)
+          headers:
+            Location:
+              description: |
+                On success: redirect(cv('POST_RESET_VIEW')) or
+                    redirect(cv('POST_LOGIN_VIEW'))
+                    
+                On invalid/expired token: redirect(cv('FORGOT_PASSWORD'))
+              schema:
+                type: string
+              examples:
+                success:
+                  value: redirect(cv('POST_RESET_VIEW')) or
+                    redirect(cv('POST_LOGIN_VIEW'))
+                invalid/expired-token:
+                  value: redirect(cv('FORGOT_PASSWORD'))
+        400:
+          description: Errors while validating form
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse" 
+          
 components:
   schemas:
     Login:
@@ -183,7 +281,7 @@ components:
           type: object
           required: [id]
           description: >
-            By default just 'id' and 'authentication_token' are returned. However by overriding User::get_security_payload() any attributes of the User model can be returned.
+            By default just 'id' and 'authentication_token' are returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
           properties:
             id:
               type: integer
@@ -216,7 +314,7 @@ components:
                   type: array
                   items:
                     type: string
-                    example: Email requires confirmation.
+                    example: Email issues.
                     description: Error message (localized)
     Register:
       type: object
@@ -250,5 +348,15 @@ components:
           type: string
           description: >
             Redirect URL. Overrides POST_REGISTER_VIEW
+    ResetPassword:
+      type: object
+      required: [password, password_confirm]
+      properties:
+        password:
+          type: string
+          description: Password
+        password_confirm:
+          type: string
+          description: Password - again
 
     

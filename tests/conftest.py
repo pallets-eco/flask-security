@@ -57,6 +57,9 @@ def app(request):
     app.config['SECURITY_PASSWORD_SALT'] = 'salty'
     # Make this plaintext for most tests - reduces unit test time by 50%
     app.config['SECURITY_PASSWORD_HASH'] = 'plaintext'
+    # Make this hex_md5 for token tests
+    app.config['SECURITY_HASHING_SCHEMES'] = ['hex_md5']
+    app.config['SECURITY_DEPRECATED_HASHING_SCHEMES'] = []
 
     for opt in ['changeable', 'recoverable', 'registerable',
                 'trackable', 'passwordless', 'confirmable']:

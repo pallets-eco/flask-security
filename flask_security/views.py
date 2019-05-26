@@ -168,21 +168,36 @@ def send_login():
 
 @anonymous_user_required
 def token_login(token):
-    """View function that handles passwordless login via a token"""
+    """View function that handles passwordless login via a token
+    Like reset-password and confirm - this is usually a GET via an email
+    so from the request we cant differentiate form-based apps from non.
+    """
 
     expired, invalid, user = login_token_status(token)
 
-    if invalid:
-        do_flash(*get_message('INVALID_LOGIN_TOKEN'))
+    if not user or invalid:
+        m, c = get_message('INVALID_LOGIN_TOKEN')
+        if _security.redirect_behavior == 'spa':
+            return redirect(get_url(_security.login_error_view,
+                                    qparams={c: m}))
+        do_flash(m, c)
+        return redirect(url_for('login'))
     if expired:
         send_login_instructions(user)
-        do_flash(*get_message('LOGIN_EXPIRED', email=user.email,
-                              within=_security.login_within))
-    if invalid or expired:
+        m, c = get_message('LOGIN_EXPIRED', email=user.email,
+                           within=_security.login_within)
+        if _security.redirect_behavior == 'spa':
+            return redirect(get_url(_security.login_error_view,
+                                    qparams=user.get_redirect_qparams({c: m})))
+        do_flash(m, c)
         return redirect(url_for('login'))
 
     login_user(user)
     after_this_request(_commit)
+    if _security.redirect_behavior == 'spa':
+        return redirect(get_url(_security.post_login_view,
+                                qparams=user.get_redirect_qparams()))
+
     do_flash(*get_message('PASSWORDLESS_LOGIN_SUCCESSFUL'))
 
     return redirect(get_post_login_redirect())
@@ -220,16 +235,25 @@ def confirm_email(token):
     expired, invalid, user = confirm_email_token_status(token)
 
     if not user or invalid:
-        invalid = True
-        do_flash(*get_message('INVALID_CONFIRMATION_TOKEN'))
+        m, c = get_message('INVALID_CONFIRMATION_TOKEN')
+        if _security.redirect_behavior == 'spa':
+            return redirect(get_url(_security.confirm_error_view,
+                                    qparams={c: m}))
+        do_flash(m, c)
+        return redirect(get_url(_security.confirm_error_view) or
+                        url_for('send_confirmation'))
 
-    already_confirmed = user is not None and user.confirmed_at is not None
+    already_confirmed = user.confirmed_at is not None
 
     if expired and not already_confirmed:
         send_confirmation_instructions(user)
-        do_flash(*get_message('CONFIRMATION_EXPIRED', email=user.email,
-                              within=_security.confirm_email_within))
-    if invalid or (expired and not already_confirmed):
+        m, c = get_message('CONFIRMATION_EXPIRED', email=user.email,
+                           within=_security.confirm_email_within)
+        if _security.redirect_behavior == 'spa':
+            return redirect(get_url(_security.confirm_error_view,
+                                    qparams=user.get_redirect_qparams({c: m})))
+
+        do_flash(m, c)
         return redirect(get_url(_security.confirm_error_view) or
                         url_for('send_confirmation'))
 
@@ -243,8 +267,13 @@ def confirm_email(token):
     else:
         msg = 'ALREADY_CONFIRMED'
 
-    do_flash(*get_message(msg))
-
+    m, c = get_message(msg)
+    if _security.redirect_behavior == 'spa':
+        return redirect(get_url(_security.post_confirm_view,
+                                qparams=user.get_redirect_qparams({c: m})) or
+                        get_url(_security.post_login_view,
+                                qparams=user.get_redirect_qparams({c: m})))
+    do_flash(m, c)
     return redirect(get_url(_security.post_confirm_view) or
                     get_url(_security.post_login_view))
 
@@ -276,32 +305,95 @@ def forgot_password():
 
 @anonymous_user_required
 def reset_password(token):
-    """View function that handles a reset password request."""
+    """View function that handles a reset password request.
+
+    This is usually called via GET as part of an email link and redirects to a reset-password form
+    It is called via POST to actually update the password (and then redirects to a post reset/login view)
+    If in either case the token is either invalid or expired it redirects to the 'forgot-password' form.
+
+    In the case of non-form based configuration:
+    For GET normal case - redirect to RESET_VIEW?token={token}&email={email}
+    For GET invalid case - redirect to RESET_ERROR_VIEW?error={error}&email={email}
+    For POST normal/successful case - redirect to POST_RESET_VIEW or POST_LOGIN_VIEW
+    For POST error case return 400 with form.errors
+    """
 
     expired, invalid, user = reset_password_token_status(token)
+    form_class = _security.reset_password_form
+    if request.is_json:
+        form = form_class(MultiDict(request.get_json()))
+    else:
+        form = form_class()
+    form.user = user
 
+    if request.method == 'GET':
+        if not user or invalid:
+            m, c = get_message('INVALID_RESET_PASSWORD_TOKEN')
+            if _security.redirect_behavior == 'spa':
+                return redirect(get_url(_security.reset_error_view,
+                                        qparams={c: m}))
+            do_flash(m, c)
+            return redirect(url_for('forgot_password'))
+        if expired:
+            send_reset_password_instructions(user)
+            m, c = get_message('PASSWORD_RESET_EXPIRED', email=user.email,
+                               within=_security.reset_password_within)
+            if _security.redirect_behavior == 'spa':
+                return redirect(get_url(_security.reset_error_view,
+                                        qparams=user.get_redirect_qparams({c: m})))
+            do_flash(m, c)
+            return redirect(url_for('forgot_password'))
+
+        # All good - for forms - redirect to reset password template
+        if _security.redirect_behavior == 'spa':
+            return redirect(get_url(_security.reset_view,
+                                    qparams=user.get_redirect_qparams({'token': token})))
+        return _security.render_template(
+            config_value('RESET_PASSWORD_TEMPLATE'),
+            reset_password_form=form,
+            reset_password_token=token,
+            **_ctx('reset_password')
+        )
+
+    # This is the POST case.
+    m = None
     if not user or invalid:
         invalid = True
-        do_flash(*get_message('INVALID_RESET_PASSWORD_TOKEN'))
+        m, c = get_message('INVALID_RESET_PASSWORD_TOKEN')
+        if not request.is_json:
+            do_flash(m, c)
 
     if expired:
         send_reset_password_instructions(user)
-        do_flash(*get_message('PASSWORD_RESET_EXPIRED', email=user.email,
-                              within=_security.reset_password_within))
-    if invalid or expired:
-        return redirect(url_for('forgot_password'))
+        m, c = get_message('PASSWORD_RESET_EXPIRED', email=user.email,
+                           within=_security.reset_password_within)
+        if not request.is_json:
+            do_flash(m, c)
 
-    form = _security.reset_password_form()
-    form.user = user
+    if invalid or expired:
+        if request.is_json:
+            form._errors = m
+            return _render_json(form)
+        else:
+            return redirect(url_for('forgot_password'))
 
     if form.validate_on_submit():
         after_this_request(_commit)
         update_password(user, form.password.data)
-        do_flash(*get_message('PASSWORD_RESET'))
         login_user(user)
-        return redirect(get_url(_security.post_reset_view) or
-                        get_url(_security.post_login_view))
+        if request.is_json:
+            login_form = _security.login_form(MultiDict({'email': user.email}))
+            setattr(login_form, 'user', user)
+            return _render_json(login_form, include_auth_token=True)
+        else:
+            do_flash(*get_message('PASSWORD_RESET'))
+            return redirect(get_url(_security.post_reset_view) or
+                            get_url(_security.post_login_view))
 
+    # validation failure case - for forms - we try again including the token
+    # for non-forms -  we just return errors and assume caller remembers token.
+    if request.is_json:
+        return _render_json(form)
     return _security.render_template(
         config_value('RESET_PASSWORD_TEMPLATE'),
         reset_password_form=form,

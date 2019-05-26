@@ -15,7 +15,13 @@ from utils import authenticate, logout
 from flask_security.core import UserMixin
 from flask_security.confirmable import generate_confirmation_token
 from flask_security.signals import confirm_instructions_sent, user_confirmed
-from flask_security.utils import capture_registrations, string_types
+from flask_security.utils import capture_flashes, capture_registrations, \
+    string_types
+
+try:
+    from urlparse import parse_qsl, urlsplit
+except ImportError:  # pragma: no cover
+    from urllib.parse import parse_qsl, urlsplit
 
 pytestmark = pytest.mark.confirmable()
 
@@ -208,3 +214,88 @@ def test_cannot_reset_password_when_email_is_not_confirmed(
             email=email),
         follow_redirects=True)
     assert get_message('CONFIRMATION_REQUIRED') in response.data
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(
+    redirect_host='localhost:8081',
+    redirect_behavior='spa',
+    post_confirm_view='/confirm-redirect')
+def test_spa_get(app, client):
+    """
+    Test 'single-page-application' style redirects
+    This uses json only.
+    """
+    with capture_flashes() as flashes:
+        with capture_registrations() as registrations:
+            response = client.post('/register',
+                                   data='{"email": "dude@lp.com",\
+                                         "password": "password"}',
+                                   headers={'Content-Type':
+                                            'application/json'})
+            assert response.headers['Content-Type'] == 'application/json'
+        token = registrations[0]['confirm_token']
+
+        response = client.get('/confirm/' + token)
+        assert response.status_code == 302
+        split = urlsplit(response.headers['Location'])
+        assert 'localhost:8081' == split.netloc
+        assert '/confirm-redirect' == split.path
+        qparams = dict(parse_qsl(split.query))
+        assert qparams['email'] == 'dude@lp.com'
+    # Arguably for json we shouldn't have any - this is buried in register_user
+    # but really shouldn't be.
+    assert len(flashes) == 1
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(
+    confirm_email_within='1 milliseconds',
+    redirect_host='localhost:8081',
+    redirect_behavior='spa',
+    confirm_error_view='/confirm-error')
+def test_spa_get_bad_token(app, client, get_message):
+    """ Test expired and invalid token"""
+    with capture_flashes() as flashes:
+        with capture_registrations() as registrations:
+            response = client.post('/register',
+                                   data='{"email": "dude@lp.com",\
+                                         "password": "password"}',
+                                   headers={'Content-Type':
+                                            'application/json'})
+            assert response.headers['Content-Type'] == 'application/json'
+        token = registrations[0]['confirm_token']
+        time.sleep(1)
+
+        response = client.get('/confirm/' + token)
+        assert response.status_code == 302
+        split = urlsplit(response.headers['Location'])
+        assert 'localhost:8081' == split.netloc
+        assert '/confirm-error' == split.path
+        qparams = dict(parse_qsl(split.query))
+        assert len(qparams) == 2
+        assert all(k in qparams for k in ['email', 'error'])
+
+        msg = get_message(
+            'CONFIRMATION_EXPIRED',
+            within='1 milliseconds',
+            email='dude@lp.com')
+        assert msg == qparams['error'].encode('utf-8')
+
+        # Test mangled token
+        token = (
+            "WyIxNjQ2MzYiLCIxMzQ1YzBlZmVhM2VhZjYwODgwMDhhZGU2YzU0MzZjMiJd."
+            "BZEw_Q.lQyo3npdPZtcJ_sNHVHP103syjM"
+            "&url_id=fbb89a8328e58c181ea7d064c2987874bc54a23d")
+        response = client.get('/confirm/' + token)
+        assert response.status_code == 302
+        split = urlsplit(response.headers['Location'])
+        assert 'localhost:8081' == split.netloc
+        assert '/confirm-error' == split.path
+        qparams = dict(parse_qsl(split.query))
+        assert len(qparams) == 1
+        assert all(k in qparams for k in ['error'])
+
+        msg = get_message('INVALID_CONFIRMATION_TOKEN')
+        assert msg == qparams['error'].encode('utf-8')
+    assert len(flashes) == 1

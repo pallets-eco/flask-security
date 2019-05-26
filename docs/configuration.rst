@@ -87,6 +87,20 @@ Core
                                          ``500``
 ``VERIFY_HASH_CACHE_TTL``                Time to live for password check cache entries.
                                          Defaults to ``300`` (5 minutes)
+``SECURITY_REDIRECT_BEHAVIOR``           Passwordless login, confirmation, and
+                                         reset password have GET endpoints that validate
+                                         the passed token and redirect to an action form.
+                                         For Single-Page-Applications style UIs which need
+                                         to control their own internal URL routing these redirects
+                                         need to not contain forms, but contain relevant information
+                                         as query parameters. Setting this to ``spa`` will enable
+                                         that behavior. Defaults to ``None`` which is existing
+                                         html-style form redirects.
+``SECURITY_REDIRECT_HOST``               Mostly for development purposes, the UI is often developed
+                                         separately and is running on a different port than the
+                                         Flask application. In order to test redirects, the `netloc`
+                                         of the redirect URL needs to be rewritten. Setting this
+                                         to e.g. `localhost:8080` does that. Defaults to ``None``
 ======================================== =======================================
 
 
@@ -117,8 +131,10 @@ URLs and Views
                                 confirmation error occurs. This value can be set
                                 to a URL or an endpoint name. If this value is
                                 ``None``, the user is presented the default view
-                                to resend a confirmation link. Defaults to
-                                ``None``.
+                                to resend a confirmation link.
+                                In the case of ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``
+                                query params in the redirect will contain the error.
+                                Defaults to``None``.
 ``SECURITY_POST_REGISTER_VIEW`` Specifies the view to redirect to after a user
                                 successfully registers. This value can be set to
                                 a URL or an endpoint name. If this value is
@@ -148,6 +164,21 @@ URLs and Views
                                 not have permission to access. If this value is
                                 ``None``, the user is presented with a default
                                 HTTP 403 response. Defaults to ``None``.
+``SECURITY_RESET_VIEW``         Specifies the view/URL to redirect to after a GET
+                                reset-password link. This is only valid if
+                                ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
+                                in the redirect will contain the token and email.
+                                Defaults to ``None``
+``SECURITY_RESET_ERROR_VIEW``   Specifies the view/URL to redirect to after a GET
+                                reset-password link when there is an error. This is only valid if
+                                ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
+                                in the redirect will contain the error.
+                                Defaults to ``None``
+``SECURITY_LOGIN_ERROR_VIEW``   Specifies the view/URL to redirect to after a GET
+                                passwordless link when there is an error. This is only valid if
+                                ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
+                                in the redirect will contain the error.
+                                Defaults to ``None``
 =============================== ================================================
 
 
