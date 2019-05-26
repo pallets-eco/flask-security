@@ -33,7 +33,7 @@ env/
 *~
 
 *.db
-*cache*
+*cache/
 
 # vim
 [._]*.s[a-w][a-z]

@@ -68,6 +68,7 @@ install_requires = [
     'Flask-BabelEx>=0.9.3',
     'itsdangerous>=0.24',
     'passlib>=1.7',
+    'cachetools>=3.1.0',
 ]
 
 packages = find_packages()
