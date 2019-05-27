@@ -18,6 +18,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 
 from flask import current_app, flash, request, session, url_for
+from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
 from flask_mail import Message
@@ -29,9 +30,10 @@ from .signals import login_instructions_sent, \
     reset_password_instructions_sent, user_registered
 
 try:
-    from urlparse import urlsplit
+    from urlparse import parse_qsl, urlsplit, urlunsplit
+    from urllib import urlencode
 except ImportError:  # pragma: no cover
-    from urllib.parse import urlsplit
+    from urllib.parse import parse_qsl, urlsplit, urlunsplit, urlencode
 
 
 # Convenient references
@@ -228,16 +230,27 @@ def do_flash(message, category=None):
         flash(message, category)
 
 
-def get_url(endpoint_or_url):
+def get_url(endpoint_or_url, qparams=None):
     """Returns a URL if a valid endpoint is found. Otherwise, returns the
     provided value.
 
     :param endpoint_or_url: The endpoint name or URL to default to
+    :param qparams: additional query params to add to end of url
     """
     try:
-        return url_for(endpoint_or_url)
-    except:
-        return endpoint_or_url
+        return transform_url(url_for(endpoint_or_url), qparams)
+    except Exception:
+        # This is an external URL (no endpoint defined in app)
+        # For (mostly) testing - allow changing/adding the url - for example
+        # add a different host:port for cases where the UI is running
+        # separately.
+        if _security.redirect_host:
+            url = transform_url(endpoint_or_url, qparams,
+                                netloc=_security.redirect_host)
+        else:
+            url = transform_url(endpoint_or_url, qparams)
+
+        return url
 
 
 def slash_url_suffix(url, suffix):
@@ -246,6 +259,23 @@ def slash_url_suffix(url, suffix):
     the URL ends with a slash."""
 
     return url.endswith('/') and ('%s/' % suffix) or ('/%s' % suffix)
+
+
+def transform_url(url, qparams=None, **kwargs):
+    """ Modify url
+
+    :param url: url to transform (can be relative)
+    :param qparams: additional query params to add to end of url
+    :param kwargs: pieces of URL to modify - e.g. netloc=localhost:8000
+    """
+    if not url:
+        return url
+    link_parse = urlsplit(url)
+    if qparams:
+        current_query = dict(parse_qsl(link_parse.query))
+        current_query.update(qparams)
+        link_parse = link_parse._replace(query=urlencode(current_query))
+    return urlunsplit(link_parse._replace(**kwargs))
 
 
 def get_security_endpoint_name(endpoint):
@@ -515,3 +545,19 @@ def capture_reset_password_requests(reset_password_sent_at=None):
         yield reset_requests
     finally:
         reset_password_instructions_sent.disconnect(_on)
+
+
+@contextmanager
+def capture_flashes():
+    """Testing utility for capturing flashes."""
+    flashes = []
+
+    def _on(app, **data):
+        flashes.append(data)
+
+    message_flashed.connect(_on)
+
+    try:
+        yield flashes
+    finally:
+        message_flashed.disconnect(_on)

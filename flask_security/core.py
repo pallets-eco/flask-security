@@ -79,6 +79,11 @@ _default_config = {
     'POST_RESET_VIEW': None,
     'POST_CHANGE_VIEW': None,
     'UNAUTHORIZED_VIEW': None,
+    'RESET_ERROR_VIEW': None,
+    'RESET_VIEW': None,
+    'LOGIN_ERROR_VIEW': None,
+    'REDIRECT_HOST': None,
+    'REDIRECT_BEHAVIOR': None,
     'FORGOT_PASSWORD_TEMPLATE': 'security/forgot_password.html',
     'LOGIN_USER_TEMPLATE': 'security/login_user.html',
     'REGISTER_USER_TEMPLATE': 'security/register_user.html',
@@ -430,6 +435,13 @@ class UserMixin(BaseUserMixin):
     def get_security_payload(self):
         """Serialize user object as response payload."""
         return {'id': str(self.id)}
+
+    def get_redirect_qparams(self, existing=None):
+        """Return user info that will be added to redirect query params."""
+        if not existing:
+            existing = {}
+        existing.update({'email': self.email})
+        return existing
 
     def verify_and_update_password(self, password):
         """Verify and update user password using configured hash."""
