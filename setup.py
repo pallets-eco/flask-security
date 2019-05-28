@@ -86,6 +86,11 @@ setup(
     maintainer='Chris Wagner',
     maintainer_email='jwag.wagner@gmail.com',
     url='https://github.com/jwag956/flask-security',
+    project_urls={
+        "Documentation": "https://flask-security-too.readthedocs.io",
+        "Code": "https://github.com/jwag956/flask-security",
+        "Issue tracker": "https://github.com/jwag956/flask-security/issues",
+    },
     packages=packages,
     zip_safe=False,
     include_package_data=True,
