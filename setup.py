@@ -30,11 +30,11 @@ tests_require = [
     'pydocstyle>=1.0.0',
     'pymysql>=0.9.3',
     'pytest-cache>=1.0',
-    'pytest-cov>=2.4.0',
-    'pytest-flakes>=1.0.1',
+    'pytest-cov>=2.5.1',
+    'pytest-flakes>=3.0.2',
     'pytest-mongo>=1.2.1',
     'pytest-pep8>=1.0.6',
-    'pytest>=3.3.0',
+    'pytest>=3.5.1',
     'sqlalchemy>=1.1.0',
     'sqlalchemy-utils>=0.33.0',
     'werkzeug>=0.12.2'
@@ -44,6 +44,7 @@ extras_require = {
     'docs': [
         'Flask-Sphinx-Themes>=1.0.1',
         'Sphinx>=1.4.2',
+        'sphinx-issues>=1.2.0',
     ],
     'tests': tests_require,
 }
@@ -66,8 +67,8 @@ install_requires = [
     'Flask-Principal>=0.4.0',
     'Flask-WTF>=0.13.1',
     'Flask-BabelEx>=0.9.3',
-    'itsdangerous>=0.24',
-    'passlib>=1.7',
+    'itsdangerous>=1.1.0',
+    'passlib>=1.7.1',
     'cachetools>=3.1.0',
 ]
 
@@ -85,6 +86,11 @@ setup(
     maintainer='Chris Wagner',
     maintainer_email='jwag.wagner@gmail.com',
     url='https://github.com/jwag956/flask-security',
+    project_urls={
+        "Documentation": "https://flask-security-too.readthedocs.io",
+        "Code": "https://github.com/jwag956/flask-security",
+        "Issue tracker": "https://github.com/jwag956/flask-security/issues",
+    },
     packages=packages,
     zip_safe=False,
     include_package_data=True,

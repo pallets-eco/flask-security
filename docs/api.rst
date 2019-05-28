@@ -28,6 +28,14 @@ Protecting Views
 
 .. autofunction:: flask_security.decorators.auth_token_required
 
+.. autofunction:: flask_security.decorators.auth_required
+
+.. data:: @security.unauthorized_handler
+
+    If an endpoint fails authentication or authorization from above decorators
+    (except ``login_required``), a method annotated with this decorator will be called.
+    For ``login_required`` (which is implemented in Flask-Login) use
+    **@security.login_manager.unauthorized_handler**
 
 User Object Helpers
 -------------------
@@ -85,6 +93,10 @@ Utils
 .. autofunction:: flask_security.utils.send_mail
 
 .. autofunction:: flask_security.utils.get_token_status
+
+.. autofunction:: flask_security.utils.get_url
+
+.. autofunction:: flask_security.utils.transform_url
 
 Signals
 -------

@@ -5,7 +5,7 @@
 
     Flask-Security decorators module
 
-    :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2012-2019 by Matt Wright.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -143,7 +143,7 @@ def auth_required(*auth_methods):
         def dashboard():
             return 'Dashboard'
 
-    :param auth_methods: Specified mechanisms.
+    :param auth_methods: Specified mechanisms (token, basic, session)
     """
     login_mechanisms = {
         'token': lambda: _check_token(),
@@ -183,7 +183,7 @@ def roles_required(*roles):
     The current user must have both the `admin` role and `editor` role in order
     to view the page.
 
-    :param args: The required roles.
+    :param roles: The required roles.
     """
     def wrapper(fn):
         @wraps(fn)
@@ -212,7 +212,7 @@ def roles_accepted(*roles):
     The current user must have either the `editor` role or `author` role in
     order to view the page.
 
-    :param args: The possible roles.
+    :param roles: The possible roles.
     """
     def wrapper(fn):
         @wraps(fn)

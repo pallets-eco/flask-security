@@ -437,7 +437,11 @@ class UserMixin(BaseUserMixin):
         return {'id': str(self.id)}
 
     def get_redirect_qparams(self, existing=None):
-        """Return user info that will be added to redirect query params."""
+        """Return user info that will be added to redirect query params.
+
+        :param existing: A dict that will be updated.
+        :return: A dict whose keys will be query params and values will be query values.
+        """
         if not existing:
             existing = {}
         existing.update({'email': self.email})

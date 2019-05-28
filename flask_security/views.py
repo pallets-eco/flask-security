@@ -307,9 +307,12 @@ def forgot_password():
 def reset_password(token):
     """View function that handles a reset password request.
 
-    This is usually called via GET as part of an email link and redirects to a reset-password form
-    It is called via POST to actually update the password (and then redirects to a post reset/login view)
-    If in either case the token is either invalid or expired it redirects to the 'forgot-password' form.
+    This is usually called via GET as part of an email link and redirects to
+    a reset-password form
+    It is called via POST to actually update the password (and then redirects to
+    a post reset/login view)
+    If in either case the token is either invalid or expired it redirects to
+    the 'forgot-password' form.
 
     In the case of non-form based configuration:
     For GET normal case - redirect to RESET_VIEW?token={token}&email={email}
@@ -347,7 +350,8 @@ def reset_password(token):
         # All good - for forms - redirect to reset password template
         if _security.redirect_behavior == 'spa':
             return redirect(get_url(_security.reset_view,
-                                    qparams=user.get_redirect_qparams({'token': token})))
+                                    qparams=user.get_redirect_qparams(
+                                        {'token': token})))
         return _security.render_template(
             config_value('RESET_PASSWORD_TEMPLATE'),
             reset_password_form=form,
