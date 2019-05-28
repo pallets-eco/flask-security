@@ -3,22 +3,39 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 3.2.0
+-------------
+
+Released TBD
+
+- (opr #839) Support caching of authentication token (eregnier).
+  This adds a new configuration variable SECURITY_USE_VERIFY_PASSWORD_CACHE
+  which enables a cache (with configurable TTL) for authentication tokens.
+  This is a big performance boost for those accessing Flask-Security via token
+  as opposed to session.
+- (:pr:`81`) Support for JSON/Single-Page-Application. This completes support
+  for non-form based access to Flask-Security. See PR for details. (jwag956)
+- (:pr:`79` Add POST logout to enhance JSON usage (jwag956).
+- (:pr:`73`) Fix get_user for various DBs (jwag956).
+  This is a more complete fix than in opr #633.
+- (:pr:`78`) Add formal openapi API spec (jwag956).
+
 Version 3.1.0
 -------------
 
 Released TBD
 
-- Use Security.render_template in mails too (opr #487)
-- Optimize DB accesses by using an SQL JOIN when retrieving a user. (opr #679)
-- Add base template to security templates (opr #697)
-- datastore: get user by numeric identity attribute (opr #633)
-- bugfix: support application factory pattern (opr703)
-- Make SECURITY_PASSWORD_SINGLE_HASH a list of scheme ignoring double hash (opr #714)
-- Allow custom login_manager to be passed in to Flask-Security (opr #717)
-- Docs for OAauth2-based custom login manager (opr #727)
-- core: make the User model check the password (opr #779)
-- Customizable send_mail (opr #730)
-- core: fix default for UNAUTHORIZED_VIEW (opr #726)
+- (opr #487) Use Security.render_template in mails too (noirbizarre)
+- (opr #679) Optimize DB accesses by using an SQL JOIN when retrieving a user. (nfvs)
+- (opr #697) Add base template to security templates (grihabor)
+- (opr #633) datastore: get user by numeric identity attribute (jirikuncar)
+- (opr #703) bugfix: support application factory pattern (briancappello)
+- (opr #714) Make SECURITY_PASSWORD_SINGLE_HASH a list of scheme ignoring double hash (noirbizarre )
+- (opr #717) Allow custom login_manager to be passed in to Flask-Security (jaza)
+- (opr #727) Docs for OAauth2-based custom login manager (jaza)
+- (opr #779) core: make the User model check the password (mklassen)
+- (opr #730) Customizable send_mail (abulte)
+- (opr #726) core: fix default for UNAUTHORIZED_VIEW (jirijunkar)
 
 These should all be backwards compatible.
 

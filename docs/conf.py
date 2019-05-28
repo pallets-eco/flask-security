@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx_issues']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,7 +50,7 @@ copyright = u'2012-2019, Matt Wright'
 # built documents.
 #
 # The short X.Y version.
-version = '3.1.0'
+version = '3.2.0'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -300,3 +300,7 @@ epub_copyright = u'2012, Matt Wright'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+# -- Options for spinx-issues ---------------------------------------------
+# Github repo
+issues_github_path = "jwag956/flask-security"
