@@ -1,5 +1,5 @@
-Customizing Views
-=================
+Customizing
+===========
 
 Flask-Security bootstraps your application with various views for handling its
 configured features to get you up and running as quickly as possible. However,

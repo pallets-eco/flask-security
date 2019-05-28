@@ -5,7 +5,7 @@
 
     Flask-Security utils module
 
-    :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2012-2019 by Matt Wright.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -236,6 +236,7 @@ def get_url(endpoint_or_url, qparams=None):
 
     :param endpoint_or_url: The endpoint name or URL to default to
     :param qparams: additional query params to add to end of url
+    :return: URL
     """
     try:
         return transform_url(url_for(endpoint_or_url), qparams)
@@ -267,6 +268,7 @@ def transform_url(url, qparams=None, **kwargs):
     :param url: url to transform (can be relative)
     :param qparams: additional query params to add to end of url
     :param kwargs: pieces of URL to modify - e.g. netloc=localhost:8000
+    :return: Modified URL
     """
     if not url:
         return url

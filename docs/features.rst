@@ -119,6 +119,8 @@ JSON is supported for the following operations:
 * Forgot password requests
 * Passwordless login requests
 
+In addition, Single-Page-Applications (like those built with Vue, Angular, and
+React) are supported via customizable redirect links.
 
 Command Line Interface
 ----------------------
