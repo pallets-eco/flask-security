@@ -19,7 +19,7 @@ Released TBD
 - (:pr:`73`) Fix get_user for various DBs (jwag956).
   This is a more complete fix than in opr #633.
 - (:pr:`78`) Add formal openapi API spec (jwag956).
-- (:pr:`86`) Add Two-factor authentication (opr #842) (baurt).
+- (:pr:`86`, :pr:`94`, :pr:`98`, :pr:`101`) Add Two-factor authentication (opr #842) (baurt, jwag956).
 
 Version 3.1.0
 -------------
@@ -46,6 +46,13 @@ Possible compatibility issues:
   emails. If anyone actually relied on this behavior, this has changed.
 - #703 - get factory pattern working again. There was a very complex dance between
   Security() instantiation and init_app regarding kwargs. This has been rationalized (hopefully).
+- #679 - SqlAlchemy SQL improvement. It is possible you will get the following error::
+
+    Got exception during processing: <class 'sqlalchemy.exc.InvalidRequestError'> -
+    'User.roles' does not support object population - eager loading cannot be applied.
+
+  This is likely solveable by removing ``lazy='dynamic'`` from your Role definition.
+
 
 Performance improvements:
 
