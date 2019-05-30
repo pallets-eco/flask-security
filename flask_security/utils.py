@@ -592,7 +592,7 @@ class SmsSenderFactory(object):
     @classmethod
     def createSender(cls, name, *args, **kwargs):
         """ Initialize an SMS sender.
-        
+
         :param name: Name as registered in SmsSenderFactory:senders (e.g. 'Twilio')
         """
         return cls.senders[name](*args, **kwargs)
