@@ -98,19 +98,14 @@ Utils
 
 .. autofunction:: flask_security.utils.transform_url
 
-.. autoclass:: SmsSenderBaseClass
-  ..method:: init(self)
-  ..method:: send_sms(self, from_number, to_number, msg)
+.. autoclass:: flask_security.utils.SmsSenderBaseClass
+  :members: send_sms
 
-.. autoclass:: DummySmsSender
-  ..method:: send_sms(self, from_number, to_number, msg)
+.. autoclass:: flask_security.utils.DummySmsSender
+  :members: send_sms
 
-.. autoclass:: SmsSenderFactory
+.. autoclass:: flask_security.utils.SmsSenderFactory
   :members: senders
-
-.. autoclass:: TwilioSmsSender(SmsSenderBaseClass)
-  ..method:: init(self)
-  ..method:: send_sms(self, from_number, to_number, msg)
 
 Signals
 -------

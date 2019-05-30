@@ -12,7 +12,7 @@
 
 import inspect
 
-from flask import Markup, abort, current_app, flash, request, session
+from flask import Markup, current_app, request, session
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
 from speaklater import make_lazy_gettext

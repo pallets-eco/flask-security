@@ -25,8 +25,8 @@ and libraries. They include:
 4. `Flask-WTF <http://packages.python.org/Flask-WTF/>`_
 5. `itsdangerous <http://packages.python.org/itsdangerous/>`_
 6. `passlib <http://packages.python.org/passlib/>`_
-8. `onetimepass <https://pypi.python.org/pypi/onetimepass/>`_
-9. `PyQRCode <https://pypi.python.org/pypi/PyQRCode/>`_
+7. `onetimepass <https://pypi.python.org/pypi/onetimepass/>`_
+8. `PyQRCode <https://pypi.python.org/pypi/PyQRCode/>`_
 
 Additionally, it assumes you'll be using a common library for your database
 connections and model definitions. Flask-Security supports the following Flask

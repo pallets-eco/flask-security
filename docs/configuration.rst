@@ -220,7 +220,7 @@ Template Paths
                                                authentication process. Defaults to
                                                ``security/two_factor_verify_code.html``.
 
-``SECURITY_TWO_FACTOR_CHOOSE_METHOD_TEMPLATE``   Specifies the path to the template for
+``SECURITY_TWO_FACTOR_CHOOSE_METHOD_TEMPLATE`` Specifies the path to the template for
                                                the choose method page for the two
                                                factor authentication process. Defaults
                                                to ``security/two_factor_choose_method.html``
@@ -375,7 +375,7 @@ Miscellaneous
                                               of time, which is 30 seconds for
                                               each window. Default to 1, which
                                               is up to 60 seconds.
-``SECURITY_TWO_FACTOR_SMS_VALIDITY``         Specifies the number of time
+``SECURITY_TWO_FACTOR_SMS_VALIDITY``          Specifies the number of time
                                               windows user has before the token
                                               sent to him using sms is valid.
                                               time windows specifies the amount

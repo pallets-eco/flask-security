@@ -149,5 +149,6 @@ Run ``flask --help`` and look for users and roles.
 .. _Flask-Principal: http://packages.python.org/Flask-Principal/
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection
 .. _passlib: http://packages.python.org/passlib/
+.. _bcrypt: https://en.wikipedia.org/wiki/Bcrypt
 .. _onetimepass: https://pypi.python.org/pypi/onetimepass/
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/
