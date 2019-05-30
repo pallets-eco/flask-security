@@ -21,7 +21,7 @@ SQLAlchemy Install requirements
 ::
 
      $ mkvirtualenv <your-app-name>
-     $ pip install flask-security flask-sqlalchemy
+     $ pip install flask-security-too flask-sqlalchemy
 
 
 Two-factor Application
@@ -84,9 +84,9 @@ possible using SQLAlchemy:
         confirmed_at = db.Column(db.DateTime())
         roles = db.relationship('Role', secondary=roles_users,
                                 backref=db.backref('users', lazy='dynamic'))
-        phone_number = db.Column(db.String(15))
+        phone_number = db.Column(db.String(64))
         two_factor_primary_method = db.Column(db.String(140))
-        totp_secret = db.Column(db.String(16))
+        totp_secret = db.Column(db.String(64))
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)

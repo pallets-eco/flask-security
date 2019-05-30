@@ -573,12 +573,13 @@ class SmsSenderBaseClass(object):
 
     @abc.abstractmethod
     def send_sms(self, from_number, to_number, msg):
-        """ Abstract method for sensing sms messages"""
+        """ Abstract method for sending sms messages"""
         return
 
 
 class DummySmsSender(SmsSenderBaseClass):
     def send_sms(self, from_number, to_number, msg):
+        """ Do nothing. """
         return
 
 
@@ -590,6 +591,10 @@ class SmsSenderFactory(object):
 
     @classmethod
     def createSender(cls, name, *args, **kwargs):
+        """ Initialize an SMS sender.
+        
+        :param name: Name as registered in SmsSenderFactory:senders (e.g. 'Twilio')
+        """
         return cls.senders[name](*args, **kwargs)
 
 
@@ -604,6 +609,7 @@ try:
                 'TWO_FACTOR_SMS_SERVICE_CONFIG')['AUTH_TOKEN']
 
         def send_sms(self, from_number, to_number, msg):
+            """ Send message via twilio account. """
             client = Client(self.account_sid, self.auth_token)
             client.messages.create(
                 to=to_number,

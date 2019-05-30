@@ -101,11 +101,8 @@ Utils
 .. autoclass:: flask_security.utils.SmsSenderBaseClass
   :members: send_sms
 
-.. autoclass:: flask_security.utils.DummySmsSender
-  :members: send_sms
-
 .. autoclass:: flask_security.utils.SmsSenderFactory
-  :members: senders
+  :members: createSender
 
 Signals
 -------
