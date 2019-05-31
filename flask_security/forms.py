@@ -313,7 +313,7 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
                                  'Set Up Using Google Authenticator'),
                                 ('sms', 'Set Up Using SMS')])
     phone = StringField(get_form_field_label('phone'))
-    submit = SubmitField(get_form_field_label('sumbit'))
+    submit = SubmitField(get_form_field_label('submit'))
 
     def __init__(self, *args, **kwargs):
         super(TwoFactorSetupForm, self).__init__(*args, **kwargs)

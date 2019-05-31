@@ -654,13 +654,11 @@ class Security(object):
 
         # configuration mismatch check
         if cv('TWO_FACTOR', app=app) is True and\
-                len(cv('TWO_FACTOR_ENABLED_METHODS',
-                       app=app)) < 1:  # pragma: no cover
-
+                len(cv('TWO_FACTOR_ENABLED_METHODS', app=app)) < 1:
             raise ValueError()
 
         config_value = cv('TWO_FACTOR', app=app)
-        if config_value:  # pragma: no cover
+        if config_value:
             self.check_two_factor_modules('onetimepass',
                                           'TWO_FACTOR', config_value)
             self.check_two_factor_modules('pyqrcode',
@@ -668,7 +666,7 @@ class Security(object):
 
         config_value = cv('TWO_FACTOR_SMS_SERVICE', app=app)
 
-        if config_value == 'Twilio':  # pragma: no cover
+        if config_value == 'Twilio':
             self.check_two_factor_modules('twilio',
                                           'TWO_FACTOR_SMS_SERVICE',
                                           config_value)

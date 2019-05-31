@@ -64,6 +64,8 @@ The following is a list of all the available context processor decorators:
 * ``change_password_context_processor``: Change password view
 * ``send_confirmation_context_processor``: Send confirmation view
 * ``send_login_context_processor``: Send login view
+* ``two_factor_setup_context_processor``: Two factor setup view
+* ``two_factor_token_validation_context_processor``: Two factor token validation view
 
 
 Forms

@@ -541,7 +541,7 @@ def two_factor_setup_function():
                 choices=config_value(
                     'TWO_FACTOR_ENABLED_METHODS'),
                 chosen_method=session['primary_method'],
-                **_ctx('two_factor_setup_function'))
+                **_ctx('two_factor_setup'))
 
     if request.is_json:
         return _render_json(form, include_user=False)
@@ -553,7 +553,7 @@ def two_factor_setup_function():
         two_factor_verify_code_form=code_form,
         choices=config_value(
             'TWO_FACTOR_ENABLED_METHODS'),
-        **_ctx('two_factor_setup_function'))
+        **_ctx('two_factor_setup'))
 
 
 def two_factor_token_validation():
@@ -609,7 +609,7 @@ def two_factor_token_validation():
             two_factor_verify_code_form=form,
             choices=config_value(
                 'TWO_FACTOR_ENABLED_METHODS'),
-            **_ctx('two_factor_setup_function'))
+            **_ctx('two_factor_setup'))
 
     # if we were trying to validate an existing method
     else:
@@ -621,7 +621,7 @@ def two_factor_token_validation():
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
             problem=None,
-            **_ctx('two_factor_token_validaion'))
+            **_ctx('two_factor_token_validation'))
 
 
 @anonymous_user_required

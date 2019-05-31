@@ -61,8 +61,8 @@ Thus if the user changes his or her password their existing authentication token
 will become invalid. A new token will need to be retrieved using the user's new
 password.
 
-Two-factor Authentication
--------------------------
+Two-factor Authentication (experimental)
+----------------------------------------
 Two-factor authentication is enabled by generating time-based one time passwords
 (Tokens). The tokens are generated using the users totp secret, which is unique
 per user, and is generated both on first login, and when changing the two-factor
@@ -72,6 +72,13 @@ Google Authenticator. By default, tokens provided by google authenticator are
 valid for 30 seconds, tokens sent by mail for up to 1 minute and tokens sent by
 sms for up to 3 minutes. The QR code used to supply Google Authenticator with
 the secret is generated using the PyQRCode library.
+This feature is marked experimental meaning that backwards incompatible changes
+might occur during minor releases. While the feature is operational, it has these
+known limitations:
+
+    * Limited and incomplete JSON support
+    * Incomplete i18n support
+    * Not enough documentation to use w/o looking at code
 
 Email Confirmation
 ------------------
