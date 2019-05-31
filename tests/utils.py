@@ -12,7 +12,7 @@ from flask import json
 from flask_security import Security
 from flask_security.datastore import SQLAlchemyUserDatastore,\
     SQLAlchemySessionUserDatastore
-from flask_security.utils import encrypt_password
+from flask_security.utils import hash_password
 
 _missing = object
 
@@ -50,20 +50,26 @@ def create_roles(ds):
 
 
 def create_users(ds, count=None):
-    users = [('matt@lp.com', 'matt', 'password', ['admin'], True, 123456),
-             ('joe@lp.com', 'joe', 'password', ['editor'], True, 234567),
+    users = [('matt@lp.com', 'matt', 'password', ['admin'], True, 123456, None, None),
+             ('joe@lp.com', 'joe', 'password', ['editor'], True, 234567, None, None),
              ('dave@lp.com', 'dave', 'password', ['admin', 'editor'], True,
-              345678),
-             ('jill@lp.com', 'jill', 'password', ['author'], True, 456789),
-             ('tiya@lp.com', 'tiya', 'password', [], False, 567890),
-             ('gene@lp.com', 'gene', 'password', [], True, 889900),
-             ('jess@lp.com', 'jess', None, [], True, 678901)]
+              345678, None, None),
+             ('jill@lp.com', 'jill', 'password', ['author'], True, 456789, None, None),
+             ('tiya@lp.com', 'tiya', 'password', [], False, 567890, None, None),
+             ('gene@lp.com', 'gene', 'password', [], True, 889900, None, None),
+             ('jess@lp.com', 'jess', None, [], True, 678901, None, None),
+             ('gal@lp.com', 'gal', 'password', ['admin'], True, 112233,
+              'sms', u'RCTE75AP2GWLZIFR'),
+             ('gal2@lp.com', 'gal2', 'password', ['admin'], True, 223311,
+              'google_authenticator', u'RCTE75AP2GWLZIFR'),
+             ('gal3@lp.com', 'gal3', 'password', ['admin'], True, 331122,
+              'mail', u'RCTE75AP2GWLZIFR')]
     count = count or len(users)
 
     for u in users[:count]:
         pw = u[2]
         if pw is not None:
-            pw = encrypt_password(pw)
+            pw = hash_password(pw)
         roles = [ds.find_or_create_role(rn) for rn in u[3]]
         ds.commit()
         user = ds.create_user(
@@ -71,7 +77,8 @@ def create_users(ds, count=None):
             username=u[1],
             password=pw,
             active=u[4],
-            security_number=u[5])
+            security_number=u[5],
+            two_factor_primary_method=u[6], totp_secret=u[7])
         ds.commit()
         for role in roles:
             ds.add_role_to_user(user, role)

@@ -28,6 +28,7 @@ pip-log.txt
 
 #Virtualenv
 env/
+.venv/
 
 #Editor temporaries
 *~
@@ -45,8 +46,11 @@ Session.vim
 
 .eggs/README.txt
 
-# Idea
-.idea/
-
 # Mac
 .DS_Store
+
+# Pycharm files
+.idea/
+
+# VScode
+.vscode/
