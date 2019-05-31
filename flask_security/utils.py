@@ -598,7 +598,7 @@ class SmsSenderFactory(object):
         return cls.senders[name](*args, **kwargs)
 
 
-try: # pragma: no cover
+try:  # pragma: no cover
     from twilio.rest import Client
 
     class TwilioSmsSender(SmsSenderBaseClass):
