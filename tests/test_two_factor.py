@@ -6,10 +6,10 @@
     two_factor tests
 """
 
-import onetimepass
+from flask import json
 import pytest
 
-from utils import logout
+from utils import get_session, logout
 from flask_security.utils import SmsSenderBaseClass, SmsSenderFactory
 
 pytestmark = pytest.mark.two_factor()
@@ -21,6 +21,8 @@ class SmsTestSender(SmsSenderBaseClass):
 
     def __init__(self):
         super(SmsTestSender, self).__init__()
+        SmsSenderBaseClass.count = 0
+        SmsSenderBaseClass.messages = []
 
     def send_sms(self, from_number, to_number, msg):
         SmsSenderBaseClass.messages.append(msg)
@@ -110,6 +112,8 @@ def test_two_factor_flag(app, client):
                            data=dict(setup="not_a_method"),
                            follow_redirects=True)
     assert b'Marked method is not valid' in response.data
+    session = get_session(response)
+    assert not session['has_two_factor']
 
     # try non-existing setup on setup page (using json)
     json_data = '{"setup": "not_a_method"}'
@@ -133,6 +137,13 @@ def test_two_factor_flag(app, client):
                            follow_redirects=True)
     assert b'"code": 200' in response.data
     assert sms_sender.get_count() == 1
+    session = get_session(response)
+    assert session['email'] == 'gal@lp.com'
+    assert session['has_two_factor']
+    assert session['primary_method'] == 'sms'
+    # Make sure totp_secret it properly encrypted
+    totp_secret = json.loads(session['totp_secret'])
+    assert 'enckey' in totp_secret
 
     code = sms_sender.messages[0].split()[-1]
 
@@ -146,6 +157,11 @@ def test_two_factor_flag(app, client):
                            data=dict(code=code),
                            follow_redirects=True)
     assert b'Your token has been confirmed' in response.data
+
+    # Upon completion, session cookie shouldnt have any two factor stuff in it.
+    session = get_session(response)
+    assert not any(k in session for k in ['email', 'has_two_factor', 'totp_secret',
+                                          'password_confirmed'])
 
     # try confirming password with a wrong one
     response = client.post('/change/two_factor_password_confirmation',
@@ -213,14 +229,22 @@ def test_two_factor_flag(app, client):
     response = client.post('/login', data=json_data,
                            headers={'Content-Type': 'application/json'},
                            follow_redirects=True)
-    totp_secret = u'RCTE75AP2GWLZIFR'
-    code = str(onetimepass.get_totp(totp_secret))
+    session = get_session(response)
+
+    # This shows how dangerous it is to have even an encrypted totp_secret
+    # in the cookie.
+    totp_secret = session['totp_secret']
+    code = app.security._totp_factory.from_source(totp_secret).generate().token
     response = client.post('/two_factor_token_validation/',
                            data=dict(code=code),
                            follow_redirects=True)
     assert b'Your token has been confirmed' in response.data
 
-    logout(client)
+    response = logout(client)
+    session = get_session(response)
+    # Verify that logout clears session info
+    assert not any(k in session for k in ['has_two_factor', 'totp_secret',
+                                          'password_confirmed'])
 
     # Test two-factor authentication first login
     data = dict(email="matt@lp.com", password="password")
@@ -250,8 +274,8 @@ def test_two_factor_flag(app, client):
     response = client.post('/two_factor_setup_function/',
                            data=data, follow_redirects=True)
     assert b'To Which Phone Number Should We Send Code To' in response.data
-    assert sms_sender.get_count() == 2
-    code = sms_sender.messages[1].split()[-1]
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
 
     response = client.post('/two_factor_token_validation/',
                            data=dict(code=code),
@@ -282,3 +306,37 @@ def test_two_factor_flag(app, client):
     message = (b'A mail was sent to us in order' +
                b' to reset your application account')
     assert message in response.data
+
+
+def test_datastore(app, client):
+    # Test that user record is properly set after proper 2FA setup.
+    sms_sender = SmsSenderFactory.createSender('test')
+    json_data = '{"email": "gal@lp.com", "password": "password"}'
+    response = client.post('/login', data=json_data,
+                           headers={'Content-Type': 'application/json'})
+    assert b'"code": 200' in response.data
+    assert sms_sender.get_count() == 1
+    session = get_session(response)
+    assert session['email'] == 'gal@lp.com'
+    assert session['has_two_factor']
+    assert session['primary_method'] == 'sms'
+    # Make sure totp_secret it properly encrypted
+    totp_secret = json.loads(session['totp_secret'])
+    assert 'enckey' in totp_secret
+
+    code = sms_sender.messages[0].split()[-1]
+
+    # sumbit right token and show appropriate response
+    response = client.post('/two_factor_token_validation/',
+                           data=dict(code=code),
+                           follow_redirects=True)
+    assert b'Your token has been confirmed' in response.data
+    session = get_session(response)
+    # Verify that sucessfull login clears session info
+    assert not any(k in session for k in ['has_two_factor', 'totp_secret',
+                                          'password_confirmed'])
+
+    with app.app_context():
+        user = app.security.datastore.find_user(email='gal@lp.com')
+        assert user.two_factor_primary_method == 'sms'
+        assert 'enckey' in user.totp_secret

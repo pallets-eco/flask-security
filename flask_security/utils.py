@@ -29,7 +29,7 @@ from werkzeug.local import LocalProxy
 from .signals import login_instructions_sent, \
     reset_password_instructions_sent, user_registered
 
-try:
+try:  # pragma: no cover
     from urlparse import parse_qsl, urlsplit, urlunsplit
     from urllib import urlencode
 except ImportError:  # pragma: no cover
@@ -572,13 +572,13 @@ class SmsSenderBaseClass(object):
         pass
 
     @abc.abstractmethod
-    def send_sms(self, from_number, to_number, msg):
-        """ Abstract method for sending sms messages"""
+    def send_sms(self, from_number, to_number, msg):  # pragma: no cover
+        """ Abstract method for sending sms messages """
         return
 
 
 class DummySmsSender(SmsSenderBaseClass):
-    def send_sms(self, from_number, to_number, msg):
+    def send_sms(self, from_number, to_number, msg):  # pragma: no cover
         """ Do nothing. """
         return
 

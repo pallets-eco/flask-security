@@ -52,6 +52,8 @@ def app(request):
     app.config['TESTING'] = True
     app.config['LOGIN_DISABLED'] = False
     app.config['WTF_CSRF_ENABLED'] = False
+    app.config['SECURITY_TWO_FACTOR_SECRET'] =\
+        {'1': 'TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B'}
     app.config['SECURITY_TWO_FACTOR_SMS_SERVICE'] = 'test'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

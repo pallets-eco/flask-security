@@ -8,11 +8,19 @@
 
 from flask import Response as BaseResponse
 from flask import json
+try:
+    from flask.json.tag import TaggedJSONSerializer
+except:
+    from flask.sessions import TaggedJSONSerializer
 
 from flask_security import Security
 from flask_security.datastore import SQLAlchemyUserDatastore,\
     SQLAlchemySessionUserDatastore
+from flask_security.twofactor import generate_totp
 from flask_security.utils import hash_password
+
+from itsdangerous import URLSafeTimedSerializer
+from werkzeug.http import parse_cookie
 
 _missing = object
 
@@ -43,27 +51,39 @@ def logout(client, endpoint=None, **kwargs):
     return client.get(endpoint or '/logout', **kwargs)
 
 
+def get_session(response):
+    """ Return session cookie contents.
+    This a base64 encoded json.
+    Returns a dict
+    """
+    cookies = parse_cookie(response.headers['set-cookie'])
+    encoded_cookie = cookies.get('session', None)
+    if not encoded_cookie:
+        return
+    serializer = URLSafeTimedSerializer('secret', serializer=TaggedJSONSerializer())
+    val = serializer.loads_unsafe(encoded_cookie)
+    return val[1]
+
+
 def create_roles(ds):
     for role in ('admin', 'editor', 'author'):
         ds.create_role(name=role)
     ds.commit()
 
 
-def create_users(ds, count=None):
-    users = [('matt@lp.com', 'matt', 'password', ['admin'], True, 123456, None, None),
-             ('joe@lp.com', 'joe', 'password', ['editor'], True, 234567, None, None),
+def create_users(app, ds, count=None):
+    users = [('matt@lp.com', 'matt', 'password', ['admin'], True, 123456, None),
+             ('joe@lp.com', 'joe', 'password', ['editor'], True, 234567, None),
              ('dave@lp.com', 'dave', 'password', ['admin', 'editor'], True,
-              345678, None, None),
-             ('jill@lp.com', 'jill', 'password', ['author'], True, 456789, None, None),
-             ('tiya@lp.com', 'tiya', 'password', [], False, 567890, None, None),
-             ('gene@lp.com', 'gene', 'password', [], True, 889900, None, None),
-             ('jess@lp.com', 'jess', None, [], True, 678901, None, None),
-             ('gal@lp.com', 'gal', 'password', ['admin'], True, 112233,
-              'sms', u'RCTE75AP2GWLZIFR'),
+              345678, None),
+             ('jill@lp.com', 'jill', 'password', ['author'], True, 456789, None),
+             ('tiya@lp.com', 'tiya', 'password', [], False, 567890, None),
+             ('gene@lp.com', 'gene', 'password', [], True, 889900, None),
+             ('jess@lp.com', 'jess', None, [], True, 678901, None),
+             ('gal@lp.com', 'gal', 'password', ['admin'], True, 112233, 'sms'),
              ('gal2@lp.com', 'gal2', 'password', ['admin'], True, 223311,
-              'google_authenticator', u'RCTE75AP2GWLZIFR'),
-             ('gal3@lp.com', 'gal3', 'password', ['admin'], True, 331122,
-              'mail', u'RCTE75AP2GWLZIFR')]
+              'google_authenticator'),
+             ('gal3@lp.com', 'gal3', 'password', ['admin'], True, 331122, 'mail')]
     count = count or len(users)
 
     for u in users[:count]:
@@ -72,13 +92,16 @@ def create_users(ds, count=None):
             pw = hash_password(pw)
         roles = [ds.find_or_create_role(rn) for rn in u[3]]
         ds.commit()
+        totp_secret = None
+        if app.config.get('SECURITY_TWO_FACTOR', None):
+            totp_secret = generate_totp()
         user = ds.create_user(
             email=u[0],
             username=u[1],
             password=pw,
             active=u[4],
             security_number=u[5],
-            two_factor_primary_method=u[6], totp_secret=u[7])
+            two_factor_primary_method=u[6], totp_secret=totp_secret)
         ds.commit()
         for role in roles:
             ds.add_role_to_user(user, role)
@@ -89,7 +112,7 @@ def populate_data(app, user_count=None):
     ds = app.security.datastore
     with app.app_context():
         create_roles(ds)
-        create_users(ds, user_count)
+        create_users(app, ds, user_count)
 
 
 class Response(BaseResponse):  # pragma: no cover

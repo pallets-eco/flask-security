@@ -30,7 +30,7 @@ from .utils import config_value, do_flash, get_message, \
     get_post_register_redirect, get_url, login_user, logout_user, \
     slash_url_suffix
 from .twofactor import send_security_token, generate_totp, \
-    complete_two_factor_process, get_totp_uri
+    complete_two_factor_process, get_totp_uri, tf_clean_session
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions['security'])
@@ -94,8 +94,7 @@ def login():
 
 def logout():
     """View function which handles a logout request."""
-    if config_value('TWO_FACTOR') is True and 'password_confirmed' in session:
-        del session['password_confirmed']
+    tf_clean_session()
 
     if current_user.is_authenticated:
         logout_user()

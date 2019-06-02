@@ -21,7 +21,7 @@ SQLAlchemy Install requirements
 ::
 
      $ mkvirtualenv <your-app-name>
-     $ pip install flask-security-too flask-sqlalchemy
+     $ pip install flask-security-too flask-sqlalchemy cryptography pyqrcode
 
 
 Two-factor Application
@@ -59,7 +59,8 @@ possible using SQLAlchemy:
 
     app.config['SECURITY_TWO_FACTOR_ENABLED_METHODS'] = ['mail',
       'google_authenticator']  # 'sms' also valid but requires an sms provider
-    app.config["SECURITY_TWO_FACTOR"] = True
+    app.config['SECURITY_TWO_FACTOR'] = True
+    app.config['SECURITY_TWO_FACTOR_SECRET'] = '{"1": passlib.totp.generate_secret()}'
     app.config['SECURITY_TWO_FACTOR_RESCUE_MAIL'] = 'put_your_mail@gmail.com'
     app.config['SECURITY_TWO_FACTOR_URI_SERVICE_NAME'] = 'put_your_app_name'
 
@@ -86,7 +87,7 @@ possible using SQLAlchemy:
                                 backref=db.backref('users', lazy='dynamic'))
         phone_number = db.Column(db.String(64))
         two_factor_primary_method = db.Column(db.String(140))
-        totp_secret = db.Column(db.String(64))
+        totp_secret = db.Column(db.String(255))
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
