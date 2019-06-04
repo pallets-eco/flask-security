@@ -66,7 +66,7 @@ Two-factor Authentication (experimental)
 Two-factor authentication is enabled by generating time-based one time passwords
 (Tokens). The tokens are generated using the users totp secret, which is unique
 per user, and is generated both on first login, and when changing the two-factor
-method.(Doing this causes the previous totp secret to become invalid) The token
+method. (Doing this causes the previous totp secret to become invalid) The token
 is provided by one of 3 methods - email, sms (service is not provided), or
 Google Authenticator. By default, tokens provided by google authenticator are
 valid for 30 seconds, tokens sent by mail for up to 1 minute and tokens sent by
@@ -79,6 +79,7 @@ known limitations:
     * Limited and incomplete JSON support
     * Incomplete i18n support
     * Not enough documentation to use w/o looking at code
+    * While confirming 2FA - encrypted TOTP is sent in cookie
 
 Email Confirmation
 ------------------
@@ -153,9 +154,8 @@ Run ``flask --help`` and look for users and roles.
 .. _Click: http://click.pocoo.org/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
 .. _alternative token: https://flask-login.readthedocs.io/en/latest/#alternative-tokens
-.. _Flask-Principal: http://packages.python.org/Flask-Principal/
+.. _Flask-Principal: https://pypi.org/project/Flask-Principal/
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection
-.. _passlib: http://packages.python.org/passlib/
+.. _passlib: https://passlib.readthedocs.io/en/stable/
 .. _bcrypt: https://en.wikipedia.org/wiki/Bcrypt
-.. _onetimepass: https://pypi.python.org/pypi/onetimepass/
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/

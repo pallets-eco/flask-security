@@ -82,8 +82,6 @@ Utils
 
 .. autofunction:: flask_security.utils.verify_and_update_password
 
-.. autofunction:: flask_security.utils.encrypt_password
-
 .. autofunction:: flask_security.utils.hash_password
 
 .. autofunction:: flask_security.utils.url_for_security

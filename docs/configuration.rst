@@ -67,6 +67,10 @@ Core
                                          mail to when they can't complete the
                                          two-factor authentication login.
                                          Defaults to ``no-reply@localhost``.
+``SECURITY_TWO_FACTOR_SECRET``           Secret used to encrypt totp_password both into DB
+                                         and in session cookie. Best practice is to set this
+                                         to '{1: passlib.totp.generate_secret()}'.
+                                         See: `Totp`_ for details.
 ``SECURITY_TOKEN_AUTHENTICATION_KEY``    Specifies the query string parameter to
                                          read when using token authentication.
                                          Defaults to ``auth_token``.
@@ -107,6 +111,7 @@ Core
                                          to e.g. `localhost:8080` does that. Defaults to ``None``
 ======================================== =======================================
 
+.. _Totp: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#totp-encryption-setup
 
 URLs and Views
 --------------
@@ -409,7 +414,7 @@ Miscellaneous
                                               a user. Defaults to ``False``.
 ``SECURITY_TWO_FACTOR_ENABLED_METHODS``       Specifies the default enabled
                                               methods for two-factor
-                                              authentication. defaults to
+                                              authentication. Defaults to
                                               ``['mail', 'google_authenticator',
                                               'sms']`` which are the only
                                               supported method at the moment.

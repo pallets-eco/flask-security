@@ -27,6 +27,7 @@ from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy, Local
 
+from .twofactor import tf_setup
 from .forms import ChangePasswordForm, ConfirmRegisterForm, \
     ForgotPasswordForm, LoginForm, PasswordlessLoginForm, RegisterForm, \
     ResetPasswordForm, SendConfirmationForm, TwoFactorVerifyCodeForm, \
@@ -163,6 +164,7 @@ _default_config = {
     'USE_VERIFY_PASSWORD_CACHE': False,
     'VERIFY_HASH_CACHE_TTL': 60 * 5,
     'VERIFY_HASH_CACHE_MAX_SIZE': 500,
+    'TWO_FACTOR_SECRET': None,
     'TWO_FACTOR_ENABLED_METHODS': ['mail', 'google_authenticator', 'sms'],
     'TWO_FACTOR_URI_SERVICE_NAME': 'service_name',
     'TWO_FACTOR_SMS_SERVICE': 'Dummy',
@@ -558,6 +560,9 @@ class _SecurityState(object):
     def unauthorized_handler(self, fn):
         self._unauthorized_callback = fn
 
+    def totp_factory(self, tf):
+        self._totp_factory = tf
+
 
 class Security(object):
     """The :class:`Security` class initializes the Flask-Security extension.
@@ -652,24 +657,20 @@ class Security(object):
             if state.cli_roles_name:
                 app.cli.add_command(roles, state.cli_roles_name)
 
-        # configuration mismatch check
-        if cv('TWO_FACTOR', app=app) is True and\
-                len(cv('TWO_FACTOR_ENABLED_METHODS', app=app)) < 1:
-            raise ValueError()
-
-        config_value = cv('TWO_FACTOR', app=app)
-        if config_value:
-            self.check_two_factor_modules('onetimepass',
-                                          'TWO_FACTOR', config_value)
+        # Two factor configuration checks and setup
+        if cv('TWO_FACTOR', app=app):
+            if len(cv('TWO_FACTOR_ENABLED_METHODS', app=app)) < 1:
+                raise ValueError('Must configure some TWO_FACTOR_ENABLED_METHODS')
             self.check_two_factor_modules('pyqrcode',
-                                          'TWO_FACTOR', config_value)
+                                          'TWO_FACTOR', cv('TWO_FACTOR', app=app))
+            self.check_two_factor_modules('cryptography', 'TWO_FACTOR_SECRET',
+                                          'has been set')
 
-        config_value = cv('TWO_FACTOR_SMS_SERVICE', app=app)
-
-        if config_value == 'Twilio':
-            self.check_two_factor_modules('twilio',
-                                          'TWO_FACTOR_SMS_SERVICE',
-                                          config_value)
+            if cv('TWO_FACTOR_SMS_SERVICE', app=app) == 'Twilio':  # pragma: no cover
+                self.check_two_factor_modules('twilio',
+                                              'TWO_FACTOR_SMS_SERVICE',
+                                              cv('TWO_FACTOR_SMS_SERVICE', app=app))
+            state.totp_factory(tf_setup(app))
 
         return state
 
