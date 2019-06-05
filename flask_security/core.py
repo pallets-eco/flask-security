@@ -74,6 +74,11 @@ _default_config = {
     'RESET_URL': '/reset',
     'CHANGE_URL': '/change',
     'CONFIRM_URL': '/confirm',
+    'TWO_FACTOR_SETUP_URL': '/tf-setup',
+    'TWO_FACTOR_TOKEN_VALIDATION_URL': '/tf-validate',
+    'TWO_FACTOR_QRCODE_URL': '/tf-qrcode',
+    'TWO_FACTOR_RESCUE_URL': '/tf-rescue',
+    'TWO_FACTOR_CONFIRM_URL': '/tf-confirm',
     'POST_LOGIN_VIEW': '/',
     'POST_LOGOUT_VIEW': '/',
     'CONFIRM_ERROR_VIEW': None,
@@ -553,6 +558,15 @@ class _SecurityState(object):
 
     def mail_context_processor(self, fn):
         self._add_ctx_processor('mail', fn)
+
+    def two_factor_change_method_password_confirmation_context_processor(self, fn):
+        self._add_ctx_processor('two_factor_change_method_password_confirmation', fn)
+
+    def two_factor_setup_context_processor(self, fn):
+        self._add_ctx_processor('two_factor_setup', fn)
+
+    def two_factor_token_validation_context_processor(self, fn):
+        self._add_ctx_processor('two_factor_token_validation', fn)
 
     def send_mail_task(self, fn):
         self._send_mail_task = fn

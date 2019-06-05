@@ -7,7 +7,8 @@
 """
 
 import pytest
-from utils import authenticate
+from test_two_factor import two_factor_authenticate
+from utils import authenticate, logout
 
 
 @pytest.mark.recoverable()
@@ -99,3 +100,47 @@ def test_passwordless_login_context_processor(app, client):
 
     response = client.get('/login')
     assert b'bar' in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    login_user_template='custom_security/login_user.html',
+    two_factor_change_method_password_confirmation_template='custom_security/tfc.html',
+    two_factor_choose_method_template='custom_security/tf_choose.html',
+    two_factor_verify_code_template='custom_security/tf_verify.html')
+def test_two_factor_context_processors(client, app):
+    # Test two factor context processors
+    @app.security.context_processor
+    def default_ctx_processor():
+        return {'global': 'global'}
+
+    @app.security.two_factor_change_method_password_confirmation_context_processor
+    def send_two_factor_confirm():
+        return {'foo': 'bar'}
+
+    two_factor_authenticate(client)
+    response = client.get('/tf-confirm')
+    assert b'global' in response.data
+    assert b'bar' in response.data
+    logout(client)
+
+    @app.security.two_factor_setup_context_processor
+    def send_two_factor_setup():
+        return {'foo': 'bar'}
+
+    # Note this just does initial login on a user that hasn't setup 2FA yet.
+    authenticate(client)
+    response = client.get('/tf-setup')
+    assert b'global' in response.data
+    assert b'bar' in response.data
+    logout(client)
+
+    @app.security.two_factor_token_validation_context_processor
+    def send_two_factor_token_validation():
+        return {'foo': 'bar'}
+
+    two_factor_authenticate(client, validate=False)
+    response = client.get('/tf-rescue')
+    assert b'global' in response.data
+    assert b'bar' in response.data
+    logout(client)
