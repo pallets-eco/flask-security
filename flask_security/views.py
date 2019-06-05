@@ -38,7 +38,7 @@ _security = LocalProxy(lambda: current_app.extensions['security'])
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
-def _render_json(form, include_user=True, include_auth_token=False):
+def _render_json(form, include_user=True, include_auth_token=False, additional=None):
     has_errors = len(form.errors) > 0
 
     if has_errors:
@@ -53,6 +53,8 @@ def _render_json(form, include_user=True, include_auth_token=False):
         if include_auth_token:
             token = form.user.get_auth_token()
             response['user']['authentication_token'] = token
+        if additional:
+            response.update(additional)
 
     return jsonify(dict(meta=dict(code=code), response=response)), code
 
@@ -78,6 +80,9 @@ def login():
         form = form_class(request.form)
 
     if form.validate_on_submit():
+        if config_value('TWO_FACTOR') is True:
+            return _two_factor_login(form)
+
         login_user(form.user, remember=form.remember.data)
         after_this_request(_commit)
 
@@ -442,46 +447,41 @@ def change_password():
     )
 
 
-@anonymous_user_required
-def two_factor_login():
-    """View function for two-factor authentication login"""
+def _two_factor_login(form):
+    """ Helper for two-factor authentication login
+
+    This is called only when login/password validated.
+    """
     # if we already validated email&password, there is no need to do it again
-    form_class = _security.login_form
 
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+    user = form.user
+    session['email'] = user.email
+
+    # Set info into form for JSON response
+    json_response = {'two_factor_required': True}
+    # if user's two-factor properties are not configured
+    if user.two_factor_primary_method is None or\
+            user.totp_secret is None:
+        session['has_two_factor'] = False
+        json_response['two_factor_setup_complete'] = False
+        if not request.is_json:
+            return redirect(url_for('two_factor_setup_function'))
+
+    # if user's two-factor properties are configured
     else:
-        form = form_class()
+        session['has_two_factor'] = True
+        session['primary_method'] = user.two_factor_primary_method
+        session['totp_secret'] = user.totp_secret
+        send_security_token(user=user,
+                            method=user.two_factor_primary_method,
+                            totp_secret=user.totp_secret)
+        json_response['two_factor_setup_complete'] = True
+        json_response['two_factor_primary_method'] = user.two_factor_primary_method
 
-    # if user's email&password approved
-    if form.validate_on_submit():
-        user = form.user
-        session['email'] = user.email
-        # if user's two-factor properties are not configured
+        if not request.is_json:
+            return redirect(url_for('two_factor_token_validation'))
 
-        if user.two_factor_primary_method is None or\
-                user.totp_secret is None:
-            session['has_two_factor'] = False
-            if not request.is_json:
-                return redirect(url_for('two_factor_setup_function'))
-
-        # if user's two-factor properties are configured
-        else:
-            session['has_two_factor'] = True
-            session['primary_method'] = user.two_factor_primary_method
-            session['totp_secret'] = user.totp_secret
-            send_security_token(user=user,
-                                method=user.two_factor_primary_method,
-                                totp_secret=user.totp_secret)
-            if not request.is_json:
-                return redirect(url_for('two_factor_token_validation'))
-
-    if request.is_json:
-        return _render_json(form, include_user=False)
-
-    return _security.render_template(config_value('LOGIN_USER_TEMPLATE'),
-                                     login_user_form=form,
-                                     **_ctx('login'))
+    return _render_json(form, include_auth_token=True, additional=json_response)
 
 
 def two_factor_setup_function():
@@ -772,35 +772,31 @@ def create_blueprint(state, import_name):
                                                     '<token>'),
                  endpoint='token_login')(token_login)
 
-    elif state.two_factor:
+    else:
+        bp.route(state.login_url,
+                 methods=['GET', 'POST'],
+                 endpoint='login')(login)
+
+    if state.two_factor:
         tf_setup_function = 'two_factor_setup_function'
         tf_token_validation = 'two_factor_token_validation'
         tf_qrcode = 'two_factor_qrcode'
         tf_rescue_function = 'two_factor_rescue_function'
         tf_pass_validation = 'two_factor_password_confirmation'
-        bp.route(state.login_url,
-                 methods=['GET', 'POST'],
-                 endpoint='login')(two_factor_login)
-        bp.route('/' + slash_url_suffix('/', tf_setup_function),
+        bp.route(state.two_factor_setup_url,
                  methods=['GET', 'POST'],
                  endpoint=tf_setup_function)(two_factor_setup_function)
-        bp.route('/' + slash_url_suffix('/', tf_token_validation),
+        bp.route(state.two_factor_token_validation_url,
                  methods=['GET', 'POST'],
                  endpoint=tf_token_validation)(two_factor_token_validation)
-        bp.route('/' + slash_url_suffix('/', tf_qrcode),
+        bp.route(state.two_factor_qrcode_url,
                  endpoint=tf_qrcode)(two_factor_qrcode)
-        bp.route('/' + slash_url_suffix('/', tf_rescue_function),
+        bp.route(state.two_factor_rescue_url,
                  methods=['GET', 'POST'],
                  endpoint=tf_rescue_function)(two_factor_rescue_function)
-        bp.route(state.change_url + slash_url_suffix(
-            state.change_url, tf_pass_validation),
-            methods=['GET', 'POST'],
-            endpoint=tf_pass_validation)(two_factor_password_confirmation)
-
-    else:
-        bp.route(state.login_url,
+        bp.route(state.two_factor_confirm_url,
                  methods=['GET', 'POST'],
-                 endpoint='login')(login)
+                 endpoint=tf_pass_validation)(two_factor_password_confirmation)
 
     if state.registerable:
         bp.route(state.register_url,

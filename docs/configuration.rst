@@ -118,77 +118,86 @@ URLs and Views
 
 .. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
 
-=============================== ================================================
-``SECURITY_LOGIN_URL``          Specifies the login URL. Defaults to ``/login``.
-``SECURITY_LOGOUT_URL``         Specifies the logout URL. Defaults to
-                                ``/logout``.
-``SECURITY_REGISTER_URL``       Specifies the register URL. Defaults to
-                                ``/register``.
-``SECURITY_RESET_URL``          Specifies the password reset URL. Defaults to
-                                ``/reset``.
-``SECURITY_CHANGE_URL``         Specifies the password change URL. Defaults to
-                                ``/change``.
-``SECURITY_CONFIRM_URL``        Specifies the email confirmation URL. Defaults
-                                to ``/confirm``.
-``SECURITY_POST_LOGIN_VIEW``    Specifies the default view to redirect to after
-                                a user logs in. This value can be set to a URL
-                                or an endpoint name. Defaults to ``/``.
-``SECURITY_POST_LOGOUT_VIEW``   Specifies the default view to redirect to after
-                                a user logs out. This value can be set to a URL
-                                or an endpoint name. Defaults to ``/``.
-``SECURITY_CONFIRM_ERROR_VIEW`` Specifies the view to redirect to if a
-                                confirmation error occurs. This value can be set
-                                to a URL or an endpoint name. If this value is
-                                ``None``, the user is presented the default view
-                                to resend a confirmation link.
-                                In the case of ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``
-                                query params in the redirect will contain the error.
-                                Defaults to``None``.
-``SECURITY_POST_REGISTER_VIEW`` Specifies the view to redirect to after a user
-                                successfully registers. This value can be set to
-                                a URL or an endpoint name. If this value is
-                                ``None``, the user is redirected to the value of
-                                ``SECURITY_POST_LOGIN_VIEW``. Defaults to
-                                ``None``.
-``SECURITY_POST_CONFIRM_VIEW``  Specifies the view to redirect to after a user
-                                successfully confirms their email. This value
-                                can be set to a URL or an endpoint name. If this
-                                value is ``None``, the user is redirected  to the
-                                value of ``SECURITY_POST_LOGIN_VIEW``. Defaults
-                                to ``None``.
-``SECURITY_POST_RESET_VIEW``    Specifies the view to redirect to after a user
-                                successfully resets their password. This value
-                                can be set to a URL or an endpoint name. If this
-                                value is ``None``, the user is redirected  to the
-                                value of ``SECURITY_POST_LOGIN_VIEW``. Defaults
-                                to ``None``.
-``SECURITY_POST_CHANGE_VIEW``   Specifies the view to redirect to after a user
-                                successfully changes their password. This value
-                                can be set to a URL or an endpoint name. If this
-                                value is ``None``, the user is redirected  to the
-                                value of ``SECURITY_POST_LOGIN_VIEW``. Defaults
-                                to ``None``.
-``SECURITY_UNAUTHORIZED_VIEW``  Specifies the view to redirect to if a user
-                                attempts to access a URL/endpoint that they do
-                                not have permission to access. If this value is
-                                ``None``, the user is presented with a default
-                                HTTP 403 response. Defaults to ``None``.
-``SECURITY_RESET_VIEW``         Specifies the view/URL to redirect to after a GET
-                                reset-password link. This is only valid if
-                                ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
-                                in the redirect will contain the token and email.
-                                Defaults to ``None``
-``SECURITY_RESET_ERROR_VIEW``   Specifies the view/URL to redirect to after a GET
-                                reset-password link when there is an error. This is only valid if
-                                ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
-                                in the redirect will contain the error.
-                                Defaults to ``None``
-``SECURITY_LOGIN_ERROR_VIEW``   Specifies the view/URL to redirect to after a GET
-                                passwordless link when there is an error. This is only valid if
-                                ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
-                                in the redirect will contain the error.
-                                Defaults to ``None``
-=============================== ================================================
+============================================ ================================================
+``SECURITY_LOGIN_URL``                       Specifies the login URL. Defaults to ``/login``.
+``SECURITY_LOGOUT_URL``                      Specifies the logout URL. Defaults to
+                                             ``/logout``.
+``SECURITY_REGISTER_URL``                    Specifies the register URL. Defaults to
+                                             ``/register``.
+``SECURITY_RESET_URL``                       Specifies the password reset URL. Defaults to
+                                             ``/reset``.
+``SECURITY_CHANGE_URL``                      Specifies the password change URL. Defaults to
+                                             ``/change``.
+``SECURITY_CONFIRM_URL``                     Specifies the email confirmation URL. Defaults
+                                             to ``/confirm``.
+``SECURITY_TWO_FACTOR_SETUP_URL``            Specifies the two factor setup URL. Defaults to ``/tf-setup``.
+``SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL`` Specifies the two factor token validation URL.
+                                             Defaults to ``/tf-validate``.
+``SECURITY_TWO_FACTOR_QRCODE_URL``           Specifies the two factor request QrCode URL.
+                                             Defaults to ``/tf-qrcode``.
+``SECURITY_TWO_FACTOR_RESCUE_URL``           Specifies the two factor rescue URL.
+                                             Defaults to ``/tf-rescue``.
+``SECURITY_TWO_FACTOR_CONFIRM_URL``          Specifies the two factor password confirmation URL.
+                                             Defaults to ``/tf-confirm``.
+``SECURITY_POST_LOGIN_VIEW``                 Specifies the default view to redirect to after
+                                             a user logs in. This value can be set to a URL
+                                             or an endpoint name. Defaults to ``/``.
+``SECURITY_POST_LOGOUT_VIEW``                Specifies the default view to redirect to after
+                                             a user logs out. This value can be set to a URL
+                                             or an endpoint name. Defaults to ``/``.
+``SECURITY_CONFIRM_ERROR_VIEW``              Specifies the view to redirect to if a
+                                             confirmation error occurs. This value can be set
+                                             to a URL or an endpoint name. If this value is
+                                             ``None``, the user is presented the default view
+                                             to resend a confirmation link.
+                                             In the case of ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``
+                                             query params in the redirect will contain the error.
+                                             Defaults to``None``.
+``SECURITY_POST_REGISTER_VIEW``              Specifies the view to redirect to after a user
+                                             successfully registers. This value can be set to
+                                             a URL or an endpoint name. If this value is
+                                             ``None``, the user is redirected to the value of
+                                             ``SECURITY_POST_LOGIN_VIEW``. Defaults to
+                                             ``None``.
+``SECURITY_POST_CONFIRM_VIEW``               Specifies the view to redirect to after a user
+                                             successfully confirms their email. This value
+                                             can be set to a URL or an endpoint name. If this
+                                             value is ``None``, the user is redirected  to the
+                                             value of ``SECURITY_POST_LOGIN_VIEW``. Defaults
+                                             to ``None``.
+``SECURITY_POST_RESET_VIEW``                 Specifies the view to redirect to after a user
+                                             successfully resets their password. This value
+                                             can be set to a URL or an endpoint name. If this
+                                             value is ``None``, the user is redirected  to the
+                                             value of ``SECURITY_POST_LOGIN_VIEW``. Defaults
+                                             to ``None``.
+``SECURITY_POST_CHANGE_VIEW``                Specifies the view to redirect to after a user
+                                             successfully changes their password. This value
+                                             can be set to a URL or an endpoint name. If this
+                                             value is ``None``, the user is redirected  to the
+                                             value of ``SECURITY_POST_LOGIN_VIEW``. Defaults
+                                             to ``None``.
+``SECURITY_UNAUTHORIZED_VIEW``               Specifies the view to redirect to if a user
+                                             attempts to access a URL/endpoint that they do
+                                             not have permission to access. If this value is
+                                             ``None``, the user is presented with a default
+                                             HTTP 403 response. Defaults to ``None``.
+``SECURITY_RESET_VIEW``                      Specifies the view/URL to redirect to after a GET
+                                             reset-password link. This is only valid if
+                                             ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
+                                             in the redirect will contain the token and email.
+                                             Defaults to ``None``
+``SECURITY_RESET_ERROR_VIEW``                Specifies the view/URL to redirect to after a GET
+                                             reset-password link when there is an error. This is only valid if
+                                             ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
+                                             in the redirect will contain the error.
+                                             Defaults to ``None``
+``SECURITY_LOGIN_ERROR_VIEW``                Specifies the view/URL to redirect to after a GET
+                                             passwordless link when there is an error. This is only valid if
+                                             ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``. Query params
+                                             in the redirect will contain the error.
+                                             Defaults to ``None``
+============================================ ================================================
 
 
 Template Paths
