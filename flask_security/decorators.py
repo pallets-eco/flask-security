@@ -12,8 +12,15 @@
 from collections import namedtuple
 from functools import wraps
 
-from flask import Response, _request_ctx_stack, abort, current_app, redirect, \
-    request, url_for
+from flask import (
+    Response,
+    _request_ctx_stack,
+    abort,
+    current_app,
+    redirect,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required  # pragma: no flakes
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from werkzeug.local import LocalProxy
@@ -22,7 +29,7 @@ from werkzeug.routing import BuildError
 from . import utils
 
 # Convenient references
-_security = LocalProxy(lambda: current_app.extensions['security'])
+_security = LocalProxy(lambda: current_app.extensions["security"])
 
 
 _default_unauthorized_html = """
@@ -33,7 +40,7 @@ _default_unauthorized_html = """
     </p>
     """
 
-BasicAuth = namedtuple('BasicAuth', 'username, password')
+BasicAuth = namedtuple("BasicAuth", "username, password")
 
 
 def _get_unauthorized_response(text=None, headers=None):
@@ -43,7 +50,7 @@ def _get_unauthorized_response(text=None, headers=None):
 
 
 def _get_unauthorized_view():
-    view = utils.config_value('UNAUTHORIZED_VIEW')
+    view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
             view = view()
@@ -52,10 +59,11 @@ def _get_unauthorized_view():
                 view = url_for(view)
             except BuildError:
                 view = None
-        utils.do_flash(*utils.get_message('UNAUTHORIZED'))
-        redirect_to = '/'
-        if (request.referrer and
-                not request.referrer.split('?')[0].endswith(request.path)):
+        utils.do_flash(*utils.get_message("UNAUTHORIZED"))
+        redirect_to = "/"
+        if request.referrer and not request.referrer.split("?")[0].endswith(
+            request.path
+        ):
             redirect_to = request.referrer
 
         return redirect(view or redirect_to)
@@ -103,10 +111,10 @@ def http_auth_required(realm):
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
             else:
-                r = _security.default_http_auth_realm \
-                    if callable(realm) else realm
-                h = {'WWW-Authenticate': 'Basic realm="%s"' % r}
+                r = _security.default_http_auth_realm if callable(realm) else realm
+                h = {"WWW-Authenticate": 'Basic realm="%s"' % r}
                 return _get_unauthorized_response(headers=h)
+
         return wrapper
 
     if callable(realm):
@@ -130,6 +138,7 @@ def auth_token_required(fn):
             return _security._unauthorized_callback()
         else:
             return _get_unauthorized_response()
+
     return decorated
 
 
@@ -146,28 +155,31 @@ def auth_required(*auth_methods):
     :param auth_methods: Specified mechanisms (token, basic, session)
     """
     login_mechanisms = {
-        'token': lambda: _check_token(),
-        'basic': lambda: _check_http_auth(),
-        'session': lambda: current_user.is_authenticated
+        "token": lambda: _check_token(),
+        "basic": lambda: _check_http_auth(),
+        "session": lambda: current_user.is_authenticated,
     }
 
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
             h = {}
-            mechanisms = [(method, login_mechanisms.get(method))
-                          for method in auth_methods]
+            mechanisms = [
+                (method, login_mechanisms.get(method)) for method in auth_methods
+            ]
             for method, mechanism in mechanisms:
                 if mechanism and mechanism():
                     return fn(*args, **kwargs)
-                elif method == 'basic':
+                elif method == "basic":
                     r = _security.default_http_auth_realm
-                    h['WWW-Authenticate'] = 'Basic realm="%s"' % r
+                    h["WWW-Authenticate"] = 'Basic realm="%s"' % r
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
             else:
                 return _get_unauthorized_response(headers=h)
+
         return decorated_view
+
     return wrapper
 
 
@@ -185,6 +197,7 @@ def roles_required(*roles):
 
     :param roles: The required roles.
     """
+
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
@@ -196,7 +209,9 @@ def roles_required(*roles):
                     else:
                         return _get_unauthorized_view()
             return fn(*args, **kwargs)
+
         return decorated_view
+
     return wrapper
 
 
@@ -214,6 +229,7 @@ def roles_accepted(*roles):
 
     :param roles: The possible roles.
     """
+
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
@@ -224,7 +240,9 @@ def roles_accepted(*roles):
                 return _security._unauthorized_callback()
             else:
                 return _get_unauthorized_view()
+
         return decorated_view
+
     return wrapper
 
 
@@ -234,4 +252,5 @@ def anonymous_user_required(f):
         if current_user.is_authenticated:
             return redirect(utils.get_url(_security.post_login_view))
         return f(*args, **kwargs)
+
     return wrapper

@@ -21,7 +21,7 @@ class VerifyHashCache:
     run on few processes as cache is only shared between threads."""
 
     def __init__(self):
-        ttl = config_value("VERIFY_HASH_CACHE_TTL", default=(60*5))
+        ttl = config_value("VERIFY_HASH_CACHE_TTL", default=(60 * 5))
         max_size = config_value("VERIFY_HASH_CACHE_MAX_SIZE", default=500)
         self._cache = TTLCache(max_size, ttl)
 

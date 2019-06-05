@@ -121,5 +121,4 @@ def test_request_loader_using_cache(app):
         app.extensions["security"] = MockExtensionSecurity()
         _request_loader(MockRequest())
         assert local_cache.verify_hash_cache is not None
-        assert local_cache.verify_hash_cache.has_verify_hash_cache(
-            MockUser(1, "token"))
+        assert local_cache.verify_hash_cache.has_verify_hash_cache(MockUser(1, "token"))

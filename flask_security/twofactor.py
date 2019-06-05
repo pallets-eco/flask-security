@@ -15,12 +15,18 @@ from passlib.exc import TokenError
 from flask import current_app as app, session
 from werkzeug.local import LocalProxy
 
-from .utils import send_mail, config_value, get_message, do_flash,\
-    SmsSenderFactory, login_user
+from .utils import (
+    send_mail,
+    config_value,
+    get_message,
+    do_flash,
+    SmsSenderFactory,
+    login_user,
+)
 from .signals import user_two_factored, two_factor_method_changed
 
 # Convenient references
-_security = LocalProxy(lambda: app.extensions['security'])
+_security = LocalProxy(lambda: app.extensions["security"])
 
 _datastore = LocalProxy(lambda: _security.datastore)
 
@@ -30,22 +36,30 @@ def tf_setup(app):
 
     The TWO_FACTOR_SECRET is used to encrypt the per-user totp_secret on disk.
     """
-    secrets = config_value('TWO_FACTOR_SECRET', app=app)
+    secrets = config_value("TWO_FACTOR_SECRET", app=app)
     # This should be a dict with at least one entry
     if not isinstance(secrets, dict) or len(secrets) < 1:
-        raise ValueError('TWO_FACTOR_SECRET needs to be a dict with at least one'
-                         'entry')
-    return TOTP.using(issuer=config_value('TWO_FACTOR_URI_SERVICE_NAME', app=app),
-                      secrets=secrets)
+        raise ValueError(
+            "TWO_FACTOR_SECRET needs to be a dict with at least one" "entry"
+        )
+    return TOTP.using(
+        issuer=config_value("TWO_FACTOR_URI_SERVICE_NAME", app=app), secrets=secrets
+    )
 
 
 def tf_clean_session():
     """
     Clean out ALL stuff stored in session (e.g. on logout)
     """
-    if config_value('TWO_FACTOR'):
-        for k in ['email', 'totp_secret', 'password_confirmed', 'phone_number',
-                  'primary_method', 'has_two_factor']:
+    if config_value("TWO_FACTOR"):
+        for k in [
+            "email",
+            "totp_secret",
+            "password_confirmed",
+            "phone_number",
+            "primary_method",
+            "has_two_factor",
+        ]:
             session.pop(k, None)
 
 
@@ -57,26 +71,27 @@ def send_security_token(user, method, totp_secret):
     :param totp_secret: a unique shared secret of the user
     """
     token_to_be_sent = get_totp_password(totp_secret)
-    if method == 'mail':
-        send_mail(config_value('EMAIL_SUBJECT_TWO_FACTOR'),
-                  user.email,
-                  'two_factor_instructions',
-                  user=user,
-                  token=token_to_be_sent)
-    elif method == 'sms':
+    if method == "mail":
+        send_mail(
+            config_value("EMAIL_SUBJECT_TWO_FACTOR"),
+            user.email,
+            "two_factor_instructions",
+            user=user,
+            token=token_to_be_sent,
+        )
+    elif method == "sms":
         msg = "Use this code to log in: %s" % token_to_be_sent
-        from_number = config_value('TWO_FACTOR_SMS_SERVICE_CONFIG')[
-            'PHONE_NUMBER']
-        if 'phone_number' in session:
-            to_number = session['phone_number']
+        from_number = config_value("TWO_FACTOR_SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
+        if "phone_number" in session:
+            to_number = session["phone_number"]
         else:
             to_number = user.phone_number
         sms_sender = SmsSenderFactory.createSender(
-            config_value('TWO_FACTOR_SMS_SERVICE'))
-        sms_sender.send_sms(from_number=from_number,
-                            to_number=to_number, msg=msg)
+            config_value("TWO_FACTOR_SMS_SERVICE")
+        )
+        sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=msg)
 
-    elif method == 'google_authenticator':
+    elif method == "google_authenticator":
         # password are generated automatically in the google authenticator app
         pass
 
@@ -89,8 +104,8 @@ def get_totp_uri(username, totp_secret):
     :return:
     """
     tp = _security._totp_factory.from_source(totp_secret)
-    service_name = config_value('TWO_FACTOR_URI_SERVICE_NAME')
-    return tp.to_uri(username + '@' + service_name)
+    service_name = config_value("TWO_FACTOR_URI_SERVICE_NAME")
+    return tp.to_uri(username + "@" + service_name)
 
 
 def verify_totp(token, totp_secret, window=0):
@@ -135,35 +150,36 @@ def complete_two_factor_process(user):
      and perform action accordingly
     :param user - user's to update in database and log in if necessary
     """
-    totp_secret_changed = user.totp_secret != session['totp_secret']
-    if totp_secret_changed or user.two_factor_primary_method\
-            != session['primary_method']:
-        user.totp_secret = session['totp_secret']
-        user.two_factor_primary_method = session['primary_method']
+    totp_secret_changed = user.totp_secret != session["totp_secret"]
+    if (
+        totp_secret_changed
+        or user.two_factor_primary_method != session["primary_method"]
+    ):
+        user.totp_secret = session["totp_secret"]
+        user.two_factor_primary_method = session["primary_method"]
 
-        if 'phone_number' in session:
-            user.phone_number = session['phone_number']
-            del session['phone_number']
+        if "phone_number" in session:
+            user.phone_number = session["phone_number"]
+            del session["phone_number"]
 
         _datastore.put(user)
 
-    del session['primary_method']
-    del session['totp_secret']
+    del session["primary_method"]
+    del session["totp_secret"]
 
     # if we are changing two-factor method
-    if 'password_confirmed' in session:
-        del session['password_confirmed']
+    if "password_confirmed" in session:
+        del session["password_confirmed"]
         # TODO Flashing shouldn't occur here - should be at view level to can
         # make sure not to do it for json requests.
-        do_flash(*get_message('TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL'))
-        two_factor_method_changed.send(app._get_current_object(),
-                                       user=user)
+        do_flash(*get_message("TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL"))
+        two_factor_method_changed.send(app._get_current_object(), user=user)
 
     # if we are logging in for the first time
     else:
-        del session['email']
-        del session['has_two_factor']
-        do_flash(*get_message('TWO_FACTOR_LOGIN_SUCCESSFUL'))
+        del session["email"]
+        del session["has_two_factor"]
+        do_flash(*get_message("TWO_FACTOR_LOGIN_SUCCESSFUL"))
         user_two_factored.send(app._get_current_object(), user=user)
         login_user(user)
     return

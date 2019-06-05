@@ -16,7 +16,7 @@ from .signals import login_instructions_sent
 from .utils import config_value, get_token_status, url_for_security
 
 # Convenient references
-_security = LocalProxy(lambda: app.extensions['security'])
+_security = LocalProxy(lambda: app.extensions["security"])
 
 _datastore = LocalProxy(lambda: _security.datastore)
 
@@ -28,13 +28,19 @@ def send_login_instructions(user):
     :param token: The login token
     """
     token = generate_login_token(user)
-    login_link = url_for_security('token_login', token=token, _external=True)
+    login_link = url_for_security("token_login", token=token, _external=True)
 
-    _security.send_mail(config_value('EMAIL_SUBJECT_PASSWORDLESS'), user.email,
-                        'login_instructions', user=user, login_link=login_link)
+    _security.send_mail(
+        config_value("EMAIL_SUBJECT_PASSWORDLESS"),
+        user.email,
+        "login_instructions",
+        user=user,
+        login_link=login_link,
+    )
 
-    login_instructions_sent.send(app._get_current_object(), user=user,
-                                 login_token=token)
+    login_instructions_sent.send(
+        app._get_current_object(), user=user, login_token=token
+    )
 
 
 def generate_login_token(user):
@@ -53,4 +59,4 @@ def login_token_status(token):
 
     :param token: The login token
     """
-    return get_token_status(token, 'login', 'LOGIN')
+    return get_token_status(token, "login", "LOGIN")

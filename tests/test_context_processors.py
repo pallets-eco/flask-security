@@ -17,130 +17,132 @@ from utils import authenticate, logout
 @pytest.mark.changeable()
 @pytest.mark.settings(
     login_without_confirmation=True,
-    change_password_template='custom_security/change_password.html',
-    login_user_template='custom_security/login_user.html',
-    reset_password_template='custom_security/reset_password.html',
-    forgot_password_template='custom_security/forgot_password.html',
-    send_confirmation_template='custom_security/send_confirmation.html',
-    register_user_template='custom_security/register_user.html')
+    change_password_template="custom_security/change_password.html",
+    login_user_template="custom_security/login_user.html",
+    reset_password_template="custom_security/reset_password.html",
+    forgot_password_template="custom_security/forgot_password.html",
+    send_confirmation_template="custom_security/send_confirmation.html",
+    register_user_template="custom_security/register_user.html",
+)
 def test_context_processors(client, app):
     @app.security.context_processor
     def default_ctx_processor():
-        return {'global': 'global'}
+        return {"global": "global"}
 
     @app.security.forgot_password_context_processor
     def forgot_password():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
-    response = client.get('/reset')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/reset")
+    assert b"global" in response.data
+    assert b"bar" in response.data
 
     @app.security.login_context_processor
     def login():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
-    response = client.get('/login')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/login")
+    assert b"global" in response.data
+    assert b"bar" in response.data
 
     @app.security.register_context_processor
     def register():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
-    response = client.get('/register')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/register")
+    assert b"global" in response.data
+    assert b"bar" in response.data
 
     @app.security.reset_password_context_processor
     def reset_password():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
-    response = client.get('/reset')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/reset")
+    assert b"global" in response.data
+    assert b"bar" in response.data
 
     @app.security.change_password_context_processor
     def change_password():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
     authenticate(client)
-    response = client.get('/change')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/change")
+    assert b"global" in response.data
+    assert b"bar" in response.data
 
     @app.security.send_confirmation_context_processor
     def send_confirmation():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
-    response = client.get('/confirm')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/confirm")
+    assert b"global" in response.data
+    assert b"bar" in response.data
 
     @app.security.mail_context_processor
     def mail():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
-    client.get('/logout')
+    client.get("/logout")
 
     with app.mail.record_messages() as outbox:
-        client.post('/reset', data=dict(email='matt@lp.com'))
+        client.post("/reset", data=dict(email="matt@lp.com"))
 
     email = outbox[0]
-    assert 'global' in email.html
-    assert 'bar' in email.html
+    assert "global" in email.html
+    assert "bar" in email.html
 
 
 @pytest.mark.passwordless()
-@pytest.mark.settings(send_login_template='custom_security/send_login.html')
+@pytest.mark.settings(send_login_template="custom_security/send_login.html")
 def test_passwordless_login_context_processor(app, client):
     @app.security.send_login_context_processor
     def send_login():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
-    response = client.get('/login')
-    assert b'bar' in response.data
+    response = client.get("/login")
+    assert b"bar" in response.data
 
 
 @pytest.mark.two_factor()
 @pytest.mark.settings(
-    login_user_template='custom_security/login_user.html',
-    two_factor_change_method_password_confirmation_template='custom_security/tfc.html',
-    two_factor_choose_method_template='custom_security/tf_choose.html',
-    two_factor_verify_code_template='custom_security/tf_verify.html')
+    login_user_template="custom_security/login_user.html",
+    two_factor_change_method_password_confirmation_template="custom_security/tfc.html",
+    two_factor_choose_method_template="custom_security/tf_choose.html",
+    two_factor_verify_code_template="custom_security/tf_verify.html",
+)
 def test_two_factor_context_processors(client, app):
     # Test two factor context processors
     @app.security.context_processor
     def default_ctx_processor():
-        return {'global': 'global'}
+        return {"global": "global"}
 
     @app.security.two_factor_change_method_password_confirmation_context_processor
     def send_two_factor_confirm():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
     two_factor_authenticate(client)
-    response = client.get('/tf-confirm')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/tf-confirm")
+    assert b"global" in response.data
+    assert b"bar" in response.data
     logout(client)
 
     @app.security.two_factor_setup_context_processor
     def send_two_factor_setup():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
     # Note this just does initial login on a user that hasn't setup 2FA yet.
     authenticate(client)
-    response = client.get('/tf-setup')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/tf-setup")
+    assert b"global" in response.data
+    assert b"bar" in response.data
     logout(client)
 
     @app.security.two_factor_token_validation_context_processor
     def send_two_factor_token_validation():
-        return {'foo': 'bar'}
+        return {"foo": "bar"}
 
     two_factor_authenticate(client, validate=False)
-    response = client.get('/tf-rescue')
-    assert b'global' in response.data
-    assert b'bar' in response.data
+    response = client.get("/tf-rescue")
+    assert b"global" in response.data
+    assert b"bar" in response.data
     logout(client)
