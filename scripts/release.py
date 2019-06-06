@@ -31,7 +31,7 @@ def parse_changelog():
     with open("CHANGES") as f:
         lineiter = iter(f)
         for line in lineiter:
-            match = re.search("^Version\s+(.*)", line.strip())
+            match = re.search("^Version\s+(.*)", line.strip())  # noqa
 
             if match is None:
                 continue

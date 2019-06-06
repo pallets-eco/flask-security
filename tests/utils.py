@@ -11,7 +11,7 @@ from flask import json
 
 try:
     from flask.json.tag import TaggedJSONSerializer
-except:
+except Exception:
     from flask.sessions import TaggedJSONSerializer
 
 from flask_security import Security

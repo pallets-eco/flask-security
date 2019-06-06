@@ -12,6 +12,7 @@ var
 sdist
 develop-eggs
 .installed.cfg
+pip-wheel-metadata/
 
 # Installer logs
 pip-log.txt
@@ -54,3 +55,6 @@ Session.vim
 
 # VScode
 .vscode/
+
+# pre-commit config
+.pre-commit-config.yaml

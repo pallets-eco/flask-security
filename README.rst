@@ -22,6 +22,9 @@ Flask-Security
     :target: https://flask-security-too.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/python/black
+
 Quickly add security features to your Flask application.
 
 Notes on this repo
