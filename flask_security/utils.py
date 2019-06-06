@@ -53,11 +53,11 @@ localize_callback = LocalProxy(lambda: _security.i18n_domain.gettext)
 PY3 = sys.version_info[0] == 3
 
 if PY3:  # pragma: no cover
-    string_types = (str,)  # pragma: no flakes
-    text_type = str  # pragma: no flakes
+    string_types = (str,)  # noqa
+    text_type = str  # noqa
 else:  # pragma: no cover
-    string_types = (basestring,)  # pragma: no flakes
-    text_type = unicode  # pragma: no flakes
+    string_types = (basestring,)  # noqa
+    text_type = unicode  # noqa
 
 
 def _(translate):
@@ -619,5 +619,5 @@ try:  # pragma: no cover
             client.messages.create(to=to_number, from_=from_number, body=msg)
 
     SmsSenderFactory.senders["Twilio"] = TwilioSmsSender
-except:
+except Exception:
     pass

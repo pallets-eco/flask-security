@@ -117,7 +117,7 @@ _default_config = {
     "SEND_LOGIN_TEMPLATE": "security/send_login.html",
     "TWO_FACTOR_VERIFY_CODE_TEMPLATE": "security/two_factor_verify_code.html",
     "TWO_FACTOR_CHOOSE_METHOD_TEMPLATE": "security/two_factor_choose_method.html",
-    "TWO_FACTOR_CHANGE_METHOD_PASSWORD_CONFIRMATION_TEMPLATE": "security/two_factor_change_method_password_confirmation.html",
+    "TWO_FACTOR_CHANGE_METHOD_PASSWORD_CONFIRMATION_TEMPLATE": "security/two_factor_change_method_password_confirmation.html",  # noqa: E501
     "CONFIRMABLE": False,
     "REGISTERABLE": False,
     "RECOVERABLE": False,
@@ -299,7 +299,7 @@ _default_forms = {
     "passwordless_login_form": PasswordlessLoginForm,
     "two_factor_verify_code_form": TwoFactorVerifyCodeForm,
     "two_factor_setup_form": TwoFactorSetupForm,
-    "two_factor_change_method_verify_password_form": TwoFactorChangeMethodVerifyPasswordForm,
+    "two_factor_change_method_verify_password_form": TwoFactorChangeMethodVerifyPasswordForm,  # noqa: E501
     "two_factor_rescue_form": TwoFactorRescueForm,
 }
 
@@ -325,7 +325,7 @@ def _request_loader(request):
             token, max_age=_security.token_max_age
         )
         user = _security.datastore.find_user(id=data[0])
-    except:
+    except Exception:
         user = None
 
     if not user:

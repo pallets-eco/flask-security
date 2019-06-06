@@ -21,7 +21,7 @@ from flask import (
     request,
     url_for,
 )
-from flask_login import current_user, login_required  # pragma: no flakes
+from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from werkzeug.local import LocalProxy
 from werkzeug.routing import BuildError
