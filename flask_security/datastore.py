@@ -63,8 +63,12 @@ def with_pony_session(f):
     def decorator(*args, **kwargs):
         from pony.orm import db_session
         from pony.orm.core import local
-        from flask import after_this_request, current_app, has_app_context, \
-            has_request_context
+        from flask import (
+            after_this_request,
+            current_app,
+            has_app_context,
+            has_request_context,
+        )
         from flask.signals import appcontext_popped
 
         register = local.db_context_counter == 0
@@ -75,20 +79,23 @@ def with_pony_session(f):
 
         if register:
             if has_request_context():
+
                 @after_this_request
                 def pop(request):
                     db_session.__exit__()
                     return request
+
             elif has_app_context():
-                @appcontext_popped.connect_via(
-                    current_app._get_current_object()
-                )
+
+                @appcontext_popped.connect_via(current_app._get_current_object())
                 def pop(sender, *args, **kwargs):
                     while local.db_context_counter:
                         db_session.__exit__()
+
             else:
-                raise RuntimeError('Needs app or request context')
+                raise RuntimeError("Needs app or request context")
         return result
+
     return decorator
 
 
@@ -124,13 +131,13 @@ class UserDatastore(object):
         return user, role
 
     def _prepare_create_user_args(self, **kwargs):
-        kwargs.setdefault('active', True)
-        roles = kwargs.get('roles', [])
+        kwargs.setdefault("active", True)
+        roles = kwargs.get("roles", [])
         for i, role in enumerate(roles):
             rn = role.name if isinstance(role, self.role_model) else role
             # see if the role exists
             roles[i] = self.find_role(rn)
-        kwargs['roles'] = roles
+        kwargs["roles"] = roles
         return kwargs
 
     def _is_numeric(self, value):
@@ -246,9 +253,10 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         from sqlalchemy.sql import sqltypes
 
         user_model_query = self.user_model.query
-        if hasattr(self.user_model, 'roles'):
+        if hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
-            user_model_query = user_model_query.options(joinedload('roles'))
+
+            user_model_query = user_model_query.options(joinedload("roles"))
 
         # To support both numeric and string primary keys, and support
         # calling this routine with either a numeric value or a string
@@ -285,9 +293,10 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
     def find_user(self, **kwargs):
         query = self.user_model.query
-        if hasattr(self.user_model, 'roles'):
+        if hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
-            query = query.options(joinedload('roles'))
+
+            query = query.options(joinedload("roles"))
 
         return query.filter_by(**kwargs).first()
 
@@ -295,14 +304,12 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         return self.role_model.query.filter_by(name=role).first()
 
 
-class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore,
-                                     SQLAlchemyDatastore):
+class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastore):
     """A SQLAlchemy datastore implementation for Flask-Security that assumes the
     use of the flask_sqlalchemy_session extension.
     """
 
     def __init__(self, session, user_model, role_model):
-
         class PretendFlaskSQLAlchemyDb(object):
             """ This is a pretend db object, so we can just pass in a session.
             """
@@ -310,10 +317,9 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore,
             def __init__(self, session):
                 self.session = session
 
-        SQLAlchemyUserDatastore.__init__(self,
-                                         PretendFlaskSQLAlchemyDb(session),
-                                         user_model,
-                                         role_model)
+        SQLAlchemyUserDatastore.__init__(
+            self, PretendFlaskSQLAlchemyDb(session), user_model, role_model
+        )
 
     def commit(self):
         # Old flask-sqlalchemy adds this weird attribute for tracking
@@ -322,6 +328,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore,
             super(SQLAlchemySessionUserDatastore, self).commit()
         except AttributeError:
             import sqlalchemy
+
             sqlalchemy.orm.Session._model_changes = {}
             super(SQLAlchemySessionUserDatastore, self).commit()
 
@@ -337,6 +344,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
 
     def get_user(self, identifier):
         from mongoengine import ValidationError
+
         try:
             return self.user_model.objects(id=identifier).first()
         except (ValidationError, ValueError):
@@ -345,7 +353,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         is_numeric = self._is_numeric(identifier)
 
         for attr in get_identity_attributes():
-            query_key = attr if is_numeric else '%s__iexact' % attr
+            query_key = attr if is_numeric else "%s__iexact" % attr
             query = {query_key: identifier}
             try:
                 rv = self.user_model.objects(**query).first()
@@ -399,6 +407,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
     def get_user(self, identifier):
         from peewee import fn as peeweeFn
         from peewee import IntegerField
+
         try:
             return self.user_model.get(self.user_model.id == identifier)
         except (self.user_model.DoesNotExist, ValueError):
@@ -413,7 +422,8 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
                     return self.user_model.get(column == identifier)
                 elif not attr_isnumeric and not self._is_numeric(identifier):
                     return self.user_model.get(
-                        peeweeFn.Lower(column) == peeweeFn.Lower(identifier))
+                        peeweeFn.Lower(column) == peeweeFn.Lower(identifier)
+                    )
             except (self.user_model.DoesNotExist, ValueError):
                 pass
 
@@ -431,7 +441,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
 
     def create_user(self, **kwargs):
         """Creates and returns a new user from the given parameters."""
-        roles = kwargs.pop('roles', [])
+        roles = kwargs.pop("roles", [])
         user = self.user_model(**self._prepare_create_user_args(**kwargs))
         user = self.put(user)
         for role in roles:
@@ -447,8 +457,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         """
         user, role = self._prepare_role_modify_args(user, role)
         result = self.UserRole.select().where(
-            self.UserRole.user == user.id,
-            self.UserRole.role == role.id,
+            self.UserRole.user == user.id, self.UserRole.role == role.id
         )
         if result.count():
             return False
@@ -464,12 +473,12 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         """
         user, role = self._prepare_role_modify_args(user, role)
         result = self.UserRole.select().where(
-            self.UserRole.user == user,
-            self.UserRole.role == role,
+            self.UserRole.user == user, self.UserRole.role == role
         )
         if result.count():
             query = self.UserRole.delete().where(
-                self.UserRole.user == user, self.UserRole.role == role)
+                self.UserRole.user == user, self.UserRole.role == role
+            )
             query.execute()
             return True
         else:
@@ -490,6 +499,7 @@ class PonyUserDatastore(PonyDatastore, UserDatastore):
     @with_pony_session
     def get_user(self, identifier):
         from pony.orm.core import ObjectNotFound
+
         try:
             return self.user_model[identifier]
         except (ObjectNotFound, ValueError):

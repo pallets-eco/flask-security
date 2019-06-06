@@ -25,12 +25,12 @@ except ImportError:
     import json
 
 warnings.warn(
-    'Please use flask_security.cli instead of flask_security.script. '
-    'Support for Flask-Script will be removed in 2.1.',
-    DeprecationWarning
+    "Please use flask_security.cli instead of flask_security.script. "
+    "Support for Flask-Script will be removed in 2.1.",
+    DeprecationWarning,
 )
 
-_datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
+_datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
 
 
 def pprint(obj):
@@ -41,6 +41,7 @@ def commit(fn):
     def wrapper(*args, **kwargs):
         fn(*args, **kwargs)
         _datastore.commit()
+
     return wrapper
 
 
@@ -48,30 +49,30 @@ class CreateUserCommand(Command):
     """Create a user"""
 
     option_list = (
-        Option('-e', '--email', dest='email', default=None),
-        Option('-p', '--password', dest='password', default=None),
-        Option('-a', '--active', dest='active', default=''),
+        Option("-e", "--email", dest="email", default=None),
+        Option("-p", "--password", dest="password", default=None),
+        Option("-a", "--active", dest="active", default=""),
     )
 
     @commit
     def run(self, **kwargs):
         # sanitize active input
-        ai = re.sub(r'\s', '', str(kwargs['active']))
-        kwargs['active'] = ai.lower() in ['', 'y', 'yes', '1', 'active']
+        ai = re.sub(r"\s", "", str(kwargs["active"]))
+        kwargs["active"] = ai.lower() in ["", "y", "yes", "1", "active"]
 
         from flask_security.forms import ConfirmRegisterForm
         from werkzeug.datastructures import MultiDict
 
-        form = ConfirmRegisterForm(MultiDict(kwargs), meta={'csrf': False})
+        form = ConfirmRegisterForm(MultiDict(kwargs), meta={"csrf": False})
 
         if form.validate():
-            kwargs['password'] = hash_password(kwargs['password'])
+            kwargs["password"] = hash_password(kwargs["password"])
             _datastore.create_user(**kwargs)
-            print('User created successfully.')
-            kwargs['password'] = '****'
+            print("User created successfully.")
+            kwargs["password"] = "****"
             pprint(kwargs)
         else:
-            print('Error creating user')
+            print("Error creating user")
             pprint(form.errors)
 
 
@@ -79,8 +80,8 @@ class CreateRoleCommand(Command):
     """Create a role"""
 
     option_list = (
-        Option('-n', '--name', dest='name', default=None),
-        Option('-d', '--desc', dest='description', default=None),
+        Option("-n", "--name", dest="name", default=None),
+        Option("-d", "--desc", dest="description", default=None),
     )
 
     @commit
@@ -91,8 +92,8 @@ class CreateRoleCommand(Command):
 
 class _RoleCommand(Command):
     option_list = (
-        Option('-u', '--user', dest='user_identifier'),
-        Option('-r', '--role', dest='role_name'),
+        Option("-u", "--user", dest="user_identifier"),
+        Option("-r", "--role", dest="role_name"),
     )
 
 
@@ -102,8 +103,9 @@ class AddRoleCommand(_RoleCommand):
     @commit
     def run(self, user_identifier, role_name):
         _datastore.add_role_to_user(user_identifier, role_name)
-        print("Role '%s' added to user '%s' successfully" % (
-            role_name, user_identifier))
+        print(
+            "Role '%s' added to user '%s' successfully" % (role_name, user_identifier)
+        )
 
 
 class RemoveRoleCommand(_RoleCommand):
@@ -112,14 +114,14 @@ class RemoveRoleCommand(_RoleCommand):
     @commit
     def run(self, user_identifier, role_name):
         _datastore.remove_role_from_user(user_identifier, role_name)
-        print("Role '%s' removed from user '%s' successfully" % (
-            role_name, user_identifier))
+        print(
+            "Role '%s' removed from user '%s' successfully"
+            % (role_name, user_identifier)
+        )
 
 
 class _ToggleActiveCommand(Command):
-    option_list = (
-        Option('-u', '--user', dest='user_identifier'),
-    )
+    option_list = (Option("-u", "--user", dest="user_identifier"),)
 
 
 class DeactivateUserCommand(_ToggleActiveCommand):

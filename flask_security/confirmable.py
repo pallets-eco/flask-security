@@ -14,21 +14,23 @@ from flask import current_app as app
 from werkzeug.local import LocalProxy
 
 from .signals import confirm_instructions_sent, user_confirmed
-from .utils import config_value, get_token_status, hash_data, \
-    url_for_security, verify_hash
+from .utils import (
+    config_value,
+    get_token_status,
+    hash_data,
+    url_for_security,
+    verify_hash,
+)
 
 # Convenient references
-_security = LocalProxy(lambda: app.extensions['security'])
+_security = LocalProxy(lambda: app.extensions["security"])
 
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
 def generate_confirmation_link(user):
     token = generate_confirmation_token(user)
-    return (
-        url_for_security('confirm_email', token=token, _external=True),
-        token
-    )
+    return (url_for_security("confirm_email", token=token, _external=True), token)
 
 
 def send_confirmation_instructions(user):
@@ -39,12 +41,15 @@ def send_confirmation_instructions(user):
 
     confirmation_link, token = generate_confirmation_link(user)
 
-    _security.send_mail(config_value('EMAIL_SUBJECT_CONFIRM'), user.email,
-                        'confirmation_instructions', user=user,
-                        confirmation_link=confirmation_link)
+    _security.send_mail(
+        config_value("EMAIL_SUBJECT_CONFIRM"),
+        user.email,
+        "confirmation_instructions",
+        user=user,
+        confirmation_link=confirmation_link,
+    )
 
-    confirm_instructions_sent.send(app._get_current_object(), user=user,
-                                   token=token)
+    confirm_instructions_sent.send(app._get_current_object(), user=user, token=token)
 
 
 def generate_confirmation_token(user):
@@ -58,9 +63,11 @@ def generate_confirmation_token(user):
 
 def requires_confirmation(user):
     """Returns `True` if the user requires confirmation."""
-    return (_security.confirmable and
-            not _security.login_without_confirmation and
-            user.confirmed_at is None)
+    return (
+        _security.confirmable
+        and not _security.login_without_confirmation
+        and user.confirmed_at is None
+    )
 
 
 def confirm_email_token_status(token):
@@ -71,8 +78,9 @@ def confirm_email_token_status(token):
 
     :param token: The confirmation token
     """
-    expired, invalid, user, token_data = \
-        get_token_status(token, 'confirm', 'CONFIRM_EMAIL', return_data=True)
+    expired, invalid, user, token_data = get_token_status(
+        token, "confirm", "CONFIRM_EMAIL", return_data=True
+    )
     if not invalid and user:
         user_id, token_email_hash = token_data
         invalid = not verify_hash(token_email_hash, user.email)

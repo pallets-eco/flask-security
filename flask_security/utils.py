@@ -26,8 +26,11 @@ from flask_principal import AnonymousIdentity, Identity, identity_changed
 from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.local import LocalProxy
 
-from .signals import login_instructions_sent, \
-    reset_password_instructions_sent, user_registered
+from .signals import (
+    login_instructions_sent,
+    reset_password_instructions_sent,
+    user_registered,
+)
 
 try:  # pragma: no cover
     from urlparse import parse_qsl, urlsplit, urlunsplit
@@ -37,7 +40,7 @@ except ImportError:  # pragma: no cover
 
 
 # Convenient references
-_security = LocalProxy(lambda: current_app.extensions['security'])
+_security = LocalProxy(lambda: current_app.extensions["security"])
 
 _datastore = LocalProxy(lambda: _security.datastore)
 
@@ -50,11 +53,11 @@ localize_callback = LocalProxy(lambda: _security.i18n_domain.gettext)
 PY3 = sys.version_info[0] == 3
 
 if PY3:  # pragma: no cover
-    string_types = str,  # pragma: no flakes
-    text_type = str  # pragma: no flakes
+    string_types = (str,)  # noqa
+    text_type = str  # noqa
 else:  # pragma: no cover
-    string_types = basestring,  # pragma: no flakes
-    text_type = unicode  # pragma: no flakes
+    string_types = (basestring,)  # noqa
+    text_type = unicode  # noqa
 
 
 def _(translate):
@@ -74,7 +77,7 @@ def login_user(user, remember=None):
     """
 
     if remember is None:
-        remember = config_value('DEFAULT_REMEMBER_ME')
+        remember = config_value("DEFAULT_REMEMBER_ME")
 
     if not _login_user(user, remember):  # pragma: no cover
         return False
@@ -83,7 +86,8 @@ def login_user(user, remember=None):
         remote_addr = request.remote_addr or None  # make sure it is None
 
         old_current_login, new_current_login = (
-            user.current_login_at, _security.datetime_factory()
+            user.current_login_at,
+            _security.datetime_factory(),
         )
         old_current_ip, new_current_ip = user.current_login_ip, remote_addr
 
@@ -95,8 +99,7 @@ def login_user(user, remember=None):
 
         _datastore.put(user)
 
-    identity_changed.send(current_app._get_current_object(),
-                          identity=Identity(user.id))
+    identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
     return True
 
 
@@ -106,10 +109,11 @@ def logout_user():
     This will also clean up the remember me cookie if it exists.
     """
 
-    for key in ('identity.name', 'identity.auth_type'):
+    for key in ("identity.name", "identity.auth_type"):
         session.pop(key, None)
-    identity_changed.send(current_app._get_current_object(),
-                          identity=AnonymousIdentity())
+    identity_changed.send(
+        current_app._get_current_object(), identity=AnonymousIdentity()
+    )
     _logout_user()
 
 
@@ -123,9 +127,10 @@ def get_hmac(password):
 
     if salt is None:
         raise RuntimeError(
-            'The configuration value `SECURITY_PASSWORD_SALT` must '
-            'not be None when the value of `SECURITY_PASSWORD_HASH` is '
-            'set to "%s"' % _security.password_hash)
+            "The configuration value `SECURITY_PASSWORD_SALT` must "
+            "not be None when the value of `SECURITY_PASSWORD_HASH` is "
+            'set to "%s"' % _security.password_hash
+        )
 
     h = hmac.new(encode_string(salt), encode_string(password), hashlib.sha512)
     return base64.b64encode(h.digest())
@@ -176,8 +181,7 @@ def encrypt_password(password):
     :param password: The plaintext password to encrypt
     """
     warnings.warn(
-        'Please use hash_password instead of encrypt_password.',
-        DeprecationWarning
+        "Please use hash_password instead of encrypt_password.", DeprecationWarning
     )
     return hash_password(password)
 
@@ -192,12 +196,13 @@ def hash_password(password):
     :param password: The plaintext password to hash
     """
     if use_double_hash():
-        password = get_hmac(password).decode('ascii')
+        password = get_hmac(password).decode("ascii")
 
     return _pwd_context.hash(
         password,
-        **config_value('PASSWORD_HASH_OPTIONS', default={}).get(
-            _security.password_hash, {})
+        **config_value("PASSWORD_HASH_OPTIONS", default={}).get(
+            _security.password_hash, {}
+        )
     )
 
 
@@ -207,7 +212,7 @@ def encode_string(string):
     :param string: The string to encode"""
 
     if isinstance(string, text_type):
-        string = string.encode('utf-8')
+        string = string.encode("utf-8")
     return string
 
 
@@ -226,7 +231,7 @@ def do_flash(message, category=None):
     :param message: The flash message
     :param category: The flash message category
     """
-    if config_value('FLASH_MESSAGES'):
+    if config_value("FLASH_MESSAGES"):
         flash(message, category)
 
 
@@ -246,8 +251,9 @@ def get_url(endpoint_or_url, qparams=None):
         # add a different host:port for cases where the UI is running
         # separately.
         if _security.redirect_host:
-            url = transform_url(endpoint_or_url, qparams,
-                                netloc=_security.redirect_host)
+            url = transform_url(
+                endpoint_or_url, qparams, netloc=_security.redirect_host
+            )
         else:
             url = transform_url(endpoint_or_url, qparams)
 
@@ -259,7 +265,7 @@ def slash_url_suffix(url, suffix):
     (which is to be appended to a URL), depending on whether or not
     the URL ends with a slash."""
 
-    return url.endswith('/') and ('%s/' % suffix) or ('/%s' % suffix)
+    return url.endswith("/") and ("%s/" % suffix) or ("/%s" % suffix)
 
 
 def transform_url(url, qparams=None, **kwargs):
@@ -281,7 +287,7 @@ def transform_url(url, qparams=None, **kwargs):
 
 
 def get_security_endpoint_name(endpoint):
-    return '%s.%s' % (_security.blueprint_name, endpoint)
+    return "%s.%s" % (_security.blueprint_name, endpoint)
 
 
 def url_for_security(endpoint, **values):
@@ -300,21 +306,20 @@ def url_for_security(endpoint, **values):
 
 
 def validate_redirect_url(url):
-    if url is None or url.strip() == '':
+    if url is None or url.strip() == "":
         return False
     url_next = urlsplit(url)
     url_base = urlsplit(request.host_url)
-    if (url_next.netloc or url_next.scheme) and \
-            url_next.netloc != url_base.netloc:
+    if (url_next.netloc or url_next.scheme) and url_next.netloc != url_base.netloc:
         return False
     return True
 
 
 def get_post_action_redirect(config_key, declared=None):
     urls = [
-        get_url(request.args.get('next')),
-        get_url(request.form.get('next')),
-        find_redirect(config_key)
+        get_url(request.args.get("next")),
+        get_url(request.form.get("next")),
+        find_redirect(config_key),
     ]
     if declared:
         urls.insert(0, declared)
@@ -324,15 +329,15 @@ def get_post_action_redirect(config_key, declared=None):
 
 
 def get_post_login_redirect(declared=None):
-    return get_post_action_redirect('SECURITY_POST_LOGIN_VIEW', declared)
+    return get_post_action_redirect("SECURITY_POST_LOGIN_VIEW", declared)
 
 
 def get_post_register_redirect(declared=None):
-    return get_post_action_redirect('SECURITY_POST_REGISTER_VIEW', declared)
+    return get_post_action_redirect("SECURITY_POST_REGISTER_VIEW", declared)
 
 
 def get_post_logout_redirect(declared=None):
-    return get_post_action_redirect('SECURITY_POST_LOGOUT_VIEW', declared)
+    return get_post_action_redirect("SECURITY_POST_LOGOUT_VIEW", declared)
 
 
 def find_redirect(key):
@@ -340,8 +345,11 @@ def find_redirect(key):
 
     :param key: The session or application configuration key to search for
     """
-    rv = (get_url(session.pop(key.lower(), None)) or
-          get_url(current_app.config[key.upper()] or None) or '/')
+    rv = (
+        get_url(session.pop(key.lower(), None))
+        or get_url(current_app.config[key.upper()] or None)
+        or "/"
+    )
     return rv
 
 
@@ -352,16 +360,16 @@ def get_config(app):
     :param app: The application to inspect
     """
     items = app.config.items()
-    prefix = 'SECURITY_'
+    prefix = "SECURITY_"
 
     def strip_prefix(tup):
-        return (tup[0].replace('SECURITY_', ''), tup[1])
+        return (tup[0].replace("SECURITY_", ""), tup[1])
 
     return dict([strip_prefix(i) for i in items if i[0].startswith(prefix)])
 
 
 def get_message(key, **kwargs):
-    rv = config_value('MSG_' + key)
+    rv = config_value("MSG_" + key)
     return localize_callback(rv[0], **kwargs), rv[1]
 
 
@@ -378,7 +386,7 @@ def config_value(key, app=None, default=None):
 
 
 def get_max_age(key, app=None):
-    td = get_within_delta(key + '_WITHIN', app)
+    td = get_within_delta(key + "_WITHIN", app)
     return td.seconds + td.days * 24 * 3600
 
 
@@ -411,28 +419,26 @@ def send_mail(subject, recipient, template, **context):
     :param context: The context to render the template with
     """
 
-    context.setdefault('security', _security)
-    context.update(_security._run_ctx_processor('mail'))
+    context.setdefault("security", _security)
+    context.update(_security._run_ctx_processor("mail"))
 
     sender = _security.email_sender
     if isinstance(sender, LocalProxy):
         sender = sender._get_current_object()
 
-    msg = Message(subject,
-                  sender=sender,
-                  recipients=[recipient])
+    msg = Message(subject, sender=sender, recipients=[recipient])
 
-    ctx = ('security/email', template)
-    if config_value('EMAIL_PLAINTEXT'):
-        msg.body = _security.render_template('%s/%s.txt' % ctx, **context)
-    if config_value('EMAIL_HTML'):
-        msg.html = _security.render_template('%s/%s.html' % ctx, **context)
+    ctx = ("security/email", template)
+    if config_value("EMAIL_PLAINTEXT"):
+        msg.body = _security.render_template("%s/%s.txt" % ctx, **context)
+    if config_value("EMAIL_HTML"):
+        msg.html = _security.render_template("%s/%s.html" % ctx, **context)
 
     if _security._send_mail_task:
         _security._send_mail_task(msg)
         return
 
-    mail = current_app.extensions.get('mail')
+    mail = current_app.extensions.get("mail")
     mail.send(msg)
 
 
@@ -446,7 +452,7 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
                     the following: ``CONFIRM_EMAIL``, ``LOGIN``,
                     ``RESET_PASSWORD``
     """
-    serializer = getattr(_security, serializer + '_serializer')
+    serializer = getattr(_security, serializer + "_serializer")
     max_age = get_max_age(max_age)
     user, data = None, None
     expired, invalid = False, False
@@ -472,9 +478,9 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
 
 def get_identity_attributes(app=None):
     app = app or current_app
-    attrs = app.config['SECURITY_USER_IDENTITY_ATTRIBUTES']
+    attrs = app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
     try:
-        attrs = [f.strip() for f in attrs.split(',')]
+        attrs = [f.strip() for f in attrs.split(",")]
     except AttributeError:
         pass
     return attrs
@@ -484,7 +490,7 @@ def use_double_hash(password_hash=None):
     """Return a bool indicating whether a password should be hashed twice."""
     # Default to plaintext for backward compatibility with
     # SECURITY_PASSWORD_SINGLE_HASH = False
-    single_hash = config_value('PASSWORD_SINGLE_HASH') or {'plaintext'}
+    single_hash = config_value("PASSWORD_SINGLE_HASH") or {"plaintext"}
 
     if password_hash is None:
         scheme = _security.password_hash
@@ -584,10 +590,7 @@ class DummySmsSender(SmsSenderBaseClass):
 
 
 class SmsSenderFactory(object):
-    senders = {
-
-        'Dummy': DummySmsSender
-    }
+    senders = {"Dummy": DummySmsSender}
 
     @classmethod
     def createSender(cls, name, *args, **kwargs):
@@ -603,19 +606,18 @@ try:  # pragma: no cover
 
     class TwilioSmsSender(SmsSenderBaseClass):
         def __init__(self):
-            self.account_sid = config_value(
-                'TWO_FACTOR_SMS_SERVICE_CONFIG')['ACCOUNT_SID']
-            self.auth_token = config_value(
-                'TWO_FACTOR_SMS_SERVICE_CONFIG')['AUTH_TOKEN']
+            self.account_sid = config_value("TWO_FACTOR_SMS_SERVICE_CONFIG")[
+                "ACCOUNT_SID"
+            ]
+            self.auth_token = config_value("TWO_FACTOR_SMS_SERVICE_CONFIG")[
+                "AUTH_TOKEN"
+            ]
 
         def send_sms(self, from_number, to_number, msg):
             """ Send message via twilio account. """
             client = Client(self.account_sid, self.auth_token)
-            client.messages.create(
-                to=to_number,
-                from_=from_number,
-                body=msg,)
+            client.messages.create(to=to_number, from_=from_number, body=msg)
 
-    SmsSenderFactory.senders['Twilio'] = TwilioSmsSender
-except:
+    SmsSenderFactory.senders["Twilio"] = TwilioSmsSender
+except Exception:
     pass
