@@ -343,3 +343,7 @@ msgstr ""
 #: flask_security/core.py:259
 msgid "Marked method is not valid"
 msgstr ""
+
+#: flask_security/core.py
+msgid "You successfully disabled two factor authorization."
+msgstr ""

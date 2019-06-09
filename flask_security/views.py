@@ -6,6 +6,7 @@
     Flask-Security views module
 
     :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -57,6 +58,7 @@ from .twofactor import (
     complete_two_factor_process,
     get_totp_uri,
     tf_clean_session,
+    tf_disable,
 )
 
 # Convenient references
@@ -107,7 +109,10 @@ def login():
         form = form_class(request.form)
 
     if form.validate_on_submit():
-        if config_value("TWO_FACTOR") is True:
+        if config_value("TWO_FACTOR") is True and (
+            config_value("TWO_FACTOR_REQUIRED") is True
+            or (form.user.totp_secret and form.user.two_factor_primary_method)
+        ):
             return _two_factor_login(form)
 
         login_user(form.user, remember=form.remember.data)
@@ -511,34 +516,41 @@ def change_password():
 def _two_factor_login(form):
     """ Helper for two-factor authentication login
 
-    This is called only when login/password validated.
+    This is called only when login/password have already been validated.
+
+    The result of this is either sending a 2FA token OR starting setup for new user.
+    In either case we do NOT log in user, so we must store some info in session to
+    track our state (including what user).
     """
-    # if we already validated email&password, there is no need to do it again
+
+    # on initial login clear any possible state out - this can happen if on same
+    # machine log in  more than once since for 2FA you are not authenticated
+    # until complete 2FA.
+    tf_clean_session()
 
     user = form.user
-    session["email"] = user.email
+    session["tf_user_id"] = user.id
 
     # Set info into form for JSON response
-    json_response = {"two_factor_required": True}
+    json_response = {"tf_required": True}
     # if user's two-factor properties are not configured
     if user.two_factor_primary_method is None or user.totp_secret is None:
-        session["has_two_factor"] = False
-        json_response["two_factor_setup_complete"] = False
+        session["tf_state"] = "setup_from_login"
+        json_response["tf_state"] = "setup_from_login"
         if not request.is_json:
             return redirect(url_for("two_factor_setup_function"))
 
     # if user's two-factor properties are configured
     else:
-        session["has_two_factor"] = True
-        session["primary_method"] = user.two_factor_primary_method
-        session["totp_secret"] = user.totp_secret
+        session["tf_state"] = "ready"
+        json_response["tf_state"] = "ready"
+        json_response["tf_primary_method"] = user.two_factor_primary_method
+
         send_security_token(
             user=user,
             method=user.two_factor_primary_method,
             totp_secret=user.totp_secret,
         )
-        json_response["two_factor_setup_complete"] = True
-        json_response["two_factor_primary_method"] = user.two_factor_primary_method
 
         if not request.is_json:
             return redirect(url_for("two_factor_token_validation"))
@@ -547,10 +559,25 @@ def _two_factor_login(form):
 
 
 def two_factor_setup_function():
-    """View function for two-factor setup during login process"""
+    """View function for two-factor setup.
 
-    # user's email&password not approved or we are
-    # logged in and didn't validate password
+    This is used both for GET to fetch forms and POST to actually set configuration
+    (and send token).
+
+    There are 3 cases for setting up:
+    1) initial login and application requires 2FA
+    2) changing existing 2FA information
+    3) user wanting to enable or disable 2FA (assuming application doesn't require it)
+
+    In order to CHANGE/ENABLE/DISABLE a 2FA information, user must be properly logged in
+    AND must perform a fresh password validation by
+    calling POST /tf-confirm (which sets 'tf_confirmed' in the session).
+
+    For initial login when 2FA required of course user can't be logged in - in this
+    case we need to have been sent some
+    state via the session as part of login to show a) who and b) that they successfully
+    authenticated.
+    """
     form_class = _security.two_factor_setup_form
 
     if request.is_json:
@@ -558,44 +585,62 @@ def two_factor_setup_function():
     else:
         form = form_class()
 
-    if "password_confirmed" not in session:
+    if not current_user.is_authenticated:
+        # This is the initial login case
+        # We can also get here from setup if they want to change
+        if not all(k in session for k in ["tf_user_id", "tf_state"]) or session[
+            "tf_state"
+        ] not in ["setup_from_login", "validating_profile"]:
+            # illegal call on this endpoint
+            tf_clean_session()
+            return _tf_illegal_state(form, _security.login_url)
 
-        if "email" not in session or "has_two_factor" not in session:
-            if not request.is_json:
-                do_flash(*get_message("TWO_FACTOR_PERMISSION_DENIED"))
-                return redirect(get_url(_security.login_url))
-            else:
-                m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-                form._errors = m
-                return _render_json(form)
+        user = _datastore.get_user(session["tf_user_id"])
+        if not user:
+            tf_clean_session()
+            return _tf_illegal_state(form, _security.login_url)
 
-        # user's email&password approved and
-        # two-factor properties were configured before
-        if session["has_two_factor"] is True:
-            if not request.is_json:
-                do_flash(*get_message("TWO_FACTOR_PERMISSION_DENIED"))
-                return redirect(url_for("two_factor_token_validation"))
-            else:
-                m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-                form._errors = m
-                return _render_json(form)
-
-        user = _datastore.find_user(email=session["email"])
     else:
+        # all other cases require user to be logged in and have performed
+        # additional password verification as signified by 'tf_confirmed'
+        # in the session.
+        if "tf_confirmed" not in session:
+            tf_clean_session()
+            return _tf_illegal_state(form, _security.two_factor_confirm_url)
         user = current_user
 
+    if not user.totp_secret:
+        # Both initial login and opt-in are this case.
+        user.totp_secret = generate_totp()
+        _datastore.put(user)
+        after_this_request(_commit)
+
     if form.validate_on_submit():
-        # totp and primary_method are added to
-        # session to flag the user's temporary choice
-        session["totp_secret"] = generate_totp()
-        session["primary_method"] = form["setup"].data
+        # Before storing in DB and therefore requiring 2FA we need to
+        # make sure it actually works.
+        # Requiring 2FA is triggered by having BOTH totp_secret and
+        # two_factor_primary_method in the user record (or having the application
+        # global config TWO_FACTOR_REQUIRED)
+        # Until we correctly validate the 2FA - we don't set primary_method in
+        # user model but use the session to store it.
+        pm = form["setup"].data
+        if pm == "disable":
+            tf_disable(user)
+            after_this_request(_commit)
+            do_flash(*get_message("TWO_FACTOR_DISABLED"))
+            if not request.is_json:
+                return redirect(get_url(_security.post_login_view))
+            else:
+                return _render_json(form)
+
+        session["tf_primary_method"] = pm
+        session["tf_state"] = "validating_profile"
         if len(form.data["phone"]) > 0:
-            session["phone_number"] = form.data["phone"]
-        send_security_token(
-            user=user,
-            method=session["primary_method"],
-            totp_secret=session["totp_secret"],
-        )
+            user.phone_number = form.data["phone"]
+        _datastore.put(user)
+        after_this_request(_commit)
+
+        send_security_token(user=user, method=pm, totp_secret=user.totp_secret)
         code_form = _security.two_factor_verify_code_form()
         if not request.is_json:
             return _security.render_template(
@@ -603,26 +648,39 @@ def two_factor_setup_function():
                 two_factor_setup_form=form,
                 two_factor_verify_code_form=code_form,
                 choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
-                chosen_method=session["primary_method"],
-                **_ctx("two_factor_setup")
+                chosen_method=pm,
+                **_ctx("tf_setup")
             )
 
     if request.is_json:
         return _render_json(form, include_user=False)
 
     code_form = _security.two_factor_verify_code_form()
+    choices = config_value("TWO_FACTOR_ENABLED_METHODS")
+    if not config_value("TWO_FACTOR_REQUIRED"):
+        choices.append("disable")
+
     return _security.render_template(
         config_value("TWO_FACTOR_CHOOSE_METHOD_TEMPLATE"),
         two_factor_setup_form=form,
         two_factor_verify_code_form=code_form,
-        choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
-        **_ctx("two_factor_setup")
+        choices=choices,
+        two_factor_required=config_value("TWO_FACTOR_REQUIRED"),
+        **_ctx("tf_setup")
     )
 
 
 def two_factor_token_validation():
-    """View function for two-factor token validation during login process"""
-    # if we are in login process and not changing current two-factor method
+    """View function for two-factor token validation
+
+    Two cases:
+    1) normal login case - everything setup correctly; normal 2FA validation
+       In this case - user not logged in -
+       but 'tf_state' == 'ready' or 'validating_profile'
+    2) validating after CHANGE/ENABLE 2FA. In this case user logged in/authenticated
+       they must have 'tf_confirmed' set meaning they re-entered their passwd
+
+    """
 
     form_class = _security.two_factor_verify_code_form
 
@@ -631,40 +689,60 @@ def two_factor_token_validation():
     else:
         form = form_class()
 
-    if "password_confirmed" not in session:
-        # user's email&password not approved or we are logged in
-        # and didn't validate password
-        if "has_two_factor" not in session:
-            if not request.is_json:
-                do_flash(*get_message("TWO_FACTOR_PERMISSION_DENIED"))
-                return redirect(get_url(_security.login_url))
-            else:
-                m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-                form._errors = m
-                return _render_json(form)
-        # make sure user has or has chosen a two-factor
-        # method before we try to validate
-        if "totp_secret" not in session or "primary_method" not in session:
-            if not request.is_json:
-                do_flash(*get_message("TWO_FACTOR_PERMISSION_DENIED"))
-                return redirect(url_for("two_factor_setup_function"))
-            else:
-                m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-                form._errors = m
-                return _render_json(form)
+    changing = current_user.is_authenticated
+    if not changing:
+        # This is the normal login case
+        if (
+            not all(k in session for k in ["tf_user_id", "tf_state"])
+            or session["tf_state"] not in ["ready", "validating_profile"]
+            or (
+                session["tf_state"] == "validating_profile"
+                and "tf_primary_method" not in session
+            )
+        ):
+            # illegal call on this endpoint
+            tf_clean_session()
+            return _tf_illegal_state(form, _security.login_url)
 
+        user = _datastore.get_user(session["tf_user_id"])
+        form.user = user
+        if not user:
+            tf_clean_session()
+            return _tf_illegal_state(form, _security.login_url)
+
+        if session["tf_state"] == "ready":
+            pm = user.two_factor_primary_method
+        else:
+            pm = session["tf_primary_method"]
+    else:
+        if (
+            not all(
+                k in session for k in ["tf_confirmed", "tf_state", "tf_primary_method"]
+            )
+            or session["tf_state"] != "validating_profile"
+        ):
+            tf_clean_session()
+            # logout since this seems like attack-ish/logic error
+            logout_user()
+            return _tf_illegal_state(form, _security.login_url)
+        pm = session["tf_primary_method"]
+        form.user = current_user
+
+    setattr(form, "primary_method", pm)
     if form.validate_on_submit():
-        complete_two_factor_process(form.user)
+        # Success - log in user and clear all session variables
+        completion_message = complete_two_factor_process(form.user, pm, changing)
         after_this_request(_commit)
         if not request.is_json:
+            do_flash(*get_message(completion_message))
             return redirect(get_post_login_redirect())
 
+    # GET or not successful POST
     if request.is_json:
-        form.user = current_user
         return _render_json(form)
 
     # if we were trying to validate a new method
-    if "password_confirmed" in session or session["has_two_factor"] is False:
+    if changing:
         setup_form = _security.two_factor_setup_form()
 
         return _security.render_template(
@@ -672,12 +750,11 @@ def two_factor_token_validation():
             two_factor_setup_form=setup_form,
             two_factor_verify_code_form=form,
             choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
-            **_ctx("two_factor_setup")
+            **_ctx("tf_setup")
         )
 
     # if we were trying to validate an existing method
     else:
-
         rescue_form = _security.two_factor_rescue_form()
 
         return _security.render_template(
@@ -685,15 +762,19 @@ def two_factor_token_validation():
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
             problem=None,
-            **_ctx("two_factor_token_validation")
+            **_ctx("tf_token_validation")
         )
 
 
 @anonymous_user_required
 def two_factor_rescue_function():
     """ Function that handles a situation where user can't
-    enter his two-factor validation code"""
-    # user's email&password yet to be approved
+    enter his two-factor validation code
+
+    User must have already provided valid username/password.
+    User must have already established 2FA
+
+    """
 
     form_class = _security.two_factor_rescue_form
 
@@ -702,25 +783,18 @@ def two_factor_rescue_function():
     else:
         form = form_class()
 
-    if "email" not in session:
-        if not request.is_json:
-            do_flash(*get_message("TWO_FACTOR_PERMISSION_DENIED"))
-            return redirect(get_url(_security.login_url))
-        else:
-            m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-            form._errors = m
-            return _render_json(form, include_user=False)
-    # user's email&password approved and two-factor properties
-    # were not configured
-    if "totp_secret" not in session or "primary_method" not in session:
-        if not request.is_json:
-            do_flash(*get_message("TWO_FACTOR_PERMISSION_DENIED"))
-            return redirect(get_url(_security.login_url))
+    if (
+        not all(k in session for k in ["tf_user_id", "tf_state"])
+        or session["tf_state"] != "ready"
+    ):
+        tf_clean_session()
+        return _tf_illegal_state(form, _security.login_url)
 
-        else:
-            m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-            form._errors = m
-            return _render_json(form, include_user=False)
+    user = _datastore.get_user(session["tf_user_id"])
+    form.user = user
+    if not user:
+        tf_clean_session()
+        return _tf_illegal_state(form, _security.login_url)
 
     problem = None
     if form.validate_on_submit():
@@ -752,7 +826,7 @@ def two_factor_rescue_function():
         two_factor_rescue_form=form,
         rescue_mail=config_value("TWO_FACTOR_RESCUE_MAIL"),
         problem=str(problem),
-        **_ctx("two_factor_token_validation")
+        **_ctx("tf_token_validation")
     )
 
 
@@ -767,9 +841,9 @@ def two_factor_password_confirmation():
         form = form_class()
 
     if form.validate_on_submit():
-        session["password_confirmed"] = True
+        session["tf_confirmed"] = True
         if not request.is_json:
-            do_flash(get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE"))
+            do_flash(*get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE"))
             return redirect(url_for("two_factor_setup_function"))
 
         else:
@@ -778,39 +852,39 @@ def two_factor_password_confirmation():
             return _render_json(form)
 
     if request.is_json:
-        form.user = current_user
+        assert form.user == current_user
+        # form.user = current_user
         return _render_json(form)
 
     return _security.render_template(
         config_value("TWO_FACTOR_CHANGE_METHOD_PASSWORD_CONFIRMATION_TEMPLATE"),
         two_factor_change_method_verify_password_form=form,
-        **_ctx("two_factor_change_method_password_confirmation")
+        **_ctx("tf_password_verify")
     )
 
 
 def two_factor_qrcode():
-    return generate_qrcode()
+    if current_user.is_authenticated:
+        user = current_user
+    else:
+        if "tf_user_id" not in session:
+            abort(404)
+        user = _datastore.get_user(session["tf_user_id"])
+        if not user:
+            # Seems like we should be careful here if user_id is gone.
+            tf_clean_session()
+            abort(404)
 
-
-def generate_qrcode():
     if "google_authenticator" not in config_value("TWO_FACTOR_ENABLED_METHODS"):
         return abort(404)
     if (
-        "primary_method" not in session
-        or session["primary_method"] != "google_authenticator"
-        or "totp_secret" not in session
+        "tf_primary_method" not in session
+        or session["tf_primary_method"] != "google_authenticator"
     ):
         return abort(404)
 
-    if "email" in session:
-        email = session["email"]
-    elif "password_confirmed" in session:
-        email = current_user.email
-    else:
-        return abort(404)
-
-    name = email.split("@")[0]
-    totp = session["totp_secret"]
+    name = user.email.split("@")[0]
+    totp = user.totp_secret
     url = pyqrcode.create(get_totp_uri(name, totp))
     from io import BytesIO
 
@@ -826,6 +900,16 @@ def generate_qrcode():
             "Expires": "0",
         },
     )
+
+
+def _tf_illegal_state(form, redirect_to):
+    m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
+    if not request.is_json:
+        do_flash(m, c)
+        return redirect(get_url(redirect_to))
+    else:
+        form._errors = m
+        return _render_json(form)
 
 
 def create_blueprint(state, import_name):

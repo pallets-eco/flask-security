@@ -49,13 +49,18 @@ def get_session(response):
     This a base64 encoded json.
     Returns a dict
     """
-    cookies = parse_cookie(response.headers["set-cookie"])
-    encoded_cookie = cookies.get("session", None)
-    if not encoded_cookie:
-        return
-    serializer = URLSafeTimedSerializer("secret", serializer=TaggedJSONSerializer())
-    val = serializer.loads_unsafe(encoded_cookie)
-    return val[1]
+
+    # Alas seems like if there are multiple set-cookie headers - we are on our own
+    for index, h in enumerate(response.headers):
+        if h[0] == "Set-Cookie":
+            cookie = parse_cookie(response.headers[index][1])
+            encoded_cookie = cookie.get("session", None)
+            if encoded_cookie:
+                serializer = URLSafeTimedSerializer(
+                    "secret", serializer=TaggedJSONSerializer()
+                )
+                val = serializer.loads_unsafe(encoded_cookie)
+                return val[1]
 
 
 def create_roles(ds):
@@ -94,7 +99,7 @@ def create_users(app, ds, count=None):
         roles = [ds.find_or_create_role(rn) for rn in u[3]]
         ds.commit()
         totp_secret = None
-        if app.config.get("SECURITY_TWO_FACTOR", None):
+        if app.config.get("SECURITY_TWO_FACTOR", None) and u[6]:
             totp_secret = generate_totp()
         user = ds.create_user(
             email=u[0],

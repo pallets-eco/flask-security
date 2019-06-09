@@ -7,12 +7,13 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 import inspect
 
-from flask import Markup, current_app, request, session
+from flask import Markup, current_app, request
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
 from speaklater import make_lazy_gettext
@@ -349,6 +350,7 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
             ("mail", "Set Up Using Mail"),
             ("google_authenticator", "Set Up Using Google Authenticator"),
             ("sms", "Set Up Using SMS"),
+            ("disable", "Disable two factor authentication"),
         ],
     )
     phone = StringField(get_form_field_label("phone"))
@@ -358,9 +360,10 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
         super(TwoFactorSetupForm, self).__init__(*args, **kwargs)
 
     def validate(self):
-        if "setup" not in self.data or self.data["setup"] not in config_value(
-            "TWO_FACTOR_ENABLED_METHODS"
-        ):
+        choices = config_value("TWO_FACTOR_ENABLED_METHODS")
+        if not config_value("TWO_FACTOR_REQUIRED"):
+            choices.append("disable")
+        if "setup" not in self.data or self.data["setup"] not in choices:
             do_flash(*get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE"))
             return False
 
@@ -377,25 +380,19 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
         super(TwoFactorVerifyCodeForm, self).__init__(*args, **kwargs)
 
     def validate(self):
-        if "email" in session:
-            self.user = _datastore.find_user(email=session["email"])
-        elif "password_confirmed" in session:
-            self.user = current_user
-        else:
-            return False
         # codes sent by sms or mail will be valid for another window cycle
-        if session["primary_method"] == "google_authenticator":
+        if self.primary_method == "google_authenticator":
             self.window = config_value("TWO_FACTOR_GOOGLE_AUTH_VALIDITY")
-        elif session["primary_method"] == "mail":
+        elif self.primary_method == "mail":
             self.window = config_value("TWO_FACTOR_MAIL_VALIDITY")
-        elif session["primary_method"] == "sms":
+        elif self.primary_method == "sms":
             self.window = config_value("TWO_FACTOR_SMS_VALIDITY")
         else:
             return False
 
         # verify entered token with user's totp secret
         if not verify_totp(
-            token=self.code.data, totp_secret=session["totp_secret"], window=self.window
+            token=self.code.data, totp_secret=self.user.totp_secret, window=self.window
         ):
             do_flash(*get_message("TWO_FACTOR_INVALID_TOKEN"))
             return False
@@ -422,7 +419,7 @@ class TwoFactorChangeMethodVerifyPasswordForm(Form, PasswordFormMixin):
 
 
 class TwoFactorRescueForm(Form, UserEmailFormMixin):
-    """The Two-factor Rescue validation form"""
+    """The Two-factor Rescue validation form """
 
     help_setup = RadioField(
         "Trouble Accessing Your Account?",
@@ -437,11 +434,4 @@ class TwoFactorRescueForm(Form, UserEmailFormMixin):
         super(TwoFactorRescueForm, self).__init__(*args, **kwargs)
 
     def validate(self):
-
-        self.user = _datastore.find_user(email=session["email"])
-
-        if "primary_method" not in session or "totp_secret" not in session:
-            do_flash(*get_message("TWO_FACTOR_PERMISSION_DENIED"))
-            return False
-
         return True
