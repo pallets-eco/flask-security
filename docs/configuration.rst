@@ -286,11 +286,9 @@ Feature Flags
 ``SECURITY_TWO_FACTOR``   Specifies if Flask-Security should enable the
                           two-factor login feature. If set to ``True``, in
                           addition to their passwords, users will be required to
-                          enter a code that is sent to them. The added feature
-                          includes the ability to send it either via email, sms
-                          message, or Google Authenticator. Default time of
-                          validity is 30 seconds in Google Authenticator and up
-                          to 60 seconds if sent by mail or sms.
+                          enter a code that is sent to them. Note that unless
+                          ``SECURITY_TWO_FACTOR_REQUIRED`` is set - this is
+                          opt-in.
                           Defaults to ``False``.
 ========================= ======================================================
 
@@ -374,28 +372,12 @@ Miscellaneous
                                               enabled. Always pluralized the
                                               time unit for this value.
                                               Defaults to ``1 days``.
-``SECURITY_TWO_FACTOR_GOOGLE_AUTH_VALIDITY``  Specifies the number of time
-                                              windows user has before the token
-                                              generated for him using google
-                                              authenticator is valid. time
-                                              windows specifies the amount of
-                                              time, which is 30 seconds for each
-                                              window. Default to 0, which is up
-                                              to 30 seconds.
-``SECURITY_TWO_FACTOR_MAIL_VALIDITY``         Specifies the number of time
-                                              windows user has before the token
-                                              sent to him using mail is valid.
-                                              time windows specifies the amount
-                                              of time, which is 30 seconds for
-                                              each window. Default to 1, which
-                                              is up to 60 seconds.
-``SECURITY_TWO_FACTOR_SMS_VALIDITY``          Specifies the number of time
-                                              windows user has before the token
-                                              sent to him using sms is valid.
-                                              time windows specifies the amount
-                                              of time, which is 30 seconds for
-                                              each window. Default to 5, which
-                                              is up to 3 minutes.                                                                                            .
+``SECURITY_TWO_FACTOR_GOOGLE_AUTH_VALIDITY``  Specifies the number of seconds access token is
+                                              valid. Defaults to 2 minutes.
+``SECURITY_TWO_FACTOR_MAIL_VALIDITY``         Specifies the number of seconds
+                                              access token is valid. Defaults to 5 minutes.
+``SECURITY_TWO_FACTOR_SMS_VALIDITY``          Specifies the number of seconds access token is
+                                              valid. Defaults to 2 minutes.
 ``SECURITY_LOGIN_WITHOUT_CONFIRMATION``       Specifies if a user may login
                                               before confirming their email when
                                               the value of
@@ -421,6 +403,9 @@ Miscellaneous
 ``SECURITY_DEFAULT_REMEMBER_ME``              Specifies the default "remember
                                               me" value used when logging in
                                               a user. Defaults to ``False``.
+``SECURITY_TWO_FACTOR_REQUIRED``              If set to ``True`` then all users will be
+                                              required to setup and use two factor authorization.
+                                              Defaults to ``False``.
 ``SECURITY_TWO_FACTOR_ENABLED_METHODS``       Specifies the default enabled
                                               methods for two-factor
                                               authentication. Defaults to
@@ -490,5 +475,6 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_TWO_FACTOR_PASSWORD_CONFIRMATION_NEEDED``
 * ``SECURITY_MSG_TWO_FACTOR_PERMISSION_DENIED``
 * ``SECURITY_MSG_TWO_FACTOR_METHOD_NOT_AVAILABLE``
+* ``SECURITY_MSG_TWO_FACTOR_DISABLED``
 * ``SECURITY_MSG_UNAUTHORIZED``
 * ``SECURITY_MSG_USER_DOES_NOT_EXIST``

@@ -146,14 +146,25 @@ sends the following signals.
    Sent when a user requests a password reset. In addition to the app (which is
    the sender), it is passed `user` and `token` arguments.
 
-.. data:: user_two_factored
+.. data:: tf_code_confirmed
 
     Sent when a user performs two-factor authentication login on the site. In
-    addition to the app (which is the sender), it is passed `user` argument
+    addition to the app (which is the sender), it is passed `user`
+    and `method` arguments.
 
-.. data:: two_factor_method_changed
+.. data:: tf_profile_changed
 
   Sent when two-factor is used and user logs in. In addition to the app
+  (which is the sender), it is passed `user` and `method` arguments.
+
+.. data:: tf_disabled
+
+  Sent when two-factor is disabled. In addition to the app
   (which is the sender), it is passed `user` argument.
+
+.. data:: tf_security_token_sent
+
+  Sent when a two factor security/access code is sent. In addition to the app
+  (which is the sender), it is passed `user`, `method`, and `token` arguments.
 
 .. _Flask documentation on signals: http://flask.pocoo.org/docs/signals/

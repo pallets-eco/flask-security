@@ -8,6 +8,7 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
     :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -130,9 +131,9 @@ _default_config = {
     "SEND_PASSWORD_RESET_EMAIL": True,
     "SEND_PASSWORD_RESET_NOTICE_EMAIL": True,
     "LOGIN_WITHIN": "1 days",
-    "TWO_FACTOR_GOOGLE_AUTH_VALIDITY": 0,
-    "TWO_FACTOR_MAIL_VALIDITY": 1,
-    "TWO_FACTOR_SMS_VALIDITY": 5,
+    "TWO_FACTOR_GOOGLE_AUTH_VALIDITY": 120,
+    "TWO_FACTOR_MAIL_VALIDITY": 300,
+    "TWO_FACTOR_SMS_VALIDITY": 120,
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "5 days",
     "LOGIN_WITHOUT_CONFIRMATION": False,
@@ -178,6 +179,7 @@ _default_config = {
     "USE_VERIFY_PASSWORD_CACHE": False,
     "VERIFY_HASH_CACHE_TTL": 60 * 5,
     "VERIFY_HASH_CACHE_MAX_SIZE": 500,
+    "TWO_FACTOR_REQUIRED": False,
     "TWO_FACTOR_SECRET": None,
     "TWO_FACTOR_ENABLED_METHODS": ["mail", "google_authenticator", "sms"],
     "TWO_FACTOR_URI_SERVICE_NAME": "service_name",
@@ -286,6 +288,10 @@ _default_messages = {
         "error",
     ),
     "TWO_FACTOR_METHOD_NOT_AVAILABLE": (_("Marked method is not valid"), "error"),
+    "TWO_FACTOR_DISABLED": (
+        _("You successfully disabled two factor authorization."),
+        "success",
+    ),
 }
 
 _default_forms = {
@@ -566,14 +572,14 @@ class _SecurityState(object):
     def mail_context_processor(self, fn):
         self._add_ctx_processor("mail", fn)
 
-    def two_factor_change_method_password_confirmation_context_processor(self, fn):
-        self._add_ctx_processor("two_factor_change_method_password_confirmation", fn)
+    def tf_password_verify_context_processor(self, fn):
+        self._add_ctx_processor("tf_password_verify", fn)
 
-    def two_factor_setup_context_processor(self, fn):
-        self._add_ctx_processor("two_factor_setup", fn)
+    def tf_setup_context_processor(self, fn):
+        self._add_ctx_processor("tf_setup", fn)
 
-    def two_factor_token_validation_context_processor(self, fn):
-        self._add_ctx_processor("two_factor_token_validation", fn)
+    def tf_token_validation_context_processor(self, fn):
+        self._add_ctx_processor("tf_token_validation", fn)
 
     def send_mail_task(self, fn):
         self._send_mail_task = fn
