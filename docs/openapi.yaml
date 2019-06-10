@@ -2,17 +2,17 @@ openapi: 3.0.0
 info:
   description: |
     Default API for Flask-Security.
-    
+
     __N.B. This is preliminary.__
-    
+
     Since Flask-Security is middleware, with many possible configurations this is a
     guide to how the APIs will behave using standard defaults.
-    
-    _Be aware that the current renderer is great! but has some limitations._ 
+
+    _Be aware that the current renderer is great! but has some limitations._
     In particular
     it can't represent both form input and JSON input - but all APIs take both. Also
     it currently doesn't render 'examples' correctly.
-    
+
     You can download the latest spec from: https://github.com/jwag956/flask-security/blob/master/docs/openapi.yaml
   version: 1.0.0
   title: "Flask-Security External API"
@@ -33,6 +33,13 @@ paths:
             text/html:
               schema:
                 example: render_template(cv('LOGIN_USER_TEMPLATE')
+        302:
+          description: Response when already logged in
+          headers:
+            Location:
+              schema:
+                type: string
+                example: redirect(cv('POST_LOGIN_VIEW'))
     post:
       summary: Login to application
       description: Supports both json and form request types
@@ -50,7 +57,7 @@ paths:
             schema:
               $ref: "#/components/schemas/Login"
           application/x-www-form-urlencoded:
-            schema:             
+            schema:
               $ref: "#/components/schemas/Login"
       responses:
         200:
@@ -79,6 +86,79 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /login(passwordless):
+    get:
+      summary: Return passwordless login form.
+      responses:
+        200:
+          description: Passwordless login form
+          content:
+            text/html:
+              schema:
+                example: render_template(cv('SEND_LOGIN_TEMPLATE'))
+    post:
+      summary: Send passwordless login instructions email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailLink"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/EmailLink"
+      responses:
+        200:
+          description: >
+            Passwordless login response. For forms both success and validation errors.
+          content:
+            text/html:
+              schema:
+                description: Passwordless login form - with errors.
+                example: render_template(cv('SEND_LOGIN_TEMPLATE'))
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        400:
+          description: Errors while validating form
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /login(passwordless)/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Login via token.
+      description: >
+        This is the result of getting a passwordless login token and is usually
+        the result of clicking the link from a passwordless email.
+        This ALWAYS results in a 302 redirect.
+      responses:
+        302:
+          description: >
+            Redirects depending on success/error and whether
+            cv('REDIRECT_BEHAVIOR') == 'spa'.
+          headers:
+            Location:
+              description: |
+                On spa-success: cv('POST_LOGIN_VIEW')email={email}
+
+                On spa-error-expired: cv('LOGIN_ERROR_VIEW')?error={msg}&email={email}
+
+                On spa-error-invalid-token: cv('LOGIN_ERROR_VIEW')?error={msg}
+
+                On form-success: cv('POST_LOGIN_VIEW')
+
+                On form-error-expired: cv('LOGIN_VIEW')
+
+                On form-error-invalid-token: cv('LOGIN_VIEW')
+              schema:
+                type: string
   /logout:
     get:
       summary: Log out current user
@@ -111,7 +191,7 @@ paths:
                         description: Http status code
   /register:
     get:
-      summary: Retrieve register form
+      summary: Return register form
       responses:
         200:
           description: Register form
@@ -119,6 +199,13 @@ paths:
             text/html:
               schema:
                 example: render_template(cv('REGISTER_USER_TEMPLATE')
+        302:
+          description: Response when already logged in
+          headers:
+            Location:
+              schema:
+                type: string
+                example: redirect(cv('POST_LOGIN_VIEW'))
     post:
       summary: Register with application
       description: Supports both json and form request types
@@ -137,7 +224,7 @@ paths:
             schema:
               $ref: "#/components/schemas/Register"
           application/x-www-form-urlencoded:
-            schema:             
+            schema:
               $ref: "#/components/schemas/RegisterForm"
       responses:
         200:
@@ -163,7 +250,100 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DefaultJsonErrorResponse"  
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /change:
+    get:
+      summary: Return change password form.
+      responses:
+        200:
+          description: change password form
+          content:
+            text/html:
+              schema:
+                example: render_template(cv('CHANGE_PASSWORD_TEMPLATE'))
+    post:
+      summary: Change password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePassword"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/ChangePassword"
+      responses:
+        200:
+          description: Change password response.
+          content:
+            text/html:
+              schema:
+                description: Change form validation error.
+                example: render_template(cv('CHANGE_PASSWORD_TEMPLATE') with error values
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        302:
+          description: Password has been changed (non-json)
+          headers:
+            Location:
+              description: |
+                On success: redirect(cv('POST_CHANGE_VIEW')) or
+                            redirect(cv('POST_LOGIN_VIEW'))
+              schema:
+                type: string
+        400:
+          description: Errors while validating form
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /reset:
+    get:
+      summary: Return reset password form.
+      responses:
+        200:
+          description: Reset password form
+          content:
+            text/html:
+              schema:
+                example: render_template(cv('FORGOT_PASSWORD_TEMPLATE'))
+        302:
+          description: Response when already logged in
+          headers:
+            Location:
+              schema:
+                type: string
+                example: redirect(cv('POST_LOGIN_VIEW'))
+    post:
+      summary: Send reset password instructions email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailLink"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/EmailLink"
+      responses:
+        200:
+          description: >
+            Reset password response. For forms both success and validation errors.
+          content:
+            text/html:
+              schema:
+                description: Forgot password form - with errors.
+                example: render_template(cv('FORGOT_PASSWORD_TEMPLATE'))
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        400:
+          description: Errors while validating form
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /reset/{token}:
     parameters:
       - name: token
@@ -174,7 +354,7 @@ paths:
     get:
       summary: Request to reset password.
       description: >
-        This is the result of getting a reset-password link and is usually
+        This is the result of getting a reset-password token and is usually
         the result of clicking the link from a reset-password email.
         If cv('REDIRECT_BEHAVIOR') == 'spa' then a 302 is always returned.
       responses:
@@ -186,17 +366,17 @@ paths:
                 example: render_template(cv('RESET_PASSWORD_TEMPLATE'))
         302:
           description: >
-            Redirects depending on success/error and whether 
+            Redirects depending on success/error and whether
             cv('REDIRECT_BEHAVIOR') == 'spa'.
           headers:
             Location:
               description: |
                 On spa-success: cv('RESET_VIEW')?token={token}&email={email}
-                
+
                 On spa-error-expired: cv('RESET_ERROR_VIEW')?error={msg}&email={email}
-                
+
                 On spa-error-invalid-token: cv('RESET_ERROR_VIEW')?error={msg}
-                
+
                 On default-error: redirect(cv('FORGOT_PASSWORD'))
               schema:
                 type: string
@@ -218,7 +398,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ResetPassword"
           application/x-www-form-urlencoded:
-            schema:             
+            schema:
               $ref: "#/components/schemas/ResetPassword"
       responses:
         200:
@@ -238,7 +418,7 @@ paths:
               description: |
                 On success: redirect(cv('POST_RESET_VIEW')) or
                     redirect(cv('POST_LOGIN_VIEW'))
-                    
+
                 On invalid/expired token: redirect(cv('FORGOT_PASSWORD'))
               schema:
                 type: string
@@ -253,8 +433,85 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DefaultJsonErrorResponse" 
-          
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /confirm:
+    get:
+      summary: Return send confirmation form.
+      responses:
+        200:
+          description: Confirmation form
+          content:
+            text/html:
+              schema:
+                example: render_template(cv('SEND_CONFIRMATION_TEMPLATE'))
+    post:
+      summary: Send confirmation email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailLink"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/EmailLink"
+      responses:
+        200:
+          description: >
+            Confirmation response. For forms both success and validation errors.
+          content:
+            text/html:
+              schema:
+                description: Confirmation form - with errors.
+                example: render_template(cv('SEND_CONFIRMATION_TEMPLATE'))
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        400:
+          description: Errors while validating form
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /confirm/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Request to confirm account.
+      description: >
+        This is the result of getting a confirmation token and is usually
+        the result of clicking the link from a confirmation email.
+        This ALWAYS results in a 302 redirect.
+      responses:
+        302:
+          description: >
+            Redirects depending on success/error and whether
+            cv('REDIRECT_BEHAVIOR') == 'spa'.
+          headers:
+            Location:
+              description: |
+                On spa-success: cv('POST_CONFIRM_VIEW')?email={email}&{level}={msg} or
+                                cv('POST_LOGIN_VIEW')?email={email}&{level}={msg}
+
+                On spa-error-expired: cv('CONFIRM_ERROR_VIEW')?error={msg}&email={email}
+
+                On spa-error-invalid-token: cv('CONFIRM_ERROR_VIEW')?error={msg}
+
+                On form-success: cv('POST_CONFIRM_VIEW') or
+                                 cv('POST_LOGIN_VIEW')
+
+                On form-error-expired: cv('CONFIRM_ERROR_VIEW') or
+                                       cv('CONFIRM_URL')
+
+                On form-error-invalid-token: cv('CONFIRM_ERROR_VIEW') or
+                                             cv('CONFIRM_URL')
+              schema:
+                type: string
+
 components:
   schemas:
     Login:
@@ -347,7 +604,7 @@ components:
         next:
           type: string
           description: >
-            Redirect URL. Overrides POST_REGISTER_VIEW
+            Redirect URL. Overrides POST_REGISTER_VIEW.
     ResetPassword:
       type: object
       required: [password, password_confirm]
@@ -358,5 +615,26 @@ components:
         password_confirm:
           type: string
           description: Password - again
-
-    
+    ChangePassword:
+      type: object
+      required: [email, password, new_password, new_password_confirm]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          description: Password
+        new_password:
+          type: string
+          description: New password
+        new_password_confirm:
+          type: string
+          description: New password - again
+    EmailLink:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          description: >
+            Email address to send link email to.
