@@ -91,7 +91,7 @@ def two_factor_authenticate(client, validate=True):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_two_factor_two_factor_setup_function_anonymous(app, client):
+def test_two_factor_two_factor_setup_anonymous(app, client):
 
     # trying to pick method without doing earlier stage
     data = dict(setup="mail")
@@ -159,7 +159,10 @@ def test_two_factor_flag(app, client):
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
-    assert b'"response": {}' in response.data
+    assert response.status_code == 400
+    assert (
+        response.jdata["response"]["errors"]["setup"][0] == "Marked method is not valid"
+    )
 
     json_data = '{"setup": "mail"}'
     response = client.post(
@@ -200,7 +203,7 @@ def test_two_factor_flag(app, client):
 
     # try confirming password with a wrong one
     response = client.post("/tf-confirm", data=dict(password=""), follow_redirects=True)
-    assert b"Invalid password" in response.data
+    assert b"Password not provided" in response.data
 
     # try confirming password with a wrong one + json
     json_data = '{"password": "wrong_password"}'
@@ -288,7 +291,8 @@ def test_two_factor_flag(app, client):
     session = get_session(response)
     # Verify that logout clears session info
     assert not any(
-        k in session for k in ["has_two_factor", "totp_secret", "password_confirmed"]
+        k in session
+        for k in ["tf_state", "tf_user_id", "tf_primary_method", "tf_confirmed"]
     )
 
     # Test two-factor authentication first login
@@ -569,5 +573,5 @@ def test_datastore(app, client):
 
     with app.app_context():
         user = app.security.datastore.find_user(email="gal@lp.com")
-        assert user.two_factor_primary_method == "sms"
-        assert "enckey" in user.totp_secret
+        assert user.tf_primary_method == "sms"
+        assert "enckey" in user.tf_totp_secret

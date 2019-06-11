@@ -205,45 +205,44 @@ Template Paths
 
 .. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
 
-============================================== =======================================
-``SECURITY_FORGOT_PASSWORD_TEMPLATE``          Specifies the path to the template for
-                                               the forgot password page. Defaults to
-                                               ``security/forgot_password.html``.
-``SECURITY_LOGIN_USER_TEMPLATE``               Specifies the path to the template for
-                                               the user login page. Defaults to
-                                               ``security/login_user.html``.
-``SECURITY_REGISTER_USER_TEMPLATE``            Specifies the path to the template for
-                                               the user registration page. Defaults to
-                                               ``security/register_user.html``.
-``SECURITY_RESET_PASSWORD_TEMPLATE``           Specifies the path to the template for
-                                               the reset password page. Defaults to
-                                               ``security/reset_password.html``.
-``SECURITY_CHANGE_PASSWORD_TEMPLATE``          Specifies the path to the template for
-                                               the change password page. Defaults to
-                                               ``security/change_password.html``.
-``SECURITY_SEND_CONFIRMATION_TEMPLATE``        Specifies the path to the template for
-                                               the resend confirmation instructions
-                                               page. Defaults to
-                                               ``security/send_confirmation.html``.
-``SECURITY_SEND_LOGIN_TEMPLATE``               Specifies the path to the template for
-                                               the send login instructions page for
-                                               passwordless logins. Defaults to
-                                               ``security/send_login.html``.
-``SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE``   Specifies the path to the template for
-                                               the verify code page for the two-factor
-                                               authentication process. Defaults to
-                                               ``security/two_factor_verify_code.html``.
+================================================== =======================================
+``SECURITY_FORGOT_PASSWORD_TEMPLATE``              Specifies the path to the template for
+                                                   the forgot password page. Defaults to
+                                                   ``security/forgot_password.html``.
+``SECURITY_LOGIN_USER_TEMPLATE``                   Specifies the path to the template for
+                                                   the user login page. Defaults to
+                                                   ``security/login_user.html``.
+``SECURITY_REGISTER_USER_TEMPLATE``                Specifies the path to the template for
+                                                   the user registration page. Defaults to
+                                                   ``security/register_user.html``.
+``SECURITY_RESET_PASSWORD_TEMPLATE``               Specifies the path to the template for
+                                                   the reset password page. Defaults to
+                                                   ``security/reset_password.html``.
+``SECURITY_CHANGE_PASSWORD_TEMPLATE``              Specifies the path to the template for
+                                                   the change password page. Defaults to
+                                                   ``security/change_password.html``.
+``SECURITY_SEND_CONFIRMATION_TEMPLATE``            Specifies the path to the template for
+                                                   the resend confirmation instructions
+                                                   page. Defaults to
+                                                   ``security/send_confirmation.html``.
+``SECURITY_SEND_LOGIN_TEMPLATE``                   Specifies the path to the template for
+                                                   the send login instructions page for
+                                                   passwordless logins. Defaults to
+                                                   ``security/send_login.html``.
+``SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE``       Specifies the path to the template for
+                                                   the verify code page for the two-factor
+                                                   authentication process. Defaults to
+                                                   ``security/two_factor_verify_code.html``.
+``SECURITY_TWO_FACTOR_SETUP_TEMPLATE``             Specifies the path to the template for
+                                                   the setup page for the two
+                                                   factor authentication process. Defaults
+                                                   to ``security/two_factor_setup.html``
+``SECURITY_TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE``   Specifies the path to the template for
+                                                   the change method page for the two
+                                                   factor authentication process. Defaults
+                                                   to ``security/two_factor_verify_password.html``.
 
-``SECURITY_TWO_FACTOR_CHOOSE_METHOD_TEMPLATE`` Specifies the path to the template for
-                                               the choose method page for the two
-                                               factor authentication process. Defaults
-                                               to ``security/two_factor_choose_method.html``
-``SECURITY_TWO_FACTOR_CHANGE_METHOD_TEMPLATE`` Specifies the path to the template for
-                                               the change method page for the two
-                                               factor authentication process. Defaults
-                                               to ``security/two_factor_change_method_password_confirmation.html``.
-
-============================================== =======================================
+================================================== =======================================
 
 
 Feature Flags

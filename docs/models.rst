@@ -58,13 +58,13 @@ If you enable two-factor by setting your application's `SECURITY_TWO_FACTOR`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
-* ``totp_secret``
-* ``two_factor_primary_method``
+* ``tf_totp_secret``
+* ``tf_primary_method``
 
 If you include 'sms' in `SECURITY_TWO_FACTOR_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
-* ``phone_number``
+* ``tf_phone_number``
 
 Custom User Payload
 ^^^^^^^^^^^^^^^^^^^

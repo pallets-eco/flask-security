@@ -111,7 +111,7 @@ def login():
     if form.validate_on_submit():
         if config_value("TWO_FACTOR") is True and (
             config_value("TWO_FACTOR_REQUIRED") is True
-            or (form.user.totp_secret and form.user.two_factor_primary_method)
+            or (form.user.tf_totp_secret and form.user.tf_primary_method)
         ):
             return _two_factor_login(form)
 
@@ -534,22 +534,20 @@ def _two_factor_login(form):
     # Set info into form for JSON response
     json_response = {"tf_required": True}
     # if user's two-factor properties are not configured
-    if user.two_factor_primary_method is None or user.totp_secret is None:
+    if user.tf_primary_method is None or user.tf_totp_secret is None:
         session["tf_state"] = "setup_from_login"
         json_response["tf_state"] = "setup_from_login"
         if not request.is_json:
-            return redirect(url_for("two_factor_setup_function"))
+            return redirect(url_for("two_factor_setup"))
 
     # if user's two-factor properties are configured
     else:
         session["tf_state"] = "ready"
         json_response["tf_state"] = "ready"
-        json_response["tf_primary_method"] = user.two_factor_primary_method
+        json_response["tf_primary_method"] = user.tf_primary_method
 
         send_security_token(
-            user=user,
-            method=user.two_factor_primary_method,
-            totp_secret=user.totp_secret,
+            user=user, method=user.tf_primary_method, totp_secret=user.tf_totp_secret
         )
 
         if not request.is_json:
@@ -558,7 +556,7 @@ def _two_factor_login(form):
     return _render_json(form, include_auth_token=True, additional=json_response)
 
 
-def two_factor_setup_function():
+def two_factor_setup():
     """View function for two-factor setup.
 
     This is used both for GET to fetch forms and POST to actually set configuration
@@ -609,17 +607,17 @@ def two_factor_setup_function():
             return _tf_illegal_state(form, _security.two_factor_confirm_url)
         user = current_user
 
-    if not user.totp_secret:
+    if not user.tf_totp_secret:
         # Both initial login and opt-in are this case.
-        user.totp_secret = generate_totp()
+        user.tf_totp_secret = generate_totp()
         _datastore.put(user)
         after_this_request(_commit)
 
     if form.validate_on_submit():
         # Before storing in DB and therefore requiring 2FA we need to
         # make sure it actually works.
-        # Requiring 2FA is triggered by having BOTH totp_secret and
-        # two_factor_primary_method in the user record (or having the application
+        # Requiring 2FA is triggered by having BOTH tf_totp_secret and
+        # tf_primary_method in the user record (or having the application
         # global config TWO_FACTOR_REQUIRED)
         # Until we correctly validate the 2FA - we don't set primary_method in
         # user model but use the session to store it.
@@ -636,15 +634,15 @@ def two_factor_setup_function():
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
         if len(form.data["phone"]) > 0:
-            user.phone_number = form.data["phone"]
+            user.tf_phone_number = form.data["phone"]
         _datastore.put(user)
         after_this_request(_commit)
 
-        send_security_token(user=user, method=pm, totp_secret=user.totp_secret)
+        send_security_token(user=user, method=pm, totp_secret=user.tf_totp_secret)
         code_form = _security.two_factor_verify_code_form()
         if not request.is_json:
             return _security.render_template(
-                config_value("TWO_FACTOR_CHOOSE_METHOD_TEMPLATE"),
+                config_value("TWO_FACTOR_SETUP_TEMPLATE"),
                 two_factor_setup_form=form,
                 two_factor_verify_code_form=code_form,
                 choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
@@ -661,7 +659,7 @@ def two_factor_setup_function():
         choices.append("disable")
 
     return _security.render_template(
-        config_value("TWO_FACTOR_CHOOSE_METHOD_TEMPLATE"),
+        config_value("TWO_FACTOR_SETUP_TEMPLATE"),
         two_factor_setup_form=form,
         two_factor_verify_code_form=code_form,
         choices=choices,
@@ -711,7 +709,7 @@ def two_factor_token_validation():
             return _tf_illegal_state(form, _security.login_url)
 
         if session["tf_state"] == "ready":
-            pm = user.two_factor_primary_method
+            pm = user.tf_primary_method
         else:
             pm = session["tf_primary_method"]
     else:
@@ -746,7 +744,7 @@ def two_factor_token_validation():
         setup_form = _security.two_factor_setup_form()
 
         return _security.render_template(
-            config_value("TWO_FACTOR_CHOOSE_METHOD_TEMPLATE"),
+            config_value("TWO_FACTOR_SETUP_TEMPLATE"),
             two_factor_setup_form=setup_form,
             two_factor_verify_code_form=form,
             choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
@@ -767,7 +765,7 @@ def two_factor_token_validation():
 
 
 @anonymous_user_required
-def two_factor_rescue_function():
+def two_factor_rescue():
     """ Function that handles a situation where user can't
     enter his two-factor validation code
 
@@ -803,7 +801,7 @@ def two_factor_rescue_function():
         # e send him code through mail
         if problem == "lost_device":
             send_security_token(
-                user=form.user, method="mail", totp_secret=form.user.totp_secret
+                user=form.user, method="mail", totp_secret=form.user.tf_totp_secret
             )
         # send app provider a mail message regarding trouble
         elif problem == "no_mail_access":
@@ -831,9 +829,9 @@ def two_factor_rescue_function():
 
 
 @login_required
-def two_factor_password_confirmation():
-    """View function which handles a change two-factor method request."""
-    form_class = _security.two_factor_change_method_verify_password_form
+def two_factor_verify_password():
+    """View function which handles a password verification request."""
+    form_class = _security.two_factor_verify_password_form
 
     if request.is_json:
         form = form_class(MultiDict(request.get_json()))
@@ -844,7 +842,7 @@ def two_factor_password_confirmation():
         session["tf_confirmed"] = True
         if not request.is_json:
             do_flash(*get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE"))
-            return redirect(url_for("two_factor_setup_function"))
+            return redirect(url_for("two_factor_setup"))
 
         else:
             m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
@@ -857,9 +855,9 @@ def two_factor_password_confirmation():
         return _render_json(form)
 
     return _security.render_template(
-        config_value("TWO_FACTOR_CHANGE_METHOD_PASSWORD_CONFIRMATION_TEMPLATE"),
-        two_factor_change_method_verify_password_form=form,
-        **_ctx("tf_password_verify")
+        config_value("TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE"),
+        two_factor_verify_password_form=form,
+        **_ctx("tf_verify_password")
     )
 
 
@@ -884,7 +882,7 @@ def two_factor_qrcode():
         return abort(404)
 
     name = user.email.split("@")[0]
-    totp = user.totp_secret
+    totp = user.tf_totp_secret
     url = pyqrcode.create(get_totp_uri(name, totp))
     from io import BytesIO
 
@@ -936,16 +934,13 @@ def create_blueprint(state, import_name):
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(login)
 
     if state.two_factor:
-        tf_setup_function = "two_factor_setup_function"
         tf_token_validation = "two_factor_token_validation"
         tf_qrcode = "two_factor_qrcode"
-        tf_rescue_function = "two_factor_rescue_function"
-        tf_pass_validation = "two_factor_password_confirmation"
         bp.route(
             state.two_factor_setup_url,
             methods=["GET", "POST"],
-            endpoint=tf_setup_function,
-        )(two_factor_setup_function)
+            endpoint="two_factor_setup",
+        )(two_factor_setup)
         bp.route(
             state.two_factor_token_validation_url,
             methods=["GET", "POST"],
@@ -955,13 +950,13 @@ def create_blueprint(state, import_name):
         bp.route(
             state.two_factor_rescue_url,
             methods=["GET", "POST"],
-            endpoint=tf_rescue_function,
-        )(two_factor_rescue_function)
+            endpoint="two_factor_rescue",
+        )(two_factor_rescue)
         bp.route(
             state.two_factor_confirm_url,
             methods=["GET", "POST"],
-            endpoint=tf_pass_validation,
-        )(two_factor_password_confirmation)
+            endpoint="two_factor_verify_password",
+        )(two_factor_verify_password)
 
     if state.registerable:
         bp.route(state.register_url, methods=["GET", "POST"], endpoint="register")(
