@@ -11,5 +11,6 @@ Contents
    customizing
    two_factor_configurations
    api
+   contributing
    changelog
    authors
