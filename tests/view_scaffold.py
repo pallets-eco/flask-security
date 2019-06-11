@@ -176,9 +176,9 @@ class User(Base, UserMixin):
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
 
-    phone_number = Column(String(64))
-    two_factor_primary_method = Column(String(140))
-    totp_secret = Column(String(255))
+    tf_phone_number = Column(String(64))
+    tf_primary_method = Column(String(140))
+    tf_totp_secret = Column(String(255))
 
     roles = relationship(
         "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")

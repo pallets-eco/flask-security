@@ -73,7 +73,7 @@ def send_security_token(user, method, totp_secret):
     elif method == "sms":
         msg = "Use this code to log in: %s" % token_to_be_sent
         from_number = config_value("TWO_FACTOR_SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
-        to_number = user.phone_number
+        to_number = user.tf_phone_number
         sms_sender = SmsSenderFactory.createSender(
             config_value("TWO_FACTOR_SMS_SERVICE")
         )
@@ -142,8 +142,8 @@ def complete_two_factor_process(user, primary_method, is_changing):
     """
 
     # We always generate NEW totp secret seems like a good idea and safe to do here.
-    user.totp_secret = generate_totp()
-    user.two_factor_primary_method = primary_method
+    user.tf_totp_secret = generate_totp()
+    user.tf_primary_method = primary_method
     _datastore.put(user)
 
     # if we are changing two-factor method
@@ -169,7 +169,7 @@ def complete_two_factor_process(user, primary_method, is_changing):
 def tf_disable(user):
     """ Disable two factor for user """
     tf_clean_session()
-    user.primary_method = None
-    user.totp_secret = None
+    user.tf_primary_method = None
+    user.tf_totp_secret = None
     _datastore.put(user)
     tf_disabled.send(app._get_current_object(), user=user)

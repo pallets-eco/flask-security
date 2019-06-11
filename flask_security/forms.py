@@ -58,9 +58,10 @@ _default_field_labels = {
     "new_password": _("New Password"),
     "change_password": _("Change Password"),
     "send_login_link": _("Send Login Link"),
-    "verify_password": _("Verify Method"),
+    "verify_password": _("Verify Password"),
     "change_method": _("Change Method"),
     "phone": _("Phone Number"),
+    "code": _("Authentication Code"),
 }
 
 
@@ -364,7 +365,8 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
         if not config_value("TWO_FACTOR_REQUIRED"):
             choices.append("disable")
         if "setup" not in self.data or self.data["setup"] not in choices:
-            do_flash(*get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE"))
+            self.setup.errors = list()
+            self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
             return False
 
         return True
@@ -392,22 +394,25 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
 
         # verify entered token with user's totp secret
         if not verify_totp(
-            token=self.code.data, totp_secret=self.user.totp_secret, window=self.window
+            token=self.code.data,
+            totp_secret=self.user.tf_totp_secret,
+            window=self.window,
         ):
-            do_flash(*get_message("TWO_FACTOR_INVALID_TOKEN"))
+            self.code.errors = list()
+            self.code.errors.append(get_message("TWO_FACTOR_INVALID_TOKEN")[0])
+
             return False
 
         return True
 
 
-class TwoFactorChangeMethodVerifyPasswordForm(Form, PasswordFormMixin):
-    """The default change password form"""
+class TwoFactorVerifyPasswordForm(Form, PasswordFormMixin):
+    """The verify password form"""
 
     submit = SubmitField(get_form_field_label("verify_password"))
 
     def validate(self):
-        if not super(TwoFactorChangeMethodVerifyPasswordForm, self).validate():
-            do_flash(*get_message("INVALID_PASSWORD"))
+        if not super(TwoFactorVerifyPasswordForm, self).validate():
             return False
 
         self.user = current_user
