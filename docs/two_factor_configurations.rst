@@ -85,9 +85,9 @@ possible using SQLAlchemy:
         confirmed_at = db.Column(db.DateTime())
         roles = db.relationship('Role', secondary=roles_users,
                                 backref=db.backref('users', lazy='dynamic'))
-        phone_number = db.Column(db.String(64))
-        two_factor_primary_method = db.Column(db.String(140))
-        totp_secret = db.Column(db.String(255))
+        tf_phone_number = db.Column(db.String(64))
+        tf_primary_method = db.Column(db.String(140))
+        tf_totp_secret = db.Column(db.String(255))
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -100,7 +100,7 @@ possible using SQLAlchemy:
     def create_user():
         db.create_all()
         user_datastore.create_user(email='gal@lp.com', password='password', username='gal',
-                               totp_secret=None, two_factor_primary_method=None)
+                               tf_totp_secret=None, tf_primary_method=None)
         db.session.commit()
 
     # Views

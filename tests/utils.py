@@ -107,8 +107,8 @@ def create_users(app, ds, count=None):
             password=pw,
             active=u[4],
             security_number=u[5],
-            two_factor_primary_method=u[6],
-            totp_secret=totp_secret,
+            tf_primary_method=u[6],
+            tf_totp_secret=totp_secret,
         )
         ds.commit()
         for role in roles:
