@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "Flask-Security-Too"
+name = "flask_security"
 version = "3.2.0rc1"
 description =""" Flask-Security is an opinionated Flask extension which adds basic
   security and authentication features to your Flask apps quickly
@@ -8,6 +8,25 @@ authors = ["Matt Wright <matt@nobien.net>"]
 license = "MIT"
 repository = "https://github.com/jwag956/flask-security"
 documentation = "https://flask-security-too.readthedocs.io"
+classifiers=[
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Development Status :: 4 - Beta",
+]
 
 [tool.poetry.dependencies]
 python = "~2.7||^3.5"
@@ -20,6 +39,7 @@ Flask-BabelEx='^0.9.3'
 itsdangerous='^1.1.0'
 passlib='^1.7'
 cryptography = "^2.7"
+
 
 
 [tool.poetry.dev-dependencies]
@@ -40,14 +60,51 @@ pytest-cache = '^1.0'
 pytest-cov = '^2.7.0'
 pytest = '^4.0.0'
 sqlalchemy = '^1.1.0'
-black = {version = "^19.3b0",allow-prereleases = true, python="^3.6"}
+# black = {version = "^19.3b0", allow-prereleases = true, python="^3.6"}
 tox = "^3.12"
-pytest-black = {version="^0.3.7"}
+pytest-black = "^0.3.7"
 flake8 = "^3.7"
 pytest-flake8 = "^1.0"
 pre-commit = "^1.16"
 pyqrcode='^1.2'
 mongomock = "^3.16"
+tomlkit = "^0.5.3"
+Flask-Sphinx-Themes= "^1.0.1"
+Sphinx = "^1.4.2"
+sphinx-issues = "^1.2.0"
+
+[tool.poetry.extras]
+docs = ["Sphinx","Flask-Sphinx-Themes","sphinx-issues"]
+tests = [
+  "Flask-CLI",
+  "Flask-Mongoengine",
+  "Flask-Peewee",
+  "Flask-SQLAlchemy",
+  "bcrypt",
+  "check-manifest",
+  "coverage",
+  "cryptography",
+  "isort",
+  "mock",
+  "mongoengine",
+  "mongomock",
+  "msgcheck",
+  "pony",
+  "psycopg2",
+  "pydocstyle",
+  "pymysql",
+  "pyqrcode",
+  "pytest-black",
+  "pytest-cache",
+  "pytest-cov",
+  "pytest-flake8",
+  "pytest-mongo",
+  "pytest",
+  "sqlalchemy",
+  "sqlalchemy-utils",
+  "werkzeug"
+]
+
 
 # [build-system]
 # requires = ["poetry>=0.12"]

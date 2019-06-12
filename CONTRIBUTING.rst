@@ -44,21 +44,27 @@ these steps:
 #.  Change directory to flask_security::
 
         $ cd flask_security
+
 #. (Optional) Activate your virtual environment
 
 #.  Install the requirements::
 
-        $ pip install -r requirements-dev.txt
+        $ pip install -e .[tests]
 
 Or just install using::
+
         $ poetry install
+
+#.  Develop the Feature/Bug Fix and edit
 
 #.  When done, run Black on the code::
 
         $ black .
+
 #.  Also, make sure that Flake8 passes::
 
         $ flake8 .
+
 #.  Write Tests for your code in::
 
         tests/
