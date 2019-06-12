@@ -39,7 +39,7 @@ from .forms import (
     SendConfirmationForm,
     TwoFactorVerifyCodeForm,
     TwoFactorSetupForm,
-    TwoFactorChangeMethodVerifyPasswordForm,
+    TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
 )
 from .utils import _
@@ -117,8 +117,8 @@ _default_config = {
     "SEND_CONFIRMATION_TEMPLATE": "security/send_confirmation.html",
     "SEND_LOGIN_TEMPLATE": "security/send_login.html",
     "TWO_FACTOR_VERIFY_CODE_TEMPLATE": "security/two_factor_verify_code.html",
-    "TWO_FACTOR_CHOOSE_METHOD_TEMPLATE": "security/two_factor_choose_method.html",
-    "TWO_FACTOR_CHANGE_METHOD_PASSWORD_CONFIRMATION_TEMPLATE": "security/two_factor_change_method_password_confirmation.html",  # noqa: E501
+    "TWO_FACTOR_SETUP_TEMPLATE": "security/two_factor_setup.html",
+    "TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE": "security/two_factor_verify_password.html",
     "CONFIRMABLE": False,
     "REGISTERABLE": False,
     "RECOVERABLE": False,
@@ -305,7 +305,7 @@ _default_forms = {
     "passwordless_login_form": PasswordlessLoginForm,
     "two_factor_verify_code_form": TwoFactorVerifyCodeForm,
     "two_factor_setup_form": TwoFactorSetupForm,
-    "two_factor_change_method_verify_password_form": TwoFactorChangeMethodVerifyPasswordForm,  # noqa: E501
+    "two_factor_verify_password_form": TwoFactorVerifyPasswordForm,
     "two_factor_rescue_form": TwoFactorRescueForm,
 }
 
@@ -572,8 +572,8 @@ class _SecurityState(object):
     def mail_context_processor(self, fn):
         self._add_ctx_processor("mail", fn)
 
-    def tf_password_verify_context_processor(self, fn):
-        self._add_ctx_processor("tf_password_verify", fn)
+    def tf_verify_password_context_processor(self, fn):
+        self._add_ctx_processor("tf_verify_password", fn)
 
     def tf_setup_context_processor(self, fn):
         self._add_ctx_processor("tf_setup", fn)
