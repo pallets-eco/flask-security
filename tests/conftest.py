@@ -221,6 +221,8 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
 
     def tear_down():
         with app.app_context():
+            User.drop_collection()
+            Role.drop_collection()
             db.connection.drop_database(db_name)
 
     request.addfinalizer(tear_down)
