@@ -15,6 +15,8 @@
 import os
 import sys
 
+import tomlkit
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -22,8 +24,17 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- General configuration -----------------------------------------------
 
+
+def _get_project_meta():
+    with open("../pyproject.toml") as pyproject:
+        file_contents = pyproject.read()
+
+    return tomlkit.parse(file_contents)["tool"]["poetry"]
+
+
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
+
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -40,9 +51,9 @@ source_suffix = ".rst"
 
 # The master toctree document.
 master_doc = "index"
-
+pkg_meta = _get_project_meta()
 # General information about the project.
-project = u"Flask-Security"
+project = pkg_meta["name"]
 copyright = u"2012-2019, Matt Wright"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -50,7 +61,8 @@ copyright = u"2012-2019, Matt Wright"
 # built documents.
 #
 # The short X.Y version.
-version = "3.2.0"
+
+version = pkg_meta["version"]
 # The full version, including alpha/beta/rc tags.
 release = version
 

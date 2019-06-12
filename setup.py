@@ -39,11 +39,17 @@ tests_require = [
     "pytest>=3.5.1",
     "sqlalchemy>=1.1.0",
     "sqlalchemy-utils>=0.33.0",
+    "tomlkit>=0.5.3",
     "werkzeug>=0.12.2",
 ]
 
 extras_require = {
-    "docs": ["Flask-Sphinx-Themes>=1.0.1", "Sphinx>=1.4.2", "sphinx-issues>=1.2.0"],
+    "docs": [
+        "Flask-Sphinx-Themes>=1.0.1",
+        "Sphinx>=1.4.2",
+        "sphinx-issues>=1.2.0",
+        "tomlkit>=0.5.3",
+    ],  # noqa
     "tests": tests_require,
 }
 
