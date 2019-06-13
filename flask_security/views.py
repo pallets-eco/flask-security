@@ -23,7 +23,6 @@ from flask import (
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
-import pyqrcode
 
 from .changeable import change_user_password
 from .confirmable import (
@@ -883,7 +882,13 @@ def two_factor_qrcode():
 
     name = user.email.split("@")[0]
     totp = user.tf_totp_secret
-    url = pyqrcode.create(get_totp_uri(name, totp))
+    try:
+        import pyqrcode
+
+        url = pyqrcode.create(get_totp_uri(name, totp))
+    except ImportError:
+        # For TWO_FACTOR - this should have been checked at app init.
+        raise
     from io import BytesIO
 
     stream = BytesIO()
