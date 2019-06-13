@@ -19,7 +19,7 @@ Released TBD
 - (:pr:`73`) Fix get_user for various DBs (jwag956).
   This is a more complete fix than in opr #633.
 - (:pr:`78`) Add formal openapi API spec (jwag956).
-- (:pr:`86`, :pr:`94`, :pr:`98`, :pr:`101`) Add Two-factor authentication (opr #842) (baurt, jwag956).
+- (:pr:`86`, :pr:`94`, :pr:`98`, :pr:`101`, :pr:`104`) Add Two-factor authentication (opr #842) (baurt, jwag956).
 
 Version 3.1.0
 -------------
