@@ -94,7 +94,7 @@ msgstr "Les instruccions per reinicialitzar la teva contrasenya s'han enviat a %
 #: flask_security/core.py:155
 #, python-format
 msgid "You did not reset your password within %(within)s. New instructions have been sent to %(email)s."
-msgstr "No vas reinicialitzar la teva contrasenya abans de %(within)s. S'han enviat noves instruccionsa %(email)s."
+msgstr "No vas reinicialitzar la teva contrasenya abans de %(within)s. S'han enviat noves instruccions a %(email)s."
 
 #: flask_security/core.py:158
 msgid "Invalid reset password token."
@@ -114,12 +114,12 @@ msgstr "Les instruccions de confirmació s'han enviat a %(email)s."
 msgid ""
 "You did not confirm your email within %(within)s. New instructions to confirm your email have been sent to "
 "%(email)s."
-msgstr "No vas confirmar el teu correu electrònic abans de %(within)s. S'han enviat noves instruccionsa %(email)s."
+msgstr "No vas confirmar el teu correu electrònic abans de %(within)s. S'han enviat noves instruccions a %(email)s."
 
 #: flask_security/core.py:168
 #, python-format
 msgid "You did not login within %(within)s. New instructions to login have been sent to %(email)s."
-msgstr "No vas iniciar la sessió abans de %(within)s. S'han enviat noves instruccionsa %(email)s."
+msgstr "No vas iniciar la sessió abans de %(within)s. S'han enviat noves instruccions a %(email)s."
 
 #: flask_security/core.py:171
 #, python-format
@@ -172,7 +172,7 @@ msgstr "Ha oblidat la seva contrasenya?"
 
 #: flask_security/core.py:195
 msgid "You successfully reset your password and you have been logged in automatically."
-msgstr "Has restablert la teva contrasenya amb èxit i s'ha iniciat la sessióautomàticament."
+msgstr "Has restablert la teva contrasenya amb èxit i s'ha iniciat la sessió automàticament."
 
 #: flask_security/core.py:198
 msgid "Your new password must be different than your previous password."
