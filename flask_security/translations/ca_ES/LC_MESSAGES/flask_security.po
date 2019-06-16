@@ -210,7 +210,7 @@ msgstr "Iniciar sessió"
 #: flask_security/forms.py:34 flask_security/templates/security/_menu.html:6
 #: flask_security/templates/security/register_user.html:3
 msgid "Register"
-msgstr "Registrarse"
+msgstr "Registrar-se"
 
 #: flask_security/forms.py:35
 msgid "Resend Confirmation Instructions"
