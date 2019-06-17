@@ -86,7 +86,7 @@ setup(
             'pytest>=4.0.0', 'pytest-black>=0.3.7', 'pytest-cache>=1.0',
             'pytest-cov>=2.7.0', 'pytest-flake8>=1.0', 'pytest-runner>=2.6.2',
             'sphinx>=1.4.2', 'sphinx-issues>=1.2.0', 'sqlalchemy>=1.1.0',
-            'tomlkit>=0.5.3', 'tox>=3.12'
+            'tomlkit>=0.5.3', 'tox>=3.12', 'werkzeug>=0.12.2'
         ],
         'tests': [
             'babel>=1.3', 'bcrypt>=3.1', 'check-manifest>=0.25',
@@ -98,7 +98,8 @@ setup(
             'pydocstyle>=3.0.0', 'pyqrcode>=1.2', 'pytest>=4.0.0',
             'pytest-black>=0.3.7', 'pytest-cache>=1.0', 'pytest-cov>=2.7.0',
             'pytest-flake8>=1.0', 'pytest-runner>=2.6.2', 'sphinx>=1.4.2',
-            'sphinx-issues>=1.2.0', 'sqlalchemy>=1.1.0', 'tomlkit>=0.5.3'
+            'sphinx-issues>=1.2.0', 'sqlalchemy>=1.1.0', 'tomlkit>=0.5.3',
+            'werkzeug>=0.12.2'
         ],
         'docs': [
             'flask-sphinx-themes>=1.0.1', 'sphinx>=1.4.2',

@@ -79,6 +79,7 @@ Flask-Sphinx-Themes= ">=1.0.1"
 Sphinx = ">=1.4.2"
 sphinx-issues = ">=1.2.0"
 pytest-runner = ">=2.6.2"
+werkzeug = ">=0.12.2"
 
 [tool.poetry.extras]
 docs = ["Sphinx","Flask-Sphinx-Themes","sphinx-issues","tomlkit"]
