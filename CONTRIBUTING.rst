@@ -27,9 +27,9 @@ https://github.com/jwag956/flask-security.  To get a working environment, follow
 these steps:
 
 #.  (Optional, but recommended) Create a Python 3.6 (or greater) virtualenv to work in,
-    and activate it.  `Poetry <https://github.com/sdispater/poetry>`_,
-     `Dephell <https://github.com/dephell/dephell>`_ and `pre-commit <https://pre-commit.com/>`_
-     are recommended, but not strictly required.
+and activate it.  `Poetry <https://github.com/sdispater/poetry>`_,
+`Dephell <https://github.com/dephell/dephell>`_ and `pre-commit <https://pre-commit.com/>`_
+are recommended, but not strictly required.
 
 
 #.  Fork the repo `Flask-Security <https://github.com/jwag956/flask-security>`_
@@ -50,6 +50,7 @@ these steps:
 #. (Optional) Activate your virtual environment
 
 #. (Optional) Install the pre-commit hooks::
+
         $ pre-commit install
 
 #.  Install the requirements::
@@ -62,6 +63,7 @@ Or if using Poetry, just install using::
         $ poetry install
 
 #.  Develop the Feature/Bug Fix and edit
+
 
 #.  Write Tests for your code in::
 

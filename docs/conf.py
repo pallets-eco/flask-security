@@ -53,7 +53,7 @@ source_suffix = ".rst"
 master_doc = "index"
 pkg_meta = _get_project_meta()
 # General information about the project.
-project = pkg_meta["name"]
+project = str(pkg_meta["name"])
 copyright = u"2012-2019, Matt Wright"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -62,7 +62,7 @@ copyright = u"2012-2019, Matt Wright"
 #
 # The short X.Y version.
 
-version = pkg_meta["version"]
+version = str(pkg_meta["version"])
 # The full version, including alpha/beta/rc tags.
 release = version
 
