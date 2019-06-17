@@ -24,7 +24,7 @@ python-versions = "*"
 version = "1.4.3"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Fast ASN.1 parser and serializer with definitions for private keys, public keys, certificates, CRL, OCSP, CMS, PKCS#3, PKCS#7, PKCS#8, PKCS#12, PKCS#5, X.509 and TSP"
 name = "asn1crypto"
 optional = false
@@ -130,7 +130,7 @@ python-versions = "*"
 version = "2019.6.16"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Foreign Function Interface for Python calling C code."
 name = "cffi"
 optional = false
@@ -214,7 +214,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, <4"
 version = "4.5.3"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 name = "cryptography"
 optional = false
@@ -256,7 +256,7 @@ python = ">=2.7,<2.8"
 version = ">=3.5"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Python 3.4 Enum backported to 3.3, 3.2, 3.1, 2.7, 2.6, 2.5, and 2.4"
 marker = "python_version < \"3.4\" or python_version >= \"2.7\" and python_version < \"2.8\""
 name = "enum34"
@@ -542,7 +542,7 @@ python = "<3.5"
 version = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "IPv4/IPv6 manipulation library"
 marker = "python_version < \"3\""
 name = "ipaddress"
@@ -773,6 +773,14 @@ version = "*"
 
 [[package]]
 category = "dev"
+description = "psycopg2 - Python-PostgreSQL Database Adapter"
+name = "psycopg2"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+version = "2.8.3"
+
+[[package]]
+category = "dev"
 description = "library with cross-python path, ini-parsing, io, code, log facilities"
 name = "py"
 optional = false
@@ -788,7 +796,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.5.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "C parser in Python"
 name = "pycparser"
 optional = false
@@ -842,6 +850,14 @@ name = "pymongo"
 optional = false
 python-versions = "*"
 version = "3.8.0"
+
+[[package]]
+category = "dev"
+description = "Pure Python MySQL Driver"
+name = "pymysql"
+optional = false
+python-versions = "*"
+version = "0.9.3"
 
 [[package]]
 category = "dev"
@@ -1002,7 +1018,7 @@ python-versions = "*"
 version = "1.0.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Python 2 and 3 compatibility utilities"
 name = "six"
 optional = false
@@ -1152,7 +1168,19 @@ description = "Database Abstraction Library"
 name = "sqlalchemy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.3.4"
+version = "1.3.5"
+
+[[package]]
+category = "dev"
+description = "Various utility functions for SQLAlchemy."
+name = "sqlalchemy-utils"
+optional = false
+python-versions = "*"
+version = "0.34.0"
+
+[package.dependencies]
+SQLAlchemy = ">=1.0"
+six = "*"
 
 [[package]]
 category = "dev"
@@ -1271,10 +1299,10 @@ version = "0.5.1"
 
 [extras]
 docs = []
-tests = ["cryptography"]
+tests = []
 
 [metadata]
-content-hash = "b6f1e3c6867000f09c35b5564ab0db49b341738852739c29f813845881a53cad"
+content-hash = "402d2894b1f5332881d8a36838098a48c3c6a9baf7741a1dba6f3a2c79bee3e8"
 python-versions = "~2.7||^3.5"
 
 [metadata.hashes]
@@ -1346,6 +1374,7 @@ peewee = ["bc879e1ffb7f7684f90d9dd236c77b5042118d079f94764f35e3806948829ac8"]
 pluggy = ["0825a152ac059776623854c1543d65a4ad408eb3d33ee114dff91e57ec6ae6fc", "b9817417e95936bf75d85d3f8767f7df6cdde751fc40aed3bb3074cbcb77757c"]
 pony = ["55bb9d4d12029d8c2bbbc7a284970e72225035db7e6370c0a15ec93d1886fe88"]
 pre-commit = ["92e406d556190503630fd801958379861c94884693a032ba66629d0351fdccd4", "cccc39051bc2457b0c0f7152a411f8e05e3ba2fe1a5613e4ee0833c1c1985ce3"]
+psycopg2 = ["128d0fa910ada0157bba1cb74a9c5f92bb8a1dca77cf91a31eb274d1f889e001", "227fd46cf9b7255f07687e5bde454d7d67ae39ca77e170097cdef8ebfc30c323", "2315e7f104681d498ccf6fd70b0dba5bce65d60ac92171492bfe228e21dcc242", "4b5417dcd2999db0f5a891d54717cfaee33acc64f4772c4bc574d4ff95ed9d80", "640113ddc943522aaf71294e3f2d24013b0edd659b7820621492c9ebd3a2fb0b", "897a6e838319b4bf648a574afb6cabcb17d0488f8c7195100d48d872419f4457", "8dceca81409898c870e011c71179454962dec152a1a6b86a347f4be74b16d864", "b1b8e41da09a0c3ef0b3d4bb72da0dde2abebe583c1e8462973233fd5ad0235f", "cb407fccc12fc29dc331f2b934913405fa49b9b75af4f3a72d0f50f57ad2ca23", "d3a27550a8185e53b244ad7e79e307594b92fede8617d80200a8cce1fba2c60f", "f0e6b697a975d9d3ccd04135316c947dd82d841067c7800ccf622a8717e98df1"]
 py = ["64f65755aee5b381cea27766a3a147c3f15b9b6b9ac88676de66ba2ae36793fa", "dc639b046a6e2cff5bbe40194ad65936d6ba360b52b3c3fe1d08a82dd50b5e53"]
 pycodestyle = ["95a2219d12372f05704562a14ec30bc76b05a5b297b21a5dfe3f6fac3491ae56", "e40a936c9a450ad81df37f549d676d127b1b66000a6c500caa2b085bc0ca976c"]
 pycparser = ["a988718abfad80b6b157acce7bf130a30876d27603738ac39f140993246b25b3"]
@@ -1354,6 +1383,7 @@ pyenchant = ["9a66aa441535e27d228baca320f7feed1b08d0c5e6167d5e5cf455b545b7c2cd",
 pyflakes = ["17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0", "d976835886f8c5b31d47970ed689944a0262b5f3afa00a5a7b4dc81e5449f8a2"]
 pygments = ["71e430bc85c88a430f000ac1d9b331d2407f681d6f6aec95e8bcfbc3df5b0127", "881c4c157e45f30af185c1ffe8d549d48ac9127433f2c380c24b84572ad66297"]
 pymongo = ["32421df60d06f479d71b6b539642e410ece3006e8910688e68df962c8eb40a21", "324b22a8443e11faca44c96b20e7ec8a9e59a1e664457edeeb4f796080b31cde", "3b6336b1d2a1ac2fcc8f629070016f3c76ad7dc969f269232471953d6dd17c0d", "4505ff8b7923dd7a8bed1bf25c9c4d0df5ab0b8b2821f2296533f2149a55f401", "460b224681ea711e48e3638d15be2249024031b7dcb9622ba19c2e85bd5a26cc", "47473b70c5f3cd5ddd2c49ab3b9ceafdafbbed5bc963f147df22a9343d7978f5", "49375839af76834e9c5c3cc78c78386873fd0b2ad9a0860a7dc4ec9fe73af9dd", "4a65f0f71ece86c860d30a1436b646db8ea32aec518845ef2903ca569faec32e", "530621906c5dd6d27305b39c4e017701e5f4299aa68b93cde70eb985f94ca26f", "54f4770b5810e8dc3cbeed675874195f02bb2bc4e95a9d665068edfb3baff4f7", "5ed9382410e938b0ff76041c34018210504729a83bcf4f6a70c7092c28169f6f", "61cad83637ae12c1c825130d7f9325cd6c162e3a64e8747a8144866020be3ff4", "61e8e1c58b4fdf47ab79b7c7db8bb022c1e40b3b5fcbbaeea5fc94dc5c75638d", "6e04e496af7d156b66cce70460011c621ecbadf5dcdce325c7acbb3cd6ea245d", "74838f04da0b3995b830fe1f00f9b200831582cbc42a22b77e04dfb717cb0d56", "7ef89ec435e89da902451dde6845066fe2770befaf0301fe2a1ac426b51fced3", "854e8425e5eb775ccfffad04ecd094c99923d60a2c2d49babb5c435e836a91fa", "9569796d48498e4db4e1d56284b626a8ed15f641ce3a8b2085f06bb03f4c2c88", "9d50c99c6388863cbfdc5db9bad62e3a7c2e5fc151554a07c7f3c2530334a34f", "9ea016c2c011df21f77c1f806ce45129a344ba2d414bd50f9e065b13a4a134be", "a8421f0823174888fb12a5fa675322e756499d71e77ff712b4412d4b8f3c6503", "aef7d88384ada699976350a285c7a333f96ebc959e98e7d2c98589f47bbf3b7f", "b4d7ff9957ee770cf03bd7156a68a2f2e838e60712d9608eadc8741c15d01e72", "c1db85c39e6a60588f855dbc7bd68fb0dab796096148ab5aa4abecaff19e1c6e", "c3e813b1bd0b883639e30170dc9daccb9b6ef7e81836188b88d3fc7364892b35", "cee2fc0b94e66e7230da12fc4b3d34793c49957e16ee04f6468a94e264a1e41d", "cf1dea28379a16b23e47db312883f07b3ba8d9d6abc1c59e51d4c8ae1820ab43", "d1cd175df7c8b5fc976bade78bf4d9fb5aa7ab465c0f59931e380bbe188ef8fc", "d48a94edf3cdd34524936a72ea01b352682b337f33a42db10ba29a96c37147d3", "d9cc103a4e97f78bc77a1d72759ab3722f6cdf0374ad4fb4b0c53bd3238bdf98", "fcb9ae8aa9158106c5d98a4349ec0d90b68f052d620b2d24622ba03b91e4d81d"]
+pymysql = ["3943fbbbc1e902f41daf7f9165519f140c4451c179380677e6a848587042561a", "d8c059dcd81dedb85a9f034d5e22dcb4442c0b201908bede99e306d65ea7c8e7"]
 pyparsing = ["1873c03321fc118f4e9746baf201ff990ceb915f433f23b395f5580d1840cb2a", "9b6323ef4ab914af344ba97510e966d64ba91055d6b9afa6b30799340e89cc03"]
 pyqrcode = ["1b2812775fa6ff5c527977c4cd2ccb07051ca7d0bc0aecf937a43864abe5eff6", "fdbf7634733e56b72e27f9bce46e4550b75a3a2c420414035cae9d9d26b234d5"]
 pytest = ["4a784f1d4f2ef198fe9b7aef793e9fa1a3b2f84e822d9b3a64a181293a572d45", "926855726d8ae8371803f7b2e6ec0a69953d9c6311fa7c3b6c1b929ff92d27da"]
@@ -1379,7 +1409,8 @@ sphinxcontrib-jsmath = ["2ec2eaebfb78f3f2078e73666b1415417a116cc848b72e5172e596c
 sphinxcontrib-qthelp = ["513049b93031beb1f57d4daea74068a4feb77aa5630f856fcff2e50de14e9a20", "79465ce11ae5694ff165becda529a600c754f4bc459778778c7017374d4d406f"]
 sphinxcontrib-serializinghtml = ["c0efb33f8052c04fd7a26c0a07f1678e8512e0faec19f4aa8f2473a8b81d5227", "db6615af393650bf1151a6cd39120c29abaf93cc60db8c48eb2dddbfdc3a9768"]
 sphinxcontrib-websupport = ["1501befb0fdf1d1c29a800fdbf4ef5dc5369377300ddbdd16d2cd40e54c6eefc", "e02f717baf02d0b6c3dd62cf81232ffca4c9d5c331e03766982e3ff9f1d2bc3f"]
-sqlalchemy = ["c7fef198b43ef31dfd783d094fd5ee435ce8717592e6784c45ba337254998017"]
+sqlalchemy = ["c30925d60af95443458ebd7525daf791f55762b106049ae71e18f8dd58084c2f"]
+sqlalchemy-utils = ["0ebd4d176a5786233db9f2e92040476fcff8b1b426fdbbb7ee4f478280ee9166"]
 toml = ["229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c", "235682dd292d5899d361a811df37e04a8828a5b1da3115886b73cf81ebc9100e", "f1db651f9657708513243e61e6cc67d101a39bad662eaa9b5546f789338e07a3"]
 tomlkit = ["d6506342615d051bc961f70bfcfa3d29b6616cc08a3ddfd4bc24196f16fd4ec2", "f077456d35303e7908cc233b340f71e0bec96f63429997f38ca9272b7d64029e"]
 tox = ["f5c8e446b51edd2ea97df31d4ded8c8b72e7d6c619519da6bb6084b9dd5770f9", "f87fd33892a2df0950e5e034def9468988b8d008c7e9416be665fcc0dd45b14f"]
