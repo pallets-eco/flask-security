@@ -27,8 +27,10 @@ https://github.com/jwag956/flask-security.  To get a working environment, follow
 these steps:
 
 #.  (Optional, but recommended) Create a Python 3.6 (or greater) virtualenv to work in,
-    and activate it.  `Poetry <https://github.com/sdispater/poetry>`_ is a great tool to
-    automate installation of virtualenvs and requirements.
+    and activate it.  `Poetry <https://github.com/sdispater/poetry>`_,
+     `Dephell <https://github.com/dephell/dephell>`_ and `pre-commit <https://pre-commit.com/>`_
+     are recommended, but not strictly required.
+
 
 #.  Fork the repo `Flask-Security <https://github.com/jwag956/flask-security>`_
         (look for the "Fork" button).
@@ -47,15 +49,23 @@ these steps:
 
 #. (Optional) Activate your virtual environment
 
+#. (Optional) Install the pre-commit hooks::
+        $ pre-commit install
+
 #.  Install the requirements::
 
         $ pip install -e .[tests]
 
-Or just install using::
+
+Or if using Poetry, just install using::
 
         $ poetry install
 
 #.  Develop the Feature/Bug Fix and edit
+
+#.  Write Tests for your code in::
+
+        tests/
 
 #.  When done, run Black on the code::
 
@@ -65,19 +75,15 @@ Or just install using::
 
         $ flake8 .
 
-#.  Write Tests for your code in::
-
-        tests/
-
 #.  Test the code by running::
 
         $ pytest
 
-Or, if using Poetry::
+Or if using Poetry::
 
         $ poetry run pytest
 
-#. When Black and Flake8 are successful, commit your changes
+#. When the tests are successful, commit your changes
 and push your branch to GitHub::
 
         $ git add .
@@ -85,5 +91,7 @@ and push your branch to GitHub::
         $ git push origin name-of-your-bugfix-or-feature
 
 #. Submit a pull request through the GitHub website.
+
+#. Be sure that the CI tests and coverage checks pass.
 
 
