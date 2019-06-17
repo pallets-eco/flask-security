@@ -56,3 +56,5 @@ Session.vim
 # VScode
 .vscode/
 
+# pre-commit config
+.pre-commit-config.yaml
