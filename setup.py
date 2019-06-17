@@ -75,16 +75,6 @@ setup(
         'flask-wtf>=0.14.2', 'itsdangerous>=1.1.0', 'passlib>=1.7'
     ],
     extras_require={
-        'tests': [
-            'bcrypt>=3.1', 'check-manifest>=0.25', 'coverage>=4.0',
-            'cryptography>=2.7', 'flask-cli>=0.4.0', 'flask-mongoengine>=0.9.5',
-            'flask-peewee>=3.0', 'flask-sqlalchemy>=2.4', 'isort>=4.2.2',
-            'mock>=1.3.0', 'mongoengine>=0.12.0', 'mongomock>=3.16',
-            'msgcheck>=3.0', 'pony>=0.7.4', 'pydocstyle>=3.0.0',
-            'pyqrcode>=1.2', 'pytest>=4.0.0', 'pytest-black>=0.3.7',
-            'pytest-cache>=1.0', 'pytest-cov>=2.7.0', 'pytest-flake8>=1.0',
-            'sqlalchemy>=1.1.0', 'tomlkit>=0.5.3'
-        ],
         'dev': [
             'bcrypt>=3.1', 'check-manifest>=0.25', 'coverage>=4.0',
             'flake8>=3.7', 'flask-cli>=0.4.0', 'flask-mongoengine>=0.9.5',
@@ -96,6 +86,16 @@ setup(
             'pytest-cache>=1.0', 'pytest-cov>=2.7.0', 'pytest-flake8>=1.0',
             'sphinx>=1.4.2', 'sphinx-issues>=1.2.0', 'sqlalchemy>=1.1.0',
             'tomlkit>=0.5.3', 'tox>=3.12'
+        ],
+        'tests': [
+            'bcrypt>=3.1', 'check-manifest>=0.25', 'coverage>=4.0',
+            'cryptography>=2.7', 'flask-cli>=0.4.0', 'flask-mongoengine>=0.9.5',
+            'flask-peewee>=3.0', 'flask-sqlalchemy>=2.4', 'isort>=4.2.2',
+            'mock>=1.3.0', 'mongoengine>=0.12.0', 'mongomock>=3.16',
+            'msgcheck>=3.0', 'pony>=0.7.4', 'pydocstyle>=3.0.0',
+            'pyqrcode>=1.2', 'pytest>=4.0.0', 'pytest-black>=0.3.7',
+            'pytest-cache>=1.0', 'pytest-cov>=2.7.0', 'pytest-flake8>=1.0',
+            'sqlalchemy>=1.1.0', 'tomlkit>=0.5.3'
         ],
         'docs': [
             'flask-sphinx-themes>=1.0.1', 'sphinx>=1.4.2',
