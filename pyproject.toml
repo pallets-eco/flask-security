@@ -35,50 +35,52 @@ classifiers=[
 
 [tool.poetry.dependencies]
 python = "~2.7||^3.5"
-Flask='>=0.12'
-Flask-Login='>=0.4.1'
-Flask-Mail='>=0.9.1'
-Flask-Principal='>=0.4.0'
-Flask-WTF='>=0.14.2'
-Flask-BabelEx='>=0.9.3'
-itsdangerous='>=1.1.0'
-passlib='>=1.7'
+Flask=">=0.12"
+Flask-Login=">=0.4.1"
+Flask-Mail=">=0.9.1"
+Flask-Principal=">=0.4.0"
+Flask-WTF=">=0.14.2"
+Flask-BabelEx=">=0.9.3"
+itsdangerous=">=1.1.0"
+passlib=">=1.7"
 cryptography = ">=2.7"
 cachetools = ">=3.1.0"
 
 
 [tool.poetry.dev-dependencies]
 Babel = ">=1.3"
-Flask-CLI = '>=0.4.0'
-Flask-Mongoengine = '>=0.9.5'
-Flask-Peewee = '>=3.0'
-Flask-SQLAlchemy = '>=2.4'
-bcrypt = '>=3.1'
-msgcheck = '>=3.0'
-check-manifest = '>=0.25'
-coverage = '>=4.0'
-isort = '>=4.2.2'
-mock = '>=1.3.0'
-mongoengine = '>=0.12.0'
-pony = '>=0.7.4'
-pydocstyle = '>=3.0.0'
-pytest-cache = '>=1.0'
-pytest-cov = '>=2.7.0'
-pytest = '>=4.0.0'
-sqlalchemy = '>=1.1.0'
-# black = {version = ">=19.3b0", allow-prereleases = true, python=">=3.6"}
-tox = ">=3.12"
-pytest-black = ">=0.3.7"
+bcrypt = ">=3.1"
+check-manifest = ">=0.25"
+coverage = ">=4.0"
+cryptography = ">=2.3.0"
 flake8 = ">=3.7"
-pytest-flake8 = ">=1.0"
-pre-commit = ">=1.16"
-pyqrcode='>=1.2'
-mongomock = ">=3.16"
-tomlkit = ">=0.5.3"
+Flask-CLI = ">=0.4.0"
+Flask-Mongoengine = ">=0.9.5"
+Flask-Peewee = ">=3.0"
 Flask-Sphinx-Themes= ">=1.0.1"
+Flask-SQLAlchemy = ">=2.3"
+isort = ">=4.2.2"
+mock = ">=1.3.0"
+mongoengine = ">=0.12.0"
+mongomock = ">=3.14.0"
+msgcheck = ">=3.0"
+pony = ">=0.7.4"
+pre-commit = ">=1.16"
+pydocstyle = ">=3.0.0"
+pymysql = ">=0.9.3"
+pyqrcode=">=1.2"
+pytest-black = ">=0.3.7"
+pytest-cache = ">=1.0"
+pytest-cov = ">=2.7.0"
+pytest-flake8 = ">=1.0"
+pytest-runner = ">=2.6.2"
+pytest = ">=4.0.0"
 Sphinx = ">=1.4.2"
 sphinx-issues = ">=1.2.0"
-pytest-runner = ">=2.6.2"
+sqlalchemy = ">=1.1.0"
+sqlalchemy-utils = ">=0.33.0"
+tomlkit = ">=0.5.3"
+tox = ">=3.12"
 werkzeug = ">=0.12.2"
 
 [tool.poetry.extras]
