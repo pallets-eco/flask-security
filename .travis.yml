@@ -50,7 +50,7 @@ before_install:
 
 install:
   - "pip install -r .travis-${REQUIREMENTS}-requirements.txt"
-  - "pip install -e .[all]"
+  - "pip install -e .[tests]"
 
 script:
   - python setup.py test
