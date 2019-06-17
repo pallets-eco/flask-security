@@ -10,9 +10,9 @@ repos:
     hooks:
     - id: flake8
 
-# - repo: https://github.com/baurt/precommit-dephell
-#   rev: master
-#   hooks:
-#     - id: pyproject-toml-to-setup-py
-#     - id: pyproject-toml-to-requirements-txt
+- repo: https://github.com/baurt/precommit-dephell
+  rev: master
+  hooks:
+    - id: pyproject-toml-to-setup-py
+    - id: pyproject-toml-to-requirements-txt
 
