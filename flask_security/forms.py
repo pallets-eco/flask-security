@@ -16,7 +16,7 @@ import inspect
 from flask import Markup, current_app, request
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
-from speaklater import make_lazy_gettext
+from speaklater import make_lazy_string
 from wtforms import (
     BooleanField,
     Field,
@@ -42,8 +42,6 @@ from .utils import (
     validate_redirect_url,
 )
 from .twofactor import verify_totp
-
-lazy_gettext = make_lazy_gettext(lambda: localize_callback)
 
 _default_field_labels = {
     "email": _("Email Address"),
@@ -94,8 +92,19 @@ password_required = Required(message="PASSWORD_NOT_PROVIDED")
 password_length = Length(min=6, max=128, message="PASSWORD_INVALID_LENGTH")
 
 
+def _local_xlate(text):
+    """ LazyStrings need to be evaluated in the context of a request
+    where _security.i18_domain is available.
+    """
+    return localize_callback(text)
+
+
 def get_form_field_label(key):
-    return lazy_gettext(_default_field_labels.get(key, ""))
+    """ This is called during import since form fields are declared as part of
+    class. Thus can't call 'localize_callback' until we need to actually
+    translate/render form.
+    """
+    return make_lazy_string(_local_xlate, _default_field_labels.get(key, ""))
 
 
 def unique_user_email(form, field):

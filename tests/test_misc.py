@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-    test_emails
+    test_misc
     ~~~~~~~~~~~
 
-    Email functionality tests
+    Email and other functionality tests
 """
 
 import hashlib
 
 import pytest
-from utils import authenticate, init_app_with_options, populate_data
+from utils import authenticate, check_xlation, init_app_with_options, populate_data
 
 from flask_security import Security
 from flask_security.forms import (
@@ -184,7 +184,7 @@ def test_addition_identity_attributes(app, sqlalchemy_datastore):
     )
     client = app.test_client()
     response = authenticate(client, email="matt", follow_redirects=True)
-    assert b"Hello matt@lp.com" in response.data
+    assert b"Welcome matt@lp.com" in response.data
 
 
 def test_passwordless_and_two_factor_configuration_mismatch(app, sqlalchemy_datastore):
@@ -277,7 +277,7 @@ def test_password_unicode_password_salt(client):
     response = authenticate(client)
     assert response.status_code == 302
     response = authenticate(client, follow_redirects=True)
-    assert b"Hello matt@lp.com" in response.data
+    assert b"Welcome matt@lp.com" in response.data
 
 
 def test_set_unauthorized_handler(app, client):
@@ -344,3 +344,45 @@ def test_no_email_sender(app):
             send_mail("Test Default Sender", user.email, "welcome", user=user)
         assert 1 == len(outbox)
         assert "test@testme.com" == outbox[0].sender
+
+
+def test_xlation(app, client):
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    # This is absolutely not the right way to get translations
+    # initialized - but works for our unit test environment.
+    app.jinja_env.globals["_"] = app.security.i18n_domain.gettext
+
+    response = client.get("/login")
+    assert b'<label for="password">Mot de passe</label>' in response.data
+    response = authenticate(client)
+    assert response.status_code == 302
+    response = authenticate(client, follow_redirects=True)
+    assert b"Bienvenue matt@lp.com" in response.data
+
+
+def test_form_labels(app):
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    app.security = Security()
+    app.security.init_app(app)
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    with app.test_request_context():
+        rform = RegisterForm()
+        assert str(rform.password.label.text) == "Mot de passe"
+        assert str(rform.password_confirm.label.text) == "Confirmer le mot de passe"
+        assert str(rform.email.label.text) == "Adresse email"
+        assert str(rform.submit.label.text) == "Inscription"
+
+        form = LoginForm()
+        assert str(form.password.label.text) == "Mot de passe"
+        assert str(form.remember.label.text) == "Se souvenir de moi"
+        assert str(form.email.label.text) == "Adresse email"
+        assert str(form.submit.label.text) == "Connexion"
+
+        form = ChangePasswordForm()
+        assert str(form.password.label.text) == "Mot de passe"
+        assert str(form.new_password.label.text) == "Nouveau mot de passe"
+        assert str(form.new_password_confirm.label.text) == "Confirmer le mot de passe"
+        assert str(form.submit.label.text) == "Changer le mot de passe"
