@@ -101,8 +101,7 @@ def app(request):
 
     mail = Mail(app)
     if babel is None or babel.args[0]:
-        babel = Babel(app)
-        app.babel = babel
+        Babel(app)
     app.json_encoder = JSONEncoder
     app.mail = mail
 
