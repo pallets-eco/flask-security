@@ -53,6 +53,7 @@ install:
   - "pip install -e .[tests]"
 
 script:
+  - python setup.py compile_catalog
   - python setup.py test
   - >
     set -e;

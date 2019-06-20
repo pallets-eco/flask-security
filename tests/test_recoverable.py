@@ -86,7 +86,7 @@ def test_recoverable_flag(app, client, get_message):
 
     # Test logging in with the new password
     response = authenticate(client, "joe@lp.com", "newpassword", follow_redirects=True)
-    assert b"Hello joe@lp.com" in response.data
+    assert b"Welcome joe@lp.com" in response.data
 
     logout(client)
 

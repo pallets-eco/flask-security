@@ -27,7 +27,7 @@ def test_authenticate(client):
     response = authenticate(client)
     assert response.status_code == 302
     response = authenticate(client, follow_redirects=True)
-    assert b"Hello matt@lp.com" in response.data
+    assert b"Welcome matt@lp.com" in response.data
 
 
 def test_authenticate_with_next(client):
@@ -50,7 +50,7 @@ def test_authenticate_with_invalid_malformed_next(client, get_message):
 
 def test_authenticate_case_insensitive_email(app, client):
     response = authenticate(client, "MATT@lp.com", follow_redirects=True)
-    assert b"Hello matt@lp.com" in response.data
+    assert b"Welcome matt@lp.com" in response.data
 
 
 def test_authenticate_with_invalid_input(client, get_message):

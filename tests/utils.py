@@ -63,6 +63,14 @@ def get_session(response):
                 return val[1]
 
 
+def check_xlation(app, locale):
+    """ Return True if locale is loaded """
+    with app.test_request_context():
+        domain = app.security.i18n_domain
+        xlations = domain.get_translations()
+        return xlations and xlations._info.get("language", None) == locale
+
+
 def create_roles(ds):
     for role in ("admin", "editor", "author"):
         ds.create_role(name=role)

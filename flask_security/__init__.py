@@ -43,7 +43,7 @@ from .signals import (
 )
 from .utils import login_user, logout_user, url_for_security
 
-__version__ = "3.2.0rc2"
+__version__ = "3.2.0rc3"
 __all__ = (
     "AnonymousUser",
     "ConfirmRegisterForm",

@@ -663,6 +663,8 @@ class Security(object):
 
         @app.before_first_request
         def _register_i18n():
+            # N.B. as of jinja 2.9 '_' is always registered
+            # http://jinja.pocoo.org/docs/2.10/extensions/#i18n-extension
             if "_" not in app.jinja_env.globals:
                 app.jinja_env.globals["_"] = state.i18n_domain.gettext
 
