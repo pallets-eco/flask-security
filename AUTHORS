@@ -1,10 +1,11 @@
-Flask-Security is written and maintained by Matt Wright and
-various contributors:
+Flask-Security was written by Matt Wright and various contributors.
+
+Flask-Security-Too is a fork:
 
 Development Lead
 ````````````````
 
-- Matt Wright <matt+github@nobien.net>
+- Chris Wagner <jwag956@github.com>
 
 Maintainer
 ``````````
