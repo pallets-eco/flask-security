@@ -22,7 +22,6 @@ tests_require = [
     "coverage>=4.0",
     "cryptography>=2.3.0",
     "isort>=4.2.2",
-    "mirakuru==1.1.0",
     "mock>=1.3.0",
     "mongoengine>=0.12.0",
     "mongomock>=3.14.0",

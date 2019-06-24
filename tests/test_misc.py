@@ -386,3 +386,47 @@ def test_form_labels(app):
         assert str(form.new_password.label.text) == "Nouveau mot de passe"
         assert str(form.new_password_confirm.label.text) == "Confirmer le mot de passe"
         assert str(form.submit.label.text) == "Changer le mot de passe"
+
+
+@pytest.mark.changeable()
+def test_per_request_xlate(app, client):
+    from flask import request, session
+
+    babel = app.extensions["babel"]
+
+    @babel.localeselector
+    def get_locale():
+        # For a given session - set lang based on first request.
+        # Honor explicit url request first
+        if "lang" not in session:
+            locale = request.args.get("lang", None)
+            if not locale:
+                locale = request.accept_languages.best
+            if locale:
+                session["lang"] = locale
+        return session.get("lang", None).replace("-", "_")
+
+    # Ugh - this overrides entire app (which is fine for testing).
+    app.jinja_env.globals["_"] = app.security.i18n_domain.gettext
+
+    response = client.get("/login", headers=[("Accept-Language", "fr")])
+    assert b'<label for="password">Mot de passe</label>' in response.data
+
+    data = dict(email="matt@lp.com", password="", remember="y")
+    response = client.post("/login", data=data, headers=[("Accept-Language", "fr")])
+    assert response.status_code == 200
+
+    # verify errors are xlated
+    assert b"Merci d&#39;indiquer un mot de passe" in response.data
+
+    # log in correctly - this should set locale in session
+    data = dict(email="matt@lp.com", password="password", remember="y")
+    response = client.post(
+        "/login", data=data, headers=[("Accept-Language", "fr")], follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    # make sure further requests always get correct xlation w/o sending header
+    response = client.get("/change", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Nouveau mot de passe" in response.data
