@@ -18,10 +18,12 @@ Since we don't actually send email - we have signal handlers dump the required
 data to the console.
 
 """
+
+import datetime
 import os
 
-from flask import Flask, render_template_string
-from flask_babelex import Babel
+from flask import Flask, render_template_string, request, session
+import flask_babelex
 from flask_mail import Mail
 from flask.json import JSONEncoder
 from flask_security import (
@@ -35,6 +37,7 @@ from flask_security.signals import (
     reset_password_instructions_sent,
     user_registered,
 )
+from flask_security.utils import hash_password
 
 
 def create_app():
@@ -71,19 +74,38 @@ def create_app():
     if os.environ.get("SETTINGS"):
         app.config.from_envvar("SETTINGS")
     mail = Mail(app)
-    babel = Babel(app)
-    app.babel = babel
+
     app.json_encoder = JSONEncoder
     app.mail = mail
     # Setup Flask-Security
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
-    Security(app, user_datastore)
+    security = Security(app, user_datastore)
+
+    # This is NOT ideal since it basically changes entire APP (which is fine for
+    # this test - but not fine for general use).
+    babel = flask_babelex.Babel(app, default_domain=security.i18n_domain)
+
+    @babel.localeselector
+    def get_locale():
+        # For a given session - set lang based on first request.
+        # Honor explicit url request first
+        if "lang" not in session:
+            locale = request.args.get("lang", None)
+            if not locale:
+                locale = request.accept_languages.best
+            if locale:
+                session["lang"] = locale
+        return session.get("lang", None).replace("-", "_")
 
     # Create a user to test with
     @app.before_first_request
     def create_user():
         init_db()
         db_session.commit()
+        test_acct = "test@test.com"
+        if not user_datastore.get_user(test_acct):
+            add_user(user_datastore, test_acct, "password", ["admin"])
+            print("Created User: {} with password {}".format(test_acct, "password"))
 
     @user_registered.connect_via(app)
     def on_user_registerd(myapp, user, confirm_token):
@@ -105,7 +127,9 @@ def create_app():
     @app.route("/")
     @login_required
     def home():
-        return render_template_string("Hello {{email}} !", email=current_user.email)
+        return render_template_string(
+            "{{ _('Welcome') }} {{email}} !", email=current_user.email
+        )
 
     return app
 
@@ -135,6 +159,19 @@ def init_db():
     # they will be registered properly on the metadata.  Otherwise
     # you will have to import them first before calling init_db()
     Base.metadata.create_all(bind=engine)
+
+
+def add_user(ds, email, password, roles):
+    pw = hash_password(password)
+    roles = [ds.find_or_create_role(rn) for rn in roles]
+    ds.commit()
+    user = ds.create_user(
+        email=email, password=pw, active=True, confirmed_at=datetime.datetime.utcnow()
+    )
+    ds.commit()
+    for role in roles:
+        ds.add_role_to_user(user, role)
+    ds.commit()
 
 
 """
