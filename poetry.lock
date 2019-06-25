@@ -1223,7 +1223,7 @@ docs = []
 tests = []
 
 [metadata]
-content-hash = "706668a869044f35ff55b83f667fe2a290c5dbdadb821babe56df4f3d0bf56e0"
+content-hash = "2a69b7fc0d961e57c747c1ca7183f08e766b621a8a305600e28b5b60bd60ea59"
 python-versions = "~2.7||^3.5"
 
 [metadata.hashes]
