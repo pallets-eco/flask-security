@@ -64,9 +64,25 @@ _default_field_labels = {
 
 
 class ValidatorMixin(object):
+    """
+    This is called at import time - so there is no app context.
+    Validators have state - namely self.message - but we need that
+    xlated on a per-request basis. So we want a lazy_string - but we can't create
+    that until we are in an app context.
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Assume message is member of _default_messages.
+        self._original_message = kwargs["message"]
+        del kwargs["message"]
+        super(ValidatorMixin, self).__init__(*args, **kwargs)
+
     def __call__(self, form, field):
-        if self.message and self.message.isupper():
-            self.message = get_message(self.message)[0]
+        if not self.message:
+            # Creat on first usage within app context.
+            self.message = make_lazy_string(
+                _local_xlate, config_value("MSG_" + self._original_message)[0]
+            )
         return super(ValidatorMixin, self).__call__(form, field)
 
 
@@ -246,10 +262,7 @@ class PasswordlessLoginForm(Form, UserEmailFormMixin):
 class LoginForm(Form, NextFormMixin):
     """The default login form"""
 
-    email = StringField(
-        get_form_field_label("email"),
-        validators=[Required(message="EMAIL_NOT_PROVIDED")],
-    )
+    email = StringField(get_form_field_label("email"), validators=[email_required])
     password = PasswordField(
         get_form_field_label("password"), validators=[password_required]
     )

@@ -18,8 +18,11 @@ Released TBD
 - (:pr:`79` Add POST logout to enhance JSON usage (jwag956).
 - (:pr:`73`) Fix get_user for various DBs (jwag956).
   This is a more complete fix than in opr #633.
-- (:pr:`78`) Add formal openapi API spec (jwag956).
+- (:pr:`78`, :pr:`103`) Add formal openapi API spec (jwag956).
 - (:pr:`86`, :pr:`94`, :pr:`98`, :pr:`101`, :pr:`104`) Add Two-factor authentication (opr #842) (baurt, jwag956).
+- (:issue:`108`) Fix form field label translations (jwag956)
+- (:issue:`115`) Fix form error message translations (upstream #801) (jwag956)
+- (:issue:`87`) Convert entire repo to Black (baurt)
 
 Version 3.1.0
 -------------

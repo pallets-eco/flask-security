@@ -9,6 +9,8 @@ Core
 .. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
 
 ======================================== =======================================
+``SECRET_KEY``                           This is actually part of Flask - but is used by
+                                         Flask-Security to sign all tokens.
 ``SECURITY_BLUEPRINT_NAME``              Specifies the name for the
                                          Flask-Security blueprint. Defaults to
                                          ``security``.
@@ -40,6 +42,14 @@ Core
                                          ``bcrypt``, ``sha512_crypt``, or
                                          ``pbkdf2_sha512``. Defaults to
                                          ``bcrypt``.
+``SECURITY_PASSWORD_SCHEMES``            List of support password hash algorithms.
+                                         `SECURITY_PASSWORD_HASH` must be from this list.
+                                         Passwords encrypted with any of these schemes will be honored.
+``SECURITY_DEPRECATED_PASSWORD_SCHEMES`` List of password hash algorithms that are considered weak and
+                                         will be accepted, however on first use will be re-hased to the current
+                                         default `SECURITY_PASSWORD_HASH`.
+                                         Default is ``["auto"]`` which means any password found that wasn't
+                                         hashed using `SECURITY_PASSWORD_HASH` will be re-hashed.
 ``SECURITY_PASSWORD_SALT``               Specifies the HMAC salt. Defaults to
                                          ``None``.
 ``SECURITY_PASSWORD_SINGLE_HASH``        A list of schemes that should not be hashed
@@ -51,7 +61,8 @@ Core
                                          not working with double hashing
                                          (`django_{digest}`, `plaintext`).
 ``SECURITY_HASHING_SCHEMES``             List of algorithms used for
-                                         creating and validating tokens.
+                                         encrypting/hashing sensitive data within a token
+                                         (Such as is sent with confirmation or reset password).
                                          Defaults to ``sha256_crypt``.
 ``SECURITY_DEPRECATED_HASHING_SCHEMES``  List of deprecated algorithms used for
                                          creating and validating tokens.
