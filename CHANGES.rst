@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 3.2.0
 -------------
 
-Released TBD
+Released June 26th 2019
 
 - (opr #839) Support caching of authentication token (eregnier).
   This adds a new configuration variable SECURITY_USE_VERIFY_PASSWORD_CACHE
@@ -27,7 +27,7 @@ Released TBD
 Version 3.1.0
 -------------
 
-Released TBD
+Released never
 
 - (opr #487) Use Security.render_template in mails too (noirbizarre)
 - (opr #679) Optimize DB accesses by using an SQL JOIN when retrieving a user. (nfvs)
