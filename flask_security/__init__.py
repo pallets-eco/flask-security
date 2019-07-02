@@ -25,6 +25,8 @@ from .decorators import (
     roles_accepted,
     roles_required,
     auth_required,
+    permissions_accepted,
+    permissions_required,
 )
 from .forms import (
     ForgotPasswordForm,
@@ -69,6 +71,8 @@ __all__ = (
     "login_user",
     "logout_user",
     "password_reset",
+    "permissions_required",
+    "permissions_accepted",
     "reset_password_instructions_sent",
     "roles_accepted",
     "roles_required",

@@ -45,6 +45,7 @@ from .forms import (
 from .utils import _
 from .utils import config_value as cv
 from .utils import (
+    FsPermNeed,
     get_config,
     hash_data,
     localize_callback,
@@ -365,6 +366,8 @@ def _on_identity_loaded(sender, identity):
 
     for role in getattr(current_user, "roles", []):
         identity.provides.add(RoleNeed(role.name))
+        for fsperm in role.get_permissions():
+            identity.provides.add(FsPermNeed(fsperm))
 
     identity.user = current_user
 
@@ -475,6 +478,61 @@ class RoleMixin(object):
     def __hash__(self):
         return hash(self.name)
 
+    def get_permissions(self):
+        """
+        Return set of permissions associated with role.
+
+        .. versionadded:: 3.3.0
+        """
+        if hasattr(self, "permissions"):
+            # These are a comma separated list
+            return set(self.permissions.split(","))
+        return set([])
+
+    def add_permissions(self, permissions):
+        """
+        Add one or more permissions to role.
+
+        :param permissions: a set, list, or single string.
+
+        Caller must commit to DB.
+
+        .. versionadded:: 3.3.0
+        """
+        if hasattr(self, "permissions"):
+            current_perms = set(self.permissions.split(","))
+            if isinstance(permissions, set):
+                perms = permissions
+            elif isinstance(permissions, list):
+                perms = set(permissions)
+            else:
+                perms = {permissions}
+            self.permissions = ",".join(current_perms.union(perms))
+        else:
+            raise NotImplementedError("Role model doesn't have permissions")
+
+    def remove_permissions(self, permissions):
+        """
+        Remove one or more permissions from role.
+
+        :param permissions: a set, list, or single string.
+
+        Caller must commit to DB.
+
+        .. versionadded:: 3.3.0
+        """
+        if hasattr(self, "permissions"):
+            current_perms = set(self.permissions.split(","))
+            if isinstance(permissions, set):
+                perms = permissions
+            elif isinstance(permissions, list):
+                perms = set(permissions)
+            else:
+                perms = {permissions}
+            self.permissions = ",".join(current_perms.difference(perms))
+        else:
+            raise NotImplementedError("Role model doesn't have permissions")
+
 
 class UserMixin(BaseUserMixin):
     """Mixin for `User` model definitions"""
@@ -498,12 +556,29 @@ class UserMixin(BaseUserMixin):
         else:
             return role in self.roles
 
+    def has_permission(self, permission):
+        """
+        Returns `True` if user has this permission (via a role it has).
+
+        :param permission: permission string name
+
+        .. versionadded:: 3.3.0
+
+        """
+        for role in self.roles:
+            if hasattr(role, "permissions"):
+                if permission in role.get_permissions():
+                    return True
+        return False
+
     def get_security_payload(self):
         """Serialize user object as response payload."""
         return {"id": str(self.id)}
 
     def get_redirect_qparams(self, existing=None):
         """Return user info that will be added to redirect query params.
+
+        .. versionadded:: 3.2.0
 
         :param existing: A dict that will be updated.
         :return: A dict whose keys will be query params and values will be query values.

@@ -3,6 +3,22 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 3.3.0
+-------------
+
+Released TBD
+
+- (:pr:`120`) Native support for Permissions as part of Roles. Endpoints can be
+  protected via permissions that are evaluated based on role(s) that the user has.
+
+Possible compatibility issues:
+
+- (:pr:`120` RoleMixin now has a method ``get_permissions`` which is called as part
+  each request to add Permissions to the authenticated user. It checks if the RoleModel
+  has a property ``permissions`` and assumes it is a comma separated string of permissions.
+  If your model already has such a property this will likely fail. You need to override ``get_permissions``
+  and simply return an emtpy set. (jwag956)
+
 Version 3.2.0
 -------------
 

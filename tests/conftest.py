@@ -44,6 +44,8 @@ from flask_security import (
     login_required,
     roles_accepted,
     roles_required,
+    permissions_accepted,
+    permissions_required,
 )
 
 
@@ -162,6 +164,18 @@ def app(request):
     def admin_or_editor():
         return render_template("index.html", content="Admin or Editor Page")
 
+    @app.route("/admin_perm")
+    @permissions_accepted("full-write", "super")
+    def admin_perm():
+        return render_template(
+            "index.html", content="Admin Page with full-write or super"
+        )
+
+    @app.route("/admin_perm_required")
+    @permissions_required("full-write", "super")
+    def admin_perm_required():
+        return render_template("index.html", content="Admin Page required")
+
     @app.route("/unauthorized")
     def unauthorized():
         return render_template("unauthorized.html")
@@ -236,6 +250,7 @@ def sqlalchemy_datastore(request, app, tmpdir, realdburl):
 
 def sqlalchemy_setup(request, app, tmpdir, realdburl):
     from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla
 
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)
@@ -248,36 +263,13 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
     db = SQLAlchemy(app)
 
-    roles_users = db.Table(
-        "roles_users",
-        db.Column("user_id", db.Integer(), db.ForeignKey("user.id")),
-        db.Column("role_id", db.Integer(), db.ForeignKey("role.id")),
-    )
+    fsqla.FsModels.set_db_info(db)
 
-    class Role(db.Model, RoleMixin):
-        id = db.Column(db.Integer(), primary_key=True)
-        name = db.Column(db.String(80), unique=True)
-        description = db.Column(db.String(255))
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
 
-    class User(db.Model, UserMixin):
-        id = db.Column(db.Integer, primary_key=True)
-        email = db.Column(db.String(255), unique=True)
+    class User(db.Model, fsqla.FsUserMixin):
         security_number = db.Column(db.Integer, unique=True)
-        username = db.Column(db.String(255))
-        password = db.Column(db.String(255))
-        last_login_at = db.Column(db.DateTime())
-        tf_primary_method = db.Column(db.String(255), nullable=True)
-        tf_totp_secret = db.Column(db.String(255), nullable=True)
-        tf_phone_number = db.Column(db.String(255), nullable=True)
-        current_login_at = db.Column(db.DateTime())
-        last_login_ip = db.Column(db.String(100))
-        current_login_ip = db.Column(db.String(100))
-        login_count = db.Column(db.Integer)
-        active = db.Column(db.Boolean())
-        confirmed_at = db.Column(db.DateTime())
-        roles = db.relationship(
-            "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
-        )
 
     with app.app_context():
         db.create_all()

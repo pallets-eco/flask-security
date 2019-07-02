@@ -212,7 +212,24 @@ class UserDatastore(object):
         return False
 
     def create_role(self, **kwargs):
-        """Creates and returns a new role from the given parameters."""
+        """
+        Creates and returns a new role from the given parameters.
+        Supported params (depending on RoleModel):
+
+        :param name: Role name
+        :param permissions: a comma delimited list of permissions, a set or a list.
+            These are user-defined
+            strings that correspond to strings used with @permissions_required()
+
+        """
+
+        # By default we just use raw DB model create - for permissions we want to
+        # be nicer and allow sending in a list or set or comma separated string.
+        if "permissions" in kwargs and hasattr(self.role_model, "permissions"):
+            perms = kwargs["permissions"]
+            if isinstance(perms, list) or isinstance(perms, set):
+                perms = ",".join(perms)
+            kwargs["permissions"] = perms
 
         role = self.role_model(**kwargs)
         return self.put(role)

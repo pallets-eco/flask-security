@@ -21,10 +21,16 @@ Role/Identity Based Access
 Flask-Security implements very basic role management out of the box. This means
 that you can associate a high level role or multiple roles to any user. For
 instance, you may assign roles such as `Admin`, `Editor`, `SuperUser`, or a
-combination of said roles to a user. Access control is based on the role name
+combination of said roles to a user. Access control is based on the role name and/or
+permissions contained within the role;
 and all roles should be uniquely named. This feature is implemented using the
-`Flask-Principal`_ extension. If you'd like to implement more granular access
-control, you can refer to the Flask-Principal `documentation on this topic`_.
+`Flask-Principal`_ extension. As with basic RBAC, permissions can be assigned to roles
+to provide more granular access control. Permissions can be associated with one or
+more roles (the RoleModel contains a list of permissions). The values of
+permissions are completely up to the developer - Flask-Security simply treats them
+as strings.
+If you'd like to implement even more granular access
+control (such as per-object), you can refer to the Flask-Principal `documentation on this topic`_.
 
 
 Password Hashing

@@ -6,10 +6,12 @@
     Flask-Security utils module
 
     :copyright: (c) 2012-2019 by Matt Wright.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import abc
 import base64
+from functools import partial
 import hashlib
 import hmac
 import sys
@@ -22,7 +24,7 @@ from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
 from flask_mail import Message
-from flask_principal import AnonymousIdentity, Identity, identity_changed
+from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.local import LocalProxy
 
@@ -58,6 +60,9 @@ if PY3:  # pragma: no cover
 else:  # pragma: no cover
     string_types = (basestring,)  # noqa
     text_type = unicode  # noqa
+
+FsPermNeed = partial(Need, "fsperm")
+FsPermNeed.__doc__ = """A need with the method preset to `"fsperm"`."""
 
 
 def _(translate):

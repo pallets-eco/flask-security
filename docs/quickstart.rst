@@ -1,6 +1,9 @@
 Quick Start
 ===========
 
+There are some complete (but simple) examples available in the *examples* directory of the
+`Flask-Security repo`_
+
 * :ref:`basic-sqlalchemy-application`
 * :ref:`basic-sqlalchemy-application-with-session`
 * :ref:`basic-mongoengine-application`
@@ -26,14 +29,14 @@ SQLAlchemy Application
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The following code sample illustrates how to get started as quickly as
-possible using SQLAlchemy:
+possible using Flask-SQLAlchemy and the built-in model mixins:
 
 ::
 
-    from flask import Flask, render_template
+    from flask import Flask, render_template_string
     from flask_sqlalchemy import SQLAlchemy
-    from flask_security import Security, SQLAlchemyUserDatastore, \
-        UserMixin, RoleMixin, login_required
+    from flask_security import Security, SQLAlchemyUserDatastore, login_required
+    from flask_security.models import fsqla
 
     # Create app
     app = Flask(__name__)
@@ -47,23 +50,13 @@ possible using SQLAlchemy:
     db = SQLAlchemy(app)
 
     # Define models
-    roles_users = db.Table('roles_users',
-            db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-            db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+    fsqla.FsModels.set_db_info(db)
 
-    class Role(db.Model, RoleMixin):
-        id = db.Column(db.Integer(), primary_key=True)
-        name = db.Column(db.String(80), unique=True)
-        description = db.Column(db.String(255))
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
 
-    class User(db.Model, UserMixin):
-        id = db.Column(db.Integer, primary_key=True)
-        email = db.Column(db.String(255), unique=True)
-        password = db.Column(db.String(255))
-        active = db.Column(db.Boolean())
-        confirmed_at = db.Column(db.DateTime())
-        roles = db.relationship('Role', secondary=roles_users,
-                                backref=db.backref('users', lazy='dynamic'))
+    class User(db.Model, fsqla.FsUserMixin):
+        pass
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -73,14 +66,14 @@ possible using SQLAlchemy:
     @app.before_first_request
     def create_user():
         db.create_all()
-        user_datastore.create_user(email='matt@nobien.net', password='password')
+        user_datastore.create_user(email='test@me.com', password='password')
         db.session.commit()
 
     # Views
     @app.route('/')
     @login_required
     def home():
-        return render_template('index.html')
+        return render_template_string("Hello {{ current_user.email }}")
 
     if __name__ == '__main__':
         app.run()
@@ -99,14 +92,14 @@ SQLAlchemy Install requirements
      $ pip install flask-security-too sqlalchemy
 
 Also, you can use the extension `Flask-SQLAlchemy-Session documentation
-<http://flask-sqlalchemy-session.readthedocs.io/en/v1.1/>`_.
+<http://flask-sqlalchemy-session.readthedocs.io/en/latest/>`_.
 
 SQLAlchemy Application
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The following code sample illustrates how to get started as quickly as
 possible using `SQLAlchemy in a declarative way
-<http://flask.pocoo.org/docs/0.12/patterns/sqlalchemy/#declarative>`_:
+<http://flask.pocoo.org/docs/1.0/patterns/sqlalchemy/#declarative>`_:
 
 We are gonna split the application at least in three files: app.py, database.py
 and models.py. You can also do the models a folder and spread your tables there.
@@ -403,3 +396,5 @@ with a single HTTP proxy in front of the web application::
 
 To learn more about the ``ProxyFix`` middleware, please see the
 `Werkzeug documentation <http://werkzeug.pocoo.org/docs/latest/contrib/fixers/#werkzeug.contrib.fixers.ProxyFix>`_.
+
+.. _Flask-Security repo: https://github.com/jwag956/flask-security

@@ -6,6 +6,7 @@
     Flask-Security decorators module
 
     :copyright: (c) 2012-2019 by Matt Wright.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -234,6 +235,77 @@ def roles_accepted(*roles):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
             perm = Permission(*[RoleNeed(role) for role in roles])
+            if perm.can():
+                return fn(*args, **kwargs)
+            if _security._unauthorized_callback:
+                return _security._unauthorized_callback()
+            else:
+                return _get_unauthorized_view()
+
+        return decorated_view
+
+    return wrapper
+
+
+def permissions_required(*fsperms):
+    """Decorator which specifies that a user must have all the specified permissions.
+    Example::
+
+        @app.route('/dashboard')
+        @permissions_required('admin-write', 'editor-write')
+        def dashboard():
+            return 'Dashboard'
+
+    The current user must have BOTH permissions (via the roles it has)
+    to view the page.
+
+    .. versionadded:: 3.3.0
+
+    N.B. Don't confuse these permissions with flask-principle Permission()!
+
+    :param fsperms: The required permissions.
+    """
+
+    def wrapper(fn):
+        @wraps(fn)
+        def decorated_view(*args, **kwargs):
+            perms = [Permission(utils.FsPermNeed(fsperm)) for fsperm in fsperms]
+            for perm in perms:
+                if not perm.can():
+                    if _security._unauthorized_callback:
+                        return _security._unauthorized_callback()
+                    else:
+                        return _get_unauthorized_view()
+            return fn(*args, **kwargs)
+
+        return decorated_view
+
+    return wrapper
+
+
+def permissions_accepted(*fsperms):
+    """Decorator which specifies that a user must have at least one of the
+    specified permissions. Example::
+
+        @app.route('/create_post')
+        @permissions_accepted('editor-write', 'author-wrote')
+        def create_post():
+            return 'Create Post'
+
+    The current user must have one of the permissions (via the roles it has)
+    to view the page.
+
+    .. versionadded:: 3.3.0
+
+    N.B. Don't confuse these permissions with flask-principle Permission()!
+
+    :param fsperms: The possible permimssions.
+    """
+
+    def wrapper(fn):
+        @wraps(fn)
+        def decorated_view(*args, **kwargs):
+            perm = Permission(*[utils.FsPermNeed(fsperm) for fsperm in fsperms])
             if perm.can():
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
