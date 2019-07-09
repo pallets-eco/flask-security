@@ -10,10 +10,18 @@ Released TBD
 
 - (:pr:`120`) Native support for Permissions as part of Roles. Endpoints can be
   protected via permissions that are evaluated based on role(s) that the user has.
+- Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
+  should be passed in.
+- Improve documentation for :class:`.UserDatastore` and :func:`.verify_and_update_password`
+  to make clear that caller must commit changers to DB if using a session based datastore.
+- (:issue:`122`) Clarify when to use ``confirm_register_form`` rather than ``register_form``.
+- Fix bug in 2FA that didn't commit DB after using `verify_and_update_password`.
+- Fix bug(s) in UserDatastore where changes to user ``active`` flag weren't being
+  added to DB.
 
 Possible compatibility issues:
 
-- (:pr:`120` RoleMixin now has a method ``get_permissions`` which is called as part
+- (:pr:`120`) :class:`.RoleMixin` now has a method :meth:`.get_permissions` which is called as part
   each request to add Permissions to the authenticated user. It checks if the RoleModel
   has a property ``permissions`` and assumes it is a comma separated string of permissions.
   If your model already has such a property this will likely fail. You need to override ``get_permissions``

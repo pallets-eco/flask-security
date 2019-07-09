@@ -22,6 +22,14 @@ class Role(RoleMixin):
     pass
 
 
+class MockDatastore(UserDatastore):
+    def put(self, model):
+        pass
+
+    def delete(self, model):
+        pass
+
+
 def test_unimplemented_datastore_methods():
     datastore = Datastore(None)
     assert datastore.db is None
@@ -43,7 +51,7 @@ def test_unimplemented_user_datastore_methods():
 
 
 def test_toggle_active():
-    datastore = UserDatastore(None, None)
+    datastore = MockDatastore(None, None)
     user = User()
     user.active = True
     assert datastore.toggle_active(user) is True
@@ -53,7 +61,7 @@ def test_toggle_active():
 
 
 def test_deactivate_user():
-    datastore = UserDatastore(None, None)
+    datastore = MockDatastore(None, None)
     user = User()
     user.active = True
     assert datastore.deactivate_user(user) is True
@@ -61,7 +69,7 @@ def test_deactivate_user():
 
 
 def test_activate_user():
-    datastore = UserDatastore(None, None)
+    datastore = MockDatastore(None, None)
     user = User()
     user.active = False
     assert datastore.activate_user(user) is True

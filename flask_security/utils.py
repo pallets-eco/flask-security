@@ -109,9 +109,12 @@ def login_user(user, remember=None):
 
 
 def logout_user():
-    """Logs out the current.
+    """Logs out the current user.
 
     This will also clean up the remember me cookie if it exists.
+
+    This sends an ``identity_changed`` signal to note that the current
+    identity is now the `AnonymousIdentity`
     """
 
     for key in ("identity.name", "identity.auth_type"):
@@ -159,6 +162,11 @@ def verify_and_update_password(password, user):
 
     Additionally, the hashed password in the database is updated if the
     hashing algorithm happens to have changed.
+
+    N.B. you MUST call DB commit if you are using a session-based datastore
+    (such as SqlAlchemy) since the user instance might have been altered
+    (i.e. ``app.security.datastore.commit()``).
+    This is usually handled in the view.
 
     :param password: A plaintext password to verify
     :param user: The user to verify against

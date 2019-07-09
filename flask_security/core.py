@@ -171,8 +171,8 @@ _default_config = {
     "EMAIL_SUBJECT_PASSWORD_RESET": _("Password reset instructions"),
     "EMAIL_PLAINTEXT": True,
     "EMAIL_HTML": True,
-    "EMAIL_SUBJECT_TWO_FACTOR": "Two-factor Login",
-    "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": "Two-factor Rescue",
+    "EMAIL_SUBJECT_TWO_FACTOR": _("Two-factor Login"),
+    "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-factor Rescue"),
     "USER_IDENTITY_ATTRIBUTES": ["email"],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
@@ -589,7 +589,20 @@ class UserMixin(BaseUserMixin):
         return existing
 
     def verify_and_update_password(self, password):
-        """Verify and update user password using configured hash."""
+        """Returns ``True`` if the password is valid for the specified user.
+
+        Additionally, the hashed password in the database is updated if the
+        hashing algorithm happens to have changed.
+
+        N.B. you MUST call DB commit if you are using a session-based datastore
+        (such as SqlAlchemy) since the user instance might have been altered
+        (i.e. ``app.security.datastore.commit()``).
+        This is usually handled in the view.
+
+        .. versionadded:: 3.2.0
+
+        :param password: A plaintext password to verify
+        """
         return verify_and_update_password(password, self)
 
 
@@ -673,13 +686,19 @@ class Security(object):
     :param datastore: An instance of a user datastore.
     :param register_blueprint: to register the Security blueprint or not.
     :param login_form: set form for the login view
-    :param register_form: set form for the register view
-    :param confirm_register_form: set form for the confirm register view
+    :param register_form: set form for the register view when
+            SECURITY_CONFIRMABLE is false
+    :param confirm_register_form: set form for the register view when
+            SECURITY_CONFIRMABLE is true
     :param forgot_password_form: set form for the forgot password view
     :param reset_password_form: set form for the reset password view
     :param change_password_form: set form for the change password view
     :param send_confirmation_form: set form for the send confirmation view
     :param passwordless_login_form: set form for the passwordless login view
+    :param two_factor_setup_form: set form for the 2FA setup view
+    :param two_factor_verify_code_form: set form the the 2FA verify code view
+    :param two_factor_rescue_form: set form for the 2FA rescue view
+    :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates
     :param send_mail: function to use to send email
