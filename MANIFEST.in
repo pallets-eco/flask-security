@@ -15,6 +15,7 @@ recursive-include docs *.py
 recursive-include docs *.rst
 recursive-include docs *.txt
 recursive-include docs Makefile
+recursive-include examples *.py
 recursive-include flask_security/templates *.*
 recursive-include flask_security/translations *.po *.pot *.mo
 recursive-include tests *.py

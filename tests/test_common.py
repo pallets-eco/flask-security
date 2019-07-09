@@ -170,6 +170,32 @@ def test_roles_accepted(client):
 
 
 @pytest.mark.settings(unauthorized_view="/")
+def test_permissions_accepted(client):
+    for user in ("matt@lp.com", "joe@lp.com"):
+        authenticate(client, user)
+        response = client.get("/admin_perm")
+        assert b"Admin Page with full-write or super" in response.data
+        logout(client)
+
+    authenticate(client, "jill@lp.com")
+    response = client.get("/admin_perm", follow_redirects=True)
+    assert b"Home Page" in response.data
+
+
+@pytest.mark.settings(unauthorized_view="/")
+def test_permissions_required(client):
+    for user in ["matt@lp.com"]:
+        authenticate(client, user)
+        response = client.get("/admin_perm_required")
+        assert b"Admin Page required" in response.data
+        logout(client)
+
+    authenticate(client, "joe@lp.com")
+    response = client.get("/admin_perm_required", follow_redirects=True)
+    assert b"Home Page" in response.data
+
+
+@pytest.mark.settings(unauthorized_view="/")
 def test_unauthenticated_role_required(client, get_message):
     response = client.get("/admin", follow_redirects=True)
     assert get_message("UNAUTHORIZED") in response.data

@@ -5,7 +5,7 @@ Flask-Security allows you to quickly add common security mechanisms to your
 Flask application. They include:
 
 1. Session based authentication
-2. Role management
+2. Role and Permission management
 3. Password hashing
 4. Basic HTTP authentication
 5. Token based authentication

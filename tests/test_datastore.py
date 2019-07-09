@@ -6,6 +6,7 @@
     Datastore tests
 """
 
+import datetime
 from pytest import raises
 from utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
@@ -225,3 +226,120 @@ def test_init_app_kwargs_override_constructor_kwargs(app, datastore):
 
     assert security.login_form == "init_app_login_form"
     assert security.register_form == "__init__register_form"
+
+
+def test_create_user_with_roles_and_permissions(app, datastore):
+    ds = datastore
+    if not hasattr(ds.role_model, "permissions"):
+        return
+    init_app_with_options(app, datastore)
+
+    with app.app_context():
+        role = ds.create_role(name="test1", permissions={"read"})
+        ds.commit()
+
+        user = ds.create_user(
+            email="dude@lp.com", username="dude", password="password", roles=[role]
+        )
+        datastore.commit()
+
+        user = datastore.find_user(email="dude@lp.com")
+        assert user.has_role("test1") is True
+        assert user.has_permission("read") is True
+
+
+def test_modify_permissions(app, datastore):
+    ds = datastore
+    if not hasattr(ds.role_model, "permissions"):
+        return
+    init_app_with_options(app, ds)
+
+    with app.app_context():
+        perms = {"read", "write"}
+        ds.create_role(name="test1", permissions=perms)
+        ds.commit()
+
+        t1 = ds.find_role("test1")
+        assert perms == t1.get_permissions()
+        orig_update_time = t1.update_datetime
+        assert t1.update_datetime <= datetime.datetime.utcnow()
+
+        t1.add_permissions("execute")
+        ds.commit()
+
+        t1 = ds.find_role("test1")
+        assert perms.union({"execute"}) == t1.get_permissions()
+
+        t1.remove_permissions("read")
+        ds.commit()
+        t1 = ds.find_role("test1")
+        assert {"write", "execute"} == t1.get_permissions()
+        assert t1.update_datetime > orig_update_time
+
+
+def test_modify_permissions_multi(app, datastore):
+    ds = datastore
+    if not hasattr(ds.role_model, "permissions"):
+        return
+
+    # N.B. right now only sqlalchemy has the extended RoleModel.
+    init_app_with_options(app, ds)
+
+    with app.app_context():
+        perms = ["read", "write"]
+        ds.create_role(name="test1", permissions=perms)
+        ds.commit()
+
+        t1 = ds.find_role("test1")
+        assert {"read", "write"} == t1.get_permissions()
+
+        # send in a list
+        t1.add_permissions(["execute", "whatever"])
+        ds.commit()
+
+        t1 = ds.find_role("test1")
+        assert {"read", "write", "execute", "whatever"} == t1.get_permissions()
+
+        t1.remove_permissions(["read", "whatever"])
+        ds.commit()
+        assert {"write", "execute"} == t1.get_permissions()
+
+        # send in a set
+        perms = {"read", "write"}
+        ds.create_role(name="test2", permissions=",".join(perms))
+        ds.commit()
+
+        t2 = ds.find_role("test2")
+        t2.add_permissions({"execute", "whatever"})
+        ds.commit()
+
+        t2 = ds.find_role("test2")
+        assert {"read", "write", "execute", "whatever"} == t2.get_permissions()
+
+        t2.remove_permissions({"read", "whatever"})
+        ds.commit()
+        assert {"write", "execute"} == t2.get_permissions()
+
+
+def test_modify_permissions_unsupported(app, datastore):
+    from conftest import PonyUserDatastore
+
+    ds = datastore
+    if hasattr(datastore.role_model, "permissions"):
+        # already tested this
+        return
+    if isinstance(datastore, PonyUserDatastore):
+        # sigh - Pony doesn't use RoleMixin.
+        return
+
+    init_app_with_options(app, ds)
+
+    with app.app_context():
+        ds.create_role(name="test3")
+        ds.commit()
+        t3 = ds.find_role("test3")
+
+        with raises(NotImplementedError):
+            t3.add_permissions("whatever")
+        with raises(NotImplementedError):
+            t3.remove_permissions("whatever")

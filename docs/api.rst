@@ -24,6 +24,10 @@ Protecting Views
 
 .. autofunction:: flask_security.decorators.roles_accepted
 
+.. autofunction:: flask_security.decorators.permissions_required
+
+.. autofunction:: flask_security.decorators.permissions_accepted
+
 .. autofunction:: flask_security.decorators.http_auth_required
 
 .. autofunction:: flask_security.decorators.auth_token_required
@@ -55,6 +59,10 @@ Datastores
     :members:
 
 .. autoclass:: flask_security.datastore.SQLAlchemyUserDatastore
+    :members:
+    :inherited-members:
+
+.. autoclass:: flask_security.datastore.SQLAlchemySessionUserDatastore
     :members:
     :inherited-members:
 

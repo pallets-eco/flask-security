@@ -43,7 +43,7 @@ master_doc = "index"
 
 # General information about the project.
 project = u"Flask-Security"
-copyright = u"2012-2019, Matt Wright"
+copyright = u"2012-2019"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -273,8 +273,8 @@ texinfo_documents = [
 # Bibliographic Dublin Core info.
 epub_title = u"Flask-Security"
 epub_author = u"Matt Wright"
-epub_publisher = u"Matt Wright"
-epub_copyright = u"2012, Matt Wright"
+epub_publisher = u"J. Christopher Wagner"
+epub_copyright = u"2012-2019"
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

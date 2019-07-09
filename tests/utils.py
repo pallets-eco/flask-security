@@ -72,8 +72,17 @@ def check_xlation(app, locale):
 
 
 def create_roles(ds):
-    for role in ("admin", "editor", "author"):
-        ds.create_role(name=role)
+    roles = [
+        ("admin", ["full-read", "full-write", "super"]),
+        ("editor", ["full-read", "full-write"]),
+        ("author", ["full-read", "my-write"]),
+        ("simple", []),
+    ]
+    for role in roles:
+        if hasattr(ds.role_model, "permissions"):
+            ds.create_role(name=role[0], permissions=",".join(role[1]))
+        else:
+            ds.create_role(name=role[0])
     ds.commit()
 
 

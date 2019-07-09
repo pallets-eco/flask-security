@@ -54,6 +54,21 @@ def test_cli_createrole(script_info):
     assert result.exit_code == 0
 
 
+def test_cli_createrole_with_perms(script_info):
+    """Test create user CLI."""
+    runner = CliRunner()
+
+    # Create role
+    result = runner.invoke(
+        roles_create,
+        ["superusers", "-d", "Test description", "-p", "super, full-write"],
+        obj=script_info,
+    )
+
+    # Some datastores don't support permissions.
+    assert result.exit_code == 0 or result.exit_code == 2
+
+
 def test_cli_addremove_role(script_info):
     """Test add/remove role."""
     runner = CliRunner()
