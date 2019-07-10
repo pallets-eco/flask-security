@@ -838,6 +838,8 @@ def two_factor_verify_password():
         form = form_class()
 
     if form.validate_on_submit():
+        # form called verify_and_update_password()
+        after_this_request(_commit)
         session["tf_confirmed"] = True
         if not request.is_json:
             do_flash(*get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE"))

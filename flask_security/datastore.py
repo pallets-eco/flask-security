@@ -6,6 +6,7 @@
     This module contains an user datastore classes.
 
     :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -117,6 +118,11 @@ class UserDatastore(object):
 
     :param user_model: A user model class definition
     :param role_model: A role model class definition
+
+    Be aware that for mutating operations, the user/role will be added to the
+    datastore (by calling self.put(<object>). If the datastore is session based
+    (such as for SQLAlchemyDatastore) it is up to caller to actually
+    commit the transaction by calling datastore.commit().
     """
 
     def __init__(self, user_model, role_model):
@@ -162,8 +168,9 @@ class UserDatastore(object):
     def add_role_to_user(self, user, role):
         """Adds a role to a user.
 
-        :param user: The user to manipulate
-        :param role: The role to add to the user
+        :param user: The user to manipulate. Can be an User object or email
+        :param role: The role to add to the user. Can be a Role object or
+            string role name
         """
         user, role = self._prepare_role_modify_args(user, role)
         if role not in user.roles:
@@ -175,8 +182,9 @@ class UserDatastore(object):
     def remove_role_from_user(self, user, role):
         """Removes a role from a user.
 
-        :param user: The user to manipulate
-        :param role: The role to remove from the user
+        :param user: The user to manipulate. Can be an User object or email
+        :param role: The role to remove from the user. Can be a Role object or
+            string role name
         """
         rv = False
         user, role = self._prepare_role_modify_args(user, role)
@@ -189,6 +197,7 @@ class UserDatastore(object):
     def toggle_active(self, user):
         """Toggles a user's active status. Always returns True."""
         user.active = not user.active
+        self.put(user)
         return True
 
     def deactivate_user(self, user):
@@ -198,6 +207,7 @@ class UserDatastore(object):
         """
         if user.active:
             user.active = False
+            self.put(user)
             return True
         return False
 
@@ -208,6 +218,7 @@ class UserDatastore(object):
         """
         if not user.active:
             user.active = True
+            self.put(user)
             return True
         return False
 
@@ -216,10 +227,12 @@ class UserDatastore(object):
         Creates and returns a new role from the given parameters.
         Supported params (depending on RoleModel):
 
-        :param name: Role name
-        :param permissions: a comma delimited list of permissions, a set or a list.
-            These are user-defined
-            strings that correspond to strings used with @permissions_required()
+        :kwparam name: Role name
+        :kwparam permissions: a comma delimited list of permissions, a set or a list.
+            These are user-defined strings that correspond to strings used with
+            @permissions_required()
+
+            .. versionadded:: 3.3.0
 
         """
 
@@ -242,7 +255,17 @@ class UserDatastore(object):
         return self.find_role(name) or self.create_role(**kwargs)
 
     def create_user(self, **kwargs):
-        """Creates and returns a new user from the given parameters."""
+        """Creates and returns a new user from the given parameters.
+
+        :kwparam email: required.
+        :kwparam password:  Hashed password. Be aware that whatever is passed in will
+            be stored directly in the DB. Do NOT pass in a plaintext password!
+            Best practice is to pass in hash_password(plaintext_password).
+        :kwparam roles: list of roles to be added to user.
+            Can be Role objects or strings
+
+        The new user's ``active`` property will be set to true.
+        """
         kwargs = self._prepare_create_user_args(**kwargs)
         user = self.user_model(**kwargs)
         return self.put(user)

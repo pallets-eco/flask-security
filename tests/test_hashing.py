@@ -94,7 +94,7 @@ def test_verify_password_bcrypt_rounds_too_low(app, sqlalchemy_datastore):
                 "SECURITY_PASSWORD_HASH_OPTIONS": {"bcrypt": {"rounds": 3}},
             }
         )
-    assert all(s in str(exc_msg) for s in ["rounds", "too low"])
+    assert all(s in str(exc_msg.value) for s in ["rounds", "too low"])
 
 
 def test_login_with_bcrypt_enabled(app, sqlalchemy_datastore):

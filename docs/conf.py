@@ -312,8 +312,8 @@ epub_copyright = u"2012-2019"
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"http://docs.python.org/": None}
+intersphinx_mapping = {"https://docs.python.org/3": None}
 
-# -- Options for spinx-issues ---------------------------------------------
+# -- Options for sphinx-issues ---------------------------------------------
 # Github repo
 issues_github_path = "jwag956/flask-security"
