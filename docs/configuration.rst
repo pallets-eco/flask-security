@@ -96,9 +96,9 @@ Core
                                          realm when using basic HTTP auth.
                                          Defaults to ``Login Required``
 ``SECURITY_USE_VERIFY_PASSWORD_CACHE``   If ``True`` Enables cache for token
-                                         verification, make it quicker further
+                                         verification, which speeds up further
                                          calls to authenticated routes using
-                                         token and slow hash algorithms
+                                         authentication-token and slow hash algorithms
                                          (like bcrypt). Defaults to ``None``
 ``SECURITY_VERIFY_HASH_CACHE_MAX_SIZE``  Limitation for token validation cache size
                                          Rules are the ones of TTLCache of
