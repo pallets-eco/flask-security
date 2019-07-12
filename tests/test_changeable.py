@@ -16,7 +16,7 @@ from flask_security.signals import password_changed
 pytestmark = pytest.mark.changeable()
 
 
-def test_recoverable_flag(app, client, get_message):
+def test_changeable_flag(app, client, get_message):
     recorded = []
 
     @password_changed.connect_via(app)
@@ -124,6 +124,16 @@ def test_recoverable_flag(app, client, get_message):
     )
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
+
+    # Test JSON errors
+    data = '{"password": "newpassword"}'
+    response = client.post(
+        "/change", data=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert response.jdata["response"]["errors"]["new_password"] == [
+        "Password not provided"
+    ]
 
 
 @pytest.mark.settings(change_url="/custom_change")

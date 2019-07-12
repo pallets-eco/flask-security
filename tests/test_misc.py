@@ -430,3 +430,13 @@ def test_per_request_xlate(app, client):
     response = client.get("/change", follow_redirects=True)
     assert response.status_code == 200
     assert b"Nouveau mot de passe" in response.data
+
+    # try JSON
+    data = '{"email": "matt@lp.com"}'
+    response = client.post(
+        "/change", data=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert response.jdata["response"]["errors"]["new_password"] == [
+        "Merci d'indiquer un mot de passe"
+    ]
