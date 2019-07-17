@@ -8,121 +8,146 @@ Core
 
 .. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
 
-======================================== =======================================
-``SECRET_KEY``                           This is actually part of Flask - but is used by
-                                         Flask-Security to sign all tokens.
-``SECURITY_BLUEPRINT_NAME``              Specifies the name for the
-                                         Flask-Security blueprint. Defaults to
-                                         ``security``.
-``SECURITY_CLI_USERS_NAME``              Specifies the name for the command
-                                         managing users. Disable by setting
-                                         ``False``. Defaults to ``users``.
-``SECURITY_CLI_ROLES_NAME``              Specifies the name for the command
-                                         managing roles. Disable by setting
-                                         ``False``. Defaults to ``roles``.
-``SECURITY_URL_PREFIX``                  Specifies the URL prefix for the
-                                         Flask-Security blueprint. Defaults to
-                                         ``None``.
-``SECURITY_SUBDOMAIN``                   Specifies the subdomain for the
-                                         Flask-Security blueprint. Defaults to
-                                         ``None``.
-``SECURITY_FLASH_MESSAGES``              Specifies whether or not to flash
-                                         messages during security procedures.
-                                         Defaults to ``True``.
-``SECURITY_I18N_DOMAIN``                 Specifies the name for domain
-                                         used for translations.
-                                         Defaults to ``flask_security``.
-``SECURITY_I18N_DIRNAME``                Specifies the directory containing the
-                                         ``MO`` files used for translations.
-                                         Defaults to
-                                         ``[PATH_LIB]/flask_security/translations``.
-``SECURITY_PASSWORD_HASH``               Specifies the password hash algorithm to
-                                         use when hashing passwords. Recommended
-                                         values for production systems are
-                                         ``bcrypt``, ``sha512_crypt``, or
-                                         ``pbkdf2_sha512``. Defaults to
-                                         ``bcrypt``.
-``SECURITY_PASSWORD_SCHEMES``            List of support password hash algorithms.
-                                         `SECURITY_PASSWORD_HASH` must be from this list.
-                                         Passwords encrypted with any of these schemes will be honored.
-``SECURITY_DEPRECATED_PASSWORD_SCHEMES`` List of password hash algorithms that are considered weak and
-                                         will be accepted, however on first use will be re-hased to the current
-                                         default `SECURITY_PASSWORD_HASH`.
-                                         Default is ``["auto"]`` which means any password found that wasn't
-                                         hashed using `SECURITY_PASSWORD_HASH` will be re-hashed.
-``SECURITY_PASSWORD_SALT``               Specifies the HMAC salt. Defaults to
-                                         ``None``.
-``SECURITY_PASSWORD_SINGLE_HASH``        A list of schemes that should not be hashed
-                                         twice. By default, passwords are
-                                         hashed twice, first with
-                                         ``SECURITY_PASSWORD_SALT``, and then
-                                         with a random salt.
-                                         Defaults to a list of known schemes
-                                         not working with double hashing
-                                         (`django_{digest}`, `plaintext`).
-``SECURITY_HASHING_SCHEMES``             List of algorithms used for
-                                         encrypting/hashing sensitive data within a token
-                                         (Such as is sent with confirmation or reset password).
-                                         Defaults to ``sha256_crypt``.
-``SECURITY_DEPRECATED_HASHING_SCHEMES``  List of deprecated algorithms used for
-                                         creating and validating tokens.
-                                         Defaults to ``hex_md5``.
-``SECURITY_PASSWORD_HASH_OPTIONS``       Specifies additional options to be passed
-                                         to the hashing method.
-``SECURITY_EMAIL_SENDER``                Specifies the email address to send
-                                         emails as. Defaults to value set
-                                         to ``MAIL_DEFAULT_SENDER`` if
-                                         Flask-Mail is used otherwise
-                                         ``no-reply@localhost``.
-``SECURITY_TWO_FACTOR_RESCUE_MAIL``      Specifies the email address users send
-                                         mail to when they can't complete the
-                                         two-factor authentication login.
-                                         Defaults to ``no-reply@localhost``.
-``SECURITY_TWO_FACTOR_SECRET``           Secret used to encrypt totp_password both into DB
-                                         and in session cookie. Best practice is to set this
-                                         to '{1: passlib.totp.generate_secret()}'.
-                                         See: `Totp`_ for details.
-``SECURITY_TOKEN_AUTHENTICATION_KEY``    Specifies the query string parameter to
-                                         read when using token authentication.
-                                         Defaults to ``auth_token``.
-``SECURITY_TOKEN_AUTHENTICATION_HEADER`` Specifies the HTTP header to read when
-                                         using token authentication. Defaults to
-                                         ``Authentication-Token``.
-``SECURITY_TOKEN_MAX_AGE``               Specifies the number of seconds before
-                                         an authentication token expires.
-                                         Defaults to None, meaning the token
-                                         never expires.
-``SECURITY_DEFAULT_HTTP_AUTH_REALM``     Specifies the default authentication
-                                         realm when using basic HTTP auth.
-                                         Defaults to ``Login Required``
-``SECURITY_USE_VERIFY_PASSWORD_CACHE``   If ``True`` Enables cache for token
-                                         verification, which speeds up further
-                                         calls to authenticated routes using
-                                         authentication-token and slow hash algorithms
-                                         (like bcrypt). Defaults to ``None``
-``SECURITY_VERIFY_HASH_CACHE_MAX_SIZE``  Limitation for token validation cache size
-                                         Rules are the ones of TTLCache of
-                                         cachetools package. Defaults to
-                                         ``500``
-``SECURITY_VERIFY_HASH_CACHE_TTL``       Time to live for password check cache entries.
-                                         Defaults to ``300`` (5 minutes)
-``SECURITY_REDIRECT_BEHAVIOR``           Passwordless login, confirmation, and
-                                         reset password have GET endpoints that validate
-                                         the passed token and redirect to an action form.
-                                         For Single-Page-Applications style UIs which need
-                                         to control their own internal URL routing these redirects
-                                         need to not contain forms, but contain relevant information
-                                         as query parameters. Setting this to ``spa`` will enable
-                                         that behavior. Defaults to ``None`` which is existing
-                                         html-style form redirects.
-``SECURITY_REDIRECT_HOST``               Mostly for development purposes, the UI is often developed
-                                         separately and is running on a different port than the
-                                         Flask application. In order to test redirects, the `netloc`
-                                         of the redirect URL needs to be rewritten. Setting this
-                                         to e.g. `localhost:8080` does that. Defaults to ``None``
-======================================== =======================================
+==============================================   =============================================
+``SECRET_KEY``                                   This is actually part of Flask - but is used by
+                                                 Flask-Security to sign all tokens.
+``SECURITY_BLUEPRINT_NAME``                      Specifies the name for the
+                                                 Flask-Security blueprint. Defaults to
+                                                 ``security``.
+``SECURITY_CLI_USERS_NAME``                      Specifies the name for the command
+                                                 managing users. Disable by setting
+                                                 ``False``. Defaults to ``users``.
+``SECURITY_CLI_ROLES_NAME``                      Specifies the name for the command
+                                                 managing roles. Disable by setting
+                                                 ``False``. Defaults to ``roles``.
+``SECURITY_URL_PREFIX``                          Specifies the URL prefix for the
+                                                 Flask-Security blueprint. Defaults to
+                                                 ``None``.
+``SECURITY_SUBDOMAIN``                           Specifies the subdomain for the
+                                                 Flask-Security blueprint. Defaults to
+                                                 ``None``.
+``SECURITY_FLASH_MESSAGES``                      Specifies whether or not to flash
+                                                 messages during security procedures.
+                                                 Defaults to ``True``.
+``SECURITY_I18N_DOMAIN``                         Specifies the name for domain
+                                                 used for translations.
+                                                 Defaults to ``flask_security``.
+``SECURITY_I18N_DIRNAME``                        Specifies the directory containing the
+                                                 ``MO`` files used for translations.
+                                                 Defaults to
+                                                 ``[PATH_LIB]/flask_security/translations``.
+``SECURITY_PASSWORD_HASH``                       Specifies the password hash algorithm to
+                                                 use when hashing passwords. Recommended
+                                                 values for production systems are
+                                                 ``bcrypt``, ``sha512_crypt``, or
+                                                 ``pbkdf2_sha512``. Defaults to
+                                                 ``bcrypt``.
+``SECURITY_PASSWORD_SCHEMES``                    List of support password hash algorithms.
+                                                 `SECURITY_PASSWORD_HASH` must be from this list.
+                                                 Passwords encrypted with any of these schemes will be honored.
+``SECURITY_DEPRECATED_PASSWORD_SCHEMES``         List of password hash algorithms that are considered weak and
+                                                 will be accepted, however on first use, will be re-hashed
+                                                 to the current default `SECURITY_PASSWORD_HASH`.
+                                                 Default is ``["auto"]`` which means any password found that wasn't
+                                                 hashed using `SECURITY_PASSWORD_HASH` will be re-hashed.
+``SECURITY_PASSWORD_SALT``                       Specifies the HMAC salt. Defaults to
+                                                 ``None``.
+``SECURITY_PASSWORD_SINGLE_HASH``                A list of schemes that should not be hashed
+                                                 twice. By default, passwords are
+                                                 hashed twice, first with
+                                                 ``SECURITY_PASSWORD_SALT``, and then
+                                                 with a random salt.
+                                                 Defaults to a list of known schemes
+                                                 not working with double hashing
+                                                 (`django_{digest}`, `plaintext`).
+``SECURITY_HASHING_SCHEMES``                     List of algorithms used for
+                                                 encrypting/hashing sensitive data within a token
+                                                 (Such as is sent with confirmation or reset password).
+                                                 Defaults to ``sha256_crypt``.
+``SECURITY_DEPRECATED_HASHING_SCHEMES``          List of deprecated algorithms used for
+                                                 creating and validating tokens.
+                                                 Defaults to ``hex_md5``.
+``SECURITY_PASSWORD_HASH_OPTIONS``               Specifies additional options to be passed
+                                                 to the hashing method.
+``SECURITY_EMAIL_SENDER``                        Specifies the email address to send
+                                                 emails as. Defaults to value set
+                                                 to ``MAIL_DEFAULT_SENDER`` if
+                                                 Flask-Mail is used otherwise
+                                                 ``no-reply@localhost``.
+``SECURITY_TWO_FACTOR_RESCUE_MAIL``              Specifies the email address users send
+                                                 mail to when they can't complete the
+                                                 two-factor authentication login.
+                                                 Defaults to ``no-reply@localhost``.
+``SECURITY_TWO_FACTOR_SECRET``                   Secret used to encrypt totp_password both into DB
+                                                 and in session cookie. Best practice is to set this
+                                                 to '{1: passlib.totp.generate_secret()}'.
+                                                 See: `Totp`_ for details.
+``SECURITY_TOKEN_AUTHENTICATION_KEY``            Specifies the query string parameter to
+                                                 read when using token authentication.
+                                                 Defaults to ``auth_token``.
+``SECURITY_TOKEN_AUTHENTICATION_HEADER``         Specifies the HTTP header to read when
+                                                 using token authentication. Defaults to
+                                                 ``Authentication-Token``.
+``SECURITY_TOKEN_MAX_AGE``                       Specifies the number of seconds before
+                                                 an authentication token expires.
+                                                 Defaults to None, meaning the token
+                                                 never expires.
+``SECURITY_DEFAULT_HTTP_AUTH_REALM``             Specifies the default authentication
+                                                 realm when using basic HTTP auth.
+                                                 Defaults to ``Login Required``
+``SECURITY_USE_VERIFY_PASSWORD_CACHE``           If ``True`` Enables cache for token
+                                                 verification, which speeds up further
+                                                 calls to authenticated routes using
+                                                 authentication-token and slow hash algorithms
+                                                 (like bcrypt). Defaults to ``None``
+``SECURITY_VERIFY_HASH_CACHE_MAX_SIZE``          Limitation for token validation cache size
+                                                 Rules are the ones of TTLCache of
+                                                 cachetools package. Defaults to
+                                                 ``500``
+``SECURITY_VERIFY_HASH_CACHE_TTL``               Time to live for password check cache entries.
+                                                 Defaults to ``300`` (5 minutes)
+``SECURITY_REDIRECT_BEHAVIOR``                   Passwordless login, confirmation, and
+                                                 reset password have GET endpoints that validate
+                                                 the passed token and redirect to an action form.
+                                                 For Single-Page-Applications style UIs which need
+                                                 to control their own internal URL routing these redirects
+                                                 need to not contain forms, but contain relevant information
+                                                 as query parameters. Setting this to ``spa`` will enable
+                                                 that behavior. Defaults to ``None`` which is existing
+                                                 html-style form redirects.
+``SECURITY_REDIRECT_HOST``                       Mostly for development purposes, the UI is often developed
+                                                 separately and is running on a different port than the
+                                                 Flask application. In order to test redirects, the `netloc`
+                                                 of the redirect URL needs to be rewritten. Setting this
+                                                 to e.g. `localhost:8080` does that. Defaults to ``None``
+``SECURITY_CSRF_PROTECT_MECHANISMS``             Authentication mechanisms that require CSRF protection.
+                                                 These are the same mechanisms as are permitted
+                                                 in the ``@auth_required`` decorator.
+                                                 Defaults to ``None``
+``SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS``        If ``True`` then CSRF will not be required for endpoints
+                                                 that don't require authentication
+                                                 (e.g. login, logout, register, forgot_password).
+                                                 Defaults to ``False``
+``SECURITY_CSRF_COOKIE``                         A dict that defines the parameters required to
+                                                 set a CSRF cookie. At a minimum it requires a 'key'.
+                                                 The complete set of parameters is described in Flask's
+                                                 `set_cookie`_ documentation.
+                                                 Defaults to ``{"key": None}`` whic means no cookie will
+                                                 sent.
+``SECURITY_CSRF_HEADER``                         The HTTP Header name that will contain the CSRF token.
+                                                 ``X-XSRF-Token`` is used by packages such as `axios`_.
+                                                 Defaults to ``X-XSRF-Token``.
+``SECURITY_CSRF_COOKIE_REFRESH_EACH_REQUEST``    By default, csrf_tokens have an expiration (controlled
+                                                 the the configuration variable ``WTF_CSRF_TIME_LIMIT``.
+                                                 This can cause CSRF failures if say an application is left
+                                                 idle for a long time. You can set that time limit to ``None``
+                                                 Or have the CSRF cookie sent on every request (which will give
+                                                 it a new expiration time. Defaults to ``False``.
+==============================================   =============================================
 
 .. _Totp: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#totp-encryption-setup
+.. _set_cookie: https://flask.palletsprojects.com/en/1.1.x/api/?highlight=set_cookie#flask.Response.set_cookie
+.. _axios: https://github.com/axios/axios
 
 URLs and Views
 --------------

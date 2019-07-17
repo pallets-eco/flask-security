@@ -425,3 +425,15 @@ def test_json_not_dict(client):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
+
+
+def test_login_info(client):
+    # Make sure we can get user info when logged in already.
+
+    json_authenticate(client)
+    response = client.get(
+        "/login", data={}, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 200
+    assert response.jdata["response"]["user"]["id"] == "1"
+    assert "last_update" in response.jdata["response"]["user"]

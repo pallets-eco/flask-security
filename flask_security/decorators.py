@@ -15,15 +15,18 @@ from functools import wraps
 
 from flask import (
     Response,
+    _app_ctx_stack,
     _request_ctx_stack,
     abort,
     current_app,
+    g,
     redirect,
     request,
     url_for,
 )
 from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
+from flask_wtf.csrf import CSRFError
 from werkzeug.local import LocalProxy
 from werkzeug.routing import BuildError
 
@@ -31,6 +34,8 @@ from . import utils
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
+
+_csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
 
 _default_unauthorized_html = """
@@ -99,15 +104,38 @@ def _check_http_auth():
     return False
 
 
+def _handle_csrf(method):
+    """ If configuration wants CSRF checks on some authentication
+    methods, do that here.
+    """
+    if (
+        not current_app.config.get("WTF_CSRF_ENABLED", False)
+        or not current_app.extensions.get("csrf", None)
+        or g.get("csrf_valid", False)
+    ):
+        return
+
+    if utils.config_value("CSRF_PROTECT_MECHANISMS"):
+        if method in utils.config_value("CSRF_PROTECT_MECHANISMS"):
+            _csrf.protect()
+        else:
+            ctx = _app_ctx_stack.top
+            ctx.fs_ignore_csrf = True
+
+
 def http_auth_required(realm):
     """Decorator that protects endpoints using Basic HTTP authentication.
 
-    :param realm: optional realm name"""
+    :param realm: optional realm name
+
+    Once authenticated, if so configured, CSRF protection will be tested.
+    """
 
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
             if _check_http_auth():
+                _handle_csrf("basic")
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
@@ -129,11 +157,14 @@ def auth_token_required(fn):
     variable with a name equal to the configuration value of
     `SECURITY_TOKEN_AUTHENTICATION_KEY` or in a request header named that of
     the configuration value of `SECURITY_TOKEN_AUTHENTICATION_HEADER`
+
+    Once authenticated, if so configured, CSRF protection will be tested.
     """
 
     @wraps(fn)
     def decorated(*args, **kwargs):
         if _check_token():
+            _handle_csrf("token")
             return fn(*args, **kwargs)
         if _security._unauthorized_callback:
             return _security._unauthorized_callback()
@@ -145,7 +176,7 @@ def auth_token_required(fn):
 
 def auth_required(*auth_methods):
     """
-    Decorator that protects enpoints through multiple mechanisms
+    Decorator that protects endpoints through multiple mechanisms
     Example::
 
         @app.route('/dashboard')
@@ -154,22 +185,32 @@ def auth_required(*auth_methods):
             return 'Dashboard'
 
     :param auth_methods: Specified mechanisms (token, basic, session)
+
+    Note that regardless of order specified - they will be tried in the following
+    order: token, session, basic.
+
+    The first mechanism that succeeds is used, following that, depending on
+    configuration, CSRF protection will be tested.
     """
     login_mechanisms = {
         "token": lambda: _check_token(),
-        "basic": lambda: _check_http_auth(),
         "session": lambda: current_user.is_authenticated,
+        "basic": lambda: _check_http_auth(),
     }
+    mechanisms_order = ["token", "session", "basic"]
 
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
             h = {}
             mechanisms = [
-                (method, login_mechanisms.get(method)) for method in auth_methods
+                (method, login_mechanisms.get(method))
+                for method in mechanisms_order
+                if method in auth_methods
             ]
             for method, mechanism in mechanisms:
                 if mechanism and mechanism():
+                    _handle_csrf(method)
                     return fn(*args, **kwargs)
                 elif method == "basic":
                     r = _security.default_http_auth_realm
@@ -180,6 +221,59 @@ def auth_required(*auth_methods):
                 return _get_unauthorized_response(headers=h)
 
         return decorated_view
+
+    return wrapper
+
+
+def unauth_csrf(fall_through=False):
+    """Decorator for endpoints that don't need authentication
+    but do want CSRF checks (available via Header rather than just form).
+    This is required when setting WTF_CSRF_CHECK_DEFAULT=False since in that
+    case, without this decorator, the form validation will attempt to do the CSRF
+    check, and that will fail since the csrf-token is in the header (for pure JSON
+    requests).
+
+    This decorator does nothing unless Flask-WTF::CSRFProtect has been initialized.
+
+    This decorator does nothing if WTF_CSRF_ENABLED==False.
+
+    This decorator will always require CSRF if the caller is authenticated.
+
+    This decorator will suppress CSRF if caller isn't authenticated and has set the
+    "CSRF_IGNORE_UNAUTH_ENDPOINTS" config variable.
+
+    :param fall_through: if set to True, then if CSRF fails here - simply keep going.
+        This is appropriate if underlying view is form based and once the form is
+        instantiated, the csrf_token will be available.
+        Note that this can mask some errors such as 'The CSRF session token is missing.'
+        meaning that the caller didn't send a session cookie and instead the caller
+        might get a 'The CSRF token is missing.' error.
+    """
+
+    def wrapper(fn):
+        @wraps(fn)
+        def decorated(*args, **kwargs):
+            if not current_app.config.get(
+                "WTF_CSRF_ENABLED", False
+            ) or not current_app.extensions.get("csrf", None):
+                return fn(*args, **kwargs)
+
+            if (
+                utils.config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
+                and not current_user.is_authenticated
+            ):
+                ctx = _app_ctx_stack.top
+                ctx.fs_ignore_csrf = True
+            else:
+                try:
+                    _csrf.protect()
+                except CSRFError:
+                    if not fall_through:
+                        raise
+
+            return fn(*args, **kwargs)
+
+        return decorated
 
     return wrapper
 

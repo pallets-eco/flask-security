@@ -8,6 +8,9 @@ info:
     Since Flask-Security is middleware, with many possible configurations this is a
     guide to how the APIs will behave using standard defaults.
 
+    By default, all POST requests require a CSRF token. This is handled automatically
+    if you render the form from your Flask application. Please read the online documentation to find out details on how CSRF can be confifgured.
+
     _Be aware that the current renderer is great! but has some limitations._
     In particular
     it can't represent both form input and JSON input - but all APIs take both. Also
@@ -25,16 +28,23 @@ info:
 paths:
   /login:
     get:
-      summary: Retrieve login form
+      summary: Retrieve login form and/or user information
       responses:
         200:
-          description: Login form
+          description: >
+            Login form or user information. The JSON response will always
+            carry the csrf_token information. If the caller is logged in, then
+            additional information is returned. This can be very useful for single-page applications where during a force refresh, all state is lost.
+            By performing this GET, the session cookie will authenticate the user and the response will contain user information.
           content:
             text/html:
               schema:
                 example: render_template(cv('LOGIN_USER_TEMPLATE')
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
         302:
-          description: Response when already logged in
+          description: Response when already logged in (non-JSON request)
           headers:
             Location:
               schema:
@@ -42,7 +52,7 @@ paths:
                 example: redirect(cv('POST_LOGIN_VIEW'))
     post:
       summary: Login to application
-      description: Supports both json and form request types
+      description: Supports both json and form request types. If the caller is already logged in, they are logged out and the new user is logged in.
       parameters:
         - name: next
           in: query
@@ -88,7 +98,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /login(passwordless):
     get:
-      summary: Return passwordless login form.
+      summary: Return passwordless login form
       responses:
         200:
           description: Passwordless login form
@@ -97,7 +107,7 @@ paths:
               schema:
                 example: render_template(cv('SEND_LOGIN_TEMPLATE'))
     post:
-      summary: Send passwordless login instructions email.
+      summary: Send passwordless login instructions email
       requestBody:
         required: true
         content:
@@ -133,7 +143,7 @@ paths:
         schema:
           type: string
     get:
-      summary: Login via token.
+      summary: Login via token
       description: >
         This is the result of getting a passwordless login token and is usually
         the result of clicking the link from a passwordless email.
@@ -253,7 +263,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /change:
     get:
-      summary: Return change password form.
+      summary: Return change password form
       responses:
         200:
           description: change password form
@@ -262,7 +272,12 @@ paths:
               schema:
                 example: render_template(cv('CHANGE_PASSWORD_TEMPLATE'))
     post:
-      summary: Change password.
+      summary: Change password
+      parameters:
+        - name: X-CSRF-Token
+          in: header
+          schema:
+            $ref: "#/components/headers/X-CSRF-Token"
       requestBody:
         required: true
         content:
@@ -300,7 +315,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /reset:
     get:
-      summary: Return reset password form.
+      summary: Return reset password form
       responses:
         200:
           description: Reset password form
@@ -316,7 +331,7 @@ paths:
                 type: string
                 example: redirect(cv('POST_LOGIN_VIEW'))
     post:
-      summary: Send reset password instructions email.
+      summary: Send reset password instructions email
       requestBody:
         required: true
         content:
@@ -352,7 +367,7 @@ paths:
         schema:
           type: string
     get:
-      summary: Request to reset password.
+      summary: Request to reset password
       description: >
         This is the result of getting a reset-password token and is usually
         the result of clicking the link from a reset-password email.
@@ -390,7 +405,7 @@ paths:
                 default-error:
                   value: redirect(cv('FORGOT_PASSWORD'))
     post:
-      summary: Reset password.
+      summary: Reset password
       requestBody:
         required: true
         content:
@@ -402,7 +417,7 @@ paths:
               $ref: "#/components/schemas/ResetPassword"
       responses:
         200:
-          description: Reset response.
+          description: Reset response
           content:
             text/html:
               schema:
@@ -436,7 +451,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /confirm:
     get:
-      summary: Return send confirmation form.
+      summary: Return send confirmation form
       responses:
         200:
           description: Confirmation form
@@ -445,7 +460,7 @@ paths:
               schema:
                 example: render_template(cv('SEND_CONFIRMATION_TEMPLATE'))
     post:
-      summary: Send confirmation email.
+      summary: Send confirmation email
       requestBody:
         required: true
         content:
@@ -481,7 +496,7 @@ paths:
         schema:
           type: string
     get:
-      summary: Request to confirm account.
+      summary: Request to confirm account
       description: >
         This is the result of getting a confirmation token and is usually
         the result of clicking the link from a confirmation email.
@@ -538,7 +553,7 @@ components:
           type: object
           required: [id]
           description: >
-            By default just 'id' and 'authentication_token' are returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
+            By default just 'id', and 'authentication_token' are returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
           properties:
             id:
               type: integer
@@ -547,6 +562,9 @@ components:
             authentication_token:
               type: string
               description: Token to be used in future token-based API calls.
+        csrf_token:
+          type: string
+          description: Session CSRF token
     DefaultJsonErrorResponse:
       type: object
       required: [meta, response]
@@ -617,10 +635,8 @@ components:
           description: Password - again
     ChangePassword:
       type: object
-      required: [email, password, new_password, new_password_confirm]
+      required: [password, new_password, new_password_confirm]
       properties:
-        email:
-          type: string
         password:
           type: string
           description: Password
@@ -638,3 +654,8 @@ components:
           type: string
           description: >
             Email address to send link email to.
+  headers:
+    X-CSRF-Token:
+      schema:
+        type: string
+

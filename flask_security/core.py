@@ -46,6 +46,7 @@ from .utils import _
 from .utils import config_value as cv
 from .utils import (
     FsPermNeed,
+    csrf_cookie_handler,
     get_config,
     hash_data,
     localize_callback,
@@ -61,6 +62,9 @@ from .cache import VerifyHashCache
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
 local_cache = Local()
+
+# List of authentication mechanisms supported.
+AUTHN_MECHANISMS = ("basic", "session", "token")
 
 
 #: Default Flask-Security configuration
@@ -190,6 +194,11 @@ _default_config = {
         "AUTH_TOKEN": None,
         "PHONE_NUMBER": None,
     },
+    "CSRF_PROTECT_MECHANISMS": AUTHN_MECHANISMS,
+    "CSRF_IGNORE_UNAUTH_ENDPOINTS": False,
+    "CSRF_COOKIE": {"key": None},
+    "CSRF_HEADER": "X-XSRF-Token",
+    "CSRF_COOKIE_REFRESH_EACH_REQUEST": False,
 }
 
 #: Default Flask-Security messages
@@ -761,6 +770,58 @@ class Security(object):
             # http://jinja.pocoo.org/docs/2.10/extensions/#i18n-extension
             if "_" not in app.jinja_env.globals:
                 app.jinja_env.globals["_"] = state.i18n_domain.gettext
+
+        @app.before_first_request
+        def _csrf_init():
+            # various config checks - some of these are opinionated in that there
+            # could be a reason for some of these combinations - but in general
+            # they cause strange behavior.
+            if not current_app.config["WTF_CSRF_ENABLED"]:
+                return
+            csrf = current_app.extensions.get("csrf", None)
+
+            # If they don't want ALL mechanisms protected, then they must
+            # set WTF_CSRF_CHECK_DEFAULT=False so that our decorators get control.
+            if cv("CSRF_PROTECT_MECHANISMS") != AUTHN_MECHANISMS:
+                if not csrf:
+                    # This isn't good.
+                    raise ValueError(
+                        "CSRF_PROTECT_MECHANISMS defined but"
+                        " CsrfProtect not part of application"
+                    )
+                if current_app.config["WTF_CSRF_CHECK_DEFAULT"]:
+                    raise ValueError(
+                        "WTF_CSRF_CHECK_DEFAULT must be set to False if"
+                        " CSRF_PROTECT_MECHANISMS is set"
+                    )
+            # We don't get control unless they turn off WTF_CSRF_CHECK_DEFAULT if
+            # they have enabled global CSRFProtect.
+            if (
+                cv("CSRF_IGNORE_UNAUTH_ENDPOINTS")
+                and csrf
+                and current_app.config["WTF_CSRF_CHECK_DEFAULT"]
+            ):
+                raise ValueError(
+                    "To ignore unauth endpoints you must set WTF_CSRF_CHECK_DEFAULT"
+                    " to False"
+                )
+
+            csrf_cookie = cv("CSRF_COOKIE")
+            if csrf_cookie and csrf_cookie["key"] and not csrf:
+                # Common use case is for cookie value to be used as contents for header
+                # which is only looked at when CsrfProtect is initialized.
+                # Yes, this is opinionated - they can always get CSRF token via:
+                # 'get /login'
+                raise ValueError(
+                    "CSRF_COOKIE defined however CsrfProtect not part of application"
+                )
+
+            if csrf:
+                csrf.exempt("flask_security.views.logout")
+            if csrf_cookie and csrf_cookie["key"]:
+                app.after_request(csrf_cookie_handler)
+                # Add configured header to WTF_CSRF_HEADERS
+                app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))
 
         app.extensions["security"] = state
 

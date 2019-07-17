@@ -6,9 +6,11 @@
     Changeable tests
 """
 
+import json
+
 import pytest
 from flask import Flask
-from utils import authenticate
+from utils import authenticate, json_authenticate
 
 from flask_security.core import UserMixin
 from flask_security.signals import password_changed
@@ -179,3 +181,22 @@ def test_custom_post_change_view(client):
     )
 
     assert b"Profile Page" in response.data
+
+
+def test_token_change(app, client_nc):
+    # Verify can change password using token auth only
+    login_response = json_authenticate(client_nc)
+    token = login_response.jdata["response"]["user"]["authentication_token"]
+
+    data = dict(
+        password="password",
+        new_password="newpassword",
+        new_password_confirm="newpassword",
+    )
+    response = client_nc.post(
+        "/change",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    assert response.status_code == 200
+    assert "authentication_token" in response.jdata["response"]["user"]

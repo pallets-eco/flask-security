@@ -18,6 +18,10 @@ Released TBD
 - Fix bug in 2FA that didn't commit DB after using `verify_and_update_password`.
 - Fix bug(s) in UserDatastore where changes to user ``active`` flag weren't being
   added to DB.
+- (:issue:`127`) JSON response was failing due to LazyStrings in error response.
+- (:issue:`126`, `93`, `96`) Revamp entire CSRF handling. This adds support for Single Page Applications
+  and having CSRF protection for browser(session) authentication but ignored for
+  token based authentication. Add extensive documentation about all the options.
 
 Possible compatibility issues:
 

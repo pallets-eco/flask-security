@@ -12,7 +12,10 @@ Session based authentication is fulfilled entirely by the `Flask-Login`_
 extension. Flask-Security handles the configuration of Flask-Login automatically
 based on a few of its own configuration values and uses Flask-Login's
 `alternative token`_ feature for remembering users when their session has
-expired.
+expired. `Flask-WTF`_ integrates with the session as well to provide out of the box
+CSRF support. Flask-Security extends that to support requiring CSRF for
+requests that are authenticated via session cookies, but not for requests
+authenticated using tokens.
 
 
 Role/Identity Based Access
@@ -132,8 +135,9 @@ statistics. They include:
 JSON/Ajax Support
 -----------------
 
-Flask-Security supports JSON/Ajax requests where appropriate. Just remember that
-all endpoints require a CSRF token just like HTML views. More specifically
+Flask-Security supports JSON/Ajax requests where appropriate. Please
+look at :ref:`csrftopic` for details on how to work with JSON and
+Single Page Applications. More specifically
 JSON is supported for the following operations:
 
 * Login requests
@@ -158,6 +162,7 @@ Run ``flask --help`` and look for users and roles.
 
 .. _Click: http://click.pocoo.org/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
+.. _Flask-WTF: https://flask-wtf.readthedocs.io/en/stable/csrf.html
 .. _alternative token: https://flask-login.readthedocs.io/en/latest/#alternative-tokens
 .. _Flask-Principal: https://pypi.org/project/Flask-Principal/
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection

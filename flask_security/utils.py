@@ -25,8 +25,11 @@ from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
 from flask_mail import Message
 from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
+from flask_wtf import csrf
+from wtforms import ValidationError
 from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.local import LocalProxy
+from werkzeug.datastructures import MultiDict
 
 from .signals import (
     login_instructions_sent,
@@ -70,6 +73,19 @@ def _(translate):
     return translate
 
 
+def find_csrf_field_name():
+    """
+    We need to clear it on logout (since that isn't being done by Flask-WTF).
+    The field name is configurable withing Flask-WTF as well as being
+    overridable.
+    We take the field name from the login_form as set by the configuration.
+    """
+    form = _security.login_form(MultiDict([]))
+    if hasattr(form.meta, "csrf_field_name"):
+        return form.meta.csrf_field_name
+    return None
+
+
 def login_user(user, remember=None):
     """Perform the login routine.
 
@@ -104,6 +120,8 @@ def login_user(user, remember=None):
 
         _datastore.put(user)
 
+    session["fs_cc"] = "set"
+
     identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
     return True
 
@@ -119,6 +137,14 @@ def logout_user():
 
     for key in ("identity.name", "identity.auth_type"):
         session.pop(key, None)
+
+    # Clear csrf token between sessions.
+    # Ideally this would be handled by Flask-WTF but...
+    # We don't clear entire session since Flask-Login seems to like having it.
+    csrf_field_name = find_csrf_field_name()
+    if csrf_field_name:
+        session.pop(csrf_field_name, None)
+    session["fs_cc"] = "clear"
     identity_changed.send(
         current_app._get_current_object(), identity=AnonymousIdentity()
     )
@@ -511,6 +537,66 @@ def use_double_hash(password_hash=None):
         scheme = _pwd_context.identify(password_hash)
 
     return not (single_hash is True or scheme in single_hash)
+
+
+def csrf_cookie_handler(response):
+    """ Called at end of every request.
+    Uses session to track state (set/clear)
+
+    Ideally we just need to set this once - however by default
+    Flask-WTF has a time-out on these tokens governed by WTF_CSRF_TIME_LIMIT.
+    While we could set that to None - and OWASP implies this is fine - that might
+    not be agreeable to everyone.
+    So as a basic usability hack - we check if it is expired and re-generate so at least
+    the user doesn't have to log out and back in (just refresh).
+    We also support a 'CSRF_COOKIE_REFRESH_EACH_REQUEST' analogous to Flask's
+    SESSION_REFRESH_EACH_REQUEST
+
+    It is of course removed on logout/session end.
+    Other info on web suggests replacing on every POST and accepting up to 'age' ago.
+    """
+    csrf_cookie = config_value("CSRF_COOKIE")
+    if not csrf_cookie or not csrf_cookie["key"]:
+        return response
+
+    op = session.get("fs_cc", None)
+    if not op:
+        return response
+
+    if op == "clear":
+        response.delete_cookie(
+            csrf_cookie["key"],
+            path=csrf_cookie.get("path", "/"),
+            domain=csrf_cookie.get("domain", None),
+        )
+        session.pop("fs_cc")
+        return response
+
+    # Send a cookie if any of:
+    # 1) CSRF_COOKIE_REFRESH_EACH_REQUEST is true
+    # 2) fs_cc == "set" - this is on first login
+    # 3) existing cookie has expired
+    send = False
+    if op == "set":
+        send = True
+        session["fs_cc"] = "sent"
+    elif config_value("CSRF_COOKIE_REFRESH_EACH_REQUEST"):
+        send = True
+    elif current_app.config["WTF_CSRF_TIME_LIMIT"]:
+        current_cookie = request.cookies.get(csrf_cookie["key"], None)
+        if current_cookie:
+            # Lets make sure it isn't expired if app doesn't set TIME_LIMIT to None.
+            try:
+                csrf.validate_csrf(current_cookie)
+            except ValidationError:
+                send = True
+
+    if send:
+        kwargs = {k: v for k, v in csrf_cookie.items()}
+        kwargs.pop("key")
+        kwargs["value"] = csrf.generate_csrf()
+        response.set_cookie(csrf_cookie["key"], **kwargs)
+    return response
 
 
 @contextmanager
