@@ -23,10 +23,9 @@ import pytest
 from flask import Flask, render_template
 from flask import jsonify
 from flask import request as flask_request
-from flask.json import JSONEncoder as BaseEncoder
+from flask.json import JSONEncoder
 from flask_babelex import Babel
 from flask_mail import Mail
-from speaklater import is_lazy_string
 from utils import Response, populate_data
 
 from flask_security import (
@@ -47,14 +46,6 @@ from flask_security import (
     permissions_accepted,
     permissions_required,
 )
-
-
-class JSONEncoder(BaseEncoder):
-    def default(self, o):
-        if is_lazy_string(o):
-            return str(o)
-
-        return BaseEncoder.default(self, o)
 
 
 @pytest.fixture()
@@ -270,6 +261,10 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
     class User(db.Model, fsqla.FsUserMixin):
         security_number = db.Column(db.Integer, unique=True)
+
+        def get_security_payload(self):
+            # Make sure we still properly hook up to flask JSONEncoder
+            return {"id": str(self.id), "last_update": self.update_datetime}
 
     with app.app_context():
         db.create_all()

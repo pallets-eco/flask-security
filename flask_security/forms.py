@@ -16,7 +16,7 @@ import inspect
 from flask import Markup, current_app, request
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
-from speaklater import make_lazy_string
+from speaklater import is_lazy_string, make_lazy_string
 from wtforms import (
     BooleanField,
     Field,
@@ -78,7 +78,7 @@ class ValidatorMixin(object):
         super(ValidatorMixin, self).__init__(*args, **kwargs)
 
     def __call__(self, form, field):
-        if not self.message:
+        if not is_lazy_string(self.message) and not self.message:
             # Creat on first usage within app context.
             self.message = make_lazy_string(
                 _local_xlate, config_value("MSG_" + self._original_message)[0]
