@@ -123,7 +123,7 @@ Core
 ``SECURITY_CSRF_PROTECT_MECHANISMS``             Authentication mechanisms that require CSRF protection.
                                                  These are the same mechanisms as are permitted
                                                  in the ``@auth_required`` decorator.
-                                                 Defaults to ``None``
+                                                 Defaults to ``("basic", "session", "token")``
 ``SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS``        If ``True`` then CSRF will not be required for endpoints
                                                  that don't require authentication
                                                  (e.g. login, logout, register, forgot_password).
@@ -141,8 +141,8 @@ Core
                                                  the the configuration variable ``WTF_CSRF_TIME_LIMIT``.
                                                  This can cause CSRF failures if say an application is left
                                                  idle for a long time. You can set that time limit to ``None``
-                                                 Or have the CSRF cookie sent on every request (which will give
-                                                 it a new expiration time. Defaults to ``False``.
+                                                 or have the CSRF cookie sent on every request (which will give
+                                                 it a new expiration time). Defaults to ``False``.
 ==============================================   =============================================
 
 .. _Totp: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#totp-encryption-setup
