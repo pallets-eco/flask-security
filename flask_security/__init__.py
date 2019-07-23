@@ -27,6 +27,7 @@ from .decorators import (
     auth_required,
     permissions_accepted,
     permissions_required,
+    unauth_csrf,
 )
 from .forms import (
     ForgotPasswordForm,
@@ -45,7 +46,7 @@ from .signals import (
 )
 from .utils import login_user, logout_user, url_for_security
 
-__version__ = "3.2.0"
+__version__ = "3.3.0rc1"
 __all__ = (
     "AnonymousUser",
     "ConfirmRegisterForm",
@@ -76,6 +77,7 @@ __all__ = (
     "reset_password_instructions_sent",
     "roles_accepted",
     "roles_required",
+    "unauth_csrf",
     "url_for_security",
     "user_confirmed",
     "user_registered",
