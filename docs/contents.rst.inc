@@ -10,6 +10,7 @@ Contents
    models
    customizing
    two_factor_configurations
+   patterns
    api
    changelog
    authors

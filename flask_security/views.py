@@ -8,9 +8,31 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
+
+    CSRF is tricky. By default all our forms have CSRF protection built in via
+    Flask-WTF. This is regardless of authentication method or whether the request
+    is Form or JSON based. Form-based 'just works' since when rendering the form
+    (on GET), the CSRF token is automatically populated.
+    We want to handle:
+        - JSON requests where CSRF token is in a header (e.g. X-CSRF-Token)
+        - Option to skip CSRF when using a token to authenticate (rather than session)
+          (CSRF_PROTECT_MECHANISMS)
+        - Option to skip CSRF for 'login'/unauthenticated requests
+          (CSRF_IGNORE_UNAUTH_ENDPOINTS)
+    This is complicated by the fact that the only way to disable form CSRF is to
+    pass in meta={csrf: false} at form instantiation time.
+
+    Be aware that for CSRF to work, caller MUST pass in session cookie. So
+    for pure API, and no session cookie - there is no way to support CSRF-Login
+    so app must set CSRF_IGNORE_UNAUTH_ENDPOINTS (or use CSRF/session cookie for logging
+    in then once they have a token, no need for cookie).
+
+    TODO: two-factor routes such as tf_setup need work. They seem to support both
+    authenticated (via session?) as well as unauthenticated access.
 """
 
 from flask import (
+    _app_ctx_stack,
     current_app,
     redirect,
     request,
@@ -21,6 +43,7 @@ from flask import (
     abort,
 )
 from flask_login import current_user
+from flask_wtf import csrf
 from speaklater import is_lazy_string
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
@@ -31,7 +54,7 @@ from .confirmable import (
     confirm_user,
     send_confirmation_instructions,
 )
-from .decorators import anonymous_user_required, login_required
+from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .passwordless import login_token_status, send_login_instructions
 from .recoverable import (
     reset_password_token_status,
@@ -95,12 +118,18 @@ def _render_json(form, include_user=True, include_auth_token=False, additional=N
     else:
         code = 200
         response = dict()
-        if include_user:
-            response["user"] = form.user.get_security_payload()
+        if hasattr(form, "user") and form.user:
+            # This allows anonymous GETs via JSON
+            if include_user:
+                response["user"] = form.user.get_security_payload()
 
-        if include_auth_token:
-            token = form.user.get_auth_token()
-            response["user"]["authentication_token"] = token
+            if include_auth_token:
+                token = form.user.get_auth_token()
+                response["user"]["authentication_token"] = token
+
+        # Return csrf_token on each JSON response - just as every form
+        # has it rendered.
+        response["csrf_token"] = csrf.generate_csrf()
         if additional:
             response.update(additional)
 
@@ -116,16 +145,52 @@ def _ctx(endpoint):
     return _security._run_ctx_processor(endpoint)
 
 
-@anonymous_user_required
+def _suppress_form_csrf():
+    """
+    Return meta contents if we should suppress form from attempting to validate CSRF.
+
+    If app doesn't want CSRF for unauth endpoints then check if caller is authenticated
+    or not (many endpoints can be called either way).
+    """
+    ctx = _app_ctx_stack.top
+    if hasattr(ctx, "fs_ignore_csrf") and ctx.fs_ignore_csrf:
+        # This is the case where CsrfProtect was already called (e.g. @auth_required)
+        return {"csrf": False}
+    if (
+        config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
+        and not current_user.is_authenticated
+    ):
+        return {"csrf": False}
+    return {}
+
+
+@unauth_csrf(fall_through=True)
 def login():
-    """View function for login view"""
+    """View function for login view
+
+    Allow already authenticated users. For GET this is useful for
+    single-page-applications on refresh - session still active but need to
+    access user info and csrf-token.
+    For POST - just logs out current user.
+
+    Q: so even if one is authenticated, since we log out, we won't run csrf. Is that
+    ok?
+    """
+
+    if current_user.is_authenticated and request.method == "POST":
+        tf_clean_session()
+        logout_user()
 
     form_class = _security.login_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        # Allow GET so we can return csrf_token for pre-login.
+        if request.content_length:
+            form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
+        else:
+            form = form_class(MultiDict([]), meta=_suppress_form_csrf())
     else:
-        form = form_class(request.form)
+        form = form_class(request.form, meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
         if config_value("TWO_FACTOR") is True and (
@@ -141,6 +206,8 @@ def login():
             return redirect(get_post_login_redirect(form.next.data))
 
     if request.is_json:
+        if current_user.is_authenticated:
+            form.user = current_user
         return _render_json(form, include_auth_token=True)
 
     return _security.render_template(
@@ -176,7 +243,7 @@ def register():
     else:
         form_data = request.form
 
-    form = form_class(form_data)
+    form = form_class(form_data, meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
         user = register_user(**form.to_dict())
@@ -206,15 +273,16 @@ def register():
     )
 
 
+@unauth_csrf(fall_through=True)
 def send_login():
     """View function that sends login instructions for passwordless login"""
 
     form_class = _security.passwordless_login_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
         send_login_instructions(form.user)
@@ -233,7 +301,7 @@ def send_login():
 def token_login(token):
     """View function that handles passwordless login via a token
     Like reset-password and confirm - this is usually a GET via an email
-    so from the request we cant differentiate form-based apps from non.
+    so from the request we can't differentiate form-based apps from non.
     """
 
     expired, invalid, user = login_token_status(token)
@@ -271,15 +339,16 @@ def token_login(token):
     return redirect(get_post_login_redirect())
 
 
+@unauth_csrf(fall_through=True)
 def send_confirmation():
     """View function which sends confirmation instructions."""
 
     form_class = _security.send_confirmation_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
         send_confirmation_instructions(form.user)
@@ -359,15 +428,16 @@ def confirm_email(token):
 
 
 @anonymous_user_required
+@unauth_csrf(fall_through=True)
 def forgot_password():
     """View function that handles a forgotten password request."""
 
     form_class = _security.forgot_password_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
         send_reset_password_instructions(form.user)
@@ -385,6 +455,7 @@ def forgot_password():
 
 
 @anonymous_user_required
+@unauth_csrf(fall_through=True)
 def reset_password(token):
     """View function that handles a reset password request.
 
@@ -405,9 +476,9 @@ def reset_password(token):
     expired, invalid, user = reset_password_token_status(token)
     form_class = _security.reset_password_form
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
     form.user = user
 
     if request.method == "GET":
@@ -500,16 +571,16 @@ def reset_password(token):
     )
 
 
-@login_required
+@auth_required("basic", "token", "session")
 def change_password():
     """View function which handles a change password request."""
 
     form_class = _security.change_password_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
         after_this_request(_commit)
@@ -523,7 +594,7 @@ def change_password():
 
     if request.is_json:
         form.user = current_user
-        return _render_json(form)
+        return _render_json(form, include_auth_token=True)
 
     return _security.render_template(
         config_value("CHANGE_PASSWORD_TEMPLATE"),
@@ -575,6 +646,7 @@ def _two_factor_login(form):
     return _render_json(form, include_auth_token=True, additional=json_response)
 
 
+@unauth_csrf(fall_through=True)
 def two_factor_setup():
     """View function for two-factor setup.
 
@@ -598,9 +670,9 @@ def two_factor_setup():
     form_class = _security.two_factor_setup_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     if not current_user.is_authenticated:
         # This is the initial login case
@@ -687,6 +759,7 @@ def two_factor_setup():
     )
 
 
+@unauth_csrf(fall_through=True)
 def two_factor_token_validation():
     """View function for two-factor token validation
 
@@ -702,9 +775,9 @@ def two_factor_token_validation():
     form_class = _security.two_factor_verify_code_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     changing = current_user.is_authenticated
     if not changing:
@@ -784,6 +857,7 @@ def two_factor_token_validation():
 
 
 @anonymous_user_required
+@unauth_csrf(fall_through=True)
 def two_factor_rescue():
     """ Function that handles a situation where user can't
     enter his two-factor validation code
@@ -796,9 +870,9 @@ def two_factor_rescue():
     form_class = _security.two_factor_rescue_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     if (
         not all(k in session for k in ["tf_user_id", "tf_state"])
@@ -847,15 +921,15 @@ def two_factor_rescue():
     )
 
 
-@login_required
+@auth_required("basic", "session", "token")
 def two_factor_verify_password():
     """View function which handles a password verification request."""
     form_class = _security.two_factor_verify_password_form
 
     if request.is_json:
-        form = form_class(MultiDict(request.get_json()))
+        form = form_class(MultiDict(request.get_json()), meta=_suppress_form_csrf())
     else:
-        form = form_class()
+        form = form_class(meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
         # form called verify_and_update_password()
@@ -882,6 +956,7 @@ def two_factor_verify_password():
     )
 
 
+@unauth_csrf(fall_through=True)
 def two_factor_qrcode():
     if current_user.is_authenticated:
         user = current_user

@@ -34,6 +34,8 @@ Protecting Views
 
 .. autofunction:: flask_security.decorators.auth_required
 
+.. autofunction:: flask_security.decorators.unauth_csrf
+
 .. data:: @security.unauthorized_handler
 
     If an endpoint fails authentication or authorization from above decorators

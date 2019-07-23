@@ -555,6 +555,15 @@ def client(request, sqlalchemy_app):
     return app.test_client()
 
 
+@pytest.fixture()
+def client_nc(request, sqlalchemy_app):
+    # useful for testing token auth.
+    # No Cookies for You!
+    app = sqlalchemy_app()
+    populate_data(app)
+    return app.test_client(use_cookies=False)
+
+
 @pytest.yield_fixture()
 def in_app_context(request, sqlalchemy_app):
     app = sqlalchemy_app()
