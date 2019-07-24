@@ -90,6 +90,51 @@ def test_inactive_user(client, get_message):
     assert get_message("DISABLED_ACCOUNT") in response.data
 
 
+def test_inactive_forbids(app, client, get_message):
+    """ Make sure that existing session doesn't work after
+    user marked inactive
+    """
+    response = authenticate(client, follow_redirects=True)
+    assert response.status_code == 200
+    # make sure can access restricted page
+    response = client.get("/profile", follow_redirects=True)
+    assert b"Profile Page" in response.data
+
+    # deactivate matt
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.deactivate_user(user)
+        app.security.datastore.commit()
+
+    response = client.get("/profile", follow_redirects=True)
+    # should be thrown back to login page.
+    assert response.status_code == 200
+    assert b"Please log in to access this page" in response.data
+
+
+@pytest.mark.settings(unauthorized_view=None)
+def test_inactive_forbids_token(app, client_nc, get_message):
+    """ Make sure that existing token doesn't work after
+    user marked inactive
+    """
+    response = json_authenticate(client_nc)
+    assert response.status_code == 200
+    token = response.jdata["response"]["user"]["authentication_token"]
+    headers = {"Authentication-Token": token}
+    # make sure can access restricted page
+    response = client_nc.get("/token", headers=headers)
+    assert b"Token Authentication" in response.data
+
+    # deactivate matt
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.deactivate_user(user)
+        app.security.datastore.commit()
+
+    response = client_nc.get("/token", content_type="application/json", headers=headers)
+    assert response.status_code == 401
+
+
 def test_unset_password(client, get_message):
     response = authenticate(client, "jess@lp.com", "password")
     assert get_message("PASSWORD_NOT_SET") in response.data
