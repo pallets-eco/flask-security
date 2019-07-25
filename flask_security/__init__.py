@@ -20,6 +20,7 @@ from .datastore import (
 )
 from .decorators import (
     auth_token_required,
+    handle_csrf,
     http_auth_required,
     login_required,
     roles_accepted,
@@ -67,6 +68,7 @@ __all__ = (
     "auth_token_required",
     "confirm_instructions_sent",
     "current_user",
+    "handle_csrf",
     "http_auth_required",
     "login_required",
     "login_user",

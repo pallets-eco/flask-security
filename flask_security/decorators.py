@@ -104,9 +104,28 @@ def _check_http_auth():
     return False
 
 
-def _handle_csrf(method):
-    """ If configuration wants CSRF checks on some authentication
-    methods, do that here.
+def handle_csrf(method):
+    """ Invoke CSRF protection based on authentication method.
+
+    Usually this is called as part of a decorator, but if that isn't
+    appropriate, endpoint code can call this directly.
+
+    If CSRF protection is appropriate, this will call flask_wtf::protect() which
+    will raise a ValidationError on CSRF failure.
+
+    This routine does nothing if any of these are true:
+
+        #) ``WTF_CSRF_ENABLED`` is set to False
+
+        #) the Flask-WTF CSRF module hasn't been initialized
+
+        #) csrfProtect already checked and accepted the token
+
+    If the passed in method is not in ``CSRF_PROTECT_MECHANISMS`` then not only
+    will no CSRF code be run, but a flag in the current context ``fs_ignore_csrf``
+    will be set so that downstream code knows to ignore any CSRF checks.
+
+    .. versionadded:: 3.3.0
     """
     if (
         not current_app.config.get("WTF_CSRF_ENABLED", False)
@@ -135,7 +154,7 @@ def http_auth_required(realm):
         @wraps(fn)
         def wrapper(*args, **kwargs):
             if _check_http_auth():
-                _handle_csrf("basic")
+                handle_csrf("basic")
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
@@ -164,7 +183,7 @@ def auth_token_required(fn):
     @wraps(fn)
     def decorated(*args, **kwargs):
         if _check_token():
-            _handle_csrf("token")
+            handle_csrf("token")
             return fn(*args, **kwargs)
         if _security._unauthorized_callback:
             return _security._unauthorized_callback()
@@ -184,13 +203,19 @@ def auth_required(*auth_methods):
         def dashboard():
             return 'Dashboard'
 
-    :param auth_methods: Specified mechanisms (token, basic, session)
+    :param auth_methods: Specified mechanisms (token, basic, session). If not specified
+        then all current available mechanisms will be tried.
 
     Note that regardless of order specified - they will be tried in the following
     order: token, session, basic.
 
     The first mechanism that succeeds is used, following that, depending on
     configuration, CSRF protection will be tested.
+
+    .. versionchanged:: 3.3.0
+       If ``auth_methods`` isn't specified, then all will be tried. Authentication
+       mechanisms will always be tried in order of ``token``, ``session``, ``basic``
+       regardless of how they are specified in the ``auth_methods`` parameter.
     """
     login_mechanisms = {
         "token": lambda: _check_token(),
@@ -212,7 +237,7 @@ def auth_required(*auth_methods):
             ]
             for method, mechanism in mechanisms:
                 if mechanism and mechanism():
-                    _handle_csrf(method)
+                    handle_csrf(method)
                     return fn(*args, **kwargs)
                 elif method == "basic":
                     r = _security.default_http_auth_realm
@@ -250,6 +275,8 @@ def unauth_csrf(fall_through=False):
         Note that this can mask some errors such as 'The CSRF session token is missing.'
         meaning that the caller didn't send a session cookie and instead the caller
         might get a 'The CSRF token is missing.' error.
+
+    .. versionadded:: 3.3.0
     """
 
     def wrapper(fn):
@@ -355,11 +382,11 @@ def permissions_required(*fsperms):
     The current user must have BOTH permissions (via the roles it has)
     to view the page.
 
-    .. versionadded:: 3.3.0
-
     N.B. Don't confuse these permissions with flask-principle Permission()!
 
     :param fsperms: The required permissions.
+
+    .. versionadded:: 3.3.0
     """
 
     def wrapper(fn):
@@ -391,11 +418,11 @@ def permissions_accepted(*fsperms):
     The current user must have one of the permissions (via the roles it has)
     to view the page.
 
-    .. versionadded:: 3.3.0
-
     N.B. Don't confuse these permissions with flask-principle Permission()!
 
     :param fsperms: The possible permimssions.
+
+    .. versionadded:: 3.3.0
     """
 
     def wrapper(fn):

@@ -18,6 +18,12 @@ Core
 
 Protecting Views
 ----------------
+.. autofunction:: flask_security.decorators.http_auth_required
+
+.. autofunction:: flask_security.decorators.auth_token_required
+
+.. autofunction:: flask_security.decorators.auth_required
+
 .. autofunction:: flask_security.decorators.login_required
 
 .. autofunction:: flask_security.decorators.roles_required
@@ -28,13 +34,9 @@ Protecting Views
 
 .. autofunction:: flask_security.decorators.permissions_accepted
 
-.. autofunction:: flask_security.decorators.http_auth_required
-
-.. autofunction:: flask_security.decorators.auth_token_required
-
-.. autofunction:: flask_security.decorators.auth_required
-
 .. autofunction:: flask_security.decorators.unauth_csrf
+
+.. autofunction:: flask_security.decorators.handle_csrf
 
 .. data:: @security.unauthorized_handler
 
