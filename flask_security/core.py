@@ -321,7 +321,10 @@ _default_forms = {
 
 
 def _user_loader(user_id):
-    return _security.datastore.find_user(id=user_id)
+    user = _security.datastore.find_user(id=user_id)
+    if not user or not user.active:
+        return None
+    return user
 
 
 def _request_loader(request):
@@ -341,6 +344,8 @@ def _request_loader(request):
             token, max_age=_security.token_max_age
         )
         user = _security.datastore.find_user(id=data[0])
+        if not user.active:
+            user = None
     except Exception:
         user = None
 

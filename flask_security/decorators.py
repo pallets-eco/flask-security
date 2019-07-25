@@ -198,6 +198,8 @@ def auth_required(*auth_methods):
         "basic": lambda: _check_http_auth(),
     }
     mechanisms_order = ["token", "session", "basic"]
+    if not auth_methods:
+        auth_methods = ("basic", "session", "token")
 
     def wrapper(fn):
         @wraps(fn)

@@ -203,6 +203,10 @@ class UserDatastore(object):
     def deactivate_user(self, user):
         """Deactivates a specified user. Returns `True` if a change was made.
 
+        This will immediately disallow access to all endpoints that require
+        authentication either via session or tokens.
+        The user will not be able to log in again.
+
         :param user: The user to deactivate
         """
         if user.active:

@@ -22,6 +22,7 @@ Released TBD
 - (:issue:`126`, `93`, `96`) Revamp entire CSRF handling. This adds support for Single Page Applications
   and having CSRF protection for browser(session) authentication but ignored for
   token based authentication. Add extensive documentation about all the options.
+- (:issue:`117`) Making a user inactive should stop all access immediately.
 
 Possible compatibility issues:
 
