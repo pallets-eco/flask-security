@@ -381,13 +381,17 @@ def confirm_email(token):
 
     already_confirmed = user.confirmed_at is not None
 
-    if expired and not already_confirmed:
-        send_confirmation_instructions(user)
-        m, c = get_message(
-            "CONFIRMATION_EXPIRED",
-            email=user.email,
-            within=_security.confirm_email_within,
-        )
+    if expired or already_confirmed:
+        if already_confirmed:
+            m, c = get_message("ALREADY_CONFIRMED")
+        else:
+            send_confirmation_instructions(user)
+            m, c = get_message(
+                "CONFIRMATION_EXPIRED",
+                email=user.email,
+                within=_security.confirm_email_within,
+            )
+
         if _security.redirect_behavior == "spa":
             return redirect(
                 get_url(
@@ -403,27 +407,31 @@ def confirm_email(token):
 
     if user != current_user:
         logout_user()
-        login_user(user)
+        if config_value("AUTO_LOGIN_AFTER_CONFIRM"):
+            # N.B. this is a (small) security risk if email went to wrong place.
+            # and you have the LOGIN_WITH_CONFIRMATION flag since in that case
+            # you can be logged and and doing stuff - but another person could
+            # get the email.
+            login_user(user)
 
-    if confirm_user(user):
-        after_this_request(_commit)
-        msg = "EMAIL_CONFIRMED"
-    else:
-        msg = "ALREADY_CONFIRMED"
+    confirm_user(user)
+    after_this_request(_commit)
 
-    m, c = get_message(msg)
+    m, c = get_message("EMAIL_CONFIRMED")
     if _security.redirect_behavior == "spa":
         return redirect(
             get_url(
                 _security.post_confirm_view, qparams=user.get_redirect_qparams({c: m})
             )
-            or get_url(
-                _security.post_login_view, qparams=user.get_redirect_qparams({c: m})
-            )
         )
     do_flash(m, c)
     return redirect(
-        get_url(_security.post_confirm_view) or get_url(_security.post_login_view)
+        get_url(_security.post_confirm_view)
+        or get_url(
+            _security.post_login_view
+            if config_value("AUTO_LOGIN_AFTER_CONFIRM")
+            else _security.login_url
+        )
     )
 
 

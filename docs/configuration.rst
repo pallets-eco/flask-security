@@ -404,9 +404,16 @@ Miscellaneous
                                               user has before a login link
                                               expires. This is only used when
                                               the passwordless login feature is
-                                              enabled. Always pluralized the
+                                              enabled. Always pluralize the
                                               time unit for this value.
                                               Defaults to ``1 days``.
+``SECURITY_AUTO_LOGIN_AFTER_CONFIRM``         If ``False`` then on confirmation
+                                              the user will be required to login again. Note that the
+                                              confirmation token is not valid after being used once.
+                                              If ``True``, then the user corresponding to the
+                                              confirmation token will be automatically logged
+                                              in.
+                                              Defaults to ``True``.
 ``SECURITY_TWO_FACTOR_GOOGLE_AUTH_VALIDITY``  Specifies the number of seconds access token is
                                               valid. Defaults to 2 minutes.
 ``SECURITY_TWO_FACTOR_MAIL_VALIDITY``         Specifies the number of seconds
