@@ -154,6 +154,13 @@ CSRF: Pro-Tips
     #) You must enable CSRFProtect(app) if you want to accept the CSRF token in the request
        header.
 
+    #) Annotate each of your endpoints with a @auth_required decorator (and don't rely
+       on just a @role_required or @login_required decorator) so that Flask-Security
+       get control at the appropriate place.
+
+    #) If you can't use a decorator, Flask-Security exposes the underlying method
+       ``handle_csrf``.
+
     #) Consider starting by setting ``SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS`` to True. Your
        application likely doesn't need 'login CSRF' protection, and it is frustrating
        to not even be able to login via API!
