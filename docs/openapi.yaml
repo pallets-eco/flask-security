@@ -501,6 +501,8 @@ paths:
         This is the result of getting a confirmation token and is usually
         the result of clicking the link from a confirmation email.
         This ALWAYS results in a 302 redirect.
+        By default (unless cv('AUTO_LOGIN_AFTER_CONFIRM') == False), the user
+        denoted by the token is logged in as a side-effect.
       responses:
         302:
           description: >
@@ -509,8 +511,7 @@ paths:
           headers:
             Location:
               description: |
-                On spa-success: cv('POST_CONFIRM_VIEW')?email={email}&{level}={msg} or
-                                cv('POST_LOGIN_VIEW')?email={email}&{level}={msg}
+                On spa-success: cv('POST_CONFIRM_VIEW')?email={email}&{level}={msg}
 
                 On spa-error-expired: cv('CONFIRM_ERROR_VIEW')?error={msg}&email={email}
 
@@ -518,6 +519,9 @@ paths:
 
                 On form-success: cv('POST_CONFIRM_VIEW') or
                                  cv('POST_LOGIN_VIEW')
+                                 
+                On form-success (no auto-login): cv('POST_CONFIRM_VIEW') or
+                                 cv('LOGIN_URL')
 
                 On form-error-expired: cv('CONFIRM_ERROR_VIEW') or
                                        cv('CONFIRM_URL')

@@ -172,6 +172,35 @@ def test_login_when_unconfirmed(client, get_message):
 
 
 @pytest.mark.registerable()
+@pytest.mark.settings(login_without_confirmation=True, auto_login_after_confirm=False)
+def test_confirmation_different_user_when_logged_in_no_auto(client, get_message):
+    """ Default - AUTO_LOGIN == false so shouldn't log in second user. """
+    e1 = "dude@lp.com"
+    e2 = "lady@lp.com"
+
+    with capture_registrations() as registrations:
+        for e in e1, e2:
+            data = dict(email=e, password="password", next="")
+            client.post("/register", data=data)
+            logout(client)
+
+    token1 = registrations[0]["confirm_token"]
+    token2 = registrations[1]["confirm_token"]
+
+    client.get("/confirm/" + token1, follow_redirects=True)
+    logout(client)
+    authenticate(client, email=e1)
+
+    response = client.get("/confirm/" + token2, follow_redirects=True)
+    assert get_message("EMAIL_CONFIRMED") in response.data
+    # should get a login view
+    assert (
+        b'<input id="password" name="password" required type="password" value="">'
+        in response.data
+    )
+
+
+@pytest.mark.registerable()
 @pytest.mark.settings(login_without_confirmation=True)
 def test_confirmation_different_user_when_logged_in(client, get_message):
     e1 = "dude@lp.com"
@@ -205,6 +234,36 @@ def test_cannot_reset_password_when_email_is_not_confirmed(client, get_message):
 
     response = client.post("/reset", data=dict(email=email), follow_redirects=True)
     assert get_message("CONFIRMATION_REQUIRED") in response.data
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(auto_login_after_confirm=False)
+def test_confirm_redirect(client, get_message):
+    with capture_registrations() as registrations:
+        data = dict(email="jane@lp.com", password="password", next="")
+        client.post("/register", data=data, follow_redirects=True)
+
+    token = registrations[0]["confirm_token"]
+
+    response = client.get("/confirm/" + token)
+    assert "location" in response.headers
+    assert "/login" in response.location
+
+    response = client.get(response.location)
+    assert get_message("EMAIL_CONFIRMED") in response.data
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(post_confirm_view="/post_confirm")
+def test_confirm_redirect_to_post_confirm(client, get_message):
+    with capture_registrations() as registrations:
+        data = dict(email="john@lp.com", password="password", next="")
+        client.post("/register", data=data, follow_redirects=True)
+
+    token = registrations[0]["confirm_token"]
+
+    response = client.get("/confirm/" + token, follow_redirects=True)
+    assert b"Post Confirm" in response.data
 
 
 @pytest.mark.registerable()
