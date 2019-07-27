@@ -13,7 +13,7 @@ possible using SQLAlchemy and two-factor feature:
 -  `Basic SQLAlchemy Application <#basic-sqlalchemy-application>`_
 
 Basic SQLAlchemy Two-Factor Application
-========================================
++++++++++++++++++++++++++++++++++++++++
 
 SQLAlchemy Install requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

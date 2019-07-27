@@ -2,7 +2,7 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    features
    configuration
@@ -10,6 +10,7 @@ Contents
    models
    customizing
    two_factor_configurations
+   spa
    patterns
    api
    changelog

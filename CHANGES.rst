@@ -13,13 +13,13 @@ Released TBD
 - Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
   should be passed in.
 - Improve documentation for :class:`.UserDatastore` and :func:`.verify_and_update_password`
-  to make clear that caller must commit changers to DB if using a session based datastore.
+  to make clear that caller must commit changes to DB if using a session based datastore.
 - (:issue:`122`) Clarify when to use ``confirm_register_form`` rather than ``register_form``.
 - Fix bug in 2FA that didn't commit DB after using `verify_and_update_password`.
 - Fix bug(s) in UserDatastore where changes to user ``active`` flag weren't being
   added to DB.
 - (:issue:`127`) JSON response was failing due to LazyStrings in error response.
-- (:issue:`126`, `93`, `96`) Revamp entire CSRF handling. This adds support for Single Page Applications
+- (:issue:`126`, :issue:`93`, :issue:`96`) Revamp entire CSRF handling. This adds support for Single Page Applications
   and having CSRF protection for browser(session) authentication but ignored for
   token based authentication. Add extensive documentation about all the options.
 - (:issue:`117`) Making a user inactive should stop all access immediately.

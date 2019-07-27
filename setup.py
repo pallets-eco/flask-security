@@ -17,17 +17,17 @@ tests_require = [
     "Flask-Mongoengine>=0.9.5",
     "Flask-Peewee>=0.6.5",
     "Flask-SQLAlchemy>=2.3",
-    "bcrypt>=3.1.0",
+    "bcrypt>=3.1.5",
     "check-manifest>=0.25",
     "coverage>=4.0",
-    "cryptography>=2.3.0",
+    "cryptography>=2.3.1",
     "isort>=4.2.2",
     "mock>=1.3.0",
-    "mongoengine>=0.12.0",
+    "mongoengine>=0.15.3",
     "mongomock>=3.14.0",
     "msgcheck>=2.9",
     "pony>=0.7.4",
-    "psycopg2>=2.7.4",
+    "psycopg2>=2.7.5",
     "pydocstyle>=1.0.0",
     "pymysql>=0.9.3",
     "pyqrcode>=1.2",
@@ -37,13 +37,13 @@ tests_require = [
     "pytest-flake8>=1.0.4",
     "pytest-mongo>=1.2.1",
     "pytest>=3.5.1",
-    "sqlalchemy>=1.1.0",
+    "sqlalchemy>=1.2.6",
     "sqlalchemy-utils>=0.33.0",
-    "werkzeug>=0.12.2",
+    "werkzeug>=0.14.1",
 ]
 
 extras_require = {
-    "docs": ["Flask-Sphinx-Themes>=1.0.1", "Sphinx>=1.4.2", "sphinx-issues>=1.2.0"],
+    "docs": ["Pallets-Sphinx-Themes>=1.2.0", "Sphinx>=1.8.5", "sphinx-issues>=1.2.0"],
     "tests": tests_require,
 }
 
@@ -54,7 +54,7 @@ for reqs in extras_require.values():
 setup_requires = ["Babel>=1.3", "pytest-runner>=2.6.2", "twine", "wheel"]
 
 install_requires = [
-    "Flask>=0.12",
+    "Flask>=1.0.2",
     "Flask-Login>=0.3.0",
     "Flask-Mail>=0.9.1",
     "Flask-Principal>=0.4.0",
@@ -88,7 +88,7 @@ setup(
     zip_safe=False,
     include_package_data=True,
     platforms="any",
-    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
+    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",
     extras_require=extras_require,
     install_requires=install_requires,
     setup_requires=setup_requires,
