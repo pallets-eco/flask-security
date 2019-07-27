@@ -477,7 +477,7 @@ def reset_password(token):
     In the case of non-form based configuration:
     For GET normal case - redirect to RESET_VIEW?token={token}&email={email}
     For GET invalid case - redirect to RESET_ERROR_VIEW?error={error}&email={email}
-    For POST normal/successful case - redirect to POST_RESET_VIEW or POST_LOGIN_VIEW
+    For POST normal/successful case - return 200 with new authentication token
     For POST error case return 400 with form.errors
     """
 
@@ -513,7 +513,7 @@ def reset_password(token):
             do_flash(m, c)
             return redirect(url_for("forgot_password"))
 
-        # All good - for forms - redirect to reset password template
+        # All good - for SPA - redirect to the ``reset_view``
         if _security.redirect_behavior == "spa":
             return redirect(
                 get_url(
@@ -521,6 +521,7 @@ def reset_password(token):
                     qparams=user.get_redirect_qparams({"token": token}),
                 )
             )
+        # for forms - render the reset password form
         return _security.render_template(
             config_value("RESET_PASSWORD_TEMPLATE"),
             reset_password_form=form,
