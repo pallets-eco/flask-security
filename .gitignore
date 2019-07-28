@@ -13,6 +13,7 @@ sdist
 develop-eggs
 .installed.cfg
 pip-wheel-metadata/
+__pycache__/
 
 # Installer logs
 pip-log.txt
@@ -29,11 +30,14 @@ pip-log.txt
 
 #Virtualenv
 env/
+venv/
 .venv/
 
 #Editor temporaries
 *~
 
+*.swp
+*.save
 *.db
 *cache/
 
@@ -49,6 +53,9 @@ Session.vim
 
 # Mac
 .DS_Store
+
+# Linux
+.directory
 
 # Pycharm files
 .idea/
