@@ -1,4 +1,3 @@
-Welcome {{ user.username }}!
+{{ _("Welcome") }} {{ user.username }}!
 
-You can log into your account using the following code: {{ token }}
-
+{{ _("You can log into your account using the following code:") }} {{ token }}

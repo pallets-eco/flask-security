@@ -1,2 +1,1 @@
-{{ user.email }} can not access mail account
-
+{{ user.email }} {{ _("can not access mail account") }}
