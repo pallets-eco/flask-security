@@ -314,6 +314,8 @@ def transform_url(url, qparams=None, **kwargs):
     :param qparams: additional query params to add to end of url
     :param kwargs: pieces of URL to modify - e.g. netloc=localhost:8000
     :return: Modified URL
+
+    .. versionadded:: 3.2.0
     """
     if not url:
         return url
@@ -678,7 +680,10 @@ class SmsSenderBaseClass(object):
 
     @abc.abstractmethod
     def send_sms(self, from_number, to_number, msg):  # pragma: no cover
-        """ Abstract method for sending sms messages """
+        """ Abstract method for sending sms messages
+
+        .. versionadded:: 3.2.0
+        """
         return
 
 
@@ -696,6 +701,8 @@ class SmsSenderFactory(object):
         """ Initialize an SMS sender.
 
         :param name: Name as registered in SmsSenderFactory:senders (e.g. 'Twilio')
+
+        .. versionadded:: 3.2.0
         """
         return cls.senders[name](*args, **kwargs)
 

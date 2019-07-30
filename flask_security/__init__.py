@@ -10,8 +10,11 @@
     :license: MIT, see LICENSE for more details.
 """
 
+# flake8: noqa: F401
+
 from .core import Security, RoleMixin, UserMixin, AnonymousUser, current_user
 from .datastore import (
+    UserDatastore,
     SQLAlchemyUserDatastore,
     MongoEngineUserDatastore,
     PeeweeUserDatastore,
@@ -31,23 +34,49 @@ from .decorators import (
     unauth_csrf,
 )
 from .forms import (
+    ChangePasswordForm,
     ForgotPasswordForm,
     LoginForm,
     RegisterForm,
     ResetPasswordForm,
     PasswordlessLoginForm,
     ConfirmRegisterForm,
+    SendConfirmationForm,
+    TwoFactorRescueForm,
+    TwoFactorSetupForm,
+    TwoFactorVerifyCodeForm,
+    TwoFactorVerifyPasswordForm,
 )
 from .signals import (
     confirm_instructions_sent,
+    login_instructions_sent,
+    password_changed,
     password_reset,
     reset_password_instructions_sent,
+    tf_code_confirmed,
+    tf_profile_changed,
+    tf_security_token_sent,
+    tf_disabled,
     user_confirmed,
     user_registered,
 )
-from .utils import login_user, logout_user, url_for_security
+from .utils import (
+    SmsSenderBaseClass,
+    SmsSenderFactory,
+    get_hmac,
+    get_token_status,
+    get_url,
+    hash_password,
+    login_user,
+    logout_user,
+    send_mail,
+    transform_url,
+    url_for_security,
+    verify_password,
+    verify_and_update_password,
+)
 
-__version__ = "3.3.0rc1"
+__version__ = "3.3.0rc2"
 __all__ = (
     "AnonymousUser",
     "ConfirmRegisterForm",

@@ -159,14 +159,14 @@ CSRF: Pro-Tips
        get control at the appropriate place.
 
     #) If you can't use a decorator, Flask-Security exposes the underlying method
-       ``handle_csrf``.
+       :func:`flask_security.handle_csrf`.
 
     #) Consider starting by setting ``SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS`` to True. Your
        application likely doesn't need 'login CSRF' protection, and it is frustrating
        to not even be able to login via API!
 
     #) If you have unauthenticated endpoints that you want to protect with CSRF then
-       use the ``@unauth_csrf`` decorator.
+       use the :func:`flask_security.unauth_csrf` decorator.
 
 
 .. _axios: https://github.com/axios/axios

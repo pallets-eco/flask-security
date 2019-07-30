@@ -76,7 +76,7 @@ All forms can be overridden. For each form used, you can specify a
 replacement class. This allows you to add extra fields to the
 register form or override validators::
 
-    from flask_security.forms import RegisterForm
+    from flask_security import RegisterForm
     from wtforms import StringField
     from wtforms.validators import DataRequired
 
