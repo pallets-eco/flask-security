@@ -15,6 +15,9 @@ Core
 
    A proxy for the current user.
 
+.. function:: flask_security.Security.render_json_func
+
+    A decorator for :meth:`flask_security.Security.render_json`
 
 Protecting Views
 ----------------
