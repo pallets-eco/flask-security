@@ -56,7 +56,7 @@ from .utils import (
     verify_and_update_password,
     verify_hash,
 )
-from .views import create_blueprint
+from .views import create_blueprint, default_render_json
 from .cache import VerifyHashCache
 
 # Convenient references
@@ -469,7 +469,8 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
 
     if "login_manager" not in kwargs:
         kwargs["login_manager"] = _get_login_manager(app, anonymous_user)
-
+    # This enables both decorator as well as a constructor arg.
+    kwargs["_render_json"] = kwargs.get("render_json", default_render_json)
     for key, value in _default_forms.items():
         if key not in kwargs or not kwargs[key]:
             kwargs[key] = value
@@ -693,6 +694,9 @@ class _SecurityState(object):
     def totp_factory(self, tf):
         self._totp_factory = tf
 
+    def render_json_func(self, fn):
+        self._render_json = fn
+
 
 class Security(object):
     """The :class:`Security` class initializes the Flask-Security extension.
@@ -716,6 +720,7 @@ class Security(object):
     :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates
+    :param render_json: function for defining JSON response
     :param send_mail: function to use to send email
     """
 
@@ -843,15 +848,15 @@ class Security(object):
         if cv("TWO_FACTOR", app=app):
             if len(cv("TWO_FACTOR_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some TWO_FACTOR_ENABLED_METHODS")
-            self.check_two_factor_modules(
+            self._check_two_factor_modules(
                 "pyqrcode", "TWO_FACTOR", cv("TWO_FACTOR", app=app)
             )
-            self.check_two_factor_modules(
+            self._check_two_factor_modules(
                 "cryptography", "TWO_FACTOR_SECRET", "has been set"
             )
 
             if cv("TWO_FACTOR_SMS_SERVICE", app=app) == "Twilio":  # pragma: no cover
-                self.check_two_factor_modules(
+                self._check_two_factor_modules(
                     "twilio",
                     "TWO_FACTOR_SMS_SERVICE",
                     cv("TWO_FACTOR_SMS_SERVICE", app=app),
@@ -860,7 +865,7 @@ class Security(object):
 
         return state
 
-    def check_two_factor_modules(
+    def _check_two_factor_modules(
         self, module, config_name, config_value
     ):  # pragma: no cover
         PY3 = sys.version_info[0] == 3
@@ -890,6 +895,26 @@ class Security(object):
 
     def send_mail(self, *args, **kwargs):
         return send_mail(*args, **kwargs)
+
+    def render_json(self, payload, code, user):
+        """ Render response payload as JSON.
+
+        :param payload: A dict. Please see the formal API spec for details.
+        :param code: Http status code
+        :param user: the UserDatastore object (or None). Not that this is usually
+                       the same as current_user - but not always.
+
+        The default implementation simply returns::
+
+            jsonify(dict(meta=dict(code=code), response=payload)), code
+
+        This can be used by applications to unify all their JSON API responses.
+        This is called in a request context.
+
+        .. versionadded:: 3.3.0
+
+        """
+        self._render_json(payload, code, user)
 
     def __getattr__(self, name):
         return getattr(self._state, name, None)
