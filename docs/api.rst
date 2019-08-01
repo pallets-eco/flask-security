@@ -8,113 +8,112 @@ The external (json/form) API is described `here`_
 
 Core
 ----
-.. autoclass:: flask_security.core.Security
+.. autoclass:: flask_security.Security
     :members:
 
-.. data:: flask_security.core.current_user
+.. data:: flask_security.current_user
 
    A proxy for the current user.
 
 .. function:: flask_security.Security.render_json_func
 
-    A decorator for :meth:`flask_security.Security.render_json`
+    A decorator for :meth:`.Security.render_json`
+
+.. function:: flask_security.Security.unauthorized_handler
+
+    If an endpoint fails authentication or authorization from one of the decorators
+    described below
+    (except ``login_required``), a method annotated with this decorator will be called.
+    For ``login_required`` (which is implemented in Flask-Login) use
+    **flask_security.login_manager.unauthorized_handler**
 
 Protecting Views
 ----------------
-.. autofunction:: flask_security.decorators.http_auth_required
+.. autofunction:: flask_security.http_auth_required
 
-.. autofunction:: flask_security.decorators.auth_token_required
+.. autofunction:: flask_security.auth_token_required
 
-.. autofunction:: flask_security.decorators.auth_required
+.. autofunction:: flask_security.auth_required
 
-.. autofunction:: flask_security.decorators.login_required
+.. autofunction:: flask_security.login_required
 
-.. autofunction:: flask_security.decorators.roles_required
+.. autofunction:: flask_security.roles_required
 
-.. autofunction:: flask_security.decorators.roles_accepted
+.. autofunction:: flask_security.roles_accepted
 
-.. autofunction:: flask_security.decorators.permissions_required
+.. autofunction:: flask_security.permissions_required
 
-.. autofunction:: flask_security.decorators.permissions_accepted
+.. autofunction:: flask_security.permissions_accepted
 
-.. autofunction:: flask_security.decorators.unauth_csrf
+.. autofunction:: flask_security.unauth_csrf
 
-.. autofunction:: flask_security.decorators.handle_csrf
-
-.. data:: @security.unauthorized_handler
-
-    If an endpoint fails authentication or authorization from above decorators
-    (except ``login_required``), a method annotated with this decorator will be called.
-    For ``login_required`` (which is implemented in Flask-Login) use
-    **@security.login_manager.unauthorized_handler**
+.. autofunction:: flask_security.handle_csrf
 
 User Object Helpers
 -------------------
-.. autoclass:: flask_security.core.UserMixin
+.. autoclass:: flask_security.UserMixin
    :members:
 
-.. autoclass:: flask_security.core.RoleMixin
+.. autoclass:: flask_security.RoleMixin
    :members:
 
-.. autoclass:: flask_security.core.AnonymousUser
+.. autoclass:: flask_security.AnonymousUser
    :members:
 
 
 Datastores
 ----------
-.. autoclass:: flask_security.datastore.UserDatastore
+.. autoclass:: flask_security.UserDatastore
     :members:
 
-.. autoclass:: flask_security.datastore.SQLAlchemyUserDatastore
-    :members:
-    :inherited-members:
-
-.. autoclass:: flask_security.datastore.SQLAlchemySessionUserDatastore
+.. autoclass:: flask_security.SQLAlchemyUserDatastore
     :members:
     :inherited-members:
 
-.. autoclass:: flask_security.datastore.MongoEngineUserDatastore
+.. autoclass:: flask_security.SQLAlchemySessionUserDatastore
     :members:
     :inherited-members:
 
-.. autoclass:: flask_security.datastore.PeeweeUserDatastore
+.. autoclass:: flask_security.MongoEngineUserDatastore
     :members:
     :inherited-members:
 
-.. autoclass:: flask_security.datastore.PonyUserDatastore
+.. autoclass:: flask_security.PeeweeUserDatastore
+    :members:
+    :inherited-members:
+
+.. autoclass:: flask_security.PonyUserDatastore
     :members:
     :inherited-members:
 
 Utils
 -----
-.. autofunction:: flask_security.utils.login_user
+.. autofunction:: flask_security.login_user
 
-.. autofunction:: flask_security.utils.logout_user
+.. autofunction:: flask_security.logout_user
 
-.. autofunction:: flask_security.utils.get_hmac
+.. autofunction:: flask_security.get_hmac
 
-.. autofunction:: flask_security.utils.verify_password
+.. autofunction:: flask_security.verify_password
 
-.. autofunction:: flask_security.utils.verify_and_update_password
+.. autofunction:: flask_security.verify_and_update_password
 
-.. autofunction:: flask_security.utils.hash_password
+.. autofunction:: flask_security.hash_password
 
-.. autofunction:: flask_security.utils.url_for_security
+.. autofunction:: flask_security.url_for_security
 
-.. autofunction:: flask_security.utils.get_within_delta
+.. autofunction:: flask_security.send_mail
 
-.. autofunction:: flask_security.utils.send_mail
+.. autofunction:: flask_security.get_token_status
 
-.. autofunction:: flask_security.utils.get_token_status
+.. autofunction:: flask_security.get_url
 
-.. autofunction:: flask_security.utils.get_url
+.. autofunction:: flask_security.transform_url
 
-.. autofunction:: flask_security.utils.transform_url
-
-.. autoclass:: flask_security.utils.SmsSenderBaseClass
+.. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms
 
-.. autoclass:: flask_security.utils.SmsSenderFactory
+.. autoclass:: flask_security.SmsSenderFactory
   :members: createSender
 
 Signals

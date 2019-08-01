@@ -787,7 +787,8 @@ class Security(object):
             # various config checks - some of these are opinionated in that there
             # could be a reason for some of these combinations - but in general
             # they cause strange behavior.
-            if not current_app.config["WTF_CSRF_ENABLED"]:
+            # WTF_CSRF_ENABLED defaults to True if not set in Flask-WTF
+            if not current_app.config.get("WTF_CSRF_ENABLED", True):
                 return
             csrf = current_app.extensions.get("csrf", None)
 
@@ -800,7 +801,7 @@ class Security(object):
                         "CSRF_PROTECT_MECHANISMS defined but"
                         " CsrfProtect not part of application"
                     )
-                if current_app.config["WTF_CSRF_CHECK_DEFAULT"]:
+                if current_app.config.get("WTF_CSRF_CHECK_DEFAULT", True):
                     raise ValueError(
                         "WTF_CSRF_CHECK_DEFAULT must be set to False if"
                         " CSRF_PROTECT_MECHANISMS is set"
@@ -810,7 +811,7 @@ class Security(object):
             if (
                 cv("CSRF_IGNORE_UNAUTH_ENDPOINTS")
                 and csrf
-                and current_app.config["WTF_CSRF_CHECK_DEFAULT"]
+                and current_app.config.get("WTF_CSRF_CHECK_DEFAULT", False)
             ):
                 raise ValueError(
                     "To ignore unauth endpoints you must set WTF_CSRF_CHECK_DEFAULT"
@@ -901,7 +902,7 @@ class Security(object):
 
         :param payload: A dict. Please see the formal API spec for details.
         :param code: Http status code
-        :param user: the UserDatastore object (or None). Not that this is usually
+        :param user: the UserDatastore object (or None). Note that this is usually
                        the same as current_user - but not always.
 
         The default implementation simply returns::

@@ -46,6 +46,14 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
     app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
 
+    # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
+    # underlying engine. This option makes sure that DB connections from the
+    # pool are still valid. Important for entire application since
+    # many DBaaS options automatically close idle connections.
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+    }
+
     # Create database connection object
     db = SQLAlchemy(app)
 
