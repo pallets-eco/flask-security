@@ -9,7 +9,6 @@
 import hashlib
 
 import pytest
-from flask import jsonify
 
 from utils import authenticate, check_xlation, init_app_with_options, populate_data
 
@@ -442,28 +441,3 @@ def test_per_request_xlate(app, client):
     assert response.jdata["response"]["errors"]["new_password"] == [
         "Merci d'indiquer un mot de passe"
     ]
-
-
-def test_render_json(app, client):
-    @app.security.render_json_func
-    def my_json(payload, code, user):
-        return jsonify(dict(myresponse=payload, code=code))
-
-    response = client.get(
-        "/login", data={}, headers={"Content-Type": "application/json"}
-    )
-    assert "myresponse" in response.jdata
-    assert response.jdata["code"] == 200
-
-
-def _my_json(payload, code, user):
-    return jsonify(dict(myresponse=payload, code=code))
-
-
-@pytest.mark.settings(render_json=_my_json)
-def test_render_json2(app, client):
-    response = client.get(
-        "/login", data={}, headers={"Content-Type": "application/json"}
-    )
-    assert "myresponse" in response.jdata
-    assert response.jdata["code"] == 200

@@ -263,6 +263,45 @@ For example, you might want to use an alternative email library like `Flask-Emai
     The above ``security.send_mail_task`` override will be useless if you
     override the entire ``send_mail`` method.
 
+Responses
+---------
+Flask-Security will likely be a very small piece of your application,
+so Flask-Security makes it easy to override all aspects of API responses.
+
+JSON Response
++++++++++++++
+Applications that support a JSON based API need to be able to have a uniform
+API response. Flask-Security has a default way to render its API responses - which can
+be easily overridden by either providing a callback function via :meth:`.Security.render_json`.
+
+401, 403, Oh My
++++++++++++++++
+For a very long read and discussion look at `this`_. Out of the box, Flask-Security in
+tandem with Flask-Login, behaves as follows:
+
+    * If authentication fails as the result of a @login_required, @auth_required,
+      @http_auth_required, or @token_auth_required then if the request 'wants' a JSON
+      response, :meth:`.Security.render_json` is called with a 401 status code. If not
+      then flask_login.LoginManager.unauthorized() is called. By default THAT will redirect to
+      a login view.
+
+    * If authorization fails as the result of @roles_required, @roles_accepted,
+      @permissions_required, or @permissions_accepted, then if the request 'wants' a JSON
+      response, :meth:`.Security.render_json` is called with a 403 status code. If not,
+      then if ``SECURITY_UNAUTHORIZED_VIEW`` is defined, the response will redirected.
+      If ``SECURITY_UNAUTHORIZED_VIEW`` is not defined, then ``abort(403)`` is called.
+
+All this can be easily changed by defining any or all of :meth:`.Security.render_json`,
+:meth:`.Security.unauthn_handler` and :meth:`.Security.unauthz_handler`.
+
+The decision on whether to return JSON is based on:
+
+    * Was the request content-type "application/json" (e.g. request.is_json()) OR
+
+    * Is the 'best' value of the ``Accept`` HTTP header "application/json"
+
+
+.. _`this`: https://stackoverflow.com/questions/3297048/403-forbidden-vs-401-unauthorized-http-responses
 
 Authorization with OAuth2
 -------------------------

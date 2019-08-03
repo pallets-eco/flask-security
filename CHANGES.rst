@@ -15,6 +15,9 @@ Released TBD
   token based authentication. Add extensive documentation about all the options.
 - (:issue:`130`) Enable applications to provide their own :meth:`.render_json` method so that they can create
   unified API responses.
+- (:issue:`121`) Unauthorization callback not quite right. Split into 2 different callbacks - one for
+  unauthorized and one for unauthenticated. Made default unauthenticated handler use Flask-Login's unauthenticated
+  method to make everything uniform. Extensive documentation added. :meth:`.Security.unauthorized_callback` has been deprecated.
 - Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
   should be passed in.
 - Improve documentation for :class:`.UserDatastore` and :func:`.verify_and_update_password`
@@ -35,6 +38,12 @@ Possible compatibility issues:
   has a property ``permissions`` and assumes it is a comma separated string of permissions.
   If your model already has such a property this will likely fail. You need to override ``get_permissions``
   and simply return an emtpy set. (jwag956)
+
+- (:issue:`121`) Changes the default (failure) behavior for views protected with @auth_required, @token_auth_required,
+  or @http_auth_required. Before, a 401 was returned with some stock html. Now, Flask-Login.unauthorized() is
+  called (the same as @login_required does) - which by default redirects to a login page/view. If you had provided your own
+  :meth:`.Security.unauthorized_callback` there are no changes - that will still be called first. The old default
+  behavior can be restored by setting ``BACKWARDS_COMPAT_UNAUTH`` to True.
 
 Version 3.2.0
 -------------

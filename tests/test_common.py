@@ -286,13 +286,15 @@ def test_token_auth_via_header_valid_token(client):
 
 
 def test_token_auth_via_querystring_invalid_token(client):
-    response = client.get("/token?auth_token=X")
-    assert 401 == response.status_code
+    response = client.get("/token?auth_token=X", headers={"Accept": "application/json"})
+    assert response.status_code == 401
 
 
 def test_token_auth_via_header_invalid_token(client):
-    response = client.get("/token", headers={"Authentication-Token": "X"})
-    assert 401 == response.status_code
+    response = client.get(
+        "/token", headers={"Authentication-Token": "X", "Accept": "application/json"}
+    )
+    assert response.status_code == 401
 
 
 def test_http_auth(client):
@@ -318,6 +320,7 @@ def test_http_auth_username(client):
     assert b"HTTP Authentication" in response.data
 
 
+@pytest.mark.settings(backwards_compat_unauthn=True)
 def test_http_auth_no_authorization(client):
     response = client.get("/http", headers={})
     assert b"<h1>Unauthorized</h1>" in response.data
@@ -325,6 +328,7 @@ def test_http_auth_no_authorization(client):
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
 
+@pytest.mark.settings(backwards_compat_unauthn=True)
 def test_invalid_http_auth_invalid_username(client):
     response = client.get(
         "/http",
@@ -338,6 +342,7 @@ def test_invalid_http_auth_invalid_username(client):
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
 
+@pytest.mark.settings(backwards_compat_unauthn=True)
 def test_invalid_http_auth_bad_password(client):
     response = client.get(
         "/http",
@@ -351,6 +356,7 @@ def test_invalid_http_auth_bad_password(client):
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
 
+@pytest.mark.settings(backwards_compat_unauthn=True)
 def test_custom_http_auth_realm(client):
     response = client.get(
         "/http_custom_realm",
@@ -375,9 +381,11 @@ def test_multi_auth_basic(client):
     assert b"Basic" in response.data
 
     response = client.get("/multi_auth")
-    assert response.status_code == 401
+    # Default unauthn is to redirect
+    assert response.status_code == 302
 
 
+@pytest.mark.settings(backwards_compat_unauthn=True)
 def test_multi_auth_basic_invalid(client):
     response = client.get(
         "/multi_auth",
