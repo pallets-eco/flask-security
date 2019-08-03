@@ -9,6 +9,7 @@
     :copyright: (c) 2019 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+import uuid
 
 from .utils import get_identity_attributes, string_types
 
@@ -153,6 +154,9 @@ class UserDatastore(object):
             return False
         return True
 
+    def _is_uuid(self, value):
+        return isinstance(value, uuid.UUID)
+
     def get_user(self, id_or_email):
         """Returns a user matching the specified ID or email address."""
         raise NotImplementedError
@@ -295,6 +299,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         from sqlalchemy import func as alchemyFn
         from sqlalchemy import inspect
         from sqlalchemy.sql import sqltypes
+        from sqlalchemy.dialects.postgresql import UUID as PSQL_UUID
 
         user_model_query = self.user_model.query
         if hasattr(self.user_model, "roles"):
@@ -302,8 +307,8 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
             user_model_query = user_model_query.options(joinedload("roles"))
 
-        # To support both numeric and string primary keys, and support
-        # calling this routine with either a numeric value or a string
+        # To support both numeric, string, and UUID primary keys, and support
+        # calling this routine with either a numeric value or a string or a UUID
         # we need to make sure the types basically match.
         # psycopg2 for example will complain if we attempt to 'get' a
         # numeric primary key with a string value.
@@ -312,8 +317,13 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         ins = inspect(self.user_model)
         pk_type = ins.primary_key[0].type
         pk_isnumeric = isinstance(pk_type, sqltypes.Integer)
-        # Are they both numeric or both NOT numeric
-        if pk_isnumeric == self._is_numeric(identifier):
+        pk_isuuid = isinstance(pk_type, PSQL_UUID)
+        # Are they the same or NOT numeric nor UUID
+        if (
+            (pk_isnumeric and self._is_numeric(identifier))
+            or (pk_isuuid and self._is_uuid(identifier))
+            or (not pk_isnumeric and not pk_isuuid)
+        ):
             rv = self.user_model.query.get(identifier)
             if rv is not None:
                 return rv
