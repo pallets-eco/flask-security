@@ -78,6 +78,7 @@ def app(request):
         "passwordless",
         "confirmable",
         "two_factor",
+        "createable",
     ]:
         app.config["SECURITY_" + opt.upper()] = opt in request.keywords
 

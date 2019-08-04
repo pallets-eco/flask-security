@@ -16,6 +16,8 @@ import hashlib
 import hmac
 import sys
 import warnings
+import random
+import string
 from contextlib import contextmanager
 from datetime import timedelta
 
@@ -221,6 +223,17 @@ def encrypt_password(password):
     """
     warnings.warn(
         "Please use hash_password instead of encrypt_password.", DeprecationWarning
+    )
+    return hash_password(password)
+
+
+def generate_default_password(password_length=8):
+    """Hash a random generated string
+
+    It is used when a user is created by an admin
+    """
+    password = " ".join(
+        random.choice(string.ascii_lowercase) for i in range(password_length)
     )
     return hash_password(password)
 

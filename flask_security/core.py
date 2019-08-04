@@ -41,6 +41,7 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
+    CreateUserForm,
 )
 from .utils import _
 from .utils import config_value as cv
@@ -114,6 +115,7 @@ _default_config = {
     "TWO_FACTOR_CONFIRM_URL": "/tf-confirm",
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
+    "CREATE_USER_URL": "/create-user",
     "CONFIRM_ERROR_VIEW": None,
     "POST_REGISTER_VIEW": None,
     "POST_CONFIRM_VIEW": None,
@@ -135,6 +137,7 @@ _default_config = {
     "TWO_FACTOR_VERIFY_CODE_TEMPLATE": "security/two_factor_verify_code.html",
     "TWO_FACTOR_SETUP_TEMPLATE": "security/two_factor_setup.html",
     "TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE": "security/two_factor_verify_password.html",
+    "CREATE_USER_TEMPLATE": "security/create_user.html",
     "CONFIRMABLE": False,
     "REGISTERABLE": False,
     "RECOVERABLE": False,
@@ -142,6 +145,7 @@ _default_config = {
     "PASSWORDLESS": False,
     "CHANGEABLE": False,
     "TWO_FACTOR": False,
+    "CREATEABLE": False,
     "SEND_REGISTER_EMAIL": True,
     "SEND_PASSWORD_CHANGE_EMAIL": True,
     "SEND_PASSWORD_RESET_EMAIL": True,
@@ -178,6 +182,7 @@ _default_config = {
     "EMAIL_HTML": True,
     "EMAIL_SUBJECT_TWO_FACTOR": _("Two-factor Login"),
     "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-factor Rescue"),
+    "EMAIL_SUBJECT_USER_CREATED": _("Your account has been created"),
     "USER_IDENTITY_ATTRIBUTES": ["email"],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
@@ -318,6 +323,7 @@ _default_forms = {
     "two_factor_setup_form": TwoFactorSetupForm,
     "two_factor_verify_password_form": TwoFactorVerifyPasswordForm,
     "two_factor_rescue_form": TwoFactorRescueForm,
+    "create_user_form": CreateUserForm,
 }
 
 
@@ -684,6 +690,9 @@ class _SecurityState(object):
     def tf_token_validation_context_processor(self, fn):
         self._add_ctx_processor("tf_token_validation", fn)
 
+    def create_user_context_processor(self, fn):
+        self._add_ctx_processor("create_user", fn)
+
     def send_mail_task(self, fn):
         self._send_mail_task = fn
 
@@ -717,6 +726,7 @@ class Security(object):
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates
     :param send_mail: function to use to send email
+    :param create_user_form: set form for create user view
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):

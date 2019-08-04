@@ -54,7 +54,12 @@ from .confirmable import (
     confirm_user,
     send_confirmation_instructions,
 )
-from .decorators import anonymous_user_required, auth_required, unauth_csrf
+from .decorators import (
+    anonymous_user_required,
+    auth_required,
+    unauth_csrf,
+    login_required,
+)
 from .passwordless import login_token_status, send_login_instructions
 from .recoverable import (
     reset_password_token_status,
@@ -62,6 +67,7 @@ from .recoverable import (
     update_password,
 )
 from .registerable import register_user
+from .createable import create_user as create
 from .utils import url_for_security as url_for
 from .utils import (
     config_value,
@@ -1020,6 +1026,41 @@ def _tf_illegal_state(form, redirect_to):
         return _render_json(form)
 
 
+@login_required
+def create_user():
+    """View function for creating users by an admin"""
+
+    form_class = _security.create_user_form
+
+    if request.is_json:
+        form_data = MultiDict(request.get_json())
+    else:
+        form_data = request.form
+
+    form = form_class(form_data)
+
+    if form.validate_on_submit():
+        create(**form.to_dict())
+
+        if not request.is_json:
+            if "next" in form:
+                redirect_url = get_post_login_redirect(form.next.data)
+            else:
+                redirect_url = get_post_login_redirect()
+
+            return redirect(redirect_url)
+        return _render_json(form)
+
+    if request.is_json:
+        return _render_json(form)
+
+    return _security.render_template(
+        config_value("CREATE_USER_TEMPLATE"),
+        create_user_form=form,
+        **_ctx("create_user")
+    )
+
+
 def create_blueprint(state, import_name):
     """Creates the security extension blueprint"""
 
@@ -1097,5 +1138,15 @@ def create_blueprint(state, import_name):
             methods=["GET", "POST"],
             endpoint="confirm_email",
         )(confirm_email)
+
+    if state.createable:
+        bp.route(
+            state.create_user_url, methods=["GET", "POST"], endpoint="create_user"
+        )(create_user)
+        bp.route(
+            state.reset_url + slash_url_suffix(state.reset_url, "<token>"),
+            methods=["GET", "POST"],
+            endpoint="reset_password",
+        )(reset_password)
 
     return bp
