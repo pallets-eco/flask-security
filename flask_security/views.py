@@ -136,13 +136,13 @@ def _base_render_json(
         if additional:
             payload.update(additional)
 
-    return _security._render_json(payload, code, user)
+    return _security._render_json(payload, code, headers=None, user=user)
 
 
-def default_render_json(payload, code, user):
+def default_render_json(payload, code, headers, user):
     """ Default JSON response handler.
     """
-    return jsonify(dict(meta=dict(code=code), response=payload)), code
+    return jsonify(dict(meta=dict(code=code), response=payload)), code, headers
 
 
 def _commit(response=None):
@@ -233,7 +233,7 @@ def logout():
 
     # No body is required - so if a POST and json - return OK
     if request.method == "POST" and request.is_json:
-        return jsonify(dict(meta=dict(code=200)))
+        return _security._render_json({}, 200, headers=None, user=None)
 
     return redirect(get_post_logout_redirect())
 

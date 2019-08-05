@@ -35,9 +35,8 @@ def test_view_configuration(client):
         "/http",
         headers={"Authorization": "Basic %s" % base64.b64encode(b"joe@lp.com:bogus")},
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
-    assert "WWW-Authenticate" in response.headers
-    assert 'Basic realm="Custom Realm"' == response.headers["WWW-Authenticate"]
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/custom_login?next=%2Fhttp"
 
 
 @pytest.mark.settings(login_user_template="custom_security/login_user.html")

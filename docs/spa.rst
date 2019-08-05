@@ -2,9 +2,9 @@ Working with Single Page Applications
 ======================================
 `Single Page Applications (spa)`_ are a popular model for both separating
 user interface from application/backend code as well as providing a responsive
-user experience. Angular and Vue are popular Javescript frameworks for writing SPAs.
+user experience. Angular and Vue are popular Javascript frameworks for writing SPAs.
 An added benefit is that the UI can be developed completely independently (in a separate repo)
-and take advantage of the latest Javescript packing and bundling techonologies that are
+and take advantage of the latest Javascript packing and bundling technologies that are
 evolving rapidly, and not make the Flask application have to deal with things
 like Flask-Webpack or webassets.
 
@@ -69,8 +69,7 @@ An example configuration::
     security = Security(app, user_datastore)
 
     # Optionally define and set unauthorized callbacks
-    security.login_manager.unauthorized_handler(unauth)
-    security.unauthorized_handler(unauth)
+    security.unauthz_handler(<your unauth handler>)
 
 When in development mode, the Flask application will run by default on port 5000.
 The UI might want to run on port 8080. In order to test redirects you need to set::

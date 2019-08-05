@@ -1,6 +1,63 @@
 Security Patterns
 =================
 
+Authentication and Authorization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Flask-Security provides a set of authentication decorators:
+
+ * @auth_required
+
+ * @http_auth_required
+
+ * @token_auth_required
+
+and a set of authorization decorators:
+
+ * @roles_required
+
+ * @roles_accepted
+
+ * @permissions_required
+
+ * @permissions_accepted
+
+In addition, Flask-Login provides @login_required. In order to take advantage of all the
+Flask-Security features, it is recommended to NOT use @login_required.
+
+Also, if you annotate your endpoints with JUST an authorization decorator, you will never
+get a 401 response, and (for forms) you won't be redirected to your login page. In this case
+you will always get a 403 status code (assuming you don't override the default handlers).
+
+While these annotations are quick and easy, it is likely that they won't completely satisfy
+all an application's authorization requirements. A common example might be that a user can
+only edit their own posts/documents. In cases like this - it is nice to have a uniform way
+of handling all authorization errors. A simple way to do this is to use a special exception
+class that you can raise either in response to Flask-Security authorization failures, or in your
+own code. Then use Flask's ``errorhandler`` to catch that exception and create the appropriate API response::
+
+    Class MyForbiddenException(Exception):
+        def __init__(self, msg='Not permitted with your privileges', status=http.HTTPStatus.FORBIDDEN):
+            self.info = {'status': status, 'msgs': [msg]}
+
+    _security = app.extensions["security"]
+
+    @_security.unauthz_handler
+    def my_unauthz_handler(func, params):
+        raise MyForbiddenException()
+
+    @app.errorhandler(MyForbiddenException)
+    def my_exception(ex):
+        return flask.jsonify(ex.info), ex.info['status']
+
+    @app.route('/doc/<int:doc_id>', methods=['PATCH'])
+    @auth_required('token', 'session')
+    def doc_patch(doc_id):
+        doc = fetch_doc(doc_id)
+        if not current_user.has_role('admin') and doc.owner != current_user:
+            raise MyForbiddenException(msg='You can only update docs you own')
+
+
+
 .. _csrftopic:
 
 CSRF
@@ -143,7 +200,7 @@ the session cookie it will.
 CSRF: Pro-Tips
 ++++++++++++++
     #) Be aware that for CSRF to work, callers MUST send the session cookie. So
-       for pure API, and no session cookie - there is no way to support 'login CSRF'.
+       for pure API (token based), and no session cookie - there is no way to support 'login CSRF'.
        So your app must set ``SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS``
        (or clients must use CSRF/session cookie for logging
        in then once they have an authentication token, no further need for cookie).
@@ -156,7 +213,7 @@ CSRF: Pro-Tips
 
     #) Annotate each of your endpoints with a @auth_required decorator (and don't rely
        on just a @role_required or @login_required decorator) so that Flask-Security
-       get control at the appropriate place.
+       gets control at the appropriate place.
 
     #) If you can't use a decorator, Flask-Security exposes the underlying method
        :func:`flask_security.handle_csrf`.

@@ -13,6 +13,7 @@
 """
 
 from datetime import datetime
+import warnings
 import sys
 
 import pkg_resources
@@ -28,6 +29,7 @@ from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy, Local
 
 from .twofactor import tf_setup
+from .decorators import default_unauthn_handler, default_unauthz_handler
 from .forms import (
     ChangePasswordForm,
     ConfirmRegisterForm,
@@ -47,6 +49,7 @@ from .utils import config_value as cv
 from .utils import (
     FsPermNeed,
     csrf_cookie_handler,
+    default_want_json,
     get_config,
     hash_data,
     localize_callback,
@@ -200,6 +203,7 @@ _default_config = {
     "CSRF_COOKIE": {"key": None},
     "CSRF_HEADER": "X-XSRF-Token",
     "CSRF_COOKIE_REFRESH_EACH_REQUEST": False,
+    "BACKWARDS_COMPAT_UNAUTHN": False,
 }
 
 #: Default Flask-Security messages
@@ -464,13 +468,16 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             _context_processors={},
             _send_mail_task=None,
             _unauthorized_callback=None,
+            _render_json=default_render_json,
+            _want_json=default_want_json,
+            _unauthn_handler=default_unauthn_handler,
+            _unauthz_handler=default_unauthz_handler,
         )
     )
 
     if "login_manager" not in kwargs:
         kwargs["login_manager"] = _get_login_manager(app, anonymous_user)
-    # This enables both decorator as well as a constructor arg.
-    kwargs["_render_json"] = kwargs.get("render_json", default_render_json)
+
     for key, value in _default_forms.items():
         if key not in kwargs or not kwargs[key]:
             kwargs[key] = value
@@ -689,13 +696,23 @@ class _SecurityState(object):
         self._send_mail_task = fn
 
     def unauthorized_handler(self, fn):
+        warnings.warn("deprecated", DeprecationWarning)
         self._unauthorized_callback = fn
 
     def totp_factory(self, tf):
         self._totp_factory = tf
 
-    def render_json_func(self, fn):
+    def render_json(self, fn):
         self._render_json = fn
+
+    def want_json(self, fn):
+        self._want_json = fn
+
+    def unauthz_handler(self, cb):
+        self._unauthz_handler = cb
+
+    def unauthn_handler(self, cb):
+        self._unauthn_handler = cb
 
 
 class Security(object):
@@ -720,7 +737,6 @@ class Security(object):
     :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates
-    :param render_json: function for defining JSON response
     :param send_mail: function to use to send email
     """
 
@@ -897,25 +913,80 @@ class Security(object):
     def send_mail(self, *args, **kwargs):
         return send_mail(*args, **kwargs)
 
-    def render_json(self, payload, code, user):
-        """ Render response payload as JSON.
+    def render_json(self, cb):
+        """ Callback to render response payload as JSON.
 
-        :param payload: A dict. Please see the formal API spec for details.
-        :param code: Http status code
-        :param user: the UserDatastore object (or None). Note that this is usually
-                       the same as current_user - but not always.
+        :param cb: Callback function with
+         signature (payload, code, headers=None, user=None)
+
+            :payload: A dict. Please see the formal API spec for details.
+            :code: Http status code
+            :headers: Headers object
+            :user: the UserDatastore object (or None). Note that this is usually
+                           the same as current_user - but not always.
 
         The default implementation simply returns::
 
-            jsonify(dict(meta=dict(code=code), response=payload)), code
+            jsonify(dict(meta=dict(code=code), response=payload)), code, headers
 
         This can be used by applications to unify all their JSON API responses.
-        This is called in a request context.
+        This is called in a request context and should return a Response or something
+        Flask can create a Response from.
 
         .. versionadded:: 3.3.0
-
         """
-        self._render_json(payload, code, user)
+        self._state._render_json = cb
+
+    def want_json(self, fn):
+        """ Function that returns True if response should be JSON (based on the request)
+
+        :param fn: Function with the following signature (request)
+
+            :request: Werkzueg/Flask request
+
+        .. versionadded:: 3.3.0
+        """
+        self._state._want_json = fn
+
+    def unauthz_handler(self, cb):
+        """
+        Callback for failed authorization.
+        This is called by the various decorators if a role or permission
+        is missing.
+
+        :param cb: Callback function with signature (func, params)
+
+            :func: the decorator function (e.g. roles_required)
+            :params: list of what (if any) was passed to the decorator.
+
+        Should return a Response or something Flask can create a Response from.
+        Can raise an exception if it is handled as part of
+        flask.errorhandler(<exception>)
+
+        With the passed parameters the application could deliver a concise error
+        message.
+
+        .. versionadded:: 3.3.0
+        """
+        self._state._unauthz_handler = cb
+
+    def unauthn_handler(self, cb):
+        """
+        Callback for failed authentication.
+        This is called by the various decorators if authentication fails.
+
+        :param cb: Callback function with signature (mechanisms, headers=None)
+
+            :mechanisms: List of which authentication mechanisms were tried
+            :headers: dict of headers to return
+
+        Should return a Response or something Flask can create a Response from.
+        Can raise an exception if it is handled as part of
+        flask.errorhandler(<exception>)
+
+        .. versionadded:: 3.3.0
+        """
+        self._state._unauthn_handler = cb
 
     def __getattr__(self, name):
         return getattr(self._state, name, None)

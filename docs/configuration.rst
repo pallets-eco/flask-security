@@ -469,6 +469,9 @@ Miscellaneous
 ``SECURITY_DATETIME_FACTORY``                 Specifies the default datetime
                                               factory. Defaults to
                                               ``datetime.datetime.utcnow``.
+``SECURITY_BACKWARDS_COMPAT_UNAUTHN``         If set to ``True`` then the default behavior for authentication
+                                              failures from one of Flask-Security's decorators will be restored to
+                                              be compatibile with prior releases (return 401 and some static html)
 ============================================= ==================================
 
 Messages

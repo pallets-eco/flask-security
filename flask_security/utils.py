@@ -601,6 +601,20 @@ def csrf_cookie_handler(response):
     return response
 
 
+def default_want_json(req):
+    """ Return True if response should be in json
+    N.B. do not call this directly - use security.want_json()
+
+    :param req: Flask/Werkzeug Request
+    """
+    if req.is_json:
+        return True
+    # TODO should this handle json sub-types?
+    if req.accept_mimetypes.best == "application/json":
+        return True
+    return False
+
+
 @contextmanager
 def capture_passwordless_login_requests():
     login_requests = []

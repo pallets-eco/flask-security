@@ -15,10 +15,6 @@ Core
 
    A proxy for the current user.
 
-.. function:: flask_security.Security.render_json_func
-
-    A decorator for :meth:`.Security.render_json`
-
 .. function:: flask_security.Security.unauthorized_handler
 
     If an endpoint fails authentication or authorization from one of the decorators
@@ -26,6 +22,8 @@ Core
     (except ``login_required``), a method annotated with this decorator will be called.
     For ``login_required`` (which is implemented in Flask-Login) use
     **flask_security.login_manager.unauthorized_handler**
+
+    ..deprecated:: 3.3.0
 
 Protecting Views
 ----------------
