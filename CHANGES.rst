@@ -37,13 +37,19 @@ Possible compatibility issues:
   each request to add Permissions to the authenticated user. It checks if the RoleModel
   has a property ``permissions`` and assumes it is a comma separated string of permissions.
   If your model already has such a property this will likely fail. You need to override ``get_permissions``
-  and simply return an emtpy set. (jwag956)
+  and simply return an emtpy set.
 
 - (:issue:`121`) Changes the default (failure) behavior for views protected with @auth_required, @token_auth_required,
   or @http_auth_required. Before, a 401 was returned with some stock html. Now, Flask-Login.unauthorized() is
   called (the same as @login_required does) - which by default redirects to a login page/view. If you had provided your own
   :meth:`.Security.unauthorized_callback` there are no changes - that will still be called first. The old default
   behavior can be restored by setting ``BACKWARDS_COMPAT_UNAUTH`` to True.
+
+- (:issue:`127`) Fix for LazyStrings in json error response. The fix for this has Flask-Security registering
+  its own JsonEncoder on its blueprint. If you registered your own JsonEncoder for your app - it will no
+  longer be called when serializing responses to Flask-Security endpoints. You can register your JsonEncoder
+  on Flask-Security's blueprint by sending it as `json_encoder_cls` as part of initialization. Be aware that your
+  JsonEncoder needs to handle LazyStrings (see speaklater).
 
 Version 3.2.0
 -------------

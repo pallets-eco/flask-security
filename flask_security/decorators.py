@@ -133,13 +133,13 @@ def handle_csrf(method):
 
     This routine does nothing if any of these are true:
 
-        #) ``WTF_CSRF_ENABLED`` is set to False
+        #) `WTF_CSRF_ENABLED` is set to False
 
         #) the Flask-WTF CSRF module hasn't been initialized
 
         #) csrfProtect already checked and accepted the token
 
-    If the passed in method is not in ``CSRF_PROTECT_MECHANISMS`` then not only
+    If the passed in method is not in `CSRF_PROTECT_MECHANISMS` then not only
     will no CSRF code be run, but a flag in the current context ``fs_ignore_csrf``
     will be set so that downstream code knows to ignore any CSRF checks.
 
@@ -275,19 +275,19 @@ def auth_required(*auth_methods):
 def unauth_csrf(fall_through=False):
     """Decorator for endpoints that don't need authentication
     but do want CSRF checks (available via Header rather than just form).
-    This is required when setting WTF_CSRF_CHECK_DEFAULT=False since in that
+    This is required when setting `WTF_CSRF_CHECK_DEFAULT` = False since in that
     case, without this decorator, the form validation will attempt to do the CSRF
     check, and that will fail since the csrf-token is in the header (for pure JSON
     requests).
 
     This decorator does nothing unless Flask-WTF::CSRFProtect has been initialized.
 
-    This decorator does nothing if WTF_CSRF_ENABLED==False.
+    This decorator does nothing if `WTF_CSRF_ENABLED` == False.
 
     This decorator will always require CSRF if the caller is authenticated.
 
     This decorator will suppress CSRF if caller isn't authenticated and has set the
-    "CSRF_IGNORE_UNAUTH_ENDPOINTS" config variable.
+    `CSRF_IGNORE_UNAUTH_ENDPOINTS` config variable.
 
     :param fall_through: if set to True, then if CSRF fails here - simply keep going.
         This is appropriate if underlying view is form based and once the form is

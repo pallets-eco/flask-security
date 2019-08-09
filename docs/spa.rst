@@ -85,7 +85,18 @@ standard security headers such as:
     * ``Strict-Transport-Security``
     * ``X-Frame-Options``
     * ``Content Security Policy``
+    * ``X-Content-Type-Options``
+    * ``X-XSS-Protection``
+    * ``Referrer policy``
 
+Some background material:
+
+    * Specific to `S3`_ but easily adaptable
+
+    * `Flask-Talisman`_ - useful if serving everything from your Flask application - also
+      useful as a good list of things to consider.
 
 .. _Single Page Applications (spa): https://en.wikipedia.org/wiki/Single-page_application
 .. _Nginx: https://www.nginx.com/
+.. _S3: https://www.savjee.be/2018/05/Content-security-policy-and-aws-s3-cloudfront/
+.. _Flask-Talisman: https://github.com/GoogleCloudPlatform/flask-talisman

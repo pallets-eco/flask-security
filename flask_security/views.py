@@ -44,7 +44,6 @@ from flask import (
 )
 from flask_login import current_user
 from flask_wtf import csrf
-from speaklater import is_lazy_string
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
 
@@ -90,24 +89,6 @@ _security = LocalProxy(lambda: current_app.extensions["security"])
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
-def _delazy(response):
-    """
-    Make sure error strings aren't LazyStrings which current json encoder can't handle.
-    We just handle the errors - which are usually a dict of key, list
-    """
-    if "errors" not in response:
-        return
-    if is_lazy_string(response["errors"]):
-        response["errors"] = str(response["errors"])
-    if not isinstance(response["errors"], dict):
-        return
-
-    for error_lists in response["errors"].values():
-        for idx, ele in enumerate(error_lists):
-            if is_lazy_string(ele):
-                error_lists[idx] = str(ele)
-
-
 def _base_render_json(
     form, include_user=True, include_auth_token=False, additional=None
 ):
@@ -117,7 +98,6 @@ def _base_render_json(
     if has_errors:
         code = 400
         payload = dict(errors=form.errors)
-        _delazy(payload)
     else:
         code = 200
         payload = dict()
@@ -1030,7 +1010,7 @@ def _tf_illegal_state(form, redirect_to):
         return _base_render_json(form)
 
 
-def create_blueprint(state, import_name):
+def create_blueprint(state, import_name, json_encoder=None):
     """Creates the security extension blueprint"""
 
     bp = Blueprint(
@@ -1040,6 +1020,8 @@ def create_blueprint(state, import_name):
         subdomain=state.subdomain,
         template_folder="templates",
     )
+    if json_encoder:
+        bp.json_encoder = json_encoder
 
     bp.route(state.logout_url, methods=["GET", "POST"], endpoint="logout")(logout)
 

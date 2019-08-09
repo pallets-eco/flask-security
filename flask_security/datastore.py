@@ -266,11 +266,14 @@ class UserDatastore(object):
         """Creates and returns a new user from the given parameters.
 
         :kwparam email: required.
-        :kwparam password:  Hashed password. Be aware that whatever is passed in will
-            be stored directly in the DB. Do NOT pass in a plaintext password!
-            Best practice is to pass in hash_password(plaintext_password).
+        :kwparam password:  Hashed password.
         :kwparam roles: list of roles to be added to user.
             Can be Role objects or strings
+
+        .. danger::
+           Be aware that whatever `password` is passed in will
+           be stored directly in the DB. Do NOT pass in a plaintext password!
+           Best practice is to pass in ``hash_password(plaintext_password)``.
 
         The new user's ``active`` property will be set to true.
         """

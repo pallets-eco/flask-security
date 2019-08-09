@@ -29,7 +29,8 @@ Quickly add security features to your Flask application.
 
 Notes on this repo
 ------------------
-This is a fork of mattupstate/flask-security starting with 3.0.0 master branch.
+This is a independently maintained version of Flask-Security based on the 3.0.0
+version of the `Original <https://github.com/mattupstate/flask-security>`_
 
 Goals
 +++++
@@ -42,12 +43,14 @@ Goals
 * Migrate to more modern paradigms such as using oauth2 and JWT for token acquisition.
 * Be more opinionated and 'batteries' included by reducing reliance on abandoned projects and
   bundling in support for common use cases.
+* Follow the `Pallets <https://github.com/pallets>`_ lead on supported versions, documentation
+  standards and any other guidelines for extentions that they come up with.
 * Any other great ideas.
 
 Contributing
 ++++++++++++
 Issues and pull requests are welcome. Other maintainers are also welcome. Unlike
-the upstream Flask-Security - issue pull requests against the *master* branch.
+the original Flask-Security - issue pull requests against the *master* branch.
 
 
 Resources
