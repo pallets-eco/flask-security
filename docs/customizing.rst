@@ -273,10 +273,12 @@ JSON Response
 Applications that support a JSON based API need to be able to have a uniform
 API response. Flask-Security has a default way to render its API responses - which can
 be easily overridden by either providing a callback function via :meth:`.Security.render_json`.
+As documents in :meth:`Security.render_json`, be aware that Flask-Security registers
+its own JsonEncoder on its blueprint.
 
 401, 403, Oh My
 +++++++++++++++
-For a very long read and discussion look at `this`_. Out of the box, Flask-Security in
+For a very long read and discussion; look at `this`_. Out of the box, Flask-Security in
 tandem with Flask-Login, behaves as follows:
 
     * If authentication fails as the result of a @login_required, @auth_required,

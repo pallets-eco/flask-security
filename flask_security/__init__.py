@@ -61,6 +61,7 @@ from .signals import (
     user_registered,
 )
 from .utils import (
+    FsJsonEncoder,
     SmsSenderBaseClass,
     SmsSenderFactory,
     get_hmac,
@@ -76,7 +77,7 @@ from .utils import (
     verify_and_update_password,
 )
 
-__version__ = "3.3.0rc2"
+__version__ = "3.3.0rc3"
 __all__ = (
     "AnonymousUser",
     "ConfirmRegisterForm",

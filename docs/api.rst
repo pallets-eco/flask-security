@@ -23,7 +23,7 @@ Core
     For ``login_required`` (which is implemented in Flask-Login) use
     **flask_security.login_manager.unauthorized_handler**
 
-    ..deprecated:: 3.3.0
+    .. deprecated:: 3.3.0
 
 Protecting Views
 ----------------
@@ -107,6 +107,8 @@ Utils
 .. autofunction:: flask_security.get_url
 
 .. autofunction:: flask_security.transform_url
+
+.. autoclass:: flask_security.FsJsonEncoder
 
 .. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms

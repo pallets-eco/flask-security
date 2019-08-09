@@ -20,6 +20,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 
 from flask import current_app, flash, request, session, url_for
+from flask.json import JSONEncoder
 from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
@@ -28,6 +29,7 @@ from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
 from wtforms import ValidationError
 from itsdangerous import BadSignature, SignatureExpired
+from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
 
@@ -546,13 +548,13 @@ def csrf_cookie_handler(response):
     Uses session to track state (set/clear)
 
     Ideally we just need to set this once - however by default
-    Flask-WTF has a time-out on these tokens governed by WTF_CSRF_TIME_LIMIT.
+    Flask-WTF has a time-out on these tokens governed by `WTF_CSRF_TIME_LIMIT`.
     While we could set that to None - and OWASP implies this is fine - that might
     not be agreeable to everyone.
     So as a basic usability hack - we check if it is expired and re-generate so at least
     the user doesn't have to log out and back in (just refresh).
-    We also support a 'CSRF_COOKIE_REFRESH_EACH_REQUEST' analogous to Flask's
-    SESSION_REFRESH_EACH_REQUEST
+    We also support a `CSRF_COOKIE_REFRESH_EACH_REQUEST` analogous to Flask's
+    `SESSION_REFRESH_EACH_REQUEST`
 
     It is of course removed on logout/session end.
     Other info on web suggests replacing on every POST and accepting up to 'age' ago.
@@ -613,6 +615,18 @@ def default_want_json(req):
     if req.accept_mimetypes.best == "application/json":
         return True
     return False
+
+
+class FsJsonEncoder(JSONEncoder):
+    """  Flask-Security JSON encoder.
+    Extends Flask's JSONencoder to handle lazy-text.
+    """
+
+    def default(self, obj):
+        if is_lazy_string(obj):
+            return str(obj)
+        else:
+            return JSONEncoder.default(self, obj)
 
 
 @contextmanager

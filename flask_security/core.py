@@ -47,6 +47,7 @@ from .forms import (
 from .utils import _
 from .utils import config_value as cv
 from .utils import (
+    FsJsonEncoder,
     FsPermNeed,
     csrf_cookie_handler,
     default_want_json,
@@ -736,8 +737,11 @@ class Security(object):
     :param two_factor_rescue_form: set form for the 2FA rescue view
     :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param anonymous_user: class to use for anonymous user
-    :param render_template: function to use to render templates
-    :param send_mail: function to use to send email
+    :param render_template: function to use to render templates. The default is Flask's
+     render_template() function.
+    :param send_mail: function to use to send email. Defaults to :func:`send_mail`
+    :param json_encoder_cls: Class to use as blueprint.json_encoder.
+     Defaults to :class:`FsJsonEncoder`
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -776,6 +780,8 @@ class Security(object):
             kwargs.setdefault("render_template", self.render_template)
         if "send_mail" not in kwargs:
             kwargs.setdefault("send_mail", self.send_mail)
+        if "json_encoder_cls" not in kwargs:
+            kwargs.setdefault("json_encoder_cls", FsJsonEncoder)
 
         for key, value in _default_config.items():
             app.config.setdefault("SECURITY_" + key, value)
@@ -788,7 +794,10 @@ class Security(object):
         self._state = state = _get_state(app, datastore, **kwargs)
 
         if register_blueprint:
-            app.register_blueprint(create_blueprint(state, __name__))
+            bp = create_blueprint(
+                state, __name__, json_encoder=kwargs["json_encoder_cls"]
+            )
+            app.register_blueprint(bp)
             app.context_processor(_context_processor)
 
         @app.before_first_request
@@ -928,6 +937,14 @@ class Security(object):
         The default implementation simply returns::
 
             jsonify(dict(meta=dict(code=code), response=payload)), code, headers
+
+        .. important::
+            Be aware the Flask's ``jsonify`` method will first look to see if a
+            ``json_encoder`` has been set on the blueprint corresponding to the current
+            request. If not then it looks for a ``json_encoder`` registered on the app;
+            and finally uses Flask's default JSONEncoder class. Flask-Security registers
+            :func:`FsJsonEncoder` as its blueprint json_encoder.
+
 
         This can be used by applications to unify all their JSON API responses.
         This is called in a request context and should return a Response or something
