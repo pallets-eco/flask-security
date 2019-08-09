@@ -55,6 +55,11 @@ def _get_unauthenticated_response(text=None, headers=None):
     return Response(text, 401, headers)
 
 
+def _get_unauthorized_response(text=None, headers=None):  # pragma: no cover
+    # People called this - even though it isn't public - no harm in keeping it.
+    return _get_unauthenticated_response(text, headers)
+
+
 def default_unauthn_handler(mechanisms, headers=None):
     """ Default callback for failures to authenticate
 
