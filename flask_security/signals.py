@@ -34,5 +34,3 @@ tf_profile_changed = signals.signal("tf-profile-changed")
 tf_security_token_sent = signals.signal("tf-security-token-sent")
 
 tf_disabled = signals.signal("tf-disabled")
-
-user_created = signals.signal("user-created")

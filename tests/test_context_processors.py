@@ -24,7 +24,6 @@ from utils import authenticate, logout
     forgot_password_template="custom_security/forgot_password.html",
     send_confirmation_template="custom_security/send_confirmation.html",
     register_user_template="custom_security/register_user.html",
-    create_user_template="custom_security/create_user.html",
 )
 def test_context_processors(client, app):
     @app.security.context_processor

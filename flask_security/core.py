@@ -182,7 +182,6 @@ _default_config = {
     "EMAIL_HTML": True,
     "EMAIL_SUBJECT_TWO_FACTOR": _("Two-factor Login"),
     "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-factor Rescue"),
-    "EMAIL_SUBJECT_USER_CREATED": _("Your account has been created"),
     "USER_IDENTITY_ATTRIBUTES": ["email"],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
@@ -693,9 +692,6 @@ class _SecurityState(object):
 
     def tf_token_validation_context_processor(self, fn):
         self._add_ctx_processor("tf_token_validation", fn)
-
-    def create_user_context_processor(self, fn):
-        self._add_ctx_processor("create_user", fn)
 
     def send_mail_task(self, fn):
         self._send_mail_task = fn

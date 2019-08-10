@@ -60,7 +60,6 @@ _default_field_labels = {
     "change_method": _("Change Method"),
     "phone": _("Phone Number"),
     "code": _("Authentication Code"),
-    "create_user": _("Create User"),
 }
 
 
@@ -463,12 +462,3 @@ class TwoFactorRescueForm(Form, UserEmailFormMixin):
 
     def validate(self):
         return True
-
-
-class CreateUserForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
-    """The Create User by an Admin form"""
-
-    submit = SubmitField(get_form_field_label("create_user"))
-
-    def __init__(self, *args, **kwargs):
-        return super(CreateUserForm, self).__init__(*args, **kwargs)
