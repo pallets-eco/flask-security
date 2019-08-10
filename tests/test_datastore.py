@@ -7,7 +7,7 @@
 """
 
 import datetime
-from pytest import raises
+from pytest import raises, skip
 from utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
 from flask_security import RoleMixin, Security, UserMixin
@@ -351,3 +351,75 @@ def test_modify_permissions_unsupported(app, datastore):
             t3.add_permissions("whatever")
         with raises(NotImplementedError):
             t3.remove_permissions("whatever")
+
+
+def test_uuid(app, request, tmpdir, realdburl):
+    """ Test that UUID extension of postgresql works as a primary id for users """
+    import uuid
+    from flask_sqlalchemy import SQLAlchemy
+    from sqlalchemy import Boolean, Column, DateTime, Integer, ForeignKey, String
+    from sqlalchemy.dialects.postgresql import UUID
+    from sqlalchemy.orm import relationship, backref
+
+    from flask_security import SQLAlchemyUserDatastore
+    from conftest import _setup_realdb, _teardown_realdb
+
+    # UUID type only supported by postgres - not sqlite.
+    if not realdburl or "postgres" not in realdburl:
+        skip("This test only works on postgres")
+    db_url, db_info = _setup_realdb(realdburl)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+
+    db = SQLAlchemy(app)
+
+    class RolesUsers(db.Model):
+        __tablename__ = "roles_users"
+        id = Column(Integer(), primary_key=True)
+        user_id = Column("user_id", UUID(as_uuid=True), ForeignKey("user.id"))
+        role_id = Column("role_id", UUID(as_uuid=True), ForeignKey("role.id"))
+
+    class User(db.Model, UserMixin):
+        __tablename__ = "user"
+        id = Column(
+            UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+        )
+        email = Column(String(255), unique=True)
+        first_name = Column(String(255), index=True)
+        last_name = Column(String(255), index=True)
+        username = Column(String(255), unique=True)
+        password = Column(String(255))
+        active = Column(Boolean())
+        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        confirmed_at = Column(DateTime())
+        roles = relationship(
+            "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
+        )
+
+    class Role(db.Model, RoleMixin):
+        __tablename__ = "role"
+        id = Column(
+            UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+        )
+        name = Column(String(80), unique=True)
+        description = Column(String(255))
+
+        # __hash__ is required to avoid the exception
+        # TypeError: unhashable type: 'Role' when saving a User
+        def __hash__(self):
+            return hash(self.name)
+
+    with app.app_context():
+        db.create_all()
+
+    def tear_down():
+        db.drop_all()
+        _teardown_realdb(db_info)
+
+    request.addfinalizer(tear_down)
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        user = ds.get_user("matt@lp.com")
+        assert not user

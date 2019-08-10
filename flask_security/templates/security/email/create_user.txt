@@ -1,7 +1,0 @@
-{{ _('Welcome %(email)s!', email=user.email) }}
-
-
-{{ _('Click the link below to reset your password:') }}
-
-{{ reset_link }}">{{ _('Reset your password') }}
-

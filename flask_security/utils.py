@@ -16,12 +16,11 @@ import hashlib
 import hmac
 import sys
 import warnings
-import random
-import string
 from contextlib import contextmanager
 from datetime import timedelta
 
 from flask import current_app, flash, request, session, url_for
+from flask.json import JSONEncoder
 from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
@@ -30,6 +29,7 @@ from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
 from wtforms import ValidationError
 from itsdangerous import BadSignature, SignatureExpired
+from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
 
@@ -227,17 +227,6 @@ def encrypt_password(password):
     return hash_password(password)
 
 
-def generate_default_password(password_length=8):
-    """Hash a random generated string
-
-    It is used when a user is created by an admin
-    """
-    password = " ".join(
-        random.choice(string.ascii_lowercase) for i in range(password_length)
-    )
-    return hash_password(password)
-
-
 def hash_password(password):
     """Hash the specified plaintext password.
 
@@ -327,6 +316,8 @@ def transform_url(url, qparams=None, **kwargs):
     :param qparams: additional query params to add to end of url
     :param kwargs: pieces of URL to modify - e.g. netloc=localhost:8000
     :return: Modified URL
+
+    .. versionadded:: 3.2.0
     """
     if not url:
         return url
@@ -557,13 +548,13 @@ def csrf_cookie_handler(response):
     Uses session to track state (set/clear)
 
     Ideally we just need to set this once - however by default
-    Flask-WTF has a time-out on these tokens governed by WTF_CSRF_TIME_LIMIT.
+    Flask-WTF has a time-out on these tokens governed by `WTF_CSRF_TIME_LIMIT`.
     While we could set that to None - and OWASP implies this is fine - that might
     not be agreeable to everyone.
     So as a basic usability hack - we check if it is expired and re-generate so at least
     the user doesn't have to log out and back in (just refresh).
-    We also support a 'CSRF_COOKIE_REFRESH_EACH_REQUEST' analogous to Flask's
-    SESSION_REFRESH_EACH_REQUEST
+    We also support a `CSRF_COOKIE_REFRESH_EACH_REQUEST` analogous to Flask's
+    `SESSION_REFRESH_EACH_REQUEST`
 
     It is of course removed on logout/session end.
     Other info on web suggests replacing on every POST and accepting up to 'age' ago.
@@ -610,6 +601,32 @@ def csrf_cookie_handler(response):
         kwargs["value"] = csrf.generate_csrf()
         response.set_cookie(csrf_cookie["key"], **kwargs)
     return response
+
+
+def default_want_json(req):
+    """ Return True if response should be in json
+    N.B. do not call this directly - use security.want_json()
+
+    :param req: Flask/Werkzeug Request
+    """
+    if req.is_json:
+        return True
+    # TODO should this handle json sub-types?
+    if req.accept_mimetypes.best == "application/json":
+        return True
+    return False
+
+
+class FsJsonEncoder(JSONEncoder):
+    """  Flask-Security JSON encoder.
+    Extends Flask's JSONencoder to handle lazy-text.
+    """
+
+    def default(self, obj):
+        if is_lazy_string(obj):
+            return str(obj)
+        else:
+            return JSONEncoder.default(self, obj)
 
 
 @contextmanager
@@ -691,7 +708,10 @@ class SmsSenderBaseClass(object):
 
     @abc.abstractmethod
     def send_sms(self, from_number, to_number, msg):  # pragma: no cover
-        """ Abstract method for sending sms messages """
+        """ Abstract method for sending sms messages
+
+        .. versionadded:: 3.2.0
+        """
         return
 
 
@@ -709,6 +729,8 @@ class SmsSenderFactory(object):
         """ Initialize an SMS sender.
 
         :param name: Name as registered in SmsSenderFactory:senders (e.g. 'Twilio')
+
+        .. versionadded:: 3.2.0
         """
         return cls.senders[name](*args, **kwargs)
 

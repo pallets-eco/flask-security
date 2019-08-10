@@ -14,7 +14,7 @@ There are some complete (but simple) examples available in the *examples* direct
 .. _basic-sqlalchemy-application:
 
 Basic SQLAlchemy Application
-============================
+----------------------------
 
 SQLAlchemy Install requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,6 +45,14 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
     app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
+
+    # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
+    # underlying engine. This option makes sure that DB connections from the
+    # pool are still valid. Important for entire application since
+    # many DBaaS options automatically close idle connections.
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+    }
 
     # Create database connection object
     db = SQLAlchemy(app)
@@ -81,7 +89,7 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
 .. _basic-sqlalchemy-application-with-session:
 
 Basic SQLAlchemy Application with session
-=========================================
+-----------------------------------------
 
 SQLAlchemy Install requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -201,7 +209,7 @@ and models.py. You can also do the models a folder and spread your tables there.
 .. _basic-mongoengine-application:
 
 Basic MongoEngine Application
-=============================
+-----------------------------
 
 MongoEngine Install requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -272,7 +280,7 @@ possible using MongoEngine:
 .. _basic-peewee-application:
 
 Basic Peewee Application
-========================
+------------------------
 
 Peewee Install requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -354,7 +362,7 @@ possible using Peewee:
 .. _mail-configuration:
 
 Mail Configuration
-==================
+------------------
 
 Flask-Security integrates with Flask-Mail to handle all email
 communications between user and site, so it's important to configure
@@ -382,7 +390,7 @@ work with your particular email server configuration, please see the
 .. _proxy-configuration:
 
 Proxy Configuration
-===================
+-------------------
 
 The user tracking features need an additional configuration
 in HTTP proxy environment. The following code illustrates a setup

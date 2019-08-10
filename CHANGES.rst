@@ -10,19 +10,26 @@ Released TBD
 
 - (:pr:`120`) Native support for Permissions as part of Roles. Endpoints can be
   protected via permissions that are evaluated based on role(s) that the user has.
+- (:issue:`126`, :issue:`93`, :issue:`96`) Revamp entire CSRF handling. This adds support for Single Page Applications
+  and having CSRF protection for browser(session) authentication but ignored for
+  token based authentication. Add extensive documentation about all the options.
+- (:issue:`130`) Enable applications to provide their own :meth:`.render_json` method so that they can create
+  unified API responses.
+- (:issue:`121`) Unauthorization callback not quite right. Split into 2 different callbacks - one for
+  unauthorized and one for unauthenticated. Made default unauthenticated handler use Flask-Login's unauthenticated
+  method to make everything uniform. Extensive documentation added. :meth:`.Security.unauthorized_callback` has been deprecated.
 - Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
   should be passed in.
 - Improve documentation for :class:`.UserDatastore` and :func:`.verify_and_update_password`
-  to make clear that caller must commit changers to DB if using a session based datastore.
+  to make clear that caller must commit changes to DB if using a session based datastore.
 - (:issue:`122`) Clarify when to use ``confirm_register_form`` rather than ``register_form``.
 - Fix bug in 2FA that didn't commit DB after using `verify_and_update_password`.
-- Fix bug(s) in UserDatastore where changes to user ``active`` flag weren't being
-  added to DB.
+- Fix bug(s) in UserDatastore where changes to user ``active`` flag weren't being added to DB.
 - (:issue:`127`) JSON response was failing due to LazyStrings in error response.
-- (:issue:`126`, `93`, `96`) Revamp entire CSRF handling. This adds support for Single Page Applications
-  and having CSRF protection for browser(session) authentication but ignored for
-  token based authentication. Add extensive documentation about all the options.
 - (:issue:`117`) Making a user inactive should stop all access immediately.
+- (:issue:`134`) Confirmation token can no longer be reused. Added
+  `SECURITY_AUTO_LOGIN_AFTER_CONFIRM` option for applications that don't want the user
+  to be automatically logged in after confirmation (defaults to True - existing behavior).
 
 Possible compatibility issues:
 
@@ -30,7 +37,19 @@ Possible compatibility issues:
   each request to add Permissions to the authenticated user. It checks if the RoleModel
   has a property ``permissions`` and assumes it is a comma separated string of permissions.
   If your model already has such a property this will likely fail. You need to override ``get_permissions``
-  and simply return an emtpy set. (jwag956)
+  and simply return an emtpy set.
+
+- (:issue:`121`) Changes the default (failure) behavior for views protected with @auth_required, @token_auth_required,
+  or @http_auth_required. Before, a 401 was returned with some stock html. Now, Flask-Login.unauthorized() is
+  called (the same as @login_required does) - which by default redirects to a login page/view. If you had provided your own
+  :meth:`.Security.unauthorized_callback` there are no changes - that will still be called first. The old default
+  behavior can be restored by setting ``BACKWARDS_COMPAT_UNAUTH`` to True.
+
+- (:issue:`127`) Fix for LazyStrings in json error response. The fix for this has Flask-Security registering
+  its own JsonEncoder on its blueprint. If you registered your own JsonEncoder for your app - it will no
+  longer be called when serializing responses to Flask-Security endpoints. You can register your JsonEncoder
+  on Flask-Security's blueprint by sending it as `json_encoder_cls` as part of initialization. Be aware that your
+  JsonEncoder needs to handle LazyStrings (see speaklater).
 
 Version 3.2.0
 -------------

@@ -38,7 +38,7 @@ _security = LocalProxy(lambda: current_app.extensions["security"])
 _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
 
-_default_unauthorized_html = """
+_default_unauthenticated_html = """
     <h1>Unauthorized</h1>
     <p>The server could not verify that you are authorized to access the URL
     requested. You either supplied the wrong credentials (e.g. a bad password),
@@ -49,13 +49,36 @@ _default_unauthorized_html = """
 BasicAuth = namedtuple("BasicAuth", "username, password")
 
 
-def _get_unauthorized_response(text=None, headers=None):
-    text = text or _default_unauthorized_html
+def _get_unauthenticated_response(text=None, headers=None):
+    text = text or _default_unauthenticated_html
     headers = headers or {}
     return Response(text, 401, headers)
 
 
-def _get_unauthorized_view():
+def _get_unauthorized_response(text=None, headers=None):  # pragma: no cover
+    # People called this - even though it isn't public - no harm in keeping it.
+    return _get_unauthenticated_response(text, headers)
+
+
+def default_unauthn_handler(mechanisms, headers=None):
+    """ Default callback for failures to authenticate
+
+    If caller wants JSON - return 401
+    Otherwise - assume caller is html and redirect if possible to a login view.
+    We let Flask-Login handle this.
+
+    """
+    if utils.config_value("BACKWARDS_COMPAT_UNAUTHN"):
+        return _get_unauthenticated_response(headers=headers)
+    if _security._want_json(request):
+        # TODO can/should we response with a WWW-Authenticate Header in all cases?
+        return _security._render_json({}, 401, headers, None)
+    return _security.login_manager.unauthorized()
+
+
+def default_unauthz_handler(func, params):
+    if _security._want_json(request):
+        return _security._render_json({}, 403, None, None)
     view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
@@ -115,13 +138,13 @@ def handle_csrf(method):
 
     This routine does nothing if any of these are true:
 
-        #) ``WTF_CSRF_ENABLED`` is set to False
+        #) `WTF_CSRF_ENABLED` is set to False
 
         #) the Flask-WTF CSRF module hasn't been initialized
 
         #) csrfProtect already checked and accepted the token
 
-    If the passed in method is not in ``CSRF_PROTECT_MECHANISMS`` then not only
+    If the passed in method is not in `CSRF_PROTECT_MECHANISMS` then not only
     will no CSRF code be run, but a flag in the current context ``fs_ignore_csrf``
     will be set so that downstream code knows to ignore any CSRF checks.
 
@@ -161,7 +184,7 @@ def http_auth_required(realm):
             else:
                 r = _security.default_http_auth_realm if callable(realm) else realm
                 h = {"WWW-Authenticate": 'Basic realm="%s"' % r}
-                return _get_unauthorized_response(headers=h)
+                return _security._unauthn_handler(["basic"], headers=h)
 
         return wrapper
 
@@ -188,7 +211,7 @@ def auth_token_required(fn):
         if _security._unauthorized_callback:
             return _security._unauthorized_callback()
         else:
-            return _get_unauthorized_response()
+            return _security._unauthn_handler(["token"])
 
     return decorated
 
@@ -224,7 +247,9 @@ def auth_required(*auth_methods):
     }
     mechanisms_order = ["token", "session", "basic"]
     if not auth_methods:
-        auth_methods = ("basic", "session", "token")
+        auth_methods = {"basic", "session", "token"}
+    else:
+        auth_methods = [am for am in auth_methods]
 
     def wrapper(fn):
         @wraps(fn)
@@ -245,7 +270,7 @@ def auth_required(*auth_methods):
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
             else:
-                return _get_unauthorized_response(headers=h)
+                return _security._unauthn_handler(auth_methods, headers=h)
 
         return decorated_view
 
@@ -255,19 +280,19 @@ def auth_required(*auth_methods):
 def unauth_csrf(fall_through=False):
     """Decorator for endpoints that don't need authentication
     but do want CSRF checks (available via Header rather than just form).
-    This is required when setting WTF_CSRF_CHECK_DEFAULT=False since in that
+    This is required when setting `WTF_CSRF_CHECK_DEFAULT` = False since in that
     case, without this decorator, the form validation will attempt to do the CSRF
     check, and that will fail since the csrf-token is in the header (for pure JSON
     requests).
 
     This decorator does nothing unless Flask-WTF::CSRFProtect has been initialized.
 
-    This decorator does nothing if WTF_CSRF_ENABLED==False.
+    This decorator does nothing if `WTF_CSRF_ENABLED` == False.
 
     This decorator will always require CSRF if the caller is authenticated.
 
     This decorator will suppress CSRF if caller isn't authenticated and has set the
-    "CSRF_IGNORE_UNAUTH_ENDPOINTS" config variable.
+    `CSRF_IGNORE_UNAUTH_ENDPOINTS` config variable.
 
     :param fall_through: if set to True, then if CSRF fails here - simply keep going.
         This is appropriate if underlying view is form based and once the form is
@@ -329,9 +354,9 @@ def roles_required(*roles):
             for perm in perms:
                 if not perm.can():
                     if _security._unauthorized_callback:
+                        # Backwards compat - deprecated
                         return _security._unauthorized_callback()
-                    else:
-                        return _get_unauthorized_view()
+                    return _security._unauthz_handler(roles_required, list(roles))
             return fn(*args, **kwargs)
 
         return decorated_view
@@ -361,9 +386,9 @@ def roles_accepted(*roles):
             if perm.can():
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
+                # Backwards compat - deprecated
                 return _security._unauthorized_callback()
-            else:
-                return _get_unauthorized_view()
+            return _security._unauthz_handler(roles_accepted, list(roles))
 
         return decorated_view
 
@@ -396,9 +421,12 @@ def permissions_required(*fsperms):
             for perm in perms:
                 if not perm.can():
                     if _security._unauthorized_callback:
+                        # Backwards compat - deprecated
                         return _security._unauthorized_callback()
-                    else:
-                        return _get_unauthorized_view()
+                    return _security._unauthz_handler(
+                        permissions_required, list(fsperms)
+                    )
+
             return fn(*args, **kwargs)
 
         return decorated_view
@@ -432,9 +460,9 @@ def permissions_accepted(*fsperms):
             if perm.can():
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
+                # Backwards compat - deprecated
                 return _security._unauthorized_callback()
-            else:
-                return _get_unauthorized_view()
+            return _security._unauthz_handler(permissions_accepted, list(fsperms))
 
         return decorated_view
 

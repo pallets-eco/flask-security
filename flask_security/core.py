@@ -13,6 +13,7 @@
 """
 
 from datetime import datetime
+import warnings
 import sys
 
 import pkg_resources
@@ -28,6 +29,7 @@ from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy, Local
 
 from .twofactor import tf_setup
+from .decorators import default_unauthn_handler, default_unauthz_handler
 from .forms import (
     ChangePasswordForm,
     ConfirmRegisterForm,
@@ -41,13 +43,14 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
-    CreateUserForm,
 )
 from .utils import _
 from .utils import config_value as cv
 from .utils import (
+    FsJsonEncoder,
     FsPermNeed,
     csrf_cookie_handler,
+    default_want_json,
     get_config,
     hash_data,
     localize_callback,
@@ -57,7 +60,7 @@ from .utils import (
     verify_and_update_password,
     verify_hash,
 )
-from .views import create_blueprint
+from .views import create_blueprint, default_render_json
 from .cache import VerifyHashCache
 
 # Convenient references
@@ -115,7 +118,6 @@ _default_config = {
     "TWO_FACTOR_CONFIRM_URL": "/tf-confirm",
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
-    "CREATE_USER_URL": "/create-user",
     "CONFIRM_ERROR_VIEW": None,
     "POST_REGISTER_VIEW": None,
     "POST_CONFIRM_VIEW": None,
@@ -137,7 +139,6 @@ _default_config = {
     "TWO_FACTOR_VERIFY_CODE_TEMPLATE": "security/two_factor_verify_code.html",
     "TWO_FACTOR_SETUP_TEMPLATE": "security/two_factor_setup.html",
     "TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE": "security/two_factor_verify_password.html",
-    "CREATE_USER_TEMPLATE": "security/create_user.html",
     "CONFIRMABLE": False,
     "REGISTERABLE": False,
     "RECOVERABLE": False,
@@ -145,7 +146,6 @@ _default_config = {
     "PASSWORDLESS": False,
     "CHANGEABLE": False,
     "TWO_FACTOR": False,
-    "CREATEABLE": False,
     "SEND_REGISTER_EMAIL": True,
     "SEND_PASSWORD_CHANGE_EMAIL": True,
     "SEND_PASSWORD_RESET_EMAIL": True,
@@ -205,6 +205,7 @@ _default_config = {
     "CSRF_COOKIE": {"key": None},
     "CSRF_HEADER": "X-XSRF-Token",
     "CSRF_COOKIE_REFRESH_EACH_REQUEST": False,
+    "BACKWARDS_COMPAT_UNAUTHN": False,
 }
 
 #: Default Flask-Security messages
@@ -323,7 +324,6 @@ _default_forms = {
     "two_factor_setup_form": TwoFactorSetupForm,
     "two_factor_verify_password_form": TwoFactorVerifyPasswordForm,
     "two_factor_rescue_form": TwoFactorRescueForm,
-    "create_user_form": CreateUserForm,
 }
 
 
@@ -470,6 +470,10 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             _context_processors={},
             _send_mail_task=None,
             _unauthorized_callback=None,
+            _render_json=default_render_json,
+            _want_json=default_want_json,
+            _unauthn_handler=default_unauthn_handler,
+            _unauthz_handler=default_unauthz_handler,
         )
     )
 
@@ -697,10 +701,23 @@ class _SecurityState(object):
         self._send_mail_task = fn
 
     def unauthorized_handler(self, fn):
+        warnings.warn("deprecated", DeprecationWarning)
         self._unauthorized_callback = fn
 
     def totp_factory(self, tf):
         self._totp_factory = tf
+
+    def render_json(self, fn):
+        self._render_json = fn
+
+    def want_json(self, fn):
+        self._want_json = fn
+
+    def unauthz_handler(self, cb):
+        self._unauthz_handler = cb
+
+    def unauthn_handler(self, cb):
+        self._unauthn_handler = cb
 
 
 class Security(object):
@@ -724,9 +741,11 @@ class Security(object):
     :param two_factor_rescue_form: set form for the 2FA rescue view
     :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param anonymous_user: class to use for anonymous user
-    :param render_template: function to use to render templates
-    :param send_mail: function to use to send email
-    :param create_user_form: set form for create user view
+    :param render_template: function to use to render templates. The default is Flask's
+     render_template() function.
+    :param send_mail: function to use to send email. Defaults to :func:`send_mail`
+    :param json_encoder_cls: Class to use as blueprint.json_encoder.
+     Defaults to :class:`FsJsonEncoder`
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -765,6 +784,8 @@ class Security(object):
             kwargs.setdefault("render_template", self.render_template)
         if "send_mail" not in kwargs:
             kwargs.setdefault("send_mail", self.send_mail)
+        if "json_encoder_cls" not in kwargs:
+            kwargs.setdefault("json_encoder_cls", FsJsonEncoder)
 
         for key, value in _default_config.items():
             app.config.setdefault("SECURITY_" + key, value)
@@ -777,7 +798,10 @@ class Security(object):
         self._state = state = _get_state(app, datastore, **kwargs)
 
         if register_blueprint:
-            app.register_blueprint(create_blueprint(state, __name__))
+            bp = create_blueprint(
+                state, __name__, json_encoder=kwargs["json_encoder_cls"]
+            )
+            app.register_blueprint(bp)
             app.context_processor(_context_processor)
 
         @app.before_first_request
@@ -792,7 +816,8 @@ class Security(object):
             # various config checks - some of these are opinionated in that there
             # could be a reason for some of these combinations - but in general
             # they cause strange behavior.
-            if not current_app.config["WTF_CSRF_ENABLED"]:
+            # WTF_CSRF_ENABLED defaults to True if not set in Flask-WTF
+            if not current_app.config.get("WTF_CSRF_ENABLED", True):
                 return
             csrf = current_app.extensions.get("csrf", None)
 
@@ -805,7 +830,7 @@ class Security(object):
                         "CSRF_PROTECT_MECHANISMS defined but"
                         " CsrfProtect not part of application"
                     )
-                if current_app.config["WTF_CSRF_CHECK_DEFAULT"]:
+                if current_app.config.get("WTF_CSRF_CHECK_DEFAULT", True):
                     raise ValueError(
                         "WTF_CSRF_CHECK_DEFAULT must be set to False if"
                         " CSRF_PROTECT_MECHANISMS is set"
@@ -815,7 +840,7 @@ class Security(object):
             if (
                 cv("CSRF_IGNORE_UNAUTH_ENDPOINTS")
                 and csrf
-                and current_app.config["WTF_CSRF_CHECK_DEFAULT"]
+                and current_app.config.get("WTF_CSRF_CHECK_DEFAULT", False)
             ):
                 raise ValueError(
                     "To ignore unauth endpoints you must set WTF_CSRF_CHECK_DEFAULT"
@@ -853,15 +878,15 @@ class Security(object):
         if cv("TWO_FACTOR", app=app):
             if len(cv("TWO_FACTOR_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some TWO_FACTOR_ENABLED_METHODS")
-            self.check_two_factor_modules(
+            self._check_two_factor_modules(
                 "pyqrcode", "TWO_FACTOR", cv("TWO_FACTOR", app=app)
             )
-            self.check_two_factor_modules(
+            self._check_two_factor_modules(
                 "cryptography", "TWO_FACTOR_SECRET", "has been set"
             )
 
             if cv("TWO_FACTOR_SMS_SERVICE", app=app) == "Twilio":  # pragma: no cover
-                self.check_two_factor_modules(
+                self._check_two_factor_modules(
                     "twilio",
                     "TWO_FACTOR_SMS_SERVICE",
                     cv("TWO_FACTOR_SMS_SERVICE", app=app),
@@ -870,7 +895,7 @@ class Security(object):
 
         return state
 
-    def check_two_factor_modules(
+    def _check_two_factor_modules(
         self, module, config_name, config_value
     ):  # pragma: no cover
         PY3 = sys.version_info[0] == 3
@@ -900,6 +925,89 @@ class Security(object):
 
     def send_mail(self, *args, **kwargs):
         return send_mail(*args, **kwargs)
+
+    def render_json(self, cb):
+        """ Callback to render response payload as JSON.
+
+        :param cb: Callback function with
+         signature (payload, code, headers=None, user=None)
+
+            :payload: A dict. Please see the formal API spec for details.
+            :code: Http status code
+            :headers: Headers object
+            :user: the UserDatastore object (or None). Note that this is usually
+                           the same as current_user - but not always.
+
+        The default implementation simply returns::
+
+            jsonify(dict(meta=dict(code=code), response=payload)), code, headers
+
+        .. important::
+            Be aware the Flask's ``jsonify`` method will first look to see if a
+            ``json_encoder`` has been set on the blueprint corresponding to the current
+            request. If not then it looks for a ``json_encoder`` registered on the app;
+            and finally uses Flask's default JSONEncoder class. Flask-Security registers
+            :func:`FsJsonEncoder` as its blueprint json_encoder.
+
+
+        This can be used by applications to unify all their JSON API responses.
+        This is called in a request context and should return a Response or something
+        Flask can create a Response from.
+
+        .. versionadded:: 3.3.0
+        """
+        self._state._render_json = cb
+
+    def want_json(self, fn):
+        """ Function that returns True if response should be JSON (based on the request)
+
+        :param fn: Function with the following signature (request)
+
+            :request: Werkzueg/Flask request
+
+        .. versionadded:: 3.3.0
+        """
+        self._state._want_json = fn
+
+    def unauthz_handler(self, cb):
+        """
+        Callback for failed authorization.
+        This is called by the various decorators if a role or permission
+        is missing.
+
+        :param cb: Callback function with signature (func, params)
+
+            :func: the decorator function (e.g. roles_required)
+            :params: list of what (if any) was passed to the decorator.
+
+        Should return a Response or something Flask can create a Response from.
+        Can raise an exception if it is handled as part of
+        flask.errorhandler(<exception>)
+
+        With the passed parameters the application could deliver a concise error
+        message.
+
+        .. versionadded:: 3.3.0
+        """
+        self._state._unauthz_handler = cb
+
+    def unauthn_handler(self, cb):
+        """
+        Callback for failed authentication.
+        This is called by the various decorators if authentication fails.
+
+        :param cb: Callback function with signature (mechanisms, headers=None)
+
+            :mechanisms: List of which authentication mechanisms were tried
+            :headers: dict of headers to return
+
+        Should return a Response or something Flask can create a Response from.
+        Can raise an exception if it is handled as part of
+        flask.errorhandler(<exception>)
+
+        .. versionadded:: 3.3.0
+        """
+        self._state._unauthn_handler = cb
 
     def __getattr__(self, name):
         return getattr(self._state, name, None)

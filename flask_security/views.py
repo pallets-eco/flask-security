@@ -44,7 +44,6 @@ from flask import (
 )
 from flask_login import current_user
 from flask_wtf import csrf
-from speaklater import is_lazy_string
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
 
@@ -54,12 +53,7 @@ from .confirmable import (
     confirm_user,
     send_confirmation_instructions,
 )
-from .decorators import (
-    anonymous_user_required,
-    auth_required,
-    unauth_csrf,
-    login_required,
-)
+from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .passwordless import login_token_status, send_login_instructions
 from .recoverable import (
     reset_password_token_status,
@@ -67,7 +61,6 @@ from .recoverable import (
     update_password,
 )
 from .registerable import register_user
-from .createable import create_user as create
 from .utils import url_for_security as url_for
 from .utils import (
     config_value,
@@ -96,50 +89,40 @@ _security = LocalProxy(lambda: current_app.extensions["security"])
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
-def _delazy(response):
-    """
-    Make sure error strings aren't LazyStrings which current json encoder can't handle.
-    We just handle the errors - which are usually a dict of key, list
-    """
-    if "errors" not in response:
-        return
-    if is_lazy_string(response["errors"]):
-        response["errors"] = str(response["errors"])
-    if not isinstance(response["errors"], dict):
-        return
-
-    for error_lists in response["errors"].values():
-        for idx, ele in enumerate(error_lists):
-            if is_lazy_string(ele):
-                error_lists[idx] = str(ele)
-
-
-def _render_json(form, include_user=True, include_auth_token=False, additional=None):
+def _base_render_json(
+    form, include_user=True, include_auth_token=False, additional=None
+):
     has_errors = len(form.errors) > 0
 
+    user = form.user if hasattr(form, "user") else None
     if has_errors:
         code = 400
-        response = dict(errors=form.errors)
-        _delazy(response)
+        payload = dict(errors=form.errors)
     else:
         code = 200
-        response = dict()
-        if hasattr(form, "user") and form.user:
+        payload = dict()
+        if user:
             # This allows anonymous GETs via JSON
             if include_user:
-                response["user"] = form.user.get_security_payload()
+                payload["user"] = user.get_security_payload()
 
             if include_auth_token:
-                token = form.user.get_auth_token()
-                response["user"]["authentication_token"] = token
+                token = user.get_auth_token()
+                payload["user"]["authentication_token"] = token
 
         # Return csrf_token on each JSON response - just as every form
         # has it rendered.
-        response["csrf_token"] = csrf.generate_csrf()
+        payload["csrf_token"] = csrf.generate_csrf()
         if additional:
-            response.update(additional)
+            payload.update(additional)
 
-    return jsonify(dict(meta=dict(code=code), response=response)), code
+    return _security._render_json(payload, code, headers=None, user=user)
+
+
+def default_render_json(payload, code, headers, user):
+    """ Default JSON response handler.
+    """
+    return jsonify(dict(meta=dict(code=code), response=payload)), code, headers
 
 
 def _commit(response=None):
@@ -214,7 +197,7 @@ def login():
     if request.is_json:
         if current_user.is_authenticated:
             form.user = current_user
-        return _render_json(form, include_auth_token=True)
+        return _base_render_json(form, include_auth_token=True)
 
     return _security.render_template(
         config_value("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
@@ -230,7 +213,7 @@ def logout():
 
     # No body is required - so if a POST and json - return OK
     if request.method == "POST" and request.is_json:
-        return jsonify(dict(meta=dict(code=200)))
+        return _security._render_json({}, 200, headers=None, user=None)
 
     return redirect(get_post_logout_redirect())
 
@@ -267,10 +250,10 @@ def register():
 
             return redirect(redirect_url)
 
-        return _render_json(form, include_auth_token=True)
+        return _base_render_json(form, include_auth_token=True)
 
     if request.is_json:
-        return _render_json(form)
+        return _base_render_json(form)
 
     return _security.render_template(
         config_value("REGISTER_USER_TEMPLATE"),
@@ -296,7 +279,7 @@ def send_login():
             do_flash(*get_message("LOGIN_EMAIL_SENT", email=form.user.email))
 
     if request.is_json:
-        return _render_json(form)
+        return _base_render_json(form)
 
     return _security.render_template(
         config_value("SEND_LOGIN_TEMPLATE"), send_login_form=form, **_ctx("send_login")
@@ -362,7 +345,7 @@ def send_confirmation():
             do_flash(*get_message("CONFIRMATION_REQUEST", email=form.user.email))
 
     if request.is_json:
-        return _render_json(form)
+        return _base_render_json(form)
 
     return _security.render_template(
         config_value("SEND_CONFIRMATION_TEMPLATE"),
@@ -459,7 +442,7 @@ def forgot_password():
             do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.user.email))
 
     if request.is_json:
-        return _render_json(form, include_user=False)
+        return _base_render_json(form, include_user=False)
 
     return _security.render_template(
         config_value("FORGOT_PASSWORD_TEMPLATE"),
@@ -483,7 +466,7 @@ def reset_password(token):
     In the case of non-form based configuration:
     For GET normal case - redirect to RESET_VIEW?token={token}&email={email}
     For GET invalid case - redirect to RESET_ERROR_VIEW?error={error}&email={email}
-    For POST normal/successful case - redirect to POST_RESET_VIEW or POST_LOGIN_VIEW
+    For POST normal/successful case - return 200 with new authentication token
     For POST error case return 400 with form.errors
     """
 
@@ -519,7 +502,7 @@ def reset_password(token):
             do_flash(m, c)
             return redirect(url_for("forgot_password"))
 
-        # All good - for forms - redirect to reset password template
+        # All good - for SPA - redirect to the ``reset_view``
         if _security.redirect_behavior == "spa":
             return redirect(
                 get_url(
@@ -527,6 +510,7 @@ def reset_password(token):
                     qparams=user.get_redirect_qparams({"token": token}),
                 )
             )
+        # for forms - render the reset password form
         return _security.render_template(
             config_value("RESET_PASSWORD_TEMPLATE"),
             reset_password_form=form,
@@ -555,7 +539,7 @@ def reset_password(token):
     if invalid or expired:
         if request.is_json:
             form._errors = m
-            return _render_json(form)
+            return _base_render_json(form)
         else:
             return redirect(url_for("forgot_password"))
 
@@ -566,7 +550,7 @@ def reset_password(token):
         if request.is_json:
             login_form = _security.login_form(MultiDict({"email": user.email}))
             setattr(login_form, "user", user)
-            return _render_json(login_form, include_auth_token=True)
+            return _base_render_json(login_form, include_auth_token=True)
         else:
             do_flash(*get_message("PASSWORD_RESET"))
             return redirect(
@@ -576,7 +560,7 @@ def reset_password(token):
     # validation failure case - for forms - we try again including the token
     # for non-forms -  we just return errors and assume caller remembers token.
     if request.is_json:
-        return _render_json(form)
+        return _base_render_json(form)
     return _security.render_template(
         config_value("RESET_PASSWORD_TEMPLATE"),
         reset_password_form=form,
@@ -608,7 +592,7 @@ def change_password():
 
     if request.is_json:
         form.user = current_user
-        return _render_json(form, include_auth_token=True)
+        return _base_render_json(form, include_auth_token=True)
 
     return _security.render_template(
         config_value("CHANGE_PASSWORD_TEMPLATE"),
@@ -657,7 +641,7 @@ def _two_factor_login(form):
         if not request.is_json:
             return redirect(url_for("two_factor_token_validation"))
 
-    return _render_json(form, include_auth_token=True, additional=json_response)
+    return _base_render_json(form, include_auth_token=True, additional=json_response)
 
 
 @unauth_csrf(fall_through=True)
@@ -734,7 +718,7 @@ def two_factor_setup():
             if not request.is_json:
                 return redirect(get_url(_security.post_login_view))
             else:
-                return _render_json(form)
+                return _base_render_json(form)
 
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
@@ -756,7 +740,7 @@ def two_factor_setup():
             )
 
     if request.is_json:
-        return _render_json(form, include_user=False)
+        return _base_render_json(form, include_user=False)
 
     code_form = _security.two_factor_verify_code_form()
     choices = config_value("TWO_FACTOR_ENABLED_METHODS")
@@ -843,7 +827,7 @@ def two_factor_token_validation():
 
     # GET or not successful POST
     if request.is_json:
-        return _render_json(form)
+        return _base_render_json(form)
 
     # if we were trying to validate a new method
     if changing:
@@ -922,7 +906,7 @@ def two_factor_rescue():
             return "", 404
 
     if request.is_json:
-        return _render_json(form, include_user=False)
+        return _base_render_json(form, include_user=False)
 
     code_form = _security.two_factor_verify_code_form()
     return _security.render_template(
@@ -956,12 +940,12 @@ def two_factor_verify_password():
         else:
             m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
             form._errors = m
-            return _render_json(form)
+            return _base_render_json(form)
 
     if request.is_json:
         assert form.user == current_user
         # form.user = current_user
-        return _render_json(form)
+        return _base_render_json(form)
 
     return _security.render_template(
         config_value("TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE"),
@@ -1023,45 +1007,10 @@ def _tf_illegal_state(form, redirect_to):
         return redirect(get_url(redirect_to))
     else:
         form._errors = m
-        return _render_json(form)
+        return _base_render_json(form)
 
 
-@login_required
-def create_user():
-    """View function for creating users by an admin"""
-
-    form_class = _security.create_user_form
-
-    if request.is_json:
-        form_data = MultiDict(request.get_json())
-    else:
-        form_data = request.form
-
-    form = form_class(form_data)
-
-    if form.validate_on_submit():
-        create(**form.to_dict())
-
-        if not request.is_json:
-            if "next" in form:
-                redirect_url = get_post_login_redirect(form.next.data)
-            else:
-                redirect_url = get_post_login_redirect()
-
-            return redirect(redirect_url)
-        return _render_json(form)
-
-    if request.is_json:
-        return _render_json(form)
-
-    return _security.render_template(
-        config_value("CREATE_USER_TEMPLATE"),
-        create_user_form=form,
-        **_ctx("create_user")
-    )
-
-
-def create_blueprint(state, import_name):
+def create_blueprint(state, import_name, json_encoder=None):
     """Creates the security extension blueprint"""
 
     bp = Blueprint(
@@ -1071,6 +1020,8 @@ def create_blueprint(state, import_name):
         subdomain=state.subdomain,
         template_folder="templates",
     )
+    if json_encoder:
+        bp.json_encoder = json_encoder
 
     bp.route(state.logout_url, methods=["GET", "POST"], endpoint="logout")(logout)
 
@@ -1138,15 +1089,5 @@ def create_blueprint(state, import_name):
             methods=["GET", "POST"],
             endpoint="confirm_email",
         )(confirm_email)
-
-    if state.createable:
-        bp.route(
-            state.create_user_url, methods=["GET", "POST"], endpoint="create_user"
-        )(create_user)
-        bp.route(
-            state.reset_url + slash_url_suffix(state.reset_url, "<token>"),
-            methods=["GET", "POST"],
-            endpoint="reset_password",
-        )(reset_password)
 
     return bp

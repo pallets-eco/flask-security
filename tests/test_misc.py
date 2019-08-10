@@ -9,6 +9,7 @@
 import hashlib
 
 import pytest
+
 from utils import authenticate, check_xlation, init_app_with_options, populate_data
 
 from flask_security import Security

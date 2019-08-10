@@ -13,7 +13,7 @@ possible using SQLAlchemy and two-factor feature:
 -  `Basic SQLAlchemy Application <#basic-sqlalchemy-application>`_
 
 Basic SQLAlchemy Two-Factor Application
-========================================
++++++++++++++++++++++++++++++++++++++++
 
 SQLAlchemy Install requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,8 +33,8 @@ possible using SQLAlchemy:
 ::
 
     from flask import Flask, current_app, render_template
-    from flask.ext.sqlalchemy import SQLAlchemy
-    from flask.ext.security import Security, SQLAlchemyUserDatastore, \
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security import Security, SQLAlchemyUserDatastore, \
         UserMixin, RoleMixin, login_required
 
 
@@ -101,7 +101,7 @@ possible using SQLAlchemy:
         db.create_all()
         user_datastore.create_user(email='gal@lp.com', password='password', username='gal',
                                tf_totp_secret=None, tf_primary_method=None)
-        db.session.commit()
+        db.commit()
 
     # Views
     @app.route('/')
