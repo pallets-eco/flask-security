@@ -141,13 +141,15 @@ def complete_two_factor_process(user, primary_method, is_changing):
      and perform action accordingly
     """
 
-    # We always generate NEW totp secret seems like a good idea and safe to do here.
-    user.tf_totp_secret = generate_totp()
     user.tf_primary_method = primary_method
     _datastore.put(user)
 
     # if we are changing two-factor method
     if is_changing:
+        # Only generate new totp secret if changing method
+        user.tf_totp_secret = generate_totp()
+        _datastore.put(user)
+
         # TODO Flashing shouldn't occur here - should be at view level to can
         # make sure not to do it for json requests.
         completion_message = "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL"
