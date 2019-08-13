@@ -47,6 +47,7 @@ from .forms import (
     TwoFactorVerifyCodeForm,
     TwoFactorVerifyPasswordForm,
 )
+from .models import fsqla
 from .signals import (
     confirm_instructions_sent,
     login_instructions_sent,

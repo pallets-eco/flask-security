@@ -145,6 +145,8 @@ class UserDatastore(object):
             # see if the role exists
             roles[i] = self.find_role(rn)
         kwargs["roles"] = roles
+        if hasattr(self.user_model, "fs_uniquifier"):
+            kwargs.setdefault("fs_uniquifier", uuid.uuid4().hex)
         return kwargs
 
     def _is_numeric(self, value):

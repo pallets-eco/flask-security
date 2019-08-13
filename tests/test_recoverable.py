@@ -293,11 +293,12 @@ def test_reset_token_deleted_user(app, client, get_message, sqlalchemy_datastore
     with capture_reset_password_requests() as requests:
         client.post("/reset", data=dict(email="gene@lp.com"), follow_redirects=True)
 
-    user = requests[0]["user"]
     token = requests[0]["token"]
 
     # Delete user
     with app.app_context():
+        # load user (and role) to get into session so cascade delete works.
+        user = app.security.datastore.find_user(email="gene@lp.com")
         sqlalchemy_datastore.delete(user)
         sqlalchemy_datastore.commit()
 

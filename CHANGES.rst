@@ -18,6 +18,8 @@ Released TBD
 - (:issue:`121`) Unauthorization callback not quite right. Split into 2 different callbacks - one for
   unauthorized and one for unauthenticated. Made default unauthenticated handler use Flask-Login's unauthenticated
   method to make everything uniform. Extensive documentation added. :meth:`.Security.unauthorized_callback` has been deprecated.
+- (:pr:`xxx`) Add complete User and Role model mixins that support all features. Modify tests and Quickstart documentation
+  to show how to use these.
 - Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
   should be passed in.
 - Improve documentation for :class:`.UserDatastore` and :func:`.verify_and_update_password`
@@ -50,6 +52,29 @@ Possible compatibility issues:
   longer be called when serializing responses to Flask-Security endpoints. You can register your JsonEncoder
   on Flask-Security's blueprint by sending it as `json_encoder_cls` as part of initialization. Be aware that your
   JsonEncoder needs to handle LazyStrings (see speaklater).
+
+
+DB Migration
+
+To use the new UserModel mixins or to add the column ``user.fs_uniquifier`` to speed up token
+authentication, a schema AND data migration needs to happen. If you are using Alembic the schema migration is
+easy - but you need to add ``fs_uniquifier`` values to all your existing data. You can
+add code like this to your migrations::update method::
+
+    # be sure to MODIFY this line to make nullable=True:
+    op.add_column('user', sa.Column('fs_uniquifier', sa.String(length=64), nullable=True))
+
+    # update existing rows with unique fs_uniquifier
+    import uuid
+    user_table = sa.Table('user', sa.MetaData(), sa.Column('id', sa.Integer, primary_key=True),
+                          sa.Column('fs_uniquifier', sa.String))
+    conn = op.get_bind()
+    for row in conn.execute(sa.select([user_table.c.id])):
+        conn.execute(user_table.update().values(fs_uniquifier=uuid.uuid4().hex).where(user_table.c.id == row['id']))
+
+    # finally - set nullable to false
+    op.alter_column('user', 'fs_uniquifier', nullable=False)
+
 
 Version 3.2.0
 -------------

@@ -30,14 +30,14 @@ class FsModels(object):
     mixins.
     """
 
-    roles_to_users = None
+    roles_users = None
     db = None
 
     @classmethod
     def set_db_info(cls, appdb):
         cls.db = appdb
-        cls.roles_to_users = appdb.Table(
-            "roles_to_users",
+        cls.roles_users = appdb.Table(
+            "roles_users",
             Column("user_id", Integer(), ForeignKey("user.id")),
             Column("role_id", Integer(), ForeignKey("role.id")),
         )
@@ -63,11 +63,14 @@ class FsUserMixin(UserMixin):
 
     # flask_security basic fields
     id = Column(Integer, primary_key=True)
-    email = Column(String(255), unique=True)
+    email = Column(String(255), unique=True, nullable=False)
     # Username is important since shouldn't expose email to other users in most cases.
     username = Column(String(255))
-    password = Column(String(255))
-    active = Column(Boolean())
+    password = Column(String(255), nullable=False)
+    active = Column(Boolean(), nullable=False)
+
+    # Faster token checking
+    fs_uniquifier = Column(String(64), unique=True, nullable=False)
 
     # confirmable
     confirmed_at = Column(DateTime())
@@ -88,7 +91,7 @@ class FsUserMixin(UserMixin):
     def roles(cls):
         return FsModels.db.relationship(
             "Role",
-            secondary=FsModels.roles_to_users,
+            secondary=FsModels.roles_users,
             backref=FsModels.db.backref("users", lazy="dynamic"),
         )
 
