@@ -148,7 +148,7 @@ def complete_two_factor_process(user, primary_method, is_changing):
 
     # if we are changing two-factor method
     if is_changing:
-        # nly generate new totp secret if changing method
+        # only generate new totp secret if changing method
         user.tf_totp_secret = generate_totp()
         _datastore.put(user)
 
