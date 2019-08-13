@@ -159,6 +159,11 @@ def app(request):
     def admin_or_editor():
         return render_template("index.html", content="Admin or Editor Page")
 
+    @app.route("/simple")
+    @roles_accepted("simple")
+    def simple():
+        return render_template("index.html", content="SimplePage")
+
     @app.route("/admin_perm")
     @permissions_accepted("full-write", "super")
     def admin_perm():

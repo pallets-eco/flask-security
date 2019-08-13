@@ -76,10 +76,10 @@ def create_roles(ds):
         ("admin", ["full-read", "full-write", "super"]),
         ("editor", ["full-read", "full-write"]),
         ("author", ["full-read", "my-write"]),
-        ("simple", []),
+        ("simple", None),
     ]
     for role in roles:
-        if hasattr(ds.role_model, "permissions"):
+        if hasattr(ds.role_model, "permissions") and role[1]:
             ds.create_role(name=role[0], permissions=",".join(role[1]))
         else:
             ds.create_role(name=role[0])
@@ -93,7 +93,7 @@ def create_users(app, ds, count=None):
         ("dave@lp.com", "dave", "password", ["admin", "editor"], True, 345678, None),
         ("jill@lp.com", "jill", "password", ["author"], True, 456789, None),
         ("tiya@lp.com", "tiya", "password", [], False, 567890, None),
-        ("gene@lp.com", "gene", "password", [], True, 889900, None),
+        ("gene@lp.com", "gene", "password", ["simple"], True, 889900, None),
         ("jess@lp.com", "jess", None, [], True, 678901, None),
         ("gal@lp.com", "gal", "password", ["admin"], True, 112233, "sms"),
         (
