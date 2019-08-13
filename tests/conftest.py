@@ -270,6 +270,8 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
     class User(db.Model, fsqla.FsUserMixin):
         security_number = db.Column(db.Integer, unique=True)
+        # For testing allow null passwords.
+        password = db.Column(db.String(255), nullable=True)
 
         def get_security_payload(self):
             # Make sure we still properly hook up to flask JSONEncoder
