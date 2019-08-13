@@ -4,6 +4,10 @@
     ~~~~~~~~~~~~~~
 
     Datastore tests
+
+    :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 import datetime
@@ -283,6 +287,18 @@ def test_modify_permissions(app, datastore):
         t1 = ds.find_role("test1")
         assert {"write", "execute"} == t1.get_permissions()
         assert t1.update_datetime > orig_update_time
+
+
+def test_get_permissions(app, datastore):
+    """ Verify that role.permissions = None works. """
+    ds = datastore
+    if not hasattr(ds.role_model, "permissions"):
+        return
+    init_app_with_options(app, ds)
+
+    with app.app_context():
+        t1 = ds.find_role("simple")
+        assert set() == t1.get_permissions()
 
 
 def test_modify_permissions_multi(app, datastore):

@@ -508,7 +508,7 @@ class RoleMixin(object):
 
         .. versionadded:: 3.3.0
         """
-        if hasattr(self, "permissions"):
+        if hasattr(self, "permissions") and self.permissions:
             # These are a comma separated list
             return set(self.permissions.split(","))
         return set([])
@@ -524,7 +524,7 @@ class RoleMixin(object):
         .. versionadded:: 3.3.0
         """
         if hasattr(self, "permissions"):
-            current_perms = set(self.permissions.split(","))
+            current_perms = self.get_permissions()
             if isinstance(permissions, set):
                 perms = permissions
             elif isinstance(permissions, list):
@@ -546,7 +546,7 @@ class RoleMixin(object):
         .. versionadded:: 3.3.0
         """
         if hasattr(self, "permissions"):
-            current_perms = set(self.permissions.split(","))
+            current_perms = self.get_permissions()
             if isinstance(permissions, set):
                 perms = permissions
             elif isinstance(permissions, list):
