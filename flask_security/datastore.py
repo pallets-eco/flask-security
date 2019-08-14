@@ -232,6 +232,25 @@ class UserDatastore(object):
             return True
         return False
 
+    def set_uniquifier(self, user, uniquifier=None):
+        """ Set user's authentication token uniquifier.
+        This will immediately render outstanding auth tokens invalid.
+
+        :param user: User to modify
+        :param uniquifier: Unique value - if none then uuid.uuid4().hex is used
+
+        This method is a no-op if the user model doesn't contain the attribute
+        ``fs_uniquifier``
+
+        .. versionadded:: 3.3.0
+        """
+        if not hasattr(user, "fs_uniquifier"):
+            return
+        if not uniquifier:
+            uniquifier = uuid.uuid4().hex
+        user.fs_uniquifier = uniquifier
+        self.put(user)
+
     def create_role(self, **kwargs):
         """
         Creates and returns a new role from the given parameters.

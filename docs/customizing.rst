@@ -272,8 +272,8 @@ JSON Response
 +++++++++++++
 Applications that support a JSON based API need to be able to have a uniform
 API response. Flask-Security has a default way to render its API responses - which can
-be easily overridden by either providing a callback function via :meth:`.Security.render_json`.
-As documents in :meth:`Security.render_json`, be aware that Flask-Security registers
+be easily overridden by providing a callback function via :meth:`.Security.render_json`.
+As documented in :meth:`Security.render_json`, be aware that Flask-Security registers
 its own JsonEncoder on its blueprint.
 
 401, 403, Oh My
@@ -281,14 +281,14 @@ its own JsonEncoder on its blueprint.
 For a very long read and discussion; look at `this`_. Out of the box, Flask-Security in
 tandem with Flask-Login, behaves as follows:
 
-    * If authentication fails as the result of a @login_required, @auth_required,
-      @http_auth_required, or @token_auth_required then if the request 'wants' a JSON
+    * If authentication fails as the result of a `@login_required`, `@auth_required`,
+      `@http_auth_required`, or `@token_auth_required` then if the request 'wants' a JSON
       response, :meth:`.Security.render_json` is called with a 401 status code. If not
       then flask_login.LoginManager.unauthorized() is called. By default THAT will redirect to
       a login view.
 
-    * If authorization fails as the result of @roles_required, @roles_accepted,
-      @permissions_required, or @permissions_accepted, then if the request 'wants' a JSON
+    * If authorization fails as the result of `@roles_required`, `@roles_accepted`,
+      `@permissions_required`, or `@permissions_accepted`, then if the request 'wants' a JSON
       response, :meth:`.Security.render_json` is called with a 403 status code. If not,
       then if ``SECURITY_UNAUTHORIZED_VIEW`` is defined, the response will redirected.
       If ``SECURITY_UNAUTHORIZED_VIEW`` is not defined, then ``abort(403)`` is called.

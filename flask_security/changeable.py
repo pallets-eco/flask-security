@@ -39,6 +39,8 @@ def change_user_password(user, password):
     :param password: The unhashed new password
     """
     user.password = hash_password(password)
+    if config_value("BACKWARDS_COMPAT_AUTH_TOKEN_INVALID"):
+        _datastore.set_uniquifier(user)
     _datastore.put(user)
     send_password_changed_notice(user)
     password_changed.send(current_app._get_current_object(), user=user)

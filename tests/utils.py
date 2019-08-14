@@ -4,6 +4,9 @@
     ~~~~~
 
     Test utils
+
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 from flask import Response as BaseResponse
@@ -37,11 +40,38 @@ def authenticate(
 
 def json_authenticate(client, email="matt@lp.com", password="password", endpoint=None):
     data = '{"email": "%s", "password": "%s"}' % (email, password)
-    return client.post(endpoint or "/login", content_type="application/json", data=data)
+
+    # Get auth token always
+    ep = endpoint or "/login" + "?include_auth_token"
+    return client.post(ep, content_type="application/json", data=data)
+
+
+def verify_token(client_nc, token, status=None):
+    # Use passed auth token in API that requires auth and verify status.
+    # Pass in a client_nc to get valid results.
+    response = client_nc.get(
+        "/token",
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    if status:
+        assert response.status_code == status
+    else:
+        assert b"Token Authentication" in response.data
 
 
 def logout(client, endpoint=None, **kwargs):
     return client.get(endpoint or "/logout", **kwargs)
+
+
+def json_logout(client, token, endpoint=None):
+    return client.post(
+        endpoint or "/logout",
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authentication-Token": token,
+        },
+    )
 
 
 def get_session(response):
