@@ -235,12 +235,14 @@ def register():
     form = form_class(form_data, meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
+        did_login = False
         user = register_user(**form.to_dict())
         form.user = user
 
         if not _security.confirmable or _security.login_without_confirmation:
             after_this_request(_commit)
             login_user(user)
+            did_login = True
 
         if not request.is_json:
             if "next" in form:
@@ -250,7 +252,8 @@ def register():
 
             return redirect(redirect_url)
 
-        return _base_render_json(form, include_auth_token=True)
+        # Only include auth token if in fact user is permitted to login
+        return _base_render_json(form, include_auth_token=did_login)
 
     if request.is_json:
         return _base_render_json(form)

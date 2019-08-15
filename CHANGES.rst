@@ -32,6 +32,8 @@ Released TBD
 - (:issue:`134`) Confirmation token can no longer be reused. Added
   `SECURITY_AUTO_LOGIN_AFTER_CONFIRM` option for applications that don't want the user
   to be automatically logged in after confirmation (defaults to True - existing behavior).
+- (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
+  confirmation was required. This was a huge security hole - it has been fixed.
 
 Possible compatibility issues:
 
