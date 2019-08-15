@@ -24,6 +24,7 @@ your `User` and `Role` model should include the following fields:
 * ``email``
 * ``password``
 * ``active``
+* ``fs_uniquifier``
 
 
 **Role**

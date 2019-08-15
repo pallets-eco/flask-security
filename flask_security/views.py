@@ -107,8 +107,13 @@ def _base_render_json(
                 payload["user"] = user.get_security_payload()
 
             if include_auth_token:
-                token = user.get_auth_token()
-                payload["user"]["authentication_token"] = token
+                # view wants to return auth_token - check behavior config
+                if (
+                    config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
+                    or "include_auth_token" in request.args
+                ):
+                    token = user.get_auth_token()
+                    payload["user"]["authentication_token"] = token
 
         # Return csrf_token on each JSON response - just as every form
         # has it rendered.
@@ -212,7 +217,7 @@ def logout():
         logout_user()
 
     # No body is required - so if a POST and json - return OK
-    if request.method == "POST" and request.is_json:
+    if request.method == "POST" and _security._want_json(request):
         return _security._render_json({}, 200, headers=None, user=None)
 
     return redirect(get_post_logout_redirect())

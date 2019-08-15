@@ -8,11 +8,15 @@ Version 3.3.0
 
 Released TBD
 
+**There are several default behavior changes that might break existing applications.
+Most have configuration variables that restore prior behavior**.
+
 - (:pr:`120`) Native support for Permissions as part of Roles. Endpoints can be
   protected via permissions that are evaluated based on role(s) that the user has.
 - (:issue:`126`, :issue:`93`, :issue:`96`) Revamp entire CSRF handling. This adds support for Single Page Applications
   and having CSRF protection for browser(session) authentication but ignored for
   token based authentication. Add extensive documentation about all the options.
+- (:issue:`156`) Token authentication is slow. Please see below for details on how to enable a new, fast implementation.
 - (:issue:`130`) Enable applications to provide their own :meth:`.render_json` method so that they can create
   unified API responses.
 - (:issue:`121`) Unauthorization callback not quite right. Split into 2 different callbacks - one for
@@ -35,7 +39,8 @@ Released TBD
 - (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
   confirmation was required. This was a huge security hole - it has been fixed.
 
-Possible compatibility issues:
+Possible compatibility issues
++++++++++++++++++++++++++++++
 
 - (:pr:`120`) :class:`.RoleMixin` now has a method :meth:`.get_permissions` which is called as part
   each request to add Permissions to the authenticated user. It checks if the RoleModel
@@ -55,8 +60,39 @@ Possible compatibility issues:
   on Flask-Security's blueprint by sending it as `json_encoder_cls` as part of initialization. Be aware that your
   JsonEncoder needs to handle LazyStrings (see speaklater).
 
+- (:issue:`156`) Faster Authentication Token introduced 2 non-backwards compatible behavior changes - each can
+  be reverted using a configuration variable.
+
+    * In prior releases, the Authentication Token was returned as part of the JSON response to each
+      successful call to `/login`, `/change`, or `/reset/{token}` API call. This is not a great idea since
+      for browser-based UIs that used JSON request/response, and used session based authentication - they would
+      be sent this token - even though it was likely ignored. Since these tokens by default have no expiration time
+      this exposed a needless security hole. The new default behavior is to ONLY return the Authentication Token from those APIs
+      if the query param ``include_auth_token`` is added to the request. Prior behavior can be restored by setting
+      the `BACKWARDS_COMPAT_AUTH_TOKEN` configuration variable.
+    * Since the old Authentication Token algorithm used the (hashed) user's password, those tokens would be invalidated
+      whenever the user changed their password. This is not likely to be what most users expect. Since the new
+      Authentication Token algorithm doesn't refer to the user's password, changing the user's password won't invalidate
+      outstanding Authentication Tokens. There is a new method and an administrator could use to force changing
+      of a user's ``fs_uniquifier`` - but nothing the user themselves can do to invalidate their Authentication Tokens.
+      Setting the `BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE` configuration variable will cause the user's ``fs_uniquifier`` to
+      be changed when they change their password.
+
+
+New fast authentication token implementation
+++++++++++++++++++++++++++++++++++++++++++++
+Current auth tokens are slow because they use the user's password (hashed) as a uniquifier (the
+user id isn't really enough since it might be reused). This requires checking the (hashed) password against
+what is in the token on EVERY request - however hashing is (on purpose) slow. So this can add almost a whole second
+to every request.
+
+To solve this a new attribute in the User model was added - ``fs_uniquifier``. If this is present in your
+User model, then it will be used instead of the password for ensuring the token corresponds to the correct user.
+This is very fast. If that attribute is NOT present - then the behavior falls back to existing (slow) method.
+
 
 DB Migration
+~~~~~~~~~~~~
 
 To use the new UserModel mixins or to add the column ``user.fs_uniquifier`` to speed up token
 authentication, a schema AND data migration needs to happen. If you are using Alembic the schema migration is

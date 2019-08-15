@@ -4,13 +4,16 @@
     ~~~~~~~~~~~
 
     Test common functionality
+
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 import base64
 import json
 import pytest
 
-from utils import authenticate, json_authenticate, logout
+from utils import authenticate, json_authenticate, logout, verify_token
 
 try:
     from cookielib import Cookie
@@ -490,3 +493,46 @@ def test_login_info(client):
     assert response.status_code == 200
     assert response.jdata["response"]["user"]["id"] == "1"
     assert "last_update" in response.jdata["response"]["user"]
+
+
+@pytest.mark.settings(security_hashing_schemes=["sha256_crypt"])
+@pytest.mark.skip
+def test_auth_token_speed(app, client_nc):
+    # To run with old algorithm you have to comment out fs_uniquifier check in UserMixin
+    import timeit
+
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+
+    def time_get():
+        rp = client_nc.get(
+            "/login",
+            data={},
+            headers={"Content-Type": "application/json", "Authentication-Token": token},
+        )
+        assert rp.status_code == 200
+
+    t = timeit.timeit(time_get, number=50)
+    print("Time for 50 iterations: ", t)
+
+
+def test_change_uniquifier(app, client_nc):
+    # make sure that existing token no longer works once we change the uniquifier
+
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
+
+    # now change uniquifier
+    # deactivate matt
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.set_uniquifier(user)
+        app.security.datastore.commit()
+
+    verify_token(client_nc, token, status=401)
+
+    # get new token and verify it works
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)

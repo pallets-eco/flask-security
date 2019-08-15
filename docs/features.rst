@@ -59,16 +59,23 @@ Token Authentication
 --------------------
 
 Token based authentication is enabled by retrieving the user auth token by
-performing an HTTP POST with the authentication details as JSON data against the
+performing an HTTP POST with a query param of ``include_auth_token`` with the authentication details
+as JSON data against the
 authentication endpoint. A successful call to this endpoint will return the
 user's ID and their authentication token. This token can be used in subsequent
 requests to protected resources. The auth token is supplied in the request
 through an HTTP header or query string parameter. By default the HTTP header
 name is `Authentication-Token` and the default query string parameter name is
-`auth_token`. Authentication tokens are generated using the user's password.
+`auth_token`. Authentication tokens are generated using a uniquifier field in the
+user's UserModel. If that field is changed (via :meth:`.UserDatastore.set_uniqifier`)
+then any existing authentication tokens will no longer be valid. Changing
+the user's password will not affect tokens.
+
+Note that prior to release 3.3.0 or if the Usermodel doesn't contain the ``fs_uniquifier``
+attribute the authentication tokens are generated using the user's password.
 Thus if the user changes his or her password their existing authentication token
 will become invalid. A new token will need to be retrieved using the user's new
-password.
+password. Verifying tokens created in this way is very slow.
 
 Two-factor Authentication (experimental)
 ----------------------------------------

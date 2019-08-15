@@ -4,6 +4,9 @@ Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
 
 
 Complete models for all features when using Flask-SqlAlchemy
+
+BE AWARE: Once any version of this is shipped no changes can be made - instead
+a new version needs to be created.
 """
 
 import datetime

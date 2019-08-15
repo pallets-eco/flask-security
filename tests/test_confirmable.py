@@ -177,7 +177,7 @@ def test_no_auth_token(client_nc):
     if user isn't confirmed.
     """
     response = client_nc.post(
-        "/register",
+        "/register?include_auth_token",
         data='{"email": "dude@lp.com", "password": "password"}',
         headers={"Content-Type": "application/json"},
     )
@@ -193,7 +193,7 @@ def test_auth_token_unconfirmed(client_nc):
     if user isn't confirmed, but the 'login_without_confirmation' flag is set.
     """
     response = client_nc.post(
-        "/register",
+        "/register?include_auth_token",
         data='{"email": "dude@lp.com", "password": "password"}',
         headers={"Content-Type": "application/json"},
     )
