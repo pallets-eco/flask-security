@@ -37,14 +37,23 @@ _security = LocalProxy(lambda: current_app.extensions["security"])
 
 _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
+_default_unauthenticated_message = """
+    The server could not verify that you are authorized to access the URL 
+    requested. You either supplied the wrong credentials (e.g. a bad password),
+    or your browser doesn't understand how to supply the credentials required.
+    """
 
 _default_unauthenticated_html = """
     <h1>Unauthorized</h1>
-    <p>The server could not verify that you are authorized to access the URL
-    requested. You either supplied the wrong credentials (e.g. a bad password),
-    or your browser doesn't understand how to supply the credentials required.
+    <p>{message}
     </p>
-    """
+    """.format(message=_default_unauthenticated_message)
+
+_default_unauthenticated_json = """
+{
+  "message": "{message}"
+}
+""".format(message=_default_unauthenticated_message)
 
 BasicAuth = namedtuple("BasicAuth", "username, password")
 
@@ -72,13 +81,13 @@ def default_unauthn_handler(mechanisms, headers=None):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        return _security._render_json({}, 401, headers, None)
+        return Response(_default_unauthenticated_json, 401, headers)
     return _security.login_manager.unauthorized()
 
 
 def default_unauthz_handler(func, params):
     if _security._want_json(request):
-        return _security._render_json({}, 403, None, None)
+        return Response(_default_unauthenticated_json, 403, None)
     view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
