@@ -38,6 +38,9 @@ Most have configuration variables that restore prior behavior**.
   to be automatically logged in after confirmation (defaults to True - existing behavior).
 - (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
   confirmation was required. This was a huge security hole - it has been fixed.
+- (:issue:`166`) :meth:`.default_render_json` uses ``flask.make_response`` and forces the Content-Type to JSON for generating the response.
+- (:issue:`166`) ``SECURITY_MSG_UNAUTHENTICATED`` added to the configuration.
+
 
 Possible compatibility issues
 +++++++++++++++++++++++++++++
