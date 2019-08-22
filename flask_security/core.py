@@ -212,8 +212,9 @@ _default_config = {
 #: Default Flask-Security messages
 _default_messages = {
     "UNAUTHORIZED": (_("You do not have permission to view this resource."), "error"),
+    "UNAUTHENTICATED": (_("You are not authenticated. Please supply the correct credentials."), "error"),
     "CONFIRM_REGISTRATION": (
-        _("Thank you. Confirmation instructions " "have been sent to %(email)s."),
+        _("Thank you. Confirmation instructions have been sent to %(email)s."),
         "success",
     ),
     "EMAIL_CONFIRMED": (_("Thank you. Your email has been confirmed."), "success"),

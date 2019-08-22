@@ -37,29 +37,10 @@ _security = LocalProxy(lambda: current_app.extensions["security"])
 
 _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
-_default_unauthenticated_message = """
-    The server could not verify that you are authorized to access the URL 
-    requested. You either supplied the wrong credentials (e.g. a bad password),
-    or your browser doesn't understand how to supply the credentials required.
-    """
-
-_default_unauthenticated_html = """
-    <h1>Unauthorized</h1>
-    <p>{message}
-    </p>
-    """.format(message=_default_unauthenticated_message)
-
-_default_unauthenticated_json = """
-{
-  "message": "{message}"
-}
-""".format(message=_default_unauthenticated_message)
-
 BasicAuth = namedtuple("BasicAuth", "username, password")
 
 
-def _get_unauthenticated_response(text=None, headers=None):
-    text = text or _default_unauthenticated_html
+def _get_unauthenticated_response(text, headers=None):
     headers = headers or {}
     return Response(text, 401, headers)
 
@@ -77,17 +58,25 @@ def default_unauthn_handler(mechanisms, headers=None):
     We let Flask-Login handle this.
 
     """
+    unauthn_message, unauthn_message_type = utils.get_message("UNAUTHENTICATED")
+
+    unauthn_html = """
+        <h1>Unauthorized</h1>
+        <p>{message}</p>""".format(message=unauthn_message)
+
     if utils.config_value("BACKWARDS_COMPAT_UNAUTHN"):
-        return _get_unauthenticated_response(headers=headers)
+        return _get_unauthenticated_response(text=unauthn_html, headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        return Response(_default_unauthenticated_json, 401, headers)
+        #return _security._render_json(_default_unauthn_json, 401, headers, None)
+        return _security._render_json({"message": unauthn_message}, 401, headers, None)
     return _security.login_manager.unauthorized()
 
 
 def default_unauthz_handler(func, params):
+    unauthz_message, unauthz_message_type = utils.get_message("UNAUTHORIZED")
     if _security._want_json(request):
-        return Response(_default_unauthenticated_json, 403, None)
+        return _security._render_json({"message": unauthz_message}, 403, None, None)
     view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
@@ -97,7 +86,7 @@ def default_unauthz_handler(func, params):
                 view = url_for(view)
             except BuildError:
                 view = None
-        utils.do_flash(*utils.get_message("UNAUTHORIZED"))
+        utils.do_flash(unauthz_message, unauthz_message_type)
         redirect_to = "/"
         if request.referrer and not request.referrer.split("?")[0].endswith(
             request.path

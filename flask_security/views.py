@@ -41,6 +41,7 @@ from flask import (
     Blueprint,
     session,
     abort,
+    make_response,
 )
 from flask_login import current_user
 from flask_wtf import csrf
@@ -127,7 +128,11 @@ def _base_render_json(
 def default_render_json(payload, code, headers, user):
     """ Default JSON response handler.
     """
-    return jsonify(dict(meta=dict(code=code), response=payload)), code, headers
+    # Force Content-Type header to json.
+    if headers is None:
+        headers = dict()
+    headers['Content-Type'] = 'application/json'
+    return make_response(payload, code, headers)
 
 
 def _commit(response=None):
