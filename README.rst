@@ -44,14 +44,16 @@ Goals
 * Be more opinionated and 'batteries' included by reducing reliance on abandoned projects and
   bundling in support for common use cases.
 * Follow the `Pallets <https://github.com/pallets>`_ lead on supported versions, documentation
-  standards and any other guidelines for extentions that they come up with.
+  standards and any other guidelines for extensions that they come up with.
 * Any other great ideas.
 
 Contributing
 ++++++++++++
 Issues and pull requests are welcome. Other maintainers are also welcome. Unlike
 the original Flask-Security - issue pull requests against the *master* branch.
+Please consult these `contributing`_ guidelines.
 
+.. _contributing: https://github.com/jwag956/flask-security/blob/master/CONTRIBUTING.rst
 
 Resources
 ---------
