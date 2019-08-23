@@ -36,7 +36,6 @@ from flask import (
     current_app,
     redirect,
     request,
-    jsonify,
     after_this_request,
     Blueprint,
     session,
@@ -131,8 +130,10 @@ def default_render_json(payload, code, headers, user):
     # Force Content-Type header to json.
     if headers is None:
         headers = dict()
-    headers['Content-Type'] = 'application/json'
-    return make_response(payload, code, headers)
+    headers["Content-Type"] = "application/json"
+    # return jsonify(dict(meta=dict(code=code), response=payload)), code, headers
+    response = dict(meta=dict(code=code), response=payload)
+    return make_response(response, code, headers)
 
 
 def _commit(response=None):

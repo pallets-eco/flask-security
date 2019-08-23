@@ -1,3 +1,5 @@
 token
 email
 thinsp
+qrcode
+authenticator

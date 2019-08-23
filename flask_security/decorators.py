@@ -40,7 +40,7 @@ _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 BasicAuth = namedtuple("BasicAuth", "username, password")
 
 
-def _get_unauthenticated_response(text, headers=None):
+def _get_unauthenticated_response(text=None, headers=None):
     headers = headers or {}
     return Response(text, 401, headers)
 
@@ -61,22 +61,23 @@ def default_unauthn_handler(mechanisms, headers=None):
     unauthn_message, unauthn_message_type = utils.get_message("UNAUTHENTICATED")
 
     unauthn_html = """
-        <h1>Unauthorized</h1>
-        <p>{message}</p>""".format(message=unauthn_message)
+        <h1>Unauthenticated</h1>
+        <p>{message}</p>""".format(
+        message=unauthn_message
+    )
 
     if utils.config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(text=unauthn_html, headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        #return _security._render_json(_default_unauthn_json, 401, headers, None)
-        return _security._render_json({"message": unauthn_message}, 401, headers, None)
+        return _security._render_json({}, 401, headers, None)
     return _security.login_manager.unauthorized()
 
 
 def default_unauthz_handler(func, params):
     unauthz_message, unauthz_message_type = utils.get_message("UNAUTHORIZED")
     if _security._want_json(request):
-        return _security._render_json({"message": unauthz_message}, 403, None, None)
+        return _security._render_json(unauthz_message, 403, None, None)
     view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):

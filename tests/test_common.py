@@ -203,6 +203,12 @@ def test_unauthorized_access_with_referrer(client, get_message):
     )
     assert response.data.count(get_message("UNAUTHORIZED")) == 1
 
+    # When referrer is from another path and unauthorized,
+    # we expect a temp redirect (302) to the referer
+    response = client.get("/admin?w=s", headers={"referer": "/profile"})
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/profile"
+
 
 @pytest.mark.settings(unauthorized_view="/")
 def test_roles_accepted(client):
@@ -323,10 +329,46 @@ def test_http_auth_username(client):
     assert b"HTTP Authentication" in response.data
 
 
-@pytest.mark.settings(backwards_compat_unauthn=True)
 def test_http_auth_no_authorization(client):
+    response = client.get(
+        "/http_admin_required",
+        headers={
+            "Authorization": "Basic %s"
+            % base64.b64encode(b"joe@lp.com:password").decode("utf-8")
+        },
+    )
+    assert response.status_code == 403
+
+
+def test_http_auth_no_authorization_json(client, get_message):
+    response = client.get(
+        "/http_admin_required",
+        headers={
+            "accept": "application/json",
+            "Authorization": "Basic %s"
+            % base64.b64encode(b"joe@lp.com:password").decode("utf-8"),
+        },
+    )
+    assert response.status_code == 403
+    assert response.headers["Content-Type"] == "application/json"
+
+
+@pytest.mark.settings(backwards_compat_unauthn=True)
+def test_http_auth_no_authentication(client, get_message):
     response = client.get("/http", headers={})
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert response.status_code == 401
+    assert b"<h1>Unauthenticated</h1>" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
+    assert "WWW-Authenticate" in response.headers
+    assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
+
+
+@pytest.mark.settings(backwards_compat_unauthn=False)
+def test_http_auth_no_authentication_json(client):
+    response = client.get("/http", headers={"accept": "application/json"})
+    assert response.status_code == 401
+    assert response.jdata["response"] == {}
+    assert response.headers["Content-Type"] == "application/json"
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
@@ -340,7 +382,24 @@ def test_invalid_http_auth_invalid_username(client):
             % base64.b64encode(b"bogus:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert b"<h1>Unauthenticated</h1>" in response.data
+    assert "WWW-Authenticate" in response.headers
+    assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
+
+
+@pytest.mark.settings(backwards_compat_unauthn=False)
+def test_invalid_http_auth_invalid_username_json(client):
+    response = client.get(
+        "/http",
+        headers={
+            "accept": "application/json",
+            "Authorization": "Basic %s"
+            % base64.b64encode(b"bogus:bogus").decode("utf-8"),
+        },
+    )
+    assert response.status_code == 401
+    assert response.jdata["response"] == {}
+    assert response.headers["Content-Type"] == "application/json"
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
@@ -354,7 +413,7 @@ def test_invalid_http_auth_bad_password(client):
             % base64.b64encode(b"joe@lp.com:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert b"<h1>Unauthenticated</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
@@ -368,7 +427,7 @@ def test_custom_http_auth_realm(client):
             % base64.b64encode(b"joe@lp.com:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert b"<h1>Unauthenticated</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="My Realm"' == response.headers["WWW-Authenticate"]
 
@@ -397,7 +456,7 @@ def test_multi_auth_basic_invalid(client):
             % base64.b64encode(b"bogus:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert b"<h1>Unauthenticated</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
