@@ -13,5 +13,6 @@ Contents
    spa
    patterns
    api
+   contributing
    changelog
    authors
