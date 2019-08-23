@@ -13,7 +13,14 @@ import base64
 import json
 import pytest
 
-from utils import authenticate, json_authenticate, logout, verify_token
+from utils import (
+    authenticate,
+    json_authenticate,
+    get_num_queries,
+    logout,
+    populate_data,
+    verify_token,
+)
 
 try:
     from cookielib import Cookie
@@ -536,3 +543,46 @@ def test_change_uniquifier(app, client_nc):
     response = json_authenticate(client_nc)
     token = response.jdata["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
+
+
+def test_token_query(in_app_context):
+    # Verify that when authenticating with auth token (and not session)
+    # that there is just one DB query to get user.
+    app = in_app_context
+    populate_data(app)
+    client_nc = app.test_client(use_cookies=False)
+
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    current_nqueries = get_num_queries(app.security.datastore)
+
+    response = client_nc.get(
+        "/token",
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    assert response.status_code == 200
+    end_nqueries = get_num_queries(app.security.datastore)
+    assert current_nqueries is None or end_nqueries == (current_nqueries + 1)
+
+
+def test_session_query(in_app_context):
+    # Verify that when authenticating with auth token (but also sending session)
+    # that there are 2 DB queries to get user.
+    # This is since the session will load one - but auth_token_required needs to
+    # verify that the TOKEN is valid (and it is possible that the user_id in the
+    # session is different that the one in the token (huh?)
+    app = in_app_context
+    populate_data(app)
+    client = app.test_client()
+
+    response = json_authenticate(client)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    current_nqueries = get_num_queries(app.security.datastore)
+
+    response = client.get(
+        "/token",
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    assert response.status_code == 200
+    end_nqueries = get_num_queries(app.security.datastore)
+    assert current_nqueries is None or end_nqueries == (current_nqueries + 2)

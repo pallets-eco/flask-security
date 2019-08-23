@@ -38,6 +38,9 @@ Most have configuration variables that restore prior behavior**.
   to be automatically logged in after confirmation (defaults to True - existing behavior).
 - (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
   confirmation was required. This was a huge security hole - it has been fixed.
+- (:pr:`168`) When using the @auth_required or @auth_token_required decorators, the token
+  would be verified twice, and the DB would be queried twice for the user. Given how slow
+  token verification is - this was a significant issue. That has been fixed.
 
 Possible compatibility issues
 +++++++++++++++++++++++++++++
@@ -73,10 +76,10 @@ Possible compatibility issues
     * Since the old Authentication Token algorithm used the (hashed) user's password, those tokens would be invalidated
       whenever the user changed their password. This is not likely to be what most users expect. Since the new
       Authentication Token algorithm doesn't refer to the user's password, changing the user's password won't invalidate
-      outstanding Authentication Tokens. There is a new method and an administrator could use to force changing
-      of a user's ``fs_uniquifier`` - but nothing the user themselves can do to invalidate their Authentication Tokens.
+      outstanding Authentication Tokens. The method :meth:`.UserDatastore.set_uniquifier` can be used by an administrator
+      to change a user's ``fs_uniquifier`` - but nothing the user themselves can do to invalidate their Authentication Tokens.
       Setting the `BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE` configuration variable will cause the user's ``fs_uniquifier`` to
-      be changed when they change their password.
+      be changed when they change their password, thus restoring prior behavior.
 
 
 New fast authentication token implementation
