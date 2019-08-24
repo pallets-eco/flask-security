@@ -17,7 +17,7 @@ import warnings
 import sys
 
 import pkg_resources
-from flask import current_app, render_template
+from flask import _request_ctx_stack, current_app, render_template
 from flask_babelex import Domain
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
@@ -336,6 +336,15 @@ def _user_loader(user_id):
 
 
 def _request_loader(request):
+    # Short-circuit if we have already been called and verified.
+    # This can happen since Flask-Login will call us (if no session) and our own
+    # decorator @auth_token_required can call us.
+    # N.B. we don't call current_user here since that in fact might try and LOAD
+    # a user - which would call us again.
+    if all(hasattr(_request_ctx_stack.top, k) for k in ["fs_authn_via", "user"]):
+        if _request_ctx_stack.top.fs_authn_via == "token":
+            return _request_ctx_stack.top.user
+
     header_key = _security.token_authentication_header
     args_key = _security.token_authentication_key
     header_token = request.headers.get(header_key, None)
@@ -365,12 +374,15 @@ def _request_loader(request):
             cache = VerifyHashCache()
             local_cache.verify_hash_cache = cache
         if cache.has_verify_hash_cache(user):
+            _request_ctx_stack.top.fs_authn_via = "token"
             return user
         if user.verify_auth_token(data):
+            _request_ctx_stack.top.fs_authn_via = "token"
             cache.set_cache(user)
             return user
     else:
         if user.verify_auth_token(data):
+            _request_ctx_stack.top.fs_authn_via = "token"
             return user
 
     return _security.login_manager.anonymous_user()
