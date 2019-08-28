@@ -127,10 +127,7 @@ def _base_render_json(
 
 
 def fs_make_response(payload, code, headers, user):
-    """ Creating a response object adhering to the Flask-Security api as
-    specified in openapi.yaml.
-    Please note: This method is used for DefaultJsonResponse as well as
-    DefaultJsonErrorResponse.
+    """ Wrapper for creating a Flask-Security specific response.
     """
     payload = dict(meta=dict(code=code), response=payload)
     return make_response(jsonify(payload), code, headers)

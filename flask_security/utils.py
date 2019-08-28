@@ -617,6 +617,15 @@ def default_want_json(req):
     return False
 
 
+def json_error_response(code, errors):
+    """ Helper to create an error response that adheres to the openapi spec.
+    """
+    response_json = dict(errors=dict())
+    for name, error in errors.items():
+        response_json["errors"][name] = error
+    return response_json
+
+
 class FsJsonEncoder(JSONEncoder):
     """  Flask-Security JSON encoder.
     Extends Flask's JSONencoder to handle lazy-text.

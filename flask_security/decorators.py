@@ -15,6 +15,7 @@ from functools import wraps
 
 from flask import (
     Response,
+    _app_ctx_stack,
     _request_ctx_stack,
     abort,
     current_app,
@@ -40,6 +41,7 @@ BasicAuth = namedtuple("BasicAuth", "username, password")
 
 
 def _get_unauthenticated_response(text=None, headers=None):
+    text = text or ""
     headers = headers or {}
     return Response(text, 401, headers)
 
@@ -69,14 +71,20 @@ def default_unauthn_handler(mechanisms, headers=None):
         return _get_unauthenticated_response(text=unauthn_html, headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        return _security._render_json({}, 401, headers, None)
+        payload = utils.json_error_response(
+            code=401, errors={"authentication": unauthn_message}
+        )
+        return _security._render_json(payload, 401, headers, None)
     return _security.login_manager.unauthorized()
 
 
 def default_unauthz_handler(func, params):
     unauthz_message, unauthz_message_type = utils.get_message("UNAUTHORIZED")
     if _security._want_json(request):
-        return _security._render_json(unauthz_message, 403, None, None)
+        payload = utils.json_error_response(
+            code=403, errors={"authorization": unauthz_message}
+        )
+        return _security._render_json(payload, 403, None, None)
     view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
@@ -159,7 +167,8 @@ def handle_csrf(method):
         if method in utils.config_value("CSRF_PROTECT_MECHANISMS"):
             _csrf.protect()
         else:
-            _request_ctx_stack.top.fs_ignore_csrf = True
+            ctx = _app_ctx_stack.top
+            ctx.fs_ignore_csrf = True
 
 
 def http_auth_required(realm):
@@ -313,7 +322,8 @@ def unauth_csrf(fall_through=False):
                 utils.config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
                 and not current_user.is_authenticated
             ):
-                _request_ctx_stack.top.fs_ignore_csrf = True
+                ctx = _app_ctx_stack.top
+                ctx.fs_ignore_csrf = True
             else:
                 try:
                     _csrf.protect()
