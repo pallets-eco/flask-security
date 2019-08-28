@@ -32,8 +32,9 @@
 """
 
 from flask import (
-    _request_ctx_stack,
+    _app_ctx_stack,
     current_app,
+    jsonify,
     redirect,
     request,
     after_this_request,
@@ -73,6 +74,7 @@ from .utils import (
     login_user,
     logout_user,
     slash_url_suffix,
+    json_error_response,
 )
 from .twofactor import (
     send_security_token,
@@ -97,7 +99,7 @@ def _base_render_json(
     user = form.user if hasattr(form, "user") else None
     if has_errors:
         code = 400
-        payload = dict(errors=form.errors)
+        payload = json_error_response(code=code, errors=form.errors)
     else:
         code = 200
         payload = dict()
@@ -124,6 +126,16 @@ def _base_render_json(
     return _security._render_json(payload, code, headers=None, user=user)
 
 
+def fs_make_response(payload, code, headers, user):
+    """ Creating a response object adhering to the Flask-Security api as
+    specified in openapi.yaml.
+    Please note: This method is used for DefaultJsonResponse as well as
+    DefaultJsonErrorResponse.
+    """
+    payload = dict(meta=dict(code=code), response=payload)
+    return make_response(jsonify(payload), code, headers)
+
+
 def default_render_json(payload, code, headers, user):
     """ Default JSON response handler.
     """
@@ -131,9 +143,7 @@ def default_render_json(payload, code, headers, user):
     if headers is None:
         headers = dict()
     headers["Content-Type"] = "application/json"
-    # return jsonify(dict(meta=dict(code=code), response=payload)), code, headers
-    response = dict(meta=dict(code=code), response=payload)
-    return make_response(response, code, headers)
+    return fs_make_response(payload, code, headers, user)
 
 
 def _commit(response=None):
@@ -152,7 +162,7 @@ def _suppress_form_csrf():
     If app doesn't want CSRF for unauth endpoints then check if caller is authenticated
     or not (many endpoints can be called either way).
     """
-    ctx = _request_ctx_stack.top
+    ctx = _app_ctx_stack.top
     if hasattr(ctx, "fs_ignore_csrf") and ctx.fs_ignore_csrf:
         # This is the case where CsrfProtect was already called (e.g. @auth_required)
         return {"csrf": False}
@@ -552,7 +562,9 @@ def reset_password(token):
 
     if invalid or expired:
         if request.is_json:
-            form._errors = m
+            if form._errors is None:
+                form._errors = dict()
+            form._errors[c] = m
             return _base_render_json(form)
         else:
             return redirect(url_for("forgot_password"))
@@ -953,7 +965,9 @@ def two_factor_verify_password():
 
         else:
             m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
-            form._errors = m
+            if form._errors is None:
+                form._errors = dict()
+            form._errors[c] = m
             return _base_render_json(form)
 
     if request.is_json:
@@ -1020,7 +1034,9 @@ def _tf_illegal_state(form, redirect_to):
         do_flash(m, c)
         return redirect(get_url(redirect_to))
     else:
-        form._errors = m
+        if form._errors is None:
+            form._errors = dict()
+        form._errors[c] = m
         return _base_render_json(form)
 
 
