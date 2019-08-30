@@ -72,17 +72,25 @@ class ValidatorMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        # Assume message is member of _default_messages.
-        self._original_message = kwargs["message"]
-        del kwargs["message"]
+        # If the message is available from config[MSG_xx] then it can be xlated.
+        # Otherwise it will be used as is.
+        if "message" in kwargs:
+            self._original_message = kwargs["message"]
+            del kwargs["message"]
+        else:
+            self._original_message = None
         super(ValidatorMixin, self).__init__(*args, **kwargs)
 
     def __call__(self, form, field):
-        if not is_lazy_string(self.message) and not self.message:
+        if self._original_message and (
+            not is_lazy_string(self.message) and not self.message
+        ):
             # Creat on first usage within app context.
-            self.message = make_lazy_string(
-                _local_xlate, config_value("MSG_" + self._original_message)[0]
-            )
+            cv = config_value("MSG_" + self._original_message)
+            if cv:
+                self.message = make_lazy_string(_local_xlate, cv[0])
+            else:
+                self.message = self._original_message
         return super(ValidatorMixin, self).__call__(form, field)
 
 

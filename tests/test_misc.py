@@ -21,6 +21,7 @@ from flask_security.forms import (
     PasswordField,
     PasswordlessLoginForm,
     RegisterForm,
+    Required,
     ResetPasswordForm,
     SendConfirmationForm,
     StringField,
@@ -318,6 +319,40 @@ def test_custom_forms_via_config(app, sqlalchemy_datastore):
 
     response = client.get("/register")
     assert b"My Register Email Address Field" in response.data
+
+
+def test_form_required(app, sqlalchemy_datastore):
+    class MyLoginForm(LoginForm):
+        myfield = StringField("My Custom Field", validators=[Required()])
+
+    app.config["SECURITY_LOGIN_FORM"] = MyLoginForm
+
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+
+    client = app.test_client()
+
+    response = client.post("/login", content_type="application/json")
+    assert response.status_code == 400
+    assert b"myfield" in response.data
+
+
+def test_form_required_local_message(app, sqlalchemy_datastore):
+    """ Test having a local message (not xlatable and not part of MSG_ config."""
+
+    class MyLoginForm(LoginForm):
+        myfield = StringField("My Custom Field", validators=[Required(message="hi")])
+
+    app.config["SECURITY_LOGIN_FORM"] = MyLoginForm
+
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+
+    client = app.test_client()
+
+    response = client.post("/login", content_type="application/json")
+    assert response.status_code == 400
+    assert b"myfield" in response.data
 
 
 @pytest.mark.babel(False)
