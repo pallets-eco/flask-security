@@ -188,6 +188,10 @@ def app(request):
     def echo_json():
         return jsonify(flask_request.get_json())
 
+    @app.route("/unauthz", methods=["GET", "POST"])
+    def unauthz():
+        return render_template("index.html", content="Unauthorized")
+
     return app
 
 
