@@ -503,6 +503,28 @@ def test_login_info(client):
     assert "last_update" in response.jdata["response"]["user"]
 
 
+@pytest.mark.registerable()
+@pytest.mark.settings(post_login_view="/anon_required")
+def test_anon_required(client, get_message):
+    """ If logged in, should get 'anonymous_user_required' redirect """
+    response = authenticate(client, follow_redirects=False)
+    response = client.get("/register")
+    assert "location" in response.headers
+    assert "/anon_required" in response.location
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(post_login_view="/anon_required")
+def test_anon_required_json(client, get_message):
+    """ If logged in, should get 'anonymous_user_required' response """
+    authenticate(client, follow_redirects=False)
+    response = client.get("/register", headers={"Accept": "application/json"})
+    assert response.status_code == 400
+    assert response.jdata["response"]["errors"].encode("utf-8") == get_message(
+        "ANONYMOUS_USER_REQUIRED"
+    )
+
+
 @pytest.mark.settings(security_hashing_schemes=["sha256_crypt"])
 @pytest.mark.skip
 def test_auth_token_speed(app, client_nc):
