@@ -445,7 +445,7 @@ def permissions_accepted(*fsperms):
 
     N.B. Don't confuse these permissions with flask-principle Permission()!
 
-    :param fsperms: The possible permimssions.
+    :param fsperms: The possible permissions.
 
     .. versionadded:: 3.3.0
     """
@@ -467,10 +467,24 @@ def permissions_accepted(*fsperms):
 
 
 def anonymous_user_required(f):
+    """Decorator which requires that caller NOT be logged in.
+    If a logged in user access an endpoint protected with this decorator
+    they will be redirected to the ``SECURITY_POST_LOGIN_VIEW``.
+    If the caller requests a JSON response, a 400 will be returned.
+    """
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         if current_user.is_authenticated:
-            return redirect(utils.get_url(_security.post_login_view))
+            if _security._want_json(request):
+                return _security._render_json(
+                    dict(errors=utils.get_message("ANONYMOUS_USER_REQUIRED")[0]),
+                    400,
+                    None,
+                    None,
+                )
+            else:
+                return redirect(utils.get_url(_security.post_login_view))
         return f(*args, **kwargs)
 
     return wrapper
