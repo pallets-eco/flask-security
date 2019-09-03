@@ -13,16 +13,7 @@
 from collections import namedtuple
 from functools import wraps
 
-from flask import (
-    Response,
-    _request_ctx_stack,
-    abort,
-    current_app,
-    g,
-    redirect,
-    request,
-    url_for,
-)
+from flask import Response, _request_ctx_stack, abort, current_app, g, redirect, request
 from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from flask_wtf.csrf import CSRFError
@@ -84,7 +75,7 @@ def default_unauthz_handler(func, params):
             view = view()
         else:
             try:
-                view = url_for(view)
+                view = utils.get_url(view)
             except BuildError:
                 view = None
         utils.do_flash(*utils.get_message("UNAUTHORIZED"))

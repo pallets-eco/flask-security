@@ -211,8 +211,9 @@ def test_unauthorized_access_with_referrer(client, get_message):
     assert response.data.count(get_message("UNAUTHORIZED")) == 1
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="/unauthz")
 def test_roles_accepted(client):
+    # This specificaly tests that we can pass a URL for unauthorized_view.
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
         response = client.get("/admin_or_editor")
@@ -221,10 +222,10 @@ def test_roles_accepted(client):
 
     authenticate(client, "jill@lp.com")
     response = client.get("/admin_or_editor", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_permissions_accepted(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
@@ -234,10 +235,10 @@ def test_permissions_accepted(client):
 
     authenticate(client, "jill@lp.com")
     response = client.get("/admin_perm", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_permissions_required(client):
     for user in ["matt@lp.com"]:
         authenticate(client, user)
@@ -247,21 +248,21 @@ def test_permissions_required(client):
 
     authenticate(client, "joe@lp.com")
     response = client.get("/admin_perm_required", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_unauthenticated_role_required(client, get_message):
     response = client.get("/admin", follow_redirects=True)
     assert get_message("UNAUTHORIZED") in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_multiple_role_required(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
         response = client.get("/admin_and_editor", follow_redirects=True)
-        assert b"Home Page" in response.data
+        assert b"Unauthorized" in response.data
         client.get("/logout")
 
     authenticate(client, "dave@lp.com")

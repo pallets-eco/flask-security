@@ -93,6 +93,8 @@ def create_app():
             locale = request.args.get("lang", None)
             if not locale:
                 locale = request.accept_languages.best
+            if not locale:
+                locale = "en"
             if locale:
                 session["lang"] = locale
         return session.get("lang", None).replace("-", "_")
