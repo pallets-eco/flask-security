@@ -291,6 +291,10 @@ _default_messages = {
     "PASSWORD_CHANGE": (_("You successfully changed your password."), "success"),
     "LOGIN": (_("Please log in to access this page."), "info"),
     "REFRESH": (_("Please reauthenticate to access this page."), "info"),
+    "ANONYMOUS_USER_REQUIRED": (
+        _("You can only access this endpoint when not logged in."),
+        "error",
+    ),
     "TWO_FACTOR_INVALID_TOKEN": (_("Invalid Token"), "error"),
     "TWO_FACTOR_LOGIN_SUCCESSFUL": (_("Your token has been confirmed"), "success"),
     "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL": (

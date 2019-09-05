@@ -217,8 +217,9 @@ def test_unauthorized_access_with_referrer(client, get_message):
     assert response.headers["Location"] == "http://localhost/profile"
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="/unauthz")
 def test_roles_accepted(client):
+    # This specificaly tests that we can pass a URL for unauthorized_view.
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
         response = client.get("/admin_or_editor")
@@ -227,10 +228,10 @@ def test_roles_accepted(client):
 
     authenticate(client, "jill@lp.com")
     response = client.get("/admin_or_editor", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_permissions_accepted(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
@@ -240,10 +241,10 @@ def test_permissions_accepted(client):
 
     authenticate(client, "jill@lp.com")
     response = client.get("/admin_perm", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_permissions_required(client):
     for user in ["matt@lp.com"]:
         authenticate(client, user)
@@ -253,21 +254,21 @@ def test_permissions_required(client):
 
     authenticate(client, "joe@lp.com")
     response = client.get("/admin_perm_required", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_unauthenticated_role_required(client, get_message):
     response = client.get("/admin", follow_redirects=True)
     assert get_message("UNAUTHORIZED") in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_multiple_role_required(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
         response = client.get("/admin_and_editor", follow_redirects=True)
-        assert b"Home Page" in response.data
+        assert b"Unauthorized" in response.data
         client.get("/logout")
 
     authenticate(client, "dave@lp.com")
@@ -563,6 +564,28 @@ def test_login_info(client):
     assert response.status_code == 200
     assert response.jdata["response"]["user"]["id"] == "1"
     assert "last_update" in response.jdata["response"]["user"]
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(post_login_view="/anon_required")
+def test_anon_required(client, get_message):
+    """ If logged in, should get 'anonymous_user_required' redirect """
+    response = authenticate(client, follow_redirects=False)
+    response = client.get("/register")
+    assert "location" in response.headers
+    assert "/anon_required" in response.location
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(post_login_view="/anon_required")
+def test_anon_required_json(client, get_message):
+    """ If logged in, should get 'anonymous_user_required' response """
+    authenticate(client, follow_redirects=False)
+    response = client.get("/register", headers={"Accept": "application/json"})
+    assert response.status_code == 400
+    assert response.jdata["response"]["errors"].encode("utf-8") == get_message(
+        "ANONYMOUS_USER_REQUIRED"
+    )
 
 
 @pytest.mark.settings(security_hashing_schemes=["sha256_crypt"])

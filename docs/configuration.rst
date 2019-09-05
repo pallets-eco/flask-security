@@ -495,6 +495,7 @@ element is the message and the second element is the error level.
 The default messages and error levels can be found in ``core.py``.
 
 * ``SECURITY_MSG_ALREADY_CONFIRMED``
+* ``SECURITY_MSG_ANONYMOUS_USER_REQUIRED``
 * ``SECURITY_MSG_CONFIRMATION_EXPIRED``
 * ``SECURITY_MSG_CONFIRMATION_REQUEST``
 * ``SECURITY_MSG_CONFIRMATION_REQUIRED``

@@ -22,7 +22,7 @@ Most have configuration variables that restore prior behavior**.
 - (:issue:`121`) Unauthorization callback not quite right. Split into 2 different callbacks - one for
   unauthorized and one for unauthenticated. Made default unauthenticated handler use Flask-Login's unauthenticated
   method to make everything uniform. Extensive documentation added. :meth:`.Security.unauthorized_callback` has been deprecated.
-- (:pr:`xxx`) Add complete User and Role model mixins that support all features. Modify tests and Quickstart documentation
+- (:pr:`120`) Add complete User and Role model mixins that support all features. Modify tests and Quickstart documentation
   to show how to use these.
 - Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
   should be passed in.
@@ -34,7 +34,7 @@ Most have configuration variables that restore prior behavior**.
 - (:issue:`127`) JSON response was failing due to LazyStrings in error response.
 - (:issue:`117`) Making a user inactive should stop all access immediately.
 - (:issue:`134`) Confirmation token can no longer be reused. Added
-  `SECURITY_AUTO_LOGIN_AFTER_CONFIRM` option for applications that don't want the user
+  ``SECURITY_AUTO_LOGIN_AFTER_CONFIRM`` option for applications that don't want the user
   to be automatically logged in after confirmation (defaults to True - existing behavior).
 - (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
   confirmation was required. This was a huge security hole - it has been fixed.
@@ -43,6 +43,9 @@ Most have configuration variables that restore prior behavior**.
 - (:pr:`168`) When using the @auth_required or @auth_token_required decorators, the token
   would be verified twice, and the DB would be queried twice for the user. Given how slow
   token verification is - this was a significant issue. That has been fixed.
+- (:issue:`84`) The :func:`.anonymous_user_required` was not JSON friendly - always
+  performing a redirect. Now, if the request 'wants' a JSON response - it will receive a 400 with an error
+  message defined by ``SECURITY_MSG_ANONYMOUS_USER_REQUIRED``.
 
 Possible compatibility issues
 +++++++++++++++++++++++++++++
@@ -50,7 +53,7 @@ Possible compatibility issues
 - (:pr:`120`) :class:`.RoleMixin` now has a method :meth:`.get_permissions` which is called as part
   each request to add Permissions to the authenticated user. It checks if the RoleModel
   has a property ``permissions`` and assumes it is a comma separated string of permissions.
-  If your model already has such a property this will likely fail. You need to override ``get_permissions``
+  If your model already has such a property this will likely fail. You need to override :meth:`.get_permissions`
   and simply return an emtpy set.
 
 - (:issue:`121`) Changes the default (failure) behavior for views protected with @auth_required, @token_auth_required,
@@ -65,6 +68,9 @@ Possible compatibility issues
   on Flask-Security's blueprint by sending it as `json_encoder_cls` as part of initialization. Be aware that your
   JsonEncoder needs to handle LazyStrings (see speaklater).
 
+- (:issue:`84`) Prior to this fix - anytime the decorator :func:`.anonymous_user_required` failed, it caused a redirect to
+  the post_login_view. Now, if the caller wanted a JSON response, it will return a 400.
+
 - (:issue:`156`) Faster Authentication Token introduced 2 non-backwards compatible behavior changes - each can
   be reverted using a configuration variable.
 
@@ -74,13 +80,13 @@ Possible compatibility issues
       be sent this token - even though it was likely ignored. Since these tokens by default have no expiration time
       this exposed a needless security hole. The new default behavior is to ONLY return the Authentication Token from those APIs
       if the query param ``include_auth_token`` is added to the request. Prior behavior can be restored by setting
-      the `BACKWARDS_COMPAT_AUTH_TOKEN` configuration variable.
+      the ``BACKWARDS_COMPAT_AUTH_TOKEN`` configuration variable.
     * Since the old Authentication Token algorithm used the (hashed) user's password, those tokens would be invalidated
       whenever the user changed their password. This is not likely to be what most users expect. Since the new
       Authentication Token algorithm doesn't refer to the user's password, changing the user's password won't invalidate
       outstanding Authentication Tokens. The method :meth:`.UserDatastore.set_uniquifier` can be used by an administrator
       to change a user's ``fs_uniquifier`` - but nothing the user themselves can do to invalidate their Authentication Tokens.
-      Setting the `BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE` configuration variable will cause the user's ``fs_uniquifier`` to
+      Setting the ``BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE`` configuration variable will cause the user's ``fs_uniquifier`` to
       be changed when they change their password, thus restoring prior behavior.
 
 
@@ -91,7 +97,7 @@ user id isn't really enough since it might be reused). This requires checking th
 what is in the token on EVERY request - however hashing is (on purpose) slow. So this can add almost a whole second
 to every request.
 
-To solve this a new attribute in the User model was added - ``fs_uniquifier``. If this is present in your
+To solve this, a new attribute in the User model was added - ``fs_uniquifier``. If this is present in your
 User model, then it will be used instead of the password for ensuring the token corresponds to the correct user.
 This is very fast. If that attribute is NOT present - then the behavior falls back to existing (slow) method.
 
