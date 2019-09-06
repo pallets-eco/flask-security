@@ -13,15 +13,7 @@
 from collections import namedtuple
 from functools import wraps
 
-from flask import (
-    Response, 
-    _request_ctx_stack, 
-    abort, 
-    current_app, 
-    g, 
-    redirect, 
-    request
-)
+from flask import Response, _request_ctx_stack, abort, current_app, g, redirect, request
 from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from flask_wtf.csrf import CSRFError
@@ -69,9 +61,7 @@ def default_unauthn_handler(mechanisms, headers=None):
         return _get_unauthenticated_response(text=unauthn_html, headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        payload = utils.json_error_response(
-            code=401, errors={"authentication": unauthn_message}
-        )
+        payload = utils.json_error_response(errors=unauthn_message)
         return _security._render_json(payload, 401, headers, None)
     return _security.login_manager.unauthorized()
 
@@ -79,9 +69,7 @@ def default_unauthn_handler(mechanisms, headers=None):
 def default_unauthz_handler(func, params):
     unauthz_message, unauthz_message_type = utils.get_message("UNAUTHORIZED")
     if _security._want_json(request):
-        payload = utils.json_error_response(
-            code=403, errors={"authorization": unauthz_message}
-        )
+        payload = utils.json_error_response(errors=unauthz_message)
         return _security._render_json(payload, 403, None, None)
     view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:

@@ -617,12 +617,27 @@ def default_want_json(req):
     return False
 
 
-def json_error_response(code, errors):
+def json_error_response(errors):
     """ Helper to create an error response that adheres to the openapi spec.
     """
-    response_json = dict(errors=dict())
-    for name, error in errors.items():
-        response_json["errors"][name] = error
+    # Python 2 and 3 compatibility for checking if something is a string.
+    try:  # pragma: no cover
+        basestring
+    except NameError:  # pragma: no cover
+        basestring = str
+
+    if isinstance(errors, basestring):
+        # When the errors is a string, use the response/error/message format
+        response_json = dict(error=errors)
+    elif isinstance(errors, dict):
+        # When the errors is a dict, use the DefaultJsonErrorResponse
+        # (response/errors/name/messages) format
+        response_json = dict(errors=dict())
+        for name, error_list in errors.items():
+            response_json["errors"][name] = error_list
+    else:
+        raise TypeError("The errors argument should be either a str or dict.")
+
     return response_json
 
 

@@ -34,7 +34,6 @@
 from flask import (
     _request_ctx_stack,
     current_app,
-    jsonify,
     redirect,
     request,
     after_this_request,
@@ -42,6 +41,7 @@ from flask import (
     session,
     abort,
     make_response,
+    jsonify,
 )
 from flask_login import current_user
 from flask_wtf import csrf
@@ -99,7 +99,7 @@ def _base_render_json(
     user = form.user if hasattr(form, "user") else None
     if has_errors:
         code = 400
-        payload = json_error_response(code=code, errors=form.errors)
+        payload = json_error_response(errors=form.errors)
     else:
         code = 200
         payload = dict()
@@ -126,13 +126,6 @@ def _base_render_json(
     return _security._render_json(payload, code, headers=None, user=user)
 
 
-def fs_make_response(payload, code, headers, user):
-    """ Wrapper for creating a Flask-Security specific response.
-    """
-    payload = dict(meta=dict(code=code), response=payload)
-    return make_response(jsonify(payload), code, headers)
-
-
 def default_render_json(payload, code, headers, user):
     """ Default JSON response handler.
     """
@@ -140,7 +133,8 @@ def default_render_json(payload, code, headers, user):
     if headers is None:
         headers = dict()
     headers["Content-Type"] = "application/json"
-    return fs_make_response(payload, code, headers, user)
+    payload = dict(meta=dict(code=code), response=payload)
+    return make_response(jsonify(payload), code, headers)
 
 
 def _commit(response=None):
@@ -559,9 +553,7 @@ def reset_password(token):
 
     if invalid or expired:
         if request.is_json:
-            if form._errors is None:
-                form._errors = dict()
-            form._errors[c] = m
+            form._errors = m
             return _base_render_json(form)
         else:
             return redirect(url_for("forgot_password"))
@@ -956,15 +948,12 @@ def two_factor_verify_password():
         # form called verify_and_update_password()
         after_this_request(_commit)
         session["tf_confirmed"] = True
+        m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
         if not request.is_json:
-            do_flash(*get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE"))
+            do_flash(m, c)
             return redirect(url_for("two_factor_setup"))
-
         else:
-            m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
-            if form._errors is None:
-                form._errors = dict()
-            form._errors[c] = m
+            form._errors = m
             return _base_render_json(form)
 
     if request.is_json:
@@ -1031,9 +1020,7 @@ def _tf_illegal_state(form, redirect_to):
         do_flash(m, c)
         return redirect(get_url(redirect_to))
     else:
-        if form._errors is None:
-            form._errors = dict()
-        form._errors[c] = m
+        form._errors = m
         return _base_render_json(form)
 
 
