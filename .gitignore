@@ -21,6 +21,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage*
 .tox
+.travis*requirements*
 
 #Translations
 *.mo
