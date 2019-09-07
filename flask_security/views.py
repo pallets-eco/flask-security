@@ -32,7 +32,7 @@
 """
 
 from flask import (
-    _app_ctx_stack,
+    _request_ctx_stack,
     current_app,
     redirect,
     request,
@@ -107,8 +107,13 @@ def _base_render_json(
                 payload["user"] = user.get_security_payload()
 
             if include_auth_token:
-                token = user.get_auth_token()
-                payload["user"]["authentication_token"] = token
+                # view wants to return auth_token - check behavior config
+                if (
+                    config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
+                    or "include_auth_token" in request.args
+                ):
+                    token = user.get_auth_token()
+                    payload["user"]["authentication_token"] = token
 
         # Return csrf_token on each JSON response - just as every form
         # has it rendered.
@@ -141,7 +146,7 @@ def _suppress_form_csrf():
     If app doesn't want CSRF for unauth endpoints then check if caller is authenticated
     or not (many endpoints can be called either way).
     """
-    ctx = _app_ctx_stack.top
+    ctx = _request_ctx_stack.top
     if hasattr(ctx, "fs_ignore_csrf") and ctx.fs_ignore_csrf:
         # This is the case where CsrfProtect was already called (e.g. @auth_required)
         return {"csrf": False}
@@ -212,7 +217,7 @@ def logout():
         logout_user()
 
     # No body is required - so if a POST and json - return OK
-    if request.method == "POST" and request.is_json:
+    if request.method == "POST" and _security._want_json(request):
         return _security._render_json({}, 200, headers=None, user=None)
 
     return redirect(get_post_logout_redirect())
@@ -235,12 +240,14 @@ def register():
     form = form_class(form_data, meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
+        did_login = False
         user = register_user(**form.to_dict())
         form.user = user
 
         if not _security.confirmable or _security.login_without_confirmation:
             after_this_request(_commit)
             login_user(user)
+            did_login = True
 
         if not request.is_json:
             if "next" in form:
@@ -250,7 +257,8 @@ def register():
 
             return redirect(redirect_url)
 
-        return _base_render_json(form, include_auth_token=True)
+        # Only include auth token if in fact user is permitted to login
+        return _base_render_json(form, include_auth_token=did_login)
 
     if request.is_json:
         return _base_render_json(form)

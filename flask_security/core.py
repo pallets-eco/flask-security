@@ -17,7 +17,7 @@ import warnings
 import sys
 
 import pkg_resources
-from flask import current_app, render_template
+from flask import _request_ctx_stack, current_app, render_template
 from flask_babelex import Domain
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
@@ -205,6 +205,8 @@ _default_config = {
     "CSRF_HEADER": "X-XSRF-Token",
     "CSRF_COOKIE_REFRESH_EACH_REQUEST": False,
     "BACKWARDS_COMPAT_UNAUTHN": False,
+    "BACKWARDS_COMPAT_AUTH_TOKEN": False,
+    "BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE": False,
 }
 
 #: Default Flask-Security messages
@@ -285,6 +287,10 @@ _default_messages = {
     "PASSWORD_CHANGE": (_("You successfully changed your password."), "success"),
     "LOGIN": (_("Please log in to access this page."), "info"),
     "REFRESH": (_("Please reauthenticate to access this page."), "info"),
+    "ANONYMOUS_USER_REQUIRED": (
+        _("You can only access this endpoint when not logged in."),
+        "error",
+    ),
     "TWO_FACTOR_INVALID_TOKEN": (_("Invalid Token"), "error"),
     "TWO_FACTOR_LOGIN_SUCCESSFUL": (_("Your token has been confirmed"), "success"),
     "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL": (
@@ -334,6 +340,15 @@ def _user_loader(user_id):
 
 
 def _request_loader(request):
+    # Short-circuit if we have already been called and verified.
+    # This can happen since Flask-Login will call us (if no session) and our own
+    # decorator @auth_token_required can call us.
+    # N.B. we don't call current_user here since that in fact might try and LOAD
+    # a user - which would call us again.
+    if all(hasattr(_request_ctx_stack.top, k) for k in ["fs_authn_via", "user"]):
+        if _request_ctx_stack.top.fs_authn_via == "token":
+            return _request_ctx_stack.top.user
+
     header_key = _security.token_authentication_header
     args_key = _security.token_authentication_key
     header_token = request.headers.get(header_key, None)
@@ -363,12 +378,15 @@ def _request_loader(request):
             cache = VerifyHashCache()
             local_cache.verify_hash_cache = cache
         if cache.has_verify_hash_cache(user):
+            _request_ctx_stack.top.fs_authn_via = "token"
             return user
-        if verify_hash(data[1], user.password):
+        if user.verify_auth_token(data):
+            _request_ctx_stack.top.fs_authn_via = "token"
             cache.set_cache(user)
             return user
     else:
-        if verify_hash(data[1], user.password):
+        if user.verify_auth_token(data):
+            _request_ctx_stack.top.fs_authn_via = "token"
             return user
 
     return _security.login_manager.anonymous_user()
@@ -508,7 +526,7 @@ class RoleMixin(object):
 
         .. versionadded:: 3.3.0
         """
-        if hasattr(self, "permissions"):
+        if hasattr(self, "permissions") and self.permissions:
             # These are a comma separated list
             return set(self.permissions.split(","))
         return set([])
@@ -524,7 +542,7 @@ class RoleMixin(object):
         .. versionadded:: 3.3.0
         """
         if hasattr(self, "permissions"):
-            current_perms = set(self.permissions.split(","))
+            current_perms = self.get_permissions()
             if isinstance(permissions, set):
                 perms = permissions
             elif isinstance(permissions, list):
@@ -546,7 +564,7 @@ class RoleMixin(object):
         .. versionadded:: 3.3.0
         """
         if hasattr(self, "permissions"):
-            current_perms = set(self.permissions.split(","))
+            current_perms = self.get_permissions()
             if isinstance(permissions, set):
                 perms = permissions
             elif isinstance(permissions, list):
@@ -567,9 +585,36 @@ class UserMixin(BaseUserMixin):
         return self.active
 
     def get_auth_token(self):
-        """Returns the user's authentication token."""
+        """Constructs the user's authentication token.
+
+        This data MUST be securely signed using the ``remember_token_serializer``
+        """
         data = [str(self.id), hash_data(self.password)]
+        if hasattr(self, "fs_uniquifier"):
+            data.append(self.fs_uniquifier)
         return _security.remember_token_serializer.dumps(data)
+
+    def verify_auth_token(self, data):
+        """
+        Perform additional verification of contents of auth token.
+        Prior to this being called the token has been validated (via signing)
+        and has not expired.
+
+        :param data: the data as formulated by :meth:`get_auth_token`
+
+        .. versionadded:: 3.3.0
+        """
+        if len(data) > 2 and hasattr(self, "fs_uniquifier"):
+            # has uniquifier - use that
+            if data[2] == self.fs_uniquifier:
+                return True
+            # Don't even try old way - if they have defined a uniquifier
+            # we want that to be able to invalidate tokens if changed.
+            return False
+        # Fall back to old and very expensive check
+        if verify_hash(data[1], self.password):
+            return True
+        return False
 
     def has_role(self, role):
         """Returns `True` if the user identifies with the specified role.
@@ -961,6 +1006,9 @@ class Security(object):
 
             :request: Werkzueg/Flask request
 
+        The default implementation returns True if either the Content-Type is
+        "application/json" or the best Accept header value is "application/json".
+
         .. versionadded:: 3.3.0
         """
         self._state._want_json = fn
@@ -968,8 +1016,9 @@ class Security(object):
     def unauthz_handler(self, cb):
         """
         Callback for failed authorization.
-        This is called by the various decorators if a role or permission
-        is missing.
+        This is called by the :func:`roles_required`, :func:`roles_accepted`,
+        :func:`permissions_required`, or :func:`permissions_accepted`
+        if a role or permission is missing.
 
         :param cb: Callback function with signature (func, params)
 
@@ -990,7 +1039,8 @@ class Security(object):
     def unauthn_handler(self, cb):
         """
         Callback for failed authentication.
-        This is called by the various decorators if authentication fails.
+        This is called by :func:`auth_required`, :func:`auth_token_required`
+        or :func:`http_auth_required` if authentication fails.
 
         :param cb: Callback function with signature (mechanisms, headers=None)
 

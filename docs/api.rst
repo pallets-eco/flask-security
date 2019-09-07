@@ -27,6 +27,8 @@ Core
 
 Protecting Views
 ----------------
+.. autofunction:: flask_security.anonymous_user_required
+
 .. autofunction:: flask_security.http_auth_required
 
 .. autofunction:: flask_security.auth_token_required

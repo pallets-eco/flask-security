@@ -172,6 +172,39 @@ def test_login_when_unconfirmed(client, get_message):
 
 
 @pytest.mark.registerable()
+def test_no_auth_token(client_nc):
+    """ Make sure that register doesn't return Authentication Token
+    if user isn't confirmed.
+    """
+    response = client_nc.post(
+        "/register?include_auth_token",
+        data='{"email": "dude@lp.com", "password": "password"}',
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    user = response.json["response"]["user"]
+    assert len(user) == 2 and all(k in user for k in ["id", "last_update"])
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(login_without_confirmation=True)
+def test_auth_token_unconfirmed(client_nc):
+    """ Make sure that register returns Authentication Token
+    if user isn't confirmed, but the 'login_without_confirmation' flag is set.
+    """
+    response = client_nc.post(
+        "/register?include_auth_token",
+        data='{"email": "dude@lp.com", "password": "password"}',
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    user = response.json["response"]["user"]
+    assert len(user) == 3 and all(
+        k in user for k in ["id", "last_update", "authentication_token"]
+    )
+
+
+@pytest.mark.registerable()
 @pytest.mark.settings(login_without_confirmation=True, auto_login_after_confirm=False)
 def test_confirmation_different_user_when_logged_in_no_auto(client, get_message):
     """ Default - AUTO_LOGIN == false so shouldn't log in second user. """

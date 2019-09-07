@@ -159,6 +159,11 @@ def app(request):
     def admin_or_editor():
         return render_template("index.html", content="Admin or Editor Page")
 
+    @app.route("/simple")
+    @roles_accepted("simple")
+    def simple():
+        return render_template("index.html", content="SimplePage")
+
     @app.route("/admin_perm")
     @permissions_accepted("full-write", "super")
     def admin_perm():
@@ -182,6 +187,10 @@ def app(request):
     @app.route("/json", methods=["GET", "POST"])
     def echo_json():
         return jsonify(flask_request.get_json())
+
+    @app.route("/unauthz", methods=["GET", "POST"])
+    def unauthz():
+        return render_template("index.html", content="Unauthorized")
 
     return app
 
@@ -265,6 +274,8 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
     class User(db.Model, fsqla.FsUserMixin):
         security_number = db.Column(db.Integer, unique=True)
+        # For testing allow null passwords.
+        password = db.Column(db.String(255), nullable=True)
 
         def get_security_payload(self):
             # Make sure we still properly hook up to flask JSONEncoder

@@ -33,6 +33,9 @@ class MockUser:
         self.password = password
         self.active = True
 
+    def verify_auth_token(self, data):
+        return True
+
 
 class MockExtensionSecurity:
     @property
@@ -112,14 +115,19 @@ def test_verify_password_cache_set_get(app):
 def test_request_loader_not_using_cache(app):
     with app.app_context():
         app.extensions["security"] = MockExtensionSecurity()
-        _request_loader(MockRequest())
-        assert getattr(local_cache, "verify_hash_cache", None) is None
+        with app.test_request_context("/"):
+            _request_loader(MockRequest())
+            assert getattr(local_cache, "verify_hash_cache", None) is None
 
 
 def test_request_loader_using_cache(app):
     with app.app_context():
         app.config["SECURITY_USE_VERIFY_PASSWORD_CACHE"] = True
+        app.config["SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN"] = True
         app.extensions["security"] = MockExtensionSecurity()
-        _request_loader(MockRequest())
-        assert local_cache.verify_hash_cache is not None
-        assert local_cache.verify_hash_cache.has_verify_hash_cache(MockUser(1, "token"))
+        with app.test_request_context("/"):
+            _request_loader(MockRequest())
+            assert local_cache.verify_hash_cache is not None
+            assert local_cache.verify_hash_cache.has_verify_hash_cache(
+                MockUser(1, "token")
+            )

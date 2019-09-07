@@ -4,13 +4,23 @@
     ~~~~~~~~~~~
 
     Test common functionality
+
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 import base64
 import json
 import pytest
 
-from utils import authenticate, json_authenticate, logout
+from utils import (
+    authenticate,
+    json_authenticate,
+    get_num_queries,
+    logout,
+    populate_data,
+    verify_token,
+)
 
 try:
     from cookielib import Cookie
@@ -201,8 +211,9 @@ def test_unauthorized_access_with_referrer(client, get_message):
     assert response.data.count(get_message("UNAUTHORIZED")) == 1
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="/unauthz")
 def test_roles_accepted(client):
+    # This specificaly tests that we can pass a URL for unauthorized_view.
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
         response = client.get("/admin_or_editor")
@@ -211,10 +222,10 @@ def test_roles_accepted(client):
 
     authenticate(client, "jill@lp.com")
     response = client.get("/admin_or_editor", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_permissions_accepted(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
@@ -224,10 +235,10 @@ def test_permissions_accepted(client):
 
     authenticate(client, "jill@lp.com")
     response = client.get("/admin_perm", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_permissions_required(client):
     for user in ["matt@lp.com"]:
         authenticate(client, user)
@@ -237,21 +248,21 @@ def test_permissions_required(client):
 
     authenticate(client, "joe@lp.com")
     response = client.get("/admin_perm_required", follow_redirects=True)
-    assert b"Home Page" in response.data
+    assert b"Unauthorized" in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_unauthenticated_role_required(client, get_message):
     response = client.get("/admin", follow_redirects=True)
     assert get_message("UNAUTHORIZED") in response.data
 
 
-@pytest.mark.settings(unauthorized_view="/")
+@pytest.mark.settings(unauthorized_view="unauthz")
 def test_multiple_role_required(client):
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(client, user)
         response = client.get("/admin_and_editor", follow_redirects=True)
-        assert b"Home Page" in response.data
+        assert b"Unauthorized" in response.data
         client.get("/logout")
 
     authenticate(client, "dave@lp.com")
@@ -490,3 +501,111 @@ def test_login_info(client):
     assert response.status_code == 200
     assert response.jdata["response"]["user"]["id"] == "1"
     assert "last_update" in response.jdata["response"]["user"]
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(post_login_view="/anon_required")
+def test_anon_required(client, get_message):
+    """ If logged in, should get 'anonymous_user_required' redirect """
+    response = authenticate(client, follow_redirects=False)
+    response = client.get("/register")
+    assert "location" in response.headers
+    assert "/anon_required" in response.location
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(post_login_view="/anon_required")
+def test_anon_required_json(client, get_message):
+    """ If logged in, should get 'anonymous_user_required' response """
+    authenticate(client, follow_redirects=False)
+    response = client.get("/register", headers={"Accept": "application/json"})
+    assert response.status_code == 400
+    assert response.jdata["response"]["errors"].encode("utf-8") == get_message(
+        "ANONYMOUS_USER_REQUIRED"
+    )
+
+
+@pytest.mark.settings(security_hashing_schemes=["sha256_crypt"])
+@pytest.mark.skip
+def test_auth_token_speed(app, client_nc):
+    # To run with old algorithm you have to comment out fs_uniquifier check in UserMixin
+    import timeit
+
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+
+    def time_get():
+        rp = client_nc.get(
+            "/login",
+            data={},
+            headers={"Content-Type": "application/json", "Authentication-Token": token},
+        )
+        assert rp.status_code == 200
+
+    t = timeit.timeit(time_get, number=50)
+    print("Time for 50 iterations: ", t)
+
+
+def test_change_uniquifier(app, client_nc):
+    # make sure that existing token no longer works once we change the uniquifier
+
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
+
+    # now change uniquifier
+    # deactivate matt
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.set_uniquifier(user)
+        app.security.datastore.commit()
+
+    verify_token(client_nc, token, status=401)
+
+    # get new token and verify it works
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
+
+
+def test_token_query(in_app_context):
+    # Verify that when authenticating with auth token (and not session)
+    # that there is just one DB query to get user.
+    app = in_app_context
+    populate_data(app)
+    client_nc = app.test_client(use_cookies=False)
+
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    current_nqueries = get_num_queries(app.security.datastore)
+
+    response = client_nc.get(
+        "/token",
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    assert response.status_code == 200
+    end_nqueries = get_num_queries(app.security.datastore)
+    assert current_nqueries is None or end_nqueries == (current_nqueries + 1)
+
+
+def test_session_query(in_app_context):
+    # Verify that when authenticating with auth token (but also sending session)
+    # that there are 2 DB queries to get user.
+    # This is since the session will load one - but auth_token_required needs to
+    # verify that the TOKEN is valid (and it is possible that the user_id in the
+    # session is different that the one in the token (huh?)
+    app = in_app_context
+    populate_data(app)
+    client = app.test_client()
+
+    response = json_authenticate(client)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    current_nqueries = get_num_queries(app.security.datastore)
+
+    response = client.get(
+        "/token",
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    assert response.status_code == 200
+    end_nqueries = get_num_queries(app.security.datastore)
+    assert current_nqueries is None or end_nqueries == (current_nqueries + 2)

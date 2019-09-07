@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    test_respnse
+    test_response
     ~~~~~~~~~~~~~~~~~
 
     Tests for validating default and plugable responses.

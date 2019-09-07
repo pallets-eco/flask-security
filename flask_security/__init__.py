@@ -7,6 +7,7 @@
     security via Flask-Login, Flask-Principal, Flask-WTF, and passlib.
 
     :copyright: (c) 2012-2019 by Matt Wright.
+    :copyright: (c) 2019 by J. Christopher Wagner.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -23,6 +24,7 @@ from .datastore import (
 )
 from .decorators import (
     auth_token_required,
+    anonymous_user_required,
     handle_csrf,
     http_auth_required,
     login_required,
@@ -47,6 +49,7 @@ from .forms import (
     TwoFactorVerifyCodeForm,
     TwoFactorVerifyPasswordForm,
 )
+from .models import fsqla
 from .signals import (
     confirm_instructions_sent,
     login_instructions_sent,
@@ -94,6 +97,7 @@ __all__ = (
     "SQLAlchemySessionUserDatastore",
     "Security",
     "UserMixin",
+    "anonymous_user_required",
     "auth_required",
     "auth_token_required",
     "confirm_instructions_sent",

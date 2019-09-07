@@ -11,6 +11,8 @@ Core
 ==============================================   =============================================
 ``SECRET_KEY``                                   This is actually part of Flask - but is used by
                                                  Flask-Security to sign all tokens.
+                                                 It is critical this is set to a strong value. For python3
+                                                 consider using: ``secrets.token_urlsafe()``
 ``SECURITY_BLUEPRINT_NAME``                      Specifies the name for the
                                                  Flask-Security blueprint. Defaults to
                                                  ``security``.
@@ -373,106 +375,116 @@ Miscellaneous
 
 .. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
 
-============================================= ==================================
-``SECURITY_USER_IDENTITY_ATTRIBUTES``         Specifies which attributes of the
-                                              user object can be used for login.
-                                              Defaults to ``['email']``.
-``SECURITY_SEND_REGISTER_EMAIL``              Specifies whether registration
-                                              email is sent. Defaults to
-                                              ``True``.
-``SECURITY_SEND_PASSWORD_CHANGE_EMAIL``       Specifies whether password change
-                                              email is sent. Defaults to
-                                              ``True``.
-``SECURITY_SEND_PASSWORD_RESET_EMAIL``        Specifies whether password reset
-                                              email is sent. Defaults to
-                                              ``True``.
-``SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL`` Specifies whether password reset
-                                              notice email is sent. Defaults to
-                                              ``True``.
+===================================================== ==================================
+``SECURITY_USER_IDENTITY_ATTRIBUTES``                 Specifies which attributes of the
+                                                      user object can be used for login.
+                                                      Defaults to ``['email']``.
+``SECURITY_SEND_REGISTER_EMAIL``                      Specifies whether registration
+                                                      email is sent. Defaults to
+                                                      ``True``.
+``SECURITY_SEND_PASSWORD_CHANGE_EMAIL``               Specifies whether password change
+                                                      email is sent. Defaults to
+                                                      ``True``.
+``SECURITY_SEND_PASSWORD_RESET_EMAIL``                Specifies whether password reset
+                                                      email is sent. Defaults to
+                                                      ``True``.
+``SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL``         Specifies whether password reset
+                                                      notice email is sent. Defaults to
+                                                      ``True``.
 
-``SECURITY_CONFIRM_EMAIL_WITHIN``             Specifies the amount of time a
-                                              user has before their confirmation
-                                              link expires. Always pluralized
-                                              the time unit for this value.
-                                              Defaults to ``5 days``.
-``SECURITY_RESET_PASSWORD_WITHIN``            Specifies the amount of time a
-                                              user has before their password
-                                              reset link expires. Always
-                                              pluralized the time unit for this
-                                              value. Defaults to ``5 days``.
-``SECURITY_LOGIN_WITHIN``                     Specifies the amount of time a
-                                              user has before a login link
-                                              expires. This is only used when
-                                              the passwordless login feature is
-                                              enabled. Always pluralize the
-                                              time unit for this value.
-                                              Defaults to ``1 days``.
-``SECURITY_AUTO_LOGIN_AFTER_CONFIRM``         If ``False`` then on confirmation
-                                              the user will be required to login again. Note that the
-                                              confirmation token is not valid after being used once.
-                                              If ``True``, then the user corresponding to the
-                                              confirmation token will be automatically logged
-                                              in.
-                                              Defaults to ``True``.
-``SECURITY_TWO_FACTOR_GOOGLE_AUTH_VALIDITY``  Specifies the number of seconds access token is
-                                              valid. Defaults to 2 minutes.
-``SECURITY_TWO_FACTOR_MAIL_VALIDITY``         Specifies the number of seconds
-                                              access token is valid. Defaults to 5 minutes.
-``SECURITY_TWO_FACTOR_SMS_VALIDITY``          Specifies the number of seconds access token is
-                                              valid. Defaults to 2 minutes.
-``SECURITY_LOGIN_WITHOUT_CONFIRMATION``       Specifies if a user may login
-                                              before confirming their email when
-                                              the value of
-                                              ``SECURITY_CONFIRMABLE`` is set to
-                                              ``True``. Defaults to ``False``.
-``SECURITY_CONFIRM_SALT``                     Specifies the salt value when
-                                              generating confirmation
-                                              links/tokens. Defaults to
-                                              ``confirm-salt``.
-``SECURITY_RESET_SALT``                       Specifies the salt value when
-                                              generating password reset
-                                              links/tokens. Defaults to
-                                              ``reset-salt``.
-``SECURITY_LOGIN_SALT``                       Specifies the salt value when
-                                              generating login links/tokens.
-                                              Defaults to ``login-salt``.
-``SECURITY_REMEMBER_SALT``                    Specifies the salt value when
-                                              generating remember tokens.
-                                              Remember tokens are used instead
-                                              of user ID's as it is more
-                                              secure. Defaults to
-                                              ``remember-salt``.
-``SECURITY_DEFAULT_REMEMBER_ME``              Specifies the default "remember
-                                              me" value used when logging in
-                                              a user. Defaults to ``False``.
-``SECURITY_TWO_FACTOR_REQUIRED``              If set to ``True`` then all users will be
-                                              required to setup and use two factor authorization.
-                                              Defaults to ``False``.
-``SECURITY_TWO_FACTOR_ENABLED_METHODS``       Specifies the default enabled
-                                              methods for two-factor
-                                              authentication. Defaults to
-                                              ``['mail', 'google_authenticator',
-                                              'sms']`` which are the only
-                                              supported method at the moment.
-``SECURITY_TWO_FACTOR_URI_SERVICE_NAME``      Specifies the name of the service
-                                              or application that the user is
-                                              authenticating to. Defaults to
-                                              ``service_name``
-``SECURITY_TWO_FACTOR_SMS_SERVICE``           Specifies the name of the sms
-                                              service provider. Defaults to
-                                              ``Dummy`` which does nothing.
-``SECURITY_TWO_FACTOR_SMS_SERVICE_CONFIG``    Specifies a dictionary of basic
-                                              configurations needed for use of a
-                                              sms service. Defaults to
-                                              ``{'ACCOUNT_ID': NONE, 'AUTH_TOKEN
-                                              ':NONE, 'PHONE_NUMBER': NONE}``
-``SECURITY_DATETIME_FACTORY``                 Specifies the default datetime
-                                              factory. Defaults to
-                                              ``datetime.datetime.utcnow``.
-``SECURITY_BACKWARDS_COMPAT_UNAUTHN``         If set to ``True`` then the default behavior for authentication
-                                              failures from one of Flask-Security's decorators will be restored to
-                                              be compatibile with prior releases (return 401 and some static html)
-============================================= ==================================
+``SECURITY_CONFIRM_EMAIL_WITHIN``                     Specifies the amount of time a
+                                                      user has before their confirmation
+                                                      link expires. Always pluralized
+                                                      the time unit for this value.
+                                                      Defaults to ``5 days``.
+``SECURITY_RESET_PASSWORD_WITHIN``                    Specifies the amount of time a
+                                                      user has before their password
+                                                      reset link expires. Always
+                                                      pluralized the time unit for this
+                                                      value. Defaults to ``5 days``.
+``SECURITY_LOGIN_WITHIN``                             Specifies the amount of time a
+                                                      user has before a login link
+                                                      expires. This is only used when
+                                                      the passwordless login feature is
+                                                      enabled. Always pluralize the
+                                                      time unit for this value.
+                                                      Defaults to ``1 days``.
+``SECURITY_AUTO_LOGIN_AFTER_CONFIRM``                 If ``False`` then on confirmation
+                                                      the user will be required to login again. Note that the
+                                                      confirmation token is not valid after being used once.
+                                                      If ``True``, then the user corresponding to the
+                                                      confirmation token will be automatically logged
+                                                      in.
+                                                      Defaults to ``True``.
+``SECURITY_TWO_FACTOR_GOOGLE_AUTH_VALIDITY``          Specifies the number of seconds access token is
+                                                      valid. Defaults to 2 minutes.
+``SECURITY_TWO_FACTOR_MAIL_VALIDITY``                 Specifies the number of seconds
+                                                      access token is valid. Defaults to 5 minutes.
+``SECURITY_TWO_FACTOR_SMS_VALIDITY``                  Specifies the number of seconds access token is
+                                                      valid. Defaults to 2 minutes.
+``SECURITY_LOGIN_WITHOUT_CONFIRMATION``               Specifies if a user may login
+                                                      before confirming their email when
+                                                      the value of
+                                                      ``SECURITY_CONFIRMABLE`` is set to
+                                                      ``True``. Defaults to ``False``.
+``SECURITY_CONFIRM_SALT``                             Specifies the salt value when
+                                                      generating confirmation
+                                                      links/tokens. Defaults to
+                                                      ``confirm-salt``.
+``SECURITY_RESET_SALT``                               Specifies the salt value when
+                                                      generating password reset
+                                                      links/tokens. Defaults to
+                                                      ``reset-salt``.
+``SECURITY_LOGIN_SALT``                               Specifies the salt value when
+                                                      generating login links/tokens.
+                                                      Defaults to ``login-salt``.
+``SECURITY_REMEMBER_SALT``                            Specifies the salt value when
+                                                      generating remember tokens.
+                                                      Remember tokens are used instead
+                                                      of user ID's as it is more
+                                                      secure. Defaults to
+                                                      ``remember-salt``.
+``SECURITY_DEFAULT_REMEMBER_ME``                      Specifies the default "remember
+                                                      me" value used when logging in
+                                                      a user. Defaults to ``False``.
+``SECURITY_TWO_FACTOR_REQUIRED``                      If set to ``True`` then all users will be
+                                                      required to setup and use two factor authorization.
+                                                      Defaults to ``False``.
+``SECURITY_TWO_FACTOR_ENABLED_METHODS``               Specifies the default enabled
+                                                      methods for two-factor
+                                                      authentication. Defaults to
+                                                      ``['mail', 'google_authenticator',
+                                                      'sms']`` which are the only
+                                                      supported method at the moment.
+``SECURITY_TWO_FACTOR_URI_SERVICE_NAME``              Specifies the name of the service
+                                                      or application that the user is
+                                                      authenticating to. Defaults to
+                                                      ``service_name``
+``SECURITY_TWO_FACTOR_SMS_SERVICE``                   Specifies the name of the sms
+                                                      service provider. Defaults to
+                                                      ``Dummy`` which does nothing.
+``SECURITY_TWO_FACTOR_SMS_SERVICE_CONFIG``            Specifies a dictionary of basic
+                                                      configurations needed for use of a
+                                                      sms service. Defaults to
+                                                      ``{'ACCOUNT_ID': NONE, 'AUTH_TOKEN
+                                                      ':NONE, 'PHONE_NUMBER': NONE}``
+``SECURITY_DATETIME_FACTORY``                         Specifies the default datetime
+                                                      factory. Defaults to
+                                                      ``datetime.datetime.utcnow``.
+``SECURITY_BACKWARDS_COMPAT_UNAUTHN``                 If set to ``True`` then the default behavior for authentication
+                                                      failures from one of Flask-Security's decorators will be restored to
+                                                      be compatible with releases prior to 3.3.0 (return 401 and some static html).
+                                                      Defaults to ``False``.
+``SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN``              If set to ``True`` then an Authentication-Token will be returned
+                                                      on every successful call to login, reset-password, change-password
+                                                      as part of the JSON response. This was the default prior to release 3.3.0
+                                                      - however sending Authentication-Tokens (which by default don't expire)
+                                                      to session based UIs is a bad security practice.
+                                                      Defaults to ``False``.
+``SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE``   When ``True`` changing the user's password will also change the user's
+                                                      ``fs_uniquifier`` (if it exists) such that existing authentication tokens
+                                                      will be rendered invalid.  This restores pre 3.3.0 behavior.
+===================================================== ==================================
 
 Messages
 -------------
@@ -483,6 +495,7 @@ element is the message and the second element is the error level.
 The default messages and error levels can be found in ``core.py``.
 
 * ``SECURITY_MSG_ALREADY_CONFIRMED``
+* ``SECURITY_MSG_ANONYMOUS_USER_REQUIRED``
 * ``SECURITY_MSG_CONFIRMATION_EXPIRED``
 * ``SECURITY_MSG_CONFIRMATION_REQUEST``
 * ``SECURITY_MSG_CONFIRMATION_REQUIRED``

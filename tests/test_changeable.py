@@ -4,13 +4,16 @@
     ~~~~~~~~~~~~~~~
 
     Changeable tests
+
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 import json
 
 import pytest
 from flask import Flask
-from utils import authenticate, json_authenticate
+from utils import authenticate, json_authenticate, verify_token
 
 from flask_security.core import UserMixin
 from flask_security.signals import password_changed
@@ -194,9 +197,37 @@ def test_token_change(app, client_nc):
         new_password_confirm="newpassword",
     )
     response = client_nc.post(
-        "/change",
+        "/change?include_auth_token=1",
         data=json.dumps(data),
         headers={"Content-Type": "application/json", "Authentication-Token": token},
     )
     assert response.status_code == 200
     assert "authentication_token" in response.jdata["response"]["user"]
+
+
+@pytest.mark.settings(backwards_compat_auth_token_invalid=True)
+def test_bc_password(app, client_nc):
+    # Test behavior of BACKWARDS_COMPAT_AUTH_TOKEN_INVALID
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
+
+    data = dict(
+        password="password",
+        new_password="newpassword",
+        new_password_confirm="newpassword",
+    )
+    response = client_nc.post(
+        "/change?include_auth_token=1",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    assert response.status_code == 200
+    assert "authentication_token" in response.jdata["response"]["user"]
+
+    # changing password should have rendered existing auth tokens invalid
+    verify_token(client_nc, token, status=401)
+
+    # but new auth token should work
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)

@@ -13,17 +13,7 @@
 from collections import namedtuple
 from functools import wraps
 
-from flask import (
-    Response,
-    _app_ctx_stack,
-    _request_ctx_stack,
-    abort,
-    current_app,
-    g,
-    redirect,
-    request,
-    url_for,
-)
+from flask import Response, _request_ctx_stack, abort, current_app, g, redirect, request
 from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from flask_wtf.csrf import CSRFError
@@ -85,7 +75,7 @@ def default_unauthz_handler(func, params):
             view = view()
         else:
             try:
-                view = url_for(view)
+                view = utils.get_url(view)
             except BuildError:
                 view = None
         utils.do_flash(*utils.get_message("UNAUTHORIZED"))
@@ -161,8 +151,7 @@ def handle_csrf(method):
         if method in utils.config_value("CSRF_PROTECT_MECHANISMS"):
             _csrf.protect()
         else:
-            ctx = _app_ctx_stack.top
-            ctx.fs_ignore_csrf = True
+            _request_ctx_stack.top.fs_ignore_csrf = True
 
 
 def http_auth_required(realm):
@@ -316,8 +305,7 @@ def unauth_csrf(fall_through=False):
                 utils.config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
                 and not current_user.is_authenticated
             ):
-                ctx = _app_ctx_stack.top
-                ctx.fs_ignore_csrf = True
+                _request_ctx_stack.top.fs_ignore_csrf = True
             else:
                 try:
                     _csrf.protect()
@@ -448,7 +436,7 @@ def permissions_accepted(*fsperms):
 
     N.B. Don't confuse these permissions with flask-principle Permission()!
 
-    :param fsperms: The possible permimssions.
+    :param fsperms: The possible permissions.
 
     .. versionadded:: 3.3.0
     """
@@ -470,10 +458,24 @@ def permissions_accepted(*fsperms):
 
 
 def anonymous_user_required(f):
+    """Decorator which requires that caller NOT be logged in.
+    If a logged in user access an endpoint protected with this decorator
+    they will be redirected to the ``SECURITY_POST_LOGIN_VIEW``.
+    If the caller requests a JSON response, a 400 will be returned.
+    """
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         if current_user.is_authenticated:
-            return redirect(utils.get_url(_security.post_login_view))
+            if _security._want_json(request):
+                return _security._render_json(
+                    dict(errors=utils.get_message("ANONYMOUS_USER_REQUIRED")[0]),
+                    400,
+                    None,
+                    None,
+                )
+            else:
+                return redirect(utils.get_url(_security.post_login_view))
         return f(*args, **kwargs)
 
     return wrapper

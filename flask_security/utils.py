@@ -620,6 +620,8 @@ def default_want_json(req):
 class FsJsonEncoder(JSONEncoder):
     """  Flask-Security JSON encoder.
     Extends Flask's JSONencoder to handle lazy-text.
+
+    .. versionadded:: 3.3.0
     """
 
     def default(self, obj):

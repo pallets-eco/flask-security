@@ -6,11 +6,12 @@
     Recoverable functionality tests
 """
 
+import json
 import time
 
 import pytest
 from flask import Flask
-from utils import authenticate, logout
+from utils import authenticate, json_authenticate, json_logout, logout, verify_token
 
 from flask_security.core import UserMixin
 from flask_security.forms import LoginForm
@@ -173,7 +174,7 @@ def test_recoverable_json(app, client, get_message):
 
         # Test submitting a new password
         response = client.post(
-            "/reset/" + token,
+            "/reset/" + token + "?include_auth_token",
             data='{"password": "newpassword",\
                                      "password_confirm": "newpassword"}',
             headers={"Content-Type": "application/json"},
@@ -189,7 +190,7 @@ def test_recoverable_json(app, client, get_message):
 
         # Test logging in with the new password
         response = client.post(
-            "/login",
+            "/login?include_auth_token",
             data='{"email": "joe@lp.com",\
                                      "password": "newpassword"}',
             headers={"Content-Type": "application/json"},
@@ -293,11 +294,12 @@ def test_reset_token_deleted_user(app, client, get_message, sqlalchemy_datastore
     with capture_reset_password_requests() as requests:
         client.post("/reset", data=dict(email="gene@lp.com"), follow_redirects=True)
 
-    user = requests[0]["user"]
     token = requests[0]["token"]
 
     # Delete user
     with app.app_context():
+        # load user (and role) to get into session so cascade delete works.
+        user = app.security.datastore.find_user(email="gene@lp.com")
         sqlalchemy_datastore.delete(user)
         sqlalchemy_datastore.commit()
 
@@ -459,3 +461,38 @@ def test_spa_get_bad_token(app, client, get_message):
         msg = get_message("INVALID_RESET_PASSWORD_TOKEN")
         assert msg == qparams["error"].encode("utf-8")
     assert len(flashes) == 0
+
+
+@pytest.mark.settings(backwards_compat_auth_token_invalid=True)
+def test_bc_password(app, client_nc):
+    # Test behavior of BACKWARDS_COMPAT_AUTH_TOKEN_INVALID
+    response = json_authenticate(client_nc, email="joe@lp.com")
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
+    json_logout(client_nc, token)
+
+    with capture_reset_password_requests() as requests:
+        response = client_nc.post(
+            "/reset",
+            data='{"email": "joe@lp.com"}',
+            headers={"Content-Type": "application/json"},
+        )
+        assert response.status_code == 200
+
+    reset_token = requests[0]["token"]
+
+    data = dict(password="newpassword", password_confirm="newpassword")
+    response = client_nc.post(
+        "/reset/" + reset_token + "?include_auth_token=1",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert "authentication_token" in response.jdata["response"]["user"]
+
+    # changing password should have rendered existing auth tokens invalid
+    verify_token(client_nc, token, status=401)
+
+    # but new auth token should work
+    token = response.jdata["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)

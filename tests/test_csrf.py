@@ -80,7 +80,7 @@ def json_login(
         data["csrf_token"] = csrf_token
 
     response = client.post(
-        endpoint or "/login",
+        endpoint or "/login" + "?include_auth_token",
         content_type="application/json",
         data=json.dumps(data),
         headers=headers,

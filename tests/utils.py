@@ -4,6 +4,9 @@
     ~~~~~
 
     Test utils
+
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 from flask import Response as BaseResponse
@@ -37,11 +40,38 @@ def authenticate(
 
 def json_authenticate(client, email="matt@lp.com", password="password", endpoint=None):
     data = '{"email": "%s", "password": "%s"}' % (email, password)
-    return client.post(endpoint or "/login", content_type="application/json", data=data)
+
+    # Get auth token always
+    ep = endpoint or "/login" + "?include_auth_token"
+    return client.post(ep, content_type="application/json", data=data)
+
+
+def verify_token(client_nc, token, status=None):
+    # Use passed auth token in API that requires auth and verify status.
+    # Pass in a client_nc to get valid results.
+    response = client_nc.get(
+        "/token",
+        headers={"Content-Type": "application/json", "Authentication-Token": token},
+    )
+    if status:
+        assert response.status_code == status
+    else:
+        assert b"Token Authentication" in response.data
 
 
 def logout(client, endpoint=None, **kwargs):
     return client.get(endpoint or "/logout", **kwargs)
+
+
+def json_logout(client, token, endpoint=None):
+    return client.post(
+        endpoint or "/logout",
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authentication-Token": token,
+        },
+    )
 
 
 def get_session(response):
@@ -76,10 +106,10 @@ def create_roles(ds):
         ("admin", ["full-read", "full-write", "super"]),
         ("editor", ["full-read", "full-write"]),
         ("author", ["full-read", "my-write"]),
-        ("simple", []),
+        ("simple", None),
     ]
     for role in roles:
-        if hasattr(ds.role_model, "permissions"):
+        if hasattr(ds.role_model, "permissions") and role[1]:
             ds.create_role(name=role[0], permissions=",".join(role[1]))
         else:
             ds.create_role(name=role[0])
@@ -93,7 +123,7 @@ def create_users(app, ds, count=None):
         ("dave@lp.com", "dave", "password", ["admin", "editor"], True, 345678, None),
         ("jill@lp.com", "jill", "password", ["author"], True, 456789, None),
         ("tiya@lp.com", "tiya", "password", [], False, 567890, None),
-        ("gene@lp.com", "gene", "password", [], True, 889900, None),
+        ("gene@lp.com", "gene", "password", ["simple"], True, 889900, None),
         ("jess@lp.com", "jess", None, [], True, 678901, None),
         ("gal@lp.com", "gal", "password", ["admin"], True, 112233, "sms"),
         (
