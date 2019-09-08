@@ -13,7 +13,6 @@ with io.open("flask_security/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 tests_require = [
-    "Flask-CLI>=0.4.0",
     "Flask-Mongoengine>=0.9.5",
     "Flask-Peewee>=0.6.5",
     "Flask-SQLAlchemy>=2.3",

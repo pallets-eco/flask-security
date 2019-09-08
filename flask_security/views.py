@@ -206,7 +206,7 @@ def login():
         if not request.is_json:
             return redirect(get_post_login_redirect(form.next.data))
 
-    if request.is_json:
+    if _security._want_json(request):
         if current_user.is_authenticated:
             form.user = current_user
         return _base_render_json(form, include_auth_token=True)
@@ -267,7 +267,7 @@ def register():
         # Only include auth token if in fact user is permitted to login
         return _base_render_json(form, include_auth_token=did_login)
 
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form)
 
     return _security.render_template(
@@ -293,7 +293,7 @@ def send_login():
         if not request.is_json:
             do_flash(*get_message("LOGIN_EMAIL_SENT", email=form.user.email))
 
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form)
 
     return _security.render_template(
@@ -359,7 +359,7 @@ def send_confirmation():
         if not request.is_json:
             do_flash(*get_message("CONFIRMATION_REQUEST", email=form.user.email))
 
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form)
 
     return _security.render_template(
@@ -456,7 +456,7 @@ def forgot_password():
         if not request.is_json:
             do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.user.email))
 
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form, include_user=False)
 
     return _security.render_template(
@@ -562,7 +562,7 @@ def reset_password(token):
         after_this_request(_commit)
         update_password(user, form.password.data)
         login_user(user)
-        if request.is_json:
+        if _security._want_json(request):
             login_form = _security.login_form(MultiDict({"email": user.email}))
             setattr(login_form, "user", user)
             return _base_render_json(login_form, include_auth_token=True)
@@ -574,7 +574,7 @@ def reset_password(token):
 
     # validation failure case - for forms - we try again including the token
     # for non-forms -  we just return errors and assume caller remembers token.
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form)
     return _security.render_template(
         config_value("RESET_PASSWORD_TEMPLATE"),
@@ -605,7 +605,7 @@ def change_password():
                 or get_url(_security.post_login_view)
             )
 
-    if request.is_json:
+    if _security._want_json(request):
         form.user = current_user
         return _base_render_json(form, include_auth_token=True)
 
@@ -640,7 +640,7 @@ def _two_factor_login(form):
     if user.tf_primary_method is None or user.tf_totp_secret is None:
         session["tf_state"] = "setup_from_login"
         json_response["tf_state"] = "setup_from_login"
-        if not request.is_json:
+        if not _security._want_json(request):
             return redirect(url_for("two_factor_setup"))
 
     # if user's two-factor properties are configured
@@ -653,7 +653,7 @@ def _two_factor_login(form):
             user=user, method=user.tf_primary_method, totp_secret=user.tf_totp_secret
         )
 
-        if not request.is_json:
+        if not _security._want_json(request):
             return redirect(url_for("two_factor_token_validation"))
 
     return _base_render_json(form, include_auth_token=True, additional=json_response)
@@ -730,7 +730,7 @@ def two_factor_setup():
             tf_disable(user)
             after_this_request(_commit)
             do_flash(*get_message("TWO_FACTOR_DISABLED"))
-            if not request.is_json:
+            if not _security._want_json(request):
                 return redirect(get_url(_security.post_login_view))
             else:
                 return _base_render_json(form)
@@ -744,7 +744,7 @@ def two_factor_setup():
 
         send_security_token(user=user, method=pm, totp_secret=user.tf_totp_secret)
         code_form = _security.two_factor_verify_code_form()
-        if not request.is_json:
+        if not _security._want_json(request):
             return _security.render_template(
                 config_value("TWO_FACTOR_SETUP_TEMPLATE"),
                 two_factor_setup_form=form,
@@ -754,7 +754,7 @@ def two_factor_setup():
                 **_ctx("tf_setup")
             )
 
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form, include_user=False)
 
     code_form = _security.two_factor_verify_code_form()
@@ -841,7 +841,7 @@ def two_factor_token_validation():
             return redirect(get_post_login_redirect())
 
     # GET or not successful POST
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form)
 
     # if we were trying to validate a new method
@@ -920,7 +920,7 @@ def two_factor_rescue():
         else:
             return "", 404
 
-    if request.is_json:
+    if _security._want_json(request):
         return _base_render_json(form, include_user=False)
 
     code_form = _security.two_factor_verify_code_form()
@@ -956,7 +956,7 @@ def two_factor_verify_password():
             form._errors = m
             return _base_render_json(form)
 
-    if request.is_json:
+    if _security._want_json(request):
         assert form.user == current_user
         # form.user = current_user
         return _base_render_json(form)
@@ -1016,7 +1016,7 @@ def two_factor_qrcode():
 
 def _tf_illegal_state(form, redirect_to):
     m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-    if not request.is_json:
+    if not _security._want_json(request):
         do_flash(m, c)
         return redirect(get_url(redirect_to))
     else:
