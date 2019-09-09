@@ -32,16 +32,16 @@
 """
 
 from flask import (
+    Blueprint,
     _request_ctx_stack,
+    abort,
+    after_this_request,
     current_app,
+    jsonify,
+    make_response,
     redirect,
     request,
-    after_this_request,
-    Blueprint,
     session,
-    abort,
-    make_response,
-    jsonify,
 )
 from flask_login import current_user
 from flask_wtf import csrf
@@ -71,16 +71,16 @@ from .utils import (
     get_post_logout_redirect,
     get_post_register_redirect,
     get_url,
+    json_error_response,
     login_user,
     logout_user,
     slash_url_suffix,
-    json_error_response,
 )
 from .twofactor import (
-    send_security_token,
-    generate_totp,
     complete_two_factor_process,
+    generate_totp,
     get_totp_uri,
+    send_security_token,
     tf_clean_session,
     tf_disable,
 )
