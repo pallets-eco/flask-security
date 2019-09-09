@@ -620,7 +620,6 @@ def default_want_json(req):
 def json_error_response(errors):
     """ Helper to create an error response that adheres to the openapi spec.
     """
-    print("[{}] {}".format(type(errors), errors))
     # Python 2 and 3 compatibility for checking if something is a string.
     try:  # pragma: no cover
         basestring
@@ -634,9 +633,7 @@ def json_error_response(errors):
     elif isinstance(errors, dict):
         # When the errors is a dict, use the DefaultJsonErrorResponse
         # (response/errors/name/messages) format
-        response_json = dict(errors=dict())
-        for name, error_list in errors.items():
-            response_json["errors"][name] = error_list
+        response_json = dict(errors=errors)
     else:
         raise TypeError("The errors argument should be either a str or dict.")
 
