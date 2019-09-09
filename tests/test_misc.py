@@ -483,9 +483,9 @@ def test_json_error_response_string():
     """ Unit test for correct response when a string is given. """
     error_msg = "This is an error!"
     response = json_error_response(errors=error_msg)
-    assert 'error' in response
-    assert 'errors' not in response
-    assert response['error'] == error_msg
+    assert "error" in response
+    assert "errors" not in response
+    assert response["error"] == error_msg
 
 
 def test_json_error_response_dict():
@@ -495,13 +495,13 @@ def test_json_error_response_dict():
         "name": "The name is too long.",
     }
     response = json_error_response(errors=error_msg)
-    assert 'errors' in response
-    assert 'error' not in response
-    assert response['errors'] == error_msg
+    assert "errors" in response
+    assert "error" not in response
+    assert response["errors"] == error_msg
 
 
 def test_json_error_response_typeerror():
     """ Unit test for checking for error raising. """
     error_msg = ("tuple",)
     with pytest.raises(TypeError):
-        response = json_error_response(errors=error_msg)
+        json_error_response(errors=error_msg)
