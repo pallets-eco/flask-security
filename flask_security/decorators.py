@@ -29,9 +29,19 @@ _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
 BasicAuth = namedtuple("BasicAuth", "username, password")
 
+# NOTE: this is here for backwards compatibility, it is deprecated and
+# to be removed in 4.0
+_default_unauthenticated_html = """
+    <h1>Unauthorized</h1>
+    <p>The server could not verify that you are authorized to access the URL
+    requested. You either supplied the wrong credentials (e.g. a bad password),
+    or your browser doesn't understand how to supply the credentials required.
+    </p>
+    """
+
 
 def _get_unauthenticated_response(text=None, headers=None):
-    text = text or ""
+    text = text or _default_unauthenticated_html
     headers = headers or {}
     return Response(text, 401, headers)
 
