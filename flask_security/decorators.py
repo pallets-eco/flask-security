@@ -163,8 +163,7 @@ def handle_csrf(method):
         if method in utils.config_value("CSRF_PROTECT_MECHANISMS"):
             _csrf.protect()
         else:
-            ctx = _request_ctx_stack.top
-            ctx.fs_ignore_csrf = True
+            _request_ctx_stack.top.fs_ignore_csrf = True
 
 
 def http_auth_required(realm):
@@ -318,8 +317,7 @@ def unauth_csrf(fall_through=False):
                 utils.config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
                 and not current_user.is_authenticated
             ):
-                ctx = _request_ctx_stack.top
-                ctx.fs_ignore_csrf = True
+                _request_ctx_stack.top.fs_ignore_csrf = True
             else:
                 try:
                     _csrf.protect()
