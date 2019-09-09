@@ -85,6 +85,31 @@ these steps:
 
   #. Be sure that the CI tests and coverage checks pass.
 
+Updating the Swagger API document
+----------------------------------
+When making changes to the external API, you need to update the openapi.yaml
+formal specification. To do this - install the swagger editor locally::
+
+    $ npm -g install swagger-editor-dist http-server
+
+Then in a browser navigate to::
+
+    file:///usr/local/lib/node_modules/swagger-editor-dist/index.html#
+
+
+Edit - it is a WYSIWYG editor and will show you errors. Once you save (as yaml) you
+need to look at what it will render as::
+
+    $ python setup.py build_sphinx
+    $ http-server
+
+Then in your browser navigate to::
+
+    http://localhost:8081/docs/_build/html/index.html
+    or
+    http://localhost:8081/docs/_build/html/_static/openapi_view.html
+
+
 
 Testing
 -------
