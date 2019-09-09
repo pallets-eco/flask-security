@@ -850,7 +850,7 @@ class Security(object):
             # N.B. as of jinja 2.9 '_' is always registered
             # http://jinja.pocoo.org/docs/2.10/extensions/#i18n-extension
             if "_" not in app.jinja_env.globals:
-                app.jinja_env.globals["_"] = state.i18n_domain.gettext
+                current_app.jinja_env.globals["_"] = state.i18n_domain.gettext
 
         @app.before_first_request
         def _csrf_init():
@@ -901,9 +901,9 @@ class Security(object):
             if csrf:
                 csrf.exempt("flask_security.views.logout")
             if csrf_cookie and csrf_cookie["key"]:
-                app.after_request(csrf_cookie_handler)
+                current_app.after_request(csrf_cookie_handler)
                 # Add configured header to WTF_CSRF_HEADERS
-                app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))
+                current_app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))
 
         app.extensions["security"] = state
 
