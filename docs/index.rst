@@ -1,5 +1,15 @@
-Flask-Security
-==============
+.. rst-class:: hide-header
+
+
+Welcome to Flask-Security
+=========================
+
+.. image:: _static/logo-owl-full-240.png
+    :alt: Flask-Security: add a drop of security to your Flask application.
+    :align: left
+    :width: 100%
+    :target: https://github.com/jwag956/flask-security
+
 
 Flask-Security allows you to quickly add common security mechanisms to your
 Flask application. They include:
@@ -37,4 +47,42 @@ extensions out of the box for data persistence:
 4. `PonyORM <http://pypi.python.org/pypi/pony/>`_
 
 
-.. include:: contents.rst.inc
+Getting Started
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   features
+   configuration
+   quickstart
+   models
+
+Customizing and Usage Patterns
+-------------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   customizing
+   two_factor_configurations
+   spa
+   patterns
+
+API
+---
+
+.. toctree::
+   :maxdepth: 2
+
+   api
+
+Additional Notes
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   contributing
+   changelog
+   authors
