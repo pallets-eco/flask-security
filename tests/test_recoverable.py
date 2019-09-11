@@ -219,7 +219,7 @@ def test_recoverable_json(app, client, get_message):
                                      "password_confirm": "newpassword"}',
             headers={"Content-Type": "application/json"},
         )
-        assert response.jdata["response"]["errors"].encode("utf-8") == get_message(
+        assert response.jdata["response"]["error"].encode("utf-8") == get_message(
             "INVALID_RESET_PASSWORD_TOKEN"
         )
     assert len(flashes) == 0

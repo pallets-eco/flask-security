@@ -19,8 +19,9 @@ __pycache__/
 pip-log.txt
 
 # Unit test / coverage reports
-.coverage
+.coverage*
 .tox
+.travis*requirements*
 
 #Translations
 *.mo

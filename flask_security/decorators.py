@@ -27,7 +27,10 @@ _security = LocalProxy(lambda: current_app.extensions["security"])
 
 _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
+BasicAuth = namedtuple("BasicAuth", "username, password")
 
+# NOTE: this is here for backwards compatibility, it is deprecated and
+# to be removed in 4.0
 _default_unauthenticated_html = """
     <h1>Unauthorized</h1>
     <p>The server could not verify that you are authorized to access the URL
@@ -35,8 +38,6 @@ _default_unauthenticated_html = """
     or your browser doesn't understand how to supply the credentials required.
     </p>
     """
-
-BasicAuth = namedtuple("BasicAuth", "username, password")
 
 
 def _get_unauthenticated_response(text=None, headers=None):
@@ -58,17 +59,22 @@ def default_unauthn_handler(mechanisms, headers=None):
     We let Flask-Login handle this.
 
     """
+    unauthn_message, _ = utils.get_message("UNAUTHENTICATED")
+
     if utils.config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        return _security._render_json({}, 401, headers, None)
+        payload = utils.json_error_response(errors=unauthn_message)
+        return _security._render_json(payload, 401, headers, None)
     return _security.login_manager.unauthorized()
 
 
 def default_unauthz_handler(func, params):
+    unauthz_message, unauthz_message_type = utils.get_message("UNAUTHORIZED")
     if _security._want_json(request):
-        return _security._render_json({}, 403, None, None)
+        payload = utils.json_error_response(errors=unauthz_message)
+        return _security._render_json(payload, 403, None, None)
     view = utils.config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
@@ -78,7 +84,7 @@ def default_unauthz_handler(func, params):
                 view = utils.get_url(view)
             except BuildError:
                 view = None
-        utils.do_flash(*utils.get_message("UNAUTHORIZED"))
+        utils.do_flash(unauthz_message, unauthz_message_type)
         redirect_to = "/"
         if request.referrer and not request.referrer.split("?")[0].endswith(
             request.path

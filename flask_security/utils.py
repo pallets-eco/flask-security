@@ -617,6 +617,29 @@ def default_want_json(req):
     return False
 
 
+def json_error_response(errors):
+    """ Helper to create an error response that adheres to the openapi spec.
+    """
+    # Python 2 and 3 compatibility for checking if something is a string.
+    try:  # pragma: no cover
+        basestring
+        string_type_check = (basestring, unicode)
+    except NameError:  # pragma: no cover
+        string_type_check = str
+
+    if isinstance(errors, string_type_check):
+        # When the errors is a string, use the response/error/message format
+        response_json = dict(error=errors)
+    elif isinstance(errors, dict):
+        # When the errors is a dict, use the DefaultJsonErrorResponse
+        # (response/errors/name/messages) format
+        response_json = dict(errors=errors)
+    else:
+        raise TypeError("The errors argument should be either a str or dict.")
+
+    return response_json
+
+
 class FsJsonEncoder(JSONEncoder):
     """  Flask-Security JSON encoder.
     Extends Flask's JSONencoder to handle lazy-text.

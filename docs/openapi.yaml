@@ -563,7 +563,7 @@ components:
           type: object
           required: [id]
           description: >
-            By default just 'id'is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
+            By default just 'id' is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
           properties:
             id:
               type: integer
