@@ -7,7 +7,6 @@ include babel.ini
 include pytest.ini
 include tox.ini
 include requirements.txt
-recursive-include artwork *.svg
 recursive-include docs *.html
 recursive-include docs *.inc
 recursive-include docs *.png
