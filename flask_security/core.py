@@ -923,26 +923,23 @@ class Security(object):
         if cv("TWO_FACTOR", app=app):
             if len(cv("TWO_FACTOR_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some TWO_FACTOR_ENABLED_METHODS")
-            self._check_two_factor_modules(
-                "pyqrcode", "TWO_FACTOR", cv("TWO_FACTOR", app=app)
-            )
-            self._check_two_factor_modules(
-                "cryptography", "TWO_FACTOR_SECRET", "has been set"
-            )
+            self._check_modules("pyqrcode", "TWO_FACTOR", cv("TWO_FACTOR", app=app))
+            self._check_modules("cryptography", "TWO_FACTOR_SECRET", "has been set")
 
             if cv("TWO_FACTOR_SMS_SERVICE", app=app) == "Twilio":  # pragma: no cover
-                self._check_two_factor_modules(
+                self._check_modules(
                     "twilio",
                     "TWO_FACTOR_SMS_SERVICE",
                     cv("TWO_FACTOR_SMS_SERVICE", app=app),
                 )
             state.totp_factory(tf_setup(app))
 
+        if cv("USE_VERIFY_PASSWORD_CACHE", app=app):
+            self._check_modules("cachetools", "USE_VERIFY_PASSWORD_CACHE", True)
+
         return state
 
-    def _check_two_factor_modules(
-        self, module, config_name, config_value
-    ):  # pragma: no cover
+    def _check_modules(self, module, config_name, config_value):  # pragma: no cover
         PY3 = sys.version_info[0] == 3
         if PY3:
             from importlib.util import find_spec
