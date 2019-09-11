@@ -41,7 +41,7 @@ Password Hashing
 
 Password hashing is enabled with `passlib`_. Passwords are hashed with the
 `bcrypt`_ function by default but you can easily configure the hashing
-algorithm. You should **always use an hashing algorithm** in your production
+algorithm. You should **always use a hashing algorithm** in your production
 environment. You may also specify to use HMAC with a configured salt value in
 addition to the algorithm chosen. Bear in mind passlib does not assume which
 algorithm you will choose and may require additional libraries to be installed.
@@ -67,11 +67,11 @@ requests to protected resources. The auth token is supplied in the request
 through an HTTP header or query string parameter. By default the HTTP header
 name is `Authentication-Token` and the default query string parameter name is
 `auth_token`. Authentication tokens are generated using a uniquifier field in the
-user's UserModel. If that field is changed (via :meth:`.UserDatastore.set_uniqifier`)
+user's UserModel. If that field is changed (via :meth:`.UserDatastore.set_uniquifier`)
 then any existing authentication tokens will no longer be valid. Changing
 the user's password will not affect tokens.
 
-Note that prior to release 3.3.0 or if the Usermodel doesn't contain the ``fs_uniquifier``
+Note that prior to release 3.3.0 or if the UserModel doesn't contain the ``fs_uniquifier``
 attribute the authentication tokens are generated using the user's password.
 Thus if the user changes his or her password their existing authentication token
 will become invalid. A new token will need to be retrieved using the user's new
@@ -167,7 +167,7 @@ registered. They can be completely disabled or their names can be changed.
 Run ``flask --help`` and look for users and roles.
 
 
-.. _Click: http://click.pocoo.org/
+.. _Click: https://palletsprojects.com/p/click/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
 .. _Flask-WTF: https://flask-wtf.readthedocs.io/en/stable/csrf.html
 .. _alternative token: https://flask-login.readthedocs.io/en/latest/#alternative-tokens
