@@ -32,6 +32,7 @@ from flask_security.forms import (
 from flask_security.utils import (
     capture_reset_password_requests,
     encode_string,
+    json_error_response,
     hash_data,
     send_mail,
     string_types,
@@ -476,3 +477,31 @@ def test_per_request_xlate(app, client):
     assert response.jdata["response"]["errors"]["new_password"] == [
         "Merci d'indiquer un mot de passe"
     ]
+
+
+def test_json_error_response_string():
+    """ Unit test for correct response when a string is given. """
+    error_msg = "This is an error!"
+    response = json_error_response(errors=error_msg)
+    assert "error" in response
+    assert "errors" not in response
+    assert response["error"] == error_msg
+
+
+def test_json_error_response_dict():
+    """ Unit test for correct response when a dict is given. """
+    error_msg = {
+        "e-mail": "The e-mail address is already in the system.",
+        "name": "The name is too long.",
+    }
+    response = json_error_response(errors=error_msg)
+    assert "errors" in response
+    assert "error" not in response
+    assert response["errors"] == error_msg
+
+
+def test_json_error_response_typeerror():
+    """ Unit test for checking for error raising. """
+    error_msg = ("tuple",)
+    with pytest.raises(TypeError):
+        json_error_response(errors=error_msg)

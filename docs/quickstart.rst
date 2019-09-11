@@ -403,6 +403,6 @@ with a single HTTP proxy in front of the web application::
     app.wsgi_app = ProxyFix(app.wsgi_app, num_proxies=1)
 
 To learn more about the ``ProxyFix`` middleware, please see the
-`Werkzeug documentation <http://werkzeug.pocoo.org/docs/latest/contrib/fixers/#werkzeug.contrib.fixers.ProxyFix>`_.
+`Werkzeug documentation <https://werkzeug.palletsprojects.com/en/0.15.x/middleware/proxy_fix/#module-werkzeug.middleware.proxy_fix>`_.
 
 .. _Flask-Security repo: https://github.com/jwag956/flask-security

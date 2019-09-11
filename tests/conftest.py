@@ -117,6 +117,12 @@ def app(request):
     def http():
         return "HTTP Authentication"
 
+    @app.route("/http_admin_required")
+    @http_auth_required
+    @permissions_required("admin")
+    def http_admin_required():
+        return "HTTP Authentication"
+
     @app.route("/http_custom_realm")
     @http_auth_required("My Realm")
     def http_custom_realm():

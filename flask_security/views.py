@@ -32,15 +32,16 @@
 """
 
 from flask import (
+    Blueprint,
     _request_ctx_stack,
+    abort,
+    after_this_request,
     current_app,
+    jsonify,
+    make_response,
     redirect,
     request,
-    jsonify,
-    after_this_request,
-    Blueprint,
     session,
-    abort,
 )
 from flask_login import current_user
 from flask_wtf import csrf
@@ -70,15 +71,16 @@ from .utils import (
     get_post_logout_redirect,
     get_post_register_redirect,
     get_url,
+    json_error_response,
     login_user,
     logout_user,
     slash_url_suffix,
 )
 from .twofactor import (
-    send_security_token,
-    generate_totp,
     complete_two_factor_process,
+    generate_totp,
     get_totp_uri,
+    send_security_token,
     tf_clean_session,
     tf_disable,
 )
@@ -97,7 +99,7 @@ def _base_render_json(
     user = form.user if hasattr(form, "user") else None
     if has_errors:
         code = 400
-        payload = dict(errors=form.errors)
+        payload = json_error_response(errors=form.errors)
     else:
         code = 200
         payload = dict()
@@ -127,7 +129,12 @@ def _base_render_json(
 def default_render_json(payload, code, headers, user):
     """ Default JSON response handler.
     """
-    return jsonify(dict(meta=dict(code=code), response=payload)), code, headers
+    # Force Content-Type header to json.
+    if headers is None:
+        headers = dict()
+    headers["Content-Type"] = "application/json"
+    payload = dict(meta=dict(code=code), response=payload)
+    return make_response(jsonify(payload), code, headers)
 
 
 def _commit(response=None):
@@ -941,12 +948,11 @@ def two_factor_verify_password():
         # form called verify_and_update_password()
         after_this_request(_commit)
         session["tf_confirmed"] = True
+        m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
         if not request.is_json:
-            do_flash(*get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE"))
+            do_flash(m, c)
             return redirect(url_for("two_factor_setup"))
-
         else:
-            m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
             form._errors = m
             return _base_render_json(form)
 
