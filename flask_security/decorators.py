@@ -68,7 +68,7 @@ def default_unauthn_handler(mechanisms, headers=None):
     )
 
     if utils.config_value("BACKWARDS_COMPAT_UNAUTHN"):
-        return _get_unauthenticated_response(text=unauthn_html, headers=headers)
+        return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
         payload = utils.json_error_response(errors=unauthn_message)
