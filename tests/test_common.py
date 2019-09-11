@@ -365,8 +365,7 @@ def test_http_auth_no_authorization_json(client, get_message):
 def test_http_auth_no_authentication(client, get_message):
     response = client.get("/http", headers={})
     assert response.status_code == 401
-    assert b"<h1>Unauthenticated</h1>" in response.data
-    assert get_message("UNAUTHENTICATED") in response.data
+    assert b"<h1>Unauthorized</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
@@ -392,7 +391,7 @@ def test_invalid_http_auth_invalid_username(client):
             % base64.b64encode(b"bogus:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthenticated</h1>" in response.data
+    assert b"<h1>Unauthorized</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
@@ -425,7 +424,7 @@ def test_invalid_http_auth_bad_password(client):
             % base64.b64encode(b"joe@lp.com:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthenticated</h1>" in response.data
+    assert b"<h1>Unauthorized</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
@@ -439,7 +438,7 @@ def test_custom_http_auth_realm(client):
             % base64.b64encode(b"joe@lp.com:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthenticated</h1>" in response.data
+    assert b"<h1>Unauthorized</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="My Realm"' == response.headers["WWW-Authenticate"]
 
@@ -468,7 +467,7 @@ def test_multi_auth_basic_invalid(client):
             % base64.b64encode(b"bogus:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthenticated</h1>" in response.data
+    assert b"<h1>Unauthorized</h1>" in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 

@@ -59,13 +59,7 @@ def default_unauthn_handler(mechanisms, headers=None):
     We let Flask-Login handle this.
 
     """
-    unauthn_message, unauthn_message_type = utils.get_message("UNAUTHENTICATED")
-
-    unauthn_html = """
-        <h1>Unauthenticated</h1>
-        <p>{message}</p>""".format(
-        message=unauthn_message
-    )
+    unauthn_message, _ = utils.get_message("UNAUTHENTICATED")
 
     if utils.config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
