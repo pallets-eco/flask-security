@@ -293,7 +293,7 @@ tandem with Flask-Login, behaves as follows:
       then if ``SECURITY_UNAUTHORIZED_VIEW`` is defined, the response will redirected.
       If ``SECURITY_UNAUTHORIZED_VIEW`` is not defined, then ``abort(403)`` is called.
 
-All this can be easily changed by defining any or all of :meth:`.Security.render_json`,
+All this can be easily changed by registering any or all of :meth:`.Security.render_json`,
 :meth:`.Security.unauthn_handler` and :meth:`.Security.unauthz_handler`.
 
 The decision on whether to return JSON is based on:
