@@ -9,8 +9,6 @@
     :license: MIT, see LICENSE for more details.
 """
 
-from cachetools import TTLCache
-
 from .utils import config_value
 
 
@@ -23,7 +21,14 @@ class VerifyHashCache:
     def __init__(self):
         ttl = config_value("VERIFY_HASH_CACHE_TTL", default=(60 * 5))
         max_size = config_value("VERIFY_HASH_CACHE_MAX_SIZE", default=500)
-        self._cache = TTLCache(max_size, ttl)
+
+        try:
+            from cachetools import TTLCache
+
+            self._cache = TTLCache(max_size, ttl)
+        except ImportError:
+            # this should have been checked at app init.
+            raise
 
     def has_verify_hash_cache(self, user):
         """Check given user id is in cache."""

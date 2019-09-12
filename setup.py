@@ -17,6 +17,7 @@ tests_require = [
     "Flask-Peewee>=0.6.5",
     "Flask-SQLAlchemy>=2.3",
     "bcrypt>=3.1.5",
+    "cachetools>=3.1.0",
     "check-manifest>=0.25",
     "coverage>=4.0",
     "cryptography>=2.3.1",
@@ -61,7 +62,6 @@ install_requires = [
     "Flask-BabelEx>=0.9.3",
     "itsdangerous>=1.1.0",
     "passlib>=1.7.1",
-    "cachetools>=3.1.0",
 ]
 
 packages = find_packages()

@@ -45,13 +45,13 @@ Core
                                                  ``pbkdf2_sha512``. Defaults to
                                                  ``bcrypt``.
 ``SECURITY_PASSWORD_SCHEMES``                    List of support password hash algorithms.
-                                                 `SECURITY_PASSWORD_HASH` must be from this list.
+                                                 ``SECURITY_PASSWORD_HASH`` must be from this list.
                                                  Passwords encrypted with any of these schemes will be honored.
 ``SECURITY_DEPRECATED_PASSWORD_SCHEMES``         List of password hash algorithms that are considered weak and
                                                  will be accepted, however on first use, will be re-hashed
-                                                 to the current default `SECURITY_PASSWORD_HASH`.
+                                                 to the current default ``SECURITY_PASSWORD_HASH``.
                                                  Default is ``["auto"]`` which means any password found that wasn't
-                                                 hashed using `SECURITY_PASSWORD_HASH` will be re-hashed.
+                                                 hashed using ``SECURITY_PASSWORD_HASH`` will be re-hashed.
 ``SECURITY_PASSWORD_SALT``                       Specifies the HMAC salt. Defaults to
                                                  ``None``.
 ``SECURITY_PASSWORD_SINGLE_HASH``                A list of schemes that should not be hashed
@@ -101,7 +101,11 @@ Core
                                                  verification, which speeds up further
                                                  calls to authenticated routes using
                                                  authentication-token and slow hash algorithms
-                                                 (like bcrypt). Defaults to ``None``
+                                                 (like bcrypt). Defaults to ``None``.
+                                                 If you set this - you must ensure that `cachetools`_ is installed.
+                                                 **Note: this will likely be deprecated and removed in 4.0. It**
+                                                 **has known limitations, and there is now a better/faster way to**
+                                                 **generate and verify auth tokens.**
 ``SECURITY_VERIFY_HASH_CACHE_MAX_SIZE``          Limitation for token validation cache size
                                                  Rules are the ones of TTLCache of
                                                  cachetools package. Defaults to
@@ -150,6 +154,8 @@ Core
 .. _Totp: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#totp-encryption-setup
 .. _set_cookie: https://flask.palletsprojects.com/en/1.1.x/api/?highlight=set_cookie#flask.Response.set_cookie
 .. _axios: https://github.com/axios/axios
+.. _cachetools: https://pypi.org/project/cachetools/
+
 
 URLs and Views
 --------------
