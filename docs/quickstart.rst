@@ -202,6 +202,7 @@ and models.py. You can also do the models a folder and spread your tables there.
         current_login_ip = Column(String(100))
         login_count = Column(Integer)
         active = Column(Boolean())
+        fs_uniquifier = Column(String(255))
         confirmed_at = Column(DateTime())
         roles = relationship('Role', secondary='roles_users',
                              backref=backref('users', lazy='dynamic'))
@@ -255,6 +256,7 @@ possible using MongoEngine:
         email = db.StringField(max_length=255)
         password = db.StringField(max_length=255)
         active = db.BooleanField(default=True)
+        fs_uniquifier = Column(String(255))
         confirmed_at = db.DateTimeField()
         roles = db.ListField(db.ReferenceField(Role), default=[])
 
@@ -326,6 +328,7 @@ possible using Peewee:
         email = TextField()
         password = TextField()
         active = BooleanField(default=True)
+        fs_uniquifier = TextField(
         confirmed_at = DateTimeField(null=True)
 
     class UserRoles(db.Model):
