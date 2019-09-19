@@ -34,18 +34,18 @@ Most have configuration variables that restore prior behavior**.
 - (:issue:`127`) JSON response was failing due to LazyStrings in error response.
 - (:issue:`117`) Making a user inactive should stop all access immediately.
 - (:issue:`134`) Confirmation token can no longer be reused. Added
-  ``SECURITY_AUTO_LOGIN_AFTER_CONFIRM`` option for applications that don't want the user
+  *SECURITY_AUTO_LOGIN_AFTER_CONFIRM* option for applications that don't want the user
   to be automatically logged in after confirmation (defaults to True - existing behavior).
 - (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
   confirmation was required. This was a huge security hole - it has been fixed.
 - (:issue:`166`) :meth:`.default_render_json` uses ``flask.make_response`` and forces the Content-Type to JSON for generating the response.
-- (:issue:`166`) ``SECURITY_MSG_UNAUTHENTICATED`` added to the configuration.
+- (:issue:`166`) *SECURITY_MSG_UNAUTHENTICATED* added to the configuration.
 - (:pr:`168`) When using the @auth_required or @auth_token_required decorators, the token
   would be verified twice, and the DB would be queried twice for the user. Given how slow
   token verification is - this was a significant issue. That has been fixed.
 - (:issue:`84`) The :func:`.anonymous_user_required` was not JSON friendly - always
   performing a redirect. Now, if the request 'wants' a JSON response - it will receive a 400 with an error
-  message defined by ``SECURITY_MSG_ANONYMOUS_USER_REQUIRED``.
+  message defined by *SECURITY_MSG_ANONYMOUS_USER_REQUIRED*.
 
 Possible compatibility issues
 +++++++++++++++++++++++++++++
@@ -60,7 +60,7 @@ Possible compatibility issues
   or @http_auth_required. Before, a 401 was returned with some stock html. Now, Flask-Login.unauthorized() is
   called (the same as @login_required does) - which by default redirects to a login page/view. If you had provided your own
   :meth:`.Security.unauthorized_callback` there are no changes - that will still be called first. The old default
-  behavior can be restored by setting ``BACKWARDS_COMPAT_UNAUTH`` to True.
+  behavior can be restored by setting *SECURITY_BACKWARDS_COMPAT_UNAUTHN* to True.
 
 - (:issue:`127`) Fix for LazyStrings in json error response. The fix for this has Flask-Security registering
   its own JsonEncoder on its blueprint. If you registered your own JsonEncoder for your app - it will no
@@ -80,13 +80,13 @@ Possible compatibility issues
       be sent this token - even though it was likely ignored. Since these tokens by default have no expiration time
       this exposed a needless security hole. The new default behavior is to ONLY return the Authentication Token from those APIs
       if the query param ``include_auth_token`` is added to the request. Prior behavior can be restored by setting
-      the ``BACKWARDS_COMPAT_AUTH_TOKEN`` configuration variable.
+      the *SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN* configuration variable.
     * Since the old Authentication Token algorithm used the (hashed) user's password, those tokens would be invalidated
       whenever the user changed their password. This is not likely to be what most users expect. Since the new
       Authentication Token algorithm doesn't refer to the user's password, changing the user's password won't invalidate
       outstanding Authentication Tokens. The method :meth:`.UserDatastore.set_uniquifier` can be used by an administrator
       to change a user's ``fs_uniquifier`` - but nothing the user themselves can do to invalidate their Authentication Tokens.
-      Setting the ``BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE`` configuration variable will cause the user's ``fs_uniquifier`` to
+      Setting the *SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE* configuration variable will cause the user's ``fs_uniquifier`` to
       be changed when they change their password, thus restoring prior behavior.
 
 
@@ -131,7 +131,7 @@ Version 3.2.0
 Released June 26th 2019
 
 - (opr #839) Support caching of authentication token (eregnier).
-  This adds a new configuration variable SECURITY_USE_VERIFY_PASSWORD_CACHE
+  This adds a new configuration variable *SECURITY_USE_VERIFY_PASSWORD_CACHE*
   which enables a cache (with configurable TTL) for authentication tokens.
   This is a big performance boost for those accessing Flask-Security via token
   as opposed to session.

@@ -585,7 +585,7 @@ def test_anon_required_json(client, get_message):
     authenticate(client, follow_redirects=False)
     response = client.get("/register", headers={"Accept": "application/json"})
     assert response.status_code == 400
-    assert response.jdata["response"]["errors"].encode("utf-8") == get_message(
+    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
         "ANONYMOUS_USER_REQUIRED"
     )
 

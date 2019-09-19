@@ -137,7 +137,7 @@ An example using `axios <https://github.com/axios/axios>`_ ::
 
 
 Note that we use the header name ``X-CSRF-Token`` as that is one of the default
-headers configured in Flask-WTF (``WTF_CSRF_HEADERS``)
+headers configured in Flask-WTF (*WTF_CSRF_HEADERS*)
 
 To protect your application's endpoints (that presumably are not using Flask forms),
 you need to enable CSRF as described in the FlaskWTF `documentation <https://flask-wtf.readthedocs.io/en/stable/csrf.html>`_: ::
@@ -146,7 +146,7 @@ you need to enable CSRF as described in the FlaskWTF `documentation <https://fla
 
 This will turn on CSRF protection on ALL endpoints, including Flask-Security. This protection differs slightly from
 the default that is part of FlaskForm in that it will first look at the request body and see if it can find a form field that contains
-the csrf-token, and if it can't, it will check if the request has a header that is listed in ``WTF_CSRF_HEADERS`` and use that.
+the csrf-token, and if it can't, it will check if the request has a header that is listed in *WTF_CSRF_HEADERS* and use that.
 Be aware that if you enable this it will ONLY work if you send the session cookie on each request.
 
 Using a Cookie
@@ -201,7 +201,7 @@ CSRF: Pro-Tips
 ++++++++++++++
     #) Be aware that for CSRF to work, callers MUST send the session cookie. So
        for pure API (token based), and no session cookie - there is no way to support 'login CSRF'.
-       So your app must set ``SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS``
+       So your app must set *SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS*
        (or clients must use CSRF/session cookie for logging
        in then once they have an authentication token, no further need for cookie).
 
@@ -218,7 +218,7 @@ CSRF: Pro-Tips
     #) If you can't use a decorator, Flask-Security exposes the underlying method
        :func:`flask_security.handle_csrf`.
 
-    #) Consider starting by setting ``SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS`` to True. Your
+    #) Consider starting by setting *SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS* to True. Your
        application likely doesn't need 'login CSRF' protection, and it is frustrating
        to not even be able to login via API!
 

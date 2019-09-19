@@ -773,9 +773,9 @@ class Security(object):
     :param register_blueprint: to register the Security blueprint or not.
     :param login_form: set form for the login view
     :param register_form: set form for the register view when
-            SECURITY_CONFIRMABLE is false
+            *SECURITY_CONFIRMABLE* is false
     :param confirm_register_form: set form for the register view when
-            SECURITY_CONFIRMABLE is true
+            *SECURITY_CONFIRMABLE* is true
     :param forgot_password_form: set form for the forgot password view
     :param reset_password_form: set form for the reset password view
     :param change_password_form: set form for the change password view
@@ -982,7 +982,9 @@ class Security(object):
 
         The default implementation simply returns::
 
-            jsonify(dict(meta=dict(code=code), response=payload)), code, headers
+                headers["Content-Type"] = "application/json"
+                payload = dict(meta=dict(code=code), response=payload)
+                return make_response(jsonify(payload), code, headers)
 
         .. important::
             Be aware the Flask's ``jsonify`` method will first look to see if a
