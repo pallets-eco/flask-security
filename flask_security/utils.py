@@ -91,7 +91,7 @@ def find_csrf_field_name():
 def login_user(user, remember=None):
     """Perform the login routine.
 
-    If SECURITY_TRACKABLE is used, make sure you commit changes after this
+    If *SECURITY_TRACKABLE* is used, make sure you commit changes after this
     request (i.e. ``app.security.datastore.commit()``).
 
     :param user: The user to login
@@ -155,7 +155,7 @@ def logout_user():
 
 def get_hmac(password):
     """Returns a Base64 encoded HMAC+SHA512 of the password signed with
-    the salt specified by ``SECURITY_PASSWORD_SALT``.
+    the salt specified by *SECURITY_PASSWORD_SALT*.
 
     :param password: The password to sign
     """
@@ -548,13 +548,13 @@ def csrf_cookie_handler(response):
     Uses session to track state (set/clear)
 
     Ideally we just need to set this once - however by default
-    Flask-WTF has a time-out on these tokens governed by `WTF_CSRF_TIME_LIMIT`.
+    Flask-WTF has a time-out on these tokens governed by *WTF_CSRF_TIME_LIMIT*.
     While we could set that to None - and OWASP implies this is fine - that might
     not be agreeable to everyone.
     So as a basic usability hack - we check if it is expired and re-generate so at least
     the user doesn't have to log out and back in (just refresh).
-    We also support a `CSRF_COOKIE_REFRESH_EACH_REQUEST` analogous to Flask's
-    `SESSION_REFRESH_EACH_REQUEST`
+    We also support a *CSRF_COOKIE_REFRESH_EACH_REQUEST* analogous to Flask's
+    *SESSION_REFRESH_EACH_REQUEST*
 
     It is of course removed on logout/session end.
     Other info on web suggests replacing on every POST and accepting up to 'age' ago.

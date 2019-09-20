@@ -134,13 +134,13 @@ def handle_csrf(method):
 
     This routine does nothing if any of these are true:
 
-        #) `WTF_CSRF_ENABLED` is set to False
+        #) *WTF_CSRF_ENABLED* is set to False
 
         #) the Flask-WTF CSRF module hasn't been initialized
 
         #) csrfProtect already checked and accepted the token
 
-    If the passed in method is not in `CSRF_PROTECT_MECHANISMS` then not only
+    If the passed in method is not in *SECURITY_CSRF_PROTECT_MECHANISMS* then not only
     will no CSRF code be run, but a flag in the current context ``fs_ignore_csrf``
     will be set so that downstream code knows to ignore any CSRF checks.
 
@@ -192,8 +192,8 @@ def auth_token_required(fn):
     """Decorator that protects endpoints using token authentication. The token
     should be added to the request by the client by using a query string
     variable with a name equal to the configuration value of
-    `SECURITY_TOKEN_AUTHENTICATION_KEY` or in a request header named that of
-    the configuration value of `SECURITY_TOKEN_AUTHENTICATION_HEADER`
+    *SECURITY_TOKEN_AUTHENTICATION_KEY* or in a request header named that of
+    the configuration value of *SECURITY_TOKEN_AUTHENTICATION_HEADER*
 
     Once authenticated, if so configured, CSRF protection will be tested.
     """
@@ -275,19 +275,19 @@ def auth_required(*auth_methods):
 def unauth_csrf(fall_through=False):
     """Decorator for endpoints that don't need authentication
     but do want CSRF checks (available via Header rather than just form).
-    This is required when setting `WTF_CSRF_CHECK_DEFAULT` = False since in that
+    This is required when setting *WTF_CSRF_CHECK_DEFAULT* = **False** since in that
     case, without this decorator, the form validation will attempt to do the CSRF
     check, and that will fail since the csrf-token is in the header (for pure JSON
     requests).
 
     This decorator does nothing unless Flask-WTF::CSRFProtect has been initialized.
 
-    This decorator does nothing if `WTF_CSRF_ENABLED` == False.
+    This decorator does nothing if *WTF_CSRF_ENABLED* == **False**.
 
     This decorator will always require CSRF if the caller is authenticated.
 
     This decorator will suppress CSRF if caller isn't authenticated and has set the
-    `CSRF_IGNORE_UNAUTH_ENDPOINTS` config variable.
+    *SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS* config variable.
 
     :param fall_through: if set to True, then if CSRF fails here - simply keep going.
         This is appropriate if underlying view is form based and once the form is
@@ -465,21 +465,22 @@ def permissions_accepted(*fsperms):
 
 def anonymous_user_required(f):
     """Decorator which requires that caller NOT be logged in.
-    If a logged in user access an endpoint protected with this decorator
-    they will be redirected to the ``SECURITY_POST_LOGIN_VIEW``.
+    If a logged in user accesses an endpoint protected with this decorator
+    they will be redirected to the *SECURITY_POST_LOGIN_VIEW*.
     If the caller requests a JSON response, a 400 will be returned.
+
+    .. versionchanged:: 3.3.0
+        Support for JSON response was added.
     """
 
     @wraps(f)
     def wrapper(*args, **kwargs):
         if current_user.is_authenticated:
             if _security._want_json(request):
-                return _security._render_json(
-                    dict(errors=utils.get_message("ANONYMOUS_USER_REQUIRED")[0]),
-                    400,
-                    None,
-                    None,
+                payload = utils.json_error_response(
+                    errors=utils.get_message("ANONYMOUS_USER_REQUIRED")[0]
                 )
+                return _security._render_json(payload, 400, None, None)
             else:
                 return redirect(utils.get_url(_security.post_login_view))
         return f(*args, **kwargs)

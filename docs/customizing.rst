@@ -290,8 +290,8 @@ tandem with Flask-Login, behaves as follows:
     * If authorization fails as the result of `@roles_required`, `@roles_accepted`,
       `@permissions_required`, or `@permissions_accepted`, then if the request 'wants' a JSON
       response, :meth:`.Security.render_json` is called with a 403 status code. If not,
-      then if ``SECURITY_UNAUTHORIZED_VIEW`` is defined, the response will redirected.
-      If ``SECURITY_UNAUTHORIZED_VIEW`` is not defined, then ``abort(403)`` is called.
+      then if *SECURITY_UNAUTHORIZED_VIEW* is defined, the response will redirected.
+      If *SECURITY_UNAUTHORIZED_VIEW* is not defined, then ``abort(403)`` is called.
 
 All this can be easily changed by registering any or all of :meth:`.Security.render_json`,
 :meth:`.Security.unauthn_handler` and :meth:`.Security.unauthz_handler`.
