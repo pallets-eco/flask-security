@@ -486,13 +486,15 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         from peewee import fn as peeweeFn
         from peewee import IntegerField
 
-        try:
-            return self.user_model.get(self.user_model.id == identifier)
-        except (self.user_model.DoesNotExist, ValueError):
-            pass
+        # For peewee we only (currently) support numeric primary keys.
+        if self._is_numeric(identifier):
+            try:
+                return self.user_model.get(self.user_model.id == identifier)
+            except (self.user_model.DoesNotExist, ValueError):
+                pass
 
         for attr in get_identity_attributes():
-            # Read above for why we are checking types.
+            # Read above (SQLAlchemy store) for why we are checking types.
             column = getattr(self.user_model, attr)
             attr_isnumeric = isinstance(column, IntegerField)
             try:
