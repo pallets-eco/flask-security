@@ -172,6 +172,48 @@ any changes to your UI and just need the following configuration::
 
 Angular's `httpClient`_ also supports this.
 
+For React based project you are free to choose your http client. It bundles fetch though. Retrieving the token is easy::
+
+    fetch(url, {
+      credentials: 'include',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'X-XSRF-TOKEN': getCookieValue('XSRF-TOKEN')
+      }
+    });
+
+Sending the token on every, mutating, request is something that you should implement yourself. As an example an API call to an API
+endpoint that does CSRF validation::
+
+    function addUser(details) {
+      return fetch('https://api.example.com/user', {
+        mode: 'cors',
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify(details),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-XSRF-TOKEN': getCookieValue('XSRF-TOKEN')
+        }
+      }).then(response => {
+        return response.json().then(data => {
+          if (response.ok) {
+            return data;
+          } else {
+            return Promise.reject({status: response.status, data});
+          }
+        });
+      });
+    }
+
+When you have axios setup correctly, this is a lot easier::
+
+    function addUser(details) {
+      return axios.post('https://api.example.com/user', details);
+    }
+
 
 CSRF: Enable protection for session auth, but not token auth
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
