@@ -80,7 +80,7 @@ Client side authentication options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Depending on your SPA architecture and vision you can choose between cookie or token based authentication.
 
-For both ways there is more documentation and some examplesn. For tokens have a look at the  `CSRF: Single-Page-Applications and AJAX/XHR`_ section.
+For both ways there is more documentation and some examples. For tokens have a look at the  `CSRF: Single-Page-Applications and AJAX/XHR`_ section.
 And for cookie based auth you will find more info in the `Using a Cookie`_ section.
 
 The config from the example above assumes that you run some authentication stuff immediately via Flask. Depending on your
