@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2019-08-22 15:35+0200\n"
+"POT-Creation-Date: 2019-09-24 07:50-0700\n"
 "PO-Revision-Date: 2017-05-01 17:52+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl_NL\n"
@@ -25,7 +25,6 @@ msgstr "Inloggen Verplicht"
 
 #: flask_security/core.py:175
 #: flask_security/templates/security/email/two_factor_instructions.html:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "Welkom"
 
@@ -62,50 +61,50 @@ msgstr "Dubbele Authenticatie Herstellen"
 msgid "You do not have permission to view this resource."
 msgstr "U heeft niet de nodige rechten om deze pagina te zien."
 
-#: flask_security/core.py:215
+#: flask_security/core.py:216
 msgid "You are not authenticated. Please supply the correct credentials."
 msgstr "U bent niet aangemeld. Voer alstublieft de juiste gegevens in."
 
-#: flask_security/core.py:217
+#: flask_security/core.py:220
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
 msgstr "Bedankt. Instructies voor bevestiging zijn verzonden naar %(email)s."
 
-#: flask_security/core.py:220
+#: flask_security/core.py:223
 msgid "Thank you. Your email has been confirmed."
 msgstr "Bedankt. Uw e-mailadres werd bevestigd."
 
-#: flask_security/core.py:221
+#: flask_security/core.py:224
 msgid "Your email has already been confirmed."
 msgstr "Uw e-mailadres werd reeds bevestigd."
 
-#: flask_security/core.py:222
+#: flask_security/core.py:225
 msgid "Invalid confirmation token."
 msgstr "Ongeldige bevestiging token."
 
-#: flask_security/core.py:224
+#: flask_security/core.py:227
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s is al gelinkt aan een ander account."
 
-#: flask_security/core.py:227
+#: flask_security/core.py:230
 msgid "Password does not match"
 msgstr "Wachtwoord komt niet overeen"
 
-#: flask_security/core.py:228
+#: flask_security/core.py:231
 msgid "Passwords do not match"
 msgstr "Wachtwoorden komen niet overeen"
 
-#: flask_security/core.py:229
+#: flask_security/core.py:232
 msgid "Redirections outside the domain are forbidden"
 msgstr "Omleidingen buiten het domein zijn niet toegelaten"
 
-#: flask_security/core.py:231
+#: flask_security/core.py:234
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr "Instructies om uw wachtwoord te resetten werden verzonden naar %(email)s."
 
-#: flask_security/core.py:235
+#: flask_security/core.py:238
 #, python-format
 msgid ""
 "You did not reset your password within %(within)s. New instructions have "
@@ -114,22 +113,22 @@ msgstr ""
 "U heeft uw wachtwoord niet gereset gedurende %(within)s. Nieuwe "
 "instructies werden verzonden naar %(email)s."
 
-#: flask_security/core.py:241
+#: flask_security/core.py:244
 msgid "Invalid reset password token."
 msgstr "Ongeldig wachtwoord reset token."
 
-#: flask_security/core.py:242
+#: flask_security/core.py:245
 msgid "Email requires confirmation."
 msgstr "E-mailadres moet bevestigd worden."
 
-#: flask_security/core.py:244
+#: flask_security/core.py:247
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr ""
 "Instructies ter bevestiging van uw e-mailadres werden verzonden naar "
 "%(email)s."
 
-#: flask_security/core.py:248
+#: flask_security/core.py:251
 #, python-format
 msgid ""
 "You did not confirm your email within %(within)s. New instructions to "
@@ -139,7 +138,7 @@ msgstr ""
 "instructies ter bevestiging van uw e-mailadres werden verzonden naar "
 "%(email)s."
 
-#: flask_security/core.py:256
+#: flask_security/core.py:259
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -148,106 +147,110 @@ msgstr ""
 "Je bent niet ingelogd geweest gedurende %(within)s. Nieuwe instructies om"
 " in te loggen werden verzonden naar%(email)s."
 
-#: flask_security/core.py:263
+#: flask_security/core.py:266
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr "Instructies om in te loggen werden verzonden naar %(email)s."
 
-#: flask_security/core.py:266
+#: flask_security/core.py:269
 msgid "Invalid login token."
 msgstr "Ongeldige aanmelding."
 
-#: flask_security/core.py:267
+#: flask_security/core.py:270
 msgid "Account is disabled."
 msgstr "Account is geblokkeerd."
 
-#: flask_security/core.py:268
+#: flask_security/core.py:271
 msgid "Email not provided"
 msgstr "Email niet ingevuld"
 
-#: flask_security/core.py:269
+#: flask_security/core.py:272
 msgid "Invalid email address"
 msgstr "Ongeldig e-mailadres"
 
-#: flask_security/core.py:270
+#: flask_security/core.py:273
 msgid "Password not provided"
 msgstr "Wachtwoord niet ingevuld"
 
-#: flask_security/core.py:271
+#: flask_security/core.py:274
 msgid "No password is set for this user"
 msgstr "Er is geen wachtwoord gezet voor deze gebruiker"
 
-#: flask_security/core.py:272
+#: flask_security/core.py:275
 msgid "Password must be at least 6 characters"
 msgstr "Uw wachtwoord moet minstens 6 karakters bevatten"
 
-#: flask_security/core.py:273
+#: flask_security/core.py:276
 msgid "Specified user does not exist"
 msgstr "Deze gebruiker bestaat niet"
 
-#: flask_security/core.py:274
+#: flask_security/core.py:277
 msgid "Invalid password"
 msgstr "Ongeldig wachtwoord"
 
-#: flask_security/core.py:275
+#: flask_security/core.py:278
 msgid "You have successfully logged in."
 msgstr "U bent succesvol ingelogd."
 
-#: flask_security/core.py:276
+#: flask_security/core.py:279
 msgid "Forgot password?"
 msgstr "Wachtwoord vergeten?"
 
-#: flask_security/core.py:278
+#: flask_security/core.py:281
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
 msgstr "U heeft uw wachtwoord succesvol gereset en bent nu automatisch ingelogd."
 
-#: flask_security/core.py:285
+#: flask_security/core.py:288
 msgid "Your new password must be different than your previous password."
 msgstr "Uw nieuw wachtwoord moet verschillend zijn van het voorgaande wachtwoord."
 
-#: flask_security/core.py:288
+#: flask_security/core.py:291
 msgid "You successfully changed your password."
 msgstr "Uw wachtwoord werd met succes gewijzigd."
 
-#: flask_security/core.py:289
+#: flask_security/core.py:292
 msgid "Please log in to access this page."
 msgstr "Gelieve in te loggen om deze pagina te zien."
 
-#: flask_security/core.py:290
+#: flask_security/core.py:293
 msgid "Please reauthenticate to access this page."
 msgstr "Gelieve opnieuw in te loggen om deze pagina te zien."
 
-#: flask_security/core.py:291
+#: flask_security/core.py:295
+msgid "You can only access this endpoint when not logged in."
+msgstr ""
+
+#: flask_security/core.py:298
 msgid "Invalid Token"
 msgstr "Niet valide token"
 
-#: flask_security/core.py:292
+#: flask_security/core.py:299
 msgid "Your token has been confirmed"
 msgstr "Uw token is bevestigd"
 
-#: flask_security/core.py:294
+#: flask_security/core.py:301
 msgid "You successfully changed your two-factor method."
 msgstr "U heeft succesvol uw Dubbele Authenticatie methode veranderd."
 
-#: flask_security/core.py:298
+#: flask_security/core.py:305
 msgid "You successfully confirmed password"
 msgstr "U heeft succesvol uw wachtwoord aangepast"
 
-#: flask_security/core.py:302
+#: flask_security/core.py:309
 msgid "Password confirmation is needed in order to access page"
 msgstr "Wachtwoord bevestiging is nodig voor we deze pagina kunnen laten zien"
 
-#: flask_security/core.py:306
+#: flask_security/core.py:313
 msgid "You currently do not have permissions to access this page"
 msgstr "U heeft niet de juiste permissies om deze pagina te laden"
 
-#: flask_security/core.py:309
+#: flask_security/core.py:316
 msgid "Marked method is not valid"
 msgstr "De gemarkeerde methode is niet valide"
 
-#: flask_security/core.py:311
+#: flask_security/core.py:318
 msgid "You successfully disabled two factor authorization."
 msgstr "U heeft succesvol Dubbele Authenticatie uitgeschakeld."
 
@@ -348,28 +351,31 @@ msgstr "Verzend bevestiging instructies opnieuw"
 
 #: flask_security/templates/security/two_factor_setup.html:6
 msgid "Two-factor authentication adds an extra layer of security to your account"
-msgstr "Dubbele Authenticatie voegt een extra laag van beveiliging toe aan uw account"
+msgstr ""
+"Dubbele Authenticatie voegt een extra laag van beveiliging toe aan uw "
+"account"
 
 #: flask_security/templates/security/two_factor_setup.html:7
 msgid ""
 "In addition to your username and password, you'll need to use a code that"
 " we will send you"
 msgstr ""
-"Naast uw gebruikersnaam en wachtwoord, heeft u ook een code nodig dat we u"
-" zullen toezenden"
+"Naast uw gebruikersnaam en wachtwoord, heeft u ook een code nodig dat we "
+"u zullen toezenden"
 
 #: flask_security/templates/security/two_factor_setup.html:18
 msgid "To complete logging in, please enter the code sent to your mail"
-msgstr "Om verder in te loggen moet U de code die we naar uw e-mail hebben"
-" gezonden invoeren"
+msgstr ""
+"Om verder in te loggen moet U de code die we naar uw e-mail hebben "
+"gezonden invoeren"
 
 #: flask_security/templates/security/two_factor_setup.html:21
 msgid ""
 "Open Google Authenticator on your device and scan the following qrcode to"
 " start receiving codes:"
 msgstr ""
-"Open Google Authenticator op uw toestel en scan de volgende qrcode om codes"
-" te kunnen ontvangen:"
+"Open Google Authenticator op uw toestel en scan de volgende qrcode om "
+"codes te kunnen ontvangen:"
 
 #: flask_security/templates/security/two_factor_setup.html:22
 msgid "Two factor authentication code"
