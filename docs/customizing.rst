@@ -263,6 +263,8 @@ For example, you might want to use an alternative email library like `Flask-Emai
     The above ``security.send_mail_task`` override will be useless if you
     override the entire ``send_mail`` method.
 
+.. _responsetopic:
+
 Responses
 ---------
 Flask-Security will likely be a very small piece of your application,
