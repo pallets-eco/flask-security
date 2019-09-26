@@ -6,10 +6,13 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 3.3.0
 -------------
 
-Released TBD
+Released September 26, 2019
 
 **There are several default behavior changes that might break existing applications.
 Most have configuration variables that restore prior behavior**.
+
+**If you use Authentication Tokens (rather than session cookies) you MUST make a (small) change.
+Please see below for details.**
 
 - (:pr:`120`) Native support for Permissions as part of Roles. Endpoints can be
   protected via permissions that are evaluated based on role(s) that the user has.
@@ -23,7 +26,7 @@ Most have configuration variables that restore prior behavior**.
   unauthorized and one for unauthenticated. Made default unauthenticated handler use Flask-Login's unauthenticated
   method to make everything uniform. Extensive documentation added. :meth:`.Security.unauthorized_callback` has been deprecated.
 - (:pr:`120`) Add complete User and Role model mixins that support all features. Modify tests and Quickstart documentation
-  to show how to use these.
+  to show how to use these. Please see :ref:`responsetopic` for details.
 - Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
   should be passed in.
 - Improve documentation for :class:`.UserDatastore` and :func:`.verify_and_update_password`
@@ -38,7 +41,8 @@ Most have configuration variables that restore prior behavior**.
   to be automatically logged in after confirmation (defaults to True - existing behavior).
 - (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
   confirmation was required. This was a huge security hole - it has been fixed.
-- (:issue:`166`) :meth:`.default_render_json` uses ``flask.make_response`` and forces the Content-Type to JSON for generating the response.
+- (:issue:`160`) The 2FA totp_secret would be regenerated upon submission, making QRCode not work. (malware-watch)
+- (:issue:`166`) :meth:`.default_render_json` uses ``flask.make_response`` and forces the Content-Type to JSON for generating the response (koekie)
 - (:issue:`166`) *SECURITY_MSG_UNAUTHENTICATED* added to the configuration.
 - (:pr:`168`) When using the @auth_required or @auth_token_required decorators, the token
   would be verified twice, and the DB would be queried twice for the user. Given how slow
@@ -46,9 +50,20 @@ Most have configuration variables that restore prior behavior**.
 - (:issue:`84`) The :func:`.anonymous_user_required` was not JSON friendly - always
   performing a redirect. Now, if the request 'wants' a JSON response - it will receive a 400 with an error
   message defined by *SECURITY_MSG_ANONYMOUS_USER_REQUIRED*.
+- (:pr:`145`) Improve 2FA templates to that they can be localized. (taavie)
+- (:issue:`173`) *SECURITY_UNAUTHORIZED_VIEW* didn't accept a url (just an endpoint). All other view
+  configurations did. That has been fixed.
 
 Possible compatibility issues
 +++++++++++++++++++++++++++++
+
+- (:pr:`164`) In prior releases, the Authentication Token was returned as part of the JSON response to each
+  successful call to `/login`, `/change`, or `/reset/{token}` API call. This is not a great idea since
+  for browser-based UIs that used JSON request/response, and used session based authentication - they would
+  be sent this token - even though it was likely ignored. Since these tokens by default have no expiration time
+  this exposed a needless security hole. The new default behavior is to ONLY return the Authentication Token from those APIs
+  if the query param ``include_auth_token`` is added to the request. Prior behavior can be restored by setting
+  the *SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN* configuration variable.
 
 - (:pr:`120`) :class:`.RoleMixin` now has a method :meth:`.get_permissions` which is called as part
   each request to add Permissions to the authenticated user. It checks if the RoleModel
@@ -60,7 +75,7 @@ Possible compatibility issues
   or @http_auth_required. Before, a 401 was returned with some stock html. Now, Flask-Login.unauthorized() is
   called (the same as @login_required does) - which by default redirects to a login page/view. If you had provided your own
   :meth:`.Security.unauthorized_callback` there are no changes - that will still be called first. The old default
-  behavior can be restored by setting *SECURITY_BACKWARDS_COMPAT_UNAUTHN* to True.
+  behavior can be restored by setting *SECURITY_BACKWARDS_COMPAT_UNAUTHN* to True. Please see :ref:`responsetopic` for details.
 
 - (:issue:`127`) Fix for LazyStrings in json error response. The fix for this has Flask-Security registering
   its own JsonEncoder on its blueprint. If you registered your own JsonEncoder for your app - it will no
@@ -71,16 +86,8 @@ Possible compatibility issues
 - (:issue:`84`) Prior to this fix - anytime the decorator :func:`.anonymous_user_required` failed, it caused a redirect to
   the post_login_view. Now, if the caller wanted a JSON response, it will return a 400.
 
-- (:issue:`156`) Faster Authentication Token introduced 2 non-backwards compatible behavior changes - each can
-  be reverted using a configuration variable.
+- (:issue:`156`) Faster Authentication Token introduced the following non-backwards compatible behavior change:
 
-    * In prior releases, the Authentication Token was returned as part of the JSON response to each
-      successful call to `/login`, `/change`, or `/reset/{token}` API call. This is not a great idea since
-      for browser-based UIs that used JSON request/response, and used session based authentication - they would
-      be sent this token - even though it was likely ignored. Since these tokens by default have no expiration time
-      this exposed a needless security hole. The new default behavior is to ONLY return the Authentication Token from those APIs
-      if the query param ``include_auth_token`` is added to the request. Prior behavior can be restored by setting
-      the *SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN* configuration variable.
     * Since the old Authentication Token algorithm used the (hashed) user's password, those tokens would be invalidated
       whenever the user changed their password. This is not likely to be what most users expect. Since the new
       Authentication Token algorithm doesn't refer to the user's password, changing the user's password won't invalidate
@@ -99,7 +106,7 @@ to every request.
 
 To solve this, a new attribute in the User model was added - ``fs_uniquifier``. If this is present in your
 User model, then it will be used instead of the password for ensuring the token corresponds to the correct user.
-This is very fast. If that attribute is NOT present - then the behavior falls back to existing (slow) method.
+This is very fast. If that attribute is NOT present - then the behavior falls back to the existing (slow) method.
 
 
 DB Migration
