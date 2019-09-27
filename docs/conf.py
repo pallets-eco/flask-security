@@ -120,7 +120,7 @@ html_context = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "Flask-Security Documentation ({}).format(version)"
+# html_title = "Flask-Security Documentation ({}).format(version)"
 html_logo = "_static/logo-owl-105.png"
 
 # The name of an image file (within the static path) to use as favicon of the
