@@ -38,7 +38,6 @@ from flask import (
     after_this_request,
     current_app,
     jsonify,
-
     request,
     session,
 )
@@ -83,6 +82,7 @@ from .utils import (
     slash_url_suffix,
 )
 from .utils import url_for_security as url_for
+
 if get_quart_status():
     from quart import make_response, redirect
 else:
