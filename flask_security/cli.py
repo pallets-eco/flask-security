@@ -26,6 +26,7 @@ if get_quart_status():
     import quart.cli
     import functools
 
+    # quart cli doesn't provide the with_appcontext function
     def with_appcontext(f):
         """Wraps a callback so that it's guaranteed to be executed with the
         script's application context.  If callbacks are registered directly
@@ -39,9 +40,12 @@ if get_quart_status():
                 return __ctx.invoke(f, *args, **kwargs)
 
         return functools.update_wrapper(decorator, f)
+
+
 else:
     try:
         import flask.cli
+
         with_appcontext = flask.cli.with_appcontext
     except ImportError:
         from flask_cli import with_appcontext

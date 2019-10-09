@@ -612,7 +612,7 @@ def default_want_json(req):
     if req.is_json:
         return True
     # TODO should this handle json sub-types?
-    if req.accept_mimetypes['application/json'] >= 1.0:
+    if req.accept_mimetypes["application/json"] >= 1.0:
         return True
     return False
 
