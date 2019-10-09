@@ -38,14 +38,10 @@ from flask import (
     after_this_request,
     current_app,
     jsonify,
-    make_response,
-    redirect,
+
     request,
     session,
 )
-
-if get_quart_status():
-    from quart import make_response, redirect
 from flask_login import current_user
 from flask_wtf import csrf
 from werkzeug.datastructures import MultiDict
@@ -87,7 +83,10 @@ from .utils import (
     slash_url_suffix,
 )
 from .utils import url_for_security as url_for
-
+if get_quart_status():
+    from quart import make_response, redirect
+else:
+    from flask import make_response, redirect
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
 
