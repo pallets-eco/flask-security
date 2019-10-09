@@ -6,7 +6,6 @@
     Command Line Interface for managing accounts and roles.
 
     :copyright: (c) 2016 by CERN.
-    :copyright: (c) 2019 by J. Christopher Wagner
     :license: MIT, see LICENSE for more details.
 """
 
@@ -18,13 +17,31 @@ import click
 from flask import current_app
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
+from .quart_compat import get_quart_status
 
 from .utils import hash_password
 
-try:
-    from flask.cli import with_appcontext
-except ImportError:
-    from flask_cli import with_appcontext
+if get_quart_status():
+    import quart.cli
+    import functools
+
+    def with_appcontext(f):
+        """Wraps a callback so that it's guaranteed to be executed with the
+        script's application context.  If callbacks are registered directly
+        to the ``app.cli`` object then they are wrapped with this function
+        by default unless it's disabled.
+        """
+
+        @click.pass_context
+        def decorator(__ctx, *args, **kwargs):
+            with __ctx.ensure_object(quart.cli.ScriptInfo).load_app().app_context():
+                return __ctx.invoke(f, *args, **kwargs)
+
+        return functools.update_wrapper(decorator, f)
+else:
+    import flask.cli
+
+    with_appcontext = flask.cli.with_appcontext
 
 _security = LocalProxy(lambda: current_app.extensions["security"])
 _datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
@@ -78,17 +95,10 @@ def users_create(identity, password, active):
 @roles.command("create")
 @click.argument("name")
 @click.option("-d", "--description", default=None)
-@click.option("-p", "--permissions")
 @with_appcontext
 @commit
 def roles_create(**kwargs):
     """Create a role."""
-
-    # For some reaosn Click puts arguments in kwargs - even if they weren't specified.
-    if "permissions" in kwargs and not kwargs["permissions"]:
-        del kwargs["permissions"]
-    if "permissions" in kwargs and not hasattr(_datastore.role_model, "permissions"):
-        raise click.UsageError("Role model does not support permissions")
     _datastore.create_role(**kwargs)
     click.secho('Role "%(name)s" created successfully.' % kwargs, fg="green")
 

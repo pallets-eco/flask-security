@@ -30,7 +30,7 @@
     TODO: two-factor routes such as tf_setup need work. They seem to support both
     authenticated (via session?) as well as unauthenticated access.
 """
-
+from .quart_compat import get_quart_status
 from flask import (
     Blueprint,
     _request_ctx_stack,
@@ -41,8 +41,12 @@ from flask import (
     make_response,
     redirect,
     request,
-    session,
-)
+    session)
+
+if get_quart_status():
+    make_response = None
+    redirect = None
+    from quart import make_response, redirect
 from flask_login import current_user
 from flask_wtf import csrf
 from werkzeug.datastructures import MultiDict
@@ -62,7 +66,14 @@ from .recoverable import (
     update_password,
 )
 from .registerable import register_user
-from .utils import url_for_security as url_for
+from .twofactor import (
+    complete_two_factor_process,
+    generate_totp,
+    get_totp_uri,
+    send_security_token,
+    tf_clean_session,
+    tf_disable,
+)
 from .utils import (
     config_value,
     do_flash,
@@ -76,14 +87,7 @@ from .utils import (
     logout_user,
     slash_url_suffix,
 )
-from .twofactor import (
-    complete_two_factor_process,
-    generate_totp,
-    get_totp_uri,
-    send_security_token,
-    tf_clean_session,
-    tf_disable,
-)
+from .utils import url_for_security as url_for
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
@@ -92,7 +96,7 @@ _datastore = LocalProxy(lambda: _security.datastore)
 
 
 def _base_render_json(
-    form, include_user=True, include_auth_token=False, additional=None
+        form, include_user=True, include_auth_token=False, additional=None
 ):
     has_errors = len(form.errors) > 0
 
@@ -111,8 +115,8 @@ def _base_render_json(
             if include_auth_token:
                 # view wants to return auth_token - check behavior config
                 if (
-                    config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
-                    or "include_auth_token" in request.args
+                        config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
+                        or "include_auth_token" in request.args
                 ):
                     token = user.get_auth_token()
                     payload["user"]["authentication_token"] = token
@@ -137,9 +141,15 @@ def default_render_json(payload, code, headers, user):
     return make_response(jsonify(payload), code, headers)
 
 
-def _commit(response=None):
-    _datastore.commit()
-    return response
+if get_quart_status():
+
+    async def _commit(response=None):
+        _datastore.commit()
+        return response
+else:
+    def _commit(response=None):
+        _datastore.commit()
+        return response
 
 
 def _ctx(endpoint):
@@ -158,8 +168,8 @@ def _suppress_form_csrf():
         # This is the case where CsrfProtect was already called (e.g. @auth_required)
         return {"csrf": False}
     if (
-        config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
-        and not current_user.is_authenticated
+            config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
+            and not current_user.is_authenticated
     ):
         return {"csrf": False}
     return {}
@@ -195,8 +205,8 @@ def login():
 
     if form.validate_on_submit():
         if config_value("TWO_FACTOR") is True and (
-            config_value("TWO_FACTOR_REQUIRED") is True
-            or (form.user.tf_totp_secret and form.user.tf_primary_method)
+                config_value("TWO_FACTOR_REQUIRED") is True
+                or (form.user.tf_totp_secret and form.user.tf_primary_method)
         ):
             return _two_factor_login(form)
 
@@ -245,7 +255,6 @@ def register():
         form_data = request.form
 
     form = form_class(form_data, meta=_suppress_form_csrf())
-
     if form.validate_on_submit():
         did_login = False
         user = register_user(**form.to_dict())
@@ -266,7 +275,6 @@ def register():
 
         # Only include auth token if in fact user is permitted to login
         return _base_render_json(form, include_auth_token=did_login)
-
     if _security._want_json(request):
         return _base_render_json(form)
 
@@ -796,12 +804,12 @@ def two_factor_token_validation():
     if not changing:
         # This is the normal login case
         if (
-            not all(k in session for k in ["tf_user_id", "tf_state"])
-            or session["tf_state"] not in ["ready", "validating_profile"]
-            or (
+                not all(k in session for k in ["tf_user_id", "tf_state"])
+                or session["tf_state"] not in ["ready", "validating_profile"]
+                or (
                 session["tf_state"] == "validating_profile"
                 and "tf_primary_method" not in session
-            )
+        )
         ):
             # illegal call on this endpoint
             tf_clean_session()
@@ -819,10 +827,10 @@ def two_factor_token_validation():
             pm = session["tf_primary_method"]
     else:
         if (
-            not all(
-                k in session for k in ["tf_confirmed", "tf_state", "tf_primary_method"]
-            )
-            or session["tf_state"] != "validating_profile"
+                not all(
+                    k in session for k in ["tf_confirmed", "tf_state", "tf_primary_method"]
+                )
+                or session["tf_state"] != "validating_profile"
         ):
             tf_clean_session()
             # logout since this seems like attack-ish/logic error
@@ -888,8 +896,8 @@ def two_factor_rescue():
         form = form_class(meta=_suppress_form_csrf())
 
     if (
-        not all(k in session for k in ["tf_user_id", "tf_state"])
-        or session["tf_state"] != "ready"
+            not all(k in session for k in ["tf_user_id", "tf_state"])
+            or session["tf_state"] != "ready"
     ):
         tf_clean_session()
         return _tf_illegal_state(form, _security.login_url)
@@ -984,8 +992,8 @@ def two_factor_qrcode():
     if "google_authenticator" not in config_value("TWO_FACTOR_ENABLED_METHODS"):
         return abort(404)
     if (
-        "tf_primary_method" not in session
-        or session["tf_primary_method"] != "google_authenticator"
+            "tf_primary_method" not in session
+            or session["tf_primary_method"] != "google_authenticator"
     ):
         return abort(404)
 
