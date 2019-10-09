@@ -6,6 +6,7 @@
     Command Line Interface for managing accounts and roles.
 
     :copyright: (c) 2016 by CERN.
+    :copyright: (c) 2019 by J. Christopher Wagner
     :license: MIT, see LICENSE for more details.
 """
 
@@ -39,9 +40,12 @@ if get_quart_status():
 
         return functools.update_wrapper(decorator, f)
 else:
-    import flask.cli
+    try:
+        import flask.cli
+        with_appcontext = flask.cli.with_appcontext
+    except ImportError:
+        from flask_cli import with_appcontext
 
-    with_appcontext = flask.cli.with_appcontext
 
 _security = LocalProxy(lambda: current_app.extensions["security"])
 _datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
@@ -99,6 +103,12 @@ def users_create(identity, password, active):
 @commit
 def roles_create(**kwargs):
     """Create a role."""
+
+    # For some reaosn Click puts arguments in kwargs - even if they weren't specified.
+    if "permissions" in kwargs and not kwargs["permissions"]:
+        del kwargs["permissions"]
+    if "permissions" in kwargs and not hasattr(_datastore.role_model, "permissions"):
+        raise click.UsageError("Role model does not support permissions")
     _datastore.create_role(**kwargs)
     click.secho('Role "%(name)s" created successfully.' % kwargs, fg="green")
 
