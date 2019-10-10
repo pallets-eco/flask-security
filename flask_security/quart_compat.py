@@ -20,7 +20,7 @@ else:
 
 
 @property
-def best() -> str:
+def best():
     options = sorted(
         self.options,
         key=lambda option: (option.value != "*", option.quality, option.value),
