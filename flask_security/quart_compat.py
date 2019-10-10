@@ -13,10 +13,20 @@
 """
 import flask
 
-if flask.__name__ == "quart.flask_patch":
+if "quart." in flask.__name__ or hasattr(flask, "_quart_patched"):
     is_quart = True
 else:
     is_quart = False
+
+
+@property
+def best() -> str:
+    options = sorted(
+        self.options,
+        key=lambda option: (option.value != "*", option.quality, option.value),
+        reverse=True,
+    )
+    return options[0].value
 
 
 def get_quart_status():

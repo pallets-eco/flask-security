@@ -82,6 +82,7 @@ from .utils import (
     slash_url_suffix,
 )
 from .utils import url_for_security as url_for
+import sys
 
 if get_quart_status():
     from quart import make_response, redirect
@@ -139,12 +140,16 @@ def default_render_json(payload, code, headers, user):
     return make_response(jsonify(payload), code, headers)
 
 
-if get_quart_status():
+PY3 = sys.version_info[0] == 3
+if get_quart_status() and PY3:
+    try:
 
-    async def _commit(response=None):
-        _datastore.commit()
-        return response
+        async def _commit(response=None):
+            _datastore.commit()
+            return response
 
+    except SyntaxError:
+        pass
 
 else:
 

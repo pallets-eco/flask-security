@@ -32,7 +32,7 @@ from itsdangerous import BadSignature, SignatureExpired
 from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
-
+from . import quart_compat
 from .signals import (
     login_instructions_sent,
     reset_password_instructions_sent,
@@ -44,7 +44,6 @@ try:  # pragma: no cover
     from urllib import urlencode
 except ImportError:  # pragma: no cover
     from urllib.parse import parse_qsl, urlsplit, urlunsplit, urlencode
-
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
@@ -612,8 +611,17 @@ def default_want_json(req):
     if req.is_json:
         return True
     # TODO should this handle json sub-types?
-    if req.accept_mimetypes["application/json"] >= 1.0:
-        return True
+    try:
+        if req.accept_mimetypes.best == "application/json":
+            return True
+    except AttributeError:
+        # the dev version of quart, Specifically:
+        # commit #a953ee37
+        # adds the best property.
+        # To support older versions, we setattribute for it
+        setattr(req.accept_mimetypes, "best", quart_compat.best)
+        if req.accept_mimetypes.best == "application/json":
+            return True
     return False
 
 

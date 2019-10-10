@@ -103,6 +103,7 @@ def users_create(identity, password, active):
 @roles.command("create")
 @click.argument("name")
 @click.option("-d", "--description", default=None)
+@click.option("-p", "--permissions")
 @with_appcontext
 @commit
 def roles_create(**kwargs):
