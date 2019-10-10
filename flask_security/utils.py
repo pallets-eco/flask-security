@@ -611,17 +611,11 @@ def default_want_json(req):
     if req.is_json:
         return True
     # TODO should this handle json sub-types?
-    try:
-        if req.accept_mimetypes.best == "application/json":
-            return True
-    except AttributeError:
-        # the dev version of quart, Specifically:
-        # commit #a953ee37
-        # adds the best property.
-        # To support older versions, we setattribute for it
+    if not hasattr(req.accept_mimetypes, "best"):
+        # Alright. we dont have the best property, lets add it ourselves.
         setattr(req.accept_mimetypes, "best", quart_compat.best)
-        if req.accept_mimetypes.best == "application/json":
-            return True
+    if req.accept_mimetypes.best == "application/json":
+        return True
     return False
 
 
