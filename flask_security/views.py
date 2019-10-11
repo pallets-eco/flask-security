@@ -141,14 +141,8 @@ def default_render_json(payload, code, headers, user):
 
 
 PY3 = sys.version_info[0] == 3
-if get_quart_status() and PY3:
-    commit = """
-    async def _commit(response=None):
-        _datastore.commit()
-        return response
-    """
-    # HACK: python 2 compatibility.
-    exec(compile(commit, __file__, "exec"))
+if PY3 and get_quart_status():
+    from .async_compat import _commit  # noqa: F401
 else:
 
     def _commit(response=None):
