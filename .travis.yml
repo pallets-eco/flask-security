@@ -69,7 +69,11 @@ script:
     fi
 
 after_script:
-  - coveralls
+  - >
+  - set -e;
+    if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
+     coveralls;
+    fi
 
 branches:
   only:

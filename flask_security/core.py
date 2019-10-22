@@ -746,7 +746,11 @@ class _SecurityState(object):
         self._send_mail_task = fn
 
     def unauthorized_handler(self, fn):
-        warnings.warn("deprecated", DeprecationWarning)
+        warnings.warn(
+            "'unauthorized_handler' has been replaced with"
+            " 'unauthz_handler' and 'unauthn_handler'",
+            DeprecationWarning,
+        )
         self._unauthorized_callback = fn
 
     def totp_factory(self, tf):
