@@ -55,9 +55,19 @@ Please consult these `contributing`_ guidelines.
 
 .. _contributing: https://github.com/jwag956/flask-security/blob/master/CONTRIBUTING.rst
 
+Installing
+----------
+Install and update using `pip <https://pip.pypa.io/en/stable/quickstart/>`_:
+
+::
+
+    pip install -U Flask-Security-Too
+
+
 Resources
 ---------
 
 - `Documentation <https://flask-security-too.readthedocs.io/>`_
+- `Releases <https://https://pypi.org/project/Flask-Security-Too/>`_
 - `Issue Tracker <https://github.com/jwag956/flask-security/issues>`_
 - `Code <https://github.com/jwag956/flask-security/>`_

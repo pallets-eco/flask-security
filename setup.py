@@ -80,6 +80,7 @@ setup(
     url="https://github.com/jwag956/flask-security",
     project_urls={
         "Documentation": "https://flask-security-too.readthedocs.io",
+        "Releases": "https://pypi.org/project/Flask-Security-Too/",
         "Code": "https://github.com/jwag956/flask-security",
         "Issue tracker": "https://github.com/jwag956/flask-security/issues",
     },
