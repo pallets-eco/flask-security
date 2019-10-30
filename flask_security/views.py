@@ -84,7 +84,7 @@ from .utils import (
 from .utils import url_for_security as url_for
 import sys
 
-if get_quart_status():
+if get_quart_status():  # pragma: no cover
     from quart import make_response, redirect
 else:
     from flask import make_response, redirect
@@ -141,7 +141,7 @@ def default_render_json(payload, code, headers, user):
 
 
 PY3 = sys.version_info[0] == 3
-if PY3 and get_quart_status():
+if PY3 and get_quart_status():  # pragma: no cover
     from .async_compat import _commit  # noqa: F401
 else:
 

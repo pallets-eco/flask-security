@@ -22,7 +22,7 @@ from .quart_compat import get_quart_status
 
 from .utils import hash_password
 
-if get_quart_status():
+if get_quart_status():  # pragma: no cover
     import quart.cli
     import functools
 
@@ -43,12 +43,9 @@ if get_quart_status():
 
 
 else:
-    try:
-        import flask.cli
+    import flask.cli
 
-        with_appcontext = flask.cli.with_appcontext
-    except ImportError:
-        from flask_cli import with_appcontext
+    with_appcontext = flask.cli.with_appcontext
 
 
 _security = LocalProxy(lambda: current_app.extensions["security"])

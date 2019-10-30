@@ -13,14 +13,14 @@
 """
 import flask
 
-if "quart." in flask.__name__ or hasattr(flask, "_quart_patched"):
+if "quart." in flask.__name__ or hasattr(flask, "_quart_patched"):  # pragma: no cover
     is_quart = True
 else:
     is_quart = False
 
 
 @property
-def best(self):
+def best(self):  # pragma: no cover
     options = sorted(
         self.options,
         key=lambda option: (option.value != "*", option.quality, option.value),
