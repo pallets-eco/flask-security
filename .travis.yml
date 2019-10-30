@@ -10,6 +10,7 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
+  - "3.8"
   - pypy3.5-6.0
 
 addons:
@@ -69,7 +70,11 @@ script:
     fi
 
 after_script:
-  - coveralls
+  - >
+  - set -e;
+    if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
+     coveralls;
+    fi
 
 branches:
   only:

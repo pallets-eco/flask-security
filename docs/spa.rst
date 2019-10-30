@@ -76,6 +76,12 @@ The UI might want to run on port 8080. In order to test redirects you need to se
 
     SECURITY_REDIRECT_HOST = 'localhost:8080'
 
+Client side authentication options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Depending on your SPA architecture and vision you can choose between cookie or token based authentication.
+
+For both there is more documentation and some examples. In both cases, you need to understand and handle :ref:`csrftopic` concerns.
+
 Security Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Static elements such as your UI should be served with an industrial-grade web server - such
@@ -89,9 +95,86 @@ standard security headers such as:
     * ``X-XSS-Protection``
     * ``Referrer policy``
 
+There are a lot of different ways to host a SPA as the javascript part itself is quit easily hosted from any static
+webserver. A couple of deployment options and their configurations will be describer here.
+
+Nginx
+~~~~~
+When serving a SPA from a Nginx webserver the Flask backend, with Flask-Security-Too, will probably be served via
+Nginx's reverse proxy feature. The javascript is served from Nginx itself and all calls to a certain path will be routed
+to the reversed proxy. The example below routes all http requests to *"/api/"* to the Flask backend and handles all other
+requests directly from javascript. This has a couple of benefits as all the requests happen within the same domain so you
+don't have to worry about `CORS`_ problems::
+
+    server {
+        listen       80;
+        server_name  www.example.com;
+
+        #access_log  /var/log/nginx/host.access.log  main;
+
+        root   /usr/share/nginx/html;
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Location of assets folder
+        location ~ ^/(static)/  {
+            gzip_static on;
+            gzip_types text/plain text/xml text/css text/comma-separated-values
+                text/javascript application/x-javascript application/atom+xml;
+            expires max;
+        }
+
+        # redirect server error pages to the static page /50x.html
+        # 400 error's will be handled from the SPA
+        error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+        }
+
+        # route all api requests to the flask app, served by gunicorn
+        location /api/ {
+            proxy_pass http://localhost:8080/api/;
+        }
+
+        # OR served via uwsgi
+        location /api/ {
+            include ..../uwsgi_params;
+            uwsgi_pass unix:/tmp/uwsgi.sock;
+            uwsgi_pass_header AUTHENTICATION-TOKEN;
+        }
+    }
+
+.. note:: The example doesn't include SSL setup to keep it simple and still suitable for a more complex kubernetes setup
+    where Nginx is often used as a load balancer and another Nginx with SSL setup runs in front of it.
+
+Amazon lambda gateway / Serverless
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Most Flask apps can be deployed to Amazon's lambda gateway without much hassle by using `Zappa`_.
+You'll get automatic horizontal scaling, seamless upgrades, automatic SSL certificate renewal and a very cheap way of
+hosting a backend without being responsible for any infrastructure. Depending on how you design your app you could
+choose to host your backend from an api specific domain: e.g. *api.example.com*. When your SPA deployment structure is
+capable of routing the AJAX/XHR request from your javascript app to the separate backend; use it. When you want to use
+the backend from another e.g. *www.example.com* you have some deal with some `CORS`_ setup as your browser will block
+cross-domain POST requests. There is a Flask package for that: `Flask-CORS`_.
+
+The setup of CORS is simple::
+
+    CORS(
+        app,
+        supports_credentials=True,  # needed for cross domain cookie support
+        resources="/*",
+        allow_headers="*",
+        origins="https://www.example.com",
+        expose_headers="Authorization,Content-Type,Authentication-Token,XSRF-TOKEN",
+    )
+
+You can then host your javascript app from an S3 bucket, with or without Cloudfront, GH-pages or from any static webserver.
+
 Some background material:
 
-    * Specific to `S3`_ but easily adaptable
+    * Specific to `S3`_ but easily adaptable.
 
     * `Flask-Talisman`_ - useful if serving everything from your Flask application - also
       useful as a good list of things to consider.
@@ -100,3 +183,6 @@ Some background material:
 .. _Nginx: https://www.nginx.com/
 .. _S3: https://www.savjee.be/2018/05/Content-security-policy-and-aws-s3-cloudfront/
 .. _Flask-Talisman: https://github.com/GoogleCloudPlatform/flask-talisman
+.. _CORS: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+.. _Flask-CORS: https://github.com/corydolphin/flask-cors
+.. _Zappa: https://github.com/Miserlou/Zappa
