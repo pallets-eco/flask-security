@@ -30,7 +30,7 @@
     TODO: two-factor routes such as tf_setup need work. They seem to support both
     authenticated (via session?) as well as unauthenticated access.
 """
-
+from .quart_compat import get_quart_status
 from flask import (
     Blueprint,
     _request_ctx_stack,
@@ -38,8 +38,6 @@ from flask import (
     after_this_request,
     current_app,
     jsonify,
-    make_response,
-    redirect,
     request,
     session,
 )
@@ -62,7 +60,14 @@ from .recoverable import (
     update_password,
 )
 from .registerable import register_user
-from .utils import url_for_security as url_for
+from .twofactor import (
+    complete_two_factor_process,
+    generate_totp,
+    get_totp_uri,
+    send_security_token,
+    tf_clean_session,
+    tf_disable,
+)
 from .utils import (
     config_value,
     do_flash,
@@ -76,15 +81,13 @@ from .utils import (
     logout_user,
     slash_url_suffix,
 )
-from .twofactor import (
-    complete_two_factor_process,
-    generate_totp,
-    get_totp_uri,
-    send_security_token,
-    tf_clean_session,
-    tf_disable,
-)
+from .utils import url_for_security as url_for
+import sys
 
+if get_quart_status():  # pragma: no cover
+    from quart import make_response, redirect
+else:
+    from flask import make_response, redirect
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
 
@@ -137,9 +140,14 @@ def default_render_json(payload, code, headers, user):
     return make_response(jsonify(payload), code, headers)
 
 
-def _commit(response=None):
-    _datastore.commit()
-    return response
+PY3 = sys.version_info[0] == 3
+if PY3 and get_quart_status():  # pragma: no cover
+    from .async_compat import _commit  # noqa: F401
+else:
+
+    def _commit(response=None):
+        _datastore.commit()
+        return response
 
 
 def _ctx(endpoint):
@@ -245,7 +253,6 @@ def register():
         form_data = request.form
 
     form = form_class(form_data, meta=_suppress_form_csrf())
-
     if form.validate_on_submit():
         did_login = False
         user = register_user(**form.to_dict())
@@ -266,7 +273,6 @@ def register():
 
         # Only include auth token if in fact user is permitted to login
         return _base_render_json(form, include_auth_token=did_login)
-
     if _security._want_json(request):
         return _base_render_json(form)
 

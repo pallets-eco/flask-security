@@ -18,13 +18,35 @@ import click
 from flask import current_app
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
+from .quart_compat import get_quart_status
 
 from .utils import hash_password
 
-try:
-    from flask.cli import with_appcontext
-except ImportError:
-    from flask_cli import with_appcontext
+if get_quart_status():  # pragma: no cover
+    import quart.cli
+    import functools
+
+    # quart cli doesn't provide the with_appcontext function
+    def with_appcontext(f):
+        """Wraps a callback so that it's guaranteed to be executed with the
+        script's application context.  If callbacks are registered directly
+        to the ``app.cli`` object then they are wrapped with this function
+        by default unless it's disabled.
+        """
+
+        @click.pass_context
+        def decorator(__ctx, *args, **kwargs):
+            with __ctx.ensure_object(quart.cli.ScriptInfo).load_app().app_context():
+                return __ctx.invoke(f, *args, **kwargs)
+
+        return functools.update_wrapper(decorator, f)
+
+
+else:
+    import flask.cli
+
+    with_appcontext = flask.cli.with_appcontext
+
 
 _security = LocalProxy(lambda: current_app.extensions["security"])
 _datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
