@@ -301,7 +301,7 @@ possible using Peewee:
 ::
 
     from flask import Flask, render_template
-    from flask_peewee.db import Database
+    from playhouse.flask_utils import FlaskDB
     from peewee import *
     from flask_security import Security, PeeweeUserDatastore, \
         UserMixin, RoleMixin, login_required
@@ -318,7 +318,7 @@ possible using Peewee:
     app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
 
     # Create database connection object
-    db = Database(app)
+    db = FlaskDB(app)
 
     class Role(db.Model, RoleMixin):
         name = CharField(unique=True)
