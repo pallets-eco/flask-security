@@ -58,7 +58,7 @@ author = "Matt Wright & Chris Wagner"
 # built documents.
 #
 # The short X.Y version.
-version = "3.3.0"
+version = "3.3.1"
 # The full version, including alpha/beta/rc tags.
 release = version
 

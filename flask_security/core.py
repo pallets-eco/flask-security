@@ -1058,6 +1058,9 @@ class Security(object):
         Can raise an exception if it is handled as part of
         flask.errorhandler(<exception>)
 
+        The default implementation will return a 401 response if the request was JSON,
+        otherwise lets flask_login.login_manager.unauthorized() handle redirects.
+
         .. versionadded:: 3.3.0
         """
         self._state._unauthn_handler = cb

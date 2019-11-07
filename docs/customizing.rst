@@ -64,6 +64,7 @@ The following is a list of all the available context processor decorators:
 * ``change_password_context_processor``: Change password view
 * ``send_confirmation_context_processor``: Send confirmation view
 * ``send_login_context_processor``: Send login view
+* ``mail_context_processor``: Whenever an email will be sent
 * ``tf_setup_context_processor``: Two factor setup view
 * ``tf_token_validation_context_processor``: Two factor token validation view
 * ``tf_verify_password_context_processor``: Two factor password re-verify view

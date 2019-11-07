@@ -82,7 +82,7 @@ def roles():
 def users_create(identity, password, active):
     """Create a user."""
     kwargs = {attr: identity for attr in _security.user_identity_attributes}
-    kwargs.update(**{"password": password, "active": "y" if active else ""})
+    kwargs.update(**{"password": password})
 
     form = _security.confirm_register_form(MultiDict(kwargs), meta={"csrf": False})
 
