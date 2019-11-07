@@ -8,6 +8,9 @@ Version 3.4.0
 
 Released TBD
 
+- (:issue:`99`, :issue:`195`) Support pluggable password validators. Provide a default
+  validator that offers complexity and breached support.
+
 Version 3.3.2
 -------------
 

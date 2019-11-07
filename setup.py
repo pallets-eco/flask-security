@@ -41,6 +41,7 @@ tests_require = [
     "sqlalchemy>=1.2.6",
     "sqlalchemy-utils>=0.33.0",
     "werkzeug>=0.14.1",
+    "zxcvbn~=4.4.28",
 ]
 
 extras_require = {

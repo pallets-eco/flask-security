@@ -40,6 +40,9 @@ app.config["SECURITY_PASSWORD_HASH"] = "argon2"
 # For python3: secrets.SystemRandom().getrandbits(128)
 app.config["SECURITY_PASSWORD_SALT"] = "146585145368132386173505678016728509634"
 
+# Take password complexity seriously
+app.config["SECURITY_PASSWORD_COMPLEXITY_CHECKER"] = "zxcvbn"
+
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "SQLALCHEMY_DATABASE_URI", "sqlite://"
 )

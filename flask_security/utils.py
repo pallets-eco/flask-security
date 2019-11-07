@@ -217,7 +217,7 @@ def verify_and_update_password(password, user):
     return verified
 
 
-def encrypt_password(password):
+def encrypt_password(password):  # pragma: no cover
     """Encrypt the specified plaintext password.
 
     It uses the configured encryption options.
@@ -861,3 +861,146 @@ try:  # pragma: no cover
     SmsSenderFactory.senders["Twilio"] = TwilioSmsSender
 except Exception:
     pass
+
+
+def password_length_validator(password):
+    """ Test password for length.
+
+    :param password: Plain text password to check
+
+    :return: None if password conforms to length requirements,
+     a list of error/suggestions if not.
+
+    .. versionadded:: 3.4.0
+
+    """
+    if len(password) < config_value("PASSWORD_LENGTH_MIN") or len(password) > 128:
+        return [
+            get_message(
+                "PASSWORD_INVALID_LENGTH", length=config_value("PASSWORD_LENGTH_MIN")
+            )[0]
+        ]
+    return None
+
+
+def password_complexity_validator(password, is_register, **kwargs):
+    """ Test password for complexity.
+
+    Currently just supports 'zxcvbn'.
+
+    :param password: Plain text password to check
+    :param is_register: if True then kwargs are arbitrary additional info. (e.g.
+        info from a registration form). If False, must be a SINGLE key "user" that
+        corresponds to the current_user. All string values will be extracted and
+        sent to the complexity checker.
+    :param kwargs:
+
+    :return: None if password is complex enough, a list of error/suggestions if not.
+        Be aware that zxcvbn does not (easily) provide a way to localize messages.
+
+    .. versionadded:: 3.4.0
+    """
+
+    if config_value("PASSWORD_COMPLEXITY_CHECKER") == "zxcvbn":
+        import zxcvbn
+
+        user_info = []
+        if not is_register:
+            for v in kwargs["user"].__dict__.values():
+                if v and isinstance(v, str):
+                    user_info.append(v)
+        else:
+            # This is usually all register form values that are in the user_model
+            if kwargs:
+                user_info = kwargs.values()
+        results = zxcvbn.zxcvbn(password, user_inputs=user_info)
+        if results["score"] > 2:
+            # Good or Strong
+            return None
+        # Should we return suggestions? Default forms don't really know what to do.
+        if results["feedback"]["warning"]:
+            # Note that these come from zxcvbn and
+            # aren't localizable via Flask-Security
+            return [results["feedback"]["warning"]]
+        return [get_message("PASSWORD_TOO_SIMPLE")[0]]
+    else:
+        return None
+
+
+def password_breached_validator(password):
+    """ Check if password on breached list
+
+    :param password: Plain text password to check
+
+    :return: None if password conforms to length requirements,
+     a list of error/suggestions if not.
+
+    .. versionadded:: 3.4.0
+    """
+    pwn = config_value("PASSWORD_CHECK_BREACHED")
+    if pwn:
+        try:
+            cnt = pwned(password)
+            if cnt >= config_value("PASSWORD_BREACHED_COUNT"):
+                return [get_message("PASSWORD_BREACHED")[0]]
+        except Exception:
+            if pwn == "strict":
+                return [get_message("PASSWORD_BREACHED_SITE_ERROR")[0]]
+    return None
+
+
+def default_password_validator(password, is_register, **kwargs):
+    """
+    Password validation.
+    Called in app/request context.
+
+    N.B. do not call this directly - use security._default_password_validator
+    """
+    notok = password_length_validator(password)
+    if notok:
+        return notok
+
+    notok = password_breached_validator(password)
+    if notok:
+        return notok
+
+    return password_complexity_validator(password, is_register, **kwargs)
+
+
+def pwned(password):
+    """
+    Check password against pwnedpasswords API using k-Anonymity.
+    https://haveibeenpwned.com/API/v3
+
+    :return: Count of password in DB (0 means hasn't been compromised)
+     Can raise HTTPError
+
+    Only implemented for python 3
+
+    .. versionadded:: 3.4.0
+    """
+
+    def convert_password_tuple(value):
+        hash_suffix, count = value.split(":")
+        return hash_suffix, int(count)
+
+    sha1 = hashlib.sha1(password.encode("utf8")).hexdigest()
+
+    if PY3:
+        import urllib.request
+        import urllib.error
+
+        req = urllib.request.Request(
+            url="https://api.pwnedpasswords.com/range/{}".format(sha1[:5].upper()),
+            headers={"User-Agent": "Flask-Security (Python)"},
+        )
+        # Might raise HTTPError
+        with urllib.request.urlopen(req) as f:
+            response = f.read()
+
+        raw = response.decode("utf-8-sig")
+
+        entries = dict(map(convert_password_tuple, raw.upper().split("\r\n")))
+        return entries.get(sha1[5:].upper(), 0)
+
+    raise NotImplementedError()

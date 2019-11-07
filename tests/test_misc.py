@@ -3,10 +3,16 @@
     test_misc
     ~~~~~~~~~~~
 
-    Email and other functionality tests
+    Lots of tests
+
+    :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 import hashlib
+import mock
+import sys
 
 import pytest
 
@@ -484,6 +490,97 @@ def test_per_request_xlate(app, client):
     assert response.jdata["response"]["errors"]["new_password"] == [
         "Merci d'indiquer un mot de passe"
     ]
+
+
+"""
+This cant work yet due to zxcvbn usage of gettext
+def test_zxcvbn_xlate(app):
+    class TestUser(object):
+        def __init__(self, email):
+            self.email = email
+
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    app.security = Security()
+    app.security.init_app(app)
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    with app.test_request_context():
+        user = TestUser("jwag@notme.com")
+        result = app.security._password_validator("simple", False, user=user)
+        print(result)
+"""
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
+@pytest.mark.settings(password_check_breached="strict")
+def test_breached(app):
+
+    # partial response from: https://api.pwnedpasswords.com/range/07003
+    pwned_response = "AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
+AFD8AA47E6FD782ADDC11D89744769F7354:2\r\n\
+B04334E179537C975D0B3C72DA2E5B68E44:15\r\n\
+B118F58C2373FDF97ACF93BD3339684D1EB:2\r\n\
+B1ED5D27429EDF77EFD84F4EA9BDA5013FB:4\r\n\
+B25C03CFBE4CBF19E0F4889711C9A488E5D:2\r\n\
+B3902FD808DCA504AAAD30F3C14BD3ACE7C:10".encode(
+        "utf-8"
+    )
+
+    app.security = Security()
+    app.security.init_app(app)
+    with app.test_request_context():
+        with mock.patch("urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.return_value.__enter__.return_value.read.return_value = (
+                pwned_response
+            )
+            pbad = app.security._password_validator("flaskflask", False)
+            assert len(pbad) == 1
+            assert app.config["SECURITY_MSG_PASSWORD_BREACHED"][0] in pbad[0]
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
+@pytest.mark.settings(
+    password_check_breached="strict",
+    password_breached_count=16,
+    password_complexity_checker="zxcvbn",
+)
+def test_breached_cnt(app):
+
+    # partial response from: https://api.pwnedpasswords.com/range/07003
+    pwned_response = "AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
+AFD8AA47E6FD782ADDC11D89744769F7354:2\r\n\
+B04334E179537C975D0B3C72DA2E5B68E44:15\r\n\
+B118F58C2373FDF97ACF93BD3339684D1EB:2\r\n\
+B1ED5D27429EDF77EFD84F4EA9BDA5013FB:4\r\n\
+B25C03CFBE4CBF19E0F4889711C9A488E5D:2\r\n\
+B3902FD808DCA504AAAD30F3C14BD3ACE7C:10".encode(
+        "utf-8"
+    )
+
+    app.security = Security()
+    app.security.init_app(app)
+    with app.test_request_context():
+        with mock.patch("urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.return_value.__enter__.return_value.read.return_value = (
+                pwned_response
+            )
+            pbad = app.security._password_validator("flaskflask", True)
+            # Still weak password, just not pwned enough. Should fail complexity
+            assert len(pbad) == 1
+            assert "Repeats like" in pbad[0]
+
+
+@pytest.mark.skip
+@pytest.mark.settings(password_check_breached="strict")
+def test_breached_real(app):
+    """ Actually go out to internet.. """
+
+    app.security = Security()
+    app.security.init_app(app)
+    with app.test_request_context():
+        pbad = app.security._password_validator("flaskflask", True)
+        assert len(pbad) == 1
+        assert app.config["SECURITY_MSG_PASSWORD_BREACHED"][0] in pbad[0]
 
 
 def test_json_error_response_string():

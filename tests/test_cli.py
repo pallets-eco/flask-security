@@ -28,13 +28,15 @@ def test_cli_createuser(script_info):
 
     # Create user with invalid email
     result = runner.invoke(
-        users_create, ["not-an-email", "--password", "123456"], obj=script_info
+        users_create, ["not-an-email", "--password", "battery staple"], obj=script_info
     )
     assert result.exit_code == 2
 
     # Create user
     result = runner.invoke(
-        users_create, ["email@example.org", "--password", "123456"], obj=script_info
+        users_create,
+        ["email@example.org", "--password", "battery staple"],
+        obj=script_info,
     )
     assert result.exit_code == 0
 
@@ -75,7 +77,7 @@ def test_cli_addremove_role(script_info):
 
     # Create a user and a role
     result = runner.invoke(
-        users_create, ["a@example.org", "--password", "123456"], obj=script_info
+        users_create, ["a@example.org", "--password", "battery staple"], obj=script_info
     )
     assert result.exit_code == 0
     result = runner.invoke(roles_create, ["superuser"], obj=script_info)
@@ -129,7 +131,7 @@ def test_cli_activate_deactivate(script_info):
 
     # Create a user
     result = runner.invoke(
-        users_create, ["a@example.org", "--password", "123456"], obj=script_info
+        users_create, ["a@example.org", "--password", "battery staple"], obj=script_info
     )
     assert result.exit_code == 0
 

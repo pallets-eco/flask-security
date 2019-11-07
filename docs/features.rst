@@ -53,6 +53,10 @@ A good way to generate this is::
 Bear in mind passlib does not assume which
 algorithm you will choose and may require additional libraries to be installed.
 
+Password Validation and Complexity
+-----------------------------------
+Consult :ref:`pass_validation_topic`.
+
 
 Basic HTTP Authentication
 -------------------------
