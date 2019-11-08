@@ -35,7 +35,7 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
 
     from flask import Flask, render_template_string
     from flask_sqlalchemy import SQLAlchemy
-    from flask_security import Security, SQLAlchemyUserDatastore, login_required
+    from flask_security import Security, SQLAlchemyUserDatastore, auth_required, hash_password
     from flask_security.models import fsqla
 
     # Create app
@@ -74,12 +74,12 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     @app.before_first_request
     def create_user():
         db.create_all()
-        user_datastore.create_user(email='test@me.com', password='password')
+        user_datastore.create_user(email="test@me.com", password=hash_password("password"))
         db.session.commit()
 
     # Views
-    @app.route('/')
-    @login_required
+    @app.route("/")
+    @auth_required()
     def home():
         return render_template_string("Hello {{ current_user.email }}")
 
@@ -115,7 +115,7 @@ and models.py. You can also do the models a folder and spread your tables there.
 - app.py ::
 
     from flask import Flask, render_template_string
-    from flask_security import Security, current_user, login_required, \
+    from flask_security import Security, current_user, auth_required, hash_password, \
          SQLAlchemySessionUserDatastore
     from database import db_session, init_db
     from models import User, Role
@@ -128,20 +128,19 @@ and models.py. You can also do the models a folder and spread your tables there.
     app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
 
     # Setup Flask-Security
-    user_datastore = SQLAlchemySessionUserDatastore(db_session,
-                                                    User, Role)
+    user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
     security = Security(app, user_datastore)
 
     # Create a user to test with
     @app.before_first_request
     def create_user():
         init_db()
-        user_datastore.create_user(email='matt@nobien.net', password='password')
+        user_datastore.create_user(email="test@me.com", password=hash_password("password"))
         db_session.commit()
 
     # Views
-    @app.route('/')
-    @login_required
+    @app.route("/")
+    @auth_required()
     def home():
         return render_template_string('Hello {{email}} !', email=current_user.email)
 
@@ -231,7 +230,7 @@ possible using MongoEngine:
     from flask import Flask, render_template
     from flask_mongoengine import MongoEngine
     from flask_security import Security, MongoEngineUserDatastore, \
-        UserMixin, RoleMixin, login_required
+        UserMixin, RoleMixin, auth_required, hash_password
 
     # Create app
     app = Flask(__name__)
@@ -267,11 +266,11 @@ possible using MongoEngine:
     # Create a user to test with
     @app.before_first_request
     def create_user():
-        user_datastore.create_user(email='matt@nobien.net', password='password')
+        user_datastore.create_user(email="admin@me.com", password=hash_password("password"))
 
     # Views
-    @app.route('/')
-    @login_required
+    @app.route("/")
+    @auth_required()
     def home():
         return render_template('index.html')
 
@@ -304,7 +303,7 @@ possible using Peewee:
     from flask_peewee.db import Database
     from peewee import *
     from flask_security import Security, PeeweeUserDatastore, \
-        UserMixin, RoleMixin, login_required
+        UserMixin, RoleMixin, auth_required, hash_password
 
     # Create app
     app = Flask(__name__)
@@ -350,11 +349,11 @@ possible using Peewee:
         for Model in (Role, User, UserRoles):
             Model.drop_table(fail_silently=True)
             Model.create_table(fail_silently=True)
-        user_datastore.create_user(email='matt@nobien.net', password='password')
+        user_datastore.create_user(email="test@me.com", password=hash_password("password"))
 
     # Views
     @app.route('/')
-    @login_required
+    @auth_required()
     def home():
         return render_template('index.html')
 

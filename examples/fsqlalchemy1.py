@@ -5,7 +5,14 @@ Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
 Very simple application.
 Uses built-in models.
 Shows using roles and permissions to protect endpoints.
+
+You can run the flask cli against this as well (once you have first created a
+real DB):
+SQLALCHEMY_DATABASE_URI="sqlite:////var/tmp/test.db" FLASK_APP=examples/fsqlalchemy1.py\
+ flask users create -a test@me.com
 """
+
+import os
 
 from flask import Flask, abort, render_template_string
 from flask.json import JSONEncoder
@@ -13,8 +20,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
+    auth_required,
     current_user,
-    login_required,
+    hash_password,
     permissions_accepted,
     permissions_required,
     roles_accepted,
@@ -25,7 +33,9 @@ from flask_security.models import fsqla
 app = Flask(__name__)
 app.config["DEBUG"] = True
 app.config["SECRET_KEY"] = "super-secret"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "SQLALCHEMY_DATABASE_URI", "sqlite://"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
 app.config["SECURITY_PASSWORD_SALT"] = "super-secret-random-salt"
@@ -78,16 +88,16 @@ def create_users():
     user_datastore.create_role(name="reader", permissions={"user-read"})
 
     user_datastore.create_user(
-        email="admin@me.com", password="password", roles=["admin"]
+        email="admin@me.com", password=hash_password("password"), roles=["admin"]
     )
     user_datastore.create_user(
-        email="ops@me.com", password="password", roles=["monitor"]
+        email="ops@me.com", password=hash_password("password"), roles=["monitor"]
     )
     real_user = user_datastore.create_user(
-        email="user@me.com", password="password", roles=["user"]
+        email="user@me.com", password=hash_password("password"), roles=["user"]
     )
     user_datastore.create_user(
-        email="reader@me.com", password="password", roles=["reader"]
+        email="reader@me.com", password=hash_password("password"), roles=["reader"]
     )
 
     # create initial blog
@@ -98,23 +108,27 @@ def create_users():
 
 
 # Views
-# Note that we always add @login_required so that if a client isn't logged in
+# Note that we always add @auth_required so that if a client isn't logged in
 # we will get a proper '401' and redirected to login page.
 @app.route("/")
-@login_required
+@auth_required()
 def home():
     return render_template_string("Hello {{ current_user.email }}")
 
 
 @app.route("/admin")
-@login_required
+@auth_required()
 @permissions_accepted("admin-read", "admin-write")
 def admin():
-    return render_template_string("Hello on admin page")
+    return render_template_string(
+        "Hello on admin page. Current user {} password is {}".format(
+            current_user.email, current_user.password
+        )
+    )
 
 
 @app.route("/ops")
-@login_required
+@auth_required()
 @roles_accepted("monitor")
 def monitor():
     # Example of using just a role. Note that 'admin' can't access this
@@ -124,7 +138,7 @@ def monitor():
 
 
 @app.route("/blog/<bid>", methods=["GET", "POST"])
-@login_required
+@auth_required()
 @permissions_required("user-write")
 def update_blog(bid):
     # Yes caller has write permission - but do they OWN this blog?

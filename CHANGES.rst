@@ -3,6 +3,25 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 3.4.0
+-------------
+
+Released TBD
+
+Version 3.3.1
+-------------
+
+Released TBD
+
+- (:pr:`197`) Add `Quart <https://gitlab.com/pgjones/quart/>`_ (Ristellise)
+- (:pr:`194`) Add Python 3.8 support into CI (jdevera)
+- (:pr:`196`) Improve docs around Single Page Applications and react (acidjunk)
+- (:issue:`201`) fsqla model was added to __init__.py making Sqlalchemy a required package.
+   That is wrong and has been removed. Applications must now import flask_security.models
+- (:pr:`999`) Fix/improve examples and quickstart to show one MUST hash_password() when
+   creating users programmatically.
+
+
 Version 3.3.0
 -------------
 

@@ -230,6 +230,9 @@ def auth_required(*auth_methods):
     The first mechanism that succeeds is used, following that, depending on
     configuration, CSRF protection will be tested.
 
+    On authentication failure :meth:`.Security.unauthorized_callback` (deprecated)
+    or :meth:`.Security.unauthn_handler` will be called.
+
     .. versionchanged:: 3.3.0
        If ``auth_methods`` isn't specified, then all will be tried. Authentication
        mechanisms will always be tried in order of ``token``, ``session``, ``basic``

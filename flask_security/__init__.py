@@ -49,7 +49,6 @@ from .forms import (
     TwoFactorVerifyCodeForm,
     TwoFactorVerifyPasswordForm,
 )
-from .models import fsqla
 from .signals import (
     confirm_instructions_sent,
     login_instructions_sent,
@@ -80,7 +79,7 @@ from .utils import (
     verify_and_update_password,
 )
 
-__version__ = "3.3.0"
+__version__ = "3.3.1"
 __all__ = (
     "AnonymousUser",
     "ConfirmRegisterForm",
@@ -103,6 +102,7 @@ __all__ = (
     "confirm_instructions_sent",
     "current_user",
     "handle_csrf",
+    "hash_password",
     "http_auth_required",
     "login_required",
     "login_user",
