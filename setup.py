@@ -14,7 +14,7 @@ with io.open("flask_security/__init__.py", "rt", encoding="utf8") as f:
 
 tests_require = [
     "Flask-Mongoengine>=0.9.5",
-    "Flask-Peewee>=0.6.5",
+    "peewee>=3.11.2",
     "Flask-SQLAlchemy>=2.3",
     "bcrypt>=3.1.5",
     "cachetools>=3.1.0",

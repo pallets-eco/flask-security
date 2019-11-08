@@ -43,7 +43,7 @@ extensions out of the box for data persistence:
 
 1. `Flask-SQLAlchemy <http://pypi.python.org/pypi/flask-sqlalchemy/>`_
 2. `Flask-MongoEngine <http://pypi.python.org/pypi/flask-mongoengine/>`_
-3. `Flask-Peewee <http://pypi.python.org/pypi/flask-peewee/>`_
+3. `Peewee Flask utils <http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#flask-utils>`_
 4. `PonyORM <http://pypi.python.org/pypi/pony/>`_
 
 

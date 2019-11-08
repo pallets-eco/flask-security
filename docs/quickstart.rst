@@ -290,7 +290,7 @@ Peewee Install requirements
 ::
 
     $ mkvirtualenv <your-app-name>
-    $ pip install flask-security-too flask-peewee
+    $ pip install flask-security-too peewee
 
 Peewee Application
 ~~~~~~~~~~~~~~~~~~

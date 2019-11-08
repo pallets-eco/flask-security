@@ -387,7 +387,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
         ForeignKeyField,
         CharField,
     )
-    from flask_peewee.db import Database
+    from playhouse.flask_utils import FlaskDB
 
     if realdburl:
         engine_mapper = {
@@ -411,7 +411,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
 
     app.config["DATABASE"] = db_config
 
-    db = Database(app)
+    db = FlaskDB(app)
 
     class Role(db.Model, RoleMixin):
         name = CharField(unique=True, max_length=80)
