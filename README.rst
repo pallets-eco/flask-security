@@ -39,7 +39,9 @@ Goals
   and most obvious changes that have already been vetted in the upstream version, as
   well as other pull requests. This was completed with the June 29 2019 3.2.0 release.
 * Continue work to get Flask-Security to be usable from Single Page Applications,
-  such as those built with Vue and Angular, that have no html forms.
+  such as those built with Vue and Angular, that have no html forms. This is true as of the 3.3.0
+  release.
+* Use `OWASP <https://github.com/OWASP/ASVS>`_ to guide best practice and default configurations.
 * Migrate to more modern paradigms such as using oauth2 and JWT for token acquisition.
 * Be more opinionated and 'batteries' included by reducing reliance on abandoned projects and
   bundling in support for common use cases.

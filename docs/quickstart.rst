@@ -2,7 +2,14 @@ Quick Start
 ===========
 
 There are some complete (but simple) examples available in the *examples* directory of the
-`Flask-Security repo`_
+`Flask-Security repo`_.
+
+.. danger::
+   The examples below place secrets in source files. Never do this for your application
+   especially if your source code is placed in a public repo. How you pass in secrets
+   securely will depend on your deployment model - however in most cases (e.g. docker, lambda)
+   using environment variables will be the easiest.
+
 
 * :ref:`basic-sqlalchemy-application`
 * :ref:`basic-sqlalchemy-application-with-session`
@@ -33,6 +40,8 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
 
 ::
 
+    import os
+
     from flask import Flask, render_template_string
     from flask_sqlalchemy import SQLAlchemy
     from flask_security import Security, SQLAlchemyUserDatastore, auth_required, hash_password
@@ -41,11 +50,14 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     # Create app
     app = Flask(__name__)
     app.config['DEBUG'] = True
-    app.config['SECRET_KEY'] = 'super-secret'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
 
+    # Generate a nice key using secrets.token_urlsafe()
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
+    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
+    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
     # underlying engine. This option makes sure that DB connections from the
     # pool are still valid. Important for entire application since
@@ -114,6 +126,8 @@ and models.py. You can also do the models a folder and spread your tables there.
 
 - app.py ::
 
+    import os
+
     from flask import Flask, render_template_string
     from flask_security import Security, current_user, auth_required, hash_password, \
          SQLAlchemySessionUserDatastore
@@ -123,9 +137,12 @@ and models.py. You can also do the models a folder and spread your tables there.
     # Create app
     app = Flask(__name__)
     app.config['DEBUG'] = True
-    app.config['SECRET_KEY'] = 'super-secret'
+
+    # Generate a nice key using secrets.token_urlsafe()
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
     # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
+    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 
     # Setup Flask-Security
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
@@ -227,6 +244,8 @@ possible using MongoEngine:
 
 ::
 
+    import os
+
     from flask import Flask, render_template
     from flask_mongoengine import MongoEngine
     from flask_security import Security, MongoEngineUserDatastore, \
@@ -235,9 +254,12 @@ possible using MongoEngine:
     # Create app
     app = Flask(__name__)
     app.config['DEBUG'] = True
-    app.config['SECRET_KEY'] = 'super-secret'
+
+    # Generate a nice key using secrets.token_urlsafe()
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
     # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
+    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 
     # MongoDB Config
     app.config['MONGODB_DB'] = 'mydatabase'
@@ -299,6 +321,8 @@ possible using Peewee:
 
 ::
 
+    import os
+
     from flask import Flask, render_template
     from playhouse.flask_utils import FlaskDB
     from peewee import *
@@ -308,13 +332,17 @@ possible using Peewee:
     # Create app
     app = Flask(__name__)
     app.config['DEBUG'] = True
-    app.config['SECRET_KEY'] = 'super-secret'
+
+    # Generate a nice key using secrets.token_urlsafe()
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
+    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
+    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
+
     app.config['DATABASE'] = {
         'name': 'example.db',
         'engine': 'peewee.SqliteDatabase',
     }
-    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
 
     # Create database connection object
     db = FlaskDB(app)

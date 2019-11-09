@@ -183,4 +183,4 @@ sends the following signals.
   Sent when a two factor security/access code is sent. In addition to the app
   (which is the sender), it is passed `user`, `method`, and `token` arguments.
 
-.. _Flask documentation on signals: http://flask.pocoo.org/docs/signals/
+.. _Flask documentation on signals: https://flask.palletsprojects.com/en/1.1.x/signals/
