@@ -6,6 +6,9 @@
     hashing tests
 """
 
+import timeit
+
+import pytest
 from pytest import raises
 from utils import authenticate, init_app_with_options
 from passlib.hash import pbkdf2_sha256, django_pbkdf2_sha256, plaintext
@@ -122,3 +125,39 @@ def test_missing_hash_salt_option(app, sqlalchemy_datastore):
                 "SECURITY_PASSWORD_SINGLE_HASH": False,
             }
         )
+
+
+def test_verify_password_argon2(app, sqlalchemy_datastore):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"SECURITY_PASSWORD_HASH": "argon2"}
+    )
+    with app.app_context():
+        assert verify_password("pass", hash_password("pass"))
+
+
+def test_verify_password_argon2_opts(app, sqlalchemy_datastore):
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{
+            "SECURITY_PASSWORD_HASH": "argon2",
+            "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {
+                "argon2__rounds": 4,
+                "argon2__salt_size": 16,
+                "argon2__hash_len": 16,
+            },
+        }
+    )
+    with app.app_context():
+        hashed_pwd = hash_password("pass")
+        assert "t=4" in hashed_pwd
+        assert verify_password("pass", hashed_pwd)
+
+
+@pytest.mark.skip
+def test_argon2_speed(app, sqlalchemy_datastore):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"SECURITY_PASSWORD_HASH": "argon2"}
+    )
+    with app.app_context():
+        timeit.timeit(lambda: hash_password("pass"), number=100)

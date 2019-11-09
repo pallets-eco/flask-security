@@ -92,10 +92,12 @@ _default_config = {
         "django_salted_md5",
         "django_salted_sha1",
         "django_des_crypt",
+        "argon2",
         "plaintext",
     },
     "PASSWORD_SCHEMES": [
         "bcrypt",
+        "argon2",
         "des_crypt",
         "pbkdf2_sha256",
         "pbkdf2_sha512",
@@ -104,6 +106,8 @@ _default_config = {
         # And always last one...
         "plaintext",
     ],
+    "PASSWORD_HASH_OPTIONS": {},  # Deprecated at passlib 1.7
+    "PASSWORD_HASH_PASSLIB_OPTIONS": {},  # >= 1.7.1 method to pass options.
     "DEPRECATED_PASSWORD_SCHEMES": ["auto"],
     "LOGIN_URL": "/login",
     "LOGOUT_URL": "/logout",
@@ -451,7 +455,13 @@ def _get_pwd_context(app):
             "Invalid password hashing scheme %r. Allowed values are %s"
             % (pw_hash, allowed)
         )
-    return CryptContext(schemes=schemes, default=pw_hash, deprecated=deprecated)
+    cc = CryptContext(
+        schemes=schemes,
+        default=pw_hash,
+        deprecated=deprecated,
+        **cv("PASSWORD_HASH_PASSLIB_OPTIONS", app=app)
+    )
+    return cc
 
 
 def _get_i18n_domain(app):

@@ -32,13 +32,13 @@ from flask_security.models import fsqla
 # Create app
 app = Flask(__name__)
 app.config["DEBUG"] = True
-app.config["SECRET_KEY"] = "super-secret"
+# generated using: secrets.token_urlsafe()
+app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
+app.config["SECURITY_PASSWORD_HASH"] = "argon2"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "SQLALCHEMY_DATABASE_URI", "sqlite://"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-# Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-app.config["SECURITY_PASSWORD_SALT"] = "super-secret-random-salt"
 
 # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
 # underlying engine. This option makes sure that DB connections from the pool
