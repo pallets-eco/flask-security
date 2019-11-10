@@ -469,8 +469,8 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
 
 
 class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
-    """A PeeweeD datastore implementation for Flask-Security that assumes
-    the use of the Flask-Peewee extension.
+    """A PeeweeD datastore implementation for Flask-Security that assumes the
+    use of Peewee Flask utils.
 
     :param user_model: A user model class definition
     :param role_model: A role model class definition

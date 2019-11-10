@@ -289,7 +289,7 @@ Peewee Install requirements
 ::
 
     $ mkvirtualenv <your-app-name>
-    $ pip install flask-security-too flask-peewee
+    $ pip install flask-security-too peewee
 
 Peewee Application
 ~~~~~~~~~~~~~~~~~~
@@ -300,7 +300,7 @@ possible using Peewee:
 ::
 
     from flask import Flask, render_template
-    from flask_peewee.db import Database
+    from playhouse.flask_utils import FlaskDB
     from peewee import *
     from flask_security import Security, PeeweeUserDatastore, \
         UserMixin, RoleMixin, auth_required, hash_password
@@ -317,7 +317,7 @@ possible using Peewee:
     app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-random-salt'
 
     # Create database connection object
-    db = Database(app)
+    db = FlaskDB(app)
 
     class Role(db.Model, RoleMixin):
         name = CharField(unique=True)
