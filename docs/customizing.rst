@@ -115,6 +115,20 @@ The following is a list of all the available form overrides:
 * ``two_factor_verify_password_form``: Two-factor verify password form
 * ``two_factor_rescue_form``: Two-factor help user form
 
+Localization
+------------
+All messages, form labels, and form strings are localizable. Flask-Security uses
+`Flask-BabelEx <https://pythonhosted.org/Flask-BabelEx/>`_ to manage its messages.
+All translations are tagged with a domain, as specified by the configuration variable
+``SECURITY_I18N_DOMAIN`` (default: "security"). For messages and labels all this
+works seamlessly.  For strings inside templates it is necessary to explicitly ask for
+the "security" domain, since your application itself might have its own domain.
+Flask-Security places the method ``_fsdomain`` in jinja2's global environment.
+In order to reference a Flask-Security translation from ANY template (such as if you copied and
+modified an existing security template) just use that method::
+
+    {{ _fsdomain("Login") }}
+
 Emails
 ------
 

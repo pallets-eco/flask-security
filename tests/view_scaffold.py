@@ -4,25 +4,28 @@
 """
 This is simple scaffold that can be run as an app and manually test
 various views using a browser.
+It can be used to test translations by adding ?lang=xx. You might need to
+delete the session cookie if you need to switch between languages (it is easy to
+do this with your browser development tools).
 
 Configurations can be set via environment variables.
 
 Runs on port 5001
 
-In order to start - you need to register a user.
-To confirm - take the token printed on the console - and put that in your browser
-at /confirm/{token}
+An initial user: test@test.com/password is created.
+If you want to register a new user - you will receive a 'flash' that has the
+confirm URL (with token) you need to enter into your browser address bar.
 
 
-Since we don't actually send email - we have signal handlers dump the required
-data to the console.
+Since we don't actually send email - we have signal handlers flash the required
+data.
 
 """
 
 import datetime
 import os
 
-from flask import Flask, render_template_string, request, session
+from flask import Flask, flash, render_template_string, request, session
 import flask_babelex
 from flask_mail import Mail
 from flask.json import JSONEncoder
@@ -43,17 +46,16 @@ from flask_security.utils import hash_password
 def create_app():
     app = Flask(__name__)
     app.config["DEBUG"] = True
-    app.config["SECRET_KEY"] = "super-secret"
+    # SECRET_KEY generated using: secrets.token_urlsafe()
+    app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = False
     # Don't actually send any email - instead we subscribe to signals
-    # and print out required info.
     app.config["MAIL_SUPPRESS_SEND"] = True
     app.config["SECURITY_TWO_FACTOR_SECRET"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
 
-    app.config["SECURITY_PASSWORD_SALT"] = "salty"
     # Make this plaintext for most tests - reduces unit test time by 50%
     app.config["SECURITY_PASSWORD_HASH"] = "plaintext"
     # Make this hex_md5 for token tests
@@ -110,16 +112,16 @@ def create_app():
             print("Created User: {} with password {}".format(test_acct, "password"))
 
     @user_registered.connect_via(app)
-    def on_user_registerd(myapp, user, confirm_token):
-        print("User {} registered with token {}".format(user.email, confirm_token))
+    def on_user_registered(myapp, user, confirm_token):
+        flash("To confirm {} - go to /confirm/{}".format(user.email, confirm_token))
 
     @reset_password_instructions_sent.connect_via(app)
     def on_reset(myapp, user, token):
-        print("User {} started password reset with token {}".format(user.email, token))
+        flash("Go to /reset/{}".format(token))
 
     @tf_security_token_sent.connect_via(app)
     def on_token_sent(myapp, user, token, method):
-        print(
+        flash(
             "User {} was sent two factor token {} via {}".format(
                 user.email, token, method
             )
@@ -130,7 +132,9 @@ def create_app():
     @login_required
     def home():
         return render_template_string(
-            "{{ _('Welcome') }} {{email}} !", email=current_user.email
+            "{% include 'security/_messages.html' %}"
+            "{{ _fsdomain('Welcome') }} {{email}} !",
+            email=current_user.email,
         )
 
     return app
