@@ -41,8 +41,9 @@ Core
 ``SECURITY_PASSWORD_HASH``                       Specifies the password hash algorithm to
                                                  use when hashing passwords. Recommended
                                                  values for production systems are
-                                                 ``bcrypt``, ``sha512_crypt``, or
-                                                 ``pbkdf2_sha512``. Defaults to
+                                                 ``bcrypt``, ``argon2``, ``sha512_crypt``, or
+                                                 ``pbkdf2_sha512``. Some algorithms require the installation
+                                                 of a backend package (e.g. `bcrypt`_,  `argon2`_). Defaults to
                                                  ``bcrypt``.
 ``SECURITY_PASSWORD_SCHEMES``                    List of support password hash algorithms.
                                                  ``SECURITY_PASSWORD_HASH`` must be from this list.
@@ -70,7 +71,10 @@ Core
                                                  creating and validating tokens.
                                                  Defaults to ``hex_md5``.
 ``SECURITY_PASSWORD_HASH_OPTIONS``               Specifies additional options to be passed
-                                                 to the hashing method.
+                                                 to the hashing method. This is deprecated as of passlib 1.7.
+``SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS``       Pass additional options to the various hashing methods. This is a
+                                                 dict of the form ``{<scheme>__<option>: <value>, ..}``
+                                                 e.g. {"argon2__rounds": 4}.
 ``SECURITY_EMAIL_SENDER``                        Specifies the email address to send
                                                  emails as. Defaults to value set
                                                  to ``MAIL_DEFAULT_SENDER`` if
@@ -155,7 +159,8 @@ Core
 .. _set_cookie: https://flask.palletsprojects.com/en/1.1.x/api/?highlight=set_cookie#flask.Response.set_cookie
 .. _axios: https://github.com/axios/axios
 .. _cachetools: https://pypi.org/project/cachetools/
-
+.. _bcrypt: https://pypi.org/project/bcrypt/
+.. _argon2: https://pypi.org/project/argon2-cffi/
 
 URLs and Views
 --------------

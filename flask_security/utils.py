@@ -229,8 +229,6 @@ def encrypt_password(password):
 def hash_password(password):
     """Hash the specified plaintext password.
 
-    It uses the configured hashing options.
-
     .. versionadded:: 2.0.2
 
     :param password: The plaintext password to hash
@@ -238,6 +236,8 @@ def hash_password(password):
     if use_double_hash():
         password = get_hmac(password).decode("ascii")
 
+    # Passing in options as part of hash is deprecated in passlib 1.7
+    # and new algorithms like argon2 don't even support it.
     return _pwd_context.hash(
         password,
         **config_value("PASSWORD_HASH_OPTIONS", default={}).get(
