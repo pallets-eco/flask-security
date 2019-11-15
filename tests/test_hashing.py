@@ -11,7 +11,7 @@ import timeit
 import pytest
 from pytest import raises
 from utils import authenticate, init_app_with_options
-from passlib.hash import pbkdf2_sha256, django_pbkdf2_sha256, plaintext
+from passlib.hash import argon2, pbkdf2_sha256, django_pbkdf2_sha256, plaintext
 
 from flask_security.utils import hash_password, verify_password, get_hmac
 
@@ -133,6 +133,8 @@ def test_verify_password_argon2(app, sqlalchemy_datastore):
     )
     with app.app_context():
         assert verify_password("pass", hash_password("pass"))
+        # Verify double hash
+        assert verify_password("pass", argon2.hash(get_hmac("pass")))
 
 
 def test_verify_password_argon2_opts(app, sqlalchemy_datastore):
