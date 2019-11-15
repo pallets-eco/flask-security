@@ -92,7 +92,6 @@ _default_config = {
         "django_salted_md5",
         "django_salted_sha1",
         "django_des_crypt",
-        "argon2",
         "plaintext",
     },
     "PASSWORD_SCHEMES": [

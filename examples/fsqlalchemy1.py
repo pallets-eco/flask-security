@@ -35,6 +35,10 @@ app.config["DEBUG"] = True
 # generated using: secrets.token_urlsafe()
 app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
 app.config["SECURITY_PASSWORD_HASH"] = "argon2"
+# argon2 uses double hashing by default - so provide key.
+# For python3: secrets.SystemRandom().getrandbits(128)
+app.config["SECURITY_PASSWORD_SALT"] = "146585145368132386173505678016728509634"
+
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "SQLALCHEMY_DATABASE_URI", "sqlite://"
 )

@@ -229,6 +229,11 @@ def encrypt_password(password):
 def hash_password(password):
     """Hash the specified plaintext password.
 
+    Unless the hash algorithm is listed in `SECURITY_PASSWORD_SINGLE_HASH`,
+    perform a double hash - first create an HMAC from plaintext, then use
+    hashing algorithm. This satisfies OWASP/ASVS section 2.4.5 - provide 'additional
+    iteration of a key derivation'.
+
     .. versionadded:: 2.0.2
 
     :param password: The plaintext password to hash
