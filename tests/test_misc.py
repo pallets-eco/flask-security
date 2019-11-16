@@ -387,10 +387,6 @@ def test_xlation(app, client):
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
-    # This is absolutely not the right way to get translations
-    # initialized - but works for our unit test environment.
-    app.jinja_env.globals["_"] = app.security.i18n_domain.gettext
-
     response = client.get("/login")
     assert b'<label for="password">Mot de passe</label>' in response.data
     response = authenticate(client)
@@ -442,9 +438,6 @@ def test_per_request_xlate(app, client):
             if locale:
                 session["lang"] = locale
         return session.get("lang", None).replace("-", "_")
-
-    # Ugh - this overrides entire app (which is fine for testing).
-    app.jinja_env.globals["_"] = app.security.i18n_domain.gettext
 
     response = client.get("/login", headers=[("Accept-Language", "fr")])
     assert b'<label for="password">Mot de passe</label>' in response.data
