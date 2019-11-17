@@ -11,15 +11,19 @@ Released TBD
 Version 3.3.1
 -------------
 
-Released TBD
+Released November 16, 2019
 
-- (:pr:`197`) Add `Quart <https://gitlab.com/pgjones/quart/>`_ (Ristellise)
+- (:pr:`197`) Add `Quart <https://gitlab.com/pgjones/quart/>`_ compatibility (Ristellise)
 - (:pr:`194`) Add Python 3.8 support into CI (jdevera)
-- (:pr:`196`) Improve docs around Single Page Applications and react (acidjunk)
+- (:pr:`196`) Improve docs around Single Page Applications and React (acidjunk)
 - (:issue:`201`) fsqla model was added to __init__.py making Sqlalchemy a required package.
-   That is wrong and has been removed. Applications must now import flask_security.models
-- (:pr:`999`) Fix/improve examples and quickstart to show one MUST hash_password() when
-   creating users programmatically.
+  That is wrong and has been removed. Applications must now explicitly import from ``flask_security.models``
+- (:pr:`204`) Fix/improve examples and quickstart to show one MUST call hash_password() when
+  creating users programmatically. Also show real SECRET_KEYs and PASSWORD_SALTs and how to generate them.
+- (:pr:`209`) Add argon2 as an allowable password hash.
+- (:pr:`210`) Improve integration with Flask-Admin. Actually - this PR improves localization support
+  by adding a method ``_fsdomain`` to jinja2's global environment. Added documentation
+  around localization.
 
 
 Version 3.3.0

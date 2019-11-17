@@ -42,8 +42,14 @@ Password Hashing
 Password hashing is enabled with `passlib`_. Passwords are hashed with the
 `bcrypt`_ function by default but you can easily configure the hashing
 algorithm. You should **always use a hashing algorithm** in your production
-environment. You may also specify to use HMAC with a configured salt value in
-addition to the algorithm chosen. Bear in mind passlib does not assume which
+environment. Hash algorithms not listed in ``SECURITY_PASSWORD_SINGLE_HASH``
+will be double hashed - first an HMAC will be computed, then the selected hash
+function will be used. In this case - you must provide a ``SECURITY_PASSWORD_SALT``.
+A good way to generate this is::
+
+    secrets.SystemRandom().getrandbits(128)
+
+Bear in mind passlib does not assume which
 algorithm you will choose and may require additional libraries to be installed.
 
 

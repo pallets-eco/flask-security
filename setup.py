@@ -74,10 +74,8 @@ setup(
     long_description=readme,
     keywords="flask security",
     license="MIT",
-    author="Matt Wright",
-    author_email="matt@nobien.net",
-    maintainer="Chris Wagner",
-    maintainer_email="jwag.wagner@gmail.com",
+    author="Matt Wright & Chris Wagner",
+    author_email="jwag.wagner+github@gmail.com",
     url="https://github.com/jwag956/flask-security",
     project_urls={
         "Documentation": "https://flask-security-too.readthedocs.io",

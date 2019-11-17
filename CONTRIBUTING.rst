@@ -71,8 +71,8 @@ these steps:
 
   #. When done, verify unit tests, syntax etc. all pass::
 
-        $ python setup.py tests
-        $ python setup.py build_sphinx
+        $ python setup.py test
+        $ python setup.py build_sphinx compile_catalog
 
   #. When the tests are successful, commit your changes
      and push your branch to GitHub::

@@ -43,7 +43,7 @@ Core
                                                  values for production systems are
                                                  ``bcrypt``, ``argon2``, ``sha512_crypt``, or
                                                  ``pbkdf2_sha512``. Some algorithms require the installation
-                                                 of a backend package (e.g. `bcrypt`_,  `argon2`_). Defaults to
+                                                 of a backend package (e.g. `bcrypt`_, `argon2`_). Defaults to
                                                  ``bcrypt``.
 ``SECURITY_PASSWORD_SCHEMES``                    List of support password hash algorithms.
                                                  ``SECURITY_PASSWORD_HASH`` must be from this list.
@@ -53,8 +53,10 @@ Core
                                                  to the current default ``SECURITY_PASSWORD_HASH``.
                                                  Default is ``["auto"]`` which means any password found that wasn't
                                                  hashed using ``SECURITY_PASSWORD_HASH`` will be re-hashed.
-``SECURITY_PASSWORD_SALT``                       Specifies the HMAC salt. Defaults to
-                                                 ``None``.
+``SECURITY_PASSWORD_SALT``                       Specifies the HMAC salt. This is required for all schemes that
+                                                 are configured for double hashing. A good salt can be generated using:
+                                                 ``secrets.SystemRandom().getrandbits(128)``.
+                                                 Defaults to ``None``.
 ``SECURITY_PASSWORD_SINGLE_HASH``                A list of schemes that should not be hashed
                                                  twice. By default, passwords are
                                                  hashed twice, first with
