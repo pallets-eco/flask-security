@@ -132,7 +132,10 @@ def test_verify_password_argon2(app, sqlalchemy_datastore):
         app, sqlalchemy_datastore, **{"SECURITY_PASSWORD_HASH": "argon2"}
     )
     with app.app_context():
-        assert verify_password("pass", hash_password("pass"))
+        hashed_pwd = hash_password("pass")
+        assert verify_password("pass", hashed_pwd)
+        assert "t=10" in hashed_pwd
+
         # Verify double hash
         assert verify_password("pass", argon2.hash(get_hmac("pass")))
 
@@ -157,9 +160,33 @@ def test_verify_password_argon2_opts(app, sqlalchemy_datastore):
 
 
 @pytest.mark.skip
-def test_argon2_speed(app, sqlalchemy_datastore):
+def test_bcrypt_speed(app, sqlalchemy_datastore):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"SECURITY_PASSWORD_HASH": "argon2"}
+        app,
+        sqlalchemy_datastore,
+        **{
+            "SECURITY_PASSWORD_HASH": "bcrypt",
+            "SECURITY_PASSWORD_SALT": "salty",
+            "SECURITY_PASSWORD_SINGLE_HASH": False,
+        }
     )
     with app.app_context():
-        timeit.timeit(lambda: hash_password("pass"), number=100)
+        print(timeit.timeit(lambda: hash_password("pass"), number=100))
+
+
+@pytest.mark.skip
+def test_argon2_speed(app, sqlalchemy_datastore):
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{
+            "SECURITY_PASSWORD_HASH": "argon2",
+            "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {"argon2__rounds": 10},
+        }
+    )
+    with app.app_context():
+        print(
+            "Hash time for {} iterations: {}".format(
+                100, timeit.timeit(lambda: hash_password("pass"), number=100)
+            )
+        )

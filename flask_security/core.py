@@ -106,7 +106,9 @@ _default_config = {
         "plaintext",
     ],
     "PASSWORD_HASH_OPTIONS": {},  # Deprecated at passlib 1.7
-    "PASSWORD_HASH_PASSLIB_OPTIONS": {},  # >= 1.7.1 method to pass options.
+    "PASSWORD_HASH_PASSLIB_OPTIONS": {
+        "argon2__rounds": 10  # 1.7.1 default is 2.
+    },  # >= 1.7.1 method to pass options.
     "DEPRECATED_PASSWORD_SCHEMES": ["auto"],
     "LOGIN_URL": "/login",
     "LOGOUT_URL": "/logout",
