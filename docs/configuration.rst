@@ -76,7 +76,7 @@ Core
                                                  to the hashing method. This is deprecated as of passlib 1.7.
 ``SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS``       Pass additional options to the various hashing methods. This is a
                                                  dict of the form ``{<scheme>__<option>: <value>, ..}``
-                                                 e.g. {"argon2__rounds": 4}.
+                                                 e.g. {"argon2__rounds": 10}.
 ``SECURITY_EMAIL_SENDER``                        Specifies the email address to send
                                                  emails as. Defaults to value set
                                                  to ``MAIL_DEFAULT_SENDER`` if
