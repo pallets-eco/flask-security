@@ -50,7 +50,8 @@ def tf_clean_session():
     Clean out ALL stuff stored in session (e.g. on logout)
     """
     if config_value("TWO_FACTOR"):
-        for k in ["tf_state", "tf_user_id", "tf_primary_method", "tf_confirmed"]:
+        for k in ["tf_state", "tf_user_id", "tf_primary_method",
+                  "tf_confirmed", "tf_totp_secret"]:
             session.pop(k, None)
 
 
@@ -140,17 +141,15 @@ def complete_two_factor_process(user, primary_method, is_changing):
     """clean session according to process (login or changing two-factor method)
      and perform action accordingly
     """
-
-    # only update primary_method and DB if necessary
-    if user.tf_primary_method != primary_method:
-        user.tf_primary_method = primary_method
-        _datastore.put(user)
-
     # if we are changing two-factor method
     if is_changing:
-        # only generate new totp secret if changing method
-        user.tf_totp_secret = generate_totp()
-        _datastore.put(user)
+        # only update primary_method and DB if necessary
+        if user.tf_primary_method != primary_method:
+            user.tf_primary_method = primary_method
+            user.tf_totp_secret = session['tf_totp_secret']
+            _datastore.put(user)
+            # Remove from session tf_totp_secret after new token was set
+            session.pop('tf_totp_secret', None)
 
         # TODO Flashing shouldn't occur here - should be at view level to can
         # make sure not to do it for json requests.

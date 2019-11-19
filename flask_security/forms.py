@@ -425,7 +425,7 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
         # verify entered token with user's totp secret
         if not verify_totp(
             token=self.code.data,
-            totp_secret=self.user.tf_totp_secret,
+            totp_secret=self.tf_totp_secret,
             window=self.window,
         ):
             self.code.errors = list()

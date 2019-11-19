@@ -717,11 +717,9 @@ def two_factor_setup():
             return _tf_illegal_state(form, _security.two_factor_confirm_url)
         user = current_user
 
-    if not user.tf_totp_secret:
-        # Both initial login and opt-in are this case.
-        user.tf_totp_secret = generate_totp()
-        _datastore.put(user)
-        after_this_request(_commit)
+    if 'tf_totp_secret' not in session:
+        # Generate a new session TOTP secret for this session if there is none already
+        session['tf_totp_secret'] = generate_totp()
 
     if form.validate_on_submit():
         # Before storing in DB and therefore requiring 2FA we need to
@@ -748,7 +746,7 @@ def two_factor_setup():
         _datastore.put(user)
         after_this_request(_commit)
 
-        send_security_token(user=user, method=pm, totp_secret=user.tf_totp_secret)
+        send_security_token(user=user, method=pm, totp_secret=session['tf_totp_secret'])
         code_form = _security.two_factor_verify_code_form()
         if not _security._want_json(request):
             return _security.render_template(
@@ -815,6 +813,7 @@ def two_factor_token_validation():
 
         user = _datastore.get_user(session["tf_user_id"])
         form.user = user
+        form.tf_totp_secret = user.tf_totp_secret
         if not user:
             tf_clean_session()
             return _tf_illegal_state(form, _security.login_url)
@@ -836,6 +835,7 @@ def two_factor_token_validation():
             return _tf_illegal_state(form, _security.login_url)
         pm = session["tf_primary_method"]
         form.user = current_user
+        form.tf_totp_secret = session['tf_totp_secret']
 
     setattr(form, "primary_method", pm)
     if form.validate_on_submit():
@@ -996,7 +996,10 @@ def two_factor_qrcode():
         return abort(404)
 
     name = user.email.split("@")[0]
-    totp = user.tf_totp_secret
+    # Use the session totp_secret for the QRcode
+    # if it exists (during setup) or the user.tf_totp_secret otherwise
+    totp = session['tf_totp_secret'] if 'tf_totp_secret' in session \
+        else user.tf_totp_secret
     try:
         import pyqrcode
 
