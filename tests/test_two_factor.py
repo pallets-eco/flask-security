@@ -575,3 +575,75 @@ def test_datastore(app, client):
         user = app.security.datastore.find_user(email="gal@lp.com")
         assert user.tf_primary_method == "sms"
         assert "enckey" in user.tf_totp_secret
+
+
+def test_totp_secret_generation(app, client):
+    """
+    Test the totp secret generation upon changing method to make sure
+    it stays the same after the process is completed
+    """
+
+    # Properly log in jill for this test
+    signalled_identity = []
+
+    @identity_changed.connect_via(app)
+    def on_identity_changed(app, identity):
+        signalled_identity.append(identity.id)
+
+    response = authenticate(client, "jill@lp.com")
+    session = get_session(response)
+    assert "tf_state" not in session
+    # Jill is 4th user to be added in utils.py
+    assert signalled_identity[0] == 4
+    del signalled_identity[:]
+
+    # Confirm password
+    sms_sender = SmsSenderFactory.createSender("test")
+    password = "password"
+    response = client.post(
+        "/tf-confirm", data=dict(password=password), follow_redirects=True
+    )
+    # Select sms method but do not send a phone number just yet (regenerates secret)
+    data = dict(setup="sms")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"To Which Phone Number Should We Send Code To" in response.data
+
+    # Retrieve the current totp secret from the user in datastore for later comparison
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert "enckey" in user.tf_totp_secret
+        old_secret = user.tf_totp_secret
+
+    # Send the phone number in the second step, method remains unchanged
+    data = dict(setup="sms", phone="+111111111111")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+
+    # Validate token - this should complete 2FA setup
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"You successfully changed" in response.data
+
+    # Retrieve the final totp secret and make sure it matches the previous one
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert old_secret == user.tf_totp_secret
+
+    # Finally opt back out and check that tf_totp_secret is None
+    response = client.get("/tf-setup", data=data, follow_redirects=True)
+    message = b"You currently do not have permissions to access this page"
+    assert message in response.data
+
+    password = "password"
+    client.post("/tf-confirm", data=dict(password=password), follow_redirects=True)
+    data = dict(setup="disable")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"You successfully disabled two factor authorization." in response.data
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert user.tf_totp_secret is None
+
+    # Log out
+    logout(client)
+    assert not signalled_identity[0]
+    del signalled_identity[:]
