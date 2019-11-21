@@ -717,12 +717,6 @@ def two_factor_setup():
             return _tf_illegal_state(form, _security.two_factor_confirm_url)
         user = current_user
 
-    if not user.tf_totp_secret:
-        # Both initial login and opt-in are this case.
-        user.tf_totp_secret = generate_totp()
-        _datastore.put(user)
-        after_this_request(_commit)
-
     if form.validate_on_submit():
         # Before storing in DB and therefore requiring 2FA we need to
         # make sure it actually works.
@@ -740,6 +734,11 @@ def two_factor_setup():
                 return redirect(get_url(_security.post_login_view))
             else:
                 return _base_render_json(form)
+
+        # Regenerate the TOTP secret on every call of 2FA setup unless it is
+        # within the same session and method (e.g. upon entering the phone number)
+        if pm != session.get("tf_primary_method", None):
+            user.tf_totp_secret = generate_totp()
 
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
