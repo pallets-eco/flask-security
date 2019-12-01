@@ -17,7 +17,7 @@
 
 {% macro render_field_errors(field) %}
   <p>
-    {% if field.errors %}
+    {% if field and field.errors %}
       <ul>
       {% for error in field.errors %}
         <li>{{ error }}</li>

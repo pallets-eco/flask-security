@@ -110,6 +110,8 @@ Then in your browser navigate to::
     http://localhost:8081/docs/_build/html/_static/openapi_view.html
 
 
+Please note that changing ``openapi.yaml`` won't re-trigger a docs build - so you might
+have to manually delete ``docs/_build``.
 
 Testing
 -------

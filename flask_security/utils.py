@@ -367,8 +367,8 @@ def validate_redirect_url(url):
 
 def get_post_action_redirect(config_key, declared=None):
     urls = [
-        get_url(request.args.get("next")),
-        get_url(request.form.get("next")),
+        get_url(request.args.get("next", None)),
+        get_url(request.form.get("next", None)),
         find_redirect(config_key),
     ]
     if declared:

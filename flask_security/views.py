@@ -180,15 +180,25 @@ def login():
     Allow already authenticated users. For GET this is useful for
     single-page-applications on refresh - session still active but need to
     access user info and csrf-token.
-    For POST - just logs out current user.
-
-    Q: so even if one is authenticated, since we log out, we won't run csrf. Is that
-    ok?
+    For POST - redirects to POST_LOGIN_VIEW (forms) or returns 400 (json).
     """
 
     if current_user.is_authenticated and request.method == "POST":
-        tf_clean_session()
-        logout_user()
+        # Just redirect current_user to POST_LOGIN_VIEW (or next).
+        # While its tempting to try to logout the current user and login the
+        # new requested user - that simply doesn't work with CSRF.
+
+        # While this is close to anonymous_user_required - it differs in that
+        # it uses get_post_login_redirect which correctly handles 'next'.
+        # TODO: consider changing anonymous_user_required to also call
+        # get_post_login_redirect - not sure why it never has?
+        if _security._want_json(request):
+            payload = json_error_response(
+                errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
+            )
+            return _security._render_json(payload, 400, None, None)
+        else:
+            return redirect(get_post_login_redirect())
 
     form_class = _security.login_form
 
@@ -212,16 +222,21 @@ def login():
         after_this_request(_commit)
 
         if not request.is_json:
-            return redirect(get_post_login_redirect(form.next.data))
+            return redirect(get_post_login_redirect())
 
     if _security._want_json(request):
         if current_user.is_authenticated:
             form.user = current_user
         return _base_render_json(form, include_auth_token=True)
 
-    return _security.render_template(
-        config_value("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
-    )
+    if current_user.is_authenticated:
+        # Basically a no-op if authenticated - just perform the same
+        # post-login redirect as if user just logged in.
+        return redirect(get_post_login_redirect())
+    else:
+        return _security.render_template(
+            config_value("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
+        )
 
 
 def logout():
@@ -264,12 +279,7 @@ def register():
             did_login = True
 
         if not request.is_json:
-            if "next" in form:
-                redirect_url = get_post_register_redirect(form.next.data)
-            else:
-                redirect_url = get_post_register_redirect()
-
-            return redirect(redirect_url)
+            return redirect(get_post_register_redirect())
 
         # Only include auth token if in fact user is permitted to login
         return _base_render_json(form, include_auth_token=did_login)
@@ -420,7 +430,7 @@ def confirm_email(token):
         if config_value("AUTO_LOGIN_AFTER_CONFIRM"):
             # N.B. this is a (small) security risk if email went to wrong place.
             # and you have the LOGIN_WITH_CONFIRMATION flag since in that case
-            # you can be logged and and doing stuff - but another person could
+            # you can be logged in and doing stuff - but another person could
             # get the email.
             login_user(user)
 
