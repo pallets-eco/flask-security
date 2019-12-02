@@ -8,13 +8,14 @@ Shows using roles and permissions to protect endpoints.
 
 You can run the flask cli against this as well (once you have first created a
 real DB):
-SQLALCHEMY_DATABASE_URI="sqlite:////var/tmp/test.db" FLASK_APP=examples/fsqlalchemy1.py\
+SQLALCHEMY_DATABASE_URI="sqlite:////var/tmp/test.db" \
+ FLASK_APP=examples/fsqlalchemy1/app.py \
  flask users create -a test@me.com
 """
 
 import os
 
-from flask import Flask, abort, render_template_string
+from flask import Flask, abort, current_app, render_template_string
 from flask.json import JSONEncoder
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import (
@@ -76,12 +77,17 @@ class Blog(db.Model):
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(app, user_datastore)
+app.security = Security(app, user_datastore)
+
+# Set this so unit tests can mock out.
+app.blog_cls = Blog
 
 
 # Create users and roles (and first blog!)
 @app.before_first_request
 def create_users():
+    if current_app.testing:
+        return
     db.create_all()
     user_datastore.create_role(
         name="admin",
@@ -105,7 +111,7 @@ def create_users():
     )
 
     # create initial blog
-    blog = Blog(text="my first blog", user=real_user)
+    blog = app.blog_cls(text="my first blog", user=real_user)
     db.session.add(blog)
     db.session.commit()
     print("First blog id {}".format(blog.id))
@@ -146,7 +152,7 @@ def monitor():
 @permissions_required("user-write")
 def update_blog(bid):
     # Yes caller has write permission - but do they OWN this blog?
-    blog = Blog.query.get(bid)
+    blog = current_app.blog_cls.query.get(bid)
     if current_user != blog.user:
         abort(403)
     return render_template_string("Yes, {{ current_user.email }} can update blog")
