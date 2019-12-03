@@ -17,6 +17,7 @@ There are some complete (but simple) examples available in the *examples* direct
 * :ref:`basic-peewee-application`
 * :ref:`mail-configuration`
 * :ref:`proxy-configuration`
+* :ref:`unit-testing`
 
 .. _basic-sqlalchemy-application:
 
@@ -434,5 +435,21 @@ with a single HTTP proxy in front of the web application::
 
 To learn more about the ``ProxyFix`` middleware, please see the
 `Werkzeug documentation <https://werkzeug.palletsprojects.com/en/0.15.x/middleware/proxy_fix/#module-werkzeug.middleware.proxy_fix>`_.
+
+.. _unit-testing:
+
+Unit Testing Your Application
+-----------------------------
+
+As soon as you add any of the Flask-Security decorators to your API endpoints, it can
+be frustrating to unit test your basic routing (and roles and permissions). Without getting
+into the argument of the difference between unit tests and integration tests - you can approach testing
+in 2 ways:
+
+* 'Pure' unit test - mocking out all lower level objects (such as the data store)
+* Complete app with in-memory/temporary DB (with little or no mocking).
+
+Look in the `Flask-Security repo`_ *examples* directory for actual code that implements the
+first approach.
 
 .. _Flask-Security repo: https://github.com/jwag956/flask-security

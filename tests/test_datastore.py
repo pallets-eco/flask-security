@@ -260,6 +260,22 @@ def test_create_user_with_roles_and_permissions(app, datastore):
         assert user.has_permission("read") is True
 
 
+def test_permissions_strings(app, datastore):
+    # Make sure spaces are squashed.
+    ds = datastore
+    if not hasattr(ds.role_model, "permissions"):
+        return
+    init_app_with_options(app, ds)
+
+    with app.app_context():
+        perms = "read, write "
+        ds.create_role(name="test1", permissions=perms)
+        ds.commit()
+
+        t1 = ds.find_role("test1")
+        assert {"read", "write"} == t1.get_permissions()
+
+
 def test_modify_permissions(app, datastore):
     ds = datastore
     if not hasattr(ds.role_model, "permissions"):

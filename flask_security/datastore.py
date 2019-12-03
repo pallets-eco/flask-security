@@ -271,6 +271,9 @@ class UserDatastore(object):
             perms = kwargs["permissions"]
             if isinstance(perms, list) or isinstance(perms, set):
                 perms = ",".join(perms)
+            elif isinstance(perms, string_types):
+                # squash spaces.
+                perms = ",".join([p.strip() for p in perms.split(",")])
             kwargs["permissions"] = perms
 
         role = self.role_model(**kwargs)
