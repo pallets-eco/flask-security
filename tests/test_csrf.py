@@ -116,6 +116,29 @@ def test_login_csrf(app, client):
     assert b"Log in" in response.data
 
 
+def test_login_csrf_double(app, client):
+    # Test if POST login while already logged in - just redirects to POST_LOGIN
+    app.config["WTF_CSRF_ENABLED"] = True
+
+    # This shouldn't log in - but return login form with csrf token.
+    data = dict(email="matt@lp.com", password="password", remember="y")
+    response = client.post("/login", data=data)
+    assert response.status_code == 200
+    assert b"csrf_token" in response.data
+
+    data["csrf_token"] = _get_csrf_token(client)
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Welcome matt" in response.data
+
+    data["csrf_token"] = _get_csrf_token(client)
+    # Note - should redirect to POST_LOGIN with current user ignoring form data.
+    data["email"] = "newguy@me.com"
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Welcome matt" in response.data
+
+
 def test_login_csrf_json(app, client):
     app.config["WTF_CSRF_ENABLED"] = True
 
@@ -158,8 +181,8 @@ def test_login_csrf_unauth_ok(app, client):
 
 
 @pytest.mark.settings(csrf_ignore_unauth_endpoints=True)
-def test_login_csrf_unauth_ok_double(app, client):
-    # Test can login w/o CSRF even if already logged in.
+def test_login_csrf_unauth_double(app, client, get_message):
+    # Test double login w/o CSRF returns unauth required error message.
     app.config["WTF_CSRF_ENABLED"] = True
 
     # This should log in.
@@ -172,7 +195,10 @@ def test_login_csrf_unauth_ok_double(app, client):
     response = client.post(
         "/login", content_type="application/json", data=json.dumps(data)
     )
-    assert response.status_code == 200
+    assert response.status_code == 400
+    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+        "ANONYMOUS_USER_REQUIRED"
+    )
 
 
 @pytest.mark.recoverable()

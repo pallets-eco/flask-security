@@ -13,6 +13,8 @@ import base64
 import json
 import pytest
 
+from flask import Blueprint
+
 from utils import (
     authenticate,
     json_authenticate,
@@ -46,6 +48,20 @@ def test_authenticate_with_next(client):
     assert b"Page 1" in response.data
 
 
+def test_authenticate_with_next_bp(app, client):
+    api = Blueprint("api", __name__)
+
+    @api.route("/info")
+    def info():
+        pass
+
+    app.register_blueprint(api, url_prefix="/api")
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=api.info", data=data, follow_redirects=False)
+    assert response.status_code == 302
+    assert "api/info" in response.location
+
+
 def test_authenticate_with_invalid_next(client, get_message):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=http://google.com", data=data)
@@ -68,6 +84,34 @@ def test_authenticate_with_invalid_input(client, get_message):
         "/login", data="{}", headers={"Content-Type": "application/json"}
     )
     assert get_message("EMAIL_NOT_PROVIDED") in response.data
+
+
+@pytest.mark.settings(post_login_view="/post_login")
+def test_get_already_authenticated(client):
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+    response = client.get("/login", follow_redirects=True)
+    assert b"Post Login" in response.data
+
+
+@pytest.mark.settings(post_login_view="/post_login")
+def test_get_already_authenticated_next(client):
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+    # This should override post_login_view
+    response = client.get("/login?next=/page1", follow_redirects=True)
+    assert b"Page 1" in response.data
+
+
+@pytest.mark.settings(post_login_view="/post_login")
+def test_post_already_authenticated(client):
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Post Login" in response.data
+    response = client.post("/login?next=/page1", data=data, follow_redirects=True)
+    assert b"Page 1" in response.data
 
 
 def test_login_form(client):
@@ -163,10 +207,16 @@ def test_logout_post(client):
     assert response.jdata["meta"]["code"] == 200
 
 
-def test_logout_with_next(client, get_message):
+def test_logout_with_next_invalid(client, get_message):
     authenticate(client)
     response = client.get("/logout?next=http://google.com")
     assert "google.com" not in response.location
+
+
+def test_logout_with_next(client):
+    authenticate(client)
+    response = client.get("/logout?next=/page1", follow_redirects=True)
+    assert b"Page 1" in response.data
 
 
 def test_missing_session_access(client, get_message):

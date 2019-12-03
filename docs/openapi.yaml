@@ -54,12 +54,13 @@ paths:
                 example: redirect(SECURITY_POST_LOGIN_VIEW)
     post:
       summary: Login to application
-      description: Supports both json and form request types. If the caller is already logged in, they are logged out and the new user is logged in.
+      description: Supports both json and form request types. If the caller is already logged in, then in the form case, they are redirected to SECURITY_POST_LOGIN_VIEW, for a json
+        request, a 400 is returned.
       parameters:
         - name: next
           in: query
           description: >
-              URL to redirect to on successful registration. Ignored for json request.
+              URL to redirect to on successful login. Ignored for json request.
           schema:
             type: string
         - $ref: "#/components/parameters/include_auth_token"
@@ -82,10 +83,13 @@ paths:
             text/html:
               schema:
                 description: Unsuccessful login
+                type: string
                 example: render_template(SECURITY_LOGIN_USER_TEMPLATE) with error values
         302:
           description: >
-            Success or failure with form data body.
+            Success or failure with form data body OR caller already authenticated/logged in.
+            Note that in the already logged in case, the form body is ignored and the redirect is
+            done in the context/session if the calling user.
             redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW)
           headers:
             Location:
@@ -94,7 +98,7 @@ paths:
                 type: string
                 example: redirect(SECURITY_POST_LOGIN_VIEW)
         400:
-          description: Errors while validating login
+          description: Errors while validating login, or caller already authenticated/logged in.
           content:
             application/json:
               schema:
@@ -128,6 +132,7 @@ paths:
             text/html:
               schema:
                 description: Passwordless login form - with errors.
+                type: string
                 example: render_template(SECURITY_SEND_LOGIN_TEMPLATE)
             application/json:
               schema:
@@ -211,6 +216,7 @@ paths:
           content:
             text/html:
               schema:
+                type: string
                 example: render_template(SECURITY_REGISTER_USER_TEMPLATE)
         302:
           description: Response when already logged in
@@ -249,6 +255,7 @@ paths:
             text/html:
               schema:
                 description: Unsuccessful registration
+                type: string
                 example: render_template(SECURITY_REGISTER_USER_TEMPLATE) with error values
         302:
           description: >
@@ -298,6 +305,7 @@ paths:
             text/html:
               schema:
                 description: Change form validation error.
+                type: string
                 example: render_template(SECURITY_CHANGE_PASSWORD_TEMPLATE) with error values
             application/json:
               schema:
@@ -326,6 +334,7 @@ paths:
           content:
             text/html:
               schema:
+                type: string
                 example: render_template(SECURITY_FORGOT_PASSWORD_TEMPLATE)
         302:
           description: Response when already logged in
@@ -353,6 +362,7 @@ paths:
             text/html:
               schema:
                 description: Forgot password form - with errors.
+                type: string
                 example: render_template(SECURITY_FORGOT_PASSWORD_TEMPLATE)
             application/json:
               schema:
@@ -382,6 +392,7 @@ paths:
           content:
             text/html:
               schema:
+                type: string
                 example: render_template(SECURITY_RESET_PASSWORD_TEMPLATE)
         302:
           description: >
@@ -428,6 +439,7 @@ paths:
             text/html:
               schema:
                 description: Reset form validation error.
+                type: string
                 example: render_template(SECURITY_RESET_PASSWORD_TEMPLATE) with error values
             application/json:
               schema:
@@ -484,6 +496,7 @@ paths:
             text/html:
               schema:
                 description: Confirmation form - with errors.
+                type: string
                 example: render_template(SECURITY_SEND_CONFIRMATION_TEMPLATE)
             application/json:
               schema:
