@@ -140,20 +140,18 @@ def complete_two_factor_process(user, primary_method, is_changing):
     """clean session according to process (login or changing two-factor method)
      and perform action accordingly
     """
+
+    # only update primary_method and DB if necessary
+    if user.tf_primary_method != primary_method:
+        user.tf_primary_method = primary_method
+        _datastore.put(user)
+
     # if we are changing two-factor method
     if is_changing:
-        # only update primary_method and DB if necessary
-        if user.tf_primary_method != primary_method:
-            user.tf_primary_method = primary_method
-            _datastore.put(user)
-
-        # TODO Flashing shouldn't occur here - should be at view level to can
-        # make sure not to do it for json requests.
         completion_message = "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL"
         tf_profile_changed.send(
             app._get_current_object(), user=user, method=primary_method
         )
-
     # if we are logging in for the first time
     else:
         completion_message = "TWO_FACTOR_LOGIN_SUCCESSFUL"

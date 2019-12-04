@@ -103,8 +103,12 @@ def app(request):
         return render_template("index.html", content="Home Page")
 
     @app.route("/profile")
-    @login_required
+    @auth_required()
     def profile():
+        if hasattr(app, "security"):
+            if app.security._want_json(flask_request):
+                return jsonify(message="profile")
+
         return render_template("index.html", content="Profile Page")
 
     @app.route("/post_login")

@@ -212,8 +212,8 @@ def login():
         form = form_class(request.form, meta=_suppress_form_csrf())
 
     if form.validate_on_submit():
-        if config_value("TWO_FACTOR") is True and (
-            config_value("TWO_FACTOR_REQUIRED") is True
+        if config_value("TWO_FACTOR") and (
+            config_value("TWO_FACTOR_REQUIRED")
             or (form.user.tf_totp_secret and form.user.tf_primary_method)
         ):
             return _two_factor_login(form)
@@ -274,6 +274,8 @@ def register():
         form.user = user
 
         if not _security.confirmable or _security.login_without_confirmation:
+            if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
+                return _two_factor_login(form)
             after_this_request(_commit)
             login_user(user)
             did_login = True
@@ -425,6 +427,9 @@ def confirm_email(token):
             get_url(_security.confirm_error_view) or url_for("send_confirmation")
         )
 
+    confirm_user(user)
+    after_this_request(_commit)
+
     if user != current_user:
         logout_user()
         if config_value("AUTO_LOGIN_AFTER_CONFIRM"):
@@ -432,10 +437,11 @@ def confirm_email(token):
             # and you have the LOGIN_WITH_CONFIRMATION flag since in that case
             # you can be logged in and doing stuff - but another person could
             # get the email.
+            if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
+                form = _security.login_form(MultiDict([]), meta=_suppress_form_csrf())
+                form.user = user
+                return _two_factor_login(form)
             login_user(user)
-
-    confirm_user(user)
-    after_this_request(_commit)
 
     m, c = get_message("EMAIL_CONFIRMED")
     if _security.redirect_behavior == "spa":
@@ -636,6 +642,7 @@ def _two_factor_login(form):
     """ Helper for two-factor authentication login
 
     This is called only when login/password have already been validated.
+    This can be from login, register, and/or confirm.
 
     The result of this is either sending a 2FA token OR starting setup for new user.
     In either case we do NOT log in user, so we must store some info in session to

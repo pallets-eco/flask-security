@@ -6,6 +6,7 @@
     Confirmable tests
 """
 
+import json
 import time
 
 import pytest
@@ -386,3 +387,53 @@ def test_spa_get_bad_token(app, client, get_message):
         msg = get_message("INVALID_CONFIRMATION_TOKEN")
         assert msg == qparams["error"].encode("utf-8")
     assert len(flashes) == 1
+
+
+@pytest.mark.two_factor()
+@pytest.mark.registerable()
+@pytest.mark.settings(two_factor_required=True)
+def test_two_factor(app, client):
+    """ If two-factor is enabled, the confirm shouldn't login, but start the
+    2-factor setup.
+    """
+    with capture_registrations() as registrations:
+        data = dict(email="mary@lp.com", password="password", next="")
+        client.post("/register", data=data, follow_redirects=True)
+
+    # make sure not logged in
+    response = client.get("/profile")
+    assert response.status_code == 302
+    assert "/login?next=%2Fprofile" in response.location
+
+    token = registrations[0]["confirm_token"]
+    response = client.get("/confirm/" + token, follow_redirects=False)
+    assert "tf-setup" in response.location
+
+
+@pytest.mark.two_factor()
+@pytest.mark.registerable()
+@pytest.mark.settings(two_factor_required=True)
+def test_two_factor_json(app, client, get_message):
+    with capture_registrations() as registrations:
+        data = dict(email="dude@lp.com", password="password")
+        response = client.post(
+            "/register", content_type="application/json", data=json.dumps(data)
+        )
+        assert response.headers["content-type"] == "application/json"
+        assert response.jdata["meta"]["code"] == 200
+        assert len(response.jdata["response"]) == 2
+        assert all(k in response.jdata["response"] for k in ["csrf_token", "user"])
+
+    # make sure not logged in
+    response = client.get("/profile", headers={"accept": "application/json"})
+    assert response.status_code == 401
+    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+        "UNAUTHENTICATED"
+    )
+
+    token = registrations[0]["confirm_token"]
+    response = client.get("/confirm/" + token, headers={"Accept": "application/json"})
+
+    assert response.status_code == 200
+    assert response.jdata["response"]["tf_required"]
+    assert response.jdata["response"]["tf_state"] == "setup_from_login"

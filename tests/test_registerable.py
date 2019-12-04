@@ -5,6 +5,7 @@
 
     Registerable tests
 """
+import json
 
 import pytest
 from flask import Flask
@@ -71,6 +72,8 @@ def test_registerable_flag(client, app, get_message):
     )
     assert response.headers["content-type"] == "application/json"
     assert response.jdata["meta"]["code"] == 200
+    assert len(response.jdata["response"]) == 2
+    assert all(k in response.jdata["response"] for k in ["csrf_token", "user"])
 
     logout(client)
 
@@ -122,3 +125,38 @@ def test_disable_register_emails(client, app):
     with app.mail.record_messages() as outbox:
         client.post("/register", data=data, follow_redirects=True)
     assert len(outbox) == 0
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(two_factor_required=True)
+def test_two_factor(app, client):
+    """ If two-factor is enabled, the register shouldn't login, but start the
+    2-factor setup.
+    """
+    data = dict(email="dude@lp.com", password="password", password_confirm="password")
+    response = client.post("/register", data=data, follow_redirects=False)
+    assert "tf-setup" in response.location
+
+    # make sure not logged in
+    response = client.get("/profile")
+    assert response.status_code == 302
+    assert "/login?next=%2Fprofile" in response.location
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(two_factor_required=True)
+def test_two_factor_json(app, client, get_message):
+    data = dict(email="dude@lp.com", password="password", password_confirm="password")
+    response = client.post(
+        "/register", content_type="application/json", data=json.dumps(data)
+    )
+    assert response.status_code == 200
+    assert response.jdata["response"]["tf_required"]
+    assert response.jdata["response"]["tf_state"] == "setup_from_login"
+
+    # make sure not logged in
+    response = client.get("/profile", headers={"accept": "application/json"})
+    assert response.status_code == 401
+    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+        "UNAUTHENTICATED"
+    )
