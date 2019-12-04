@@ -20,7 +20,7 @@ import pytest
 from flask_security.twofactor import get_totp_uri
 from utils import authenticate, get_session, logout
 from flask_principal import identity_changed
-from flask_security.utils import SmsSenderBaseClass, SmsSenderFactory
+from flask_security.utils import SmsSenderBaseClass, SmsSenderFactory, capture_flashes
 
 pytestmark = pytest.mark.two_factor()
 
@@ -61,16 +61,6 @@ class TestMail:
         self.count += 1
 
 
-def assert_flashes(client, expected_message, expected_category="message"):
-    with client.session_transaction() as session:
-        try:
-            category, message = session["_flashes"][0]
-        except KeyError:
-            raise AssertionError("nothing flashed")
-        assert expected_message in message
-        assert expected_category == category
-
-
 def two_factor_authenticate(client, validate=True):
     """ Login/Authenticate using two factor.
     This is the equivalent of utils:authenticate
@@ -90,15 +80,26 @@ def two_factor_authenticate(client, validate=True):
         assert response.status_code == 200
 
 
+def tf_in_session(session):
+    return any(
+        k in session
+        for k in ["tf_state", "tf_primary_method", "tf_user_id", "tf_confirmed"]
+    )
+
+
 @pytest.mark.settings(two_factor_required=True)
-def test_two_factor_two_factor_setup_anonymous(app, client):
+def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
 
     # trying to pick method without doing earlier stage
     data = dict(setup="mail")
-    response = client.post("/tf-setup", data=data)
-    assert response.status_code == 302
-    flash_message = "You currently do not have permissions to access this page"
-    assert_flashes(client, flash_message, expected_category="error")
+
+    with capture_flashes() as flashes:
+        response = client.post("/tf-setup", data=data)
+        assert response.status_code == 302
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "TWO_FACTOR_PERMISSION_DENIED"
+    )
 
 
 @pytest.mark.settings(two_factor_required=True)
@@ -288,12 +289,8 @@ def test_two_factor_flag(app, client):
     assert b"Your token has been confirmed" in response.data
 
     response = logout(client)
-    session = get_session(response)
     # Verify that logout clears session info
-    assert not any(
-        k in session
-        for k in ["tf_state", "tf_user_id", "tf_primary_method", "tf_confirmed"]
-    )
+    assert not tf_in_session(get_session(response))
 
     # Test two-factor authentication first login
     data = dict(email="matt@lp.com", password="password")
@@ -326,6 +323,7 @@ def test_two_factor_flag(app, client):
 
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
+    assert not tf_in_session(get_session(response))
 
     logout(client)
 
@@ -500,9 +498,7 @@ def test_opt_in(app, client):
 
     # Upon completion, session cookie shouldnt have any two factor stuff in it.
     session = get_session(response)
-    assert not any(
-        k in session for k in ["tf_state", "tf_primary_method", "tf_user_id"]
-    )
+    assert not tf_in_session(session)
 
     # Log out
     logout(client)
@@ -553,27 +549,38 @@ def test_opt_in(app, client):
 def test_datastore(app, client):
     # Test that user record is properly set after proper 2FA setup.
     sms_sender = SmsSenderFactory.createSender("test")
-    json_data = '{"email": "gal@lp.com", "password": "password"}'
+    data = dict(email="gene@lp.com", password="password")
     response = client.post(
-        "/login", data=json_data, headers={"Content-Type": "application/json"}
+        "/login", data=json.dumps(data), headers={"Content-Type": "application/json"}
     )
-    assert b'"code": 200' in response.data
+    assert response.jdata["meta"]["code"] == 200
+    session = get_session(response)
+    assert session["tf_state"] == "setup_from_login"
+
+    # setup
+    data = dict(setup="sms", phone="+111111111111")
+    response = client.post(
+        "/tf-setup", data=json.dumps(data), headers={"Content-Type": "application/json"}
+    )
+
     assert sms_sender.get_count() == 1
     session = get_session(response)
-    assert session["tf_state"] == "ready"
+    assert session["tf_state"] == "validating_profile"
+    assert session["tf_primary_method"] == "sms"
 
     code = sms_sender.messages[0].split()[-1]
 
-    # submit right token and show appropriate response
+    # submit token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
     session = get_session(response)
     # Verify that successful login clears session info
-    assert not any(k in session for k in ["tf_state", "tf_user_id"])
+    assert not tf_in_session(session)
 
     with app.app_context():
-        user = app.security.datastore.find_user(email="gal@lp.com")
+        user = app.security.datastore.find_user(email="gene@lp.com")
         assert user.tf_primary_method == "sms"
+        assert user.tf_phone_number == "+111111111111"
         assert "enckey" in user.tf_totp_secret
 
 

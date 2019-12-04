@@ -62,6 +62,7 @@ def create_app():
     app.config["SECURITY_HASHING_SCHEMES"] = ["hex_md5"]
     app.config["SECURITY_DEPRECATED_HASHING_SCHEMES"] = []
 
+    # Turn on all features (except passwordless since that removes normal login)
     for opt in [
         "changeable",
         "recoverable",
@@ -74,7 +75,12 @@ def create_app():
         app.config["SECURITY_" + opt.upper()] = True
 
     if os.environ.get("SETTINGS"):
+        # Load settings from a file pointed to by SETTINGS
         app.config.from_envvar("SETTINGS")
+    # Allow any SECURITY_ config to be set in environment.
+    for ev in os.environ:
+        if ev.startswith("SECURITY_"):
+            app.config[ev] = os.environ.get(ev)
     mail = Mail(app)
 
     app.json_encoder = JSONEncoder
