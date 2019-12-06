@@ -8,6 +8,31 @@ Version 3.4.0
 
 Released TBD
 
+Version 3.3.2
+-------------
+
+Released December 7, 2019
+
+- (:issue:`215`) Fixed 2FA totp secret regeneration bug (kishi85)
+- (:issue:`172`) Fixed 'next' redirect error in login view
+- (:issue:`221`) Fixed regressions in login view when already authenticated user
+  again does a GET or POST.
+- (:issue:`219`) Added example code for unit testing FS protected routes.
+- (:issue:`223`) Integrated two-factor auth into registration and confirmation.
+
+Thanks to kuba-lilz and kishi85 for finding and providing detailed issue reports.
+
+In Flask-Security 3.3.0 the login view was changed to allow already authenticated
+users to access the view. Prior to 3.3.0, the login view was protected with
+@anonymous_user_required - so any access (via GET or POST) would simply redirect
+the user to the ``POST_LOGIN_VIEW``. With the 3.3.0 changes, both GET and POST
+behaved oddly. GET simply returned the login template, and POST attempted to
+log out the current user, and log in the new user. This was problematic since
+this couldn't possibly work with CSRF.
+The old behavior has been restored, with the subtle change that older Flask-Security
+releases did not look at "next" in the form or request for the redirect,
+and now, all redirects from the login view will honor "next".
+
 Version 3.3.1
 -------------
 

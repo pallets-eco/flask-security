@@ -1,6 +1,7 @@
 include .editorconfig
 include AUTHORS
 include CHANGES.rst
+include CONTRIBUTING.rst
 include LICENSE
 include README.rst
 include babel.ini
