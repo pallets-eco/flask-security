@@ -54,13 +54,19 @@ possible using SQLAlchemy:
     # Create app
     app = Flask(__name__)
     app.config['DEBUG'] = True
-    app.config['SECRET_KEY'] = 'super-secret'
+    # Generate a nice key using secrets.token_urlsafe()
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
+    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
+    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
+
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
 
     app.config['SECURITY_TWO_FACTOR_ENABLED_METHODS'] = ['mail',
       'google_authenticator']  # 'sms' also valid but requires an sms provider
     app.config['SECURITY_TWO_FACTOR'] = True
-    app.config['SECURITY_TWO_FACTOR_SECRET'] = '{"1": passlib.totp.generate_secret()}'
+    # Generate a good totp secret using: passlib.totp.generate_secret()
+    app.config['SECURITY_TWO_FACTOR_SECRET'] = {"1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"}
     app.config['SECURITY_TWO_FACTOR_RESCUE_MAIL'] = 'put_your_mail@gmail.com'
     app.config['SECURITY_TWO_FACTOR_URI_SERVICE_NAME'] = 'put_your_app_name'
 
@@ -101,7 +107,7 @@ possible using SQLAlchemy:
         db.create_all()
         user_datastore.create_user(email='gal@lp.com', password='password', username='gal',
                                tf_totp_secret=None, tf_primary_method=None)
-        db.commit()
+        db.session.commit()
 
     # Views
     @app.route('/')
