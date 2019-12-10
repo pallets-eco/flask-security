@@ -50,7 +50,13 @@ def tf_clean_session():
     Clean out ALL stuff stored in session (e.g. on logout)
     """
     if config_value("TWO_FACTOR"):
-        for k in ["tf_state", "tf_user_id", "tf_primary_method", "tf_confirmed"]:
+        for k in [
+            "tf_state",
+            "tf_user_id",
+            "tf_primary_method",
+            "tf_confirmed",
+            "tf_remember_login",
+        ]:
             session.pop(k, None)
 
 
@@ -136,7 +142,7 @@ def generate_totp():
     return _security._totp_factory.new().to_json(encrypt=True)
 
 
-def complete_two_factor_process(user, primary_method, is_changing):
+def complete_two_factor_process(user, primary_method, is_changing, remember_login=None):
     """clean session according to process (login or changing two-factor method)
      and perform action accordingly
     """
@@ -158,7 +164,7 @@ def complete_two_factor_process(user, primary_method, is_changing):
         tf_code_confirmed.send(
             app._get_current_object(), user=user, method=primary_method
         )
-        login_user(user)
+        login_user(user, remember=remember_login)
     tf_clean_session()
     return completion_message
 

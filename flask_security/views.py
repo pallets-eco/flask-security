@@ -656,6 +656,8 @@ def _two_factor_login(form):
 
     user = form.user
     session["tf_user_id"] = user.id
+    if "remember" in form:
+        session["tf_remember_login"] = form.remember.data
 
     # Set info into form for JSON response
     json_response = {"tf_required": True}
@@ -856,7 +858,9 @@ def two_factor_token_validation():
     setattr(form, "primary_method", pm)
     if form.validate_on_submit():
         # Success - log in user and clear all session variables
-        completion_message = complete_two_factor_process(form.user, pm, changing)
+        completion_message = complete_two_factor_process(
+            form.user, pm, changing, session.pop("tf_remember_login", None)
+        )
         after_this_request(_commit)
         if not request.is_json:
             do_flash(*get_message(completion_message))
