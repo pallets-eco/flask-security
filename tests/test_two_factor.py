@@ -275,7 +275,9 @@ def test_two_factor_flag(app, client):
 
     logout(client)
 
-    json_data = '{"email": "gal@lp.com", "password": "password"}'
+    # Test login with remember_token
+    assert "remember_token" not in [c.name for c in client.cookie_jar]
+    json_data = '{"email": "gal@lp.com", "password": "password", "remember": true}'
     response = client.post(
         "/login",
         data=json_data,
@@ -287,6 +289,14 @@ def test_two_factor_flag(app, client):
     code = app.security._totp_factory.from_source(totp_secret).generate().token
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
+
+    # Verify that the remember token is properly set
+    found = False
+    for cookie in client.cookie_jar:
+        if cookie.name == "remember_token":
+            found = True
+            assert cookie.path == "/"
+    assert found
 
     response = logout(client)
     # Verify that logout clears session info
