@@ -24,6 +24,8 @@ from flask.json import JSONEncoder
 from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
+from flask_login import current_user as _current_user
+from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
 from flask_mail import Message
 from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
@@ -572,7 +574,18 @@ def csrf_cookie_handler(response):
 
     op = session.get("fs_cc", None)
     if not op:
-        return response
+        remember_cookie_name = current_app.config.get(
+            "REMEMBER_COOKIE_NAME", REMEMBER_COOKIE_NAME
+        )
+        has_remember_cookie = (
+            remember_cookie_name in request.cookies
+            and session.get("remember") != "clear"
+        )
+        # Set cookie if successfully logged in with flask_login's remember cookie
+        if has_remember_cookie and _current_user.is_authenticated:
+            op = "set"
+        else:
+            return response
 
     if op == "clear":
         response.delete_cookie(

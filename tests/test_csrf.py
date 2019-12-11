@@ -64,14 +64,19 @@ def _get_csrf_token(client):
 
 
 def json_login(
-    client, email="matt@lp.com", password="password", endpoint=None, use_header=False
+    client,
+    email="matt@lp.com",
+    password="password",
+    endpoint=None,
+    use_header=False,
+    remember=None,
 ):
     """ Return tuple (auth_token, csrf_token)
     Note that since this is sent as JSON rather than form that csrfProtect
     won't find token value (since it looks in request.form).
     """
     csrf_token = _get_csrf_token(client)
-    data = dict(email=email, password=password)
+    data = dict(email=email, password=password, remember=remember)
 
     if use_header:
         headers = {"X-CSRF-Token": csrf_token}
@@ -533,4 +538,33 @@ def test_cp_with_token_cookie_refresh(app, client):
         assert csrf_cookie
     assert mp.success == 1 and mp.failure == 0
     json_logout(client)
+    assert "X-XSRF-Token" not in [c.name for c in client.cookie_jar]
+
+
+@pytest.mark.settings(CSRF_COOKIE={"key": "X-XSRF-Token"})
+@pytest.mark.changeable()
+def test_remember_login_csrf_cookie(app, client):
+    # Test csrf cookie upon resuming a remember session
+    app.config["WTF_CSRF_ENABLED"] = True
+    CSRFProtect(app)
+
+    # Login with remember_token generation
+    json_login(client, use_header=True, remember=True)
+
+    csrf_cookie = [c for c in client.cookie_jar if c.name == "X-XSRF-Token"][0]
+    session_cookie = [c for c in client.cookie_jar if c.name == "session"][0]
+    # Delete session and csrf cookie - we should always get new ones
+    client.delete_cookie(csrf_cookie.domain, csrf_cookie.name)
+    client.delete_cookie(session_cookie.domain, session_cookie.name)
+
+    # Do a simple get request with the remember_token cookie present
+    assert "remember_token" in [c.name for c in client.cookie_jar]
+    response = client.get("/profile")
+    assert response.status_code == 200
+    assert "session" in [c.name for c in client.cookie_jar]
+    assert "X-XSRF-Token" in [c.name for c in client.cookie_jar]
+    # Logout and check that everything cleans up nicely
+    json_logout(client)
+    assert "remember_token" not in [c.name for c in client.cookie_jar]
+    assert "session" not in [c.name for c in client.cookie_jar]
     assert "X-XSRF-Token" not in [c.name for c in client.cookie_jar]
