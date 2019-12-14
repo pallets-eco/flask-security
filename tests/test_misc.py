@@ -29,6 +29,7 @@ from flask_security.forms import (
     email_validator,
     valid_user_email,
 )
+from flask_security import auth_required
 from flask_security.utils import (
     capture_reset_password_requests,
     encode_string,
@@ -498,3 +499,29 @@ def test_json_error_response_typeerror():
     error_msg = ("tuple",)
     with pytest.raises(TypeError):
         json_error_response(errors=error_msg)
+
+
+def test_method_view(app, client):
+    # auth_required with flask method view
+    from flask.views import MethodView
+    from flask import render_template_string
+
+    class MyView(MethodView):
+        decorators = [auth_required("token", "session")]
+
+        def get(self):
+            return render_template_string("Hi view")
+
+    myview = MyView.as_view("myview")
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+
+    response = client.get("/myview", follow_redirects=False)
+    # should require login
+    assert response.status_code == 302
+    assert "/login" in response.location
+
+    authenticate(client)
+    response = client.get("/myview")
+    assert response.status_code == 200
+    assert b"Hi view" in response.data
