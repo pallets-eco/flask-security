@@ -429,7 +429,7 @@ Miscellaneous
                                                       confirmation token will be automatically logged
                                                       in.
                                                       Defaults to ``True``.
-``SECURITY_TWO_FACTOR_GOOGLE_AUTH_VALIDITY``          Specifies the number of seconds access token is
+``SECURITY_TWO_FACTOR_AUTHENTICATOR_VALIDITY``        Specifies the number of seconds access token is
                                                       valid. Defaults to 2 minutes.
 ``SECURITY_TWO_FACTOR_MAIL_VALIDITY``                 Specifies the number of seconds
                                                       access token is valid. Defaults to 5 minutes.
@@ -466,7 +466,7 @@ Miscellaneous
 ``SECURITY_TWO_FACTOR_ENABLED_METHODS``               Specifies the default enabled
                                                       methods for two-factor
                                                       authentication. Defaults to
-                                                      ``['mail', 'google_authenticator',
+                                                      ``['mail', 'authenticator',
                                                       'sms']`` which are the only
                                                       supported method at the moment.
 ``SECURITY_TWO_FACTOR_URI_SERVICE_NAME``              Specifies the name of the service

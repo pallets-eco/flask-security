@@ -4,8 +4,8 @@ Two-factor Configurations
 Two-factor authentication provides a second layer of security to any type of
 login, requiring extra information or a secondary device to log in, in addition
 to ones login credentials. The added feature includes the ability to add a
-secondary authentication method using either via email, sms message, or Google
-Authenticator.
+secondary authentication method using either via email, sms message, or an
+Authenticator app such as Google, Lastpass, or Authy.
 
 The following code sample illustrates how to get started as quickly as
 possible using SQLAlchemy and two-factor feature:
@@ -63,7 +63,7 @@ possible using SQLAlchemy:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
 
     app.config['SECURITY_TWO_FACTOR_ENABLED_METHODS'] = ['mail',
-      'google_authenticator']  # 'sms' also valid but requires an sms provider
+      'authenticator']  # 'sms' also valid but requires an sms provider
     app.config['SECURITY_TWO_FACTOR'] = True
     # Generate a good totp secret using: passlib.totp.generate_secret()
     app.config['SECURITY_TWO_FACTOR_SECRET'] = {"1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"}

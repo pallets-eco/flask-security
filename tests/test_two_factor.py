@@ -256,10 +256,10 @@ def test_two_factor_flag(app, client):
     message = b"Two-factor authentication adds an extra layer of security"
     assert message in response.data
 
-    # Setup google auth
-    setup_data = dict(setup="google_authenticator")
+    # Setup authenticator
+    setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open Google Authenticator on your device" in response.data
+    assert b"Open your authenticator app on your device" in response.data
 
     # Now request code. We can't test the qrcode easily - but we can get the totp_secret
     # that goes into the qrcode and make sure that works
@@ -269,8 +269,7 @@ def test_two_factor_flag(app, client):
         )
     assert gtu.call_count == 1
     (username, totp_secret), _ = gtu.call_args
-    assert username == "gal"
-    print(qrcode_page_response)
+    assert username == "gal@lp.com"
     assert b"svg" in qrcode_page_response.data
 
     logout(client)
@@ -313,9 +312,9 @@ def test_two_factor_flag(app, client):
     assert qrcode_page_response.status_code == 404
 
     # check availability of qrcode page when this option is picked
-    setup_data = dict(setup="google_authenticator")
+    setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open Google Authenticator on your device" in response.data
+    assert b"Open your authenticator app on your device" in response.data
 
     qrcode_page_response = client.get(
         "/tf-qrcode", data=setup_data, follow_redirects=True
@@ -664,3 +663,45 @@ def test_totp_secret_generation(app, client):
     logout(client)
     assert not signalled_identity[0]
     del signalled_identity[:]
+
+
+@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("username", "email"))
+def test_qrcode_identity(app, client):
+    # Setup authenticator
+    authenticate(client, email="jill@lp.com")
+
+    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
+    setup_data = dict(setup="authenticator")
+    response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
+    assert b"Open your authenticator app on your device" in response.data
+
+    # Now request code. Verify that we get 'username' not email.
+    with patch("flask_security.views.get_totp_uri", wraps=get_totp_uri) as gtu:
+        qrcode_page_response = client.get(
+            "/tf-qrcode", data=setup_data, follow_redirects=True
+        )
+    assert gtu.call_count == 1
+    (username, totp_secret), _ = gtu.call_args
+    assert username == "jill"
+    assert b"svg" in qrcode_page_response.data
+
+
+@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("security_number", "email"))
+def test_qrcode_identity_num(app, client):
+    # Setup authenticator
+    authenticate(client, email="jill@lp.com")
+
+    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
+    setup_data = dict(setup="authenticator")
+    response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
+    assert b"Open your authenticator app on your device" in response.data
+
+    # Now request code. Verify that we get 'security_number' not email.
+    with patch("flask_security.views.get_totp_uri", wraps=get_totp_uri) as gtu:
+        qrcode_page_response = client.get(
+            "/tf-qrcode", data=setup_data, follow_redirects=True
+        )
+    assert gtu.call_count == 1
+    (username, totp_secret), _ = gtu.call_args
+    assert username == "456789"
+    assert b"svg" in qrcode_page_response.data

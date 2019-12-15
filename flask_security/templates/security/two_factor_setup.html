@@ -17,8 +17,8 @@
         {% if chosen_method=="mail" and chosen_method in choices %}
             <p>{{ _("To complete logging in, please enter the code sent to your mail") }}</p>
         {% endif %}
-        {% if chosen_method=="google_authenticator" and chosen_method in choices %}
-            <p>{{ _("Open Google Authenticator on your device and scan the following qrcode to start receiving codes:") }}</p>
+        {% if chosen_method=="authenticator" and chosen_method in choices %}
+            <p>{{ _("Open your authenticator app on your device and scan the following qrcode to start receiving codes:") }}</p>
             <p><img alt="{{ _("Two factor authentication code") }}" id="qrcode" src="{{ url_for_security("two_factor_qrcode") }}"></p>
         {% endif %}
         {% if chosen_method=="sms" and chosen_method in choices %}

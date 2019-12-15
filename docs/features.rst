@@ -83,23 +83,23 @@ Thus if the user changes his or her password their existing authentication token
 will become invalid. A new token will need to be retrieved using the user's new
 password. Verifying tokens created in this way is very slow.
 
-Two-factor Authentication (experimental)
+Two-factor Authentication (alpha)
 ----------------------------------------
 Two-factor authentication is enabled by generating time-based one time passwords
-(Tokens). The tokens are generated using the users totp secret, which is unique
+(Tokens). The tokens are generated using the users `totp secret`_, which is unique
 per user, and is generated both on first login, and when changing the two-factor
-method (Doing this causes the previous totp secret to become invalid). The token
+method (doing this causes the previous totp secret to become invalid). The token
 is provided by one of 3 methods - email, sms (service is not provided), or
-Google Authenticator. By default, tokens provided by google authenticator are
+an authenticator app such as Google Authenticator, LastPass Authenticator, or Authy.
+By default, tokens provided by the authenticator app are
 valid for 2 minutes, tokens sent by mail for up to 5 minute and tokens sent by
-sms for up to 2 minutes. The QR code used to supply Google Authenticator with
+sms for up to 2 minutes. The QR code used to supply the authenticator app with
 the secret is generated using the PyQRCode library.
-This feature is marked experimental meaning that backwards incompatible changes
+This feature is marked alpha meaning that backwards incompatible changes
 might occur during minor releases. While the feature is operational, it has these
 known limitations:
 
     * Limited and incomplete JSON support
-    * Incomplete i18n support
     * Not enough documentation to use w/o looking at code
 
 Email Confirmation
@@ -180,5 +180,6 @@ Run ``flask --help`` and look for users and roles.
 .. _Flask-Principal: https://pypi.org/project/Flask-Principal/
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection
 .. _passlib: https://passlib.readthedocs.io/en/stable/
+.. _totp secret: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#overview
 .. _bcrypt: https://en.wikipedia.org/wiki/Bcrypt
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/
