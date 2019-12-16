@@ -19,12 +19,12 @@ import warnings
 from contextlib import contextmanager
 from datetime import timedelta
 
-from flask import current_app, flash, request, session, url_for
+from flask import _request_ctx_stack, current_app, flash, request, session, url_for
 from flask.json import JSONEncoder
 from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
-from flask_login import current_user as _current_user
+from flask_login import current_user as current_user
 from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
 from flask_mail import Message
 from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
@@ -272,6 +272,25 @@ def hash_data(data):
 
 def verify_hash(hashed_data, compare_data):
     return _hashing_context.verify(encode_string(compare_data), hashed_data)
+
+
+def suppress_form_csrf():
+    """
+    Return meta contents if we should suppress form from attempting to validate CSRF.
+
+    If app doesn't want CSRF for unauth endpoints then check if caller is authenticated
+    or not (many endpoints can be called either way).
+    """
+    ctx = _request_ctx_stack.top
+    if hasattr(ctx, "fs_ignore_csrf") and ctx.fs_ignore_csrf:
+        # This is the case where CsrfProtect was already called (e.g. @auth_required)
+        return {"csrf": False}
+    if (
+        config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
+        and not current_user.is_authenticated
+    ):
+        return {"csrf": False}
+    return {}
 
 
 def do_flash(message, category=None):
@@ -582,7 +601,7 @@ def csrf_cookie_handler(response):
             and session.get("remember") != "clear"
         )
         # Set cookie if successfully logged in with flask_login's remember cookie
-        if has_remember_cookie and _current_user.is_authenticated:
+        if has_remember_cookie and current_user.is_authenticated:
             op = "set"
         else:
             return response
@@ -621,6 +640,41 @@ def csrf_cookie_handler(response):
         kwargs["value"] = csrf.generate_csrf()
         response.set_cookie(csrf_cookie["key"], **kwargs)
     return response
+
+
+def base_render_json(
+    form, include_user=True, include_auth_token=False, additional=None
+):
+    has_errors = len(form.errors) > 0
+
+    user = form.user if hasattr(form, "user") else None
+    if has_errors:
+        code = 400
+        payload = json_error_response(errors=form.errors)
+    else:
+        code = 200
+        payload = dict()
+        if user:
+            # This allows anonymous GETs via JSON
+            if include_user:
+                payload["user"] = user.get_security_payload()
+
+            if include_auth_token:
+                # view wants to return auth_token - check behavior config
+                if (
+                    config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
+                    or "include_auth_token" in request.args
+                ):
+                    token = user.get_auth_token()
+                    payload["user"]["authentication_token"] = token
+
+        # Return csrf_token on each JSON response - just as every form
+        # has it rendered.
+        payload["csrf_token"] = csrf.generate_csrf()
+        if additional:
+            payload.update(additional)
+
+    return _security._render_json(payload, code, headers=None, user=user)
 
 
 def default_want_json(req):
@@ -696,9 +750,6 @@ def capture_passwordless_login_requests():
 @contextmanager
 def capture_registrations():
     """Testing utility for capturing registrations.
-
-    :param confirmation_sent_at: An optional datetime object to set the
-                                 user's `confirmation_sent_at` to
     """
     registrations = []
 
