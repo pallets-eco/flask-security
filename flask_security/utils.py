@@ -686,11 +686,12 @@ def default_want_json(req):
     if req.is_json:
         return True
     # TODO should this handle json sub-types?
+    accept_mimetypes = req.accept_mimetypes
     if not hasattr(req.accept_mimetypes, "best"):  # pragma: no cover
         # Alright. we dont have the best property, lets add it ourselves.
         # This is for quart compatibility
-        setattr(req.accept_mimetypes, "best", quart_compat.best)
-    if req.accept_mimetypes.best == "application/json":
+        setattr(accept_mimetypes, "best", quart_compat.best)
+    if accept_mimetypes.best == "application/json":
         return True
     return False
 
