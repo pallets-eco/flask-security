@@ -43,6 +43,14 @@ from flask_security.signals import (
 from flask_security.utils import hash_password
 
 
+def _find_bool(v):
+    if str(v).lower() in ["true"]:
+        return True
+    elif str(v).lower() in ["false"]:
+        return False
+    return v
+
+
 def create_app():
     app = Flask(__name__)
     app.config["DEBUG"] = True
@@ -80,7 +88,7 @@ def create_app():
     # Allow any SECURITY_ config to be set in environment.
     for ev in os.environ:
         if ev.startswith("SECURITY_"):
-            app.config[ev] = os.environ.get(ev)
+            app.config[ev] = _find_bool(os.environ.get(ev))
     mail = Mail(app)
 
     app.json_encoder = JSONEncoder

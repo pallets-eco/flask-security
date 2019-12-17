@@ -378,9 +378,12 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
     setup = RadioField(
         "Available Methods",
         choices=[
-            ("mail", "Set Up Using Mail"),
-            ("google_authenticator", "Set Up Using Google Authenticator"),
-            ("sms", "Set Up Using SMS"),
+            ("mail", "Set up using email"),
+            (
+                "authenticator",
+                "Set up using an authenticator app (e.g. google, lastpass, authy)",
+            ),
+            ("sms", "Set up using SMS"),
             ("disable", "Disable two factor authentication"),
         ],
     )
@@ -413,8 +416,11 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
 
     def validate(self):
         # codes sent by sms or mail will be valid for another window cycle
-        if self.primary_method == "google_authenticator":
-            self.window = config_value("TWO_FACTOR_GOOGLE_AUTH_VALIDITY")
+        if (
+            self.primary_method == "google_authenticator"
+            or self.primary_method == "authenticator"
+        ):
+            self.window = config_value("TWO_FACTOR_AUTHENTICATOR_VALIDITY")
         elif self.primary_method == "mail":
             self.window = config_value("TWO_FACTOR_MAIL_VALIDITY")
         elif self.primary_method == "sms":

@@ -156,7 +156,7 @@ _default_config = {
     "SEND_PASSWORD_RESET_EMAIL": True,
     "SEND_PASSWORD_RESET_NOTICE_EMAIL": True,
     "LOGIN_WITHIN": "1 days",
-    "TWO_FACTOR_GOOGLE_AUTH_VALIDITY": 120,
+    "TWO_FACTOR_AUTHENTICATOR_VALIDITY": 120,
     "TWO_FACTOR_MAIL_VALIDITY": 300,
     "TWO_FACTOR_SMS_VALIDITY": 120,
     "CONFIRM_EMAIL_WITHIN": "5 days",
@@ -196,7 +196,7 @@ _default_config = {
     "VERIFY_HASH_CACHE_MAX_SIZE": 500,
     "TWO_FACTOR_REQUIRED": False,
     "TWO_FACTOR_SECRET": None,
-    "TWO_FACTOR_ENABLED_METHODS": ["mail", "google_authenticator", "sms"],
+    "TWO_FACTOR_ENABLED_METHODS": ["mail", "authenticator", "sms"],
     "TWO_FACTOR_URI_SERVICE_NAME": "service_name",
     "TWO_FACTOR_SMS_SERVICE": "Dummy",
     "TWO_FACTOR_SMS_SERVICE_CONFIG": {

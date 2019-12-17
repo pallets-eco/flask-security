@@ -61,10 +61,10 @@ def tf_clean_session():
 
 
 def send_security_token(user, method, totp_secret):
-    """Sends the security token via email for the specified user.
+    """Sends the security token via email/sms for the specified user.
     :param user: The user to send the code to
     :param method: The method in which the code will be sent
-                ('mail' or 'sms') at the moment
+                ('mail' or 'sms', or 'authenticator') at the moment
     :param totp_secret: a unique shared secret of the user
     """
     token_to_be_sent = get_totp_password(totp_secret)
@@ -85,8 +85,8 @@ def send_security_token(user, method, totp_secret):
         )
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=msg)
 
-    elif method == "google_authenticator":
-        # password are generated automatically in the google authenticator app
+    elif method == "google_authenticator" or method == "authenticator":
+        # password are generated automatically in the authenticator apps
         pass
     tf_security_token_sent.send(
         app._get_current_object(), user=user, method=method, token=token_to_be_sent
@@ -96,13 +96,12 @@ def send_security_token(user, method, totp_secret):
 def get_totp_uri(username, totp_secret):
     """ Generate provisioning url for use with the qrcode
             scanner built into the app
-    :param username: username of the current user
+    :param username: username/email of the current user
     :param totp_secret: a unique shared secret of the user
     :return:
     """
     tp = _security._totp_factory.from_source(totp_secret)
-    service_name = config_value("TWO_FACTOR_URI_SERVICE_NAME")
-    return tp.to_uri(username + "@" + service_name)
+    return tp.to_uri(username)
 
 
 def verify_totp(token, totp_secret, window=0):

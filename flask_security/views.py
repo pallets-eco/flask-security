@@ -70,6 +70,7 @@ from .utils import (
     base_render_json,
     config_value,
     do_flash,
+    get_identity_attributes,
     get_message,
     get_post_login_redirect,
     get_post_logout_redirect,
@@ -953,20 +954,29 @@ def two_factor_qrcode():
             tf_clean_session()
             abort(404)
 
-    if "google_authenticator" not in config_value("TWO_FACTOR_ENABLED_METHODS"):
+    if "authenticator" not in config_value("TWO_FACTOR_ENABLED_METHODS"):
         return abort(404)
     if (
         "tf_primary_method" not in session
-        or session["tf_primary_method"] != "google_authenticator"
+        or session["tf_primary_method"] != "authenticator"
     ):
         return abort(404)
 
-    name = user.email.split("@")[0]
     totp = user.tf_totp_secret
     try:
         import pyqrcode
 
-        url = pyqrcode.create(get_totp_uri(name, totp))
+        # By convention, the URI should have the username that the user
+        # logs in with.
+        userid = None
+        for attr in get_identity_attributes():
+            userid = getattr(user, attr, None)
+            if userid is not None and len(str(userid)) > 0:
+                break
+
+        url = pyqrcode.create(
+            get_totp_uri(str(userid) if userid is not None else "Unknown", totp)
+        )
     except ImportError:
         # For TWO_FACTOR - this should have been checked at app init.
         raise
