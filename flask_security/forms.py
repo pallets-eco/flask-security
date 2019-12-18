@@ -17,6 +17,7 @@ from flask import Markup, current_app, request
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
 from speaklater import is_lazy_string, make_lazy_string
+from werkzeug.local import LocalProxy
 from wtforms import (
     BooleanField,
     Field,
@@ -41,7 +42,9 @@ from .utils import (
     url_for_security,
     validate_redirect_url,
 )
-from .twofactor import verify_totp
+
+# Convenient references
+_security = LocalProxy(lambda: current_app.extensions["security"])
 
 _default_field_labels = {
     "email": _("Email Address"),
@@ -60,6 +63,8 @@ _default_field_labels = {
     "change_method": _("Change Method"),
     "phone": _("Phone Number"),
     "code": _("Authentication Code"),
+    "submit": _("Submit"),
+    "submitcode": _("Submit Code"),
 }
 
 
@@ -409,7 +414,7 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
     """The Two-factor token validation form"""
 
     code = StringField(get_form_field_label("code"))
-    submit = SubmitField(get_form_field_label("submit code"))
+    submit = SubmitField(get_form_field_label("submitcode"))
 
     def __init__(self, *args, **kwargs):
         super(TwoFactorVerifyCodeForm, self).__init__(*args, **kwargs)
@@ -429,9 +434,10 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
             return False
 
         # verify entered token with user's totp secret
-        if not verify_totp(
+        if not _security._totp_factory.verify_totp(
             token=self.code.data,
             totp_secret=self.user.tf_totp_secret,
+            user=self.user,
             window=self.window,
         ):
             self.code.errors = list()

@@ -62,6 +62,7 @@ from .signals import (
     user_confirmed,
     user_registered,
 )
+from .totp import Totp
 from .utils import (
     FsJsonEncoder,
     SmsSenderBaseClass,

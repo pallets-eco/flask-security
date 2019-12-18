@@ -112,6 +112,9 @@ Utils
 
 .. autoclass:: flask_security.FsJsonEncoder
 
+.. autoclass:: flask_security.Totp
+  :members: get_last_counter, set_last_counter
+
 .. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms
 

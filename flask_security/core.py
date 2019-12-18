@@ -28,7 +28,6 @@ from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy, Local
 
-from .twofactor import tf_setup
 from .decorators import default_unauthn_handler, default_unauthz_handler
 from .forms import (
     ChangePasswordForm,
@@ -44,6 +43,7 @@ from .forms import (
     TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
 )
+from .totp import Totp
 from .utils import _
 from .utils import config_value as cv
 from .utils import (
@@ -52,6 +52,7 @@ from .utils import (
     csrf_cookie_handler,
     default_want_json,
     get_config,
+    get_identity_attributes,
     hash_data,
     localize_callback,
     send_mail,
@@ -689,6 +690,22 @@ class UserMixin(BaseUserMixin):
         """
         return verify_and_update_password(password, self)
 
+    def calc_username(self):
+        """ Come up with the best 'username' based on how the app
+        is configured (via SECURITY_USER_IDENTITY_ATTRIBUTES).
+        Returns the first non-null match (and converts to string).
+        In theory this should NEVER be the empty string unless the user
+        record isn't actually valid.
+
+        .. versionadded:: 3.4.0
+        """
+        cusername = None
+        for attr in get_identity_attributes():
+            cusername = getattr(self, attr, None)
+            if cusername is not None and len(str(cusername)) > 0:
+                break
+        return str(cusername) if cusername is not None else ""
+
 
 class AnonymousUser(AnonymousUserMixin):
     """AnonymousUser definition"""
@@ -806,6 +823,7 @@ class Security(object):
     :param send_mail: function to use to send email. Defaults to :func:`send_mail`
     :param json_encoder_cls: Class to use as blueprint.json_encoder.
      Defaults to :class:`FsJsonEncoder`
+    :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -846,6 +864,8 @@ class Security(object):
             kwargs.setdefault("send_mail", self.send_mail)
         if "json_encoder_cls" not in kwargs:
             kwargs.setdefault("json_encoder_cls", FsJsonEncoder)
+        if "totp_cls" not in kwargs:
+            kwargs.setdefault("totp_cls", Totp)
 
         for key, value in _default_config.items():
             app.config.setdefault("SECURITY_" + key, value)
@@ -949,7 +969,9 @@ class Security(object):
                     "TWO_FACTOR_SMS_SERVICE",
                     cv("TWO_FACTOR_SMS_SERVICE", app=app),
                 )
-            state.totp_factory(tf_setup(app))
+            secrets = cv("TWO_FACTOR_SECRET", app=app)
+            issuer = cv("TWO_FACTOR_URI_SERVICE_NAME", app=app)
+            state.totp_factory(state.totp_cls(secrets, issuer))
 
         if cv("USE_VERIFY_PASSWORD_CACHE", app=app):
             self._check_modules("cachetools", "USE_VERIFY_PASSWORD_CACHE", True)

@@ -22,7 +22,6 @@ from flask_security.datastore import (
     SQLAlchemyUserDatastore,
     SQLAlchemySessionUserDatastore,
 )
-from flask_security.twofactor import generate_totp
 from flask_security.utils import hash_password
 
 from itsdangerous import URLSafeTimedSerializer
@@ -139,7 +138,7 @@ def create_users(app, ds, count=None):
         ds.commit()
         totp_secret = None
         if app.config.get("SECURITY_TWO_FACTOR", None) and u[6]:
-            totp_secret = generate_totp()
+            totp_secret = app.security._totp_factory.generate_totp_secret()
         user = ds.create_user(
             email=u[0],
             username=u[1],

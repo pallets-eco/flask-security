@@ -10,14 +10,13 @@
 """
 
 try:
-    from unittest.mock import patch
+    from unittest.mock import Mock
 except ImportError:
-    from mock import patch
+    from mock import Mock
 
 from flask import json
 import pytest
 
-from flask_security.twofactor import get_totp_uri
 from utils import authenticate, get_session, logout
 from flask_principal import identity_changed
 from flask_security.utils import SmsSenderBaseClass, SmsSenderFactory, capture_flashes
@@ -46,17 +45,12 @@ class SmsTestSender(SmsSenderBaseClass):
 SmsSenderFactory.senders["test"] = SmsTestSender
 
 
-class TestMail:
-
-    # def __init__(self):
-    #     self.count = 0
-    #     self.msg = ""
+class TestMail(object):
+    def __init__(self):
+        self.count = 0
+        self.msg = None
 
     def send(self, msg):
-        if not self.msg:
-            self.msg = ""
-        if not self.count:
-            self.count = 0
         self.msg = msg
         self.count += 1
 
@@ -230,8 +224,6 @@ def test_two_factor_flag(app, client):
     # change method (from sms to mail)
     setup_data = dict(setup="mail")
     testMail = TestMail()
-    testMail.msg = ""
-    testMail.count = 0
     app.extensions["mail"] = testMail
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"
@@ -263,12 +255,13 @@ def test_two_factor_flag(app, client):
 
     # Now request code. We can't test the qrcode easily - but we can get the totp_secret
     # that goes into the qrcode and make sure that works
-    with patch("flask_security.views.get_totp_uri", wraps=get_totp_uri) as gtu:
-        qrcode_page_response = client.get(
-            "/tf-qrcode", data=setup_data, follow_redirects=True
-        )
-    assert gtu.call_count == 1
-    (username, totp_secret), _ = gtu.call_args
+    mtf = Mock(wraps=app.security._totp_factory)
+    app.security.totp_factory(mtf)
+    qrcode_page_response = client.get(
+        "/tf-qrcode", data=setup_data, follow_redirects=True
+    )
+    assert mtf.get_totp_uri.call_count == 1
+    (username, totp_secret), _ = mtf.get_totp_uri.call_args
     assert username == "gal@lp.com"
     assert b"svg" in qrcode_page_response.data
 
@@ -285,7 +278,7 @@ def test_two_factor_flag(app, client):
     )
 
     # Generate token from passed totp_secret
-    code = app.security._totp_factory.from_source(totp_secret).generate().token
+    code = app.security._totp_factory.generate_totp_password(totp_secret)
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
 
@@ -676,12 +669,13 @@ def test_qrcode_identity(app, client):
     assert b"Open your authenticator app on your device" in response.data
 
     # Now request code. Verify that we get 'username' not email.
-    with patch("flask_security.views.get_totp_uri", wraps=get_totp_uri) as gtu:
-        qrcode_page_response = client.get(
-            "/tf-qrcode", data=setup_data, follow_redirects=True
-        )
-    assert gtu.call_count == 1
-    (username, totp_secret), _ = gtu.call_args
+    mtf = Mock(wraps=app.security._totp_factory)
+    app.security.totp_factory(mtf)
+    qrcode_page_response = client.get(
+        "/tf-qrcode", data=setup_data, follow_redirects=True
+    )
+    assert mtf.get_totp_uri.call_count == 1
+    (username, totp_secret), _ = mtf.get_totp_uri.call_args
     assert username == "jill"
     assert b"svg" in qrcode_page_response.data
 
@@ -697,11 +691,47 @@ def test_qrcode_identity_num(app, client):
     assert b"Open your authenticator app on your device" in response.data
 
     # Now request code. Verify that we get 'security_number' not email.
-    with patch("flask_security.views.get_totp_uri", wraps=get_totp_uri) as gtu:
-        qrcode_page_response = client.get(
-            "/tf-qrcode", data=setup_data, follow_redirects=True
-        )
-    assert gtu.call_count == 1
-    (username, totp_secret), _ = gtu.call_args
+    mtf = Mock(wraps=app.security._totp_factory)
+    app.security.totp_factory(mtf)
+    qrcode_page_response = client.get(
+        "/tf-qrcode", data=setup_data, follow_redirects=True
+    )
+    assert mtf.get_totp_uri.call_count == 1
+    (username, totp_secret), _ = mtf.get_totp_uri.call_args
     assert username == "456789"
     assert b"svg" in qrcode_page_response.data
+
+
+@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("email", "username"))
+def test_email_salutation(app, client):
+
+    authenticate(client, email="jill@lp.com")
+    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
+
+    test_mail = TestMail()
+    app.extensions["mail"] = test_mail
+    response = client.post("/tf-setup", data=dict(setup="mail"), follow_redirects=True)
+    msg = b"To complete logging in, please enter the code sent to your mail"
+    assert msg in response.data
+
+    assert "jill@lp.com" in test_mail.msg.send_to
+    assert "jill@lp.com" in test_mail.msg.body
+    assert "jill@lp.com" in test_mail.msg.html
+
+
+@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("username", "email"))
+def test_username_salutation(app, client):
+
+    authenticate(client, email="jill@lp.com")
+    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
+
+    test_mail = TestMail()
+    app.extensions["mail"] = test_mail
+    response = client.post("/tf-setup", data=dict(setup="mail"), follow_redirects=True)
+    msg = b"To complete logging in, please enter the code sent to your mail"
+    assert msg in response.data
+
+    assert "jill@lp.com" in test_mail.msg.send_to
+    assert "jill@lp.com" not in test_mail.msg.body
+    assert "jill@lp.com" not in test_mail.msg.html
+    assert "jill" in test_mail.msg.body

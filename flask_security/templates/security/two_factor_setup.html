@@ -13,7 +13,7 @@
             {% endif %}
         {% endfor %}
         {{ render_field_errors(two_factor_setup_form.setup) }}
-        {{ render_field(two_factor_setup_form.submit, value="submit choice") }}
+        {{ render_field(two_factor_setup_form.submit) }}
         {% if chosen_method=="mail" and chosen_method in choices %}
             <p>{{ _("To complete logging in, please enter the code sent to your mail") }}</p>
         {% endif %}
@@ -25,14 +25,14 @@
             <p>{{ _("To Which Phone Number Should We Send Code To?") }}</p>
             {{ two_factor_setup_form.hidden_tag() }}
             {{ render_field_with_errors(two_factor_setup_form.phone, placeholder="enter phone number") }}
-            {{ render_field(two_factor_setup_form.submit, value="submit phone") }}
+            {{ render_field(two_factor_setup_form.submit) }}
         {% endif %}
     </form>
     <form action="{{ url_for_security("two_factor_token_validation") }}" method="POST"
           name="two_factor_verify_code_form">
         {{ two_factor_verify_code_form.hidden_tag() }}
         {{ render_field_with_errors(two_factor_verify_code_form.code) }}
-        {{ render_field(two_factor_verify_code_form.submit, value="submit code") }}
+        {{ render_field(two_factor_verify_code_form.submit) }}
     </form>
     {% include "security/_menu.html" %}
 {% endblock %}
