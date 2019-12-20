@@ -9,12 +9,10 @@
     :copyright: (c) 2019 by J. Christopher Wagner (jwag).
 """
 
-from passlib.totp import TOTP
-from passlib.exc import TokenError
-
 from flask import current_app as app, session
 from werkzeug.local import LocalProxy
 
+from .totp import Totp
 from .utils import send_mail, config_value, SmsSenderFactory, login_user
 from .signals import (
     tf_code_confirmed,
@@ -35,14 +33,8 @@ def tf_setup(app):
     The TWO_FACTOR_SECRET is used to encrypt the per-user totp_secret on disk.
     """
     secrets = config_value("TWO_FACTOR_SECRET", app=app)
-    # This should be a dict with at least one entry
-    if not isinstance(secrets, dict) or len(secrets) < 1:
-        raise ValueError(
-            "TWO_FACTOR_SECRET needs to be a dict with at least one" "entry"
-        )
-    return TOTP.using(
-        issuer=config_value("TWO_FACTOR_URI_SERVICE_NAME", app=app), secrets=secrets
-    )
+    issuer = config_value("TWO_FACTOR_URI_SERVICE_NAME", app=app)
+    return Totp(secrets, issuer, app)
 
 
 def tf_clean_session():
@@ -67,7 +59,7 @@ def send_security_token(user, method, totp_secret):
                 ('mail' or 'sms', or 'authenticator') at the moment
     :param totp_secret: a unique shared secret of the user
     """
-    token_to_be_sent = get_totp_password(totp_secret)
+    token_to_be_sent = _security._totp_factory.generate_totp_password(totp_secret)
     if method == "mail":
         send_mail(
             config_value("EMAIL_SUBJECT_TWO_FACTOR"),
@@ -75,6 +67,7 @@ def send_security_token(user, method, totp_secret):
             "two_factor_instructions",
             user=user,
             token=token_to_be_sent,
+            username=user.calc_username(),
         )
     elif method == "sms":
         msg = "Use this code to log in: %s" % token_to_be_sent
@@ -91,54 +84,6 @@ def send_security_token(user, method, totp_secret):
     tf_security_token_sent.send(
         app._get_current_object(), user=user, method=method, token=token_to_be_sent
     )
-
-
-def get_totp_uri(username, totp_secret):
-    """ Generate provisioning url for use with the qrcode
-            scanner built into the app
-    :param username: username/email of the current user
-    :param totp_secret: a unique shared secret of the user
-    :return:
-    """
-    tp = _security._totp_factory.from_source(totp_secret)
-    return tp.to_uri(username)
-
-
-def verify_totp(token, totp_secret, window=0):
-    """ Verifies token for specific user_totp
-    :param token - token to be check against user's secret
-    :param totp_secret - a unique shared secret of the user
-    :param window - optional,
-        How far backward and forward in time to search for a match. Measured in seconds.
-    :return: A totpMatch instance or None
-    """
-
-    # TODO - in old implementation  using onetimepass window was described
-    # as 'compensate for clock skew) and 'interval_length' would say how long
-    # the token is good for.
-    # In passlib - 'window' means how far back and forward to look and 'clock_skew'
-    # is specifically for well, clock slew.
-    try:
-        return _security._totp_factory.verify(token, totp_secret, window=window)
-    except TokenError:
-        return None
-
-
-def get_totp_password(totp_secret):
-    """Get time-based one-time password on the basis of given secret and time
-    :param totp_secret - a unique shared secret of the user
-    """
-    return _security._totp_factory.from_source(totp_secret).generate().token
-
-
-def generate_totp():
-    """ Create new user-unique totp_secret.
-
-    We return an encrypted json string so that when sent in a cookie or
-    sent to DB - it is encrypted.
-
-    """
-    return _security._totp_factory.new().to_json(encrypt=True)
 
 
 def complete_two_factor_process(user, primary_method, is_changing, remember_login=None):

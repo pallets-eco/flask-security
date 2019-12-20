@@ -199,6 +199,11 @@ def verify_and_update_password(password, user):
 
     :param password: A plaintext password to verify
     :param user: The user to verify against
+
+    .. tip::
+        This should not be called directly - rather use
+        :meth:`.UserMixin.verify_and_update_password`
+
     """
     if use_double_hash(user.password):
         verified = _pwd_context.verify(get_hmac(password), user.password)

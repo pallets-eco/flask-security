@@ -60,8 +60,6 @@ from .recoverable import (
 from .registerable import register_user
 from .twofactor import (
     complete_two_factor_process,
-    generate_totp,
-    get_totp_uri,
     send_security_token,
     tf_clean_session,
     tf_disable,
@@ -70,7 +68,6 @@ from .utils import (
     base_render_json,
     config_value,
     do_flash,
-    get_identity_attributes,
     get_message,
     get_post_login_redirect,
     get_post_logout_redirect,
@@ -704,7 +701,7 @@ def two_factor_setup():
         # Regenerate the TOTP secret on every call of 2FA setup unless it is
         # within the same session and method (e.g. upon entering the phone number)
         if pm != session.get("tf_primary_method", None):
-            user.tf_totp_secret = generate_totp()
+            user.tf_totp_secret = _security._totp_factory.generate_totp_secret()
 
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
@@ -968,14 +965,11 @@ def two_factor_qrcode():
 
         # By convention, the URI should have the username that the user
         # logs in with.
-        userid = None
-        for attr in get_identity_attributes():
-            userid = getattr(user, attr, None)
-            if userid is not None and len(str(userid)) > 0:
-                break
-
+        username = user.calc_username()
         url = pyqrcode.create(
-            get_totp_uri(str(userid) if userid is not None else "Unknown", totp)
+            _security._totp_factory.get_totp_uri(
+                username if username else "Unknown", totp
+            )
         )
     except ImportError:
         # For TWO_FACTOR - this should have been checked at app init.
