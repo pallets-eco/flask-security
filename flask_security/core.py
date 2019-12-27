@@ -66,6 +66,7 @@ from .cache import VerifyHashCache
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
+_datastore = LocalProxy(lambda: _security.datastore)
 local_cache = Local()
 
 # List of authentication mechanisms supported.
@@ -343,10 +344,22 @@ _default_forms = {
 
 
 def _user_loader(user_id):
-    user = _security.datastore.find_user(id=user_id)
-    if not user or not user.active:
-        return None
-    return user
+    # Try to load based on fs_uniquifier (alternative_id) first
+    if hasattr(_datastore.user_model, "fs_uniquifier"):
+        try:
+            user = _security.datastore.find_user(fs_uniquifier=user_id)
+            if user and user.active:
+                return user
+        except Exception:
+            pass
+    # Load based on user.id as fallback method for upstream data
+    try:
+        user = _security.datastore.find_user(id=user_id)
+        if user and user.active:
+            return user
+    except Exception:
+        pass
+    return None
 
 
 def _request_loader(request):
@@ -594,6 +607,19 @@ class RoleMixin(object):
 
 class UserMixin(BaseUserMixin):
     """Mixin for `User` model definitions"""
+
+    def get_id(self):
+        """Returns the user identification attribute
+        """
+        if hasattr(self, "fs_uniquifier") and self.fs_uniquifier is not None:
+            # Use fs_uniquifier as alternative_id if available and not None
+            alternative_id = str(self.fs_uniquifier)
+            if len(alternative_id) > 0:
+                # Return only if alternative_id is a valid value
+                return alternative_id
+
+        # Use upstream value if alternative_id is unavailable
+        return BaseUserMixin.get_id(self)
 
     @property
     def is_active(self):
