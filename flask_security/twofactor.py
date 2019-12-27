@@ -48,6 +48,7 @@ def tf_clean_session():
             "tf_primary_method",
             "tf_confirmed",
             "tf_remember_login",
+            "tf_totp_secret",
         ]:
             session.pop(k, None)
 
@@ -86,14 +87,21 @@ def send_security_token(user, method, totp_secret):
     )
 
 
-def complete_two_factor_process(user, primary_method, is_changing, remember_login=None):
+def complete_two_factor_process(
+    user, primary_method, totp_secret, is_changing, remember_login=None
+):
     """clean session according to process (login or changing two-factor method)
      and perform action accordingly
     """
 
-    # only update primary_method and DB if necessary
+    # update changed primary_method
     if user.tf_primary_method != primary_method:
         user.tf_primary_method = primary_method
+        _datastore.put(user)
+
+    # update changed totp_secret
+    if user.tf_totp_secret != totp_secret:
+        user.tf_totp_secret = totp_secret
         _datastore.put(user)
 
     # if we are changing two-factor method

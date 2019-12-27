@@ -265,6 +265,11 @@ def test_two_factor_flag(app, client):
     assert username == "gal@lp.com"
     assert b"svg" in qrcode_page_response.data
 
+    # Generate token from passed totp_secret and confirm setup
+    code = app.security._totp_factory.generate_totp_password(totp_secret)
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"You successfully changed your two-factor method" in response.data
+
     logout(client)
 
     # Test login with remember_token
@@ -617,11 +622,15 @@ def test_totp_secret_generation(app, client):
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"To Which Phone Number Should We Send Code To" in response.data
 
-    # Retrieve the current totp secret from the user in datastore for later comparison
-    with app.app_context():
-        user = app.security.datastore.find_user(email="jill@lp.com")
-        assert "enckey" in user.tf_totp_secret
-        old_secret = user.tf_totp_secret
+    # Retrieve the currently generated totp secret for later comparison
+    session = get_session(response)
+    if "tf_totp_secret" in session:
+        generated_secret = session["tf_totp_secret"]
+    else:
+        with app.app_context():
+            user = app.security.datastore.find_user(email="jill@lp.com")
+            generated_secret = user.tf_totp_secret
+    assert "enckey" in generated_secret
 
     # Send the phone number in the second step, method remains unchanged
     data = dict(setup="sms", phone="+111111111111")
@@ -636,7 +645,7 @@ def test_totp_secret_generation(app, client):
     # Retrieve the final totp secret and make sure it matches the previous one
     with app.app_context():
         user = app.security.datastore.find_user(email="jill@lp.com")
-        assert old_secret == user.tf_totp_secret
+        assert generated_secret == user.tf_totp_secret
 
     # Finally opt back out and check that tf_totp_secret is None
     response = client.get("/tf-setup", data=data, follow_redirects=True)
