@@ -34,7 +34,7 @@ from itsdangerous import BadSignature, SignatureExpired
 from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
-from . import quart_compat
+from .quart_compat import best
 from .signals import (
     login_instructions_sent,
     reset_password_instructions_sent,
@@ -695,7 +695,7 @@ def default_want_json(req):
     if not hasattr(req.accept_mimetypes, "best"):  # pragma: no cover
         # Alright. we dont have the best property, lets add it ourselves.
         # This is for quart compatibility
-        setattr(accept_mimetypes, "best", quart_compat.best)
+        setattr(accept_mimetypes, "best", best)
     if accept_mimetypes.best == "application/json":
         return True
     return False

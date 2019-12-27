@@ -20,7 +20,14 @@ from flask_wtf.csrf import CSRFError
 from werkzeug.local import LocalProxy
 from werkzeug.routing import BuildError
 
-from . import utils
+from .utils import (
+    FsPermNeed,
+    config_value,
+    do_flash,
+    get_message,
+    get_url,
+    json_error_response,
+)
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
@@ -59,32 +66,32 @@ def default_unauthn_handler(mechanisms, headers=None):
     We let Flask-Login handle this.
 
     """
-    unauthn_message, _ = utils.get_message("UNAUTHENTICATED")
+    unauthn_message, _ = get_message("UNAUTHENTICATED")
 
-    if utils.config_value("BACKWARDS_COMPAT_UNAUTHN"):
+    if config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        payload = utils.json_error_response(errors=unauthn_message)
+        payload = json_error_response(errors=unauthn_message)
         return _security._render_json(payload, 401, headers, None)
     return _security.login_manager.unauthorized()
 
 
 def default_unauthz_handler(func, params):
-    unauthz_message, unauthz_message_type = utils.get_message("UNAUTHORIZED")
+    unauthz_message, unauthz_message_type = get_message("UNAUTHORIZED")
     if _security._want_json(request):
-        payload = utils.json_error_response(errors=unauthz_message)
+        payload = json_error_response(errors=unauthz_message)
         return _security._render_json(payload, 403, None, None)
-    view = utils.config_value("UNAUTHORIZED_VIEW")
+    view = config_value("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
             view = view()
         else:
             try:
-                view = utils.get_url(view)
+                view = get_url(view)
             except BuildError:
                 view = None
-        utils.do_flash(unauthz_message, unauthz_message_type)
+        do_flash(unauthz_message, unauthz_message_type)
         redirect_to = "/"
         if request.referrer and not request.referrer.split("?")[0].endswith(
             request.path
@@ -153,8 +160,8 @@ def handle_csrf(method):
     ):
         return
 
-    if utils.config_value("CSRF_PROTECT_MECHANISMS"):
-        if method in utils.config_value("CSRF_PROTECT_MECHANISMS"):
+    if config_value("CSRF_PROTECT_MECHANISMS"):
+        if method in config_value("CSRF_PROTECT_MECHANISMS"):
             _csrf.protect()
         else:
             _request_ctx_stack.top.fs_ignore_csrf = True
@@ -311,7 +318,7 @@ def unauth_csrf(fall_through=False):
                 return fn(*args, **kwargs)
 
             if (
-                utils.config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
+                config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
                 and not current_user.is_authenticated
             ):
                 _request_ctx_stack.top.fs_ignore_csrf = True
@@ -414,7 +421,7 @@ def permissions_required(*fsperms):
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
-            perms = [Permission(utils.FsPermNeed(fsperm)) for fsperm in fsperms]
+            perms = [Permission(FsPermNeed(fsperm)) for fsperm in fsperms]
             for perm in perms:
                 if not perm.can():
                     if _security._unauthorized_callback:
@@ -453,7 +460,7 @@ def permissions_accepted(*fsperms):
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
-            perm = Permission(*[utils.FsPermNeed(fsperm) for fsperm in fsperms])
+            perm = Permission(*[FsPermNeed(fsperm) for fsperm in fsperms])
             if perm.can():
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
@@ -480,12 +487,12 @@ def anonymous_user_required(f):
     def wrapper(*args, **kwargs):
         if current_user.is_authenticated:
             if _security._want_json(request):
-                payload = utils.json_error_response(
-                    errors=utils.get_message("ANONYMOUS_USER_REQUIRED")[0]
+                payload = json_error_response(
+                    errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
                 )
                 return _security._render_json(payload, 400, None, None)
             else:
-                return redirect(utils.get_url(_security.post_login_view))
+                return redirect(get_url(_security.post_login_view))
         return f(*args, **kwargs)
 
     return wrapper
