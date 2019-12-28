@@ -701,7 +701,7 @@ def two_factor_setup():
         # Regenerate the TOTP secret on every call of 2FA setup unless it is
         # within the same session and method (e.g. upon entering the phone number)
         if pm != session.get("tf_primary_method", None):
-            user.tf_totp_secret = _security._totp_factory.generate_totp_secret()
+            session["tf_totp_secret"] = _security._totp_factory.generate_totp_secret()
 
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
@@ -710,7 +710,7 @@ def two_factor_setup():
         _datastore.put(user)
         after_this_request(_commit)
 
-        send_security_token(user=user, method=pm, totp_secret=user.tf_totp_secret)
+        send_security_token(user=user, method=pm, totp_secret=session["tf_totp_secret"])
         code_form = _security.two_factor_verify_code_form()
         if not _security._want_json(request):
             return _security.render_template(
@@ -783,8 +783,10 @@ def two_factor_token_validation():
 
         if session["tf_state"] == "ready":
             pm = user.tf_primary_method
+            totp_secret = user.tf_totp_secret
         else:
             pm = session["tf_primary_method"]
+            totp_secret = session["tf_totp_secret"]
     else:
         if (
             not all(
@@ -797,13 +799,15 @@ def two_factor_token_validation():
             logout_user()
             return _tf_illegal_state(form, _security.login_url)
         pm = session["tf_primary_method"]
+        totp_secret = session["tf_totp_secret"]
         form.user = current_user
 
     setattr(form, "primary_method", pm)
+    setattr(form, "tf_totp_secret", totp_secret)
     if form.validate_on_submit():
         # Success - log in user and clear all session variables
         completion_message = complete_two_factor_process(
-            form.user, pm, changing, session.pop("tf_remember_login", None)
+            form.user, pm, totp_secret, changing, session.pop("tf_remember_login", None)
         )
         after_this_request(_commit)
         if not request.is_json:
@@ -960,6 +964,8 @@ def two_factor_qrcode():
         return abort(404)
 
     totp = user.tf_totp_secret
+    if "tf_totp_secret" in session:
+        totp = session["tf_totp_secret"]
     try:
         import pyqrcode
 
