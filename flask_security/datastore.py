@@ -234,7 +234,8 @@ class UserDatastore(object):
 
     def set_uniquifier(self, user, uniquifier=None):
         """ Set user's authentication token uniquifier.
-        This will immediately render outstanding auth tokens invalid.
+        This will immediately render outstanding auth tokens,
+        session cookies and remember cookies invalid.
 
         :param user: User to modify
         :param uniquifier: Unique value - if none then uuid.uuid4().hex is used
