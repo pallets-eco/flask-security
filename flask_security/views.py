@@ -30,7 +30,9 @@
     TODO: two-factor routes such as tf_setup need work. They seem to support both
     authenticated (via session?) as well as unauthenticated access.
 """
-from .quart_compat import get_quart_status
+
+import sys
+
 from flask import (
     Blueprint,
     abort,
@@ -52,6 +54,7 @@ from .confirmable import (
 )
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .passwordless import login_token_status, send_login_instructions
+from .quart_compat import get_quart_status
 from .recoverable import (
     reset_password_token_status,
     send_reset_password_instructions,
@@ -80,7 +83,6 @@ from .utils import (
     suppress_form_csrf,
 )
 from .utils import url_for_security as url_for
-import sys
 
 if get_quart_status():  # pragma: no cover
     from quart import make_response, redirect
