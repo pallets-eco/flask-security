@@ -515,6 +515,7 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             confirm_serializer=_get_serializer(app, "confirm"),
             _context_processors={},
             _send_mail_task=None,
+            _send_mail=kwargs.get("send_mail", send_mail),
             _unauthorized_callback=None,
             _render_json=default_render_json,
             _want_json=default_want_json,
@@ -609,7 +610,12 @@ class UserMixin(BaseUserMixin):
     """Mixin for `User` model definitions"""
 
     def get_id(self):
-        """Returns the user identification attribute
+        """Returns the user identification attribute.
+
+        This will be `fs_uniquifier` if that is available, else base class id
+        (which is via Flask-Login and is user.id).
+
+        .. versionadded:: 3.4.0
         """
         if hasattr(self, "fs_uniquifier") and self.fs_uniquifier is not None:
             # Use fs_uniquifier as alternative_id if available and not None
@@ -689,10 +695,10 @@ class UserMixin(BaseUserMixin):
     def get_redirect_qparams(self, existing=None):
         """Return user info that will be added to redirect query params.
 
-        .. versionadded:: 3.2.0
-
         :param existing: A dict that will be updated.
         :return: A dict whose keys will be query params and values will be query values.
+
+        .. versionadded:: 3.2.0
         """
         if not existing:
             existing = {}
@@ -710,9 +716,9 @@ class UserMixin(BaseUserMixin):
         (i.e. ``app.security.datastore.commit()``).
         This is usually handled in the view.
 
-        .. versionadded:: 3.2.0
-
         :param password: A plaintext password to verify
+
+        .. versionadded:: 3.2.0
         """
         return verify_and_update_password(password, self)
 
@@ -798,6 +804,9 @@ class _SecurityState(object):
 
     def send_mail_task(self, fn):
         self._send_mail_task = fn
+
+    def send_mail(self, fn):
+        self._send_mail = fn
 
     def unauthorized_handler(self, fn):
         warnings.warn(
@@ -886,8 +895,6 @@ class Security(object):
 
         if "render_template" not in kwargs:
             kwargs.setdefault("render_template", self.render_template)
-        if "send_mail" not in kwargs:
-            kwargs.setdefault("send_mail", self.send_mail)
         if "json_encoder_cls" not in kwargs:
             kwargs.setdefault("json_encoder_cls", FsJsonEncoder)
         if "totp_cls" not in kwargs:
@@ -1030,8 +1037,16 @@ class Security(object):
     def render_template(self, *args, **kwargs):
         return render_template(*args, **kwargs)
 
-    def send_mail(self, *args, **kwargs):
-        return send_mail(*args, **kwargs)
+    def send_mail(self, fn):
+        """ Function used to send emails.
+
+        :param fn: Function with signature(subject, recipient, template, context)
+
+        See :meth:`send_mail` for details.
+
+        .. versionadded:: 3.1.0
+        """
+        self._state._send_mail = fn
 
     def render_json(self, cb):
         """ Callback to render response payload as JSON.

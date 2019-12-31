@@ -13,7 +13,7 @@ from flask import current_app as app, session
 from werkzeug.local import LocalProxy
 
 from .totp import Totp
-from .utils import send_mail, config_value, SmsSenderFactory, login_user
+from .utils import config_value, SmsSenderFactory, login_user
 from .signals import (
     tf_code_confirmed,
     tf_disabled,
@@ -23,7 +23,6 @@ from .signals import (
 
 # Convenient references
 _security = LocalProxy(lambda: app.extensions["security"])
-
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
@@ -62,7 +61,7 @@ def send_security_token(user, method, totp_secret):
     """
     token_to_be_sent = _security._totp_factory.generate_totp_password(totp_secret)
     if method == "mail":
-        send_mail(
+        _security._send_mail(
             config_value("EMAIL_SUBJECT_TWO_FACTOR"),
             user.email,
             "two_factor_instructions",

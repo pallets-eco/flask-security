@@ -35,7 +35,7 @@ def register_user(**kwargs):
     user_registered.send(app._get_current_object(), user=user, confirm_token=token)
 
     if config_value("SEND_REGISTER_EMAIL"):
-        _security.send_mail(
+        _security._send_mail(
             config_value("EMAIL_SUBJECT_REGISTER"),
             user.email,
             "welcome",

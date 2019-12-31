@@ -70,6 +70,19 @@ def test_alt_send_mail(app, sqlalchemy_datastore):
     assert app.mail_sent is True
 
 
+@pytest.mark.recoverable()
+def test_alt_send_mail_decorator(app, client):
+    """ Verify that can override the send_mail method. """
+    app.mail_sent = False
+
+    @app.security.send_mail
+    def send_email(subject, email, template, **kwargs):
+        app.mail_sent = True
+
+    client.post("/reset", data=dict(email="matt@lp.com"))
+    assert app.mail_sent is True
+
+
 def test_register_blueprint_flag(app, sqlalchemy_datastore):
     app.security = Security(app, datastore=Security, register_blueprint=False)
     client = app.test_client()
