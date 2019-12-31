@@ -22,7 +22,7 @@ class Totp(object):
     Subclass this and implement the get/set last_counter methods. Your subclass can
     be registered at Flask-Security creation/initialization time.
 
-    .. versionadded: 3.4.0
+    .. versionadded:: 3.4.0
 
     """
 

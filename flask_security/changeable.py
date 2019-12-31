@@ -29,7 +29,7 @@ def send_password_changed_notice(user):
     """
     if config_value("SEND_PASSWORD_CHANGE_EMAIL"):
         subject = config_value("EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE")
-        _security.send_mail(subject, user.email, "change_notice", user=user)
+        _security._send_mail(subject, user.email, "change_notice", user=user)
 
 
 def change_user_password(user, password):

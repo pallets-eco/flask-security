@@ -81,16 +81,16 @@ from .utils import (
     logout_user,
     slash_url_suffix,
     suppress_form_csrf,
+    url_for_security,
 )
-from .utils import url_for_security as url_for
 
 if get_quart_status():  # pragma: no cover
     from quart import make_response, redirect
 else:
     from flask import make_response, redirect
+
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
-
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
@@ -167,7 +167,7 @@ def login():
         login_user(form.user, remember=form.remember.data)
         after_this_request(_commit)
 
-        if not request.is_json:
+        if not _security._want_json(request):
             return redirect(get_post_login_redirect())
 
     if _security._want_json(request):
@@ -226,7 +226,7 @@ def register():
             login_user(user)
             did_login = True
 
-        if not request.is_json:
+        if not _security._want_json(request):
             return redirect(get_post_register_redirect())
 
         # Only include auth token if in fact user is permitted to login
@@ -254,7 +254,7 @@ def send_login():
 
     if form.validate_on_submit():
         send_login_instructions(form.user)
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(*get_message("LOGIN_EMAIL_SENT", email=form.user.email))
 
     if _security._want_json(request):
@@ -279,7 +279,7 @@ def token_login(token):
         if _security.redirect_behavior == "spa":
             return redirect(get_url(_security.login_error_view, qparams={c: m}))
         do_flash(m, c)
-        return redirect(url_for("login"))
+        return redirect(url_for_security("login"))
     if expired:
         send_login_instructions(user)
         m, c = get_message(
@@ -293,7 +293,7 @@ def token_login(token):
                 )
             )
         do_flash(m, c)
-        return redirect(url_for("login"))
+        return redirect(url_for_security("login"))
 
     login_user(user)
     after_this_request(_commit)
@@ -320,7 +320,7 @@ def send_confirmation():
 
     if form.validate_on_submit():
         send_confirmation_instructions(form.user)
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(*get_message("CONFIRMATION_REQUEST", email=form.user.email))
 
     if _security._want_json(request):
@@ -344,7 +344,8 @@ def confirm_email(token):
             return redirect(get_url(_security.confirm_error_view, qparams={c: m}))
         do_flash(m, c)
         return redirect(
-            get_url(_security.confirm_error_view) or url_for("send_confirmation")
+            get_url(_security.confirm_error_view)
+            or url_for_security("send_confirmation")
         )
 
     already_confirmed = user.confirmed_at is not None
@@ -370,7 +371,8 @@ def confirm_email(token):
 
         do_flash(m, c)
         return redirect(
-            get_url(_security.confirm_error_view) or url_for("send_confirmation")
+            get_url(_security.confirm_error_view)
+            or url_for_security("send_confirmation")
         )
 
     confirm_user(user)
@@ -421,7 +423,7 @@ def forgot_password():
 
     if form.validate_on_submit():
         send_reset_password_instructions(form.user)
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.user.email))
 
     if _security._want_json(request):
@@ -467,7 +469,7 @@ def reset_password(token):
             if _security.redirect_behavior == "spa":
                 return redirect(get_url(_security.reset_error_view, qparams={c: m}))
             do_flash(m, c)
-            return redirect(url_for("forgot_password"))
+            return redirect(url_for_security("forgot_password"))
         if expired:
             send_reset_password_instructions(user)
             m, c = get_message(
@@ -483,7 +485,7 @@ def reset_password(token):
                     )
                 )
             do_flash(m, c)
-            return redirect(url_for("forgot_password"))
+            return redirect(url_for_security("forgot_password"))
 
         # All good - for SPA - redirect to the ``reset_view``
         if _security.redirect_behavior == "spa":
@@ -506,7 +508,7 @@ def reset_password(token):
     if not user or invalid:
         invalid = True
         m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(m, c)
 
     if expired:
@@ -516,15 +518,15 @@ def reset_password(token):
             email=user.email,
             within=_security.reset_password_within,
         )
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(m, c)
 
     if invalid or expired:
-        if request.is_json:
+        if _security._want_json(request):
             form._errors = m
             return base_render_json(form)
         else:
-            return redirect(url_for("forgot_password"))
+            return redirect(url_for_security("forgot_password"))
 
     if form.validate_on_submit():
         after_this_request(_commit)
@@ -566,7 +568,7 @@ def change_password():
     if form.validate_on_submit():
         after_this_request(_commit)
         change_user_password(current_user._get_current_object(), form.new_password.data)
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(*get_message("PASSWORD_CHANGE"))
             return redirect(
                 get_url(_security.post_change_view)
@@ -612,7 +614,7 @@ def _two_factor_login(form):
         session["tf_state"] = "setup_from_login"
         json_response["tf_state"] = "setup_from_login"
         if not _security._want_json(request):
-            return redirect(url_for("two_factor_setup"))
+            return redirect(url_for_security("two_factor_setup"))
 
     # if user's two-factor properties are configured
     else:
@@ -625,7 +627,7 @@ def _two_factor_login(form):
         )
 
         if not _security._want_json(request):
-            return redirect(url_for("two_factor_token_validation"))
+            return redirect(url_for_security("two_factor_token_validation"))
 
     return base_render_json(form, include_auth_token=True, additional=json_response)
 
@@ -812,7 +814,7 @@ def two_factor_token_validation():
             form.user, pm, totp_secret, changing, session.pop("tf_remember_login", None)
         )
         after_this_request(_commit)
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(*get_message(completion_message))
             return redirect(get_post_login_redirect())
 
@@ -887,7 +889,7 @@ def two_factor_rescue():
             )
         # send app provider a mail message regarding trouble
         elif problem == "no_mail_access":
-            _security.send_mail(
+            _security._send_mail(
                 config_value("EMAIL_SUBJECT_TWO_FACTOR_RESCUE"),
                 config_value("TWO_FACTOR_RESCUE_MAIL"),
                 "two_factor_rescue",
@@ -925,9 +927,9 @@ def two_factor_verify_password():
         after_this_request(_commit)
         session["tf_confirmed"] = True
         m, c = get_message("TWO_FACTOR_PASSWORD_CONFIRMATION_DONE")
-        if not request.is_json:
+        if not _security._want_json(request):
             do_flash(m, c)
-            return redirect(url_for("two_factor_setup"))
+            return redirect(url_for_security("two_factor_setup"))
         else:
             form._errors = m
             return base_render_json(form)

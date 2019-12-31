@@ -171,19 +171,27 @@ sends the following signals.
     addition to the app (which is the sender), it is passed `user`
     and `method` arguments.
 
+    .. versionadded:: 3.3.0
+
 .. data:: tf_profile_changed
 
-  Sent when two-factor is used and user logs in. In addition to the app
-  (which is the sender), it is passed `user` and `method` arguments.
+    Sent when two-factor is used and user logs in. In addition to the app
+    (which is the sender), it is passed `user` and `method` arguments.
+
+    .. versionadded:: 3.3.0
 
 .. data:: tf_disabled
 
-  Sent when two-factor is disabled. In addition to the app
-  (which is the sender), it is passed `user` argument.
+    Sent when two-factor is disabled. In addition to the app
+    (which is the sender), it is passed `user` argument.
+
+    .. versionadded:: 3.3.0
 
 .. data:: tf_security_token_sent
 
-  Sent when a two factor security/access code is sent. In addition to the app
-  (which is the sender), it is passed `user`, `method`, and `token` arguments.
+    Sent when a two factor security/access code is sent. In addition to the app
+    (which is the sender), it is passed `user`, `method`, and `token` arguments.
+
+    .. versionadded:: 3.3.0
 
 .. _Flask documentation on signals: https://flask.palletsprojects.com/en/1.1.x/signals/

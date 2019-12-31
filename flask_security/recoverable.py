@@ -37,7 +37,7 @@ def send_reset_password_instructions(user):
     reset_link = url_for_security("reset_password", token=token, _external=True)
 
     if config_value("SEND_PASSWORD_RESET_EMAIL"):
-        _security.send_mail(
+        _security._send_mail(
             config_value("EMAIL_SUBJECT_PASSWORD_RESET"),
             user.email,
             "reset_instructions",
@@ -56,7 +56,7 @@ def send_password_reset_notice(user):
     :param user: The user to send the notice to
     """
     if config_value("SEND_PASSWORD_RESET_NOTICE_EMAIL"):
-        _security.send_mail(
+        _security._send_mail(
             config_value("EMAIL_SUBJECT_PASSWORD_NOTICE"),
             user.email,
             "reset_notice",

@@ -30,7 +30,7 @@ def send_login_instructions(user):
     token = generate_login_token(user)
     login_link = url_for_security("token_login", token=token, _external=True)
 
-    _security.send_mail(
+    _security._send_mail(
         config_value("EMAIL_SUBJECT_PASSWORDLESS"),
         user.email,
         "login_instructions",
