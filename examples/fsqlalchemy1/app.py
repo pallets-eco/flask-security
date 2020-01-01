@@ -28,7 +28,7 @@ from flask_security import (
     permissions_required,
     roles_accepted,
 )
-from flask_security.models import fsqla
+from flask_security.models import fsqla_v2 as fsqla
 
 # Create app
 app = Flask(__name__)

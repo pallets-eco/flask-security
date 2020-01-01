@@ -46,7 +46,7 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     from flask import Flask, render_template_string
     from flask_sqlalchemy import SQLAlchemy
     from flask_security import Security, SQLAlchemyUserDatastore, auth_required, hash_password
-    from flask_security.models import fsqla
+    from flask_security.models import fsqla_v2 as fsqla
 
     # Create app
     app = Flask(__name__)

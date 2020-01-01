@@ -15,6 +15,10 @@ various `best practice` fields - such as update and create times. These mixins c
 be easily extended to add any sort of custom fields and can be found in the
 `models` module (today there is just one for using Flask-SqlAlchemy).
 
+The provided models are versioned since they represent actual DB models, and any
+changes require a schema migration (and perhaps a data migration). Applications
+must specifically import the version they want (and handle any required migration).
+
 At the bare minimum
 your `User` and `Role` model should include the following fields:
 

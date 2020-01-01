@@ -97,6 +97,8 @@ exclude_patterns = ["_build"]
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
+nitpicky = True
+nitpick_ignore = [("py:attr", "LoginManager.unauthorized"), ("py:class", "function")]
 
 # -- Options for HTML output ---------------------------------------------
 
