@@ -72,7 +72,7 @@ Please see below for details.**
   unified API responses.
 - (:issue:`121`) Unauthorization callback not quite right. Split into 2 different callbacks - one for
   unauthorized and one for unauthenticated. Made default unauthenticated handler use Flask-Login's unauthenticated
-  method to make everything uniform. Extensive documentation added. :meth:`.Security.unauthorized_callback` has been deprecated.
+  method to make everything uniform. Extensive documentation added. `.Security.unauthorized_callback` has been deprecated.
 - (:pr:`120`) Add complete User and Role model mixins that support all features. Modify tests and Quickstart documentation
   to show how to use these. Please see :ref:`responsetopic` for details.
 - Improve documentation for :meth:`.UserDatastore.create_user` to make clear that hashed password
@@ -90,7 +90,7 @@ Please see below for details.**
 - (:issue:`159`) The ``/register`` endpoint returned the Authentication Token even though
   confirmation was required. This was a huge security hole - it has been fixed.
 - (:issue:`160`) The 2FA totp_secret would be regenerated upon submission, making QRCode not work. (malware-watch)
-- (:issue:`166`) :meth:`.default_render_json` uses ``flask.make_response`` and forces the Content-Type to JSON for generating the response (koekie)
+- (:issue:`166`) `default_render_json` uses ``flask.make_response`` and forces the Content-Type to JSON for generating the response (koekie)
 - (:issue:`166`) *SECURITY_MSG_UNAUTHENTICATED* added to the configuration.
 - (:pr:`168`) When using the @auth_required or @auth_token_required decorators, the token
   would be verified twice, and the DB would be queried twice for the user. Given how slow
@@ -122,7 +122,7 @@ Possible compatibility issues
 - (:issue:`121`) Changes the default (failure) behavior for views protected with @auth_required, @token_auth_required,
   or @http_auth_required. Before, a 401 was returned with some stock html. Now, Flask-Login.unauthorized() is
   called (the same as @login_required does) - which by default redirects to a login page/view. If you had provided your own
-  :meth:`.Security.unauthorized_callback` there are no changes - that will still be called first. The old default
+  `.Security.unauthorized_callback` there are no changes - that will still be called first. The old default
   behavior can be restored by setting *SECURITY_BACKWARDS_COMPAT_UNAUTHN* to True. Please see :ref:`responsetopic` for details.
 
 - (:issue:`127`) Fix for LazyStrings in json error response. The fix for this has Flask-Security registering

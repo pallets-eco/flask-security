@@ -264,7 +264,7 @@ def sqlalchemy_datastore(request, app, tmpdir, realdburl):
 
 def sqlalchemy_setup(request, app, tmpdir, realdburl):
     from flask_sqlalchemy import SQLAlchemy
-    from flask_security.models import fsqla
+    from flask_security.models import fsqla_v2 as fsqla
 
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)

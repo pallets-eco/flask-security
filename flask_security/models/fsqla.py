@@ -35,9 +35,14 @@ class FsModels(object):
 
     roles_users = None
     db = None
+    fs_model_version = 1
 
     @classmethod
     def set_db_info(cls, appdb):
+        """ Initialize Model.
+        This needs to be called after the DB object has been created
+        (e.g. db = Sqlalchemy())
+        """
         cls.db = appdb
         cls.roles_users = appdb.Table(
             "roles_users",
