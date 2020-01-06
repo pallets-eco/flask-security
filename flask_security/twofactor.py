@@ -12,7 +12,6 @@
 from flask import current_app as app, session
 from werkzeug.local import LocalProxy
 
-from .totp import Totp
 from .utils import config_value, SmsSenderFactory, login_user
 from .signals import (
     tf_code_confirmed,
@@ -24,16 +23,6 @@ from .signals import (
 # Convenient references
 _security = LocalProxy(lambda: app.extensions["security"])
 _datastore = LocalProxy(lambda: _security.datastore)
-
-
-def tf_setup(app):
-    """ Initialize a totp factory.
-
-    The TWO_FACTOR_SECRET is used to encrypt the per-user totp_secret on disk.
-    """
-    secrets = config_value("TWO_FACTOR_SECRET", app=app)
-    issuer = config_value("TWO_FACTOR_URI_SERVICE_NAME", app=app)
-    return Totp(secrets, issuer, app)
 
 
 def tf_clean_session():
@@ -71,11 +60,9 @@ def send_security_token(user, method, totp_secret):
         )
     elif method == "sms":
         msg = "Use this code to log in: %s" % token_to_be_sent
-        from_number = config_value("TWO_FACTOR_SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
+        from_number = config_value("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
         to_number = user.tf_phone_number
-        sms_sender = SmsSenderFactory.createSender(
-            config_value("TWO_FACTOR_SMS_SERVICE")
-        )
+        sms_sender = SmsSenderFactory.createSender(config_value("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=msg)
 
     elif method == "google_authenticator" or method == "authenticator":

@@ -103,6 +103,21 @@ known limitations:
     * Limited and incomplete JSON support
     * Not enough documentation to use w/o looking at code
 
+Passwordless Sign In
+---------------------
+Passwordless sign in utilizes similar mechanisms as two-factor authentication.
+Instead of a password that is stored in the DB and is often difficult to
+remember - user's can use email, SMS, or an authenticator app to provide the proof of
+identity required to initiate a session. Be aware that NIST does not recommend
+email for this purpose (though many web sites do so) due to the fact that a) email may travel through
+many different servers as part of being delivered - and b) is available from any device.
+Using SMS or an authenticator app means you are providing "something you have" (the mobile device)
+and either "something you know" (PIN) or "something you are" (biometric passcode).
+This effectively means that passwordless sign in, is in fact already two-factor (if using
+SMS or authenticator app), so currently the Two-Factor feature can not be used in
+conjunction with passwordless (but it can still be used on the regular username/password
+sign in flow).
+
 Email Confirmation
 ------------------
 

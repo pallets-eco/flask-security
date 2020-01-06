@@ -230,6 +230,25 @@ These configuration keys are used globally across all features.
 
     Default: ``['email']``.
 
+.. py:data:: SECURITY_USER_IDENTITY_MAPPINGS
+
+    Defines the order and matching that will be applied when validating the
+    (unified/passwordless) login form. This form has a single ``identity`` field
+    that is parsed using the information below - the FIRST match will then be
+    used to look up the user in the DB.
+
+    Default::
+
+        [
+            {"email": uia_email_mapper},
+            {"pl_phone_number": uia_phone_mapper},
+        ],
+
+    Be aware that ONLY those attributes listed in ``SECURITY_USER_IDENTITY_ATTRIBUTES``
+    will be considered - regardless of the setting in this variable.
+
+    .. versionadded:: 3.4.0
+
 .. py:data:: SECURITY_DEFAULT_REMEMBER_ME
 
     Specifies the default "remember me" value used when logging in a user.
@@ -293,6 +312,9 @@ Core - rarely need changing
     Remember tokens are used instead of user ID's as it is more secure.
 
     Default: ``"remember-salt"``.
+.. py:data:: SECURITY_PL_SETUP_SALT
+
+    Default: ``"pl-setup-salt"``
 
 .. py:data:: SECURITY_EMAIL_PLAINTEXT
 
@@ -736,6 +758,65 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``"/tf-confirm"``.
 
+Passwordless V2
+---------------
+
+    .. versionadded:: 3.4.0
+
+    This feature includes a unified login model - using either identity/password
+    or identity/code. Which user model fields can be used for identity is defined
+    in ``SECURITY_USER_IDENTITY_ATTRIBUTES`` and ``SECURITY_USER_IDENTITY_MAPPINGS``
+
+.. py:data:: SECURITY_PASSWORDLESSV2
+
+    To enable this feature - set this to ``True``.
+
+    Default: False
+.. py:data:: SECURITY_PL_LOGIN_URL
+
+    Default: "/pl-login"
+.. py:data:: SECURITY_PL_SETUP_URL
+
+    Default: "/pl-setup"
+.. py:data:: SECURITY_PL_SEND_CODE_URL
+
+    Default: "/pl-send-code"
+.. py:data:: SECURITY_PL_VERIFY_LINK_URL
+
+    Default: "/pl-verify-link"
+.. py:data:: SECURITY_PL_QRCODE_URL
+
+    Default: "/pl-qrcode"
+.. py:data:: SECURITY_PL_POST_SETUP_VIEW
+
+    Default: None
+.. py:data:: SECURITY_PL_LOGIN_TEMPLATE
+
+    Default: "security/pl_login.html"
+.. py:data:: SECURITY_PL_SETUP_TEMPLATE
+
+    Default: "security/pl_setup.html"
+
+.. py:data:: SECURITY_PL_ENABLED_METHODS
+
+    Specifies the default enabled methods for passwordless authentication.
+
+    Default: ["email", "authenticator", "sms"]
+.. py:data:: SECURITY_PL_TOKEN_VALIDITY
+
+    Specifies the number of seconds access token/code is valid.
+
+    Default: 120
+.. py:data:: SECURITY_PL_EMAIL_SUBJECT
+
+    Default: _("Verification Code")
+.. py:data:: SECURITY_PL_SETUP_WITHIN
+
+    Specifies the amount of time a user has before their setup
+    token expires. Always pluralize the time unit for this value.
+
+    Default: "30 minutes"
+
 Passwordless
 -------------
 
@@ -796,6 +877,7 @@ All feature flags. By default all are 'False'/not enabled.
 * ``SECURITY_RECOVERABLE``
 * ``SECURITY_TRACKABLE``
 * ``SECURITY_PASSWORDLESS``
+* ``SECURITY_PASSWORDLESSV2``
 * ``SECURITY_CHANGEABLE``
 * ``SECURITY_TWO_FACTOR``
 
@@ -809,6 +891,12 @@ A list of all URLs and Views:
 * ``SECURITY_RESET_URL``
 * ``SECURITY_CHANGE_URL``
 * ``SECURITY_CONFIRM_URL``
+* ``SECURITY_PL_LOGIN_URL``
+* ``SECURITY_PL_QRCODE_URL``
+* ``SECURITY_PL_SETUP_URL``
+* ``SECURITY_PL_SEND_CODE_URL``
+* ``SECURITY_PL_VERIFY_LINK_URL``
+* ``SECURITY_PL_POST_SETUP_VIEW``
 * ``SECURITY_TWO_FACTOR_SETUP_URL``
 * ``SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL``
 * ``SECURITY_TWO_FACTOR_QRCODE_URL``
@@ -835,6 +923,8 @@ A list of all templates:
 * ``SECURITY_REGISTER_USER_TEMPLATE``
 * ``SECURITY_RESET_PASSWORD_TEMPLATE``
 * ``SECURITY_CHANGE_PASSWORD_TEMPLATE``
+* ``SECURITY_PL_LOGIN_TEMPLATE``
+* ``SECURITY_PL_SETUP_TEMPLATE``
 * ``SECURITY_SEND_CONFIRMATION_TEMPLATE``
 * ``SECURITY_SEND_LOGIN_TEMPLATE``
 * ``SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE``
@@ -860,6 +950,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_EMAIL_CONFIRMED``
 * ``SECURITY_MSG_EMAIL_NOT_PROVIDED``
 * ``SECURITY_MSG_FORGOT_PASSWORD``
+* ``SECURITY_MSG_INVALID_CODE``
 * ``SECURITY_MSG_INVALID_CONFIRMATION_TOKEN``
 * ``SECURITY_MSG_INVALID_EMAIL_ADDRESS``
 * ``SECURITY_MSG_INVALID_LOGIN_TOKEN``
@@ -879,6 +970,11 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_PASSWORD_RESET``
 * ``SECURITY_MSG_PASSWORD_RESET_EXPIRED``
 * ``SECURITY_MSG_PASSWORD_RESET_REQUEST``
+* ``SECURITY_MSG_PL_METHOD_NOT_AVAILABLE``
+* ``SECURITY_MSG_PL_PHONE_REQUIRED``
+* ``SECURITY_MSG_PL_SETUP_EXPIRED``
+* ``SECURITY_MSG_PL_SETUP_SUCCESSFUL``
+* ``SECURITY_MSG_PL_SPECIFY_IDENTITY``
 * ``SECURITY_MSG_REFRESH``
 * ``SECURITY_MSG_RETYPE_PASSWORD_MISMATCH``
 * ``SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN``
@@ -891,4 +987,5 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_TWO_FACTOR_DISABLED``
 * ``SECURITY_MSG_UNAUTHORIZED``
 * ``SECURITY_MSG_UNAUTHENTICATED``
+* ``SECURITY_MSG_USE_CODE``
 * ``SECURITY_MSG_USER_DOES_NOT_EXIST``

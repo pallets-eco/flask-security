@@ -1,0 +1,9 @@
+<p>{{ _("Welcome") }} {{ username }}!</p>
+
+<p>{{ _("You can sign into your account using the following code:") }} {{ token }}</p>
+
+{% if login_link %}
+  <p>{{ _("Or use the the link below:") }}</p>
+
+  <p><a href="{{ login_link }}">{{ _("Sign In") }}</a></p>
+{%  endif %}

@@ -81,6 +81,20 @@ will require the following additional field:
 
 * ``tf_phone_number``
 
+Passwordless
+^^^^^^^^^^^^^
+
+If you enable passwordless sign in by setting your application's `SECURITY_PASSWORDLESSV2`
+configuration value to `True`, your `User` model will require the following
+additional fields:
+
+* ``pl_totp_secret``
+
+If you include 'sms' in `SECURITY_PL_ENABLED_METHODS`, your `User` model
+will require the following additional field:
+
+* ``pl_phone_number``
+
 Permissions
 ^^^^^^^^^^^
 If you want to protect endpoints with permissions, and assign permissions to roles
