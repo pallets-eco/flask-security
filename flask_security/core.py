@@ -43,6 +43,11 @@ from .forms import (
     TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
 )
+from .passwordlessv2 import (
+    PasswordlessV2LoginForm,
+    PasswordlessV2SetupForm,
+    PasswordlessV2SetupVerifyForm,
+)
 from .totp import Totp
 from .utils import _
 from .utils import config_value as cv
@@ -57,6 +62,8 @@ from .utils import (
     localize_callback,
     send_mail,
     string_types,
+    uia_email_mapper,
+    uia_phone_mapper,
     url_for_security,
     verify_and_update_password,
     verify_hash,
@@ -190,22 +197,48 @@ _default_config = {
     "EMAIL_SUBJECT_TWO_FACTOR": _("Two-factor Login"),
     "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-factor Rescue"),
     "USER_IDENTITY_ATTRIBUTES": ["email"],
+    "USER_IDENTITY_MAPPINGS": [
+        {"email": uia_email_mapper},
+        {"pl_phone_number": uia_phone_mapper},
+    ],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
     "DATETIME_FACTORY": datetime.utcnow,
     "USE_VERIFY_PASSWORD_CACHE": False,
     "VERIFY_HASH_CACHE_TTL": 60 * 5,
     "VERIFY_HASH_CACHE_MAX_SIZE": 500,
-    "TWO_FACTOR_REQUIRED": False,
-    "TWO_FACTOR_SECRET": None,
-    "TWO_FACTOR_ENABLED_METHODS": ["mail", "authenticator", "sms"],
-    "TWO_FACTOR_URI_SERVICE_NAME": "service_name",
-    "TWO_FACTOR_SMS_SERVICE": "Dummy",
-    "TWO_FACTOR_SMS_SERVICE_CONFIG": {
+    "TOTP_SECRETS": None,
+    "TOTP_ISSUER": "service_name",
+    "SMS_SERVICE": "Dummy",
+    "SMS_SERVICE_CONFIG": {
         "ACCOUNT_SID": None,
         "AUTH_TOKEN": None,
         "PHONE_NUMBER": None,
     },
+    "TWO_FACTOR_REQUIRED": False,
+    "TWO_FACTOR_SECRET": None,  # Deprecated - use TOTP_SECRETS
+    "TWO_FACTOR_ENABLED_METHODS": ["mail", "authenticator", "sms"],
+    "TWO_FACTOR_URI_SERVICE_NAME": "service_name",  # Deprecated - use TOTP_ISSUER
+    "TWO_FACTOR_SMS_SERVICE": "Dummy",  # Deprecated - use SMS_SERVICE
+    "TWO_FACTOR_SMS_SERVICE_CONFIG": {  # Deprecated - use SMS_SERVICE_CONFIG
+        "ACCOUNT_SID": None,
+        "AUTH_TOKEN": None,
+        "PHONE_NUMBER": None,
+    },
+    "PASSWORDLESSV2": False,
+    "PL_SETUP_SALT": "pl-setup-salt",
+    "PL_LOGIN_URL": "/pl-login",
+    "PL_SETUP_URL": "/pl-setup",
+    "PL_SEND_CODE_URL": "/pl-send-code",
+    "PL_VERIFY_LINK_URL": "/pl-verify-link",
+    "PL_QRCODE_URL": "/pl-qrcode",
+    "PL_POST_SETUP_VIEW": None,
+    "PL_LOGIN_TEMPLATE": "security/pl_login.html",
+    "PL_SETUP_TEMPLATE": "security/pl_setup.html",
+    "PL_ENABLED_METHODS": ["email", "authenticator", "sms"],
+    "PL_TOKEN_VALIDITY": 120,
+    "PL_EMAIL_SUBJECT": _("Verification Code"),
+    "PL_SETUP_WITHIN": "30 minutes",
     "CSRF_PROTECT_MECHANISMS": AUTHN_MECHANISMS,
     "CSRF_IGNORE_UNAUTH_ENDPOINTS": False,
     "CSRF_COOKIE": {"key": None},
@@ -218,6 +251,7 @@ _default_config = {
 
 #: Default Flask-Security messages
 _default_messages = {
+    "API_ERROR": (_("Input not appropriate for requested API"), "error"),
     "UNAUTHORIZED": (_("You do not have permission to view this resource."), "error"),
     "UNAUTHENTICATED": (
         _("You are not authenticated. Please supply the correct credentials."),
@@ -277,6 +311,7 @@ _default_messages = {
     "DISABLED_ACCOUNT": (_("Account is disabled."), "error"),
     "EMAIL_NOT_PROVIDED": (_("Email not provided"), "error"),
     "INVALID_EMAIL_ADDRESS": (_("Invalid email address"), "error"),
+    "INVALID_CODE": (_("Invalid code"), "error"),
     "PASSWORD_NOT_PROVIDED": (_("Password not provided"), "error"),
     "PASSWORD_NOT_SET": (_("No password is set for this user"), "error"),
     "PASSWORD_INVALID_LENGTH": (_("Password must be at least 6 characters"), "error"),
@@ -325,6 +360,15 @@ _default_messages = {
         _("You successfully disabled two factor authorization."),
         "success",
     ),
+    "PL_METHOD_NOT_AVAILABLE": (_("Requested method is not valid"), "error"),
+    "PL_PHONE_REQUIRED": (_("Phone number required"), "error"),
+    "PL_SETUP_EXPIRED": (
+        _("Setup must be completed within %(within)s. Please start over."),
+        "error",
+    ),
+    "PL_SETUP_SUCCESSFUL": (_("Passwordless setup successful"), "info"),
+    "PL_SPECIFY_IDENTITY": (_("You must specify a valid identity to sign in"), "error"),
+    "USE_CODE": (_("Use this code to sign in: %(code)s."), "info"),
 }
 
 _default_forms = {
@@ -340,6 +384,9 @@ _default_forms = {
     "two_factor_setup_form": TwoFactorSetupForm,
     "two_factor_verify_password_form": TwoFactorVerifyPasswordForm,
     "two_factor_rescue_form": TwoFactorRescueForm,
+    "pl_login_form": PasswordlessV2LoginForm,
+    "pl_setup_form": PasswordlessV2SetupForm,
+    "pl_setup_verify_form": PasswordlessV2SetupVerifyForm,
 }
 
 
@@ -513,6 +560,7 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             login_serializer=_get_serializer(app, "login"),
             reset_serializer=_get_serializer(app, "reset"),
             confirm_serializer=_get_serializer(app, "confirm"),
+            pl_setup_serializer=_get_serializer(app, "pl_setup"),
             _context_processors={},
             _send_mail_task=None,
             _send_mail=kwargs.get("send_mail", send_mail),
@@ -802,6 +850,12 @@ class _SecurityState(object):
     def tf_token_validation_context_processor(self, fn):
         self._add_ctx_processor("tf_token_validation", fn)
 
+    def pl_login_context_processor(self, fn):
+        self._add_ctx_processor("pl_login", fn)
+
+    def pl_setup_context_processor(self, fn):
+        self._add_ctx_processor("pl_setup", fn)
+
     def send_mail_task(self, fn):
         self._send_mail_task = fn
 
@@ -852,6 +906,9 @@ class Security(object):
     :param two_factor_verify_code_form: set form the the 2FA verify code view
     :param two_factor_rescue_form: set form for the 2FA rescue view
     :param two_factor_verify_password_form: set form for the 2FA verify password view
+    :param pl_login_form: set form for the passwordless sign in view
+    :param pl_setup_form: set form for the passwordless setup view
+    :param pl_setup_verify_form: set from for the passwordless setup verify view
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates. The default is Flask's
      render_template() function.
@@ -989,29 +1046,45 @@ class Security(object):
             if state.cli_roles_name:
                 app.cli.add_command(roles, state.cli_roles_name)
 
+        # Migrate from TWO_FACTOR config to generic config.
+        for newc, oldc in [
+            ("SECURITY_SMS_SERVICE", "SECURITY_TWO_FACTOR_SMS_SERVICE"),
+            ("SECURITY_SMS_SERVICE_CONFIG", "SECURITY_TWO_FACTOR_SMS_SERVICE_CONFIG"),
+            ("SECURITY_TOTP_SECRETS", "SECURITY_TWO_FACTOR_SECRET"),
+            ("SECURITY_TOTP_ISSUER", "SECURITY_TWO_FACTOR_URI_SERVICE_NAME"),
+        ]:
+            if not app.config.get(newc, None):
+                app.config[newc] = app.config.get(oldc, None)
+
         # Two factor configuration checks and setup
+        multi_factor = False
+        if cv("PASSWORDLESSV2", app=app):
+            multi_factor = True
+            if len(cv("PL_ENABLED_METHODS", app=app)) < 1:
+                raise ValueError("Must configure some PL_ENABLED_METHODS")
         if cv("TWO_FACTOR", app=app):
+            multi_factor = True
             if len(cv("TWO_FACTOR_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some TWO_FACTOR_ENABLED_METHODS")
-            self._check_modules("pyqrcode", "TWO_FACTOR", cv("TWO_FACTOR", app=app))
-            self._check_modules("cryptography", "TWO_FACTOR_SECRET", "has been set")
 
-            if cv("TWO_FACTOR_SMS_SERVICE", app=app) == "Twilio":  # pragma: no cover
-                self._check_modules(
-                    "twilio",
-                    "TWO_FACTOR_SMS_SERVICE",
-                    cv("TWO_FACTOR_SMS_SERVICE", app=app),
-                )
-            secrets = cv("TWO_FACTOR_SECRET", app=app)
-            issuer = cv("TWO_FACTOR_URI_SERVICE_NAME", app=app)
+        if multi_factor:
+            self._check_modules("pyqrcode", "TWO_FACTOR or PASSWORDLESSV2")
+            self._check_modules("cryptography", "TWO_FACTOR or PASSWORDLESSV2")
+
+            sms_service = cv("SMS_SERVICE", app=app)
+            if sms_service == "Twilio":  # pragma: no cover
+                self._check_modules("twilio", "TWO_FACTOR or PASSWORDLESSV2")
+
+            secrets = cv("TOTP_SECRETS", app=app)
+            issuer = cv("TOTP_ISSUER", app=app)
             state.totp_factory(state.totp_cls(secrets, issuer))
 
         if cv("USE_VERIFY_PASSWORD_CACHE", app=app):
-            self._check_modules("cachetools", "USE_VERIFY_PASSWORD_CACHE", True)
+            self._check_modules("cachetools", "USE_VERIFY_PASSWORD_CACHE")
 
         return state
 
-    def _check_modules(self, module, config_name, config_value):  # pragma: no cover
+    def _check_modules(self, module, config_name):  # pragma: no cover
         PY3 = sys.version_info[0] == 3
         if PY3:
             from importlib.util import find_spec
@@ -1028,9 +1101,7 @@ class Security(object):
                 module_exists = False
 
         if not module_exists:
-            raise ValueError(
-                "{} is required for {} = {}".format(module, config_name, config_value)
-            )
+            raise ValueError("{} is required for {}".format(module, config_name))
 
         return module_exists
 

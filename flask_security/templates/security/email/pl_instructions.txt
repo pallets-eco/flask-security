@@ -1,0 +1,10 @@
+{{ _("Welcome") }} {{ username }}!
+
+{{ _("You can sign into your account using the following code:") }} {{ token }}
+
+{% if login_link %}
+
+    {{ _("Or use the link below:") }}
+
+    {{ login_link }}
+{% endif %}

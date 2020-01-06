@@ -14,6 +14,7 @@ import base64
 from functools import partial
 import hashlib
 import hmac
+import re
 import sys
 import warnings
 from contextlib import contextmanager
@@ -24,12 +25,12 @@ from flask.json import JSONEncoder
 from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
-from flask_login import current_user as current_user
+from flask_login import current_user
 from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
 from flask_mail import Message
 from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
-from wtforms import ValidationError
+from wtforms import validators, ValidationError
 from itsdangerous import BadSignature, SignatureExpired
 from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
@@ -552,6 +553,32 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
         return expired, invalid, user
 
 
+def check_and_get_token_status(token, serializer, within=None):
+    """Get the status of a token and return data.
+
+    :param token: The token to check
+    :param serializer: The name of the serializer. Can be one of the
+                       following: ``confirm``, ``login``, ``reset``
+    :param within: max age - passed as a timedelta
+
+    :return: a tuple of (expired, invalid, data)
+    """
+    serializer = getattr(_security, serializer + "_serializer")
+    max_age = within.total_seconds()
+    data = None
+    expired, invalid = False, False
+
+    try:
+        data = serializer.loads(token, max_age=max_age)
+    except SignatureExpired:
+        d, data = serializer.loads_unsafe(token)
+        expired = True
+    except (BadSignature, TypeError, ValueError):
+        invalid = True
+
+    return expired, invalid, data
+
+
 def get_identity_attributes(app=None):
     app = app or current_app
     attrs = app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
@@ -560,6 +587,41 @@ def get_identity_attributes(app=None):
     except AttributeError:
         pass
     return attrs
+
+
+def uia_phone_mapper(identity):
+    """ Used to match identity as a phone number.
+    See USER_IDENTITY_MAPPINGS.
+
+    .. versionadded:: 3.4.0
+    """
+    matcher = re.match(
+        r"(\+?\d[-.\s]?)?(\(\d{3}\)\s?|\d{3}[-.\s]?)\d{3}[-.\s]?\d{4}", identity
+    )
+    if matcher:
+        return identity
+    return None
+
+
+def uia_email_mapper(identity):
+    """ Used to match identity as an email.
+    See USER_IDENTITY_MAPPINGS.
+
+    .. versionadded:: 3.4.0
+    """
+
+    # Fake up enough to invoke the WTforms email validator.
+    class FakeField(object):
+        pass
+
+    email_validator = validators.Email(message="nothing")
+    field = FakeField()
+    setattr(field, "data", identity)
+    try:
+        email_validator(None, field)
+    except ValidationError:
+        return None
+    return identity
 
 
 def use_double_hash(password_hash=None):
@@ -846,12 +908,8 @@ try:  # pragma: no cover
 
     class TwilioSmsSender(SmsSenderBaseClass):
         def __init__(self):
-            self.account_sid = config_value("TWO_FACTOR_SMS_SERVICE_CONFIG")[
-                "ACCOUNT_SID"
-            ]
-            self.auth_token = config_value("TWO_FACTOR_SMS_SERVICE_CONFIG")[
-                "AUTH_TOKEN"
-            ]
+            self.account_sid = config_value("SMS_SERVICE_CONFIG")["ACCOUNT_SID"]
+            self.auth_token = config_value("SMS_SERVICE_CONFIG")["AUTH_TOKEN"]
 
         def send_sms(self, from_number, to_number, msg):
             """ Send message via twilio account. """

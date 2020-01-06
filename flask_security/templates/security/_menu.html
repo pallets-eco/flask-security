@@ -1,7 +1,12 @@
-{% if security.registerable or security.recoverable or security.confirmable %}
+{% if security.registerable or security.recoverable or security.confirmable or security.passwordlessv2 %}
 <h2>{{ _('Menu') }}</h2>
 <ul>
+  {% if not skip_login_menu %}
   <li><a href="{{ url_for_security('login') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">{{ _('Login') }}</a></li>
+  {% endif %}
+  {% if security.passwordlessv2 and not skip_login_menu %}
+  <li><a href="{{ url_for_security('pl_login') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">{{ _("Sign In using a one-time code") }}</a><br/></li>
+  {% endif %}
   {% if security.registerable %}
   <li><a href="{{ url_for_security('register') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">{{ _('Register') }}</a><br/></li>
   {% endif %}
