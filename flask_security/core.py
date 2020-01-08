@@ -214,6 +214,7 @@ _default_config = {
     "BACKWARDS_COMPAT_UNAUTHN": False,
     "BACKWARDS_COMPAT_AUTH_TOKEN": False,
     "BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE": False,
+    "JOIN_USER_ROLES": True,
 }
 
 #: Default Flask-Security messages
