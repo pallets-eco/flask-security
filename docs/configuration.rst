@@ -318,6 +318,16 @@ Core - rarely need changing
 
     Default: ``roles``.
 
+.. py:data:: SECURITY_JOIN_USER_ROLES
+
+    Specifies whether to set the ``UserModel.roles`` loading relationship to ``joined`` when a ``roles`` attribute
+    is present for a SQLAlchemy Datastore. Setting this to ``False`` restores pre 3.3.0 behavior and is required if the ``roles`` attribute
+    is not a joinable attribute on the ``UserModel``
+
+    Default: ``True``.
+
+    .. versionadded:: 3.4.0
+
 .. _Totp: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#totp-encryption-setup
 .. _set_cookie: https://flask.palletsprojects.com/en/1.1.x/api/?highlight=set_cookie#flask.Response.set_cookie
 .. _axios: https://github.com/axios/axios

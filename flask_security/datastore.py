@@ -11,7 +11,7 @@
 """
 import uuid
 
-from .utils import get_identity_attributes, string_types
+from .utils import config_value, get_identity_attributes, string_types
 
 
 class Datastore(object):
@@ -330,7 +330,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         from sqlalchemy.dialects.postgresql import UUID as PSQL_UUID
 
         user_model_query = self.user_model.query
-        if hasattr(self.user_model, "roles"):
+        if config_value("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
 
             user_model_query = user_model_query.options(joinedload("roles"))
@@ -375,7 +375,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
     def find_user(self, **kwargs):
         query = self.user_model.query
-        if hasattr(self.user_model, "roles"):
+        if config_value("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
 
             query = query.options(joinedload("roles"))
