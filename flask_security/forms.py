@@ -212,13 +212,34 @@ class NextFormMixin:
 class RegisterFormMixin:
     submit = SubmitField(get_form_field_label("register"))
 
-    def to_dict(form):
-        def is_field_and_user_attr(member):
-            return isinstance(member, Field) and hasattr(
-                _datastore.user_model, member.name
-            )
+    def to_dict(self, only_user):
+        """
+        Return form data as dictionary
+        :param only_user: bool, if True then only fields that have
+        corresponding members in UserModel are returned
+        :return: dict
+        """
 
-        fields = inspect.getmembers(form, is_field_and_user_attr)
+        def is_field_and_user_attr(member):
+
+            is_form_field = isinstance(member, Field)
+
+            # Not a form field, return False
+            if not is_form_field:
+
+                return False
+
+            # If only fields recorded on UserModel should be returned,
+            # perform check on user model, else return field
+            if only_user is True:
+
+                return hasattr(_datastore.user_model, member.name)
+
+            else:
+
+                return True
+
+        fields = inspect.getmembers(self, is_field_and_user_attr)
         return dict((key, value.data) for key, value in fields)
 
 

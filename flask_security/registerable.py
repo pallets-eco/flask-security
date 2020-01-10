@@ -22,10 +22,19 @@ _security = LocalProxy(lambda: app.extensions["security"])
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
-def register_user(**kwargs):
+def register_user(registration_form):
+    """
+    Calls datastore to create user, triggers post-registration logic
+    (e.g. sending confirmation link, sending registration mail)
+    :param registration_form: form with user registration data
+    :return: user instance
+    """
+
+    user_model_kwargs = registration_form.to_dict(only_user=True)
+
     confirmation_link, token = None, None
-    kwargs["password"] = hash_password(kwargs["password"])
-    user = _datastore.create_user(**kwargs)
+    user_model_kwargs["password"] = hash_password(user_model_kwargs["password"])
+    user = _datastore.create_user(**user_model_kwargs)
     _datastore.commit()
 
     if _security.confirmable:
