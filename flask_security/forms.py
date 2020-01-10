@@ -225,12 +225,12 @@ class RegisterFormMixin:
             is_form_field = isinstance(member, Field)
 
             # Not a form field, return False
-            if not is_form_field:
+            if is_form_field is False:
 
                 return False
 
             # If only fields recorded on UserModel should be returned,
-            # perform check on user model, else return field
+            # perform check on user model, else return True
             if only_user is True:
 
                 return hasattr(_datastore.user_model, member.name)
