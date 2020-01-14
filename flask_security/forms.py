@@ -231,11 +231,8 @@ class RegisterFormMixin:
             # If only fields recorded on UserModel should be returned,
             # perform check on user model, else return True
             if only_user is True:
-
                 return hasattr(_datastore.user_model, member.name)
-
             else:
-
                 return True
 
         fields = inspect.getmembers(self, is_field_and_user_attr)
