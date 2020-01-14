@@ -41,7 +41,12 @@ def register_user(registration_form):
         confirmation_link, token = generate_confirmation_link(user)
         do_flash(*get_message("CONFIRM_REGISTRATION", email=user.email))
 
-    user_registered.send(app._get_current_object(), user=user, confirm_token=token)
+    user_registered.send(
+        app._get_current_object(),
+        user=user,
+        confirm_token=token,
+        form_data=registration_form.to_dict(only_user=False),
+    )
 
     if config_value("SEND_REGISTER_EMAIL"):
         _security._send_mail(

@@ -27,10 +27,13 @@ def test_registerable_flag(client, app, get_message):
 
     # Test registering is successful, sends email, and fires signal
     @user_registered.connect_via(app)
-    def on_user_registerd(app, user, confirm_token):
+    def on_user_registerd(app, user, confirm_token, form_data):
+
         assert isinstance(app, Flask)
         assert isinstance(user, UserMixin)
         assert confirm_token is None
+        assert len(form_data.keys()) > 0
+
         recorded.append(user)
 
     data = dict(
