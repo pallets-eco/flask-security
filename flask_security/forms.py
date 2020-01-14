@@ -225,8 +225,7 @@ class RegisterFormMixin:
             is_form_field = isinstance(member, Field)
 
             # Not a form field, return False
-            if is_form_field is False:
-
+            if not is_form_field:
                 return False
 
             # If only fields recorded on UserModel should be returned,
