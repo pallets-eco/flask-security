@@ -14,6 +14,10 @@ from utils import authenticate, logout
 from flask_security.core import UserMixin
 from flask_security.signals import user_registered
 
+from flask_security.forms import RegisterForm, StringField
+
+from flask_security import Security
+
 pytestmark = pytest.mark.registerable()
 
 
@@ -163,3 +167,39 @@ def test_two_factor_json(app, client, get_message):
     assert response.jdata["response"]["error"].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
+
+
+def test_form_data_is_passed_to_user_registered_signal(app, sqlalchemy_datastore):
+    class MyRegisterForm(RegisterForm):
+        additional_field = StringField("additional_field")
+
+    app.security = Security(
+        app, datastore=sqlalchemy_datastore, register_form=MyRegisterForm
+    )
+
+    recorded = []
+
+    @user_registered.connect_via(app)
+    def on_user_registerd(app, user, confirm_token, form_data):
+
+        assert isinstance(app, Flask)
+        assert isinstance(user, UserMixin)
+        assert confirm_token is None
+
+        assert form_data["additional_field"] == "additional_data"
+
+        recorded.append(user)
+
+    client = app.test_client()
+
+    data = dict(
+        email="dude@lp.com",
+        password="password",
+        password_confirm="password",
+        additional_field="additional_data",
+    )
+
+    response = client.post("/register", data=data, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert len(recorded) == 1
