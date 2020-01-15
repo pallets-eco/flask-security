@@ -110,6 +110,8 @@ Utils
 
 .. autofunction:: flask_security.get_token_status
 
+.. autofunction:: flask_security.check_and_get_token_status
+
 .. autofunction:: flask_security.get_url
 
 .. autofunction:: flask_security.transform_url
@@ -198,16 +200,16 @@ sends the following signals.
 
     .. versionadded:: 3.3.0
 
-.. data:: pl_security_token_sent
+.. data:: us_security_token_sent
 
-    Sent when a passwordless access code is sent. In addition to the app
+    Sent when a unified sign in access code is sent. In addition to the app
     (which is the sender), it is passed `user`, `method`, and `token` arguments.
 
     .. versionadded:: 3.4.0
 
-.. data:: pl_profile_changed
+.. data:: us_profile_changed
 
-    Sent when user completes changing their passwordless profile. In addition to the app
+    Sent when user completes changing their unified sign in profile. In addition to the app
     (which is the sender), it is passed `user` and `method` arguments.
 
     .. versionadded:: 3.4.0

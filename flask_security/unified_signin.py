@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-    flask_security.passwordlessv2
+    flask_security.unified_signin
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security passwordless module
+    Flask-Security Unified signin module
 
     :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
+    This implements a unified sign in endpoint - allowing
+    authentication via identity and passcode - where identity is configured
+    via SECURITY_USER_IDENTITY_ATTRIBUTES, and allowable passcode are either
+    password or US_ENABLED_METHODS.
+
     Finish up/Consider:
     - 2FA? since this is now a universal login - probably yes.
-    - should we support a way that /logout redirects to pl-login rather than /login?
+    - should we support a way that /logout redirects to us-signin rather than /login?
+    - Enhance register to allow null passwords - this has to work with the new
+      pwdvalidation changes.
     - openapi.yaml
     - configuration.rst
     - test context processors
@@ -35,7 +42,7 @@ from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import Form, Required, get_form_field_label
 from .quart_compat import get_quart_status
-from .signals import pl_profile_changed, pl_security_token_sent
+from .signals import us_profile_changed, us_security_token_sent
 from .utils import (
     _,
     SmsSenderFactory,
@@ -68,8 +75,7 @@ else:
         return response
 
 
-def _pl_common_validate(form):
-    # Common validation for passwordless forms.
+def _us_common_validate(form):
     # Be aware - this has side effect on the form - it will fill in
     # the form.user
 
@@ -80,7 +86,7 @@ def _pl_common_validate(form):
         for ua, mapper in mapping.items():
             # Make sure we don't validate on a column that application
             # hasn't specifically configured as a unique/identity column
-            # In other words - might have a phone number for 2FA or passwordless
+            # In other words - might have a phone number for 2FA or unified
             # but don't want the user to be able to use that as primary identity
             if ua in config_value("USER_IDENTITY_ATTRIBUTES"):
                 # Allow mapper to alter (coerce) to type DB requires
@@ -89,7 +95,7 @@ def _pl_common_validate(form):
                     form.user = _datastore.find_user(**{ua: idata})
 
     if not form.user:
-        form.identity.errors.append(get_message("PL_SPECIFY_IDENTITY")[0])
+        form.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
         return False
     if not form.user.is_active:
         form.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
@@ -97,19 +103,17 @@ def _pl_common_validate(form):
     return True
 
 
-class PasswordlessV2LoginForm(Form):
+class UnifiedSigninForm(Form):
     """ A unified login form
     For either identity/password or request and enter code.
     """
 
     user = None
 
-    # Identity can be any of the USER_IDENTITY_ATTRIBUTES
-    # And xlate please
     identity = StringField(
         get_form_field_label("identity"),
         validators=[Required()],
-        render_kw={"placeholder": "email, phone, username"},
+        render_kw={"placeholder": _("email, phone, username")},
     )
 
     passcode = StringField(
@@ -127,24 +131,24 @@ class PasswordlessV2LoginForm(Form):
     submit_send_code = SubmitField(get_form_field_label("sendcode"))
 
     def __init__(self, *args, **kwargs):
-        super(PasswordlessV2LoginForm, self).__init__(*args, **kwargs)
+        super(UnifiedSigninForm, self).__init__(*args, **kwargs)
         self.remember.default = config_value("DEFAULT_REMEMBER_ME")
 
     def validate(self):
-        if not super(PasswordlessV2LoginForm, self).validate():
+        if not super(UnifiedSigninForm, self).validate():
             return False
 
         # For either - require a valid identity
-        if not _pl_common_validate(self):
+        if not _us_common_validate(self):
             return False
 
         if self.submit.data:
             # This is login - verify passcode/password
-            if not self.user.pl_totp_secret or not _security._totp_factory.verify_totp(
+            if not self.user.us_totp_secret or not _security._totp_factory.verify_totp(
                 token=self.passcode.data,
-                totp_secret=self.user.pl_totp_secret,
+                totp_secret=self.user.us_totp_secret,
                 user=self.user,
-                window=config_value("PL_TOKEN_VALIDITY"),
+                window=config_value("US_TOKEN_VALIDITY"),
             ):
                 # That didn't work - maybe it's just a password
                 if not self.user.verify_and_update_password(self.passcode.data):
@@ -161,20 +165,20 @@ class PasswordlessV2LoginForm(Form):
             # Note: we don't check for NOT CONFIRMED account here and go
             # ahead and send a code - but above we check and won't let them sign in.
             # The idea is to not expose info if not authenticated
-            if self.chosen_method.data not in config_value("PL_ENABLED_METHODS"):
+            if self.chosen_method.data not in config_value("US_ENABLED_METHODS"):
                 self.chosen_method.errors.append(
-                    get_message("PL_METHOD_NOT_AVAILABLE")[0]
+                    get_message("US_METHOD_NOT_AVAILABLE")[0]
                 )
                 return False
-            if self.chosen_method.data == "sms" and not self.user.pl_phone_number:
-                # They need to pl-setup!
-                self.chosen_method.errors.append(get_message("PL_PHONE_REQUIRED")[0])
+            if self.chosen_method.data == "sms" and not self.user.us_phone_number:
+                # They need to us-setup!
+                self.chosen_method.errors.append(get_message("US_PHONE_REQUIRED")[0])
                 return False
             return True
         return False  # pragma: no cover
 
 
-class PasswordlessV2SetupForm(Form):
+class UnifiedSigninSetupForm(Form):
     """ Setup form """
 
     chosen_method = RadioField(
@@ -196,26 +200,26 @@ class PasswordlessV2SetupForm(Form):
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
-        super(PasswordlessV2SetupForm, self).__init__(*args, **kwargs)
+        super(UnifiedSigninSetupForm, self).__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(PasswordlessV2SetupForm, self).validate():
+        if not super(UnifiedSigninSetupForm, self).validate():
             return False
-        if self.chosen_method.data not in config_value("PL_ENABLED_METHODS"):
-            self.chosen_method.errors.append(get_message("PL_METHOD_NOT_AVAILABLE")[0])
+        if self.chosen_method.data not in config_value("US_ENABLED_METHODS"):
+            self.chosen_method.errors.append(get_message("US_METHOD_NOT_AVAILABLE")[0])
             return False
 
         if self.chosen_method.data == "sms":
             # XXX use phone validator
             if self.phone.data is None or len(self.phone.data) == 0:
-                self.phone.errors.append(get_message("PL_PHONE_REQUIRED")[0])
+                self.phone.errors.append(get_message("US_PHONE_REQUIRED")[0])
                 return False
 
         return True
 
 
-class PasswordlessV2SetupVerifyForm(Form):
-    """The passwordless setup validation form """
+class UnifiedSigninSetupVerifyForm(Form):
+    """The unified sign in setup validation form """
 
     # These 2 filled in by view
     user = None
@@ -225,17 +229,17 @@ class PasswordlessV2SetupVerifyForm(Form):
     submit = SubmitField(get_form_field_label("submitcode"))
 
     def __init__(self, *args, **kwargs):
-        super(PasswordlessV2SetupVerifyForm, self).__init__(*args, **kwargs)
+        super(UnifiedSigninSetupVerifyForm, self).__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(PasswordlessV2SetupVerifyForm, self).validate():
+        if not super(UnifiedSigninSetupVerifyForm, self).validate():
             return False
 
         if not _security._totp_factory.verify_totp(
             token=self.code.data,
             totp_secret=self.totp_secret,
             user=self.user,
-            window=config_value("PL_TOKEN_VALIDITY"),
+            window=config_value("US_TOKEN_VALIDITY"),
         ):
             self.code.errors.append(get_message("INVALID_CODE")[0])
             return False
@@ -245,13 +249,13 @@ class PasswordlessV2SetupVerifyForm(Form):
 
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
-def pl_send_code():
+def us_send_code():
     """
     Send code view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a method request to send a code.
     """
-    form_class = _security.pl_login_form
+    form_class = _security.us_signin_form
 
     if request.is_json:
         if request.content_length:
@@ -265,16 +269,16 @@ def pl_send_code():
     if form.validate_on_submit():
         # send code
         user = form.user
-        if not user.pl_totp_secret:
+        if not user.us_totp_secret:
             after_this_request(_commit)
-            user.pl_totp_secret = _security._totp_factory.generate_totp_secret()
+            user.us_totp_secret = _security._totp_factory.generate_totp_secret()
             _datastore.put(user)
 
         send_security_token(
             user,
             form.chosen_method.data,
-            user.pl_totp_secret,
-            user.pl_phone_number,
+            user.us_totp_secret,
+            user.us_phone_number,
             send_magic_link=True,
         )
 
@@ -283,38 +287,38 @@ def pl_send_code():
             return base_render_json(form, include_user=False)
 
         return _security.render_template(
-            config_value("PL_LOGIN_TEMPLATE"),
-            pl_login_form=form,
-            methods=config_value("PL_ENABLED_METHODS"),
+            config_value("US_SIGNIN_TEMPLATE"),
+            us_signin_form=form,
+            methods=config_value("US_ENABLED_METHODS"),
             chosen_method=form.chosen_method.data,
             code_sent=True,
             skip_loginmenu=True,
-            **_security._run_ctx_processor("pl_login")
+            **_security._run_ctx_processor("us_signin")
         )
 
     # Here on GET or failed validation
     if _security._want_json(request):
-        payload = {"methods": config_value("PL_ENABLED_METHODS")}
+        payload = {"methods": config_value("US_ENABLED_METHODS")}
         return base_render_json(form, include_user=False, additional=payload)
 
     return _security.render_template(
-        config_value("PL_LOGIN_TEMPLATE"),
-        pl_login_form=form,
-        methods=config_value("PL_ENABLED_METHODS"),
+        config_value("US_SIGNIN_TEMPLATE"),
+        us_signin_form=form,
+        methods=config_value("US_ENABLED_METHODS"),
         skip_loginmenu=True,
-        **_security._run_ctx_processor("pl_login")
+        **_security._run_ctx_processor("us_signin")
     )
 
 
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
-def pl_login():
+def us_signin():
     """
-    Passwordless/unified login view.
+    Unified sign in view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a passcode (password or OTP).
     """
-    form_class = _security.pl_login_form
+    form_class = _security.us_signin_form
 
     if request.is_json:
         if request.content_length:
@@ -337,7 +341,7 @@ def pl_login():
     # Here on GET or failed POST validate
     if _security._want_json(request):
         payload = {
-            "methods": config_value("PL_ENABLED_METHODS"),
+            "methods": config_value("US_ENABLED_METHODS"),
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
         }
         return base_render_json(form, include_user=False, additional=payload)
@@ -345,16 +349,16 @@ def pl_login():
     # On error - wipe code
     form.passcode.data = None
     return _security.render_template(
-        config_value("PL_LOGIN_TEMPLATE"),
-        pl_login_form=form,
-        methods=config_value("PL_ENABLED_METHODS"),
+        config_value("US_SIGNIN_TEMPLATE"),
+        us_signin_form=form,
+        methods=config_value("US_ENABLED_METHODS"),
         skip_login_menu=True,
-        **_security._run_ctx_processor("pl_login")
+        **_security._run_ctx_processor("us_signin")
     )
 
 
 @anonymous_user_required
-def pl_verify_link():
+def us_verify_link():
     """
     Used to verify a magic email link. GET only
     """
@@ -363,7 +367,7 @@ def pl_verify_link():
         if _security.redirect_behavior == "spa":
             return redirect(get_url(_security.login_error_view, qparams={c: m}))
         do_flash(m, c)
-        return redirect(url_for_security("pl_login"))
+        return redirect(url_for_security("us_signin"))
 
     user = _datastore.find_user(email=request.args.get("email"))
     if not user or not user.active:
@@ -374,13 +378,13 @@ def pl_verify_link():
         if _security.redirect_behavior == "spa":
             return redirect(get_url(_security.login_error_view, qparams={c: m}))
         do_flash(m, c)
-        return redirect(url_for_security("pl_login"))
+        return redirect(url_for_security("us_signin"))
 
-    if not user.pl_totp_secret or not _security._totp_factory.verify_totp(
+    if not user.us_totp_secret or not _security._totp_factory.verify_totp(
         token=request.args.get("code"),
-        totp_secret=user.pl_totp_secret,
+        totp_secret=user.us_totp_secret,
         user=user,
-        window=config_value("PL_TOKEN_VALIDITY"),
+        window=config_value("US_TOKEN_VALIDITY"),
     ):
         m, c = get_message("INVALID_CODE")
         if _security.redirect_behavior == "spa":
@@ -391,7 +395,7 @@ def pl_verify_link():
                 )
             )
         do_flash(m, c)
-        return redirect(url_for_security("pl_login"))
+        return redirect(url_for_security("us_signin"))
 
     login_user(user)
     after_this_request(_commit)
@@ -400,7 +404,7 @@ def pl_verify_link():
         # send it would be via a query param and that isn't secure. (logging and
         # possibly HTTP Referer header).
         # This means that this can only work if sessions are active which sort of
-        # makes sense - otherwise you need to use /pl-verify with a code.
+        # makes sense - otherwise you need to use /us-signin with a code.
         return redirect(
             get_url(_security.post_login_view, qparams=user.get_redirect_qparams())
         )
@@ -410,14 +414,14 @@ def pl_verify_link():
 
 
 @auth_required()
-def pl_setup():
+def us_setup():
     """
-    Change passwordless methods.
+    Change unified sign in methods.
     We want to verify the new method - so don't store anything yet in DB
     use a timed signed token to pass along state.
     GET - retrieve current info (json) or form.
     """
-    form_class = _security.pl_setup_form
+    form_class = _security.us_setup_form
 
     if request.is_json:
         if request.content_length:
@@ -428,10 +432,10 @@ def pl_setup():
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        if not current_user.pl_totp_secret or form.new_totp_secret.data:
+        if not current_user.us_totp_secret or form.new_totp_secret.data:
             totp = _security._totp_factory.generate_totp_secret()
         else:
-            totp = current_user.pl_totp_secret
+            totp = current_user.us_totp_secret
         state = {
             "totp_secret": totp,
             "chosen_method": form.chosen_method.data,
@@ -443,19 +447,19 @@ def pl_setup():
             totp_secret=state["totp_secret"],
             phone_number=state["phone_number"],
         )
-        state_token = _security.pl_setup_serializer.dumps(state)
+        state_token = _security.us_setup_serializer.dumps(state)
 
         if _security._want_json(request):
             payload = {"state": state_token, "chosen_method": form.chosen_method.data}
             return base_render_json(form, include_user=False, additional=payload)
         return _security.render_template(
-            config_value("PL_SETUP_TEMPLATE"),
-            methods=config_value("PL_ENABLED_METHODS"),
+            config_value("US_SETUP_TEMPLATE"),
+            methods=config_value("US_ENABLED_METHODS"),
             chosen_method=form.chosen_method.data,
-            pl_setup_form=form,
-            pl_setup_verify_form=_security.pl_setup_verify_form(),
+            us_setup_form=form,
+            us_setup_verify_form=_security.us_setup_verify_form(),
             state=state_token,
-            **_security._run_ctx_processor("pl_setup")
+            **_security._run_ctx_processor("us_setup")
         )
 
     # Get here on initial new setup (GET)
@@ -463,30 +467,30 @@ def pl_setup():
     if _security._want_json(request):
         payload = {
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
-            "methods": config_value("PL_ENABLED_METHODS"),
-            "phone": current_user.pl_phone_number,
+            "methods": config_value("US_ENABLED_METHODS"),
+            "phone": current_user.us_phone_number,
         }
         return base_render_json(form, include_user=False, additional=payload)
 
     # Show user existing phone number
-    form.phone.data = current_user.pl_phone_number
+    form.phone.data = current_user.us_phone_number
     return _security.render_template(
-        config_value("PL_SETUP_TEMPLATE"),
-        methods=config_value("PL_ENABLED_METHODS"),
-        pl_setup_form=form,
-        **_security._run_ctx_processor("pl_setup")
+        config_value("US_SETUP_TEMPLATE"),
+        methods=config_value("US_ENABLED_METHODS"),
+        us_setup_form=form,
+        **_security._run_ctx_processor("us_setup")
     )
 
 
 @auth_required()
-def pl_setup_verify(token):
+def us_setup_verify(token):
     """
     Verify new setup.
     The token is the state variable which is signed and timed
     and contains all the state that once confirmed will be stored in the user record.
     """
 
-    form_class = _security.pl_setup_verify_form
+    form_class = _security.us_setup_verify_form
 
     if request.is_json:
         form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
@@ -494,29 +498,29 @@ def pl_setup_verify(token):
         form = form_class(meta=suppress_form_csrf())
 
     expired, invalid, state = check_and_get_token_status(
-        token, "pl_setup", get_within_delta("PL_SETUP_WITHIN")
+        token, "us_setup", get_within_delta("US_SETUP_WITHIN")
     )
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("PL_SETUP_EXPIRED", within=config_value("PL_SETUP_WITHIN"))
+        m, c = get_message("US_SETUP_EXPIRED", within=config_value("US_SETUP_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
             payload = json_error_response(errors=m)
             return _security._render_json(payload, 400, None, None)
         do_flash(m, c)
-        return redirect(url_for_security("pl_setup"))
+        return redirect(url_for_security("us_setup"))
 
     form.totp_secret = state["totp_secret"]
     form.user = current_user
 
     if form.validate_on_submit():
         after_this_request(_commit)
-        current_user.pl_totp_secret = state["totp_secret"]
+        current_user.us_totp_secret = state["totp_secret"]
         if state["chosen_method"] == "sms":
-            current_user.pl_phone_number = state["phone_number"]
+            current_user.us_phone_number = state["phone_number"]
         _datastore.put(current_user)
-        pl_profile_changed.send(
+        us_profile_changed.send(
             app._get_current_object(), user=current_user, method=state["chosen_method"]
         )
         if _security._want_json(request):
@@ -525,13 +529,13 @@ def pl_setup_verify(token):
                 include_user=False,
                 additional=dict(
                     chosen_method=state["chosen_method"],
-                    phone=current_user.pl_phone_number,
+                    phone=current_user.us_phone_number,
                 ),
             )
         else:
-            do_flash(*get_message("PL_SETUP_SUCCESSFUL"))
+            do_flash(*get_message("US_SETUP_SUCCESSFUL"))
             return redirect(
-                get_url(_security.pl_post_setup_view)
+                get_url(_security.us_post_setup_view)
                 or get_url(_security.post_login_view)
             )
 
@@ -540,16 +544,16 @@ def pl_setup_verify(token):
         return base_render_json(form, include_user=False)
     m, c = get_message("INVALID_CODE")
     do_flash(m, c)
-    return redirect(url_for_security("pl_setup"))
+    return redirect(url_for_security("us_setup"))
 
 
 @auth_required()
-def pl_qrcode(token):
+def us_qrcode(token):
 
-    if "authenticator" not in config_value("PL_ENABLED_METHODS"):
+    if "authenticator" not in config_value("US_ENABLED_METHODS"):
         return abort(404)
     expired, invalid, state = check_and_get_token_status(
-        token, "pl_setup", get_within_delta("PL_SETUP_WITHIN")
+        token, "us_setup", get_within_delta("US_SETUP_WITHIN")
     )
     if expired or invalid:
         return abort(400)
@@ -598,12 +602,12 @@ def send_security_token(user, method, totp_secret, phone_number, send_magic_link
         login_link = None
         if send_magic_link:
             login_link = url_for_security(
-                "pl_verify_link", email=user.email, code=token, _external=True
+                "us_verify_link", email=user.email, code=token, _external=True
             )
         _security._send_mail(
-            config_value("PL_EMAIL_SUBJECT"),
+            config_value("US_EMAIL_SUBJECT"),
             user.email,
-            "pl_instructions",
+            "us_instructions",
             user=user,
             username=user.calc_username(),
             token=token,
@@ -619,6 +623,6 @@ def send_security_token(user, method, totp_secret, phone_number, send_magic_link
     elif method == "authenticator":
         # tokens are generated automatically with authenticator apps
         pass
-    pl_security_token_sent.send(
+    us_security_token_sent.send(
         app._get_current_object(), user=user, method=method, token=token
     )

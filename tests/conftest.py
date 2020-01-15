@@ -78,7 +78,7 @@ def app(request):
         "passwordless",
         "confirmable",
         "two_factor",
-        "passwordlessv2",
+        "unified_signin",
     ]:
         app.config["SECURITY_" + opt.upper()] = opt in request.keywords
 
@@ -239,8 +239,8 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         tf_primary_method = db.StringField(max_length=255)
         tf_totp_secret = db.StringField(max_length=255)
         tf_phone_number = db.StringField(max_length=255)
-        pl_totp_secret = db.StringField(max_length=255)
-        pl_phone_number = db.StringField(max_length=255)
+        us_totp_secret = db.StringField(max_length=255)
+        us_phone_number = db.StringField(max_length=255)
         last_login_ip = db.StringField(max_length=100)
         current_login_ip = db.StringField(max_length=100)
         login_count = db.IntField()
@@ -358,8 +358,8 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         tf_primary_method = Column(String(255), nullable=True)
         tf_totp_secret = Column(String(255), nullable=True)
         tf_phone_number = Column(String(255), nullable=True)
-        pl_totp_secret = Column(String(255), nullable=True)
-        pl_phone_number = Column(String(64), nullable=True)
+        us_totp_secret = Column(String(255), nullable=True)
+        us_phone_number = Column(String(64), nullable=True)
         last_login_ip = Column(String(100))
         current_login_ip = Column(String(100))
         login_count = Column(Integer)
@@ -436,8 +436,8 @@ def peewee_setup(request, app, tmpdir, realdburl):
         tf_primary_method = TextField(null=True)
         tf_totp_secret = TextField(null=True)
         tf_phone_number = TextField(null=True)
-        pl_totp_secret = TextField(null=True)
-        pl_phone_number = TextField(null=True)
+        us_totp_secret = TextField(null=True)
+        us_phone_number = TextField(null=True)
         last_login_ip = TextField(null=True)
         current_login_ip = TextField(null=True)
         login_count = IntegerField(null=True)
@@ -500,8 +500,8 @@ def pony_setup(request, app, tmpdir, realdburl):
         tf_primary_method = Optional(str, nullable=True)
         tf_totp_secret = Optional(str, nullable=True)
         tf_phone_number = Optional(str, nullable=True)
-        pl_totp_secret = Optional(str, nullable=True)
-        pl_phone_number = Optional(str, nullable=True)
+        us_totp_secret = Optional(str, nullable=True)
+        us_phone_number = Optional(str, nullable=True)
         last_login_ip = Optional(str)
         current_login_ip = Optional(str)
         login_count = Optional(int)

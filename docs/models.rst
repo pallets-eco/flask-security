@@ -81,19 +81,19 @@ will require the following additional field:
 
 * ``tf_phone_number``
 
-Passwordless
-^^^^^^^^^^^^^
+Unified Sign In
+^^^^^^^^^^^^^^^
 
-If you enable passwordless sign in by setting your application's `SECURITY_PASSWORDLESSV2`
+If you enable unified sign in by setting your application's :py:data:`SECURITY_UNIFIED_SIGNIN`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
-* ``pl_totp_secret``
+* ``us_totp_secret``
 
-If you include 'sms' in `SECURITY_PL_ENABLED_METHODS`, your `User` model
+If you include 'sms' in :py:data:`SECURITY_US_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
-* ``pl_phone_number``
+* ``us_phone_number``
 
 Permissions
 ^^^^^^^^^^^

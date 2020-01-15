@@ -241,7 +241,7 @@ These configuration keys are used globally across all features.
 
         [
             {"email": uia_email_mapper},
-            {"pl_phone_number": uia_phone_mapper},
+            {"us_phone_number": uia_phone_mapper},
         ],
 
     Be aware that ONLY those attributes listed in ``SECURITY_USER_IDENTITY_ATTRIBUTES``
@@ -279,6 +279,48 @@ These configuration keys are used globally across all features.
     ``fs_uniquifier`` (if it exists) such that existing authentication tokens
     will be rendered invalid.  This restores pre 3.3.0 behavior.
 
+Core - Multi-factor
+-------------------
+These are used by the Two-Factor and Unified Signin features.
+
+.. py:data:: SECURITY_TOTP_SECRETS
+
+    Secret used to encrypt totp_password both into DB and in session cookie.
+    Best practice is to set this to:
+
+    .. code-block:: python
+
+        "{1: <result of passlib.totp.generate_secret()>}"
+
+    See: `Totp`_ for details.
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_TOTP_ISSUER
+
+    Specifies the name of the service or application that the user is authenticating to.
+    This will be the name displayed by most authenticator apps.
+
+    Default: ``service_name``.
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_SMS_SERVICE
+
+    Specifies the name of the sms service provider.
+
+    Default: ``Dummy`` which does nothing.
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_SMS_SERVICE_CONFIG
+
+    Specifies a dictionary of basic configurations needed for use of a sms service.
+
+    Default: ``{'ACCOUNT_ID': NONE, 'AUTH_TOKEN':NONE, 'PHONE_NUMBER': NONE}``
+
+    .. versionadded:: 3.4.0
+
 Core - rarely need changing
 ----------------------------
 
@@ -312,9 +354,9 @@ Core - rarely need changing
     Remember tokens are used instead of user ID's as it is more secure.
 
     Default: ``"remember-salt"``.
-.. py:data:: SECURITY_PL_SETUP_SALT
+.. py:data:: SECURITY_US_SETUP_SALT
 
-    Default: ``"pl-setup-salt"``
+    Default: ``"us-setup-salt"``
 
 .. py:data:: SECURITY_EMAIL_PLAINTEXT
 
@@ -647,28 +689,22 @@ Configuration related to the two-factor authentication feature.
     Specifies the default enabled methods for two-factor authentication.
 
     Default: ``['mail', 'authenticator', 'sms']`` which are the only currently supported methods.
+
+.. py:data:: SECURITY_TWO_FACTOR_SECRET
+
+    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_TOTP_SECRETS`
+
 .. py:data:: SECURITY_TWO_FACTOR_URI_SERVICE_NAME
 
-    Specifies the name of the service or application that the user is authenticating to.
+    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_TOTP_ISSUER`
 
-    Default: ``service_name``.
-
-    .. deprecated:: 3.4.0 see: SECURITY_TOTP_ISSUER
 .. py:data:: SECURITY_TWO_FACTOR_SMS_SERVICE
 
-    Specifies the name of the sms service provider.
-
-    Default: ``Dummy`` which does nothing.
-
-    .. deprecated:: 3.4.0 see: SECURITY_SMS_SERVICE
+    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_SMS_SERVICE`
 
 .. py:data:: SECURITY_TWO_FACTOR_SMS_SERVICE_CONFIG
 
-    Specifies a dictionary of basic configurations needed for use of a sms service.
-
-    Default: ``{'ACCOUNT_ID': NONE, 'AUTH_TOKEN':NONE, 'PHONE_NUMBER': NONE}``
-
-    .. deprecated:: 3.4.0 see: SECURITY_SMS_SERVICE_CONFIG
+    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_SMS_SERVICE_CONFIG`
 
 .. py:data:: SECURITY_TWO_FACTOR_AUTHENTICATOR_VALIDITY
 
@@ -691,19 +727,6 @@ Configuration related to the two-factor authentication feature.
     two-factor authentication login.
 
     Default: ``no-reply@localhost``.
-
-.. py:data:: SECURITY_TWO_FACTOR_SECRET
-
-    Secret used to encrypt totp_password both into DB and in session cookie.
-    Best practice is to set this to:
-
-    .. code-block:: python
-
-        "{1: passlib.totp.generate_secret()}"
-
-    See: `Totp`_ for details.
-
-    .. deprecated:: 3.4.0 see: SECURITY_TOTP_SECRETS
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_TWO_FACTOR
 
@@ -758,64 +781,101 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``"/tf-confirm"``.
 
-Passwordless V2
----------------
+Unified Signin
+--------------
 
     .. versionadded:: 3.4.0
 
-    This feature includes a unified login model - using either identity/password
-    or identity/code. Which user model fields can be used for identity is defined
-    in ``SECURITY_USER_IDENTITY_ATTRIBUTES`` and ``SECURITY_USER_IDENTITY_MAPPINGS``
-
-.. py:data:: SECURITY_PASSWORDLESSV2
+.. py:data:: SECURITY_UNIFIED_SIGNIN
 
     To enable this feature - set this to ``True``.
 
-    Default: False
-.. py:data:: SECURITY_PL_LOGIN_URL
+    Default: ``False``
 
-    Default: "/pl-login"
-.. py:data:: SECURITY_PL_SETUP_URL
+.. py:data:: SECURITY_US_SIGNIN_URL
 
-    Default: "/pl-setup"
-.. py:data:: SECURITY_PL_SEND_CODE_URL
+    Sign in a user with an identity and a passcode.
 
-    Default: "/pl-send-code"
-.. py:data:: SECURITY_PL_VERIFY_LINK_URL
+    Default: ``"/us-signin"``
 
-    Default: "/pl-verify-link"
-.. py:data:: SECURITY_PL_QRCODE_URL
+.. py:data:: SECURITY_US_SEND_CODE_URL
 
-    Default: "/pl-qrcode"
-.. py:data:: SECURITY_PL_POST_SETUP_VIEW
+    Endpoint that given an identity, and a previously setup authentication method, will
+    generate and return a one time code. This isn't necessary when using an authenticator app.
 
-    Default: None
-.. py:data:: SECURITY_PL_LOGIN_TEMPLATE
+    Default: ``"/us-send-code"``
 
-    Default: "security/pl_login.html"
-.. py:data:: SECURITY_PL_SETUP_TEMPLATE
+.. py:data:: SECURITY_US_SETUP_URL
 
-    Default: "security/pl_setup.html"
+    Endpoint for setting up and validating SMS or an authenticator app for use in
+    receiving one-time codes.
 
-.. py:data:: SECURITY_PL_ENABLED_METHODS
+    Default: ``"/us-setup"``
 
-    Specifies the default enabled methods for passwordless authentication.
+.. py:data:: SECURITY_US_VERIFY_LINK_URL
 
-    Default: ["email", "authenticator", "sms"]
-.. py:data:: SECURITY_PL_TOKEN_VALIDITY
+    This endpoint handles the 'magic link' that is sent when the user requests a code
+    via email. It is mostly just accessed via a ``GET`` from a email reader.
+
+    Default: ``"/us-verify-link"``
+
+.. py:data:: SECURITY_US_QRCODE_URL
+
+    Default: ``"/us-qrcode"``
+
+.. py:data:: SECURITY_US_POST_SETUP_VIEW
+
+    Specifies the view to redirect to after a user successfully setups an authentication method (non-json).
+    This value can be set to a URL or an endpoint name. If this value is ``None``, the user is redirected to the
+    value of :py:data:`SECURITY_POST_LOGIN_VIEW`.
+
+    Default: ``None``
+
+.. py:data:: SECURITY_US_SIGNIN_TEMPLATE
+
+    Default: ``"security/us_signin.html"``
+
+.. py:data:: SECURITY_US_SETUP_TEMPLATE
+
+    Default: ``"security/us_setup.html"``
+
+.. py:data:: SECURITY_US_ENABLED_METHODS
+
+    Specifies the default enabled methods for unified sign in authentication.
+
+    Default: ``["email", "authenticator", "sms"]`` - which are the only supported options.
+
+.. py:data:: SECURITY_US_TOKEN_VALIDITY
 
     Specifies the number of seconds access token/code is valid.
 
-    Default: 120
-.. py:data:: SECURITY_PL_EMAIL_SUBJECT
+    Default: ``120``
 
-    Default: _("Verification Code")
-.. py:data:: SECURITY_PL_SETUP_WITHIN
+.. py:data:: SECURITY_US_EMAIL_SUBJECT
+
+    Default: ``_("Verification Code")``
+
+.. py:data:: SECURITY_US_SETUP_WITHIN
 
     Specifies the amount of time a user has before their setup
     token expires. Always pluralize the time unit for this value.
 
     Default: "30 minutes"
+
+
+Additional relevant configuration variables:
+
+    * :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` - Defines which user fields can be
+      used for identity.
+    * :py:data:`SECURITY_USER_IDENTITY_MAPPINGS` - Defines the order and methods for parsing identity.
+    * :py:data:`SECURITY_DEFAULT_REMEMBER_ME`
+    * :py:data:`SECURITY_SMS_SERVICE_CONFIG`
+    * :py:data:`SECURITY_SMS_SERVICE` - When SMS is enabled in :py:data:`SECURITY_US_ENABLED_METHODS`
+    * :py:data:`SECURITY_TOTP_SECRETS`
+    * :py:data:`SECURITY_TOTP_ISSUER`
+    * :py:data:`SECURITY_LOGIN_ERROR_VIEW` - The user is redirected here if
+      :py:data:`SECURITY_US_VERIFY_LINK_URL` has an error and the request is json and
+      :py:data:`SECURITY_REDIRECT_BEHAVIOR` equals ``"spa"``.
 
 Passwordless
 -------------
@@ -877,9 +937,9 @@ All feature flags. By default all are 'False'/not enabled.
 * ``SECURITY_RECOVERABLE``
 * ``SECURITY_TRACKABLE``
 * ``SECURITY_PASSWORDLESS``
-* ``SECURITY_PASSWORDLESSV2``
 * ``SECURITY_CHANGEABLE``
 * ``SECURITY_TWO_FACTOR``
+* :py:data:`SECURITY_UNIFIED_SIGNIN`
 
 URLs and Views
 --------------
@@ -891,12 +951,6 @@ A list of all URLs and Views:
 * ``SECURITY_RESET_URL``
 * ``SECURITY_CHANGE_URL``
 * ``SECURITY_CONFIRM_URL``
-* ``SECURITY_PL_LOGIN_URL``
-* ``SECURITY_PL_QRCODE_URL``
-* ``SECURITY_PL_SETUP_URL``
-* ``SECURITY_PL_SEND_CODE_URL``
-* ``SECURITY_PL_VERIFY_LINK_URL``
-* ``SECURITY_PL_POST_SETUP_VIEW``
 * ``SECURITY_TWO_FACTOR_SETUP_URL``
 * ``SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL``
 * ``SECURITY_TWO_FACTOR_QRCODE_URL``
@@ -913,6 +967,12 @@ A list of all URLs and Views:
 * ``SECURITY_RESET_VIEW``
 * ``SECURITY_RESET_ERROR_VIEW``
 * ``SECURITY_LOGIN_ERROR_VIEW``
+* :py:data:`SECURITY_US_SIGNIN_URL`
+* :py:data:`SECURITY_US_QRCODE_URL`
+* :py:data:`SECURITY_US_SETUP_URL`
+* :py:data:`SECURITY_US_SEND_CODE_URL`
+* :py:data:`SECURITY_US_VERIFY_LINK_URL`
+* :py:data:`SECURITY_US_POST_SETUP_VIEW`
 
 Template Paths
 --------------
@@ -923,13 +983,13 @@ A list of all templates:
 * ``SECURITY_REGISTER_USER_TEMPLATE``
 * ``SECURITY_RESET_PASSWORD_TEMPLATE``
 * ``SECURITY_CHANGE_PASSWORD_TEMPLATE``
-* ``SECURITY_PL_LOGIN_TEMPLATE``
-* ``SECURITY_PL_SETUP_TEMPLATE``
 * ``SECURITY_SEND_CONFIRMATION_TEMPLATE``
 * ``SECURITY_SEND_LOGIN_TEMPLATE``
 * ``SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE``
 * ``SECURITY_TWO_FACTOR_SETUP_TEMPLATE``
 * ``SECURITY_TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE``
+* :py:data:`SECURITY_US_SIGNIN_TEMPLATE`
+* :py:data:`SECURITY_US_SETUP_TEMPLATE`
 
 Messages
 -------------
@@ -970,11 +1030,6 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_PASSWORD_RESET``
 * ``SECURITY_MSG_PASSWORD_RESET_EXPIRED``
 * ``SECURITY_MSG_PASSWORD_RESET_REQUEST``
-* ``SECURITY_MSG_PL_METHOD_NOT_AVAILABLE``
-* ``SECURITY_MSG_PL_PHONE_REQUIRED``
-* ``SECURITY_MSG_PL_SETUP_EXPIRED``
-* ``SECURITY_MSG_PL_SETUP_SUCCESSFUL``
-* ``SECURITY_MSG_PL_SPECIFY_IDENTITY``
 * ``SECURITY_MSG_REFRESH``
 * ``SECURITY_MSG_RETYPE_PASSWORD_MISMATCH``
 * ``SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN``
@@ -987,5 +1042,10 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_TWO_FACTOR_DISABLED``
 * ``SECURITY_MSG_UNAUTHORIZED``
 * ``SECURITY_MSG_UNAUTHENTICATED``
+* ``SECURITY_MSG_US_METHOD_NOT_AVAILABLE``
+* ``SECURITY_MSG_US_PHONE_REQUIRED``
+* ``SECURITY_MSG_US_SETUP_EXPIRED``
+* ``SECURITY_MSG_US_SETUP_SUCCESSFUL``
+* ``SECURITY_MSG_US_SPECIFY_IDENTITY``
 * ``SECURITY_MSG_USE_CODE``
 * ``SECURITY_MSG_USER_DOES_NOT_EXIST``

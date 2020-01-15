@@ -35,7 +35,7 @@ from flask_security import (
     SQLAlchemySessionUserDatastore,
 )
 from flask_security.signals import (
-    pl_security_token_sent,
+    us_security_token_sent,
     tf_security_token_sent,
     reset_password_instructions_sent,
     user_registered,
@@ -66,7 +66,7 @@ def create_app():
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = False
-    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = ["email", "pl_phone_number"]
+    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = ["email", "us_phone_number"]
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
@@ -86,7 +86,7 @@ def create_app():
         "NOTpasswordless",
         "confirmable",
         "two_factor",
-        "passwordlessv2",
+        "unified_signin",
     ]:
         app.config["SECURITY_" + opt.upper()] = True
 
@@ -149,7 +149,7 @@ def create_app():
             )
         )
 
-    @pl_security_token_sent.connect_via(app)
+    @us_security_token_sent.connect_via(app)
     def on_pl_token_sent(myapp, user, token, method):
         flash(
             "User {} was sent passwordless token {} via {}".format(
@@ -253,8 +253,8 @@ class User(Base, UserMixin):
     tf_primary_method = Column(String(140))
     tf_totp_secret = Column(String(255))
 
-    pl_totp_secret = Column(String(255), nullable=True)
-    pl_phone_number = Column(String(64), nullable=True)
+    us_totp_secret = Column(String(255), nullable=True)
+    us_phone_number = Column(String(64), nullable=True)
 
     roles = relationship(
         "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")

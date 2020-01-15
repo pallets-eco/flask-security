@@ -558,10 +558,12 @@ def check_and_get_token_status(token, serializer, within=None):
 
     :param token: The token to check
     :param serializer: The name of the serializer. Can be one of the
-                       following: ``confirm``, ``login``, ``reset``
+                       following: ``confirm``, ``login``, ``reset``, ``us_setup``
     :param within: max age - passed as a timedelta
 
     :return: a tuple of (expired, invalid, data)
+
+    .. versionadded:: 3.4.0
     """
     serializer = getattr(_security, serializer + "_serializer")
     max_age = within.total_seconds()
@@ -591,7 +593,7 @@ def get_identity_attributes(app=None):
 
 def uia_phone_mapper(identity):
     """ Used to match identity as a phone number.
-    See USER_IDENTITY_MAPPINGS.
+    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`
 
     .. versionadded:: 3.4.0
     """
@@ -605,7 +607,7 @@ def uia_phone_mapper(identity):
 
 def uia_email_mapper(identity):
     """ Used to match identity as an email.
-    See USER_IDENTITY_MAPPINGS.
+    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`
 
     .. versionadded:: 3.4.0
     """

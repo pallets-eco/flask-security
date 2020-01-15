@@ -43,10 +43,10 @@ from .forms import (
     TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
 )
-from .passwordlessv2 import (
-    PasswordlessV2LoginForm,
-    PasswordlessV2SetupForm,
-    PasswordlessV2SetupVerifyForm,
+from .unified_signin import (
+    UnifiedSigninForm,
+    UnifiedSigninSetupForm,
+    UnifiedSigninSetupVerifyForm,
 )
 from .totp import Totp
 from .utils import _
@@ -199,7 +199,7 @@ _default_config = {
     "USER_IDENTITY_ATTRIBUTES": ["email"],
     "USER_IDENTITY_MAPPINGS": [
         {"email": uia_email_mapper},
-        {"pl_phone_number": uia_phone_mapper},
+        {"us_phone_number": uia_phone_mapper},
     ],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
@@ -225,20 +225,20 @@ _default_config = {
         "AUTH_TOKEN": None,
         "PHONE_NUMBER": None,
     },
-    "PASSWORDLESSV2": False,
-    "PL_SETUP_SALT": "pl-setup-salt",
-    "PL_LOGIN_URL": "/pl-login",
-    "PL_SETUP_URL": "/pl-setup",
-    "PL_SEND_CODE_URL": "/pl-send-code",
-    "PL_VERIFY_LINK_URL": "/pl-verify-link",
-    "PL_QRCODE_URL": "/pl-qrcode",
-    "PL_POST_SETUP_VIEW": None,
-    "PL_LOGIN_TEMPLATE": "security/pl_login.html",
-    "PL_SETUP_TEMPLATE": "security/pl_setup.html",
-    "PL_ENABLED_METHODS": ["email", "authenticator", "sms"],
-    "PL_TOKEN_VALIDITY": 120,
-    "PL_EMAIL_SUBJECT": _("Verification Code"),
-    "PL_SETUP_WITHIN": "30 minutes",
+    "UNIFIED_SIGNIN": False,
+    "US_SETUP_SALT": "us-setup-salt",
+    "US_SIGNIN_URL": "/us-signin",
+    "US_SETUP_URL": "/us-setup",
+    "US_SEND_CODE_URL": "/us-send-code",
+    "US_VERIFY_LINK_URL": "/us-verify-link",
+    "US_QRCODE_URL": "/us-qrcode",
+    "US_POST_SETUP_VIEW": None,
+    "US_SIGNIN_TEMPLATE": "security/us_signin.html",
+    "US_SETUP_TEMPLATE": "security/us_setup.html",
+    "US_ENABLED_METHODS": ["email", "authenticator", "sms"],
+    "US_TOKEN_VALIDITY": 120,
+    "US_EMAIL_SUBJECT": _("Verification Code"),
+    "US_SETUP_WITHIN": "30 minutes",
     "CSRF_PROTECT_MECHANISMS": AUTHN_MECHANISMS,
     "CSRF_IGNORE_UNAUTH_ENDPOINTS": False,
     "CSRF_COOKIE": {"key": None},
@@ -361,14 +361,14 @@ _default_messages = {
         _("You successfully disabled two factor authorization."),
         "success",
     ),
-    "PL_METHOD_NOT_AVAILABLE": (_("Requested method is not valid"), "error"),
-    "PL_PHONE_REQUIRED": (_("Phone number required"), "error"),
-    "PL_SETUP_EXPIRED": (
+    "US_METHOD_NOT_AVAILABLE": (_("Requested method is not valid"), "error"),
+    "US_PHONE_REQUIRED": (_("Phone number required"), "error"),
+    "US_SETUP_EXPIRED": (
         _("Setup must be completed within %(within)s. Please start over."),
         "error",
     ),
-    "PL_SETUP_SUCCESSFUL": (_("Passwordless setup successful"), "info"),
-    "PL_SPECIFY_IDENTITY": (_("You must specify a valid identity to sign in"), "error"),
+    "US_SETUP_SUCCESSFUL": (_("Unified sign in setup successful"), "info"),
+    "US_SPECIFY_IDENTITY": (_("You must specify a valid identity to sign in"), "error"),
     "USE_CODE": (_("Use this code to sign in: %(code)s."), "info"),
 }
 
@@ -385,9 +385,9 @@ _default_forms = {
     "two_factor_setup_form": TwoFactorSetupForm,
     "two_factor_verify_password_form": TwoFactorVerifyPasswordForm,
     "two_factor_rescue_form": TwoFactorRescueForm,
-    "pl_login_form": PasswordlessV2LoginForm,
-    "pl_setup_form": PasswordlessV2SetupForm,
-    "pl_setup_verify_form": PasswordlessV2SetupVerifyForm,
+    "us_signin_form": UnifiedSigninForm,
+    "us_setup_form": UnifiedSigninSetupForm,
+    "us_setup_verify_form": UnifiedSigninSetupVerifyForm,
 }
 
 
@@ -561,7 +561,7 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             login_serializer=_get_serializer(app, "login"),
             reset_serializer=_get_serializer(app, "reset"),
             confirm_serializer=_get_serializer(app, "confirm"),
-            pl_setup_serializer=_get_serializer(app, "pl_setup"),
+            us_setup_serializer=_get_serializer(app, "us_setup"),
             _context_processors={},
             _send_mail_task=None,
             _send_mail=kwargs.get("send_mail", send_mail),
@@ -851,11 +851,11 @@ class _SecurityState(object):
     def tf_token_validation_context_processor(self, fn):
         self._add_ctx_processor("tf_token_validation", fn)
 
-    def pl_login_context_processor(self, fn):
-        self._add_ctx_processor("pl_login", fn)
+    def us_signin_context_processor(self, fn):
+        self._add_ctx_processor("us_signin", fn)
 
-    def pl_setup_context_processor(self, fn):
-        self._add_ctx_processor("pl_setup", fn)
+    def us_setup_context_processor(self, fn):
+        self._add_ctx_processor("us_setup", fn)
 
     def send_mail_task(self, fn):
         self._send_mail_task = fn
@@ -907,9 +907,9 @@ class Security(object):
     :param two_factor_verify_code_form: set form the the 2FA verify code view
     :param two_factor_rescue_form: set form for the 2FA rescue view
     :param two_factor_verify_password_form: set form for the 2FA verify password view
-    :param pl_login_form: set form for the passwordless sign in view
-    :param pl_setup_form: set form for the passwordless setup view
-    :param pl_setup_verify_form: set from for the passwordless setup verify view
+    :param us_signin_form: set form for the unified sign in view
+    :param us_setup_form: set form for the unified sign in setup view
+    :param us_setup_verify_form: set from for the unified sign in setup verify view
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates. The default is Flask's
      render_template() function.
@@ -1059,22 +1059,22 @@ class Security(object):
 
         # Two factor configuration checks and setup
         multi_factor = False
-        if cv("PASSWORDLESSV2", app=app):
+        if cv("UNIFIED_SIGNIN", app=app):
             multi_factor = True
-            if len(cv("PL_ENABLED_METHODS", app=app)) < 1:
-                raise ValueError("Must configure some PL_ENABLED_METHODS")
+            if len(cv("US_ENABLED_METHODS", app=app)) < 1:
+                raise ValueError("Must configure some US_ENABLED_METHODS")
         if cv("TWO_FACTOR", app=app):
             multi_factor = True
             if len(cv("TWO_FACTOR_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some TWO_FACTOR_ENABLED_METHODS")
 
         if multi_factor:
-            self._check_modules("pyqrcode", "TWO_FACTOR or PASSWORDLESSV2")
-            self._check_modules("cryptography", "TWO_FACTOR or PASSWORDLESSV2")
+            self._check_modules("pyqrcode", "TWO_FACTOR or UNIFIED_SIGNIN")
+            self._check_modules("cryptography", "TWO_FACTOR or UNIFIED_SIGNIN")
 
             sms_service = cv("SMS_SERVICE", app=app)
             if sms_service == "Twilio":  # pragma: no cover
-                self._check_modules("twilio", "TWO_FACTOR or PASSWORDLESSV2")
+                self._check_modules("twilio", "TWO_FACTOR or UNIFIED_SIGNIN")
 
             secrets = cv("TOTP_SECRETS", app=app)
             issuer = cv("TOTP_ISSUER", app=app)

@@ -9,7 +9,7 @@ BE AWARE: Once any version of this is shipped no changes can be made - instead
 a new version needs to be created.
 
 This is Version 2:
-    - Add support for passwordless V2.
+    - Add support for unified sign in.
     - Make username unique (but not required).
 """
 
@@ -38,9 +38,9 @@ class FsUserMixin(FsUserMixinV1):
     # Make username unique but not required.
     username = Column(String(255), unique=True, nullable=True)
 
-    # passwordless v2
-    pl_totp_secret = Column(String(255), nullable=True)
-    pl_phone_number = Column(String(128), nullable=True)
+    # unified sign in
+    us_totp_secret = Column(String(255), nullable=True)
+    us_phone_number = Column(String(128), nullable=True)
 
     # This is repeated since I couldn't figure out how to have it reference the
     # new version of FsModels.

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-    test_passwordlessv2
-    ~~~~~~~~~~~~~~~~~
+    test_unified_signin
+    ~~~~~~~~~~~~~~~~~~~
 
-    Passwordless tests
+    Unified signin tests
 
-    - test invalid state
-    - new totp
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
+
 """
 
 from contextlib import contextmanager
@@ -26,8 +27,8 @@ from utils import SmsTestSender, logout
 from flask_security import (
     SmsSenderFactory,
     UserMixin,
-    pl_profile_changed,
-    pl_security_token_sent,
+    us_profile_changed,
+    us_security_token_sent,
 )
 from flask_security.utils import capture_flashes
 
@@ -36,13 +37,13 @@ try:
 except ImportError:  # pragma: no cover
     from urllib.parse import parse_qsl, urlsplit
 
-pytestmark = pytest.mark.passwordlessv2()
+pytestmark = pytest.mark.unified_signin()
 
 SmsSenderFactory.senders["test"] = SmsTestSender
 
 
 @contextmanager
-def capture_passwordless_login_requests():
+def capture_send_code_requests():
     login_requests = []
 
     def _on(app, **data):
@@ -51,25 +52,25 @@ def capture_passwordless_login_requests():
         assert isinstance(data["user"], UserMixin)
         login_requests.append(data)
 
-    pl_security_token_sent.connect(_on)
+    us_security_token_sent.connect(_on)
 
     try:
         yield login_requests
     finally:
-        pl_security_token_sent.disconnect(_on)
+        us_security_token_sent.disconnect(_on)
 
 
 def authenticate(client, identity="matt@lp.com"):
-    with capture_passwordless_login_requests() as requests:
+    with capture_send_code_requests() as requests:
         response = client.post(
-            "/pl-send-code",
+            "/us-send-code",
             data=json.dumps(dict(identity=identity, chosen_method="email")),
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 200
 
     response = client.post(
-        "/pl-login?include_auth_token",
+        "/us-signin?include_auth_token",
         data=json.dumps(dict(identity=identity, passcode=requests[0]["token"])),
         headers={"Content-Type": "application/json"},
     )
@@ -80,7 +81,7 @@ def authenticate(client, identity="matt@lp.com"):
 def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
     with app.test_request_context("/"):
         user = app.security.datastore.find_user(email=email)
-        user.pl_phone_number = phone
+        user.us_phone_number = phone
         app.security.datastore.put(user)
         app.security.datastore.commit()
 
@@ -88,24 +89,24 @@ def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
 def test_simple_login(app, client, get_message):
     # Test missing choice
     data = dict(identity="matt@lp.com")
-    response = client.post("/pl-send-code", data=data, follow_redirects=True)
-    assert get_message("PL_METHOD_NOT_AVAILABLE") in response.data
+    response = client.post("/us-send-code", data=data, follow_redirects=True)
+    assert get_message("US_METHOD_NOT_AVAILABLE") in response.data
 
     # Test login using invalid email
     data = dict(identity="nobody@lp.com", chosen_method="email")
-    response = client.post("/pl-send-code", data=data, follow_redirects=True)
-    assert get_message("PL_SPECIFY_IDENTITY") in response.data
+    response = client.post("/us-send-code", data=data, follow_redirects=True)
+    assert get_message("US_SPECIFY_IDENTITY") in response.data
 
     # test disabled account
     data = dict(identity="tiya@lp.com", chosen_method="email")
-    response = client.post("/pl-send-code", data=data, follow_redirects=True)
+    response = client.post("/us-send-code", data=data, follow_redirects=True)
     assert b"Code has been sent" not in response.data
     assert get_message("DISABLED_ACCOUNT") in response.data
 
-    with capture_passwordless_login_requests() as requests:
+    with capture_send_code_requests() as requests:
         with app.mail.record_messages() as outbox:
             response = client.post(
-                "/pl-send-code",
+                "/us-send-code",
                 data=dict(identity="matt@lp.com", chosen_method="email"),
                 follow_redirects=True,
             )
@@ -116,7 +117,7 @@ def test_simple_login(app, client, get_message):
 
     # try bad code
     response = client.post(
-        "/pl-login",
+        "/us-signin",
         data=dict(identity="matt@lp.com", passcode="blahblah"),
         follow_redirects=True,
     )
@@ -126,7 +127,7 @@ def test_simple_login(app, client, get_message):
     assert "remember_token" not in [c.name for c in client.cookie_jar]
     assert "session" not in [c.name for c in client.cookie_jar]
     response = client.post(
-        "/pl-login",
+        "/us-signin",
         data=dict(identity="matt@lp.com", passcode=requests[0]["token"]),
         follow_redirects=False,
     )
@@ -143,7 +144,7 @@ def test_simple_login(app, client, get_message):
     sms_sender = SmsSenderFactory.createSender("test")
     set_phone(app)
     response = client.post(
-        "/pl-send-code",
+        "/us-send-code",
         data=dict(identity="matt@lp.com", chosen_method="sms"),
         follow_redirects=True,
     )
@@ -152,7 +153,7 @@ def test_simple_login(app, client, get_message):
 
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post(
-        "/pl-login",
+        "/us-signin",
         data=dict(identity="matt@lp.com", passcode=code, remember=True),
         follow_redirects=True,
     )
@@ -171,20 +172,20 @@ def test_simple_login_json(app, client_nc, get_message):
 
     with capture_flashes() as flashes:
 
-        response = client_nc.get("/pl-login", headers=headers)
+        response = client_nc.get("/us-signin", headers=headers)
         assert (
             response.jdata["response"]["methods"]
-            == app.config["SECURITY_PL_ENABLED_METHODS"]
+            == app.config["SECURITY_US_ENABLED_METHODS"]
         )
         assert (
             response.jdata["response"]["identity_attributes"]
             == app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
         )
 
-        with capture_passwordless_login_requests() as requests:
+        with capture_send_code_requests() as requests:
             with app.mail.record_messages() as outbox:
                 response = client_nc.post(
-                    "/pl-send-code",
+                    "/us-send-code",
                     data=json.dumps(
                         dict(identity="matt@lp.com", chosen_method="email")
                     ),
@@ -199,7 +200,7 @@ def test_simple_login_json(app, client_nc, get_message):
 
         # try bad code
         response = client_nc.post(
-            "/pl-login",
+            "/us-signin",
             data=json.dumps(dict(identity="matt@lp.com", passcode="blahblah")),
             headers=headers,
             follow_redirects=True,
@@ -211,7 +212,7 @@ def test_simple_login_json(app, client_nc, get_message):
 
         # Login successfully with code
         response = client_nc.post(
-            "/pl-login?include_auth_token",
+            "/us-signin?include_auth_token",
             data=json.dumps(
                 dict(identity="matt@lp.com", passcode=requests[0]["token"])
             ),
@@ -229,7 +230,7 @@ def test_simple_login_json(app, client_nc, get_message):
         sms_sender = SmsSenderFactory.createSender("test")
         set_phone(app)
         response = client_nc.post(
-            "/pl-send-code",
+            "/us-send-code",
             data=json.dumps(dict(identity="matt@lp.com", chosen_method="sms")),
             headers=headers,
             follow_redirects=True,
@@ -238,7 +239,7 @@ def test_simple_login_json(app, client_nc, get_message):
 
         code = sms_sender.messages[0].split()[-1].strip(".")
         response = client_nc.post(
-            "/pl-login?include_auth_token",
+            "/us-signin?include_auth_token",
             data=json.dumps(dict(identity="matt@lp.com", passcode=code)),
             headers=headers,
             follow_redirects=True,
@@ -251,7 +252,7 @@ def test_simple_login_json(app, client_nc, get_message):
 def test_verify_link(app, client, get_message):
     with app.mail.record_messages() as outbox:
         response = client.post(
-            "/pl-send-code",
+            "/us-send-code",
             data=dict(identity="matt@lp.com", chosen_method="email"),
             follow_redirects=True,
         )
@@ -264,20 +265,20 @@ def test_verify_link(app, client, get_message):
     magic_link = matcher.group(1)
 
     # Try with no code
-    response = client.get("pl-verify-link?email=matt@lp.com", follow_redirects=False)
-    assert response.location == "http://localhost/pl-login"
-    response = client.get("pl-verify-link?email=matt@lp.com", follow_redirects=True)
+    response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=False)
+    assert response.location == "http://localhost/us-signin"
+    response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=True)
     assert get_message("API_ERROR") in response.data
 
     # Try unknown user
     response = client.get(
-        "pl-verify-link?email=matt42@lp.com&code=12345", follow_redirects=True
+        "us-verify-link?email=matt42@lp.com&code=12345", follow_redirects=True
     )
     assert get_message("USER_DOES_NOT_EXIST") in response.data
 
     # Try bad code
     response = client.get(
-        "pl-verify-link?email=matt@lp.com&code=12345", follow_redirects=True
+        "us-verify-link?email=matt@lp.com&code=12345", follow_redirects=True
     )
     assert get_message("INVALID_CODE") in response.data
 
@@ -302,7 +303,7 @@ def test_verify_link_spa(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     with app.mail.record_messages() as outbox:
         response = client.post(
-            "/pl-send-code",
+            "/us-send-code",
             data=json.dumps(dict(identity="matt@lp.com", chosen_method="email")),
             headers=headers,
         )
@@ -314,7 +315,7 @@ def test_verify_link_spa(app, client, get_message):
     magic_link = matcher.group(1)
 
     # Try with no code
-    response = client.get("pl-verify-link?email=matt@lp.com", follow_redirects=False)
+    response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=False)
     assert response.status_code == 302
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
@@ -324,7 +325,7 @@ def test_verify_link_spa(app, client, get_message):
 
     # Try unknown user
     response = client.get(
-        "pl-verify-link?email=matt42@lp.com&code=12345", follow_redirects=False
+        "us-verify-link?email=matt42@lp.com&code=12345", follow_redirects=False
     )
     assert response.status_code == 302
     split = urlsplit(response.headers["Location"])
@@ -335,7 +336,7 @@ def test_verify_link_spa(app, client, get_message):
 
     # Try bad code
     response = client.get(
-        "pl-verify-link?email=matt@lp.com&code=12345", follow_redirects=False
+        "us-verify-link?email=matt@lp.com&code=12345", follow_redirects=False
     )
     assert response.status_code == 302
     split = urlsplit(response.headers["Location"])
@@ -359,19 +360,19 @@ def test_verify_link_spa(app, client, get_message):
 
 def test_setup(app, client, get_message):
     authenticate(client)
-    response = client.get("pl-setup")
+    response = client.get("us-setup")
     assert all(
         i in response.data
         for i in [b"chosen_method-0", b"chosen_method-1", b"chosen_method-2"]
     )
 
     # test missing phone
-    response = client.post("pl-setup", data=dict(chosen_method="sms", phone=""))
+    response = client.post("us-setup", data=dict(chosen_method="sms", phone=""))
     assert response.status_code == 200
-    assert get_message("PL_PHONE_REQUIRED") in response.data
+    assert get_message("US_PHONE_REQUIRED") in response.data
 
     sms_sender = SmsSenderFactory.createSender("test")
-    response = client.post("pl-setup", data=dict(chosen_method="sms", phone="555-1212"))
+    response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
     assert response.status_code == 200
     assert b"Submit Code" in response.data
     matcher = re.match(
@@ -388,18 +389,18 @@ def test_setup(app, client, get_message):
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post(verify_url, data=dict(code=code), follow_redirects=True)
     assert response.status_code == 200
-    assert get_message("PL_SETUP_SUCCESSFUL") in response.data
+    assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
 
 @pytest.mark.settings(
-    pl_enabled_methods=["email", "sms"],
-    user_identity_attributes=["email", "pl_phone_number"],
+    us_enabled_methods=["email", "sms"],
+    user_identity_attributes=["email", "us_phone_number"],
 )
 def test_setup_json(app, client_nc, get_message):
-    @pl_profile_changed.connect_via(app)
+    @us_profile_changed.connect_via(app)
     def pc(sender, user, method):
         assert method == "sms"
-        assert user.pl_phone_number == "650-555-1212"
+        assert user.us_phone_number == "650-555-1212"
 
     token = authenticate(client_nc)
     headers = {
@@ -407,13 +408,13 @@ def test_setup_json(app, client_nc, get_message):
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    response = client_nc.get("/pl-setup", headers=headers)
+    response = client_nc.get("/us-setup", headers=headers)
     assert response.status_code == 200
     assert response.jdata["response"]["methods"] == ["email", "sms"]
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
-        "pl-setup",
+        "us-setup",
         data=json.dumps(dict(chosen_method="sms", phone="650-555-1212")),
         headers=headers,
     )
@@ -423,7 +424,7 @@ def test_setup_json(app, client_nc, get_message):
 
     # send invalid code
     response = client_nc.post(
-        "/pl-setup/" + state, data=json.dumps(dict(code=12344)), headers=headers
+        "/us-setup/" + state, data=json.dumps(dict(code=12344)), headers=headers
     )
     assert response.status_code == 400
     assert response.jdata["response"]["errors"]["code"][0].encode(
@@ -431,7 +432,7 @@ def test_setup_json(app, client_nc, get_message):
     ) == get_message("INVALID_CODE")
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client_nc.post(
-        "/pl-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
+        "/us-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
     )
     assert response.status_code == 200
     assert response.jdata["response"]["chosen_method"] == "sms"
@@ -442,14 +443,14 @@ def test_setup_json(app, client_nc, get_message):
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
-        "/pl-send-code",
+        "/us-send-code",
         data=json.dumps(dict(identity="650-555-1212", chosen_method="sms")),
         headers=headers,
     )
     assert response.status_code == 200
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client_nc.post(
-        "/pl-login?include_auth_token",
+        "/us-signin?include_auth_token",
         data=json.dumps(dict(identity="matt@lp.com", passcode=code)),
         headers=headers,
     )
@@ -463,7 +464,7 @@ def test_setup_bad_token(app, client, get_message):
 
     # bogus state
     response = client.post(
-        "/pl-setup/" + "not a token", data=json.dumps(dict(code=12345)), headers=headers
+        "/us-setup/" + "not a token", data=json.dumps(dict(code=12345)), headers=headers
     )
     assert response.status_code == 400
     assert response.jdata["response"]["error"].encode("utf-8") == get_message(
@@ -472,12 +473,12 @@ def test_setup_bad_token(app, client, get_message):
 
     # same w/o json
     response = client.post(
-        "/pl-setup/" + "not a token", data=dict(code=12345), follow_redirects=True
+        "/us-setup/" + "not a token", data=dict(code=12345), follow_redirects=True
     )
     assert get_message("API_ERROR") in response.data
 
 
-@pytest.mark.settings(pl_setup_within="1 milliseconds")
+@pytest.mark.settings(us_setup_within="1 milliseconds")
 def test_setup_timeout(app, client, get_message):
     # Test setup timeout
     authenticate(client)
@@ -485,7 +486,7 @@ def test_setup_timeout(app, client, get_message):
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client.post(
-        "pl-setup",
+        "us-setup",
         data=json.dumps(dict(chosen_method="sms", phone="555-1212")),
         headers=headers,
     )
@@ -495,26 +496,26 @@ def test_setup_timeout(app, client, get_message):
 
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post(
-        "/pl-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
+        "/us-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
     )
     assert response.status_code == 400
     assert response.jdata["response"]["error"].encode("utf-8") == get_message(
-        "PL_SETUP_EXPIRED", within=app.config["SECURITY_PL_SETUP_WITHIN"]
+        "US_SETUP_EXPIRED", within=app.config["SECURITY_US_SETUP_WITHIN"]
     )
 
 
-@pytest.mark.settings(pl_enabled_methods=["sms"])
+@pytest.mark.settings(us_enabled_methods=["sms"])
 def test_invalid_method(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-    response = client.get("/pl-login", headers=headers)
+    response = client.get("/us-signin", headers=headers)
     assert response.jdata["response"]["methods"] == ["sms"]
-    response = client.get("/pl-send-code", headers=headers)
+    response = client.get("/us-send-code", headers=headers)
     assert response.jdata["response"]["methods"] == ["sms"]
 
     # verify json error
     response = client.post(
-        "/pl-send-code",
+        "/us-send-code",
         data=json.dumps(dict(identity="matt@lp.com", chosen_method="email")),
         headers=headers,
         follow_redirects=True,
@@ -522,29 +523,29 @@ def test_invalid_method(app, client, get_message):
     assert response.status_code == 400
     assert response.jdata["response"]["errors"]["chosen_method"][0].encode(
         "utf-8"
-    ) == get_message("PL_METHOD_NOT_AVAILABLE")
+    ) == get_message("US_METHOD_NOT_AVAILABLE")
 
     # verify form error
     response = client.post(
-        "/pl-send-code",
+        "/us-send-code",
         data=dict(identity="matt@lp.com", chosen_method="email"),
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert get_message("PL_METHOD_NOT_AVAILABLE") in response.data
+    assert get_message("US_METHOD_NOT_AVAILABLE") in response.data
 
 
-@pytest.mark.settings(pl_enabled_methods=["sms", "email"])
+@pytest.mark.settings(us_enabled_methods=["sms", "email"])
 def test_invalid_method_setup(app, client, get_message):
     authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-    response = client.get("/pl-setup", headers=headers)
+    response = client.get("/us-setup", headers=headers)
     assert response.jdata["response"]["methods"] == ["sms", "email"]
 
     # verify json error
     response = client.post(
-        "/pl-setup",
+        "/us-setup",
         data=json.dumps(dict(email="matt@lp.com", chosen_method="authenticator")),
         headers=headers,
         follow_redirects=True,
@@ -552,10 +553,10 @@ def test_invalid_method_setup(app, client, get_message):
     assert response.status_code == 400
     assert response.jdata["response"]["errors"]["chosen_method"][0].encode(
         "utf-8"
-    ) == get_message("PL_METHOD_NOT_AVAILABLE")
+    ) == get_message("US_METHOD_NOT_AVAILABLE")
 
     response = client.post(
-        "/pl-setup",
+        "/us-setup",
         data=dict(email="matt@lp.com", chosen_method="authenticators"),
         follow_redirects=True,
     )
@@ -563,7 +564,7 @@ def test_invalid_method_setup(app, client, get_message):
 
 
 def test_setup_new_totp(app, client, get_message):
-    # pl-setup has a 'generate new totp-secret' option
+    # us-setup has a 'generate new totp-secret' option
     # Verify that works (and existing codes no longer work)
     authenticate(client)
 
@@ -572,7 +573,7 @@ def test_setup_new_totp(app, client, get_message):
     # Start by generating a good code
     sms_sender = SmsSenderFactory.createSender("test")
     response = client.post(
-        "pl-setup",
+        "us-setup",
         data=json.dumps(dict(chosen_method="sms", phone="555-1212")),
         headers=headers,
     )
@@ -583,7 +584,7 @@ def test_setup_new_totp(app, client, get_message):
     # should no longer work
     sms_sender2 = SmsSenderFactory.createSender("test")
     response = client.post(
-        "pl-setup",
+        "us-setup",
         data=json.dumps(
             dict(chosen_method="sms", phone="555-1212", new_totp_secret=True)
         ),
@@ -593,14 +594,14 @@ def test_setup_new_totp(app, client, get_message):
     state = response.jdata["response"]["state"]
     # Use old code
     response = client.post(
-        "/pl-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
+        "/us-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
     )
     assert response.status_code == 400
 
     # Use new code
     code = sms_sender2.messages[0].split()[-1].strip(".")
     response = client.post(
-        "/pl-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
+        "/us-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
     )
     assert response.status_code == 200
     assert response.jdata["response"]["chosen_method"] == "sms"
@@ -611,7 +612,7 @@ def test_qrcode(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     authenticate(client, identity="gal@lp.com")
     response = client.post(
-        "pl-setup",
+        "us-setup",
         data=json.dumps(dict(chosen_method="authenticator")),
         headers=headers,
     )
@@ -622,7 +623,7 @@ def test_qrcode(app, client, get_message):
     # that goes into the qrcode and make sure that works
     mtf = Mock(wraps=app.security._totp_factory)
     app.security.totp_factory(mtf)
-    qrcode_page_response = client.get("/pl-qrcode/" + state, follow_redirects=True)
+    qrcode_page_response = client.get("/us-qrcode/" + state, follow_redirects=True)
     assert mtf.get_totp_uri.call_count == 1
     (username, totp_secret), _ = mtf.get_totp_uri.call_args
     assert username == "gal@lp.com"
@@ -631,23 +632,23 @@ def test_qrcode(app, client, get_message):
     # Generate token from passed totp_secret and confirm setup
     code = app.security._totp_factory.generate_totp_password(totp_secret)
     response = client.post(
-        "/pl-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
+        "/us-setup/" + state, data=json.dumps(dict(code=code)), headers=headers
     )
     assert response.status_code == 200
     assert response.jdata["response"]["chosen_method"] == "authenticator"
 
 
 def test_next(app, client, get_message):
-    with capture_passwordless_login_requests() as requests:
+    with capture_send_code_requests() as requests:
         response = client.post(
-            "/pl-send-code",
+            "/us-send-code",
             data=dict(identity="matt@lp.com", chosen_method="email"),
             follow_redirects=True,
         )
         assert response.status_code == 200
 
     response = client.post(
-        "/pl-login?next=/post_login",
+        "/us-signin?next=/post_login",
         data=dict(identity="matt@lp.com", passcode=requests[0]["token"]),
         follow_redirects=False,
     )
@@ -655,7 +656,7 @@ def test_next(app, client, get_message):
 
     logout(client)
     response = client.post(
-        "/pl-login",
+        "/us-signin",
         data=dict(
             identity="matt@lp.com", passcode=requests[0]["token"], next="/post_login"
         ),
@@ -675,16 +676,16 @@ def test_confirmable(app, client, get_message):
     assert response.status_code == 200
 
     # try to get a code - this should succeed
-    with capture_passwordless_login_requests() as requests:
+    with capture_send_code_requests() as requests:
         response = client.post(
-            "/pl-send-code",
+            "/us-send-code",
             data=dict(identity="dude@lp.com", chosen_method="email"),
             follow_redirects=True,
         )
         assert response.status_code == 200
 
     response = client.post(
-        "/pl-login",
+        "/us-signin",
         data=dict(identity="dude@lp.com", passcode=requests[0]["token"]),
         follow_redirects=True,
     )
