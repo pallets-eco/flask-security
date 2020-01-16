@@ -31,7 +31,7 @@ def test_registerable_flag(client, app, get_message):
 
     # Test registering is successful, sends email, and fires signal
     @user_registered.connect_via(app)
-    def on_user_registerd(app, user, confirm_token, form_data):
+    def on_user_registered(app, user, confirm_token, form_data):
 
         assert isinstance(app, Flask)
         assert isinstance(user, UserMixin)
@@ -77,6 +77,7 @@ def test_registerable_flag(client, app, get_message):
     response = client.post(
         "/register", data=data, headers={"Content-Type": "application/json"}
     )
+
     assert response.headers["content-type"] == "application/json"
     assert response.jdata["meta"]["code"] == 200
     assert len(response.jdata["response"]) == 2
