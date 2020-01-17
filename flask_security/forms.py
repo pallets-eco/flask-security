@@ -67,6 +67,8 @@ _default_field_labels = {
     "submitcode": _("Submit Code"),
 }
 
+_security = LocalProxy(lambda: current_app.extensions["security"])
+
 
 class ValidatorMixin(object):
     """
@@ -118,7 +120,6 @@ class Length(ValidatorMixin, validators.Length):
 email_required = Required(message="EMAIL_NOT_PROVIDED")
 email_validator = Email(message="INVALID_EMAIL_ADDRESS")
 password_required = Required(message="PASSWORD_NOT_PROVIDED")
-password_length = Length(min=6, max=128, message="PASSWORD_INVALID_LENGTH")
 
 
 def _local_xlate(text):
@@ -184,8 +185,7 @@ class PasswordFormMixin:
 
 class NewPasswordFormMixin:
     password = PasswordField(
-        get_form_field_label("password"),
-        validators=[password_required, password_length],
+        get_form_field_label("password"), validators=[password_required]
     )
 
 
@@ -347,7 +347,25 @@ class LoginForm(Form, NextFormMixin):
 class ConfirmRegisterForm(
     Form, RegisterFormMixin, UniqueEmailFormMixin, NewPasswordFormMixin
 ):
-    pass
+    def validate(self):
+        if not super(ConfirmRegisterForm, self).validate():
+            return False
+
+        # We do explicit validation here for passwords (rather than write a validator
+        # class) for 2 reasons:
+        # 1) We want to control which fields are passed - sometimes thats current_user
+        #    other times its the registration fields.
+        # 2) We want to be able to return multiple error messages.
+        rfields = {}
+        for k, v in self.data.items():
+            if hasattr(_datastore.user_model, k):
+                rfields[k] = v
+        del rfields["password"]
+        pbad = _security._password_validator(self.password.data, True, **rfields)
+        if pbad:
+            self.password.errors.extend(pbad)
+            return False
+        return True
 
 
 class RegisterForm(ConfirmRegisterForm, PasswordConfirmFormMixin, NextFormMixin):
@@ -362,13 +380,24 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
 
     submit = SubmitField(get_form_field_label("reset_password"))
 
+    def validate(self):
+        if not super(ResetPasswordForm, self).validate():
+            return False
+
+        pbad = _security._password_validator(
+            self.password.data, False, user=current_user
+        )
+        if pbad:
+            self.password.errors.extend(pbad)
+            return False
+        return True
+
 
 class ChangePasswordForm(Form, PasswordFormMixin):
     """The default change password form"""
 
     new_password = PasswordField(
-        get_form_field_label("new_password"),
-        validators=[password_required, password_length],
+        get_form_field_label("new_password"), validators=[password_required]
     )
 
     new_password_confirm = PasswordField(
@@ -390,6 +419,12 @@ class ChangePasswordForm(Form, PasswordFormMixin):
             return False
         if self.password.data == self.new_password.data:
             self.password.errors.append(get_message("PASSWORD_IS_THE_SAME")[0])
+            return False
+        pbad = _security._password_validator(
+            self.new_password.data, False, user=current_user
+        )
+        if pbad:
+            self.new_password.errors.extend(pbad)
             return False
         return True
 

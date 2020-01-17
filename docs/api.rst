@@ -108,6 +108,14 @@ Utils
 
 .. autofunction:: flask_security.get_url
 
+.. autofunction:: flask_security.password_length_validator
+
+.. autofunction:: flask_security.password_complexity_validator
+
+.. autofunction:: flask_security.password_breached_validator
+
+.. autofunction:: flask_security.pwned
+
 .. autofunction:: flask_security.transform_url
 
 .. autoclass:: flask_security.FsJsonEncoder
