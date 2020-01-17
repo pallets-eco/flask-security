@@ -134,6 +134,8 @@ sends the following signals.
 
    Sent when a user registers on the site. In addition to the app (which is the
    sender), it is passed `user`, `confirm_token` and `form_data` arguments.
+   `form_data` is a dictionary representation of registration form's content
+   received with registration request.
 
 .. data:: user_confirmed
 
