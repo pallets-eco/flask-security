@@ -107,6 +107,39 @@ These configuration keys are used globally across all features.
 
     .. versionadded:: 3.3.1
 
+.. py:data:: SECURITY_PASSWORD_LENGTH_MIN
+
+    Minimum required length for passwords.
+
+    Default: 8
+
+    .. versionadded:: 3.4.0
+.. py:data:: SECURITY_PASSWORD_COMPLEXITY_CHECKER
+
+    Set to complexity checker to use (Only ``zxcvbn`` supported).
+
+    Default: ``None``
+
+    .. versionadded:: 3.4.0
+.. py:data:: SECURITY_PASSWORD_CHECK_BREACHED
+
+    If not ``None`` new/changed passwords will be checked against the
+    database of breached passwords at https://api.pwnedpasswords.com.
+    If set to ``strict`` then if the site can't be reached, validation will fail.
+    If set to ``best-effort`` failure to reach the site will continue
+    with the rest of password validation.
+
+    Default: ``None``
+
+    .. versionadded:: 3.4.0
+.. py:data:: SECURITY_PASSWORD_BREACHED_COUNT
+
+    Passwords with counts greater than or equal to this value are considered breached.
+
+    Default: 1  - which might be to burdensome for some applications.
+
+    .. versionadded:: 3.4.0
+
 .. py:data:: SECURITY_TOKEN_AUTHENTICATION_KEY
 
     Specifies the query string parameter to read when using token authentication.
@@ -1021,6 +1054,8 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_LOGIN_EMAIL_SENT``
 * ``SECURITY_MSG_LOGIN_EXPIRED``
 * ``SECURITY_MSG_PASSWORDLESS_LOGIN_SUCCESSFUL``
+* ``SECURITY_MSG_PASSWORD_BREACHED``
+* ``SECURITY_MSG_PASSWORD_BREACHED_SITE_ERROR``
 * ``SECURITY_MSG_PASSWORD_CHANGE``
 * ``SECURITY_MSG_PASSWORD_INVALID_LENGTH``
 * ``SECURITY_MSG_PASSWORD_IS_THE_SAME``
@@ -1030,6 +1065,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_PASSWORD_RESET``
 * ``SECURITY_MSG_PASSWORD_RESET_EXPIRED``
 * ``SECURITY_MSG_PASSWORD_RESET_REQUEST``
+* ``SECURITY_MSG_PASSWORD_TOO_SIMPLE``
 * ``SECURITY_MSG_REFRESH``
 * ``SECURITY_MSG_RETYPE_PASSWORD_MISMATCH``
 * ``SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN``

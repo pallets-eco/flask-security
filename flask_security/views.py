@@ -224,7 +224,7 @@ def register():
     form = form_class(form_data, meta=suppress_form_csrf())
     if form.validate_on_submit():
         did_login = False
-        user = register_user(**form.to_dict())
+        user = register_user(form)
         form.user = user
 
         if not _security.confirmable or _security.login_without_confirmation:

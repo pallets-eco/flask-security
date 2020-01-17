@@ -114,6 +114,14 @@ Utils
 
 .. autofunction:: flask_security.get_url
 
+.. autofunction:: flask_security.password_length_validator
+
+.. autofunction:: flask_security.password_complexity_validator
+
+.. autofunction:: flask_security.password_breached_validator
+
+.. autofunction:: flask_security.pwned
+
 .. autofunction:: flask_security.transform_url
 
 .. autoclass:: flask_security.FsJsonEncoder
@@ -139,7 +147,9 @@ sends the following signals.
 .. data:: user_registered
 
    Sent when a user registers on the site. In addition to the app (which is the
-   sender), it is passed `user` and `confirm_token` arguments.
+   sender), it is passed `user`, `confirm_token` and `form_data` arguments.
+   `form_data` is a dictionary representation of registration form's content
+   received with registration request.
 
 .. data:: user_confirmed
 

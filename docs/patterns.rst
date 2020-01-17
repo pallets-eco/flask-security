@@ -58,6 +58,30 @@ own code. Then use Flask's ``errorhandler`` to catch that exception and create t
 
 
 
+.. _pass_validation_topic:
+
+Password Validation and Complexity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There is a large body of references (and endless discussions) around how to get users to create
+good passwords. The `OWASP Authenication cheatsheet <https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html>`_
+is a useful place to start. Flask-Security has a default password validator that:
+
+ * Checks for minimum and maximum length (minimum is configurable via ``SECURITY_PASSWORD_LENGTH_MIN``).
+   The default is 8 characters as defined by `NIST <https://pages.nist.gov/800-63-3/sp800-63b.html>`_.
+ * If ``SECURITY_PASSWORD_BREACHED`` is set, will use the API for `haveibeenpwned <https://haveibeenpwned.com>`_ to
+   check if the password is on a list of breached passwords. The configuration variable ``SECURITY_PASSWORD_BREACHED_COUNT``
+   can be used to set the minimum allowable 'breaches'.
+ * If ``SECURITY_PASSWORD_COMPLEXITY_CHECKER`` is set to ``zxcvbn`` and the
+   package `zxcvbn <https://pypi.org/project/zxcvbn/>`_ is installed, it will check the password for complexity.
+
+Be aware that ``zxcvbn`` is not actively being maintained, and has localization issues.
+
+The entire validator can be easily changed by supplying a :meth:`.Security.password_validator`.
+This enables application to e.g. use any piece of the UserModel (which is a parameter) as part of validation.
+A custom validator can still call the underlying methods where appropriate:
+:func:`flask_security.password_length_validator`, :func:`flask_security.password_complexity_validator`,
+and :func:`flask_security.password_breached_validator`.
+
 .. _csrftopic:
 
 CSRF
@@ -66,7 +90,7 @@ By default, Flask-Security, via Flask-WTForms protects all form based POSTS
 from CSRF attacks using well vetted per-session hidden-form-field csrf-tokens.
 
 Any web application that relies on session cookies for authentication must have CSRF protection.
-For more details please read this `OWASP cheatsheet <https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.md>`_.
+For more details please read this `OWASP CSRF cheatsheet <https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.md>`_.
 A couple important take-aways - first - it isn't about forms versus JSON - it is about
 how the API is authenticated (session cookies versus authentication token). Second there is the
 concern about 'login CSRF' - is protection needed prior to authentication (yes if

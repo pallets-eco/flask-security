@@ -76,7 +76,7 @@ def test_recoverable_flag(app, client, get_message):
     # Test submitting a new password
     response = client.post(
         "/reset/" + token,
-        data={"password": "newpassword", "password_confirm": "newpassword"},
+        data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
         follow_redirects=True,
     )
 
@@ -86,7 +86,9 @@ def test_recoverable_flag(app, client, get_message):
     logout(client)
 
     # Test logging in with the new password
-    response = authenticate(client, "joe@lp.com", "newpassword", follow_redirects=True)
+    response = authenticate(
+        client, "joe@lp.com", "awesome sunset", follow_redirects=True
+    )
     assert b"Welcome joe@lp.com" in response.data
 
     logout(client)
@@ -102,7 +104,7 @@ def test_recoverable_flag(app, client, get_message):
     # Test invalid token
     response = client.post(
         "/reset/bogus",
-        data={"password": "newpassword", "password_confirm": "newpassword"},
+        data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
         follow_redirects=True,
     )
     assert get_message("INVALID_RESET_PASSWORD_TOKEN") in response.data
@@ -175,8 +177,8 @@ def test_recoverable_json(app, client, get_message):
         # Test submitting a new password
         response = client.post(
             "/reset/" + token + "?include_auth_token",
-            data='{"password": "newpassword",\
-                                     "password_confirm": "newpassword"}',
+            data='{"password": "awesome sunset",\
+                                     "password_confirm": "awesome sunset"}',
             headers={"Content-Type": "application/json"},
         )
         assert all(
@@ -192,7 +194,7 @@ def test_recoverable_json(app, client, get_message):
         response = client.post(
             "/login?include_auth_token",
             data='{"email": "joe@lp.com",\
-                                     "password": "newpassword"}',
+                                     "password": "awesome sunset"}',
             headers={"Content-Type": "application/json"},
         )
         assert all(
@@ -322,7 +324,7 @@ def test_used_reset_token(client, get_message):
     # use the token
     response = client.post(
         "/reset/" + token,
-        data={"password": "newpassword", "password_confirm": "newpassword"},
+        data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
         follow_redirects=True,
     )
 
@@ -350,7 +352,7 @@ def test_reset_passwordless_user(client, get_message):
     # use the token
     response = client.post(
         "/reset/" + token,
-        data={"password": "newpassword", "password_confirm": "newpassword"},
+        data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
         follow_redirects=True,
     )
 
@@ -481,7 +483,7 @@ def test_bc_password(app, client_nc):
 
     reset_token = requests[0]["token"]
 
-    data = dict(password="newpassword", password_confirm="newpassword")
+    data = dict(password="awesome sunset", password_confirm="awesome sunset")
     response = client_nc.post(
         "/reset/" + reset_token + "?include_auth_token=1",
         data=json.dumps(data),
@@ -496,3 +498,20 @@ def test_bc_password(app, client_nc):
     # but new auth token should work
     token = response.jdata["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
+
+
+@pytest.mark.settings(password_complexity_checker="zxcvbn")
+def test_easy_password(client, get_message):
+    with capture_reset_password_requests() as requests:
+        client.post("/reset", data=dict(email="joe@lp.com"), follow_redirects=True)
+
+    token = requests[0]["token"]
+
+    # use the token
+    response = client.post(
+        "/reset/" + token,
+        data={"password": "mypassword", "password_confirm": "mypassword"},
+        follow_redirects=True,
+    )
+
+    assert b"This is a very common password" in response.data

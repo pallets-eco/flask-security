@@ -10,6 +10,7 @@
 """
 
 import json
+import sys
 
 import pytest
 from flask import Flask
@@ -74,7 +75,7 @@ def test_changeable_flag(app, client, get_message):
         data={"password": "password", "new_password": "a", "new_password_confirm": "a"},
         follow_redirects=True,
     )
-    assert get_message("PASSWORD_INVALID_LENGTH") in response.data
+    assert get_message("PASSWORD_INVALID_LENGTH", length=8) in response.data
 
     # Test same as previous
     response = client.post(
@@ -94,8 +95,8 @@ def test_changeable_flag(app, client, get_message):
             "/change",
             data={
                 "password": "password",
-                "new_password": "newpassword",
-                "new_password_confirm": "newpassword",
+                "new_password": "new strong password",
+                "new_password_confirm": "new strong password",
             },
             follow_redirects=True,
         )
@@ -110,9 +111,9 @@ def test_changeable_flag(app, client, get_message):
     response = client.post(
         "/change",
         data={
-            "password": "newpassword",
-            "new_password": "      newpassword      ",
-            "new_password_confirm": "      newpassword      ",
+            "password": "new strong password",
+            "new_password": "      new strong password      ",
+            "new_password_confirm": "      new strong password      ",
         },
         follow_redirects=True,
     )
@@ -120,9 +121,9 @@ def test_changeable_flag(app, client, get_message):
 
     # Test JSON
     data = (
-        '{"password": "      newpassword      ", '
-        '"new_password": "newpassword2", '
-        '"new_password_confirm": "newpassword2"}'
+        '{"password": "      new strong password      ", '
+        '"new_password": "new stronger password2", '
+        '"new_password_confirm": "new stronger password2"}'
     )
     response = client.post(
         "/change", data=data, headers={"Content-Type": "application/json"}
@@ -177,8 +178,8 @@ def test_custom_post_change_view(client):
         "/change",
         data={
             "password": "password",
-            "new_password": "newpassword",
-            "new_password_confirm": "newpassword",
+            "new_password": "new strong password",
+            "new_password_confirm": "new strong password",
         },
         follow_redirects=True,
     )
@@ -193,8 +194,8 @@ def test_token_change(app, client_nc):
 
     data = dict(
         password="password",
-        new_password="newpassword",
-        new_password_confirm="newpassword",
+        new_password="new strong password",
+        new_password_confirm="new strong password",
     )
     response = client_nc.post(
         "/change?include_auth_token=1",
@@ -214,8 +215,8 @@ def test_bc_password(app, client_nc):
 
     data = dict(
         password="password",
-        new_password="newpassword",
-        new_password_confirm="newpassword",
+        new_password="new strong password",
+        new_password_confirm="new strong password",
     )
     response = client_nc.post(
         "/change?include_auth_token=1",
@@ -231,3 +232,99 @@ def test_bc_password(app, client_nc):
     # but new auth token should work
     token = response.jdata["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
+
+
+@pytest.mark.settings(password_complexity_checker="zxcvbn")
+def test_easy_password(app, client):
+    authenticate(client)
+
+    data = (
+        '{"password": "password", '
+        '"new_password": "mattmatt2", '
+        '"new_password_confirm": "mattmatt2"}'
+    )
+    response = client.post(
+        "/change", data=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 400
+    # Response from zxcvbn
+    assert "Repeats like" in response.jdata["response"]["errors"]["new_password"][0]
+
+
+def test_my_validator(app, client):
+    @app.security.password_validator
+    def pwval(password, is_register, **kwargs):
+        user = kwargs["user"]
+        # This is setup in createusers for matt.
+        assert user.security_number == 123456
+        return ["Are you crazy?"]
+
+    authenticate(client)
+
+    data = (
+        '{"password": "password", '
+        '"new_password": "mattmatt2", '
+        '"new_password_confirm": "mattmatt2"}'
+    )
+    response = client.post(
+        "/change", data=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 400
+    assert "Are you crazy" in response.jdata["response"]["errors"]["new_password"][0]
+
+
+@pytest.mark.settings(password_length_min=12)
+def test_override_length(app, client, get_message):
+    authenticate(client)
+    response = client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "01234567890",
+            "new_password_confirm": "01234567890",
+        },
+        follow_redirects=True,
+    )
+    assert get_message("PASSWORD_INVALID_LENGTH", length=12) in response.data
+
+
+def test_unicode_length(app, client, get_message):
+    # From NIST and OWASP - each unicode code point should count as a character.
+    authenticate(client)
+
+    # Emoji's are 4 bytes in utf-8
+    data = dict(
+        password="password",
+        new_password="\N{CYCLONE}\N{SUNRISE}\N{FOGGY}"
+        "\N{VOLCANO}\N{CRESCENT MOON}\N{MILKY WAY}"
+        "\N{FOG}\N{THERMOMETER}\N{ROSE}",
+        new_password_confirm="\N{CYCLONE}\N{SUNRISE}\N{FOGGY}"
+        "\N{VOLCANO}\N{CRESCENT MOON}\N{MILKY WAY}"
+        "\N{FOG}\N{THERMOMETER}\N{ROSE}",
+    )
+    response = client.post(
+        "/change", data=json.dumps(data), headers={"Content-Type": "application/json"}
+    )
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
+def test_unicode_invalid_length(app, client, get_message):
+    # From NIST and OWASP - each unicode code point should count as a character.
+    authenticate(client)
+
+    # Emoji's are 4 bytes in utf-8
+    data = dict(
+        password="password",
+        new_password="\N{CYCLONE}\N{CYCLONE}\N{FOGGY}\N{FOGGY}",
+        new_password_confirm="\N{CYCLONE}\N{CYCLONE}\N{FOGGY}\N{FOGGY}",
+    )
+    response = client.post(
+        "/change", data=json.dumps(data), headers={"Content-Type": "application/json"}
+    )
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 400
+    assert get_message("PASSWORD_INVALID_LENGTH", length=8) in response.data
