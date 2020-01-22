@@ -8,6 +8,7 @@
 
 import pytest
 from test_two_factor import two_factor_authenticate
+from test_unified_signin import authenticate as us_authenticate
 from utils import authenticate, logout
 
 
@@ -147,3 +148,44 @@ def test_two_factor_context_processors(client, app):
     assert b"global" in response.data
     assert b"bar" in response.data
     logout(client)
+
+
+@pytest.mark.unified_signin()
+@pytest.mark.settings(
+    us_setup_template="custom_security/us_setup.html",
+    us_signin_template="custom_security/us_signin.html",
+)
+def test_unified_signin_context_processors(client, app):
+    @app.security.context_processor
+    def default_ctx_processor():
+        return {"global": "global"}
+
+    @app.security.us_signin_context_processor
+    def signin_ctx():
+        return {"foo": "signin"}
+
+    # signin template is used in 3 places (TODO test POST us-send-code)
+    response = client.get("/us-signin")
+    assert b"CUSTOM UNIFIED SIGN IN" in response.data
+    assert b"global" in response.data
+    assert b"signin" in response.data
+
+    response = client.get("/us-send-code")
+    assert b"CUSTOM UNIFIED SIGN IN" in response.data
+    assert b"global" in response.data
+    assert b"signin" in response.data
+
+    @app.security.us_setup_context_processor
+    def setup_ctx():
+        return {"foo": "setup"}
+
+    us_authenticate(client)
+    response = client.get("us-setup")
+    assert b"CUSTOM UNIFIED SIGNIN SETUP" in response.data
+    assert b"global" in response.data
+    assert b"setup" in response.data
+
+    response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
+    assert b"CUSTOM UNIFIED SIGNIN SETUP" in response.data
+    assert b"global" in response.data
+    assert b"setup" in response.data

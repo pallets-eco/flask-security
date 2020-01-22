@@ -8,7 +8,7 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
     :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -1102,7 +1102,7 @@ class Security(object):
             self._check_modules("cachetools", "USE_VERIFY_PASSWORD_CACHE")
 
         if cv("PASSWORD_COMPLEXITY_CHECKER", app=app) == "zxcvbn":
-            self._check_modules("zxcvbn", "PASSWORD_COMPLEXITY_CHECKER", True)
+            self._check_modules("zxcvbn", "PASSWORD_COMPLEXITY_CHECKER")
         return state
 
     def _check_modules(self, module, config_name):  # pragma: no cover

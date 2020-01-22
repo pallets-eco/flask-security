@@ -16,14 +16,10 @@
     Finish up/Consider:
     - 2FA? since this is now a universal login - probably yes.
     - should we support a way that /logout redirects to us-signin rather than /login?
-    - Enhance register to allow null passwords - this has to work with the new
-      pwdvalidation changes.
     - openapi.yaml
     - configuration.rst
-    - test context processors
     - example
-    - need to change password to be nullable and verify doesn't allow normal login
-    - make username unique?
+    - add a sentinal value for password meaning 'none'. Integrate with registration
     - Any reason to support 'next' in form? xx?next=yyy works fine.
     - separate code validation times for SMS, email, authenticator?
     - token versus code versus passcode? Confusing terminology.
@@ -436,6 +432,8 @@ def us_setup():
             totp = _security._totp_factory.generate_totp_secret()
         else:
             totp = current_user.us_totp_secret
+        # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
+        # to send it to the user.
         state = {
             "totp_secret": totp,
             "chosen_method": form.chosen_method.data,

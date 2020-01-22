@@ -107,8 +107,10 @@ known limitations:
     * Limited and incomplete JSON support
     * Not enough documentation to use w/o looking at code
 
-Unified Sign In
----------------
+Unified Sign In (beta)
+-----------------------
+**This feature is in Beta - mostly due to it being brand new and little to no production soaking**
+
 Unified sign in provides a generalized login endpoint that takes an `identity`
 and a `passcode`; where (based on configuration):
 

@@ -1,4 +1,4 @@
-# :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -240,7 +240,7 @@ class User(Base, UserMixin):
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True)
     username = Column(String(255), unique=True, nullable=True)
-    password = Column(String(255), nullable=True)
+    password = Column(String(255), nullable=False)
     last_login_at = Column(DateTime())
     current_login_at = Column(DateTime())
     last_login_ip = Column(String(100))
@@ -249,12 +249,12 @@ class User(Base, UserMixin):
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
 
-    tf_phone_number = Column(String(64))
-    tf_primary_method = Column(String(140))
+    tf_phone_number = Column(String(128))
+    tf_primary_method = Column(String(64))
     tf_totp_secret = Column(String(255))
 
     us_totp_secret = Column(String(255), nullable=True)
-    us_phone_number = Column(String(64), nullable=True)
+    us_phone_number = Column(String(128), nullable=True)
 
     roles = relationship(
         "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
