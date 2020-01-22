@@ -107,6 +107,36 @@ known limitations:
     * Limited and incomplete JSON support
     * Not enough documentation to use w/o looking at code
 
+Unified Sign In (beta)
+-----------------------
+**This feature is in Beta - mostly due to it being brand new and little to no production soaking**
+
+Unified sign in provides a generalized login endpoint that takes an `identity`
+and a `passcode`; where (based on configuration):
+
+    * `identity` is any of :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` (e.g. email, username, phone)
+    * `passcode` is a password or a one-time code (delivered via email, SMS, or authenticator app)
+
+Please see this `Wikipedia`_ article about multi-factor authentication.
+
+Using this feature, it is possible to not require the user to have a stored password
+at all, and just require the use of a one-time code. The mechanisms for generating
+and delivering the one-time code are similar to common two-factor mechanisms.
+
+This one-time code can be configured to be delivered via email, SMS or authenticator app -
+however be aware that NIST does not recommend email for this purpose (though many web sites do so)
+due to the fact that a) email may travel through
+many different servers as part of being delivered - and b) is available from any device.
+
+Using SMS or an authenticator app means you are providing "something you have" (the mobile device)
+and either "something you know" (passcode to unlock your device)
+or "something you are" (biometric passcode to unlock your device).
+This effectively means that using a one-time code to sign in, is in fact already two-factor (if using
+SMS or authenticator app). Many large authentication providers already offer this - here is
+`Microsoft's`_ version.
+NOTE: currently the Two-Factor feature can not be used in
+conjunction with unified sign in feature - that will be an enhancement.
+
 Email Confirmation
 ------------------
 
@@ -188,3 +218,5 @@ Run ``flask --help`` and look for users and roles.
 .. _totp secret: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#overview
 .. _bcrypt: https://en.wikipedia.org/wiki/Bcrypt
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/
+.. _Wikipedia: https://en.wikipedia.org/wiki/Multi-factor_authentication
+.. _Microsoft's: https://docs.microsoft.com/en-us/azure/active-directory/user-help/user-help-auth-app-overview

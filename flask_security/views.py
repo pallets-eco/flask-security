@@ -55,6 +55,14 @@ from .confirmable import (
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .passwordless import login_token_status, send_login_instructions
 from .quart_compat import get_quart_status
+from .unified_signin import (
+    us_signin,
+    us_qrcode,
+    us_send_code,
+    us_setup,
+    us_setup_verify,
+    us_verify_link,
+)
 from .recoverable import (
     reset_password_token_status,
     send_reset_password_instructions,
@@ -1034,6 +1042,29 @@ def create_blueprint(state, import_name, json_encoder=None):
 
     else:
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(login)
+
+    if state.unified_signin:
+        bp.route(state.us_signin_url, methods=["GET", "POST"], endpoint="us_signin")(
+            us_signin
+        )
+        bp.route(state.us_setup_url, methods=["GET", "POST"], endpoint="us_setup")(
+            us_setup
+        )
+        bp.route(
+            state.us_setup_url + slash_url_suffix(state.us_setup_url, "<token>"),
+            methods=["GET", "POST"],
+            endpoint="us_setup_verify",
+        )(us_setup_verify)
+        bp.route(
+            state.us_send_code_url, methods=["GET", "POST"], endpoint="us_send_code"
+        )(us_send_code)
+        bp.route(state.us_verify_link_url, methods=["GET"], endpoint="us_verify_link")(
+            us_verify_link
+        )
+        bp.route(
+            state.us_qrcode_url + slash_url_suffix(state.us_setup_url, "<token>"),
+            endpoint="us_qrcode",
+        )(us_qrcode)
 
     if state.two_factor:
         tf_token_validation = "two_factor_token_validation"

@@ -100,11 +100,17 @@ Utils
 
 .. autofunction:: flask_security.hash_password
 
+.. autofunction:: flask_security.uia_phone_mapper
+
+.. autofunction:: flask_security.uia_email_mapper
+
 .. autofunction:: flask_security.url_for_security
 
 .. autofunction:: flask_security.send_mail
 
 .. autofunction:: flask_security.get_token_status
+
+.. autofunction:: flask_security.check_and_get_token_status
 
 .. autofunction:: flask_security.get_url
 
@@ -203,5 +209,19 @@ sends the following signals.
     (which is the sender), it is passed `user`, `method`, and `token` arguments.
 
     .. versionadded:: 3.3.0
+
+.. data:: us_security_token_sent
+
+    Sent when a unified sign in access code is sent. In addition to the app
+    (which is the sender), it is passed `user`, `method`, and `token` arguments.
+
+    .. versionadded:: 3.4.0
+
+.. data:: us_profile_changed
+
+    Sent when user completes changing their unified sign in profile. In addition to the app
+    (which is the sender), it is passed `user` and `method` arguments.
+
+    .. versionadded:: 3.4.0
 
 .. _Flask documentation on signals: https://flask.palletsprojects.com/en/1.1.x/signals/

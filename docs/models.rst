@@ -81,6 +81,20 @@ will require the following additional field:
 
 * ``tf_phone_number``
 
+Unified Sign In
+^^^^^^^^^^^^^^^
+
+If you enable unified sign in by setting your application's :py:data:`SECURITY_UNIFIED_SIGNIN`
+configuration value to `True`, your `User` model will require the following
+additional fields:
+
+* ``us_totp_secret``
+
+If you include 'sms' in :py:data:`SECURITY_US_ENABLED_METHODS`, your `User` model
+will require the following additional field:
+
+* ``us_phone_number``
+
 Permissions
 ^^^^^^^^^^^
 If you want to protect endpoints with permissions, and assign permissions to roles

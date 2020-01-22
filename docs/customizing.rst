@@ -24,6 +24,8 @@ following is a list of view templates:
 * `security/two_factor_verify_password.html`
 * `security/two_factor_setup.html`
 * `security/two_factor_verify_code.html`
+* `security/us_signin.html`
+* `security/us_setup.html`
 
 Overriding these templates is simple:
 
@@ -68,6 +70,8 @@ The following is a list of all the available context processor decorators:
 * ``tf_setup_context_processor``: Two factor setup view
 * ``tf_token_validation_context_processor``: Two factor token validation view
 * ``tf_verify_password_context_processor``: Two factor password re-verify view
+* ``us_signin_context_processor``: Unified sign in view
+* ``us_setup_context_processor``: Unified sign in setup view
 
 
 Forms
@@ -114,6 +118,9 @@ The following is a list of all the available form overrides:
 * ``two_factor_setup_form``: Two-factor setup form
 * ``two_factor_verify_password_form``: Two-factor verify password form
 * ``two_factor_rescue_form``: Two-factor help user form
+* ``us_signin_form``: Unified sign in form
+* ``us_setup_form``: Unified sign in setup form
+* ``us_setup_verify_form``: Unified sign in setup verify form
 
 Localization
 ------------
@@ -152,6 +159,8 @@ The following is a list of email templates:
 * `security/email/two_factor_instructions.txt`
 * `security/email/two_factor_rescue.html`
 * `security/email/two_factor_rescue.txt`
+* `security/email/us_instructions.html`
+* `security/email/us_instructions.txt`
 
 Overriding these templates is simple:
 

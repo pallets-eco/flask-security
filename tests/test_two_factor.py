@@ -17,29 +17,11 @@ except ImportError:
 from flask import json
 import pytest
 
-from utils import authenticate, get_session, logout
+from utils import SmsTestSender, authenticate, get_session, logout
 from flask_principal import identity_changed
-from flask_security.utils import SmsSenderBaseClass, SmsSenderFactory, capture_flashes
+from flask_security.utils import SmsSenderFactory, capture_flashes
 
 pytestmark = pytest.mark.two_factor()
-
-
-class SmsTestSender(SmsSenderBaseClass):
-    SmsSenderBaseClass.messages = []
-    SmsSenderBaseClass.count = 0
-
-    def __init__(self):
-        super(SmsTestSender, self).__init__()
-        SmsSenderBaseClass.count = 0
-        SmsSenderBaseClass.messages = []
-
-    def send_sms(self, from_number, to_number, msg):
-        SmsSenderBaseClass.messages.append(msg)
-        SmsSenderBaseClass.count += 1
-        return
-
-    def get_count(self):
-        return SmsSenderBaseClass.count
 
 
 SmsSenderFactory.senders["test"] = SmsTestSender
@@ -77,7 +59,14 @@ def two_factor_authenticate(client, validate=True):
 def tf_in_session(session):
     return any(
         k in session
-        for k in ["tf_state", "tf_primary_method", "tf_user_id", "tf_confirmed"]
+        for k in [
+            "tf_state",
+            "tf_primary_method",
+            "tf_user_id",
+            "tf_confirmed",
+            "tf_remember_login",
+            "tf_totp_secret",
+        ]
     )
 
 
@@ -191,10 +180,7 @@ def test_two_factor_flag(app, client):
     assert b"Your token has been confirmed" in response.data
 
     # Upon completion, session cookie shouldnt have any two factor stuff in it.
-    session = get_session(response)
-    assert not any(
-        k in session for k in ["tf_state", "tf_primary_method", "tf_user_id"]
-    )
+    assert not tf_in_session(get_session(response))
 
     # try confirming password with a wrong one
     response = client.post("/tf-confirm", data=dict(password=""), follow_redirects=True)

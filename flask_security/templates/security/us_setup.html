@@ -1,0 +1,34 @@
+{% extends "security/base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
+
+{% block content %}
+    {% include "security/_messages.html" %}
+    <h1>{{ _("Setup and verify unified sign in options") }}</h1>
+    <form action="{{ url_for_security("us_setup") }}" method="POST"
+          name="us_setup_form">
+      {{ us_setup_form.hidden_tag() }}
+      {{ render_field_with_errors(us_setup_form.new_totp_secret) }}
+      {% for subfield in us_setup_form.chosen_method %}
+        {% if subfield.data in methods %}
+            {{ render_field_with_errors(subfield) }}
+        {% endif %}
+      {% endfor %}
+      {{ render_field_errors(us_setup_form.chosen_method) }}
+      {% if "sms" in methods %}
+        {{ render_field_with_errors(us_setup_form.phone) }}
+      {% endif %}
+      {% if chosen_method == "authenticator" %}
+        <p>{{ _("Open your authenticator app on your device and scan the following qrcode to start receiving codes:") }}</p>
+        <p><img alt="{{ _("Passwordless QRCode") }}" id="qrcode" src="{{ url_for_security("us_qrcode", token=state) }}"></p>
+      {% endif %}
+      {{ render_field(us_setup_form.submit) }}
+    </form>
+    {%  if state %}
+      <form action="{{ url_for_security("us_setup_verify", token=state) }}" method="POST"
+          name="us_setup_verify_form">
+        {{ us_setup_verify_form.hidden_tag() }}
+        {{ render_field_with_errors(us_setup_verify_form.code) }}
+        {{ render_field(us_setup_verify_form.submit) }}
+      </form>
+    {%  endif %}
+{% endblock %}

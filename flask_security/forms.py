@@ -51,6 +51,7 @@ _default_field_labels = {
     "password": _("Password"),
     "remember_me": _("Remember Me"),
     "login": _("Login"),
+    "signin": _("Sign In"),
     "register": _("Register"),
     "send_confirmation": _("Resend Confirmation Instructions"),
     "recover_password": _("Recover Password"),
@@ -65,6 +66,11 @@ _default_field_labels = {
     "code": _("Authentication Code"),
     "submit": _("Submit"),
     "submitcode": _("Submit Code"),
+    "error": _("Error(s)"),
+    "new_totp_secret": _("Generate new TOTP secret"),
+    "identity": _("Identity"),
+    "sendcode": _("Send Code"),
+    "passcode": _("Passcode"),
 }
 
 _security = LocalProxy(lambda: current_app.extensions["security"])

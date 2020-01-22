@@ -17,7 +17,7 @@ try:
 except Exception:
     from flask.sessions import TaggedJSONSerializer
 
-from flask_security import Security
+from flask_security import Security, SmsSenderBaseClass
 from flask_security.datastore import (
     SQLAlchemyUserDatastore,
     SQLAlchemySessionUserDatastore,
@@ -196,3 +196,21 @@ def is_sqlalchemy(datastore):
     return isinstance(datastore, SQLAlchemyUserDatastore) and not isinstance(
         datastore, SQLAlchemySessionUserDatastore
     )
+
+
+class SmsTestSender(SmsSenderBaseClass):
+    SmsSenderBaseClass.messages = []
+    SmsSenderBaseClass.count = 0
+
+    def __init__(self):
+        super(SmsTestSender, self).__init__()
+        SmsSenderBaseClass.count = 0
+        SmsSenderBaseClass.messages = []
+
+    def send_sms(self, from_number, to_number, msg):
+        SmsSenderBaseClass.messages.append(msg)
+        SmsSenderBaseClass.count += 1
+        return
+
+    def get_count(self):
+        return SmsSenderBaseClass.count

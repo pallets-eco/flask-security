@@ -1,4 +1,4 @@
-# :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -18,7 +18,7 @@ confirm URL (with token) you need to enter into your browser address bar.
 
 
 Since we don't actually send email - we have signal handlers flash the required
-data.
+data and a mail sender that flashes what mail would be sent!
 
 """
 
@@ -27,7 +27,6 @@ import os
 
 from flask import Flask, flash, render_template_string, request, session
 import flask_babelex
-from flask_mail import Mail
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -36,6 +35,7 @@ from flask_security import (
     SQLAlchemySessionUserDatastore,
 )
 from flask_security.signals import (
+    us_security_token_sent,
     tf_security_token_sent,
     reset_password_instructions_sent,
     user_registered,
@@ -51,6 +51,14 @@ def _find_bool(v):
     return v
 
 
+class FlashMail(object):
+    def __init__(self, app):
+        app.extensions["mail"] = self
+
+    def send(self, msg):
+        flash(msg.body)
+
+
 def create_app():
     app = Flask(__name__)
     app.config["DEBUG"] = True
@@ -58,9 +66,8 @@ def create_app():
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = False
-    # Don't actually send any email - instead we subscribe to signals
-    app.config["MAIL_SUPPRESS_SEND"] = True
-    app.config["SECURITY_TWO_FACTOR_SECRET"] = {
+    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = ["email", "us_phone_number"]
+    app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
 
@@ -79,6 +86,7 @@ def create_app():
         "NOTpasswordless",
         "confirmable",
         "two_factor",
+        "unified_signin",
     ]:
         app.config["SECURITY_" + opt.upper()] = True
 
@@ -89,10 +97,10 @@ def create_app():
     for ev in os.environ:
         if ev.startswith("SECURITY_"):
             app.config[ev] = _find_bool(os.environ.get(ev))
-    mail = Mail(app)
+    mail = FlashMail(app)
+    app.mail = mail
 
     app.json_encoder = JSONEncoder
-    app.mail = mail
     # Setup Flask-Security
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
     security = Security(app, user_datastore)
@@ -137,7 +145,15 @@ def create_app():
     def on_token_sent(myapp, user, token, method):
         flash(
             "User {} was sent two factor token {} via {}".format(
-                user.email, token, method
+                user.calc_username(), token, method
+            )
+        )
+
+    @us_security_token_sent.connect_via(app)
+    def on_pl_token_sent(myapp, user, token, method):
+        flash(
+            "User {} was sent passwordless token {} via {}".format(
+                user.calc_username(), token, method
             )
         )
 
@@ -223,8 +239,8 @@ class User(Base, UserMixin):
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True)
-    username = Column(String(255))
-    password = Column(String(255))
+    username = Column(String(255), unique=True, nullable=True)
+    password = Column(String(255), nullable=False)
     last_login_at = Column(DateTime())
     current_login_at = Column(DateTime())
     last_login_ip = Column(String(100))
@@ -233,9 +249,12 @@ class User(Base, UserMixin):
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
 
-    tf_phone_number = Column(String(64))
-    tf_primary_method = Column(String(140))
+    tf_phone_number = Column(String(128))
+    tf_primary_method = Column(String(64))
     tf_totp_secret = Column(String(255))
+
+    us_totp_secret = Column(String(255), nullable=True)
+    us_phone_number = Column(String(128), nullable=True)
 
     roles = relationship(
         "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
