@@ -6,7 +6,7 @@
     This module contains an user datastore classes.
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import uuid
@@ -411,15 +411,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
         )
 
     def commit(self):
-        # Old flask-sqlalchemy adds this weird attribute for tracking
-        # to Session. flask-sqlalchemy 2.0 does things more nicely.
-        try:
-            super(SQLAlchemySessionUserDatastore, self).commit()
-        except AttributeError:
-            import sqlalchemy
-
-            sqlalchemy.orm.Session._model_changes = {}
-            super(SQLAlchemySessionUserDatastore, self).commit()
+        super(SQLAlchemySessionUserDatastore, self).commit()
 
 
 class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
@@ -469,14 +461,6 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
 
     def find_role(self, role):
         return self.role_model.objects(name=role).first()
-
-    # TODO: Not sure why this was added but tests pass without it
-    # def add_role_to_user(self, user, role):
-    #     rv = super(MongoEngineUserDatastore, self).add_role_to_user(
-    #         user, role)
-    #     if rv:
-    #         self.put(user)
-    #     return rv
 
 
 class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
