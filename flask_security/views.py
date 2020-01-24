@@ -6,7 +6,7 @@
     Flask-Security views module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     CSRF is tricky. By default all our forms have CSRF protection built in via
@@ -211,6 +211,10 @@ def logout():
 def register():
     """View function which handles a registration request."""
 
+    # For some unknown historic reason - if you don't require confirmation
+    # (via email) then you need to type in your password twice. That might
+    # make sense if you can't reset your password but in modern (2020) UX models
+    # don't ask twice.
     if _security.confirmable or request.is_json:
         form_class = _security.confirm_register_form
     else:
@@ -227,6 +231,10 @@ def register():
         user = register_user(form)
         form.user = user
 
+        # The 'auto-login' feature probably should be removed - I can't imagine
+        # an application that would want random email accounts. It has been like this
+        # since the beginning. Note that we still enforce 2FA - however for unified
+        # signin - we adhere to historic behavior.
         if not _security.confirmable or _security.login_without_confirmation:
             if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
                 return _two_factor_login(form)

@@ -10,19 +10,29 @@
 
     This implements a unified sign in endpoint - allowing
     authentication via identity and passcode - where identity is configured
-    via SECURITY_USER_IDENTITY_ATTRIBUTES, and allowable passcode are either
-    password or US_ENABLED_METHODS.
+    via SECURITY_USER_IDENTITY_ATTRIBUTES, and allowable passcodes are either a
+    password or one of US_ENABLED_METHODS.
 
-    Finish up/Consider:
+    Finish up:
     - 2FA? since this is now a universal login - probably yes.
+    - setup should probably require a 'fresh' authentication - as 2FA does.
     - should we support a way that /logout redirects to us-signin rather than /login?
+    - we should be able to add a phone number as part of setup even w/o any METHODS -
+      i.e. to allow login with any identity (phone) and a password.
     - openapi.yaml
-    - configuration.rst
-    - example
-    - add a sentinal value for password meaning 'none'. Integrate with registration
+    - add new example?
+    - add username as last IDENTITY_MAPPING and allow anything...?? or just in example?
+
+    Consider/Questions:
+    - Allow registering/confirming with just a phone number - this likely would require
+      a new register/confirm endpoint in order to implement verification.
+    - Right now ChangePassword won't work - it requires an existing password - so
+      if the user doesn't have one - can't change it. However ForgotPassword will in
+      fact allow the user to add a password. Is that sufficient?
     - Any reason to support 'next' in form? xx?next=yyy works fine.
     - separate code validation times for SMS, email, authenticator?
     - token versus code versus passcode? Confusing terminology.
+
 """
 
 import sys
@@ -147,7 +157,9 @@ class UnifiedSigninForm(Form):
                 window=config_value("US_TOKEN_VALIDITY"),
             ):
                 # That didn't work - maybe it's just a password
-                if not self.user.verify_and_update_password(self.passcode.data):
+                if "password" not in config_value(
+                    "US_ENABLED_METHODS"
+                ) or not self.user.verify_and_update_password(self.passcode.data):
                     self.passcode.errors.append(get_message("INVALID_PASSWORD")[0])
                     return False
 
@@ -326,8 +338,8 @@ def us_signin():
     form.submit.data = True
 
     if form.validate_on_submit():
-        login_user(form.user, remember=form.remember.data)
         after_this_request(_commit)
+        login_user(form.user, remember=form.remember.data)
 
         if _security._want_json(request):
             return base_render_json(form, include_auth_token=True)
@@ -618,9 +630,11 @@ def send_security_token(user, method, totp_secret, phone_number, send_magic_link
         sms_sender = SmsSenderFactory.createSender(config_value("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=m)
 
-    elif method == "authenticator":
+    elif method == "authenticator" or method == "password":
         # tokens are generated automatically with authenticator apps
-        pass
+        # and passwords are well passwords
+        # Still go ahead and notify signal receivers that they requested it.
+        token = None
     us_security_token_sent.send(
         app._get_current_object(), user=user, method=method, token=token
     )

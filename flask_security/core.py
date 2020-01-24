@@ -240,7 +240,7 @@ _default_config = {
     "US_POST_SETUP_VIEW": None,
     "US_SIGNIN_TEMPLATE": "security/us_signin.html",
     "US_SETUP_TEMPLATE": "security/us_setup.html",
-    "US_ENABLED_METHODS": ["email", "authenticator", "sms"],
+    "US_ENABLED_METHODS": ["password", "email", "authenticator", "sms"],
     "US_TOKEN_VALIDITY": 120,
     "US_EMAIL_SUBJECT": _("Verification Code"),
     "US_SETUP_WITHIN": "30 minutes",
@@ -935,6 +935,14 @@ class Security(object):
     :param json_encoder_cls: Class to use as blueprint.json_encoder.
      Defaults to :class:`FsJsonEncoder`
     :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
+
+    .. versionchanged:: 3.4.0
+        ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form`` added as part of
+        the :ref:`unified-sign-in` feature.
+
+    .. versionchanged:: 3.4.0
+        ``totp_cls`` added to enable application to implement replay protection - see
+        :py:class:`Totp`.
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -1237,9 +1245,9 @@ class Security(object):
         """
         Callback for validating a user password.
         This is called on registration as well a change and reset password.
-        For registration, kwargs will be all the form input fields that are attributes
-        of the user model.
-        For reset/change, kwargs will be user=UserModel
+        For registration, ``kwargs`` will be all the form input fields that are
+        attributes of the user model.
+        For reset/change, ``kwargs`` will be user=UserModel
 
         :param cb: Callback function with signature (password, is_register, kwargs)
 
@@ -1251,6 +1259,7 @@ class Security(object):
         if not.
 
         .. versionadded:: 3.4.0
+            Refer to :ref:`pass_validation_topic` for more information.
         """
         self._state._password_validator = cb
 
