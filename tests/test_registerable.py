@@ -108,6 +108,66 @@ def test_registerable_flag(client, app, get_message):
     assert b"Page 1" in response.data
 
 
+@pytest.mark.confirmable()
+def test_required_password(client, get_message):
+    # when confirm required - should not require confirm_password - but should
+    # require a password
+    data = dict(email="trp@lp.com", password="")
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("PASSWORD_NOT_PROVIDED") in response.data
+
+    data = dict(email="trp@lp.com", password="battery staple")
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("CONFIRM_REGISTRATION", email="trp@lp.com") in response.data
+
+
+def test_required_password_confirm(client, get_message):
+    response = client.post(
+        "/register",
+        data={
+            "email": "trp@lp.com",
+            "password": "password",
+            "password_confirm": "notpassword",
+        },
+        follow_redirects=True,
+    )
+    assert get_message("RETYPE_PASSWORD_MISMATCH") in response.data
+
+    response = client.post(
+        "/register",
+        data={"email": "trp@lp.com", "password": "password", "password_confirm": ""},
+        follow_redirects=True,
+    )
+    assert get_message("PASSWORD_NOT_PROVIDED") in response.data
+
+
+@pytest.mark.confirmable()
+@pytest.mark.unified_signin()
+def test_allow_null_password(client, get_message):
+    # If unified sign in is enabled - should be able to register w/o password
+    data = dict(email="trp@lp.com", password="")
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("CONFIRM_REGISTRATION", email="trp@lp.com") in response.data
+
+
+@pytest.mark.unified_signin()
+def test_allow_null_password_nologin(client, get_message):
+    # If unified sign in is enabled - should be able to register w/o password
+    # With confirmable false - should be logged in automatically upon register.
+    # But shouldn't be able to perform normal login again
+    data = dict(email="trp@lp.com", password="")
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Welcome trp@lp.com" in response.data
+    logout(client)
+
+    # Make sure can't log in
+    response = authenticate(client, email="trp@lp.com", password="")
+    assert get_message("PASSWORD_NOT_PROVIDED") in response.data
+
+    response = authenticate(client, email="trp@lp.com", password="NoPassword")
+    assert get_message("INVALID_PASSWORD") in response.data
+
+
 @pytest.mark.settings(
     register_url="/custom_register", post_register_view="/post_register"
 )
@@ -127,7 +187,7 @@ def test_custom_register_url(client):
 
 
 @pytest.mark.settings(register_user_template="custom_security/register_user.html")
-def test_custom_register_tempalate(client):
+def test_custom_register_template(client):
     response = client.get("/register")
     assert b"CUSTOM REGISTER USER" in response.data
 

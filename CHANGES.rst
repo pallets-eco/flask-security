@@ -6,10 +6,11 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 3.4.0
 -------------
 
-Released TBD
+Released Target Feb 2020
 
 - (:issue:`99`, :issue:`195`) Support pluggable password validators. Provide a default
   validator that offers complexity and breached support.
+- (:pr:`257`) Support a unified sign in feature. Please see :ref:`unified-sign-in`.
 
 Version 3.3.2
 -------------

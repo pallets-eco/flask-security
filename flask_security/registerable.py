@@ -6,8 +6,11 @@
     Flask-Security registerable module
 
     :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
+import uuid
 
 from flask import current_app as app
 from werkzeug.local import LocalProxy
@@ -32,11 +35,20 @@ def register_user(registration_form):
 
     user_model_kwargs = registration_form.to_dict(only_user=True)
 
-    confirmation_link, token = None, None
+    if not user_model_kwargs["password"]:
+        # For no password - set an unguessable password.
+        # Since we still allow 'plaintext' as a password scheme - can't use a simple
+        # sentinel.
+        user_model_kwargs["password"] = "NoPassword-" + uuid.uuid4().hex
+
     user_model_kwargs["password"] = hash_password(user_model_kwargs["password"])
     user = _datastore.create_user(**user_model_kwargs)
+    # This has always been here - but should probably be removed since in all other
+    # cases we use a 'after_this_request(commit)'. Seems like this would break quart
+    # compat as well?
     _datastore.commit()
 
+    confirmation_link, token = None, None
     if _security.confirmable:
         confirmation_link, token = generate_confirmation_link(user)
         do_flash(*get_message("CONFIRM_REGISTRATION", email=user.email))

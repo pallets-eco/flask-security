@@ -7,7 +7,7 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -72,8 +72,6 @@ _default_field_labels = {
     "sendcode": _("Send Code"),
     "passcode": _("Passcode"),
 }
-
-_security = LocalProxy(lambda: current_app.extensions["security"])
 
 
 class ValidatorMixin(object):
@@ -227,11 +225,7 @@ class RegisterFormMixin:
         """
 
         def is_field_and_user_attr(member):
-
-            is_form_field = isinstance(member, Field)
-
-            # Not a form field, return False
-            if not is_form_field:
+            if not isinstance(member, Field):
                 return False
 
             # If only fields recorded on UserModel should be returned,
@@ -350,31 +344,70 @@ class LoginForm(Form, NextFormMixin):
         return True
 
 
-class ConfirmRegisterForm(
-    Form, RegisterFormMixin, UniqueEmailFormMixin, NewPasswordFormMixin
-):
+class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
+    """ This form is used for registering when 'confirmable' is set.
+    The only difference between this and the other RegisterForm is that
+    this one doesn't require re-typing in the password...
+    """
+
+    # Password optional when Unified Signin enabled.
+    password = PasswordField(
+        get_form_field_label("password"), validators=[validators.Optional()]
+    )
+
     def validate(self):
         if not super(ConfirmRegisterForm, self).validate():
             return False
 
-        # We do explicit validation here for passwords (rather than write a validator
-        # class) for 2 reasons:
-        # 1) We want to control which fields are passed - sometimes thats current_user
-        #    other times its the registration fields.
-        # 2) We want to be able to return multiple error messages.
-        rfields = {}
-        for k, v in self.data.items():
-            if hasattr(_datastore.user_model, k):
-                rfields[k] = v
-        del rfields["password"]
-        pbad = _security._password_validator(self.password.data, True, **rfields)
-        if pbad:
-            self.password.errors.extend(pbad)
-            return False
+        # To support unified sign in - we permit registering with no password.
+        if not config_value("UNIFIED_SIGNIN"):
+            # password required
+            if not self.password.data or not self.password.data.strip():
+                self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
+                return False
+
+        if self.password.data:
+            # We do explicit validation here for passwords
+            # (rather than write a validator class) for 2 reasons:
+            # 1) We want to control which fields are passed -
+            #    sometimes that's current_user
+            #    other times it's the registration fields.
+            # 2) We want to be able to return multiple error messages.
+            rfields = {}
+            for k, v in self.data.items():
+                if hasattr(_datastore.user_model, k):
+                    rfields[k] = v
+            del rfields["password"]
+            pbad = _security._password_validator(self.password.data, True, **rfields)
+            if pbad:
+                self.password.errors.extend(pbad)
+                return False
         return True
 
 
-class RegisterForm(ConfirmRegisterForm, PasswordConfirmFormMixin, NextFormMixin):
+class RegisterForm(ConfirmRegisterForm, NextFormMixin):
+
+    # Password optional when Unified Signin enabled.
+    password_confirm = PasswordField(
+        get_form_field_label("retype_password"),
+        validators=[
+            EqualTo("password", message="RETYPE_PASSWORD_MISMATCH"),
+            validators.Optional(),
+        ],
+    )
+
+    def validate(self):
+        if not super(RegisterForm, self).validate():
+            return False
+        if not config_value("UNIFIED_SIGNIN"):
+            # password_confirm required
+            if not self.password_confirm.data or not self.password_confirm.data.strip():
+                self.password_confirm.errors.append(
+                    get_message("PASSWORD_NOT_PROVIDED")[0]
+                )
+                return False
+        return True
+
     def __init__(self, *args, **kwargs):
         super(RegisterForm, self).__init__(*args, **kwargs)
         if not self.next.data:

@@ -134,15 +134,15 @@ def create_app():
             print("Created User: {} with password {}".format(test_acct, "password"))
 
     @user_registered.connect_via(app)
-    def on_user_registered(myapp, user, confirm_token):
+    def on_user_registered(myapp, user, confirm_token, **extra):
         flash("To confirm {} - go to /confirm/{}".format(user.email, confirm_token))
 
     @reset_password_instructions_sent.connect_via(app)
-    def on_reset(myapp, user, token):
+    def on_reset(myapp, user, token, **extra):
         flash("Go to /reset/{}".format(token))
 
     @tf_security_token_sent.connect_via(app)
-    def on_token_sent(myapp, user, token, method):
+    def on_token_sent(myapp, user, token, method, **extra):
         flash(
             "User {} was sent two factor token {} via {}".format(
                 user.calc_username(), token, method
@@ -150,7 +150,7 @@ def create_app():
         )
 
     @us_security_token_sent.connect_via(app)
-    def on_pl_token_sent(myapp, user, token, method):
+    def on_pl_token_sent(myapp, user, token, method, **extra):
         flash(
             "User {} was sent passwordless token {} via {}".format(
                 user.calc_username(), token, method

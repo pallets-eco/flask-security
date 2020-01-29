@@ -107,9 +107,11 @@ known limitations:
     * Limited and incomplete JSON support
     * Not enough documentation to use w/o looking at code
 
-Unified Sign In (beta)
------------------------
-**This feature is in Beta - mostly due to it being brand new and little to no production soaking**
+.. _unified-sign-in:
+
+Unified Sign In
+---------------
+**This feature is in Beta - mostly due to it being brand new and little to no production soak time**
 
 Unified sign in provides a generalized login endpoint that takes an `identity`
 and a `passcode`; where (based on configuration):
@@ -134,8 +136,19 @@ or "something you are" (biometric passcode to unlock your device).
 This effectively means that using a one-time code to sign in, is in fact already two-factor (if using
 SMS or authenticator app). Many large authentication providers already offer this - here is
 `Microsoft's`_ version.
-NOTE: currently the Two-Factor feature can not be used in
-conjunction with unified sign in feature - that will be an enhancement.
+
+Note that by configuring :py:data:`SECURITY_US_ENABLED_METHODS` an application can
+use this endpoint JUST with identity/password or in fact disallow passwords altogether.
+
+`Current Missing Functionality`:
+
+    * The Unified signin endpoint does not currently support 2FA. While this isn't really
+      important for SMS and authenticator authentication methods, it would be useful for
+      password and email confirmation methods.
+    * Change password does not work if a user registers without a password. However
+      forgot-password will allow the user to set a new password.
+    * Registration and Confirmation only work with email - so while you can enable multiple
+      authentication methods, you still have to register with email.
 
 Email Confirmation
 ------------------
@@ -189,6 +202,7 @@ Single Page Applications. More specifically
 JSON is supported for the following operations:
 
 * Login requests
+* Unigied signin requests
 * Registration requests
 * Change password requests
 * Confirmation requests

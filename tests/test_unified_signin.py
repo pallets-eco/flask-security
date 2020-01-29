@@ -22,7 +22,7 @@ import time
 
 import pytest
 from flask import Flask
-from utils import SmsTestSender, logout
+from utils import SmsTestSender, authenticate, logout
 
 from flask_security import (
     SmsSenderFactory,
@@ -30,7 +30,7 @@ from flask_security import (
     us_profile_changed,
     us_security_token_sent,
 )
-from flask_security.utils import capture_flashes
+from flask_security.utils import capture_flashes, capture_reset_password_requests
 
 try:
     from urlparse import parse_qsl, urlsplit
@@ -60,7 +60,7 @@ def capture_send_code_requests():
         us_security_token_sent.disconnect(_on)
 
 
-def authenticate(client, identity="matt@lp.com"):
+def us_authenticate(client, identity="matt@lp.com"):
     with capture_send_code_requests() as requests:
         response = client.post(
             "/us-send-code",
@@ -359,7 +359,7 @@ def test_verify_link_spa(app, client, get_message):
 
 
 def test_setup(app, client, get_message):
-    authenticate(client)
+    us_authenticate(client)
     response = client.get("us-setup")
     assert all(
         i in response.data
@@ -402,7 +402,7 @@ def test_setup_json(app, client_nc, get_message):
         assert method == "sms"
         assert user.us_phone_number == "650-555-1212"
 
-    token = authenticate(client_nc)
+    token = us_authenticate(client_nc)
     headers = {
         "Authentication-Token": token,
         "Accept": "application/json",
@@ -460,7 +460,7 @@ def test_setup_json(app, client_nc, get_message):
 
 def test_setup_bad_token(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
-    authenticate(client)
+    us_authenticate(client)
 
     # bogus state
     response = client.post(
@@ -481,7 +481,7 @@ def test_setup_bad_token(app, client, get_message):
 @pytest.mark.settings(us_setup_within="1 milliseconds")
 def test_setup_timeout(app, client, get_message):
     # Test setup timeout
-    authenticate(client)
+    us_authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     sms_sender = SmsSenderFactory.createSender("test")
@@ -537,7 +537,7 @@ def test_invalid_method(app, client, get_message):
 
 @pytest.mark.settings(us_enabled_methods=["sms", "email"])
 def test_invalid_method_setup(app, client, get_message):
-    authenticate(client)
+    us_authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     response = client.get("/us-setup", headers=headers)
@@ -566,7 +566,7 @@ def test_invalid_method_setup(app, client, get_message):
 def test_setup_new_totp(app, client, get_message):
     # us-setup has a 'generate new totp-secret' option
     # Verify that works (and existing codes no longer work)
-    authenticate(client)
+    us_authenticate(client)
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -610,7 +610,7 @@ def test_setup_new_totp(app, client, get_message):
 
 def test_qrcode(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
-    authenticate(client, identity="gal@lp.com")
+    us_authenticate(client, identity="gal@lp.com")
     response = client.post(
         "us-setup",
         data=json.dumps(dict(chosen_method="authenticator")),
@@ -694,3 +694,72 @@ def test_confirmable(app, client, get_message):
     # Verify not authenticated
     response = client.get("/profile", follow_redirects=False)
     assert "/login?next=%2Fprofile" in response.location
+
+
+@pytest.mark.registerable()
+@pytest.mark.recoverable()
+def test_can_add_password(app, client, get_message):
+    # Test that if register w/o a password, can use 'recover password' to assign one
+    data = dict(email="trp@lp.com", password="")
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Welcome trp@lp.com" in response.data
+    logout(client)
+
+    with capture_reset_password_requests() as requests:
+        client.post("/reset", data=dict(email="trp@lp.com"), follow_redirects=True)
+    token = requests[0]["token"]
+
+    response = client.post(
+        "/reset/" + token,
+        data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
+        follow_redirects=True,
+    )
+
+    assert get_message("PASSWORD_RESET") in response.data
+
+    # authenticate with new password using standard/old login endpoint.
+    response = authenticate(
+        client, "trp@lp.com", "awesome sunset", follow_redirects=True
+    )
+    assert b"Welcome trp@lp.com" in response.data
+
+    logout(client)
+    # authenticate with password and us-signin endpoint
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="trp@lp.com", passcode="awesome sunset"),
+        follow_redirects=True,
+    )
+    assert b"Welcome trp@lp.com" in response.data
+
+
+@pytest.mark.settings(
+    us_enabled_methods=["password"],
+    user_identity_attributes=["email", "us_phone_number"],
+)
+def test_regular_login(app, client, get_message):
+    # If "password" in methods - then should be able to login with good-ol
+    # login/password
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="matt@lp.com", passcode="password", remember=True),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert "remember_token" in [c.name for c in client.cookie_jar]
+
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(
+    us_enabled_methods=["sms"], user_identity_attributes=["email", "us_phone_number"]
+)
+def test_regular_login_disallowed(app, client, get_message):
+    # If "password" not in methods - then should not be able to use password
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="matt@lp.com", passcode="password", remember=True),
+        follow_redirects=True,
+    )
+    assert get_message("INVALID_PASSWORD") in response.data

@@ -848,11 +848,13 @@ Unified Signin
 .. py:data:: SECURITY_US_VERIFY_LINK_URL
 
     This endpoint handles the 'magic link' that is sent when the user requests a code
-    via email. It is mostly just accessed via a ``GET`` from a email reader.
+    via email. It is mostly just accessed via a ``GET`` from an email reader.
 
     Default: ``"/us-verify-link"``
 
 .. py:data:: SECURITY_US_QRCODE_URL
+
+    Used to generate and return a QRcode that can be used to intialize an authenticator app.
 
     Default: ``"/us-qrcode"``
 
@@ -875,8 +877,10 @@ Unified Signin
 .. py:data:: SECURITY_US_ENABLED_METHODS
 
     Specifies the default enabled methods for unified sign in authentication.
+    Be aware that ``password`` only affects this ``SECURITY_US_SIGNIN_URL`` endpoint.
+    Removing it from here won't stop users from using the ``SECURITY_LOGIN_URL`` endpoint.
 
-    Default: ``["email", "authenticator", "sms"]`` - which are the only supported options.
+    Default: ``["password", "email", "authenticator", "sms"]`` - which are the only supported options.
 
 .. py:data:: SECURITY_US_TOKEN_VALIDITY
 
@@ -902,8 +906,8 @@ Additional relevant configuration variables:
       used for identity.
     * :py:data:`SECURITY_USER_IDENTITY_MAPPINGS` - Defines the order and methods for parsing identity.
     * :py:data:`SECURITY_DEFAULT_REMEMBER_ME`
-    * :py:data:`SECURITY_SMS_SERVICE_CONFIG`
     * :py:data:`SECURITY_SMS_SERVICE` - When SMS is enabled in :py:data:`SECURITY_US_ENABLED_METHODS`
+    * :py:data:`SECURITY_SMS_SERVICE_CONFIG`
     * :py:data:`SECURITY_TOTP_SECRETS`
     * :py:data:`SECURITY_TOTP_ISSUER`
     * :py:data:`SECURITY_LOGIN_ERROR_VIEW` - The user is redirected here if
