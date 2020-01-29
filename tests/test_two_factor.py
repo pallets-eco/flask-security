@@ -5,7 +5,7 @@
 
     two_factor tests
 
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -19,6 +19,7 @@ import pytest
 
 from utils import SmsTestSender, authenticate, get_session, logout
 from flask_principal import identity_changed
+from flask_security.signals import reset_password_instructions_sent
 from flask_security.utils import SmsSenderFactory, capture_flashes
 
 pytestmark = pytest.mark.two_factor()
@@ -536,6 +537,43 @@ def test_opt_in(app, client):
     assert "tf_state" not in session
     # Jill is 4th user to be added in utils.py
     assert signalled_identity[0] == 4
+
+
+@pytest.mark.recoverable()
+@pytest.mark.settings(two_factor_required=True)
+def test_recoverable(app, client, get_message):
+    # make sure 'forgot password' doesn't bypass 2FA.
+    # 'gal@lp.com' already setup for SMS
+
+    rtokens = []
+    sms_sender = SmsSenderFactory.createSender("test")
+
+    @reset_password_instructions_sent.connect_via(app)
+    def on_instructions_sent(sapp, **kwargs):
+        rtokens.append(kwargs["token"])
+
+    client.post("/reset", data=dict(email="gal@lp.com"), follow_redirects=True)
+    response = client.post(
+        "/reset/" + rtokens[0],
+        data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
+        follow_redirects=True,
+    )
+    # Should have redirected us to the 2FA login page
+    assert b"Please enter your authentication code" in response.data
+
+    # we shouldn't be logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 302
+
+    # Grab code that was sent
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"Your token has been confirmed" in response.data
+
+    # verify we are logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
 
 
 @pytest.mark.settings(two_factor_required=True)

@@ -547,6 +547,11 @@ def reset_password(token):
     if form.validate_on_submit():
         after_this_request(_commit)
         update_password(user, form.password.data)
+        if config_value("TWO_FACTOR") and (
+            config_value("TWO_FACTOR_REQUIRED")
+            or (form.user.tf_totp_secret and form.user.tf_primary_method)
+        ):
+            return _two_factor_login(form)
         login_user(user)
         if _security._want_json(request):
             login_form = _security.login_form(MultiDict({"email": user.email}))
