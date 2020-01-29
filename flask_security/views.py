@@ -717,7 +717,7 @@ def two_factor_setup():
 
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
-        if len(form.data["phone"]) > 0:
+        if "phone" in form.data and len(form.data["phone"]) > 0:
             user.tf_phone_number = form.data["phone"]
         _datastore.put(user)
         after_this_request(_commit)

@@ -401,7 +401,7 @@ def test_no_opt_out(app, client):
     )
     assert b"You successfully confirmed password" in response.data
 
-    response = client.get("/tf_setup", follow_redirects=True)
+    response = client.get("/tf-setup", follow_redirects=True)
     assert b"Disable two factor" not in response.data
 
     # Try to opt-out
@@ -651,6 +651,24 @@ def test_totp_secret_generation(app, client):
     logout(client)
     assert not signalled_identity[0]
     del signalled_identity[:]
+
+
+@pytest.mark.settings(two_factor_enabled_methods=["authenticator"])
+def test_just_authenticator(app, client):
+    authenticate(client, email="jill@lp.com")
+    password = "password"
+    client.post("/tf-confirm", data=dict(password=password), follow_redirects=True)
+
+    response = client.get("/tf-setup", follow_redirects=True)
+    assert b"Set up using SMS" not in response.data
+
+    data = dict(setup="authenticator")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"Submit Code" in response.data
+
+    # test json
+    response = client.post("/tf-setup", json=data)
+    assert response.status_code == 200
 
 
 @pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("username", "email"))
