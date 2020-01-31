@@ -6,7 +6,7 @@
     Lots of tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -43,6 +43,7 @@ from flask_security.utils import (
     hash_data,
     send_mail,
     string_types,
+    uia_phone_mapper,
     verify_hash,
 )
 
@@ -635,3 +636,21 @@ def test_method_view(app, client):
     response = client.get("/myview")
     assert response.status_code == 200
     assert b"Hi view" in response.data
+
+
+def test_phone_util_override(app):
+    class MyPhoneUtil(object):
+        def validate_phone_number(self, input_data):
+            return "call-me"
+
+        def get_canonical_form(self, input_data):
+            return "very-canonical"
+
+    app.security = Security()
+    app.security.init_app(app, phone_util_cls=MyPhoneUtil)
+
+    with app.app_context():
+        client = app.test_client()
+        # trigger @before first request
+        client.get("/login")
+        assert uia_phone_mapper("55") == "very-canonical"

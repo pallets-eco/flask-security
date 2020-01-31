@@ -180,7 +180,7 @@ class UnifiedSigninForm(Form):
                 return False
             if self.chosen_method.data == "sms" and not self.user.us_phone_number:
                 # They need to us-setup!
-                self.chosen_method.errors.append(get_message("US_PHONE_REQUIRED")[0])
+                self.chosen_method.errors.append(get_message("PHONE_INVALID")[0])
                 return False
             return True
         return False  # pragma: no cover
@@ -218,9 +218,9 @@ class UnifiedSigninSetupForm(Form):
             return False
 
         if self.chosen_method.data == "sms":
-            # XXX use phone validator
-            if self.phone.data is None or len(self.phone.data) == 0:
-                self.phone.errors.append(get_message("US_PHONE_REQUIRED")[0])
+            msg = _security._phone_util.validate_phone_number(self.phone.data)
+            if msg:
+                self.phone.errors.append(msg)
                 return False
 
         return True
@@ -449,7 +449,7 @@ def us_setup():
         state = {
             "totp_secret": totp,
             "chosen_method": form.chosen_method.data,
-            "phone_number": form.phone.data,
+            "phone_number": _security._phone_util.get_canonical_form(form.phone.data),
         }
         send_security_token(
             user=current_user,

@@ -129,6 +129,9 @@ Utils
 .. autoclass:: flask_security.Totp
   :members: get_last_counter, set_last_counter
 
+.. autoclass:: flask_security.PhoneUtil
+  :members:
+
 .. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms
 
@@ -139,6 +142,11 @@ Signals
 -------
 See the `Flask documentation on signals`_ for information on how to use these
 signals in your code.
+
+.. tip::
+
+    Remember to add ``**extra_args`` to your signature so that if we add
+    additional parameters in the future your code doesn't break.
 
 See the documentation for the signals provided by the Flask-Login and
 Flask-Principal extensions. In addition to those signals, Flask-Security

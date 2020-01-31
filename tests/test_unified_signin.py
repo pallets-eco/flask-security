@@ -369,10 +369,17 @@ def test_setup(app, client, get_message):
     # test missing phone
     response = client.post("us-setup", data=dict(chosen_method="sms", phone=""))
     assert response.status_code == 200
-    assert get_message("US_PHONE_REQUIRED") in response.data
+    assert get_message("PHONE_INVALID") in response.data
+
+    # test invalid phone
+    response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
+    assert response.status_code == 200
+    assert get_message("PHONE_INVALID") in response.data
 
     sms_sender = SmsSenderFactory.createSender("test")
-    response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
+    response = client.post(
+        "us-setup", data=dict(chosen_method="sms", phone="650-555-1212")
+    )
     assert response.status_code == 200
     assert b"Submit Code" in response.data
     matcher = re.match(
@@ -400,7 +407,7 @@ def test_setup_json(app, client_nc, get_message):
     @us_profile_changed.connect_via(app)
     def pc(sender, user, method):
         assert method == "sms"
-        assert user.us_phone_number == "650-555-1212"
+        assert user.us_phone_number == "+16505551212"
 
     token = us_authenticate(client_nc)
     headers = {
@@ -436,15 +443,15 @@ def test_setup_json(app, client_nc, get_message):
     )
     assert response.status_code == 200
     assert response.jdata["response"]["chosen_method"] == "sms"
-    assert response.jdata["response"]["phone"] == "650-555-1212"
+    assert response.jdata["response"]["phone"] == "+16505551212"
 
-    # now login with phone
+    # now login with phone - send in different format than we set up with.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
         "/us-send-code",
-        data=json.dumps(dict(identity="650-555-1212", chosen_method="sms")),
+        data=json.dumps(dict(identity="6505551212", chosen_method="sms")),
         headers=headers,
     )
     assert response.status_code == 200
@@ -487,7 +494,7 @@ def test_setup_timeout(app, client, get_message):
     sms_sender = SmsSenderFactory.createSender("test")
     response = client.post(
         "us-setup",
-        data=json.dumps(dict(chosen_method="sms", phone="555-1212")),
+        data=json.dumps(dict(chosen_method="sms", phone="650-555-1212")),
         headers=headers,
     )
     assert response.status_code == 200
@@ -574,7 +581,7 @@ def test_setup_new_totp(app, client, get_message):
     sms_sender = SmsSenderFactory.createSender("test")
     response = client.post(
         "us-setup",
-        data=json.dumps(dict(chosen_method="sms", phone="555-1212")),
+        data=json.dumps(dict(chosen_method="sms", phone="650-555-1212")),
         headers=headers,
     )
     assert response.status_code == 200
@@ -586,7 +593,7 @@ def test_setup_new_totp(app, client, get_message):
     response = client.post(
         "us-setup",
         data=json.dumps(
-            dict(chosen_method="sms", phone="555-1212", new_totp_secret=True)
+            dict(chosen_method="sms", phone="650-555-1212", new_totp_secret=True)
         ),
         headers=headers,
     )
@@ -605,7 +612,7 @@ def test_setup_new_totp(app, client, get_message):
     )
     assert response.status_code == 200
     assert response.jdata["response"]["chosen_method"] == "sms"
-    assert response.jdata["response"]["phone"] == "555-1212"
+    assert response.jdata["response"]["phone"] == "+16505551212"
 
 
 def test_qrcode(app, client, get_message):

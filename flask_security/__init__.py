@@ -7,7 +7,7 @@
     security via Flask-Login, Flask-Principal, Flask-WTF, and passlib.
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner.
+    :copyright: (c) 2019-2020 by J. Christopher Wagner.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -49,6 +49,7 @@ from .forms import (
     TwoFactorVerifyCodeForm,
     TwoFactorVerifyPasswordForm,
 )
+from .phone_util import PhoneUtil
 from .signals import (
     confirm_instructions_sent,
     login_instructions_sent,
@@ -64,12 +65,12 @@ from .signals import (
     user_confirmed,
     user_registered,
 )
+from .totp import Totp
 from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
     UnifiedSigninSetupVerifyForm,
 )
-from .totp import Totp
 from .utils import (
     FsJsonEncoder,
     SmsSenderBaseClass,

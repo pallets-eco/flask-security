@@ -266,7 +266,7 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_USER_IDENTITY_MAPPINGS
 
     Defines the order and matching that will be applied when validating the
-    (unified/passwordless) login form. This form has a single ``identity`` field
+    unified sign in form. This form has a single ``identity`` field
     that is parsed using the information below - the FIRST match will then be
     used to look up the user in the DB.
 
@@ -354,6 +354,16 @@ These are used by the Two-Factor and Unified Signin features.
 
     .. versionadded:: 3.4.0
 
+.. py:data:: SECURITY_PHONE_REGION_DEFAULT
+
+    Assigns a default 'region' for phone numbers used for two-factor or
+    unified sign in. All other phone numbers will require a region prefix to
+    be accepted.
+
+    Default: ``US``
+
+    .. versionadded:: 3.4.0
+
 Core - rarely need changing
 ----------------------------
 
@@ -419,7 +429,8 @@ Core - rarely need changing
 
     Specifies whether to set the ``UserModel.roles`` loading relationship to ``joined`` when a ``roles`` attribute
     is present for a SQLAlchemy Datastore. Setting this to ``False`` restores pre 3.3.0 behavior and is required if the ``roles`` attribute
-    is not a joinable attribute on the ``UserModel``
+    is not a joinable attribute on the ``UserModel``. The default setting improves performance by only requiring a single
+    DB call.
 
     Default: ``True``.
 
@@ -910,6 +921,7 @@ Additional relevant configuration variables:
     * :py:data:`SECURITY_SMS_SERVICE_CONFIG`
     * :py:data:`SECURITY_TOTP_SECRETS`
     * :py:data:`SECURITY_TOTP_ISSUER`
+    * :py:data:`SECURITY_PHONE_REGION_DEFAULT`
     * :py:data:`SECURITY_LOGIN_ERROR_VIEW` - The user is redirected here if
       :py:data:`SECURITY_US_VERIFY_LINK_URL` has an error and the request is json and
       :py:data:`SECURITY_REDIRECT_BEHAVIOR` equals ``"spa"``.
@@ -1070,6 +1082,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_PASSWORD_RESET_EXPIRED``
 * ``SECURITY_MSG_PASSWORD_RESET_REQUEST``
 * ``SECURITY_MSG_PASSWORD_TOO_SIMPLE``
+* ``SECURITY_MSG_PHONE_INVALID``
 * ``SECURITY_MSG_REFRESH``
 * ``SECURITY_MSG_RETYPE_PASSWORD_MISMATCH``
 * ``SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN``
@@ -1083,7 +1096,6 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_UNAUTHORIZED``
 * ``SECURITY_MSG_UNAUTHENTICATED``
 * ``SECURITY_MSG_US_METHOD_NOT_AVAILABLE``
-* ``SECURITY_MSG_US_PHONE_REQUIRED``
 * ``SECURITY_MSG_US_SETUP_EXPIRED``
 * ``SECURITY_MSG_US_SETUP_SUCCESSFUL``
 * ``SECURITY_MSG_US_SPECIFY_IDENTITY``
