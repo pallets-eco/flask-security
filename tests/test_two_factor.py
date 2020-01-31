@@ -309,7 +309,7 @@ def test_two_factor_flag(app, client):
 
     # check appearence of setup page when sms picked and phone number entered
     sms_sender = SmsSenderFactory.createSender("test")
-    data = dict(setup="sms", phone="+111111111111")
+    data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"To Which Phone Number Should We Send Code To" in response.data
     assert sms_sender.get_count() == 1
@@ -470,7 +470,7 @@ def test_opt_in(app, client):
 
     # opt-in for SMS 2FA - but we haven't re-verified password
     sms_sender = SmsSenderFactory.createSender("test")
-    data = dict(setup="sms", phone="+111111111111")
+    data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     message = b"You currently do not have permissions to access this page"
     assert message in response.data
@@ -480,7 +480,7 @@ def test_opt_in(app, client):
     response = client.post(
         "/tf-confirm", data=dict(password=password), follow_redirects=True
     )
-    data = dict(setup="sms", phone="+111111111111")
+    data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"To Which Phone Number Should We Send Code To" in response.data
     assert sms_sender.get_count() == 1
@@ -589,7 +589,7 @@ def test_datastore(app, client):
     assert session["tf_state"] == "setup_from_login"
 
     # setup
-    data = dict(setup="sms", phone="+111111111111")
+    data = dict(setup="sms", phone="+442083661177")
     response = client.post(
         "/tf-setup", data=json.dumps(data), headers={"Content-Type": "application/json"}
     )
@@ -611,7 +611,7 @@ def test_datastore(app, client):
     with app.app_context():
         user = app.security.datastore.find_user(email="gene@lp.com")
         assert user.tf_primary_method == "sms"
-        assert user.tf_phone_number == "+111111111111"
+        assert user.tf_phone_number == "+442083661177"
         assert "enckey" in user.tf_totp_secret
 
 
@@ -641,8 +641,8 @@ def test_totp_secret_generation(app, client):
     response = client.post(
         "/tf-confirm", data=dict(password=password), follow_redirects=True
     )
-    # Select sms method but do not send a phone number just yet (regenerates secret)
-    data = dict(setup="sms")
+    # Select sms method (regenerates secret)
+    data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"To Which Phone Number Should We Send Code To" in response.data
 
@@ -656,8 +656,8 @@ def test_totp_secret_generation(app, client):
             generated_secret = user.tf_totp_secret
     assert "enckey" in generated_secret
 
-    # Send the phone number in the second step, method remains unchanged
-    data = dict(setup="sms", phone="+111111111111")
+    # Send a new phone number in the second step, method remains unchanged
+    data = dict(setup="sms", phone="+442083661188")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]

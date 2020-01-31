@@ -43,6 +43,7 @@ from .forms import (
     TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
 )
+from .phone_util import PhoneUtil
 from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
@@ -206,6 +207,7 @@ _default_config = {
         {"email": uia_email_mapper},
         {"us_phone_number": uia_phone_mapper},
     ],
+    "PHONE_REGION_DEFAULT": "US",
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
     "DATETIME_FACTORY": datetime.utcnow,
@@ -330,6 +332,7 @@ _default_messages = {
         _("Failed to contact breached passwords site"),
         "error",
     ),
+    "PHONE_INVALID": (_("Phone number not valid e.g. missing country code"), "error"),
     "USER_DOES_NOT_EXIST": (_("Specified user does not exist"), "error"),
     "INVALID_PASSWORD": (_("Invalid password"), "error"),
     "PASSWORDLESS_LOGIN_SUCCESSFUL": (_("You have successfully logged in."), "success"),
@@ -376,7 +379,6 @@ _default_messages = {
         "success",
     ),
     "US_METHOD_NOT_AVAILABLE": (_("Requested method is not valid"), "error"),
-    "US_PHONE_REQUIRED": (_("Phone number required"), "error"),
     "US_SETUP_EXPIRED": (
         _("Setup must be completed within %(within)s. Please start over."),
         "error",
@@ -935,14 +937,20 @@ class Security(object):
     :param json_encoder_cls: Class to use as blueprint.json_encoder.
      Defaults to :class:`FsJsonEncoder`
     :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
+    :param phone_util_cls: Class to use for phone number utilities.
+     Defaults to :class:`PhoneUtil`
 
     .. versionchanged:: 3.4.0
         ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form`` added as part of
         the :ref:`unified-sign-in` feature.
 
     .. versionchanged:: 3.4.0
-        ``totp_cls`` added to enable application to implement replay protection - see
+        ``totp_cls`` added to enable applications to implement replay protection - see
         :py:class:`Totp`.
+
+    .. versionchanged:: 3.4.0
+        ``phone_util_cls`` added to allow different phone number
+         parsing implementations - see :py:class:`PhoneUtil`
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -983,6 +991,8 @@ class Security(object):
             kwargs.setdefault("json_encoder_cls", FsJsonEncoder)
         if "totp_cls" not in kwargs:
             kwargs.setdefault("totp_cls", Totp)
+        if "phone_util_cls" not in kwargs:
+            kwargs.setdefault("phone_util_cls", PhoneUtil)
 
         for key, value in _default_config.items():
             app.config.setdefault("SECURITY_" + key, value)
@@ -1063,6 +1073,10 @@ class Security(object):
                 # Add configured header to WTF_CSRF_HEADERS
                 current_app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))
 
+        @app.before_first_request
+        def _init_phone_util():
+            state._phone_util = state.phone_util_cls()
+
         app.extensions["security"] = state
 
         if hasattr(app, "cli"):
@@ -1101,6 +1115,11 @@ class Security(object):
             sms_service = cv("SMS_SERVICE", app=app)
             if sms_service == "Twilio":  # pragma: no cover
                 self._check_modules("twilio", "TWO_FACTOR or UNIFIED_SIGNIN")
+            if (
+                "sms" in cv("US_ENABLED_METHODS", app=app)
+                or "sms" in cv("TWO_FACTOR_ENABLED_METHODS", app=app)
+            ) and state.phone_util_cls == PhoneUtil:
+                self._check_modules("phonenumbers", "SMS")
 
             secrets = cv("TOTP_SECRETS", app=app)
             issuer = cv("TOTP_ISSUER", app=app)

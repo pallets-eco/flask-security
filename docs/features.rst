@@ -140,7 +140,7 @@ SMS or authenticator app). Many large authentication providers already offer thi
 Note that by configuring :py:data:`SECURITY_US_ENABLED_METHODS` an application can
 use this endpoint JUST with identity/password or in fact disallow passwords altogether.
 
-`Current Missing Functionality`:
+`Current Limited Functionality`:
 
     * The Unified signin endpoint does not currently support 2FA. While this isn't really
       important for SMS and authenticator authentication methods, it would be useful for

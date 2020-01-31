@@ -490,6 +490,9 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
         super(TwoFactorSetupForm, self).__init__(*args, **kwargs)
 
     def validate(self):
+        # TODO: the super class validate is never called - thus we have to
+        # initialize errors to lists below. It also means that 'email' is never
+        # validated - though it isn't required so the mixin might not be correct.
         choices = config_value("TWO_FACTOR_ENABLED_METHODS")
         if not config_value("TWO_FACTOR_REQUIRED"):
             choices.append("disable")
@@ -497,6 +500,12 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
             self.setup.errors = list()
             self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
             return False
+        if self.setup.data == "sms":
+            msg = _security._phone_util.validate_phone_number(self.phone.data)
+            if msg:
+                self.phone.errors = list()
+                self.phone.errors.append(msg)
+                return False
 
         return True
 

@@ -6,7 +6,7 @@
     Flask-Security utils module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import abc
@@ -14,7 +14,6 @@ import base64
 from functools import partial
 import hashlib
 import hmac
-import re
 import sys
 import warnings
 from contextlib import contextmanager
@@ -592,22 +591,21 @@ def get_identity_attributes(app=None):
 
 
 def uia_phone_mapper(identity):
-    """ Used to match identity as a phone number.
-    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`
+    """ Used to match identity as a phone number. This is a simple proxy
+    to :py:class:`PhoneUtil`
+
+    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
 
     .. versionadded:: 3.4.0
     """
-    matcher = re.match(
-        r"(\+?\d[-.\s]?)?(\(\d{3}\)\s?|\d{3}[-.\s]?)\d{3}[-.\s]?\d{4}", identity
-    )
-    if matcher:
-        return identity
-    return None
+    ph = _security._phone_util.get_canonical_form(identity)
+    return ph
 
 
 def uia_email_mapper(identity):
     """ Used to match identity as an email.
-    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`
+
+    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
 
     .. versionadded:: 3.4.0
     """
@@ -928,7 +926,7 @@ def password_length_validator(password):
 
     :param password: Plain text password to check
 
-    :return: None if password conforms to length requirements,
+    :return: ``None`` if password conforms to length requirements,
      a list of error/suggestions if not.
 
     .. versionadded:: 3.4.0
@@ -955,7 +953,7 @@ def password_complexity_validator(password, is_register, **kwargs):
         sent to the complexity checker.
     :param kwargs:
 
-    :return: None if password is complex enough, a list of error/suggestions if not.
+    :return: ``None`` if password is complex enough, a list of error/suggestions if not.
         Be aware that zxcvbn does not (easily) provide a way to localize messages.
 
     .. versionadded:: 3.4.0
@@ -988,12 +986,14 @@ def password_complexity_validator(password, is_register, **kwargs):
 
 
 def password_breached_validator(password):
-    """ Check if password on breached list
+    """ Check if password on breached list.
+    Does nothing unless :py:data:`SECURITY_PASSWORD_CHECK_BREACHED` is set.
+    If password is found on the breached list, return an error if the count is
+    greater than or equal to :py:data:`SECURITY_PASSWORD_BREACHED_COUNT`.
 
     :param password: Plain text password to check
 
-    :return: None if password conforms to length requirements,
-     a list of error/suggestions if not.
+    :return: ``None`` if password passes breached tests, else a list of error messages.
 
     .. versionadded:: 3.4.0
     """
@@ -1014,7 +1014,7 @@ def default_password_validator(password, is_register, **kwargs):
     Password validation.
     Called in app/request context.
 
-    N.B. do not call this directly - use security._default_password_validator
+    N.B. do not call this directly - use security._password_validator
     """
     notok = password_length_validator(password)
     if notok:

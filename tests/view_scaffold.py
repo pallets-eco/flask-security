@@ -2,7 +2,7 @@
 # :license: MIT, see LICENSE for more details.
 
 """
-This is simple scaffold that can be run as an app and manually test
+This is a simple scaffold that can be run as an app and manually test
 various views using a browser.
 It can be used to test translations by adding ?lang=xx. You might need to
 delete the session cookie if you need to switch between languages (it is easy to
@@ -15,7 +15,6 @@ Runs on port 5001
 An initial user: test@test.com/password is created.
 If you want to register a new user - you will receive a 'flash' that has the
 confirm URL (with token) you need to enter into your browser address bar.
-
 
 Since we don't actually send email - we have signal handlers flash the required
 data and a mail sender that flashes what mail would be sent!
