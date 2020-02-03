@@ -276,6 +276,22 @@ def test_permissions_strings(app, datastore):
         assert {"read", "write"} == t1.get_permissions()
 
 
+def test_permissions_iter(app, datastore):
+    # Test permissions as an interable
+    ds = datastore
+    if not hasattr(ds.role_model, "permissions"):
+        return
+    init_app_with_options(app, ds)
+
+    with app.app_context():
+        perms = ["read", "write"]
+        ds.create_role(name="test1", permissions=perms)
+        ds.commit()
+
+        t1 = ds.find_role("test1")
+        assert {"read", "write"} == t1.get_permissions()
+
+
 def test_modify_permissions(app, datastore):
     ds = datastore
     if not hasattr(ds.role_model, "permissions"):
