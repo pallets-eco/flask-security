@@ -6,13 +6,20 @@
     Flask-Security two_factor module
 
     :copyright: (c) 2016 by Gal Stainfeld, at Emedgene
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
 """
 
-from flask import current_app as app, session
+from flask import current_app as app, redirect, request, session
+from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
 
-from .utils import config_value, SmsSenderFactory, login_user
+from .utils import (
+    SmsSenderFactory,
+    base_render_json,
+    config_value,
+    login_user,
+    url_for_security,
+)
 from .signals import (
     tf_code_confirmed,
     tf_disabled,
@@ -41,15 +48,16 @@ def tf_clean_session():
             session.pop(k, None)
 
 
-def send_security_token(user, method, totp_secret):
+def send_security_token(user, method, totp_secret, phone_number):
     """Sends the security token via email/sms for the specified user.
     :param user: The user to send the code to
     :param method: The method in which the code will be sent
-                ('mail' or 'sms', or 'authenticator') at the moment
+                ('email' or 'sms', or 'authenticator') at the moment
     :param totp_secret: a unique shared secret of the user
+    :param phone_number: If 'sms' phone number to send to
     """
     token_to_be_sent = _security._totp_factory.generate_totp_password(totp_secret)
-    if method == "mail":
+    if method == "email" or method == "mail":
         _security._send_mail(
             config_value("EMAIL_SUBJECT_TWO_FACTOR"),
             user.email,
@@ -61,7 +69,7 @@ def send_security_token(user, method, totp_secret):
     elif method == "sms":
         msg = "Use this code to log in: %s" % token_to_be_sent
         from_number = config_value("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
-        to_number = user.tf_phone_number
+        to_number = phone_number
         sms_sender = SmsSenderFactory.createSender(config_value("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=msg)
 
@@ -114,3 +122,60 @@ def tf_disable(user):
     user.tf_totp_secret = None
     _datastore.put(user)
     tf_disabled.send(app._get_current_object(), user=user)
+
+
+def is_tf_setup(user):
+    """ Return True is user account is setup for 2FA. """
+    return user.tf_totp_secret and user.tf_primary_method
+
+
+def tf_login(user, remember=None, primary_authn_via=None):
+    """ Helper for two-factor authentication login
+
+    This is called only when login/password have already been validated.
+    This can be from login, register, and/or confirm.
+
+    The result of this is either sending a 2FA token OR starting setup for new user.
+    In either case we do NOT log in user, so we must store some info in session to
+    track our state (including what user).
+    """
+
+    # on initial login clear any possible state out - this can happen if on same
+    # machine log in  more than once since for 2FA you are not authenticated
+    # until complete 2FA.
+    tf_clean_session()
+
+    session["tf_user_id"] = user.id
+    if "remember":
+        session["tf_remember_login"] = remember
+
+    # Set info into form for JSON response
+    json_response = {"tf_required": True}
+    # if user's two-factor properties are not configured
+    if user.tf_primary_method is None or user.tf_totp_secret is None:
+        session["tf_state"] = "setup_from_login"
+        json_response["tf_state"] = "setup_from_login"
+        if not _security._want_json(request):
+            return redirect(url_for_security("two_factor_setup"))
+
+    # if user's two-factor properties are configured
+    else:
+        session["tf_state"] = "ready"
+        json_response["tf_state"] = "ready"
+        json_response["tf_primary_method"] = user.tf_primary_method
+
+        send_security_token(
+            user=user,
+            method=user.tf_primary_method,
+            totp_secret=user.tf_totp_secret,
+            phone_number=user.tf_phone_number,
+        )
+
+        if not _security._want_json(request):
+            return redirect(url_for_security("two_factor_token_validation"))
+
+    # Fake up a form - doesn't really matter which.
+    form = _security.login_form(MultiDict([]))
+    form.user = user
+
+    return base_render_json(form, include_user=False, additional=json_response)

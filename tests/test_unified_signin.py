@@ -22,13 +22,15 @@ import time
 
 import pytest
 from flask import Flask
-from utils import SmsTestSender, authenticate, logout
+from utils import SmsBadSender, SmsTestSender, authenticate, logout
 
 from flask_security import (
     SmsSenderFactory,
+    SQLAlchemyUserDatastore,
     UserMixin,
     us_profile_changed,
     us_security_token_sent,
+    user_authenticated,
 )
 from flask_security.utils import capture_flashes, capture_reset_password_requests
 
@@ -40,6 +42,7 @@ except ImportError:  # pragma: no cover
 pytestmark = pytest.mark.unified_signin()
 
 SmsSenderFactory.senders["test"] = SmsTestSender
+SmsSenderFactory.senders["bad"] = SmsBadSender
 
 
 @contextmanager
@@ -79,6 +82,7 @@ def us_authenticate(client, identity="matt@lp.com"):
 
 
 def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
+    # A quick way to 'setup' SMS
     with app.test_request_context("/"):
         user = app.security.datastore.find_user(email=email)
         user.us_phone_number = phone
@@ -87,6 +91,12 @@ def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
 
 
 def test_simple_login(app, client, get_message):
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    def authned(myapp, user, **extra_args):
+        auths.append((user.email, extra_args["authn_via"]))
+
     # Test missing choice
     data = dict(identity="matt@lp.com")
     response = client.post("/us-send-code", data=data, follow_redirects=True)
@@ -132,6 +142,7 @@ def test_simple_login(app, client, get_message):
         follow_redirects=False,
     )
     assert "remember_token" not in [c.name for c in client.cookie_jar]
+    assert "email" in auths[0][1]
 
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
@@ -159,6 +170,7 @@ def test_simple_login(app, client, get_message):
     )
     assert response.status_code == 200
     assert "remember_token" in [c.name for c in client.cookie_jar]
+    assert "sms" in auths[1][1]
 
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
@@ -168,6 +180,12 @@ def test_simple_login(app, client, get_message):
 
 
 def test_simple_login_json(app, client_nc, get_message):
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    def authned(myapp, user, **extra_args):
+        auths.append((user.email, extra_args["authn_via"]))
+
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     with capture_flashes() as flashes:
@@ -221,6 +239,7 @@ def test_simple_login_json(app, client_nc, get_message):
         )
         assert response.status_code == 200
         assert "authentication_token" in response.jdata["response"]["user"]
+        assert "email" in auths[0][1]
 
         logout(client_nc)
         response = client_nc.get("/profile", headers=headers, follow_redirects=False)
@@ -250,6 +269,12 @@ def test_simple_login_json(app, client_nc, get_message):
 
 
 def test_verify_link(app, client, get_message):
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    def authned(myapp, user, **extra_args):
+        auths.append((user.email, extra_args["authn_via"]))
+
     with app.mail.record_messages() as outbox:
         response = client.post(
             "/us-send-code",
@@ -285,6 +310,7 @@ def test_verify_link(app, client, get_message):
     # Try actual link
     response = client.get(magic_link, follow_redirects=True)
     assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
+    assert "email" in auths[0][1]
 
     # verify logged in
     response = client.get("/profile", follow_redirects=False)
@@ -587,7 +613,7 @@ def test_setup_new_totp(app, client, get_message):
     assert response.status_code == 200
     code = sms_sender.messages[0].split()[-1].strip(".")
 
-    # Now send correct value - this should generatea new totp - so the previous 'code'
+    # Now send correct value - this should generate new totp - so the previous 'code'
     # should no longer work
     sms_sender2 = SmsSenderFactory.createSender("test")
     response = client.post(
@@ -747,6 +773,12 @@ def test_can_add_password(app, client, get_message):
 def test_regular_login(app, client, get_message):
     # If "password" in methods - then should be able to login with good-ol
     # login/password
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    def authned(myapp, user, **extra_args):
+        auths.append((user.email, extra_args["authn_via"]))
+
     response = client.post(
         "/us-signin",
         data=dict(identity="matt@lp.com", passcode="password", remember=True),
@@ -754,6 +786,7 @@ def test_regular_login(app, client, get_message):
     )
     assert response.status_code == 200
     assert "remember_token" in [c.name for c in client.cookie_jar]
+    assert "password" in auths[0][1]
 
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
@@ -770,3 +803,178 @@ def test_regular_login_disallowed(app, client, get_message):
         follow_redirects=True,
     )
     assert get_message("INVALID_PASSWORD") in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(two_factor_required=True)
+def test_tf(app, client, get_message):
+    # Test basic two-factor - default for signing in with password.
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="matt@lp.com", passcode="password", remember=True),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    message = b"Two-factor authentication adds an extra layer of security"
+    assert message in response.data
+    assert b"Set up using SMS" in response.data
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="+442083661177")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"To Which Phone Number Should We Send Code To" in response.data
+    code = sms_sender.messages[0].split()[-1]
+
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"Your token has been confirmed" in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(two_factor_required=True)
+def test_tf_link(app, client, get_message):
+    # Verify two-factor required when using magic link
+    with app.mail.record_messages() as outbox:
+        response = client.post(
+            "/us-send-code",
+            data=dict(identity="matt@lp.com", chosen_method="email"),
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert b"Sign In" in response.data
+
+    matcher = re.match(
+        r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
+    )
+    magic_link = matcher.group(1)
+    response = client.get(magic_link, follow_redirects=True)
+    assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") not in response.data
+    message = b"Two-factor authentication adds an extra layer of security"
+    assert message in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    two_factor_required=True, user_identity_attributes=["email", "us_phone_number"]
+)
+def test_tf_not(app, client, get_message):
+    # Test basic two-factor - when first factor doesn't require second (e.g. SMS)
+    # 1. sign in and setup TFA
+    client.post(
+        "/us-signin",
+        data=dict(identity="matt@lp.com", passcode="password", remember=True),
+        follow_redirects=True,
+    )
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="+442083661177")
+    client.post("/tf-setup", data=data, follow_redirects=True)
+    code = sms_sender.messages[0].split()[-1]
+    client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+
+    # 2. setup unified sign in with SMS
+    response = client.post(
+        "us-setup", data=dict(chosen_method="sms", phone="650-555-1212")
+    )
+    matcher = re.match(
+        r'.*<form action="([^\s]*)".*',
+        response.data.decode("utf-8"),
+        re.IGNORECASE | re.DOTALL,
+    )
+    verify_url = matcher.group(1)
+    code = sms_sender.messages[0].split()[-1].strip(".")
+    response = client.post(verify_url, data=dict(code=code), follow_redirects=True)
+    assert response.status_code == 200
+    assert get_message("US_SETUP_SUCCESSFUL") in response.data
+
+    # 3. logout
+    logout(client)
+
+    # 4. sign in with SMS - should not require TFA
+    client.post(
+        "/us-send-code",
+        data=dict(identity="matt@lp.com", chosen_method="sms"),
+        follow_redirects=True,
+    )
+
+    code = sms_sender.messages[0].split()[-1].strip(".")
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="6505551212", passcode=code),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    # assert "sms" in auths[1][1]
+
+    # Verify authenticated
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(sms_service="bad")
+def test_bad_sender(app, client, get_message):
+    # If SMS sender fails - make sure propagated
+    # Test form, json, x signin, setup
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    set_phone(app)
+    data = dict(identity="matt@lp.com", chosen_method="sms")
+    response = client.post("/us-send-code", data=data, follow_redirects=True)
+    assert get_message("FAILED_TO_SEND_CODE") in response.data
+
+    response = client.post("us-send-code", data=json.dumps(data), headers=headers)
+    assert response.status_code == 400
+    assert response.jdata["response"]["errors"]["chosen_method"][0].encode(
+        "utf-8"
+    ) == get_message("FAILED_TO_SEND_CODE")
+
+    # Now test setup
+    us_authenticate(client)
+    data = dict(chosen_method="sms", phone="650-555-1212")
+    response = client.post("us-setup", data=data)
+    assert get_message("FAILED_TO_SEND_CODE") in response.data
+
+    response = client.post("us-setup", data=json.dumps(data), headers=headers)
+    assert response.status_code == 400
+    assert response.jdata["response"]["errors"]["chosen_method"][0].encode(
+        "utf-8"
+    ) == get_message("FAILED_TO_SEND_CODE")
+
+
+@pytest.mark.registerable()
+def test_replace_send_code(app, get_message):
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security, us_send_security_token
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    db = SQLAlchemy(app)
+
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        def us_send_security_token(self, method, **kwargs):
+            assert method == "sms"
+            us_send_security_token(self, method, **kwargs)
+
+    with app.app_context():
+        db.create_all()
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        client = app.test_client()
+
+        # since we don't use client fixture - have to add user
+        data = dict(email="trp@lp.com", password="password")
+        response = client.post("/register", data=data, follow_redirects=True)
+        assert b"Welcome trp@lp.com" in response.data
+        logout(client)
+
+        set_phone(app, email="trp@lp.com")
+        data = dict(identity="trp@lp.com", chosen_method="sms")
+        response = client.post("/us-send-code", data=data, follow_redirects=True)
+        assert b"Code has been sent" in response.data

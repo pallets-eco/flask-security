@@ -231,7 +231,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
 
     class User(db.Document, UserMixin):
         email = db.StringField(unique=True, max_length=255)
-        username = db.StringField(max_length=255)
+        username = db.StringField(unique=True, max_length=255)
         password = db.StringField(required=False, max_length=255)
         security_number = db.IntField(unique=True)
         last_login_at = db.DateTimeField()
@@ -239,7 +239,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         tf_primary_method = db.StringField(max_length=255)
         tf_totp_secret = db.StringField(max_length=255)
         tf_phone_number = db.StringField(max_length=255)
-        us_totp_secret = db.StringField(max_length=255)
+        us_totp_secrets = db.StringField()
         us_phone_number = db.StringField(max_length=255)
         last_login_ip = db.StringField(max_length=100)
         current_login_ip = db.StringField(max_length=100)
@@ -273,10 +273,7 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
         db_url, db_info = _setup_realdb(realdburl)
         app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     else:
-        f, path = tempfile.mkstemp(
-            prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)
-        )
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + path
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
     db = SQLAlchemy(app)
 
@@ -301,9 +298,6 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
         if realdburl:
             db.drop_all()
             _teardown_realdb(db_info)
-        else:
-            os.close(f)
-            os.remove(path)
 
     request.addfinalizer(tear_down)
 
@@ -319,7 +313,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
     from sqlalchemy.ext.declarative import declarative_base
-    from sqlalchemy import Boolean, DateTime, Column, Integer, String, ForeignKey
+    from sqlalchemy import Boolean, DateTime, Column, Integer, String, Text, ForeignKey
 
     f, path = tempfile.mkstemp(
         prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)
@@ -358,7 +352,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         tf_primary_method = Column(String(255), nullable=True)
         tf_totp_secret = Column(String(255), nullable=True)
         tf_phone_number = Column(String(255), nullable=True)
-        us_totp_secret = Column(String(255), nullable=True)
+        us_totp_secrets = Column(Text, nullable=True)
         us_phone_number = Column(String(64), nullable=True)
         last_login_ip = Column(String(100))
         current_login_ip = Column(String(100))
@@ -436,7 +430,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
         tf_primary_method = TextField(null=True)
         tf_totp_secret = TextField(null=True)
         tf_phone_number = TextField(null=True)
-        us_totp_secret = TextField(null=True)
+        us_totp_secrets = TextField(null=True)
         us_phone_number = TextField(null=True)
         last_login_ip = TextField(null=True)
         current_login_ip = TextField(null=True)
@@ -500,7 +494,7 @@ def pony_setup(request, app, tmpdir, realdburl):
         tf_primary_method = Optional(str, nullable=True)
         tf_totp_secret = Optional(str, nullable=True)
         tf_phone_number = Optional(str, nullable=True)
-        us_totp_secret = Optional(str, nullable=True)
+        us_totp_secrets = Optional(str, nullable=True)
         us_phone_number = Optional(str, nullable=True)
         last_login_ip = Optional(str)
         current_login_ip = Optional(str)

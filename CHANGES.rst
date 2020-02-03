@@ -11,6 +11,21 @@ Released Target Feb 2020
 - (:issue:`99`, :issue:`195`) Support pluggable password validators. Provide a default
   validator that offers complexity and breached support.
 - (:pr:`257`) Support a unified sign in feature. Please see :ref:`unified-sign-in`.
+- (:pr:`265`) Add phone number validation class. This is used in both unified sign in
+  as well as two-factor when using ``sms``.
+
+As part of adding unified sign in - there were many similarities with two-factor.
+Some refactoring was done to unify naming, some configuration variables etc.
+It should all be backwards compatible.
+
+- In TWO_FACTOR_ENABLED_METHODS "mail" was changed to "email". "mail" will still
+  be honored if already stored in DB. Also "google_authenticator" is now just "authenticator".
+- TWO_FACTOR_SECRET, TWO_FACTOR_URI_SERVICE_NAME, TWO_FACTOR_SMS_SERVICE, and TWO_FACTOR_SMS_SERVICE_CONFIG
+  have all been deprecated in favor of names that are the same for two-factor and unified sign in.
+
+Other changes with possible backwards compatibility issues:
+
+- ``/tf-setup`` never did any phone number validation. Now it does.
 
 Version 3.3.2
 -------------

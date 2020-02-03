@@ -55,21 +55,23 @@ from .signals import (
     login_instructions_sent,
     password_changed,
     password_reset,
-    us_security_token_sent,
-    us_profile_changed,
     reset_password_instructions_sent,
     tf_code_confirmed,
     tf_profile_changed,
     tf_security_token_sent,
     tf_disabled,
+    user_authenticated,
     user_confirmed,
     user_registered,
+    us_security_token_sent,
+    us_profile_changed,
 )
 from .totp import Totp
 from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
     UnifiedSigninSetupVerifyForm,
+    us_send_security_token,
 )
 from .utils import (
     FsJsonEncoder,

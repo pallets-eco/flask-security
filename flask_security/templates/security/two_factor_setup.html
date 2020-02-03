@@ -14,7 +14,7 @@
         {% endfor %}
         {{ render_field_errors(two_factor_setup_form.setup) }}
         {{ render_field(two_factor_setup_form.submit) }}
-        {% if chosen_method=="mail" and chosen_method in choices %}
+        {% if chosen_method=="email" and chosen_method in choices %}
             <p>{{ _("To complete logging in, please enter the code sent to your mail") }}</p>
         {% endif %}
         {% if chosen_method=="authenticator" and chosen_method in choices %}

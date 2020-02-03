@@ -85,7 +85,7 @@ def test_fsqla_fields():
     )
     assert attrs == v1_user_attrs
 
-    v2_user_attrs = {"us_totp_secret", "us_phone_number"}
+    v2_user_attrs = {"us_totp_secrets", "us_phone_number"}
     attrs = set(
         [
             a[0]

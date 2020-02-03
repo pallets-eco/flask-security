@@ -14,7 +14,6 @@
     password or one of US_ENABLED_METHODS.
 
     Finish up:
-    - 2FA? since this is now a universal login - probably yes.
     - setup should probably require a 'fresh' authentication - as 2FA does.
     - should we support a way that /logout redirects to us-signin rather than /login?
     - we should be able to add a phone number as part of setup even w/o any METHODS -
@@ -49,6 +48,7 @@ from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import Form, Required, get_form_field_label
 from .quart_compat import get_quart_status
 from .signals import us_profile_changed, us_security_token_sent
+from .twofactor import is_tf_setup, tf_login
 from .utils import (
     _,
     SmsSenderFactory,
@@ -115,6 +115,7 @@ class UnifiedSigninForm(Form):
     """
 
     user = None
+    authn_via = None
 
     identity = StringField(
         get_form_field_label("identity"),
@@ -150,18 +151,29 @@ class UnifiedSigninForm(Form):
 
         if self.submit.data:
             # This is login - verify passcode/password
-            if not self.user.us_totp_secret or not _security._totp_factory.verify_totp(
-                token=self.passcode.data,
-                totp_secret=self.user.us_totp_secret,
-                user=self.user,
-                window=config_value("US_TOKEN_VALIDITY"),
-            ):
-                # That didn't work - maybe it's just a password
-                if "password" not in config_value(
-                    "US_ENABLED_METHODS"
-                ) or not self.user.verify_and_update_password(self.passcode.data):
-                    self.passcode.errors.append(get_message("INVALID_PASSWORD")[0])
-                    return False
+            # Since we have a unique totp_secret for each method - we
+            # can figure out which mechanism was used.
+            ok = False
+            totp_secrets = self.user.us_get_totp_secrets()
+            for method in config_value("US_ENABLED_METHODS"):
+                if method == "password":
+                    if self.user.verify_and_update_password(self.passcode.data):
+                        ok = True
+                        break
+                else:
+                    if method in totp_secrets and _security._totp_factory.verify_totp(
+                        token=self.passcode.data,
+                        totp_secret=totp_secrets[method],
+                        user=self.user,
+                        window=config_value("US_TOKEN_VALIDITY"),
+                    ):
+                        ok = True
+                        break
+            if not ok:
+                self.passcode.errors.append(get_message("INVALID_PASSWORD")[0])
+                return False
+
+            self.authn_via = method
 
             # Only check this once authenticated to not give away info
             if requires_confirmation(self.user):
@@ -277,18 +289,24 @@ def us_send_code():
     if form.validate_on_submit():
         # send code
         user = form.user
-        if not user.us_totp_secret:
+        method = form.chosen_method.data
+        totp_secrets = user.us_get_totp_secrets()
+        if method not in totp_secrets:
             after_this_request(_commit)
-            user.us_totp_secret = _security._totp_factory.generate_totp_secret()
-            _datastore.put(user)
+            totp_secrets[method] = _security._totp_factory.generate_totp_secret()
+            user.us_put_totp_secrets(totp_secrets)
 
-        send_security_token(
-            user,
-            form.chosen_method.data,
-            user.us_totp_secret,
-            user.us_phone_number,
+        msg = user.us_send_security_token(
+            method,
+            totp_secret=totp_secrets[method],
+            phone_number=user.us_phone_number,
             send_magic_link=True,
         )
+        code_sent = True
+        if msg:
+            # send code didn't work
+            code_sent = False
+            form.chosen_method.errors.append(msg)
 
         if _security._want_json(request):
             # Not authenticated yet - so don't send any user info.
@@ -299,7 +317,7 @@ def us_send_code():
             us_signin_form=form,
             methods=config_value("US_ENABLED_METHODS"),
             chosen_method=form.chosen_method.data,
-            code_sent=True,
+            code_sent=code_sent,
             skip_loginmenu=True,
             **_security._run_ctx_processor("us_signin")
         )
@@ -338,8 +356,21 @@ def us_signin():
     form.submit.data = True
 
     if form.validate_on_submit():
+        # Require multi-factor is it is enabled, and the method
+        # we authenticated with requires it and either user has requested MFA or it is
+        # required.
+        remember_me = form.remember.data if "remember" in form else None
+        if (
+            config_value("TWO_FACTOR")
+            and form.authn_via in config_value("US_MFA_REQUIRED")
+            and (config_value("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user))
+        ):
+            return tf_login(
+                form.user, remember=remember_me, primary_authn_via=form.authn_via
+            )
+
         after_this_request(_commit)
-        login_user(form.user, remember=form.remember.data)
+        login_user(form.user, remember=remember_me, authn_via=[form.authn_via])
 
         if _security._want_json(request):
             return base_render_json(form, include_auth_token=True)
@@ -388,9 +419,10 @@ def us_verify_link():
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
-    if not user.us_totp_secret or not _security._totp_factory.verify_totp(
+    totp_secrets = user.us_get_totp_secrets()
+    if "email" not in totp_secrets or not _security._totp_factory.verify_totp(
         token=request.args.get("code"),
-        totp_secret=user.us_totp_secret,
+        totp_secret=totp_secrets["email"],
         user=user,
         window=config_value("US_TOKEN_VALIDITY"),
     ):
@@ -405,7 +437,14 @@ def us_verify_link():
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
-    login_user(user)
+    if (
+        config_value("TWO_FACTOR")
+        and "email" in config_value("US_MFA_REQUIRED")
+        and (config_value("TWO_FACTOR_REQUIRED") or is_tf_setup(user))
+    ):
+        return tf_login(user, primary_authn_via="email")
+
+    login_user(user, authn_via=["email"])
     after_this_request(_commit)
     if _security.redirect_behavior == "spa":
         # We do NOT send the authentication token here since the only way to
@@ -440,23 +479,37 @@ def us_setup():
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        if not current_user.us_totp_secret or form.new_totp_secret.data:
+        method = form.chosen_method.data
+        totp_secrets = current_user.us_get_totp_secrets()
+        if method not in totp_secrets or form.new_totp_secret.data:
             totp = _security._totp_factory.generate_totp_secret()
         else:
-            totp = current_user.us_totp_secret
+            totp = totp_secrets[method]
         # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
         # to send it to the user.
         state = {
             "totp_secret": totp,
-            "chosen_method": form.chosen_method.data,
+            "chosen_method": method,
             "phone_number": _security._phone_util.get_canonical_form(form.phone.data),
         }
-        send_security_token(
-            user=current_user,
-            method=form.chosen_method.data,
+        msg = current_user.us_send_security_token(
+            method=method,
             totp_secret=state["totp_secret"],
             phone_number=state["phone_number"],
         )
+        if msg:
+            # sending didn't work.
+            form.chosen_method.errors.append(msg)
+            if _security._want_json(request):
+                # Not authenticated yet - so don't send any user info.
+                return base_render_json(form, include_user=False)
+            return _security.render_template(
+                config_value("US_SETUP_TEMPLATE"),
+                methods=config_value("US_ENABLED_METHODS"),
+                us_setup_form=form,
+                **_security._run_ctx_processor("us_setup")
+            )
+
         state_token = _security.us_setup_serializer.dumps(state)
 
         if _security._want_json(request):
@@ -526,20 +579,23 @@ def us_setup_verify(token):
 
     if form.validate_on_submit():
         after_this_request(_commit)
-        current_user.us_totp_secret = state["totp_secret"]
-        if state["chosen_method"] == "sms":
+        method = state["chosen_method"]
+        totp_secrets = current_user.us_get_totp_secrets()
+
+        totp_secrets[method] = state["totp_secret"]
+        if method == "sms":
             current_user.us_phone_number = state["phone_number"]
-        _datastore.put(current_user)
+        current_user.us_put_totp_secrets(totp_secrets)
+
         us_profile_changed.send(
-            app._get_current_object(), user=current_user, method=state["chosen_method"]
+            app._get_current_object(), user=current_user, method=method
         )
         if _security._want_json(request):
             return base_render_json(
                 form,
                 include_user=False,
                 additional=dict(
-                    chosen_method=state["chosen_method"],
-                    phone=current_user.us_phone_number,
+                    chosen_method=method, phone=current_user.us_phone_number
                 ),
             )
         else:
@@ -597,14 +653,23 @@ def us_qrcode(token):
     )
 
 
-def send_security_token(user, method, totp_secret, phone_number, send_magic_link=False):
+def us_send_security_token(
+    user, method, totp_secret, phone_number, send_magic_link=False
+):
     """ Generate and send the security code.
     :param user: The user to send the code to
     :param method: The method in which the code will be sent
     :param totp_secret: the unique shared secret of the user
     :param phone_number: If 'sms' phone number to send to
     :param send_magic_link: If true a magic link that can be clicked on will be sent.
-      This shouldn't be sent during a setup.
+    This shouldn't be sent during a setup.
+
+    There is no return value - it is assumed that exceptions are thrown by underlying
+    methods that callers can catch.
+
+    Flask-Security code should NOT call this directly - call user.us_send_security_token
+
+    .. versionadded:: 3.4.0
     """
     token = _security._totp_factory.generate_totp_password(totp_secret)
 
@@ -636,5 +701,10 @@ def send_security_token(user, method, totp_secret, phone_number, send_magic_link
         # Still go ahead and notify signal receivers that they requested it.
         token = None
     us_security_token_sent.send(
-        app._get_current_object(), user=user, method=method, token=token
+        app._get_current_object(),
+        user=user,
+        method=method,
+        token=token,
+        phone_number=phone_number,
+        send_magic_link=send_magic_link,
     )

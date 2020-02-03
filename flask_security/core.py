@@ -13,6 +13,7 @@
 """
 
 from datetime import datetime
+import json
 import warnings
 import sys
 
@@ -48,6 +49,7 @@ from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
     UnifiedSigninSetupVerifyForm,
+    us_send_security_token,
 )
 from .totp import Totp
 from .utils import _
@@ -60,6 +62,7 @@ from .utils import (
     default_password_validator,
     get_config,
     get_identity_attributes,
+    get_message,
     hash_data,
     localize_callback,
     send_mail,
@@ -224,7 +227,7 @@ _default_config = {
     },
     "TWO_FACTOR_REQUIRED": False,
     "TWO_FACTOR_SECRET": None,  # Deprecated - use TOTP_SECRETS
-    "TWO_FACTOR_ENABLED_METHODS": ["mail", "authenticator", "sms"],
+    "TWO_FACTOR_ENABLED_METHODS": ["email", "authenticator", "sms"],
     "TWO_FACTOR_URI_SERVICE_NAME": "service_name",  # Deprecated - use TOTP_ISSUER
     "TWO_FACTOR_SMS_SERVICE": "Dummy",  # Deprecated - use SMS_SERVICE
     "TWO_FACTOR_SMS_SERVICE_CONFIG": {  # Deprecated - use SMS_SERVICE_CONFIG
@@ -243,6 +246,7 @@ _default_config = {
     "US_SIGNIN_TEMPLATE": "security/us_signin.html",
     "US_SETUP_TEMPLATE": "security/us_setup.html",
     "US_ENABLED_METHODS": ["password", "email", "authenticator", "sms"],
+    "US_MFA_REQUIRED": ["password", "email"],
     "US_TOKEN_VALIDITY": 120,
     "US_EMAIL_SUBJECT": _("Verification Code"),
     "US_SETUP_WITHIN": "30 minutes",
@@ -355,6 +359,7 @@ _default_messages = {
         _("You can only access this endpoint when not logged in."),
         "error",
     ),
+    "FAILED_TO_SEND_CODE": (_("Failed to send code. Please try again later"), "error"),
     "TWO_FACTOR_INVALID_TOKEN": (_("Invalid Token"), "error"),
     "TWO_FACTOR_LOGIN_SUCCESSFUL": (_("Your token has been confirmed"), "success"),
     "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL": (
@@ -803,6 +808,45 @@ class UserMixin(BaseUserMixin):
             if cusername is not None and len(str(cusername)) > 0:
                 break
         return str(cusername) if cusername is not None else ""
+
+    def us_get_totp_secrets(self):
+        """ Return totp secrets.
+        These are json encoded in the DB.
+
+        Returns a dict with methods as keys and secrets as values.
+
+        .. versionadded:: 3.4.0
+        """
+        if not self.us_totp_secrets:
+            return {}
+        return json.loads(self.us_totp_secrets)
+
+    def us_put_totp_secrets(self, secrets):
+        """ Save secrets. Assume to be a dict (or None)
+        with keys as methods, and values as (encrypted) secrets.
+
+        .. versionadded:: 3.4.0
+        """
+        self.us_totp_secrets = json.dumps(secrets) if secrets else None
+        return _datastore.put(self)
+
+    def us_send_security_token(self, method, **kwargs):
+        """ Generate and send the security code for unified sign in.
+
+        :param method: The method in which the code will be sent
+        :param kwargs: Opaque parameters that are subject to change at any time
+        :return: None if successful, error message if not.
+
+        This is a wrapper around :meth:`us_send_security_token`
+        that can be overridden to manage any errors.
+
+        .. versionadded:: 3.4.0
+        """
+        try:
+            us_send_security_token(self, method, **kwargs)
+        except Exception:
+            return get_message("FAILED_TO_SEND_CODE")[0]
+        return None
 
 
 class AnonymousUser(AnonymousUserMixin):

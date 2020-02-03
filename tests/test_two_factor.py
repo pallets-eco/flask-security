@@ -75,7 +75,7 @@ def tf_in_session(session):
 def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
 
     # trying to pick method without doing earlier stage
-    data = dict(setup="mail")
+    data = dict(setup="email")
 
     with capture_flashes() as flashes:
         response = client.post("/tf-setup", data=data)
@@ -149,7 +149,7 @@ def test_two_factor_flag(app, client):
         response.jdata["response"]["errors"]["setup"][0] == "Marked method is not valid"
     )
 
-    json_data = '{"setup": "mail"}'
+    json_data = '{"setup": "email"}'
     response = client.post(
         "/tf-setup",
         data=json_data,
@@ -209,7 +209,7 @@ def test_two_factor_flag(app, client):
     assert message in response.data
 
     # change method (from sms to mail)
-    setup_data = dict(setup="mail")
+    setup_data = dict(setup="email")
     testMail = TestMail()
     app.extensions["mail"] = testMail
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
@@ -641,8 +641,8 @@ def test_totp_secret_generation(app, client):
     response = client.post(
         "/tf-confirm", data=dict(password=password), follow_redirects=True
     )
-    # Select sms method (regenerates secret)
-    data = dict(setup="sms", phone="+442083661177")
+    # Select sms method but do not send a phone number just yet (regenerates secret)
+    data = dict(setup="sms")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"To Which Phone Number Should We Send Code To" in response.data
 
@@ -761,7 +761,7 @@ def test_email_salutation(app, client):
 
     test_mail = TestMail()
     app.extensions["mail"] = test_mail
-    response = client.post("/tf-setup", data=dict(setup="mail"), follow_redirects=True)
+    response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"
     assert msg in response.data
 
@@ -778,7 +778,7 @@ def test_username_salutation(app, client):
 
     test_mail = TestMail()
     app.extensions["mail"] = test_mail
-    response = client.post("/tf-setup", data=dict(setup="mail"), follow_redirects=True)
+    response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"
     assert msg in response.data
 
