@@ -214,3 +214,8 @@ class SmsTestSender(SmsSenderBaseClass):
 
     def get_count(self):
         return SmsSenderBaseClass.count
+
+
+class SmsBadSender(SmsSenderBaseClass):
+    def send_sms(self, from_number, to_number, msg):
+        raise ValueError("Unknown number: {}".format(to_number))

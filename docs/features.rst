@@ -140,11 +140,14 @@ SMS or authenticator app). Many large authentication providers already offer thi
 Note that by configuring :py:data:`SECURITY_US_ENABLED_METHODS` an application can
 use this endpoint JUST with identity/password or in fact disallow passwords altogether.
 
+Unified sign in is integrated with two-factor authentication. Since in general
+there is no need for a second factor if the initial authentication was with SMS or
+an authenticator application, the :py:data:`SECURITY_US_MFA_REQUIRED` configuration
+determines which primary authentication mechanisms require a second factor. By default
+limited to ``email`` and ``password`` (if two-factor is enabled).
+
 `Current Limited Functionality`:
 
-    * The Unified signin endpoint does not currently support 2FA. While this isn't really
-      important for SMS and authenticator authentication methods, it would be useful for
-      password and email confirmation methods.
     * Change password does not work if a user registers without a password. However
       forgot-password will allow the user to set a new password.
     * Registration and Confirmation only work with email - so while you can enable multiple

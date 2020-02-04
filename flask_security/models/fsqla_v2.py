@@ -13,7 +13,7 @@ This is Version 2:
     - Make username unique (but not required).
 """
 
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Text
 from sqlalchemy.ext.declarative import declared_attr
 
 
@@ -39,7 +39,7 @@ class FsUserMixin(FsUserMixinV1):
     username = Column(String(255), unique=True, nullable=True)
 
     # unified sign in
-    us_totp_secret = Column(String(255), nullable=True)
+    us_totp_secrets = Column(Text, nullable=True)
     us_phone_number = Column(String(128), nullable=True)
 
     # This is repeated since I couldn't figure out how to have it reference the

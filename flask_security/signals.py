@@ -6,12 +6,15 @@
     Flask-Security signals module
 
     :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 import blinker
 
 signals = blinker.Namespace()
+
+user_authenticated = signals.signal("user-authenticated")
 
 user_registered = signals.signal("user-registered")
 
@@ -35,6 +38,6 @@ tf_security_token_sent = signals.signal("tf-security-token-sent")
 
 tf_disabled = signals.signal("tf-disabled")
 
-us_security_token_sent = signals.signal("pl-security-token-sent")
+us_security_token_sent = signals.signal("us-security-token-sent")
 
-us_profile_changed = signals.signal("pl-profile-changed")
+us_profile_changed = signals.signal("us-profile-changed")

@@ -88,7 +88,7 @@ If you enable unified sign in by setting your application's :py:data:`SECURITY_U
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
-* ``us_totp_secret``
+* ``us_totp_secrets`` (an arbitrarily long Text field)
 
 If you include 'sms' in :py:data:`SECURITY_US_ENABLED_METHODS`, your `User` model
 will require the following additional field:

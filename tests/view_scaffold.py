@@ -149,7 +149,7 @@ def create_app():
         )
 
     @us_security_token_sent.connect_via(app)
-    def on_pl_token_sent(myapp, user, token, method, **extra):
+    def on_us_token_sent(myapp, user, token, method, **extra):
         flash(
             "User {} was sent passwordless token {} via {}".format(
                 user.calc_username(), token, method
@@ -217,7 +217,7 @@ Required Models
 
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy import Boolean, DateTime, Column, Integer, String, ForeignKey
+from sqlalchemy import Boolean, DateTime, Column, Integer, String, Text, ForeignKey
 
 
 class RolesUsers(Base):
@@ -252,7 +252,7 @@ class User(Base, UserMixin):
     tf_primary_method = Column(String(64))
     tf_totp_secret = Column(String(255))
 
-    us_totp_secret = Column(String(255), nullable=True)
+    us_totp_secrets = Column(Text(), nullable=True)
     us_phone_number = Column(String(128), nullable=True)
 
     roles = relationship(
