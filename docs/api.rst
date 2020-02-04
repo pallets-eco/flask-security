@@ -124,6 +124,8 @@ Utils
 
 .. autofunction:: flask_security.transform_url
 
+.. autofunction:: flask_security.us_send_security_token
+
 .. autoclass:: flask_security.FsJsonEncoder
 
 .. autoclass:: flask_security.Totp
@@ -151,6 +153,16 @@ signals in your code.
 See the documentation for the signals provided by the Flask-Login and
 Flask-Principal extensions. In addition to those signals, Flask-Security
 sends the following signals.
+
+.. data:: user_authenticated
+
+    Sent when a user successfully authenticates. In addition to the app (which is the
+    sender), it is passed `user`, and `authn_via` arguments. The `authn_via` argument
+    specifies how the user authenticated - it will be a list with possible values
+    of ``password``, ``sms``, ``authenticator``, ``email``, ``confirm``, ``reset``,
+    ``register``.
+
+    .. versionadded:: 3.4.0
 
 .. data:: user_registered
 
@@ -221,7 +233,8 @@ sends the following signals.
 .. data:: us_security_token_sent
 
     Sent when a unified sign in access code is sent. In addition to the app
-    (which is the sender), it is passed `user`, `method`, and `token` arguments.
+    (which is the sender), it is passed `user`, `method`, `token`,
+    `phone_number`, and `send_magic_link` arguments.
 
     .. versionadded:: 3.4.0
 

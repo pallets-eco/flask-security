@@ -732,7 +732,7 @@ Configuration related to the two-factor authentication feature.
 
     Specifies the default enabled methods for two-factor authentication.
 
-    Default: ``['mail', 'authenticator', 'sms']`` which are the only currently supported methods.
+    Default: ``['email', 'authenticator', 'sms']`` which are the only currently supported methods.
 
 .. py:data:: SECURITY_TWO_FACTOR_SECRET
 
@@ -892,6 +892,15 @@ Unified Signin
     Removing it from here won't stop users from using the ``SECURITY_LOGIN_URL`` endpoint.
 
     Default: ``["password", "email", "authenticator", "sms"]`` - which are the only supported options.
+
+.. py:data:: SECURITY_US_MFA_REQUIRED
+
+    A list of ``US_ENABLED_METHODS`` that will require two-factor
+    authentication. This is of course dependent on the settings of :py:data:`SECURITY_TWO_FACTOR`
+    and :py:data:`SECURITY_TWO_FACTOR_REQUIRED`. Note that even with REQUIRED, only
+    methods listed here will trigger a two-factor cycle.
+
+    Default: ``["password", "email"]``.
 
 .. py:data:: SECURITY_US_TOKEN_VALIDITY
 
@@ -1058,6 +1067,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_EMAIL_ALREADY_ASSOCIATED``
 * ``SECURITY_MSG_EMAIL_CONFIRMED``
 * ``SECURITY_MSG_EMAIL_NOT_PROVIDED``
+* ``SECURITY_MSG_FAILED_TO_SEND_CODE``
 * ``SECURITY_MSG_FORGOT_PASSWORD``
 * ``SECURITY_MSG_INVALID_CODE``
 * ``SECURITY_MSG_INVALID_CONFIRMATION_TOKEN``

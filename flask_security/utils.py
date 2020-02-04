@@ -38,6 +38,7 @@ from .quart_compat import best
 from .signals import (
     login_instructions_sent,
     reset_password_instructions_sent,
+    user_authenticated,
     user_registered,
 )
 
@@ -89,7 +90,7 @@ def find_csrf_field_name():
     return None
 
 
-def login_user(user, remember=None):
+def login_user(user, remember=None, authn_via=None):
     """Perform the login routine.
 
     If *SECURITY_TRACKABLE* is used, make sure you commit changes after this
@@ -98,6 +99,10 @@ def login_user(user, remember=None):
     :param user: The user to login
     :param remember: Flag specifying if the remember cookie should be set.
                      Defaults to ``False``
+    :param authn_via: A list of strings denoting which mechanism(s) the user
+        authenticated with.
+        These will be one or more of ["password", "sms", "authenticator", "email"] or
+        other 'auto-login' mechanisms.
     """
 
     if remember is None:
@@ -126,6 +131,10 @@ def login_user(user, remember=None):
     session["fs_cc"] = "set"
 
     identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+
+    user_authenticated.send(
+        current_app._get_current_object(), user=user, authn_via=authn_via
+    )
     return True
 
 

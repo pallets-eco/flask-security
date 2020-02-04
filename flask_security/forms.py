@@ -474,7 +474,7 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
     setup = RadioField(
         "Available Methods",
         choices=[
-            ("mail", "Set up using email"),
+            ("email", "Set up using email"),
             (
                 "authenticator",
                 "Set up using an authenticator app (e.g. google, lastpass, authy)",
@@ -494,13 +494,19 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
         # initialize errors to lists below. It also means that 'email' is never
         # validated - though it isn't required so the mixin might not be correct.
         choices = config_value("TWO_FACTOR_ENABLED_METHODS")
+        if "email" in choices:
+            # backwards compat
+            choices.append("mail")
         if not config_value("TWO_FACTOR_REQUIRED"):
             choices.append("disable")
         if "setup" not in self.data or self.data["setup"] not in choices:
             self.setup.errors = list()
             self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
             return False
-        if self.setup.data == "sms":
+        if self.setup.data == "sms" and len(self.phone.data) > 0:
+            # Somewhat bizarre - but this isn't required the first time around
+            # when they select "sms". Then they get a field to fill out with
+            # phone number, then Submit again.
             msg = _security._phone_util.validate_phone_number(self.phone.data)
             if msg:
                 self.phone.errors = list()
@@ -526,7 +532,7 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
             or self.primary_method == "authenticator"
         ):
             self.window = config_value("TWO_FACTOR_AUTHENTICATOR_VALIDITY")
-        elif self.primary_method == "mail":
+        elif self.primary_method == "email" or self.primary_method == "mail":
             self.window = config_value("TWO_FACTOR_MAIL_VALIDITY")
         elif self.primary_method == "sms":
             self.window = config_value("TWO_FACTOR_SMS_VALIDITY")

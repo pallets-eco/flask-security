@@ -74,6 +74,7 @@ from .twofactor import (
     send_security_token,
     tf_clean_session,
     tf_disable,
+    tf_login,
 )
 from .utils import (
     base_render_json,
@@ -166,13 +167,16 @@ def login():
         form = form_class(request.form, meta=suppress_form_csrf())
 
     if form.validate_on_submit():
+        remember_me = form.remember.data if "remember" in form else None
         if config_value("TWO_FACTOR") and (
             config_value("TWO_FACTOR_REQUIRED")
             or (form.user.tf_totp_secret and form.user.tf_primary_method)
         ):
-            return _two_factor_login(form)
+            return tf_login(
+                form.user, remember=remember_me, primary_authn_via="password"
+            )
 
-        login_user(form.user, remember=form.remember.data)
+        login_user(form.user, remember=remember_me, authn_via=["password"])
         after_this_request(_commit)
 
         if not _security._want_json(request):
@@ -237,9 +241,9 @@ def register():
         # signin - we adhere to historic behavior.
         if not _security.confirmable or _security.login_without_confirmation:
             if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
-                return _two_factor_login(form)
+                return tf_login(user, primary_authn_via="register")
             after_this_request(_commit)
-            login_user(user)
+            login_user(user, authn_via=["register"])
             did_login = True
 
         if not _security._want_json(request):
@@ -311,7 +315,7 @@ def token_login(token):
         do_flash(m, c)
         return redirect(url_for_security("login"))
 
-    login_user(user)
+    login_user(user, authn_via=["token"])
     after_this_request(_commit)
     if _security.redirect_behavior == "spa":
         return redirect(
@@ -402,10 +406,8 @@ def confirm_email(token):
             # you can be logged in and doing stuff - but another person could
             # get the email.
             if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
-                form = _security.login_form(MultiDict([]), meta=suppress_form_csrf())
-                form.user = user
-                return _two_factor_login(form)
-            login_user(user)
+                return tf_login(user, primary_authn_via="confirm")
+            login_user(user, authn_via=["confirm"])
 
     m, c = get_message("EMAIL_CONFIRMED")
     if _security.redirect_behavior == "spa":
@@ -551,8 +553,8 @@ def reset_password(token):
             config_value("TWO_FACTOR_REQUIRED")
             or (form.user.tf_totp_secret and form.user.tf_primary_method)
         ):
-            return _two_factor_login(form)
-        login_user(user)
+            return tf_login(user, primary_authn_via="reset")
+        login_user(user, authn_via=["reset"])
         if _security._want_json(request):
             login_form = _security.login_form(MultiDict({"email": user.email}))
             setattr(login_form, "user", user)
@@ -605,52 +607,6 @@ def change_password():
         change_password_form=form,
         **_ctx("change_password")
     )
-
-
-def _two_factor_login(form):
-    """ Helper for two-factor authentication login
-
-    This is called only when login/password have already been validated.
-    This can be from login, register, and/or confirm.
-
-    The result of this is either sending a 2FA token OR starting setup for new user.
-    In either case we do NOT log in user, so we must store some info in session to
-    track our state (including what user).
-    """
-
-    # on initial login clear any possible state out - this can happen if on same
-    # machine log in  more than once since for 2FA you are not authenticated
-    # until complete 2FA.
-    tf_clean_session()
-
-    user = form.user
-    session["tf_user_id"] = user.id
-    if "remember" in form:
-        session["tf_remember_login"] = form.remember.data
-
-    # Set info into form for JSON response
-    json_response = {"tf_required": True}
-    # if user's two-factor properties are not configured
-    if user.tf_primary_method is None or user.tf_totp_secret is None:
-        session["tf_state"] = "setup_from_login"
-        json_response["tf_state"] = "setup_from_login"
-        if not _security._want_json(request):
-            return redirect(url_for_security("two_factor_setup"))
-
-    # if user's two-factor properties are configured
-    else:
-        session["tf_state"] = "ready"
-        json_response["tf_state"] = "ready"
-        json_response["tf_primary_method"] = user.tf_primary_method
-
-        send_security_token(
-            user=user, method=user.tf_primary_method, totp_secret=user.tf_totp_secret
-        )
-
-        if not _security._want_json(request):
-            return redirect(url_for_security("two_factor_token_validation"))
-
-    return base_render_json(form, include_auth_token=True, additional=json_response)
 
 
 @unauth_csrf(fall_through=True)
@@ -713,7 +669,7 @@ def two_factor_setup():
         # global config TWO_FACTOR_REQUIRED)
         # Until we correctly validate the 2FA - we don't set primary_method in
         # user model but use the session to store it.
-        pm = form["setup"].data
+        pm = form.setup.data
         if pm == "disable":
             tf_disable(user)
             after_this_request(_commit)
@@ -730,12 +686,23 @@ def two_factor_setup():
 
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
-        if "phone" in form.data and len(form.data["phone"]) > 0:
-            user.tf_phone_number = form.data["phone"]
-        _datastore.put(user)
-        after_this_request(_commit)
+        new_phone = form.phone.data if len(form.phone.data) > 0 else None
+        if new_phone:
+            user.tf_phone_number = new_phone
+            _datastore.put(user)
+            after_this_request(_commit)
 
-        send_security_token(user=user, method=pm, totp_secret=session["tf_totp_secret"])
+        # This form is sort of bizarre - for SMS and authenticator
+        # you select, then get more info, and submit again.
+        # For authenticator of course, we don't actually send anything
+        # and for SMS it is the second time around that we get the phone number
+        if pm == "email" or (pm == "sms" and new_phone):
+            send_security_token(
+                user=user,
+                method=pm,
+                totp_secret=session["tf_totp_secret"],
+                phone_number=user.tf_phone_number,
+            )
         code_form = _security.two_factor_verify_code_form()
         if not _security._want_json(request):
             return _security.render_template(
@@ -747,6 +714,9 @@ def two_factor_setup():
                 **_ctx("tf_setup")
             )
 
+    # We get here on GET and POST with failed validation.
+    # For things like phone number - we've already done one POST
+    # that succeeded and now if failed - so retain the initial info
     if _security._want_json(request):
         return base_render_json(form, include_user=False)
 
@@ -760,6 +730,7 @@ def two_factor_setup():
         two_factor_setup_form=form,
         two_factor_verify_code_form=code_form,
         choices=choices,
+        chosen_method=form.setup.data,
         two_factor_required=config_value("TWO_FACTOR_REQUIRED"),
         **_ctx("tf_setup")
     )
@@ -906,7 +877,10 @@ def two_factor_rescue():
         # e send him code through mail
         if problem == "lost_device":
             send_security_token(
-                user=form.user, method="mail", totp_secret=form.user.tf_totp_secret
+                user=form.user,
+                method="email",
+                totp_secret=form.user.tf_totp_secret,
+                phone_number=form.user.tf_phone_number,
             )
         # send app provider a mail message regarding trouble
         elif problem == "no_mail_access":

@@ -75,7 +75,7 @@ def tf_in_session(session):
 def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
 
     # trying to pick method without doing earlier stage
-    data = dict(setup="mail")
+    data = dict(setup="email")
 
     with capture_flashes() as flashes:
         response = client.post("/tf-setup", data=data)
@@ -149,7 +149,7 @@ def test_two_factor_flag(app, client):
         response.jdata["response"]["errors"]["setup"][0] == "Marked method is not valid"
     )
 
-    json_data = '{"setup": "mail"}'
+    json_data = '{"setup": "email"}'
     response = client.post(
         "/tf-setup",
         data=json_data,
@@ -209,7 +209,7 @@ def test_two_factor_flag(app, client):
     assert message in response.data
 
     # change method (from sms to mail)
-    setup_data = dict(setup="mail")
+    setup_data = dict(setup="email")
     testMail = TestMail()
     app.extensions["mail"] = testMail
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
@@ -342,6 +342,30 @@ def test_two_factor_flag(app, client):
     response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
     message = b"A mail was sent to us in order" + b" to reset your application account"
     assert message in response.data
+
+
+@pytest.mark.settings(two_factor_required=True)
+def test_setup_bad_phone(app, client):
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    message = b"Two-factor authentication adds an extra layer of security"
+    assert message in response.data
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="555-1212")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"Phone number not valid" in response.data
+    assert sms_sender.get_count() == 0
+
+    client.post(
+        "/tf-setup", data=dict(setup="sms", phone="650-555-1212"), follow_redirects=True
+    )
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"Your token has been confirmed" in response.data
+    assert not tf_in_session(get_session(response))
 
 
 @pytest.mark.settings(two_factor_required=True)
@@ -641,8 +665,8 @@ def test_totp_secret_generation(app, client):
     response = client.post(
         "/tf-confirm", data=dict(password=password), follow_redirects=True
     )
-    # Select sms method (regenerates secret)
-    data = dict(setup="sms", phone="+442083661177")
+    # Select sms method but do not send a phone number just yet (regenerates secret)
+    data = dict(setup="sms")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"To Which Phone Number Should We Send Code To" in response.data
 
@@ -761,7 +785,7 @@ def test_email_salutation(app, client):
 
     test_mail = TestMail()
     app.extensions["mail"] = test_mail
-    response = client.post("/tf-setup", data=dict(setup="mail"), follow_redirects=True)
+    response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"
     assert msg in response.data
 
@@ -778,7 +802,7 @@ def test_username_salutation(app, client):
 
     test_mail = TestMail()
     app.extensions["mail"] = test_mail
-    response = client.post("/tf-setup", data=dict(setup="mail"), follow_redirects=True)
+    response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"
     assert msg in response.data
 
