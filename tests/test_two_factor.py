@@ -345,6 +345,30 @@ def test_two_factor_flag(app, client):
 
 
 @pytest.mark.settings(two_factor_required=True)
+def test_setup_bad_phone(app, client):
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    message = b"Two-factor authentication adds an extra layer of security"
+    assert message in response.data
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="555-1212")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"Phone number not valid" in response.data
+    assert sms_sender.get_count() == 0
+
+    client.post(
+        "/tf-setup", data=dict(setup="sms", phone="650-555-1212"), follow_redirects=True
+    )
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"Your token has been confirmed" in response.data
+    assert not tf_in_session(get_session(response))
+
+
+@pytest.mark.settings(two_factor_required=True)
 def test_json(app, client):
     """
     Test all endpoints using JSON. (eventually)

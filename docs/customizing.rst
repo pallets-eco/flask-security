@@ -92,10 +92,10 @@ register form or override validators::
     security = Security(app, user_datastore,
              register_form=ExtendedRegisterForm)
 
-For the ``register_form`` and ``confirm_register_form``, each field is
-passed to the user model (as kwargs) when a user is created. In the
-above case, the ``first_name`` and ``last_name`` fields are passed
-directly to the model, so the model should look like::
+For the ``register_form`` and ``confirm_register_form``, only fields that
+exist in the user model are passed (as kwargs) to :meth:`.UserDatastore.create_user`.
+Thus, in the above case, the ``first_name`` and ``last_name`` fields will only
+be passed if the model looks like::
 
     class User(db.Model, UserMixin):
         id = db.Column(db.Integer, primary_key=True)
