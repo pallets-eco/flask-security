@@ -625,11 +625,20 @@ class RoleMixin(object):
         """
         Return set of permissions associated with role.
 
+        Either takes a comma seperated string of permissions or
+        an interable of strings if permissions are in their own
+        table.
+
         .. versionadded:: 3.3.0
         """
         if hasattr(self, "permissions") and self.permissions:
-            # These are a comma separated list
-            return set(self.permissions.split(","))
+            if isinstance(self.permissions, set):
+                return self.permissions
+            elif isinstance(self.permissions, list):
+                return set(self.permissions)
+            else:
+                # Assume this is a comma separated list
+                return set(self.permissions.split(","))
         return set([])
 
     def add_permissions(self, permissions):
