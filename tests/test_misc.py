@@ -17,12 +17,14 @@ import sys
 import pytest
 
 from utils import authenticate, check_xlation, init_app_with_options, populate_data
+from wtforms import SubmitField
 
 from flask_security import Security
 from flask_security.forms import (
     ChangePasswordForm,
     ConfirmRegisterForm,
     ForgotPasswordForm,
+    Form,
     LoginForm,
     PasswordField,
     PasswordlessLoginForm,
@@ -152,6 +154,37 @@ def test_basic_custom_forms(app, sqlalchemy_datastore):
 
     response = client.get("/change")
     assert b"My Change Password Field" in response.data
+
+
+def test_logout_custom_form(app, sqlalchemy_datastore):
+    class MyLoginForm(LoginForm):
+        email = StringField("My Login Email Address Field")
+
+    class MyLogoutForm(Form):
+        submit = SubmitField("My Logout Submit Field")
+
+    app.security = Security(
+        app,
+        datastore=sqlalchemy_datastore,
+        login_form=MyLoginForm,
+        logout_form=MyLogoutForm,
+    )
+
+    populate_data(app)
+    client = app.test_client()
+
+    authenticate(client)
+
+    response = client.get("/logout")
+    assert b"My Logout Submit Field" in response.data
+
+    response = client.get("/login")
+    assert b"My Login Email Address Field" not in response.data
+
+    response = client.post("/logout")
+
+    response = client.get("/login")
+    assert b"My Login Email Address Field" in response.data
 
 
 @pytest.mark.registerable()

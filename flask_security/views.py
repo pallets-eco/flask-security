@@ -211,6 +211,20 @@ def logout():
     return redirect(get_post_logout_redirect())
 
 
+def logout_with_form():
+    """View function which handles a logout with a form."""
+    form = _security.logout_form(request.form)
+
+    if form.validate_on_submit():
+        response = logout()
+        assert not current_user.is_authenticated
+        return response
+
+    return _security.render_template(
+        config_value("LOGOUT_USER_TEMPLATE"), logout_user_form=form, **_ctx("logout")
+    )
+
+
 @anonymous_user_required
 def register():
     """View function which handles a registration request."""
@@ -1018,7 +1032,12 @@ def create_blueprint(state, import_name, json_encoder=None):
     if json_encoder:
         bp.json_encoder = json_encoder
 
-    bp.route(state.logout_url, methods=["GET", "POST"], endpoint="logout")(logout)
+    if state.logout_form:
+        bp.route(state.logout_url, methods=["GET", "POST"], endpoint="logout")(
+            logout_with_form
+        )
+    else:
+        bp.route(state.logout_url, methods=["GET", "POST"], endpoint="logout")(logout)
 
     if state.passwordless:
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(send_login)

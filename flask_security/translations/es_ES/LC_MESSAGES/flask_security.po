@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2019-12-14 21:54-0800\n"
+"POT-Creation-Date: 2020-02-07 19:25+0900\n"
 "PO-Revision-Date: 2017-08-25 17:21+0200\n"
 "Last-Translator: Mauko Quiroga <mauko.quiroga@data.gouv.fr>\n"
 "Language: es_ES\n"
@@ -17,98 +17,98 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.7.0\n"
+"Generated-By: Babel 2.8.0\n"
 
-#: flask_security/core.py:179
+#: flask_security/core.py:180
 msgid "Login Required"
 msgstr "Inicio de sesión necesario"
 
-#: flask_security/core.py:180
+#: flask_security/core.py:181
 #: flask_security/templates/security/email/two_factor_instructions.html:1
 msgid "Welcome"
 msgstr "Bienvenido"
 
-#: flask_security/core.py:181
+#: flask_security/core.py:182
 msgid "Please confirm your email"
 msgstr "Por favor, confirma tu correo electrónico"
 
-#: flask_security/core.py:182
+#: flask_security/core.py:183
 msgid "Login instructions"
 msgstr "Instrucciones para iniciar sesión"
 
-#: flask_security/core.py:183
+#: flask_security/core.py:184
 #: flask_security/templates/security/email/reset_notice.html:1
 msgid "Your password has been reset"
 msgstr "Tu contraseña ha sido restablecida"
 
-#: flask_security/core.py:184
+#: flask_security/core.py:185
 msgid "Your password has been changed"
 msgstr "Tu contraseña ha sido cambiada"
 
-#: flask_security/core.py:185
+#: flask_security/core.py:186
 msgid "Password reset instructions"
 msgstr "Instrucciones de recuperación de contraseña"
 
-#: flask_security/core.py:188
+#: flask_security/core.py:189
 msgid "Two-factor Login"
 msgstr ""
 
-#: flask_security/core.py:189
+#: flask_security/core.py:190
 msgid "Two-factor Rescue"
 msgstr ""
 
-#: flask_security/core.py:219
+#: flask_security/core.py:220
 msgid "You do not have permission to view this resource."
 msgstr "No tienes permiso para consultar este recurso."
 
-#: flask_security/core.py:221
+#: flask_security/core.py:222
 msgid "You are not authenticated. Please supply the correct credentials."
 msgstr ""
 
-#: flask_security/core.py:225
+#: flask_security/core.py:226
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
 msgstr ""
 "Gracias. Un correo con instrucciones sobre cómo confirmar tu cuenta ha "
 "sido enviado a %(email)s."
 
-#: flask_security/core.py:228
+#: flask_security/core.py:229
 msgid "Thank you. Your email has been confirmed."
 msgstr "Gracias. Tu correo electrónico ha sido confirmado."
 
-#: flask_security/core.py:229
+#: flask_security/core.py:230
 msgid "Your email has already been confirmed."
 msgstr "Tu correo electrónico ya ha sido confirmado."
 
-#: flask_security/core.py:230
+#: flask_security/core.py:231
 msgid "Invalid confirmation token."
 msgstr "Autentificador de confirmación inválido."
 
-#: flask_security/core.py:232
+#: flask_security/core.py:233
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s ya está asociado a una cuenta."
 
-#: flask_security/core.py:235
+#: flask_security/core.py:236
 msgid "Password does not match"
 msgstr "La contraseña no coincide"
 
-#: flask_security/core.py:236
+#: flask_security/core.py:237
 msgid "Passwords do not match"
 msgstr "Las contraseñas no coinciden"
 
-#: flask_security/core.py:237
+#: flask_security/core.py:238
 msgid "Redirections outside the domain are forbidden"
 msgstr "Las redirecciones a sitios web externos están prohibidas"
 
-#: flask_security/core.py:239
+#: flask_security/core.py:240
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr ""
 "Las instrucciones para restablecer tu contraseña han sido enviadas a "
 "%(email)s."
 
-#: flask_security/core.py:243
+#: flask_security/core.py:244
 #, python-format
 msgid ""
 "You did not reset your password within %(within)s. New instructions have "
@@ -117,20 +117,20 @@ msgstr ""
 "No restableciste tu contraseña antes de %(within)s. Nuevas instrucciones "
 "han sido enviadas a %(email)s."
 
-#: flask_security/core.py:249
+#: flask_security/core.py:250
 msgid "Invalid reset password token."
 msgstr "Autentificador de restablecimiento de contraseña inválido."
 
-#: flask_security/core.py:250
+#: flask_security/core.py:251
 msgid "Email requires confirmation."
 msgstr "El correo electrónico requiere confirmación."
 
-#: flask_security/core.py:252
+#: flask_security/core.py:253
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr "Las instrucciones de confirmación se han enviado a %(email)s."
 
-#: flask_security/core.py:256
+#: flask_security/core.py:257
 #, python-format
 msgid ""
 "You did not confirm your email within %(within)s. New instructions to "
@@ -140,7 +140,7 @@ msgstr ""
 "instrucciones para confirmar tu correo electrónico han sido enviadas a "
 "%(email)s."
 
-#: flask_security/core.py:264
+#: flask_security/core.py:265
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -149,56 +149,56 @@ msgstr ""
 "No iniciaste sesión antes de %(within)s. Nuevas instrucciones para "
 "iniciar sesión han sido enviadas a %(email)s."
 
-#: flask_security/core.py:271
+#: flask_security/core.py:272
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr "Instrucciones para iniciar sesión han sido enviadas a %(email)s."
 
-#: flask_security/core.py:274
+#: flask_security/core.py:275
 msgid "Invalid login token."
 msgstr "Autenticador de inicio de sesión inválido."
 
-#: flask_security/core.py:275
+#: flask_security/core.py:276
 msgid "Account is disabled."
 msgstr "Cuenta deshabilitada."
 
-#: flask_security/core.py:276
+#: flask_security/core.py:277
 msgid "Email not provided"
 msgstr "Correo electrónico no indicado"
 
-#: flask_security/core.py:277
+#: flask_security/core.py:278
 msgid "Invalid email address"
 msgstr "Dirección de correo electrónico inválida"
 
-#: flask_security/core.py:278
+#: flask_security/core.py:279
 msgid "Password not provided"
 msgstr "Contraseña no indicada"
 
-#: flask_security/core.py:279
+#: flask_security/core.py:280
 msgid "No password is set for this user"
 msgstr "Ninguna contraseña ha sido definida para este·a usuario·a"
 
-#: flask_security/core.py:280
+#: flask_security/core.py:281
 msgid "Password must be at least 6 characters"
 msgstr "La contraseña debe contar al menos con 6 caracteres"
 
-#: flask_security/core.py:281
+#: flask_security/core.py:282
 msgid "Specified user does not exist"
 msgstr "Usuario·a especificado·a no existe"
 
-#: flask_security/core.py:282
+#: flask_security/core.py:283
 msgid "Invalid password"
 msgstr "Contraseña inválida"
 
-#: flask_security/core.py:283
+#: flask_security/core.py:284
 msgid "You have successfully logged in."
 msgstr "Has iniciado sesión con éxito."
 
-#: flask_security/core.py:284
+#: flask_security/core.py:285
 msgid "Forgot password?"
 msgstr "¿Has olvidado tu contraseña?"
 
-#: flask_security/core.py:286
+#: flask_security/core.py:287
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
@@ -206,55 +206,55 @@ msgstr ""
 "Has restablecido tu contraseña con éxito y has iniciado sesión "
 "automáticamente."
 
-#: flask_security/core.py:293
+#: flask_security/core.py:294
 msgid "Your new password must be different than your previous password."
 msgstr "Tu nueva contraseña debe ser diferente de la antigua."
 
-#: flask_security/core.py:296
+#: flask_security/core.py:297
 msgid "You successfully changed your password."
 msgstr "Has cambiado tu contraseña con éxito."
 
-#: flask_security/core.py:297
+#: flask_security/core.py:298
 msgid "Please log in to access this page."
 msgstr "Debes iniciar sesión para poder acceder a esta página."
 
-#: flask_security/core.py:298
+#: flask_security/core.py:299
 msgid "Please reauthenticate to access this page."
 msgstr "Deber iniciar sesión nuevamente para poder acceder a esta página."
 
-#: flask_security/core.py:300
+#: flask_security/core.py:301
 msgid "You can only access this endpoint when not logged in."
 msgstr ""
 
-#: flask_security/core.py:303
+#: flask_security/core.py:304
 msgid "Invalid Token"
 msgstr ""
 
-#: flask_security/core.py:304
+#: flask_security/core.py:305
 msgid "Your token has been confirmed"
 msgstr ""
 
-#: flask_security/core.py:306
+#: flask_security/core.py:307
 msgid "You successfully changed your two-factor method."
 msgstr ""
 
-#: flask_security/core.py:310
+#: flask_security/core.py:311
 msgid "You successfully confirmed password"
 msgstr ""
 
-#: flask_security/core.py:314
+#: flask_security/core.py:315
 msgid "Password confirmation is needed in order to access page"
 msgstr ""
 
-#: flask_security/core.py:318
+#: flask_security/core.py:319
 msgid "You currently do not have permissions to access this page"
 msgstr ""
 
-#: flask_security/core.py:321
+#: flask_security/core.py:322
 msgid "Marked method is not valid"
 msgstr ""
 
-#: flask_security/core.py:323
+#: flask_security/core.py:324
 msgid "You successfully disabled two factor authorization."
 msgstr ""
 
@@ -345,6 +345,10 @@ msgstr "Cambiar la contraseña"
 msgid "Send password reset instructions"
 msgstr "Enviar instrucciones para restablecer la contraseña"
 
+#: flask_security/templates/security/logout_user.html:6
+msgid "Logout"
+msgstr ""
+
 #: flask_security/templates/security/reset_password.html:6
 msgid "Reset password"
 msgstr "Restablecer contraseña"
@@ -369,8 +373,8 @@ msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:21
 msgid ""
-"Open your authenticator app on your device and scan the following qrcode "
-"to start receiving codes:"
+"Open Google Authenticator on your device and scan the following qrcode to"
+" start receiving codes:"
 msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:22

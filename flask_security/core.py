@@ -154,6 +154,7 @@ _default_config = {
     "REDIRECT_BEHAVIOR": None,
     "FORGOT_PASSWORD_TEMPLATE": "security/forgot_password.html",
     "LOGIN_USER_TEMPLATE": "security/login_user.html",
+    "LOGOUT_USER_TEMPLATE": "security/logout_user.html",
     "REGISTER_USER_TEMPLATE": "security/register_user.html",
     "RESET_PASSWORD_TEMPLATE": "security/reset_password.html",
     "CHANGE_PASSWORD_TEMPLATE": "security/change_password.html",
@@ -395,6 +396,7 @@ _default_messages = {
 
 _default_forms = {
     "login_form": LoginForm,
+    "logout_form": None,
     "confirm_register_form": ConfirmRegisterForm,
     "register_form": RegisterForm,
     "forgot_password_form": ForgotPasswordForm,
@@ -967,6 +969,9 @@ class Security(object):
     :param datastore: An instance of a user datastore.
     :param register_blueprint: to register the Security blueprint or not.
     :param login_form: set form for the login view
+    :param logout_form: set form for the logout view, if necessary. If set,
+            the endpoint at *SECURITY_LOGOUT_URL* will logout only when a
+            POST request is issued.
     :param register_form: set form for the register view when
             *SECURITY_CONFIRMABLE* is false
     :param confirm_register_form: set form for the register view when
