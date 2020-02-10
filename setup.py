@@ -40,7 +40,7 @@ tests_require = [
     "pytest>=3.5.1",
     "sqlalchemy>=1.2.6",
     "sqlalchemy-utils>=0.33.0",
-    "werkzeug>=0.14.1",
+    "werkzeug>=0.15.5",
 ]
 
 extras_require = {
@@ -56,7 +56,7 @@ setup_requires = ["Babel>=1.3", "pytest-runner>=2.6.2", "twine", "wheel"]
 
 install_requires = [
     "Flask>=1.0.2",
-    "Flask-Login>=0.3.0",
+    "Flask-Login>=0.4.1",
     "Flask-Mail>=0.9.1",
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=0.14.2",

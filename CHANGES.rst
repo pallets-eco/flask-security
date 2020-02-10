@@ -8,6 +8,13 @@ Version 3.4.0
 
 Released TBD
 
+Version 3.3.3
+-------------
+
+Released February 11, 2020
+
+Minor changes required to work with latest released Werkzeug and Flask-Login.
+
 Version 3.3.2
 -------------
 
