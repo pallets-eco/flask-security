@@ -103,7 +103,16 @@ def default_unauthz_handler(func, params):
 
 
 def _check_token():
-    user = _security.login_manager.request_callback(request)
+    # N.B. this isn't great Flask-Login 0.5.0 made this protected
+    # Issue https://github.com/maxcountryman/flask-login/issues/471
+    # was filed to restore public access. We want to call this via
+    # login_manager in case someone has overridden the login_manager which we
+    # allow.
+    if hasattr(_security.login_manager, "request_callback"):
+        # Pre 0.5.0
+        user = _security.login_manager.request_callback(request)
+    else:
+        user = _security.login_manager._request_callback(request)
 
     if user and user.is_authenticated:
         app = current_app._get_current_object()

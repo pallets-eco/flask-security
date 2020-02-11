@@ -9,7 +9,7 @@
 import pytest
 from flask import after_this_request, redirect
 from utils import authenticate, logout
-from werkzeug.contrib.fixers import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask_security import login_user
 
@@ -22,7 +22,7 @@ def _client_ip(client):
 
 
 def test_trackable_flag(app, client):
-    app.wsgi_app = ProxyFix(app.wsgi_app, num_proxies=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
     e = "matt@lp.com"
     authenticate(client, email=e)
     logout(client)
@@ -38,7 +38,7 @@ def test_trackable_flag(app, client):
 
 
 def test_trackable_with_multiple_ips_in_headers(app, client):
-    app.wsgi_app = ProxyFix(app.wsgi_app, num_proxies=2)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2)
 
     e = "matt@lp.com"
     authenticate(client, email=e)
@@ -64,7 +64,7 @@ def test_trackable_using_login_user(app, client):
     datastore.commit() after logging a user in to make sure the trackable
     fields are saved to the datastore.
     """
-    app.wsgi_app = ProxyFix(app.wsgi_app, num_proxies=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
     @app.route("/login_custom", methods=["POST"])
     def login_custom():
