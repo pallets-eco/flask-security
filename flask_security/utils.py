@@ -190,13 +190,11 @@ def is_authn_fresh(within_minutes):
 
     if "fs_authn_ts" not in session:
         return False
-    authn_time = datetime.datetime.fromtimestamp(
-        session["fs_authn_ts"], datetime.timezone.utc
-    )
+    authn_time = datetime.datetime.utcfromtimestamp(session["fs_authn_ts"])
     # allow for some time drift where it's possible authn_time is in the future
     # but lets be cautious and not allow arbitrary future times
     allow_window = timedelta(minutes=within_minutes)
-    delta = datetime.datetime.now(datetime.timezone.utc) - authn_time
+    delta = datetime.datetime.utcnow() - authn_time
     if allow_window > delta > -allow_window:
         return True
     return False

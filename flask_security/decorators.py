@@ -6,7 +6,7 @@
     Flask-Security decorators module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -229,7 +229,7 @@ def auth_token_required(fn):
     return decorated
 
 
-def auth_required(*auth_methods, within_minutes=-1):
+def auth_required(*auth_methods, **kwargs):
     """
     Decorator that protects endpoints through multiple mechanisms
     Example::
@@ -241,7 +241,7 @@ def auth_required(*auth_methods, within_minutes=-1):
 
     :param auth_methods: Specified mechanisms (token, basic, session). If not specified
         then all current available mechanisms will be tried.
-    :param within_minutes: Add 'freshness' check to authentication. If > 0, then
+    :kwparam within_minutes: Add 'freshness' check to authentication. If > 0, then
         the caller must have authenticated within the time specified (as measured using
         the session cookie). If 0, caller will always be redirected to re-login.
         If < 0 (the default) no freshness check is performed.
@@ -266,6 +266,8 @@ def auth_required(*auth_methods, within_minutes=-1):
         Added ``within_minutes`` parameter to add a freshness check.
 
     """
+    # 2.7 doesn't support keyword args after *args....
+    within_minutes = kwargs.get("within_minutes", -1)
     login_mechanisms = {
         "token": lambda: _check_token(),
         "session": lambda: current_user.is_authenticated,
@@ -279,7 +281,7 @@ def auth_required(*auth_methods, within_minutes=-1):
 
     def wrapper(fn):
         @wraps(fn)
-        def decorated_view(*args, **kwargs):
+        def decorated_view(*args, **dkwargs):
             h = {}
             if "basic" in auth_methods:
                 r = _security.default_http_auth_realm
@@ -301,7 +303,7 @@ def auth_required(*auth_methods, within_minutes=-1):
                             msg=get_message("REAUTHENTICATION_REQUIRED")[0],
                         )
                     handle_csrf(method)
-                    return fn(*args, **kwargs)
+                    return fn(*args, **dkwargs)
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
             else:
