@@ -269,6 +269,10 @@ _default_messages = {
         _("You are not authenticated. Please supply the correct credentials."),
         "error",
     ),
+    "REAUTHENTICATION_REQUIRED": (
+        _("You must re-authenticate to access this endpoint"),
+        "error",
+    ),
     "CONFIRM_REGISTRATION": (
         _("Thank you. Confirmation instructions have been sent to %(email)s."),
         "success",

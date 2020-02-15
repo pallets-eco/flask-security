@@ -13,11 +13,19 @@
 import hashlib
 import mock
 import sys
+import time
 
 import pytest
 
-from utils import authenticate, check_xlation, init_app_with_options, populate_data
+from utils import (
+    authenticate,
+    check_xlation,
+    init_app_with_options,
+    json_authenticate,
+    populate_data,
+)
 
+from flask import request, Response
 from flask_security import Security
 from flask_security.forms import (
     ChangePasswordForm,
@@ -654,3 +662,73 @@ def test_phone_util_override(app):
         # trigger @before first request
         client.get("/login")
         assert uia_phone_mapper("55") == "very-canonical"
+
+
+def test_authn_freshness(app, client, get_message):
+    @app.security.unauthn_handler
+    def my_unauthn(mechanisms, headers=None, msg=None):
+        assert msg == get_message("REAUTHENTICATION_REQUIRED").decode("utf-8")
+        if app.security._want_json(request):
+            payload = json_error_response(errors=msg)
+            return app.security._render_json(payload, 401, headers, None)
+        return app.login_manager.unauthorized()
+
+    @auth_required(within_minutes=30)
+    def myview():
+        return Response(status=200)
+
+    @auth_required(within_minutes=0.001)
+    def myspecialview():
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+    app.add_url_rule("/myspecialview", view_func=myspecialview, methods=["GET"])
+    authenticate(client)
+
+    # This should work and not be redirected
+    response = client.get("/myview", follow_redirects=False)
+    assert response.status_code == 200
+
+    # This should require additional authn
+    time.sleep(0.1)
+    response = client.get("/myspecialview", follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == "http://localhost/login?next=%2Fmyspecialview"
+
+    # Test json error response
+    response = client.get("/myspecialview", headers={"accept": "application/json"})
+    assert response.status_code == 401
+    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+        "REAUTHENTICATION_REQUIRED"
+    )
+
+
+def test_authn_freshness_callable(app, client, get_message):
+    @auth_required(within_minutes=lambda: 30)
+    def myview():
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+    authenticate(client)
+
+    # This should work and not be redirected
+    response = client.get("/myview", follow_redirects=False)
+    assert response.status_code == 200
+
+
+def test_authn_freshness_nc(app, client_nc, get_message):
+    # If don't send session cookie - then freshness always fails
+    @auth_required(within_minutes=30)
+    def myview():
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+
+    response = json_authenticate(client_nc)
+    token = response.jdata["response"]["user"]["authentication_token"]
+    h = {"Authentication-Token": token}
+
+    # This should fail
+    response = client_nc.get("/myview", headers=h, follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == "http://localhost/login?next=%2Fmyview"

@@ -11,10 +11,12 @@
 """
 import abc
 import base64
+import datetime
 from functools import partial
 import hashlib
 import hmac
 import sys
+import time
 import warnings
 from contextlib import contextmanager
 from datetime import timedelta
@@ -129,6 +131,7 @@ def login_user(user, remember=None, authn_via=None):
         _datastore.put(user)
 
     session["fs_cc"] = "set"
+    session["fs_authn_ts"] = time.time()
 
     identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
 
@@ -147,7 +150,7 @@ def logout_user():
     identity is now the `AnonymousIdentity`
     """
 
-    for key in ("identity.name", "identity.auth_type"):
+    for key in ("identity.name", "identity.auth_type", "fs_authn_ts"):
         session.pop(key, None)
 
     # Clear csrf token between sessions.
@@ -161,6 +164,42 @@ def logout_user():
         current_app._get_current_object(), identity=AnonymousIdentity()
     )
     _logout_user()
+
+
+def is_authn_fresh(within_minutes):
+    """ Check if user authenticated within specified time.
+
+    :param within_minutes: int/float or callable that returns an int/float
+
+    If within_minutes is 0, this will always return False (not fresh)
+    If within_minutes is negative, will always return True (always 'fresh')
+
+    Be aware that for this to work, sessions and therefore session cookies
+    must be functioning and being sent as part of the request.
+
+    .. warning::
+        Be sure the caller is already authenticated PRIOR to calling this method.
+
+    """
+
+    if callable(within_minutes):
+        within_minutes = within_minutes()
+    if within_minutes < 0:
+        # this means 'always fresh'
+        return True
+
+    if "fs_authn_ts" not in session:
+        return False
+    authn_time = datetime.datetime.fromtimestamp(
+        session["fs_authn_ts"], datetime.timezone.utc
+    )
+    # allow for some time drift where it's possible authn_time is in the future
+    # but lets be cautious and not allow arbitrary future times
+    allow_window = timedelta(minutes=within_minutes)
+    delta = datetime.datetime.now(datetime.timezone.utc) - authn_time
+    if allow_window > delta > -allow_window:
+        return True
+    return False
 
 
 def get_hmac(password):
