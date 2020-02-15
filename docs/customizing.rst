@@ -16,6 +16,7 @@ following is a list of view templates:
 
 * `security/forgot_password.html`
 * `security/login_user.html`
+* `security/logout_user.html`
 * `security/register_user.html`
 * `security/reset_password.html`
 * `security/change_password.html`

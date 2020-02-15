@@ -487,6 +487,13 @@ Login/Logout
 
     Default:``security/login_user.html``.
 
+.. py:data:: SECURITY_LOGOUT_USER_TEMPLATE
+
+    Specifies the path to the template for the user logout page. This is valid, when the
+    ``logout_form`` argument is specified for the initializer for the ``Security`` class.
+
+    Default:``security/logout_user.html``.
+
 Registerable
 ------------
 .. py:data:: SECURITY_REGISTERABLE
@@ -828,56 +835,7 @@ Configuration related to the two-factor authentication feature.
 Unified Signin
 --------------
 
-<<<<<<< HEAD
     .. versionadded:: 3.4.0
-=======
-.. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
-
-================================================== =======================================
-``SECURITY_FORGOT_PASSWORD_TEMPLATE``              Specifies the path to the template for
-                                                   the forgot password page. Defaults to
-                                                   ``security/forgot_password.html``.
-``SECURITY_LOGIN_USER_TEMPLATE``                   Specifies the path to the template for
-                                                   the user login page. Defaults to
-                                                   ``security/login_user.html``.
-``SECURITY_LOGOUT_USER_TEMPLATE``                  Specifies the path to the template for
-                                                   the user logout page. This is valid,
-						   when the `logout_form` argument is
-						   specified for the initializer for the
-						   `Security` class. Defaults to
-                                                   ``security/logout_user.html``.
-``SECURITY_REGISTER_USER_TEMPLATE``                Specifies the path to the template for
-                                                   the user registration page. Defaults to
-                                                   ``security/register_user.html``.
-``SECURITY_RESET_PASSWORD_TEMPLATE``               Specifies the path to the template for
-                                                   the reset password page. Defaults to
-                                                   ``security/reset_password.html``.
-``SECURITY_CHANGE_PASSWORD_TEMPLATE``              Specifies the path to the template for
-                                                   the change password page. Defaults to
-                                                   ``security/change_password.html``.
-``SECURITY_SEND_CONFIRMATION_TEMPLATE``            Specifies the path to the template for
-                                                   the resend confirmation instructions
-                                                   page. Defaults to
-                                                   ``security/send_confirmation.html``.
-``SECURITY_SEND_LOGIN_TEMPLATE``                   Specifies the path to the template for
-                                                   the send login instructions page for
-                                                   passwordless logins. Defaults to
-                                                   ``security/send_login.html``.
-``SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE``       Specifies the path to the template for
-                                                   the verify code page for the two-factor
-                                                   authentication process. Defaults to
-                                                   ``security/two_factor_verify_code.html``.
-``SECURITY_TWO_FACTOR_SETUP_TEMPLATE``             Specifies the path to the template for
-                                                   the setup page for the two
-                                                   factor authentication process. Defaults
-                                                   to ``security/two_factor_setup.html``
-``SECURITY_TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE``   Specifies the path to the template for
-                                                   the change method page for the two
-                                                   factor authentication process. Defaults
-                                                   to ``security/two_factor_verify_password.html``.
-
-================================================== =======================================
->>>>>>> c2a3aa5... Update documentation.
 
 .. py:data:: SECURITY_UNIFIED_SIGNIN
 
