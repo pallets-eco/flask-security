@@ -5,21 +5,21 @@ Authentication and Authorization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Flask-Security provides a set of authentication decorators:
 
- * @auth_required
+ * :func:`.auth_required`
 
- * @http_auth_required
+ * :func:`.http_auth_required`
 
- * @token_auth_required
+ * :func:`.auth_token_required`
 
 and a set of authorization decorators:
 
- * @roles_required
+ * :func:`.roles_required`
 
- * @roles_accepted
+ * :func:`.roles_accepted`
 
- * @permissions_required
+ * :func:`.permissions_required`
 
- * @permissions_accepted
+ * :func:`.permissions_accepted`
 
 In addition, Flask-Login provides @login_required. In order to take advantage of all the
 Flask-Security features, it is recommended to NOT use @login_required.
@@ -27,6 +27,10 @@ Flask-Security features, it is recommended to NOT use @login_required.
 Also, if you annotate your endpoints with JUST an authorization decorator, you will never
 get a 401 response, and (for forms) you won't be redirected to your login page. In this case
 you will always get a 403 status code (assuming you don't override the default handlers).
+
+:func:`.auth_required` also provides a mechanism to check for freshness; that is, require that the
+caller has authenticated within a specified window. This is commonly used when the endpoint is protecting
+modifications to sensitive information. Flask-Security uses this as part of securing the :ref:`unified-sign-in` setup endpoint.
 
 While these annotations are quick and easy, it is likely that they won't completely satisfy
 all an application's authorization requirements. A common example might be that a user can
@@ -66,12 +70,12 @@ There is a large body of references (and endless discussions) around how to get 
 good passwords. The `OWASP Authenication cheatsheet <https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html>`_
 is a useful place to start. Flask-Security has a default password validator that:
 
- * Checks for minimum and maximum length (minimum is configurable via ``SECURITY_PASSWORD_LENGTH_MIN``).
+ * Checks for minimum and maximum length (minimum is configurable via :py:data:`SECURITY_PASSWORD_LENGTH_MIN`).
    The default is 8 characters as defined by `NIST <https://pages.nist.gov/800-63-3/sp800-63b.html>`_.
- * If ``SECURITY_PASSWORD_BREACHED`` is set, will use the API for `haveibeenpwned <https://haveibeenpwned.com>`_ to
-   check if the password is on a list of breached passwords. The configuration variable ``SECURITY_PASSWORD_BREACHED_COUNT``
+ * If :py:data:`SECURITY_PASSWORD_CHECK_BREACHED` is set, will use the API for `haveibeenpwned <https://haveibeenpwned.com>`_ to
+   check if the password is on a list of breached passwords. The configuration variable :py:data:`SECURITY_PASSWORD_BREACHED_COUNT`
    can be used to set the minimum allowable 'breaches'.
- * If ``SECURITY_PASSWORD_COMPLEXITY_CHECKER`` is set to ``zxcvbn`` and the
+ * If :py:data:`SECURITY_PASSWORD_COMPLEXITY_CHECKER` is set to ``zxcvbn`` and the
    package `zxcvbn <https://pypi.org/project/zxcvbn/>`_ is installed, it will check the password for complexity.
 
 Be aware that ``zxcvbn`` is not actively being maintained, and has localization issues.
@@ -97,7 +101,7 @@ concern about 'login CSRF' - is protection needed prior to authentication (yes i
 you have a really secure/popular site).
 
 Flask-Security strives to support various options for both its endpoints (e.g. ``/login``)
-and the application endpoints (protected with Flask-Security decorators such as ``@auth_required``).
+and the application endpoints (protected with Flask-Security decorators such as :func:`.auth_required`).
 
 If your application just uses forms that are derived from ``Flask-WTF::Flaskform`` - you are done.
 
@@ -105,9 +109,9 @@ If your application just uses forms that are derived from ``Flask-WTF::Flaskform
 CSRF: Single-Page-Applications and AJAX/XHR
 ++++++++++++++++++++++++++++++++++++++++++++
 If you are thinking about using authentication tokens in your browser-based UI - read
-`This article <https://stormpath.com/blog/where-to-store-your-jwts-cookies-vs-html5-web-storage>`_
+`this article <https://stormpath.com/blog/where-to-store-your-jwts-cookies-vs-html5-web-storage>`_
 on how and where to store authentication tokens. While the
-article is talking about JWT it applies to flask_security tokens as well.
+article is talking about JWT it applies to Flask-Security tokens as well.
 
 In general, it is considered more secure (and easier) to use sessions for browser
 based UI, and tokens for service to service and scripts.
@@ -244,8 +248,8 @@ CSRF: Enable protection for session auth, but not token auth
 As mentioned above, CSRF is critical for any mutating operation where the authentication credentials are 'invisibly' sent - such as a session cookie -
 from a browser. But if your endpoint a) can only be authenticated with an attached token or b) can be called either via session OR token;
 it is often desirable not to force token API users to deal with CSRF. To solve this, we need to keep CSRFProtect from checking the csrf-token early in the
-request and instead defer that decision to later decorators/code. Flask-Security's authentication decorators (``auth_required``, ``auth_token_required``,
-and ``http_auth_required`` all support calling csrf protection based on configuration::
+request and instead defer that decision to later decorators/code. Flask-Security's authentication decorators (:func:`.auth_required`,
+:func:`.auth_token_required`, and :func:`.http_auth_required` all support calling csrf protection based on configuration::
 
     # Disable pre-request CSRF
     app.config[WTF_CSRF_CHECK_DEFAULT] = False
@@ -267,7 +271,7 @@ CSRF: Pro-Tips
 ++++++++++++++
     #) Be aware that for CSRF to work, callers MUST send the session cookie. So
        for pure API (token based), and no session cookie - there is no way to support 'login CSRF'.
-       So your app must set *SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS*
+       So your app must set :py:data:`SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS`
        (or clients must use CSRF/session cookie for logging
        in then once they have an authentication token, no further need for cookie).
 
@@ -284,7 +288,7 @@ CSRF: Pro-Tips
     #) If you can't use a decorator, Flask-Security exposes the underlying method
        :func:`flask_security.handle_csrf`.
 
-    #) Consider starting by setting *SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS* to True. Your
+    #) Consider starting by setting :py:data:`SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS` to True. Your
        application likely doesn't need 'login CSRF' protection, and it is frustrating
        to not even be able to login via API!
 

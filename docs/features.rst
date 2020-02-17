@@ -205,7 +205,7 @@ Single Page Applications. More specifically
 JSON is supported for the following operations:
 
 * Login requests
-* Unigied signin requests
+* Unified sign in requests
 * Registration requests
 * Change password requests
 * Confirmation requests

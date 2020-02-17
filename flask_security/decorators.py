@@ -6,7 +6,7 @@
     Flask-Security decorators module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -26,6 +26,7 @@ from .utils import (
     do_flash,
     get_message,
     get_url,
+    is_authn_fresh,
     json_error_response,
 )
 
@@ -58,7 +59,7 @@ def _get_unauthorized_response(text=None, headers=None):  # pragma: no cover
     return _get_unauthenticated_response(text, headers)
 
 
-def default_unauthn_handler(mechanisms, headers=None):
+def default_unauthn_handler(mechanisms, headers=None, msg=None):
     """ Default callback for failures to authenticate
 
     If caller wants JSON - return 401
@@ -66,13 +67,14 @@ def default_unauthn_handler(mechanisms, headers=None):
     We let Flask-Login handle this.
 
     """
-    unauthn_message, _ = get_message("UNAUTHENTICATED")
+    if not msg:
+        msg = get_message("UNAUTHENTICATED")[0]
 
     if config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
-        payload = json_error_response(errors=unauthn_message)
+        payload = json_error_response(errors=msg)
         return _security._render_json(payload, 401, headers, None)
     return _security.login_manager.unauthorized()
 
@@ -227,7 +229,7 @@ def auth_token_required(fn):
     return decorated
 
 
-def auth_required(*auth_methods):
+def auth_required(*auth_methods, **kwargs):
     """
     Decorator that protects endpoints through multiple mechanisms
     Example::
@@ -239,6 +241,12 @@ def auth_required(*auth_methods):
 
     :param auth_methods: Specified mechanisms (token, basic, session). If not specified
         then all current available mechanisms will be tried.
+    :kwparam within_minutes: Add 'freshness' check to authentication. If > 0, then
+        the caller must have authenticated within the time specified (as measured using
+        the session cookie). If 0, caller will always be redirected to re-login.
+        If < 0 (the default) no freshness check is performed.
+        Note that Basic Auth, by definition, is always 'fresh' and will never result in
+        a redirect/error.
 
     Note that regardless of order specified - they will be tried in the following
     order: token, session, basic.
@@ -253,7 +261,13 @@ def auth_required(*auth_methods):
        If ``auth_methods`` isn't specified, then all will be tried. Authentication
        mechanisms will always be tried in order of ``token``, ``session``, ``basic``
        regardless of how they are specified in the ``auth_methods`` parameter.
+
+    .. versionchanged:: 3.4.0
+        Added ``within_minutes`` parameter to add a freshness check.
+
     """
+    # 2.7 doesn't support keyword args after *args....
+    within_minutes = kwargs.get("within_minutes", -1)
     login_mechanisms = {
         "token": lambda: _check_token(),
         "session": lambda: current_user.is_authenticated,
@@ -267,8 +281,11 @@ def auth_required(*auth_methods):
 
     def wrapper(fn):
         @wraps(fn)
-        def decorated_view(*args, **kwargs):
+        def decorated_view(*args, **dkwargs):
             h = {}
+            if "basic" in auth_methods:
+                r = _security.default_http_auth_realm
+                h["WWW-Authenticate"] = 'Basic realm="%s"' % r
             mechanisms = [
                 (method, login_mechanisms.get(method))
                 for method in mechanisms_order
@@ -276,11 +293,17 @@ def auth_required(*auth_methods):
             ]
             for method, mechanism in mechanisms:
                 if mechanism and mechanism():
+                    # successfully authenticated. Basic auth is by definition 'fresh'.
+                    # Note that using token auth is ok - but caller still has to pass
+                    # in a session cookie...
+                    if method != "basic" and not is_authn_fresh(within_minutes):
+                        return _security._unauthn_handler(
+                            auth_methods,
+                            headers=h,
+                            msg=get_message("REAUTHENTICATION_REQUIRED")[0],
+                        )
                     handle_csrf(method)
-                    return fn(*args, **kwargs)
-                elif method == "basic":
-                    r = _security.default_http_auth_realm
-                    h["WWW-Authenticate"] = 'Basic realm="%s"' % r
+                    return fn(*args, **dkwargs)
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
             else:

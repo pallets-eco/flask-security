@@ -269,6 +269,10 @@ _default_messages = {
         _("You are not authenticated. Please supply the correct credentials."),
         "error",
     ),
+    "REAUTHENTICATION_REQUIRED": (
+        _("You must re-authenticate to access this endpoint"),
+        "error",
+    ),
     "CONFIRM_REGISTRATION": (
         _("Thank you. Confirmation instructions have been sent to %(email)s."),
         "success",
@@ -1297,10 +1301,12 @@ class Security(object):
         This is called by :func:`auth_required`, :func:`auth_token_required`
         or :func:`http_auth_required` if authentication fails.
 
-        :param cb: Callback function with signature (mechanisms, headers=None)
+        :param cb: Callback function with signature (mechanisms, headers=None, msg=None)
 
             :mechanisms: List of which authentication mechanisms were tried
             :headers: dict of headers to return
+            :msg: a translated/localized message
+                  (if None then SECURITY_MSG_UNAUTHENTICATED is used)
 
         Should return a Response or something Flask can create a Response from.
         Can raise an exception if it is handled as part of
@@ -1310,6 +1316,11 @@ class Security(object):
         otherwise lets flask_login.login_manager.unauthorized() handle redirects.
 
         .. versionadded:: 3.3.0
+
+        .. versionchanged:: 3.4.0
+            The ``msg`` argument was added to enable customizing why the caller was
+            deemed unauthenticated.
+
         """
         self._state._unauthn_handler = cb
 

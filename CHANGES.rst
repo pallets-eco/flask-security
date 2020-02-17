@@ -13,9 +13,11 @@ Released Target Feb 2020
 - (:pr:`257`) Support a unified sign in feature. Please see :ref:`unified-sign-in`.
 - (:pr:`265`) Add phone number validation class. This is used in both unified sign in
   as well as two-factor when using ``sms``.
+- (:pr:`274`) Add support for 'freshness' of caller's authentication. This permits endpoints
+  to be additionally protected by ensuring a recent authentication.
 
-As part of adding unified sign in - there were many similarities with two-factor.
-Some refactoring was done to unify naming, some configuration variables etc.
+As part of adding unified sign in, there were many similarities with two-factor.
+Some refactoring was done to unify naming, configuration variables etc.
 It should all be backwards compatible.
 
 - In TWO_FACTOR_ENABLED_METHODS "mail" was changed to "email". "mail" will still
