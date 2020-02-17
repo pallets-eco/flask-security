@@ -10,6 +10,7 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from datetime import timedelta
 import hashlib
 import mock
 import sys
@@ -25,7 +26,7 @@ from utils import (
     populate_data,
 )
 
-from flask import request, Response
+from flask import abort, request, Response
 from flask_security import Security
 from flask_security.forms import (
     ChangePasswordForm,
@@ -45,6 +46,7 @@ from flask_security.forms import (
 )
 from flask_security import auth_required
 from flask_security.utils import (
+    capture_flashes,
     capture_reset_password_requests,
     encode_string,
     json_error_response,
@@ -666,19 +668,87 @@ def test_phone_util_override(app):
 
 
 def test_authn_freshness(app, client, get_message):
-    @app.security.unauthn_handler
-    def my_unauthn(mechanisms, headers=None, msg=None):
-        assert msg == get_message("REAUTHENTICATION_REQUIRED").decode("utf-8")
-        if app.security._want_json(request):
-            payload = json_error_response(errors=msg)
-            return app.security._render_json(payload, 401, headers, None)
-        return app.login_manager.unauthorized()
+    """
+    Test freshness using default reauthn_handler
+    REAUTHENTICATE_VIEW {None (default), custom}
+    """
 
-    @auth_required(within_minutes=30)
+    @auth_required(within=30, grace=0)
     def myview():
         return Response(status=200)
 
-    @auth_required(within_minutes=0.001)
+    @auth_required(within=0.001, grace=0)
+    def myspecialview():
+        return Response(status=200)
+
+    def myreauthnview():
+        pass
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+    app.add_url_rule("/myspecialview", view_func=myspecialview, methods=["GET"])
+    app.add_url_rule("/myreauthnview", view_func=myreauthnview, methods=["GET"])
+    authenticate(client)
+
+    # This should work and not be redirected
+    response = client.get("/myview", follow_redirects=False)
+    assert response.status_code == 200
+
+    # This should require additional authn. With default REAUTHENTICATE_VIEW set should
+    # just redirect to login
+    time.sleep(0.1)
+    response = client.get("/myspecialview", follow_redirects=False)
+    assert response.status_code == 302
+    assert (
+        response.location
+        == "http://localhost/login?next=http%3A%2F%2Flocalhost%2Fmyspecialview"
+    )
+
+    # Test json error response
+    response = client.get("/myspecialview", headers={"accept": "application/json"})
+    assert response.status_code == 401
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "REAUTHENTICATION_REQUIRED"
+    )
+
+    app.config["SECURITY_REAUTHENTICATE_VIEW"] = "myreauthnview"
+    time.sleep(0.1)
+    with capture_flashes() as flashes:
+        response = client.get("/myspecialview", follow_redirects=False)
+        assert response.status_code == 302
+        assert (
+            response.location == "http://localhost/"
+            "myreauthnview?next=http%3A%2F%2Flocalhost%2Fmyspecialview"
+        )
+
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "REAUTHENTICATION_REQUIRED"
+    )
+
+    # Test that if we send in a callable it calls it and DOESN'T default to /login
+    # even though our callable returns None.
+    app.config["SECURITY_REAUTHENTICATE_VIEW"] = lambda: None
+    time.sleep(0.1)
+    response = client.get("/myspecialview", follow_redirects=False)
+    assert response.status_code == 401
+
+
+def test_authn_freshness_handler(app, client, get_message):
+    """ Test with our own handler """
+
+    @app.security.reauthn_handler
+    def my_reauthn(within, grace, headers=None):
+        assert within == timedelta(minutes=30) or timedelta(minutes=0.001)
+        if app.security._want_json(request):
+            payload = json_error_response(errors="Oh No")
+            return app.security._render_json(payload, 401, headers, None)
+        abort(500)
+
+    @auth_required(within=30, grace=0)
+    def myview():
+        return Response(status=200)
+
+    @auth_required(within=0.001, grace=0)
     def myspecialview():
         return Response(status=200)
 
@@ -693,19 +763,16 @@ def test_authn_freshness(app, client, get_message):
     # This should require additional authn
     time.sleep(0.1)
     response = client.get("/myspecialview", follow_redirects=False)
-    assert response.status_code == 302
-    assert response.location == "http://localhost/login?next=%2Fmyspecialview"
+    assert response.status_code == 500
 
     # Test json error response
     response = client.get("/myspecialview", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
-        "REAUTHENTICATION_REQUIRED"
-    )
+    assert response.json["response"]["error"] == "Oh No"
 
 
 def test_authn_freshness_callable(app, client, get_message):
-    @auth_required(within_minutes=lambda: 30)
+    @auth_required(within=lambda: timedelta(minutes=30))
     def myview():
         return Response(status=200)
 
@@ -717,9 +784,33 @@ def test_authn_freshness_callable(app, client, get_message):
     assert response.status_code == 200
 
 
+def test_authn_freshness_grace(app, client, get_message):
+    # Test that grace override within.
+    @auth_required(within=lambda: timedelta(minutes=30), grace=10)
+    def myview():
+        return Response(status=200)
+
+    @auth_required(within=0.001, grace=lambda: timedelta(minutes=10))
+    def myspecialview():
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+    app.add_url_rule("/myspecialview", view_func=myspecialview, methods=["GET"])
+    authenticate(client)
+
+    # This should work and not be redirected
+    response = client.get("/myview", follow_redirects=False)
+    assert response.status_code == 200
+
+    # This should NOT require additional authn
+    time.sleep(0.1)
+    response = client.get("/myspecialview", follow_redirects=False)
+    assert response.status_code == 200
+
+
 def test_authn_freshness_nc(app, client_nc, get_message):
     # If don't send session cookie - then freshness always fails
-    @auth_required(within_minutes=30)
+    @auth_required(within=30)
     def myview():
         return Response(status=200)
 
@@ -729,7 +820,10 @@ def test_authn_freshness_nc(app, client_nc, get_message):
     token = response.json["response"]["user"]["authentication_token"]
     h = {"Authentication-Token": token}
 
-    # This should fail
+    # This should fail- with default REAUTHENTICATE_VIEW - should be a redirect
     response = client_nc.get("/myview", headers=h, follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == "http://localhost/login?next=%2Fmyview"
+    assert (
+        response.location
+        == "http://localhost/login?next=http%3A%2F%2Flocalhost%2Fmyview"
+    )

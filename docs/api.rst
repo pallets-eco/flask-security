@@ -92,7 +92,7 @@ Utils
 
 .. autofunction:: flask_security.logout_user
 
-.. autofunction:: flask_security.is_authn_fresh
+.. autofunction:: flask_security.check_and_update_authn_fresh
 
 .. autofunction:: flask_security.get_hmac
 

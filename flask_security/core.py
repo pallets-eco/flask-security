@@ -12,7 +12,7 @@
     :license: MIT, see LICENSE for more details.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import warnings
 import sys
@@ -29,7 +29,11 @@ from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy, Local
 
-from .decorators import default_unauthn_handler, default_unauthz_handler
+from .decorators import (
+    default_reauthn_handler,
+    default_unauthn_handler,
+    default_unauthz_handler,
+)
 from .forms import (
     ChangePasswordForm,
     ConfirmRegisterForm,
@@ -148,6 +152,7 @@ _default_config = {
     "POST_RESET_VIEW": None,
     "POST_CHANGE_VIEW": None,
     "UNAUTHORIZED_VIEW": None,
+    "REAUTHENTICATE_VIEW": None,
     "RESET_ERROR_VIEW": None,
     "RESET_VIEW": None,
     "LOGIN_ERROR_VIEW": None,
@@ -180,6 +185,7 @@ _default_config = {
     "TWO_FACTOR_SMS_VALIDITY": 120,
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "5 days",
+    "FRESHNESS_GRACE_PERIOD": timedelta(hours=2),
     "LOGIN_WITHOUT_CONFIRMATION": False,
     "AUTO_LOGIN_AFTER_CONFIRM": True,
     "EMAIL_SENDER": LocalProxy(
@@ -595,6 +601,7 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             _render_json=default_render_json,
             _want_json=default_want_json,
             _unauthn_handler=default_unauthn_handler,
+            _reauthn_handler=default_reauthn_handler,
             _unauthz_handler=default_unauthz_handler,
             _password_validator=default_password_validator,
         )
@@ -630,7 +637,7 @@ class RoleMixin(object):
         """
         Return set of permissions associated with role.
 
-        Either takes a comma seperated string of permissions or
+        Either takes a comma separated string of permissions or
         an interable of strings if permissions are in their own
         table.
 
@@ -979,6 +986,9 @@ class _SecurityState(object):
     def unauthn_handler(self, cb):
         self._unauthn_handler = cb
 
+    def reauthn_handler(self, cb):
+        self._reauthn_handler = cb
+
     def password_validator(self, cb):
         self._password_validator = cb
 
@@ -1320,12 +1330,10 @@ class Security(object):
         This is called by :func:`auth_required`, :func:`auth_token_required`
         or :func:`http_auth_required` if authentication fails.
 
-        :param cb: Callback function with signature (mechanisms, headers=None, msg=None)
+        :param cb: Callback function with signature (mechanisms, headers=None)
 
             :mechanisms: List of which authentication mechanisms were tried
             :headers: dict of headers to return
-            :msg: a translated/localized message
-                  (if None then SECURITY_MSG_UNAUTHENTICATED is used)
 
         Should return a Response or something Flask can create a Response from.
         Can raise an exception if it is handled as part of
@@ -1335,13 +1343,34 @@ class Security(object):
         otherwise lets flask_login.login_manager.unauthorized() handle redirects.
 
         .. versionadded:: 3.3.0
-
-        .. versionchanged:: 3.4.0
-            The ``msg`` argument was added to enable customizing why the caller was
-            deemed unauthenticated.
-
         """
         self._state._unauthn_handler = cb
+
+    def reauthn_handler(self, cb):
+        """
+        Callback when endpoint required a fresh authentication.
+        This is called by :func:`auth_required`.
+
+        :param cb: Callback function with signature (within, grace, headers=None)
+
+            :within: timedelta that endpoint required fresh authentication within.
+            :grace: timedelta of grace period that endpoint allowed.
+            :headers: dict of headers to return
+
+        Should return a Response or something Flask can create a Response from.
+        Can raise an exception if it is handled as part of
+        flask.errorhandler(<exception>)
+
+        The default implementation will return a 401 response if the request was JSON,
+        otherwise redirects to :py:data:`SECURITY_REAUTHENTICATE_VIEW` or
+        if that is None to :py:data:`SECURITY_LOGIN_URL` and if that is None
+        it sends an abort(401).
+
+        See :meth:`flask_security.auth_required` for details about freshness checking.
+
+        .. versionadded:: 3.4.0
+        """
+        self._state._reauthn_handler = cb
 
     def password_validator(self, cb):
         """

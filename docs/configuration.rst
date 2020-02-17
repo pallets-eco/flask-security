@@ -140,6 +140,16 @@ These configuration keys are used globally across all features.
 
     .. versionadded:: 3.4.0
 
+.. py:data:: SECURITY_FRESHNESS_GRACE_PERIOD
+
+    When protecting an endpoint with :meth:`flask_security.auth_required` and requesting a freshness
+    test, this is the default grace period if none is provided. Please see
+    :meth:`flask_security.check_and_update_authn_fresh` for details.
+
+    Default: timedelta(hours=2)
+
+    .. versionadded:: 3.4.0
+
 .. py:data:: SECURITY_TOKEN_AUTHENTICATION_KEY
 
     Specifies the query string parameter to read when using token authentication.
@@ -480,6 +490,19 @@ Login/Logout
     HTTP 403 response.
 
     Default: ``None``.
+
+.. py:data:: SECURITY_REAUTHENTICATE_VIEW
+
+    Specifies the view to redirect to if a user attempts to access a URL/endpoint that they are required
+    to have a 'fresh' login (see :meth:`flask_security.auth_required`).
+    If this value is ``None``, then the user is redirected to :py:data`SECURITY_LOGIN_URL` -
+    if that is NONE the user is presented with a default HTTP 401 response.
+    This can be an endpoint name or a callable. The default redirects to the
+    login page. This possibly isn't the best user experience - but is 'correct'.
+
+    Default: ``None``
+
+    .. versionadded:: 3.4.0
 
 .. py:data:: SECURITY_LOGIN_USER_TEMPLATE
 
@@ -1022,6 +1045,7 @@ A list of all URLs and Views:
 * ``SECURITY_POST_RESET_VIEW``
 * ``SECURITY_POST_CHANGE_VIEW``
 * ``SECURITY_UNAUTHORIZED_VIEW``
+* :py:data:`SECURITY_REAUTHENTICATE_VIEW`
 * ``SECURITY_RESET_VIEW``
 * ``SECURITY_RESET_ERROR_VIEW``
 * ``SECURITY_LOGIN_ERROR_VIEW``
