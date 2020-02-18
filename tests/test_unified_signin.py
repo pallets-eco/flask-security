@@ -922,7 +922,7 @@ def test_bad_sender(app, client, get_message):
     assert get_message("FAILED_TO_SEND_CODE") in response.data
 
     response = client.post("us-send-code", data=json.dumps(data), headers=headers)
-    assert response.status_code == 400
+    assert response.status_code == 500
     assert response.jdata["response"]["errors"]["chosen_method"][0].encode(
         "utf-8"
     ) == get_message("FAILED_TO_SEND_CODE")
@@ -934,7 +934,7 @@ def test_bad_sender(app, client, get_message):
     assert get_message("FAILED_TO_SEND_CODE") in response.data
 
     response = client.post("us-setup", data=json.dumps(data), headers=headers)
-    assert response.status_code == 400
+    assert response.status_code == 500
     assert response.jdata["response"]["errors"]["chosen_method"][0].encode(
         "utf-8"
     ) == get_message("FAILED_TO_SEND_CODE")

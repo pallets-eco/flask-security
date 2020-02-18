@@ -756,13 +756,17 @@ def csrf_cookie_handler(response):
 
 
 def base_render_json(
-    form, include_user=True, include_auth_token=False, additional=None
+    form,
+    include_user=True,
+    include_auth_token=False,
+    additional=None,
+    error_status_code=400,
 ):
     has_errors = len(form.errors) > 0
 
     user = form.user if hasattr(form, "user") else None
     if has_errors:
-        code = 400
+        code = error_status_code
         payload = json_error_response(errors=form.errors)
     else:
         code = 200
