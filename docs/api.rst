@@ -128,6 +128,8 @@ Utils
 
 .. autofunction:: flask_security.us_send_security_token
 
+.. autofunction:: flask_security.tf_send_security_token
+
 .. autoclass:: flask_security.FsJsonEncoder
 
 .. autoclass:: flask_security.Totp

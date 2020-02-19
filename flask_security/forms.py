@@ -571,7 +571,7 @@ class TwoFactorVerifyPasswordForm(Form, PasswordFormMixin):
         return True
 
 
-class TwoFactorRescueForm(Form, UserEmailFormMixin):
+class TwoFactorRescueForm(Form):
     """The Two-factor Rescue validation form """
 
     help_setup = RadioField(
@@ -587,4 +587,6 @@ class TwoFactorRescueForm(Form, UserEmailFormMixin):
         super(TwoFactorRescueForm, self).__init__(*args, **kwargs)
 
     def validate(self):
+        if not super(TwoFactorRescueForm, self).validate():
+            return False
         return True

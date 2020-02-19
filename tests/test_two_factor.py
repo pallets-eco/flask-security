@@ -17,15 +17,20 @@ except ImportError:
 from flask import json
 import pytest
 
-from utils import SmsTestSender, authenticate, get_session, logout
+from utils import SmsBadSender, SmsTestSender, authenticate, get_session, logout
 from flask_principal import identity_changed
-from flask_security.signals import reset_password_instructions_sent
-from flask_security.utils import SmsSenderFactory, capture_flashes
+from flask_security import (
+    SQLAlchemyUserDatastore,
+    SmsSenderFactory,
+    reset_password_instructions_sent,
+)
+from flask_security.utils import capture_flashes
 
 pytestmark = pytest.mark.two_factor()
 
 
 SmsSenderFactory.senders["test"] = SmsTestSender
+SmsSenderFactory.senders["bad"] = SmsBadSender
 
 
 class TestMail(object):
@@ -38,16 +43,19 @@ class TestMail(object):
         self.count += 1
 
 
-def two_factor_authenticate(client, validate=True):
+def tf_authenticate(app, client, validate=True):
     """ Login/Authenticate using two factor.
     This is the equivalent of utils:authenticate
     """
+    prev_sms = app.config["SECURITY_SMS_SERVICE"]
+    app.config["SECURITY_SMS_SERVICE"] = "test"
     sms_sender = SmsSenderFactory.createSender("test")
     json_data = '{"email": "gal@lp.com", "password": "password"}'
     response = client.post(
         "/login", data=json_data, headers={"Content-Type": "application/json"}
     )
     assert b'"code": 200' in response.data
+    app.config["SECURITY_SMS_SERVICE"] = prev_sms
 
     if validate:
         code = sms_sender.messages[0].split()[-1]
@@ -810,3 +818,93 @@ def test_username_salutation(app, client):
     assert "jill@lp.com" not in test_mail.msg.body
     assert "jill@lp.com" not in test_mail.msg.html
     assert "jill" in test_mail.msg.body
+
+
+@pytest.mark.settings(sms_service="bad")
+def test_bad_sender(app, client, get_message):
+    # If SMS sender fails - make sure propagated
+    # Test form, json, x signin, setup
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    # test normal, already setup up login.
+    with capture_flashes() as flashes:
+        data = {"email": "gal@lp.com", "password": "password"}
+        response = client.post("login", data=data, follow_redirects=False)
+        assert response.status_code == 302
+        assert response.location == "http://localhost/login"
+    assert get_message("FAILED_TO_SEND_CODE") in flashes[0]["message"].encode("utf-8")
+
+    # test w/ JSON
+    json_data = '{"email": "gal@lp.com", "password": "password"}'
+    response = client.post("login", data=json_data, headers=headers)
+    assert response.status_code == 500
+    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+        "FAILED_TO_SEND_CODE"
+    )
+
+    # Now test setup
+    tf_authenticate(app, client)
+    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
+    data = dict(setup="sms", phone="+442083661188")
+    response = client.post("tf-setup", data=data)
+    assert get_message("FAILED_TO_SEND_CODE") in response.data
+
+    response = client.post("tf-setup", data=json.dumps(data), headers=headers)
+    assert response.status_code == 500
+    assert response.jdata["response"]["errors"]["setup"][0].encode(
+        "utf-8"
+    ) == get_message("FAILED_TO_SEND_CODE")
+
+
+@pytest.mark.registerable()
+def test_replace_send_code(app, get_message):
+    # replace tf_send_code - and have it return an error to check that.
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security, hash_password
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    db = SQLAlchemy(app)
+
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        rv = [None, "That didnt work out as we planned", "Failed Again"]
+
+        def tf_send_security_token(self, method, **kwargs):
+            return User.rv.pop(0)
+
+    with app.app_context():
+        db.create_all()
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        client = app.test_client()
+
+        ds.create_user(
+            email="trp@lp.com",
+            password=hash_password("password"),
+            tf_primary_method="sms",
+            tf_totp_secret=app.security._totp_factory.generate_totp_secret(),
+        )
+        ds.commit()
+
+        data = dict(email="trp@lp.com", password="password")
+        response = client.post("/login", data=data, follow_redirects=True)
+        assert b"Please enter your authentication code" in response.data
+        rescue_data = dict(help_setup="lost_device")
+        response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
+        assert b"That didnt work out as we planned" in response.data
+
+        # Test JSON
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        response = client.post(
+            "/tf-rescue", data=json.dumps(rescue_data), headers=headers
+        )
+        assert response.status_code == 500
+        assert response.jdata["response"]["errors"]["help_setup"][0] == "Failed Again"

@@ -8,13 +8,15 @@ Version 3.4.0
 
 Released Target Feb 2020
 
-- (:issue:`99`, :issue:`195`) Support pluggable password validators. Provide a default
-  validator that offers complexity and breached support.
 - (:pr:`257`) Support a unified sign in feature. Please see :ref:`unified-sign-in`.
 - (:pr:`265`) Add phone number validation class. This is used in both unified sign in
   as well as two-factor when using ``sms``.
 - (:pr:`274`) Add support for 'freshness' of caller's authentication. This permits endpoints
   to be additionally protected by ensuring a recent authentication.
+- (:issue:`99`, :issue:`195`) Support pluggable password validators. Provide a default
+  validator that offers complexity and breached support.
+- (:issue:`266`) Provide interface to two-factor send_token so that applications
+  can provide error mitigation. Defaults to returning errors if can't send the verification code.
 
 As part of adding unified sign in, there were many similarities with two-factor.
 Some refactoring was done to unify naming, configuration variables etc.

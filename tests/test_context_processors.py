@@ -7,7 +7,7 @@
 """
 
 import pytest
-from test_two_factor import two_factor_authenticate
+from test_two_factor import tf_authenticate
 from test_unified_signin import authenticate as us_authenticate
 from utils import authenticate, logout
 
@@ -122,7 +122,7 @@ def test_two_factor_context_processors(client, app):
     def send_two_factor_confirm():
         return {"foo": "bar"}
 
-    two_factor_authenticate(client)
+    tf_authenticate(app, client)
     response = client.get("/tf-confirm")
     assert b"global" in response.data
     assert b"bar" in response.data
@@ -143,7 +143,7 @@ def test_two_factor_context_processors(client, app):
     def send_two_factor_token_validation():
         return {"foo": "bar"}
 
-    two_factor_authenticate(client, validate=False)
+    tf_authenticate(app, client, validate=False)
     response = client.get("/tf-rescue")
     assert b"global" in response.data
     assert b"bar" in response.data

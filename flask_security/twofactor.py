@@ -17,7 +17,9 @@ from .utils import (
     SmsSenderFactory,
     base_render_json,
     config_value,
+    do_flash,
     login_user,
+    json_error_response,
     url_for_security,
 )
 from .signals import (
@@ -48,13 +50,20 @@ def tf_clean_session():
             session.pop(k, None)
 
 
-def send_security_token(user, method, totp_secret, phone_number):
+def tf_send_security_token(user, method, totp_secret, phone_number):
     """Sends the security token via email/sms for the specified user.
+
     :param user: The user to send the code to
     :param method: The method in which the code will be sent
-                ('email' or 'sms', or 'authenticator') at the moment
+                   ('email' or 'sms', or 'authenticator') at the moment
     :param totp_secret: a unique shared secret of the user
     :param phone_number: If 'sms' phone number to send to
+
+    There is no return value - it is assumed that exceptions are thrown by underlying
+    methods that callers can catch.
+
+    Flask-Security code should NOT call this directly -
+    call :meth:`.UserMixin.tf_send_security_token`
     """
     token_to_be_sent = _security._totp_factory.generate_totp_password(totp_secret)
     if method == "email" or method == "mail":
@@ -77,7 +86,11 @@ def send_security_token(user, method, totp_secret, phone_number):
         # password are generated automatically in the authenticator apps
         pass
     tf_security_token_sent.send(
-        app._get_current_object(), user=user, method=method, token=token_to_be_sent
+        app._get_current_object(),
+        user=user,
+        method=method,
+        token=token_to_be_sent,
+        phone_number=phone_number,
     )
 
 
@@ -164,17 +177,25 @@ def tf_login(user, remember=None, primary_authn_via=None):
         json_response["tf_state"] = "ready"
         json_response["tf_primary_method"] = user.tf_primary_method
 
-        send_security_token(
-            user=user,
+        msg = user.tf_send_security_token(
             method=user.tf_primary_method,
             totp_secret=user.tf_totp_secret,
             phone_number=user.tf_phone_number,
         )
+        if msg:
+            # send code didn't work
+            if not _security._want_json(request):
+                # This is a mess - we are deep down in the login flow.
+                do_flash(msg, "error")
+                return redirect(url_for_security("login"))
+            else:
+                payload = json_error_response(errors=msg)
+                return _security._render_json(payload, 500, None, None)
 
         if not _security._want_json(request):
             return redirect(url_for_security("two_factor_token_validation"))
 
-    # Fake up a form - doesn't really matter which.
+    # JSON response - Fake up a form - doesn't really matter which.
     form = _security.login_form(MultiDict([]))
     form.user = user
 

@@ -45,6 +45,7 @@ from .forms import (
     TwoFactorRescueForm,
 )
 from .phone_util import PhoneUtil
+from .twofactor import tf_send_security_token
 from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
@@ -808,7 +809,7 @@ class UserMixin(BaseUserMixin):
 
     def calc_username(self):
         """ Come up with the best 'username' based on how the app
-        is configured (via SECURITY_USER_IDENTITY_ATTRIBUTES).
+        is configured (via :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`).
         Returns the first non-null match (and converts to string).
         In theory this should NEVER be the empty string unless the user
         record isn't actually valid.
@@ -857,6 +858,24 @@ class UserMixin(BaseUserMixin):
         """
         try:
             us_send_security_token(self, method, **kwargs)
+        except Exception:
+            return get_message("FAILED_TO_SEND_CODE")[0]
+        return None
+
+    def tf_send_security_token(self, method, **kwargs):
+        """ Generate and send the security code for two-factor.
+
+        :param method: The method in which the code will be sent
+        :param kwargs: Opaque parameters that are subject to change at any time
+        :return: None if successful, error message if not.
+
+        This is a wrapper around :meth:`tf_send_security_token`
+        that can be overridden to manage any errors.
+
+        .. versionadded:: 3.4.0
+        """
+        try:
+            tf_send_security_token(self, method, **kwargs)
         except Exception:
             return get_message("FAILED_TO_SEND_CODE")[0]
         return None

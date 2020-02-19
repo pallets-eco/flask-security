@@ -310,7 +310,9 @@ def us_send_code():
 
         if _security._want_json(request):
             # Not authenticated yet - so don't send any user info.
-            return base_render_json(form, include_user=False)
+            return base_render_json(
+                form, include_user=False, error_status_code=500 if msg else 400
+            )
 
         return _security.render_template(
             config_value("US_SIGNIN_TEMPLATE"),
@@ -502,7 +504,9 @@ def us_setup():
             form.chosen_method.errors.append(msg)
             if _security._want_json(request):
                 # Not authenticated yet - so don't send any user info.
-                return base_render_json(form, include_user=False)
+                return base_render_json(
+                    form, include_user=False, error_status_code=500 if msg else 400
+                )
             return _security.render_template(
                 config_value("US_SETUP_TEMPLATE"),
                 methods=config_value("US_ENABLED_METHODS"),
@@ -657,17 +661,20 @@ def us_send_security_token(
     user, method, totp_secret, phone_number, send_magic_link=False
 ):
     """ Generate and send the security code.
+
     :param user: The user to send the code to
     :param method: The method in which the code will be sent
     :param totp_secret: the unique shared secret of the user
     :param phone_number: If 'sms' phone number to send to
     :param send_magic_link: If true a magic link that can be clicked on will be sent.
+
     This shouldn't be sent during a setup.
 
     There is no return value - it is assumed that exceptions are thrown by underlying
     methods that callers can catch.
 
-    Flask-Security code should NOT call this directly - call user.us_send_security_token
+    Flask-Security code should NOT call this directly -
+    call :meth:`.UserMixin.us_send_security_token`
 
     .. versionadded:: 3.4.0
     """

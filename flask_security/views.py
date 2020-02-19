@@ -71,7 +71,6 @@ from .recoverable import (
 from .registerable import register_user
 from .twofactor import (
     complete_two_factor_process,
-    send_security_token,
     tf_clean_session,
     tf_disable,
     tf_login,
@@ -697,12 +696,19 @@ def two_factor_setup():
         # For authenticator of course, we don't actually send anything
         # and for SMS it is the second time around that we get the phone number
         if pm == "email" or (pm == "sms" and new_phone):
-            send_security_token(
-                user=user,
+            msg = user.tf_send_security_token(
                 method=pm,
                 totp_secret=session["tf_totp_secret"],
                 phone_number=user.tf_phone_number,
             )
+            if msg:
+                # send code didn't work
+                form.setup.errors = list()
+                form.setup.errors.append(msg)
+                if _security._want_json(request):
+                    return base_render_json(
+                        form, include_user=False, error_status_code=500
+                    )
         code_form = _security.two_factor_verify_code_form()
         if not _security._want_json(request):
             return _security.render_template(
@@ -870,18 +876,25 @@ def two_factor_rescue():
         tf_clean_session()
         return _tf_illegal_state(form, _security.login_url)
 
-    problem = None
+    rproblem = ""
     if form.validate_on_submit():
         problem = form.data["help_setup"]
+        rproblem = problem
         # if the problem is that user can't access his device, w
         # e send him code through mail
         if problem == "lost_device":
-            send_security_token(
-                user=form.user,
+            msg = form.user.tf_send_security_token(
                 method="email",
                 totp_secret=form.user.tf_totp_secret,
                 phone_number=form.user.tf_phone_number,
             )
+            if msg:
+                rproblem = ""
+                form.help_setup.errors.append(msg)
+                if _security._want_json(request):
+                    return base_render_json(
+                        form, include_user=False, error_status_code=500
+                    )
         # send app provider a mail message regarding trouble
         elif problem == "no_mail_access":
             _security._send_mail(
@@ -902,7 +915,7 @@ def two_factor_rescue():
         two_factor_verify_code_form=code_form,
         two_factor_rescue_form=form,
         rescue_mail=config_value("TWO_FACTOR_RESCUE_MAIL"),
-        problem=str(problem),
+        problem=rproblem,
         **_ctx("tf_token_validation")
     )
 
