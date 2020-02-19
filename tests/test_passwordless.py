@@ -45,17 +45,17 @@ def test_trackable_flag(app, client, get_message):
     assert get_message("DISABLED_ACCOUNT") in response.data
 
     # Test login with json and valid email
-    data = '{"email": "matt@lp.com", "password": "password"}'
+    data = dict(email="matt@lp.com", password="password")
     response = client.post(
-        "/login", data=data, headers={"Content-Type": "application/json"}
+        "/login", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 200
     assert len(recorded) == 1
 
     # Test login with json and invalid email
-    data = '{"email": "nobody@lp.com", "password": "password"}'
+    data = dict(email="nobody@lp.com", password="password")
     response = client.post(
-        "/login", data=data, headers={"Content-Type": "application/json"}
+        "/login", json=data, headers={"Content-Type": "application/json"}
     )
     assert b"errors" in response.data
 
@@ -127,7 +127,7 @@ def test_spa_get(app, client):
         with capture_passwordless_login_requests() as requests:
             response = client.post(
                 "/login",
-                data='{"email": "matt@lp.com"}',
+                json=dict(email="matt@lp.com"),
                 headers={"Content-Type": "application/json"},
             )
             assert response.headers["Content-Type"] == "application/json"
@@ -155,7 +155,7 @@ def test_spa_get_bad_token(app, client, get_message):
         with capture_passwordless_login_requests() as requests:
             response = client.post(
                 "/login",
-                data='{"email": "matt@lp.com"}',
+                json=dict(email="matt@lp.com"),
                 headers={"Content-Type": "application/json"},
             )
             assert response.headers["Content-Type"] == "application/json"

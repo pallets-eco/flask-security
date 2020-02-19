@@ -5,7 +5,6 @@
 
     Registerable tests
 """
-import json
 
 import pytest
 from flask import Flask
@@ -74,25 +73,25 @@ def test_registerable_flag(client, app, get_message):
     assert get_message("EMAIL_ALREADY_ASSOCIATED", email="Dude@lp.com") in response.data
 
     # Test registering with JSON
-    data = '{ "email": "dude2@lp.com", "password": "horse battery"}'
+    data = dict(email="dude2@lp.com", password="horse battery")
     response = client.post(
-        "/register", data=data, headers={"Content-Type": "application/json"}
+        "/register", json=data, headers={"Content-Type": "application/json"}
     )
 
     assert response.headers["content-type"] == "application/json"
-    assert response.jdata["meta"]["code"] == 200
-    assert len(response.jdata["response"]) == 2
-    assert all(k in response.jdata["response"] for k in ["csrf_token", "user"])
+    assert response.json["meta"]["code"] == 200
+    assert len(response.json["response"]) == 2
+    assert all(k in response.json["response"] for k in ["csrf_token", "user"])
 
     logout(client)
 
     # Test registering with invalid JSON
-    data = '{ "email": "bogus", "password": "password"}'
+    data = dict(email="bogus", password="password")
     response = client.post(
-        "/register", data=data, headers={"Content-Type": "application/json"}
+        "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["content-type"] == "application/json"
-    assert response.jdata["meta"]["code"] == 400
+    assert response.json["meta"]["code"] == 400
 
     logout(client)
 
@@ -222,17 +221,15 @@ def test_two_factor(app, client):
 @pytest.mark.settings(two_factor_required=True)
 def test_two_factor_json(app, client, get_message):
     data = dict(email="dude@lp.com", password="password", password_confirm="password")
-    response = client.post(
-        "/register", content_type="application/json", data=json.dumps(data)
-    )
+    response = client.post("/register", content_type="application/json", json=data)
     assert response.status_code == 200
-    assert response.jdata["response"]["tf_required"]
-    assert response.jdata["response"]["tf_state"] == "setup_from_login"
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "setup_from_login"
 
     # make sure not logged in
     response = client.get("/profile", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
 
@@ -290,12 +287,12 @@ def test_easy_password(app, sqlalchemy_datastore):
         password_confirm="mattmatt2",
     )
     response = client.post(
-        "/register", data=json.dumps(data), headers={"Content-Type": "application/json"}
+        "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400
     # Response from zxcvbn
-    assert "Repeats like" in response.jdata["response"]["errors"]["password"][0]
+    assert "Repeats like" in response.json["response"]["errors"]["password"][0]
 
     # Test that username affects password selection
     data = dict(
@@ -305,12 +302,12 @@ def test_easy_password(app, sqlalchemy_datastore):
         password_confirm="JoeTheDude",
     )
     response = client.post(
-        "/register", data=json.dumps(data), headers={"Content-Type": "application/json"}
+        "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400
     # Response from zxcvbn
     assert (
         "Password not complex enough"
-        in response.jdata["response"]["errors"]["password"][0]
+        in response.json["response"]["errors"]["password"][0]
     )

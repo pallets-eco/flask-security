@@ -491,12 +491,13 @@ def test_per_request_xlate(app, client):
     assert b"Nouveau mot de passe" in response.data
 
     # try JSON
-    data = '{"email": "matt@lp.com"}'
     response = client.post(
-        "/change", data=data, headers={"Content-Type": "application/json"}
+        "/change",
+        json=dict(email="matt@lp.com"),
+        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 400
-    assert response.jdata["response"]["errors"]["new_password"] == [
+    assert response.json["response"]["errors"]["new_password"] == [
         "Merci d'indiquer un mot de passe"
     ]
 
@@ -698,7 +699,7 @@ def test_authn_freshness(app, client, get_message):
     # Test json error response
     response = client.get("/myspecialview", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "REAUTHENTICATION_REQUIRED"
     )
 
@@ -725,7 +726,7 @@ def test_authn_freshness_nc(app, client_nc, get_message):
     app.add_url_rule("/myview", view_func=myview, methods=["GET"])
 
     response = json_authenticate(client_nc)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     h = {"Authentication-Token": token}
 
     # This should fail

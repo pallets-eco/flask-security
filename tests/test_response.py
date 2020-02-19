@@ -5,7 +5,7 @@
 
     Tests for validating default and plugable responses.
 
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -24,8 +24,8 @@ def test_render_json(app, client):
     response = client.get(
         "/login", data={}, headers={"Content-Type": "application/json"}
     )
-    assert "myresponse" in response.jdata
-    assert response.jdata["code"] == 200
+    assert "myresponse" in response.json
+    assert response.json["code"] == 200
 
 
 def _my_json(payload, code, headers=None, user=None):
@@ -37,15 +37,15 @@ def test_render_json2(app, client):
     response = client.get(
         "/login", data={}, headers={"Content-Type": "application/json"}
     )
-    assert "myresponse" in response.jdata
-    assert response.jdata["code"] == 200
+    assert "myresponse" in response.json
+    assert response.json["code"] == 200
 
 
 def test_render_json_logout(app, client):
     app.extensions["security"].render_json(_my_json)
     response = client.post("/logout", headers={"Content-Type": "application/json"})
-    assert "myresponse" in response.jdata
-    assert response.jdata["code"] == 200
+    assert "myresponse" in response.json
+    assert response.json["code"] == 200
 
 
 def test_default_unauthn(app, client):
@@ -57,7 +57,7 @@ def test_default_unauthn(app, client):
 
     response = client.get("/multi_auth", headers={"Accept": "application/json"})
     assert response.status_code == 401
-    assert response.jdata["meta"]["code"] == 401
+    assert response.json["meta"]["code"] == 401
     # Since "basic" is acceptible - we should get a WWW-Authenticate header back
     assert "WWW-Authenticate" in response.headers
 
@@ -83,8 +83,8 @@ def test_default_unauthn_myjson(app, client):
 
     response = client.get("/multi_auth", headers={"Accept": "application/json"})
     assert response.status_code == 401
-    assert response.jdata["code"] == 401
-    assert "myresponse" in response.jdata
+    assert response.json["code"] == 401
+    assert "myresponse" in response.json
 
 
 def test_my_unauthn_handler(app, client):
@@ -95,7 +95,7 @@ def test_my_unauthn_handler(app, client):
     response = client.get("/multi_auth", headers={"Accept": "application/json"})
     assert response.status_code == 401
     assert all(
-        m in response.jdata["response"]["mechanisms"]
+        m in response.json["response"]["mechanisms"]
         for m in ["session", "token", "basic"]
     )
 
@@ -110,7 +110,7 @@ def test_default_unauthz(app, client):
 
     response = client.get("/admin", headers={"Accept": "application/json"})
     assert response.status_code == 403
-    assert response.jdata["meta"]["code"] == 403
+    assert response.json["meta"]["code"] == 403
 
 
 def test_default_unauthz_myjson(app, client):
@@ -124,7 +124,7 @@ def test_default_unauthz_myjson(app, client):
 
     response = client.get("/admin", headers={"Accept": "application/json"})
     assert response.status_code == 403
-    assert response.jdata["code"] == 403
+    assert response.json["code"] == 403
 
 
 def test_my_unauthz_handler(app, client):
@@ -141,9 +141,9 @@ def test_my_unauthz_handler(app, client):
 
     response = client.get("/admin", headers={"Accept": "application/json"})
     assert response.status_code == 403
-    assert response.jdata["code"] == 403
-    assert response.jdata["myresponse"]["func"] == "roles_required"
-    assert response.jdata["myresponse"]["params"] == ["admin"]
+    assert response.json["code"] == 403
+    assert response.json["myresponse"]["func"] == "roles_required"
+    assert response.json["myresponse"]["params"] == ["admin"]
 
 
 def test_my_unauthz_handler_exc(app, client):

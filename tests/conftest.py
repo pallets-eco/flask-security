@@ -20,13 +20,13 @@ except ImportError:  # pragma: no cover
     from urllib.parse import urlsplit
 
 import pytest
-from flask import Flask, render_template
+from flask import Flask, Response, render_template
 from flask import jsonify
 from flask import request as flask_request
 from flask.json import JSONEncoder
 from flask_babelex import Babel
 from flask_mail import Mail
-from utils import Response, populate_data
+from utils import populate_data
 
 from flask_security import (
     MongoEngineUserDatastore,

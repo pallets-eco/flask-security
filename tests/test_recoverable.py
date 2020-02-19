@@ -6,7 +6,6 @@
     Recoverable functionality tests
 """
 
-import json
 import time
 
 import pytest
@@ -142,7 +141,7 @@ def test_recoverable_json(app, client, get_message):
             with app.mail.record_messages() as outbox:
                 response = client.post(
                     "/reset",
-                    data='{"email": "joe@lp.com"}',
+                    json=dict(email="joe@lp.com"),
                     headers={"Content-Type": "application/json"},
                 )
                 assert response.headers["Content-Type"] == "application/json"
@@ -155,11 +154,11 @@ def test_recoverable_json(app, client, get_message):
         # Test invalid email
         response = client.post(
             "/reset",
-            data='{"email": "whoknows@lp.com"}',
+            json=dict(email="whoknows@lp.com"),
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 400
-        assert response.jdata["response"]["errors"]["email"][0].encode(
+        assert response.json["response"]["errors"]["email"][0].encode(
             "utf-8"
         ) == get_message("USER_DOES_NOT_EXIST")
 
@@ -170,19 +169,18 @@ def test_recoverable_json(app, client, get_message):
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 400
-        assert response.jdata["response"]["errors"]["password_confirm"][0].encode(
+        assert response.json["response"]["errors"]["password_confirm"][0].encode(
             "utf-8"
         ) == get_message("PASSWORD_NOT_PROVIDED")
 
         # Test submitting a new password
         response = client.post(
             "/reset/" + token + "?include_auth_token",
-            data='{"password": "awesome sunset",\
-                                     "password_confirm": "awesome sunset"}',
+            json=dict(password="awesome sunset", password_confirm="awesome sunset"),
             headers={"Content-Type": "application/json"},
         )
         assert all(
-            k in response.jdata["response"]["user"]
+            k in response.json["response"]["user"]
             for k in ["id", "authentication_token"]
         )
         assert len(recorded_resets) == 1
@@ -193,12 +191,11 @@ def test_recoverable_json(app, client, get_message):
         # Test logging in with the new password
         response = client.post(
             "/login?include_auth_token",
-            data='{"email": "joe@lp.com",\
-                                     "password": "awesome sunset"}',
+            json=dict(email="joe@lp.com", password="awesome sunset"),
             headers={"Content-Type": "application/json"},
         )
         assert all(
-            k in response.jdata["response"]["user"]
+            k in response.json["response"]["user"]
             for k in ["id", "authentication_token"]
         )
 
@@ -207,8 +204,7 @@ def test_recoverable_json(app, client, get_message):
         # Use token again - should fail since already have set new password.
         response = client.post(
             "/reset/" + token,
-            data='{"password": "newpassword",\
-                                     "password_confirm": "newpassword"}',
+            json=dict(password="newpassword", password_confirm="newpassword"),
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 400
@@ -217,11 +213,10 @@ def test_recoverable_json(app, client, get_message):
         # Test invalid token
         response = client.post(
             "/reset/bogus",
-            data='{"password": "newpassword",\
-                                     "password_confirm": "newpassword"}',
+            json=dict(password="newpassword", password_confirm="newpassword"),
             headers={"Content-Type": "application/json"},
         )
-        assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+        assert response.json["response"]["error"].encode("utf-8") == get_message(
             "INVALID_RESET_PASSWORD_TOKEN"
         )
     assert len(flashes) == 0
@@ -394,11 +389,11 @@ def test_spa_get(app, client):
     with capture_reset_password_requests() as requests:
         response = client.post(
             "/reset",
-            data='{"email": "joe@lp.com"}',
+            json=dict(email="joe@lp.com"),
             headers={"Content-Type": "application/json"},
         )
         assert response.headers["Content-Type"] == "application/json"
-        assert "user" not in response.jdata["response"]
+        assert "user" not in response.json["response"]
     token = requests[0]["token"]
 
     response = client.get("/reset/" + token)
@@ -423,11 +418,11 @@ def test_spa_get_bad_token(app, client, get_message):
         with capture_reset_password_requests() as requests:
             response = client.post(
                 "/reset",
-                data='{"email": "joe@lp.com"}',
+                json=dict(email="joe@lp.com"),
                 headers={"Content-Type": "application/json"},
             )
             assert response.headers["Content-Type"] == "application/json"
-            assert "user" not in response.jdata["response"]
+            assert "user" not in response.json["response"]
         token = requests[0]["token"]
         time.sleep(1)
 
@@ -469,14 +464,14 @@ def test_spa_get_bad_token(app, client, get_message):
 def test_bc_password(app, client_nc):
     # Test behavior of BACKWARDS_COMPAT_AUTH_TOKEN_INVALID
     response = json_authenticate(client_nc, email="joe@lp.com")
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
     json_logout(client_nc, token)
 
     with capture_reset_password_requests() as requests:
         response = client_nc.post(
             "/reset",
-            data='{"email": "joe@lp.com"}',
+            json=dict(email="joe@lp.com"),
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 200
@@ -486,17 +481,17 @@ def test_bc_password(app, client_nc):
     data = dict(password="awesome sunset", password_confirm="awesome sunset")
     response = client_nc.post(
         "/reset/" + reset_token + "?include_auth_token=1",
-        data=json.dumps(data),
+        json=data,
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
-    assert "authentication_token" in response.jdata["response"]["user"]
+    assert "authentication_token" in response.json["response"]["user"]
 
     # changing password should have rendered existing auth tokens invalid
     verify_token(client_nc, token, status=401)
 
     # but new auth token should work
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
 
 

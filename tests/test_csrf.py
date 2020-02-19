@@ -5,7 +5,7 @@
 
     CSRF tests
 
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 from contextlib import contextmanager
@@ -13,7 +13,6 @@ import time
 
 import flask_wtf.csrf
 
-from flask import json
 import pytest
 from flask_wtf import CSRFProtect
 
@@ -60,7 +59,7 @@ def _get_csrf_token(client):
     response = client.get(
         "/login", data={}, headers={"Content-Type": "application/json"}
     )
-    return response.jdata["response"]["csrf_token"]
+    return response.json["response"]["csrf_token"]
 
 
 def json_login(
@@ -87,18 +86,18 @@ def json_login(
     response = client.post(
         endpoint or "/login" + "?include_auth_token",
         content_type="application/json",
-        data=json.dumps(data),
+        json=data,
         headers=headers,
     )
     assert response.status_code == 200
-    rd = response.jdata["response"]
+    rd = response.json["response"]
     return rd["user"]["authentication_token"], rd["csrf_token"]
 
 
 def json_logout(client):
     response = client.post("logout", content_type="application/json", data={})
     assert response.status_code == 200
-    assert response.jdata["meta"]["code"] == 200
+    assert response.json["meta"]["code"] == 200
     return response
 
 
@@ -197,11 +196,9 @@ def test_login_csrf_unauth_double(app, client, get_message):
     assert b"Welcome matt" in response.data
 
     # login in again - should work
-    response = client.post(
-        "/login", content_type="application/json", data=json.dumps(data)
-    )
+    response = client.post("/login", content_type="application/json", json=data)
     assert response.status_code == 400
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "ANONYMOUS_USER_REQUIRED"
     )
 
@@ -214,15 +211,11 @@ def test_reset(app, client):
     with mp_validate_csrf() as mp:
         data = dict(email="matt@lp.com")
         # should fail - no CSRF token
-        response = client.post(
-            "/reset", content_type="application/json", data=json.dumps(data)
-        )
+        response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 400
 
         data["csrf_token"] = _get_csrf_token(client)
-        response = client.post(
-            "/reset", content_type="application/json", data=json.dumps(data)
-        )
+        response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 200
     assert mp.success == 1 and mp.failure == 1
 
@@ -239,16 +232,14 @@ def test_cp_reset(app, client):
     with mp_validate_csrf() as mp:
         data = dict(email="matt@lp.com")
         # should fail - no CSRF token
-        response = client.post(
-            "/reset", content_type="application/json", data=json.dumps(data)
-        )
+        response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 400
 
         csrf_token = _get_csrf_token(client)
         response = client.post(
             "/reset",
             content_type="application/json",
-            data=json.dumps(data),
+            json=data,
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
@@ -276,7 +267,7 @@ def test_cp_with_token(app, client):
         response = client.post(
             "/change",
             content_type="application/json",
-            data=json.dumps(data),
+            json=data,
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
@@ -296,7 +287,7 @@ def test_cp_login_json_no_session(app, client_nc):
         response = client_nc.post(
             "/login",
             content_type="application/json",
-            data=json.dumps(data),
+            json=data,
             headers={"Accept": "application/json"},
         )
         assert response.status_code == 400
@@ -305,7 +296,7 @@ def test_cp_login_json_no_session(app, client_nc):
         response = client_nc.post(
             "/login",
             content_type="application/json",
-            data=json.dumps(data),
+            json=data,
             headers={"X-CSRF-Token": _get_csrf_token(client_nc)},
         )
         assert response.status_code == 400
@@ -358,9 +349,7 @@ def test_different_mechanisms(app, client):
         )
 
         response = client.post(
-            "/change",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json"},
+            "/change", json=data, headers={"Content-Type": "application/json"}
         )
         assert response.status_code == 400
         assert b"The CSRF token is missing" in response.data
@@ -368,7 +357,7 @@ def test_different_mechanisms(app, client):
         # token based should work
         response = client.post(
             "/change",
-            data=json.dumps(data),
+            json=data,
             headers={
                 "Content-Type": "application/json",
                 "Authentication-Token": auth_token,
@@ -401,7 +390,7 @@ def test_different_mechanisms_nc(app, client_nc):
         )
         response = client_nc.post(
             "/change",
-            data=json.dumps(data),
+            json=data,
             headers={
                 "Content-Type": "application/json",
                 "Authentication-Token": auth_token,
@@ -453,7 +442,7 @@ def test_cp_with_token_cookie(app, client):
         response = client.post(
             "/change",
             content_type="application/json",
-            data=json.dumps(data),
+            json=data,
             headers={"X-XSRF-Token": csrf_token},
         )
         assert response.status_code == 200
@@ -488,7 +477,7 @@ def test_cp_with_token_cookie_expire(app, client):
         response = client.post(
             "/change",
             content_type="application/json",
-            data=json.dumps(data),
+            json=data,
             headers={"X-XSRF-Token": csrf_token},
         )
         assert response.status_code == 400
@@ -530,7 +519,7 @@ def test_cp_with_token_cookie_refresh(app, client):
         response = client.post(
             "/change",
             content_type="application/json",
-            data=json.dumps(data),
+            json=data,
             headers={"X-XSRF-Token": csrf_cookie.value},
         )
         assert response.status_code == 200
