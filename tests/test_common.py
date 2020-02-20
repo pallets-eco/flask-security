@@ -173,7 +173,7 @@ def test_inactive_forbids_token(app, client_nc, get_message):
     """
     response = json_authenticate(client_nc)
     assert response.status_code == 200
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     headers = {"Authentication-Token": token}
     # make sure can access restricted page
     response = client_nc.get("/token", headers=headers)
@@ -204,7 +204,7 @@ def test_logout_post(client):
     authenticate(client)
     response = client.post("/logout", content_type="application/json")
     assert response.status_code == 200
-    assert response.jdata["meta"]["code"] == 200
+    assert response.json["meta"]["code"] == 200
 
 
 def test_logout_with_next_invalid(client, get_message):
@@ -328,8 +328,8 @@ def test_multiple_role_required(client):
 
 def test_ok_json_auth(client):
     response = json_authenticate(client)
-    assert response.jdata["meta"]["code"] == 200
-    assert "authentication_token" in response.jdata["response"]["user"]
+    assert response.json["meta"]["code"] == 200
+    assert "authentication_token" in response.json["response"]["user"]
 
 
 def test_invalid_json_auth(client):
@@ -339,14 +339,14 @@ def test_invalid_json_auth(client):
 
 def test_token_auth_via_querystring_valid_token(client):
     response = json_authenticate(client)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     response = client.get("/token?auth_token=" + token)
     assert b"Token Authentication" in response.data
 
 
 def test_token_auth_via_header_valid_token(client):
     response = json_authenticate(client)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     headers = {"Authentication-Token": token}
     response = client.get("/token", headers=headers)
     assert b"Token Authentication" in response.data
@@ -424,7 +424,7 @@ def test_http_auth_no_authentication(client, get_message):
 def test_http_auth_no_authentication_json(client, get_message):
     response = client.get("/http", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
@@ -457,7 +457,7 @@ def test_invalid_http_auth_invalid_username_json(client, get_message):
         },
     )
     assert response.status_code == 401
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
@@ -528,7 +528,7 @@ def test_multi_auth_basic_invalid(client):
 
 def test_multi_auth_token(client):
     response = json_authenticate(client)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     response = client.get("/multi_auth?auth_token=" + token)
     assert b"Token" in response.data
 
@@ -586,7 +586,7 @@ def test_request_loader_does_not_fail_with_invalid_token(client):
 
 def test_sending_auth_token_with_json(client):
     response = json_authenticate(client)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     data = '{"auth_token": "%s"}' % token
     response = client.post(
         "/token", data=data, headers={"Content-Type": "application/json"}
@@ -609,13 +609,13 @@ def test_login_info(client):
     json_authenticate(client)
     response = client.get("/login", headers={"Content-Type": "application/json"})
     assert response.status_code == 200
-    assert response.jdata["response"]["user"]["id"] == "1"
-    assert "last_update" in response.jdata["response"]["user"]
+    assert response.json["response"]["user"]["id"] == "1"
+    assert "last_update" in response.json["response"]["user"]
 
     response = client.get("/login", headers={"Accept": "application/json"})
     assert response.status_code == 200
-    assert response.jdata["response"]["user"]["id"] == "1"
-    assert "last_update" in response.jdata["response"]["user"]
+    assert response.json["response"]["user"]["id"] == "1"
+    assert "last_update" in response.json["response"]["user"]
 
 
 @pytest.mark.registerable()
@@ -635,7 +635,7 @@ def test_anon_required_json(client, get_message):
     authenticate(client, follow_redirects=False)
     response = client.get("/register", headers={"Accept": "application/json"})
     assert response.status_code == 400
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "ANONYMOUS_USER_REQUIRED"
     )
 
@@ -647,7 +647,7 @@ def test_auth_token_speed(app, client_nc):
     import timeit
 
     response = json_authenticate(client_nc)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
 
     def time_get():
         rp = client_nc.get(
@@ -665,7 +665,7 @@ def test_change_uniquifier(app, client_nc):
     # make sure that existing token no longer works once we change the uniquifier
 
     response = json_authenticate(client_nc)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
 
     # now change uniquifier
@@ -679,7 +679,7 @@ def test_change_uniquifier(app, client_nc):
 
     # get new token and verify it works
     response = json_authenticate(client_nc)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
 
 
@@ -691,7 +691,7 @@ def test_token_query(in_app_context):
     client_nc = app.test_client(use_cookies=False)
 
     response = json_authenticate(client_nc)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     current_nqueries = get_num_queries(app.security.datastore)
 
     response = client_nc.get(
@@ -714,7 +714,7 @@ def test_session_query(in_app_context):
     client = app.test_client()
 
     response = json_authenticate(client)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     current_nqueries = get_num_queries(app.security.datastore)
 
     response = client.get(

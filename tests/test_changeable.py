@@ -5,11 +5,10 @@
 
     Changeable tests
 
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
-import json
 import sys
 
 import pytest
@@ -137,7 +136,7 @@ def test_changeable_flag(app, client, get_message):
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
-    assert response.jdata["response"]["errors"]["new_password"] == [
+    assert response.json["response"]["errors"]["new_password"] == [
         "Password not provided"
     ]
 
@@ -190,7 +189,7 @@ def test_custom_post_change_view(client):
 def test_token_change(app, client_nc):
     # Verify can change password using token auth only
     login_response = json_authenticate(client_nc)
-    token = login_response.jdata["response"]["user"]["authentication_token"]
+    token = login_response.json["response"]["user"]["authentication_token"]
 
     data = dict(
         password="password",
@@ -199,18 +198,18 @@ def test_token_change(app, client_nc):
     )
     response = client_nc.post(
         "/change?include_auth_token=1",
-        data=json.dumps(data),
+        json=data,
         headers={"Content-Type": "application/json", "Authentication-Token": token},
     )
     assert response.status_code == 200
-    assert "authentication_token" in response.jdata["response"]["user"]
+    assert "authentication_token" in response.json["response"]["user"]
 
 
 @pytest.mark.settings(backwards_compat_auth_token_invalid=True)
 def test_bc_password(app, client_nc):
     # Test behavior of BACKWARDS_COMPAT_AUTH_TOKEN_INVALID
     response = json_authenticate(client_nc)
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
 
     data = dict(
@@ -220,17 +219,17 @@ def test_bc_password(app, client_nc):
     )
     response = client_nc.post(
         "/change?include_auth_token=1",
-        data=json.dumps(data),
+        json=data,
         headers={"Content-Type": "application/json", "Authentication-Token": token},
     )
     assert response.status_code == 200
-    assert "authentication_token" in response.jdata["response"]["user"]
+    assert "authentication_token" in response.json["response"]["user"]
 
     # changing password should have rendered existing auth tokens invalid
     verify_token(client_nc, token, status=401)
 
     # but new auth token should work
-    token = response.jdata["response"]["user"]["authentication_token"]
+    token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
 
 
@@ -249,7 +248,7 @@ def test_easy_password(app, client):
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400
     # Response from zxcvbn
-    assert "Repeats like" in response.jdata["response"]["errors"]["new_password"][0]
+    assert "Repeats like" in response.json["response"]["errors"]["new_password"][0]
 
 
 def test_my_validator(app, client):
@@ -272,7 +271,7 @@ def test_my_validator(app, client):
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400
-    assert "Are you crazy" in response.jdata["response"]["errors"]["new_password"][0]
+    assert "Are you crazy" in response.json["response"]["errors"]["new_password"][0]
 
 
 @pytest.mark.settings(password_length_min=12)
@@ -305,7 +304,7 @@ def test_unicode_length(app, client, get_message):
         "\N{FOG}\N{THERMOMETER}\N{ROSE}",
     )
     response = client.post(
-        "/change", data=json.dumps(data), headers={"Content-Type": "application/json"}
+        "/change", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
@@ -323,7 +322,7 @@ def test_unicode_invalid_length(app, client, get_message):
         new_password_confirm="\N{CYCLONE}\N{CYCLONE}\N{FOGGY}\N{FOGGY}",
     )
     response = client.post(
-        "/change", data=json.dumps(data), headers={"Content-Type": "application/json"}
+        "/change", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400

@@ -14,7 +14,6 @@ try:
 except ImportError:
     from mock import Mock
 
-from flask import json
 import pytest
 
 from utils import SmsBadSender, SmsTestSender, authenticate, get_session, logout
@@ -50,9 +49,9 @@ def tf_authenticate(app, client, validate=True):
     prev_sms = app.config["SECURITY_SMS_SERVICE"]
     app.config["SECURITY_SMS_SERVICE"] = "test"
     sms_sender = SmsSenderFactory.createSender("test")
-    json_data = '{"email": "gal@lp.com", "password": "password"}'
+    json_data = dict(email="gal@lp.com", password="password")
     response = client.post(
-        "/login", data=json_data, headers={"Content-Type": "application/json"}
+        "/login", json=json_data, headers={"Content-Type": "application/json"}
     )
     assert b'"code": 200' in response.data
     app.config["SECURITY_SMS_SERVICE"] = prev_sms
@@ -110,10 +109,9 @@ def test_two_factor_flag(app, client):
     data = dict(email="nobody@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
     assert b"Specified user does not exist" in response.data
-    json_data = '{"email": "nobody@lp.com", "password": "password"}'
     response = client.post(
         "/login",
-        data=json_data,
+        json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
@@ -123,10 +121,9 @@ def test_two_factor_flag(app, client):
     data = dict(email="gal@lp.com", password="wrong_pass")
     response = client.post("/login", data=data, follow_redirects=True)
     assert b"Invalid password" in response.data
-    json_data = '{"email": "gal@lp.com", "password": "wrong_pass"}'
     response = client.post(
         "/login",
-        data=json_data,
+        json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
@@ -145,32 +142,32 @@ def test_two_factor_flag(app, client):
     assert session["tf_state"] == "setup_from_login"
 
     # try non-existing setup on setup page (using json)
-    json_data = '{"setup": "not_a_method"}'
+    data = dict(setup="not_a_method")
     response = client.post(
         "/tf-setup",
-        data=json_data,
+        json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
     assert response.status_code == 400
     assert (
-        response.jdata["response"]["errors"]["setup"][0] == "Marked method is not valid"
+        response.json["response"]["errors"]["setup"][0] == "Marked method is not valid"
     )
 
-    json_data = '{"setup": "email"}'
+    data = dict(setup="email")
     response = client.post(
         "/tf-setup",
-        data=json_data,
+        json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
 
     # Test for sms in process of valid login
     sms_sender = SmsSenderFactory.createSender("test")
-    json_data = '{"email": "gal@lp.com", "password": "password"}'
+    data = dict(email="gal@lp.com", password="password")
     response = client.post(
         "/login",
-        data=json_data,
+        json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
@@ -196,15 +193,15 @@ def test_two_factor_flag(app, client):
     assert b"Password not provided" in response.data
 
     # try confirming password with a wrong one + json
-    json_data = '{"password": "wrong_password"}'
+    data = dict(password="wrong_password")
     response = client.post(
         "/tf-confirm",
-        data=json_data,
+        json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
 
-    assert response.jdata["meta"]["code"] == 400
+    assert response.json["meta"]["code"] == 400
 
     # Test change two_factor password confirmation view to mail
     password = "password"
@@ -269,10 +266,10 @@ def test_two_factor_flag(app, client):
 
     # Test login with remember_token
     assert "remember_token" not in [c.name for c in client.cookie_jar]
-    json_data = '{"email": "gal@lp.com", "password": "password", "remember": true}'
+    data = dict(email="gal@lp.com", password="password", remember=True)
     response = client.post(
         "/login",
-        data=json_data,
+        json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
@@ -330,10 +327,10 @@ def test_two_factor_flag(app, client):
     logout(client)
 
     # check when two_factor_rescue function should not appear
-    rescue_data_json = '{"help_setup": "lost_device"}'
+    rescue_data_json = dict(help_setup="lost_device")
     response = client.post(
         "/tf-rescue",
-        data=rescue_data_json,
+        json=rescue_data_json,
         headers={"Content-Type": "application/json"},
     )
     assert b'"code": 400' in response.data
@@ -383,23 +380,23 @@ def test_json(app, client):
     """
 
     # Test that user not yet setup for 2FA gets correct response.
-    json_data = '{"email": "matt@lp.com", "password": "password"}'
+    data = dict(email="matt@lp.com", password="password")
     response = client.post(
-        "/login", data=json_data, headers={"Content-Type": "application/json"}
+        "/login", json=data, headers={"Content-Type": "application/json"}
     )
-    assert response.jdata["response"]["tf_required"]
-    assert response.jdata["response"]["tf_state"] == "setup_from_login"
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "setup_from_login"
 
     # Login with someone already setup.
     sms_sender = SmsSenderFactory.createSender("test")
-    json_data = '{"email": "gal@lp.com", "password": "password"}'
+    data = dict(email="gal@lp.com", password="password")
     response = client.post(
-        "/login", data=json_data, headers={"Content-Type": "application/json"}
+        "/login", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 200
-    assert response.jdata["response"]["tf_required"]
-    assert response.jdata["response"]["tf_state"] == "ready"
-    assert response.jdata["response"]["tf_primary_method"] == "sms"
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_primary_method"] == "sms"
 
     # Verify SMS sent
     assert sms_sender.get_count() == 1
@@ -407,7 +404,7 @@ def test_json(app, client):
     code = sms_sender.messages[0].split()[-1]
     response = client.post(
         "/tf-validate",
-        data=json.dumps({"code": code}),
+        json=dict(code=code),
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
@@ -614,16 +611,16 @@ def test_datastore(app, client):
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(email="gene@lp.com", password="password")
     response = client.post(
-        "/login", data=json.dumps(data), headers={"Content-Type": "application/json"}
+        "/login", json=data, headers={"Content-Type": "application/json"}
     )
-    assert response.jdata["meta"]["code"] == 200
+    assert response.json["meta"]["code"] == 200
     session = get_session(response)
     assert session["tf_state"] == "setup_from_login"
 
     # setup
     data = dict(setup="sms", phone="+442083661177")
     response = client.post(
-        "/tf-setup", data=json.dumps(data), headers={"Content-Type": "application/json"}
+        "/tf-setup", json=data, headers={"Content-Type": "application/json"}
     )
 
     assert sms_sender.get_count() == 1
@@ -835,10 +832,10 @@ def test_bad_sender(app, client, get_message):
     assert get_message("FAILED_TO_SEND_CODE") in flashes[0]["message"].encode("utf-8")
 
     # test w/ JSON
-    json_data = '{"email": "gal@lp.com", "password": "password"}'
-    response = client.post("login", data=json_data, headers=headers)
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("login", json=data, headers=headers)
     assert response.status_code == 500
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "FAILED_TO_SEND_CODE"
     )
 
@@ -849,9 +846,9 @@ def test_bad_sender(app, client, get_message):
     response = client.post("tf-setup", data=data)
     assert get_message("FAILED_TO_SEND_CODE") in response.data
 
-    response = client.post("tf-setup", data=json.dumps(data), headers=headers)
+    response = client.post("tf-setup", json=data, headers=headers)
     assert response.status_code == 500
-    assert response.jdata["response"]["errors"]["setup"][0].encode(
+    assert response.json["response"]["errors"]["setup"][0].encode(
         "utf-8"
     ) == get_message("FAILED_TO_SEND_CODE")
 
@@ -903,8 +900,6 @@ def test_replace_send_code(app, get_message):
 
         # Test JSON
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
-        response = client.post(
-            "/tf-rescue", data=json.dumps(rescue_data), headers=headers
-        )
+        response = client.post("/tf-rescue", json=rescue_data, headers=headers)
         assert response.status_code == 500
-        assert response.jdata["response"]["errors"]["help_setup"][0] == "Failed Again"
+        assert response.json["response"]["errors"]["help_setup"][0] == "Failed Again"

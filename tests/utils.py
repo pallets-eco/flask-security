@@ -5,17 +5,11 @@
 
     Test utils
 
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
-from flask import Response as BaseResponse
-from flask import json
-
-try:
-    from flask.json.tag import TaggedJSONSerializer
-except Exception:
-    from flask.sessions import TaggedJSONSerializer
+from flask.json.tag import TaggedJSONSerializer
 
 from flask_security import Security, SmsSenderBaseClass
 from flask_security.datastore import (
@@ -159,19 +153,6 @@ def populate_data(app, user_count=None):
     with app.app_context():
         create_roles(ds)
         create_users(app, ds, user_count)
-
-
-class Response(BaseResponse):  # pragma: no cover
-    @property
-    def jdata(self):
-        rv = getattr(self, "_cached_jdata", _missing)
-        if rv is not _missing:
-            return rv
-        try:
-            self._cached_jdata = json.loads(self.data)
-        except ValueError:
-            raise Exception("Invalid JSON response")
-        return self._cached_jdata
 
 
 def init_app_with_options(app, datastore, **options):

@@ -6,7 +6,6 @@
     Confirmable tests
 """
 
-import json
 import time
 
 import pytest
@@ -63,12 +62,12 @@ def test_confirmable_flag(app, client, sqlalchemy_datastore, get_message):
     # Test JSON
     response = client.post(
         "/confirm",
-        data='{"email": "matt@lp.com"}',
+        json=dict(email="matt@lp.com"),
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
-    assert "user" in response.jdata["response"]
+    assert "user" in response.json["response"]
     assert len(recorded_instructions_sent) == 1
 
     # Test ask for instructions with invalid email
@@ -179,7 +178,7 @@ def test_no_auth_token(client_nc):
     """
     response = client_nc.post(
         "/register?include_auth_token",
-        data='{"email": "dude@lp.com", "password": "awesome sunset"}',
+        json=dict(email="dude@lp.com", password="awesome sunset"),
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
@@ -195,7 +194,7 @@ def test_auth_token_unconfirmed(client_nc):
     """
     response = client_nc.post(
         "/register?include_auth_token",
-        data='{"email": "dude@lp.com", "password": "awesome sunset"}',
+        json=dict(email="dude@lp.com", password="awesome sunset"),
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
@@ -315,8 +314,7 @@ def test_spa_get(app, client):
         with capture_registrations() as registrations:
             response = client.post(
                 "/register",
-                data='{"email": "dude@lp.com",\
-                                         "password": "awesome sunset"}',
+                json=dict(email="dude@lp.com", password="awesome sunset"),
                 headers={"Content-Type": "application/json"},
             )
             assert response.headers["Content-Type"] == "application/json"
@@ -347,8 +345,7 @@ def test_spa_get_bad_token(app, client, get_message):
         with capture_registrations() as registrations:
             response = client.post(
                 "/register",
-                data='{"email": "dude@lp.com",\
-                                         "password": "awesome sunset"}',
+                json=dict(email="dude@lp.com", password="awesome sunset"),
                 headers={"Content-Type": "application/json"},
             )
             assert response.headers["Content-Type"] == "application/json"
@@ -416,18 +413,16 @@ def test_two_factor(app, client):
 def test_two_factor_json(app, client, get_message):
     with capture_registrations() as registrations:
         data = dict(email="dude@lp.com", password="password")
-        response = client.post(
-            "/register", content_type="application/json", data=json.dumps(data)
-        )
+        response = client.post("/register", content_type="application/json", json=data)
         assert response.headers["content-type"] == "application/json"
-        assert response.jdata["meta"]["code"] == 200
-        assert len(response.jdata["response"]) == 2
-        assert all(k in response.jdata["response"] for k in ["csrf_token", "user"])
+        assert response.json["meta"]["code"] == 200
+        assert len(response.json["response"]) == 2
+        assert all(k in response.json["response"] for k in ["csrf_token", "user"])
 
     # make sure not logged in
     response = client.get("/profile", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.jdata["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
 
@@ -435,5 +430,5 @@ def test_two_factor_json(app, client, get_message):
     response = client.get("/confirm/" + token, headers={"Accept": "application/json"})
 
     assert response.status_code == 200
-    assert response.jdata["response"]["tf_required"]
-    assert response.jdata["response"]["tf_state"] == "setup_from_login"
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "setup_from_login"
