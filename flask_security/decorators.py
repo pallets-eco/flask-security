@@ -11,6 +11,7 @@
 """
 
 from collections import namedtuple
+import datetime
 from functools import wraps
 
 from flask import Response, _request_ctx_stack, abort, current_app, g, redirect, request
@@ -26,7 +27,7 @@ from .utils import (
     do_flash,
     get_message,
     get_url,
-    is_authn_fresh,
+    check_and_update_authn_fresh,
     json_error_response,
 )
 
@@ -59,7 +60,7 @@ def _get_unauthorized_response(text=None, headers=None):  # pragma: no cover
     return _get_unauthenticated_response(text, headers)
 
 
-def default_unauthn_handler(mechanisms, headers=None, msg=None):
+def default_unauthn_handler(mechanisms, headers=None):
     """ Default callback for failures to authenticate
 
     If caller wants JSON - return 401
@@ -67,8 +68,7 @@ def default_unauthn_handler(mechanisms, headers=None, msg=None):
     We let Flask-Login handle this.
 
     """
-    if not msg:
-        msg = get_message("UNAUTHENTICATED")[0]
+    msg = get_message("UNAUTHENTICATED")[0]
 
     if config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
@@ -77,6 +77,32 @@ def default_unauthn_handler(mechanisms, headers=None, msg=None):
         payload = json_error_response(errors=msg)
         return _security._render_json(payload, 401, headers, None)
     return _security.login_manager.unauthorized()
+
+
+def default_reauthn_handler(within, grace, headers=None):
+    """ Default callback for 'freshness' related authn failures.
+
+    If caller wants JSON - return 401
+    Otherwise - assume caller is html and redirect if possible to configured view.
+
+    """
+    m, c = get_message("REAUTHENTICATION_REQUIRED")
+
+    if _security._want_json(request):
+        # TODO can/should we response with a WWW-Authenticate Header in all cases?
+        payload = json_error_response(errors=m)
+        return _security._render_json(payload, 401, headers, None)
+
+    view = config_value("REAUTHENTICATE_VIEW")
+    if callable(view):
+        view = view()
+    elif not view:
+        view = _security.login_url
+    if view:
+        do_flash(m, c)
+        redirect_url = get_url(view, qparams={"next": request.url})
+        return redirect(redirect_url)
+    abort(401)
 
 
 def default_unauthz_handler(func, params):
@@ -241,12 +267,23 @@ def auth_required(*auth_methods, **kwargs):
 
     :param auth_methods: Specified mechanisms (token, basic, session). If not specified
         then all current available mechanisms will be tried.
-    :kwparam within_minutes: Add 'freshness' check to authentication. If > 0, then
-        the caller must have authenticated within the time specified (as measured using
-        the session cookie). If 0, caller will always be redirected to re-login.
-        If < 0 (the default) no freshness check is performed.
+    :kwparam within: Add 'freshness' check to authentication. Is either an int
+        specifying # of minutes, or a callable that returns a timedelta. For timedeltas,
+        timedelta.total_seconds() is used for the calculations:
+
+            - If > 0, then the caller must have authenticated within the time specified
+              (as measured using the session cookie).
+            - If 0 and not within the grace period (see below) the caller will
+              always be redirected to re-login.
+            - If < 0 (the default) no freshness check is performed.
+
         Note that Basic Auth, by definition, is always 'fresh' and will never result in
         a redirect/error.
+    :kwparam grace: Add a grace period for freshness checks. As above, either an int
+        or a callable returning a timedelta. If not specified then
+        :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` is used. The grace period allows
+        callers to complete the required operations w/o being prompted again.
+        See :meth:`flask_security.check_and_update_authn_fresh` for details.
 
     Note that regardless of order specified - they will be tried in the following
     order: token, session, basic.
@@ -263,11 +300,10 @@ def auth_required(*auth_methods, **kwargs):
        regardless of how they are specified in the ``auth_methods`` parameter.
 
     .. versionchanged:: 3.4.0
-        Added ``within_minutes`` parameter to add a freshness check.
+        Added ``within`` and ``grace`` parameters to enforce a freshness check.
 
     """
-    # 2.7 doesn't support keyword args after *args....
-    within_minutes = kwargs.get("within_minutes", -1)
+
     login_mechanisms = {
         "token": lambda: _check_token(),
         "session": lambda: current_user.is_authenticated,
@@ -282,6 +318,20 @@ def auth_required(*auth_methods, **kwargs):
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **dkwargs):
+            # 2.7 doesn't support keyword args after *args....
+            within = kwargs.get("within", -1)
+            if callable(within):
+                within = within()
+            else:
+                within = datetime.timedelta(minutes=within)
+            grace = kwargs.get("grace", None)
+            if grace is None:
+                grace = config_value("FRESHNESS_GRACE_PERIOD")
+            elif callable(grace):
+                grace = grace()
+            else:
+                grace = datetime.timedelta(minutes=grace)
+
             h = {}
             if "basic" in auth_methods:
                 r = _security.default_http_auth_realm
@@ -296,12 +346,10 @@ def auth_required(*auth_methods, **kwargs):
                     # successfully authenticated. Basic auth is by definition 'fresh'.
                     # Note that using token auth is ok - but caller still has to pass
                     # in a session cookie...
-                    if method != "basic" and not is_authn_fresh(within_minutes):
-                        return _security._unauthn_handler(
-                            auth_methods,
-                            headers=h,
-                            msg=get_message("REAUTHENTICATION_REQUIRED")[0],
-                        )
+                    if method != "basic" and not check_and_update_authn_fresh(
+                        within, grace
+                    ):
+                        return _security._reauthn_handler(within, grace, headers=h,)
                     handle_csrf(method)
                     return fn(*args, **dkwargs)
             if _security._unauthorized_callback:

@@ -103,7 +103,7 @@ def login_user(user, remember=None, authn_via=None):
                      Defaults to ``False``
     :param authn_via: A list of strings denoting which mechanism(s) the user
         authenticated with.
-        These will be one or more of ["password", "sms", "authenticator", "email"] or
+        These should be one or more of ["password", "sms", "authenticator", "email"] or
         other 'auto-login' mechanisms.
     """
 
@@ -131,7 +131,7 @@ def login_user(user, remember=None, authn_via=None):
         _datastore.put(user)
 
     session["fs_cc"] = "set"
-    session["fs_authn_ts"] = time.time()
+    session["fs_paa"] = time.time()  # Primary authentication at - timestamp
 
     identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
 
@@ -150,7 +150,7 @@ def logout_user():
     identity is now the `AnonymousIdentity`
     """
 
-    for key in ("identity.name", "identity.auth_type", "fs_authn_ts"):
+    for key in ("identity.name", "identity.auth_type", "fs_paa", "fs_gexp"):
         session.pop(key, None)
 
     # Clear csrf token between sessions.
@@ -166,13 +166,24 @@ def logout_user():
     _logout_user()
 
 
-def is_authn_fresh(within_minutes):
-    """ Check if user authenticated within specified time.
+def check_and_update_authn_fresh(within, grace):
+    """ Check if user authenticated within specified time and update grace period.
 
-    :param within_minutes: int/float or callable that returns an int/float
+    :param within: A timedelta specifying the maximum time in the past that the caller
+                  authenticated that is still considered 'fresh'.
+    :param grace: A timedelta that, if the current session is considered 'fresh'
+                  will set a grace period for which freshness won't be checked.
+                  The intent here is that the caller shouldn't get part-way though
+                  a set of operations and suddenly be required to authenticate again.
 
-    If within_minutes is 0, this will always return False (not fresh)
-    If within_minutes is negative, will always return True (always 'fresh')
+    If within.total_seconds() is negative, will always return True (always 'fresh').
+    This effectively just disables this entire mechanism.
+
+    If "fs_gexp" is in the session and the current timestamp is less than that,
+    return True and extend grace time (i.e. set fs_gexp to current time + grace).
+
+    If not within the grace period, and within.total_seconds() is 0,
+    return False (not fresh).
 
     Be aware that for this to work, sessions and therefore session cookies
     must be functioning and being sent as part of the request.
@@ -180,22 +191,39 @@ def is_authn_fresh(within_minutes):
     .. warning::
         Be sure the caller is already authenticated PRIOR to calling this method.
 
+    .. versionadded:: 3.4.0
     """
 
-    if callable(within_minutes):
-        within_minutes = within_minutes()
-    if within_minutes < 0:
+    if within.total_seconds() < 0:
         # this means 'always fresh'
         return True
 
-    if "fs_authn_ts" not in session:
+    if "fs_paa" not in session:
+        # No session, you can't play.
         return False
-    authn_time = datetime.datetime.utcfromtimestamp(session["fs_authn_ts"])
+
+    def _py2timestamp(dt):
+        return time.mktime(dt.timetuple()) + dt.microsecond / 1e6
+
+    now = datetime.datetime.utcnow()
+    new_exp = now + grace
+    # grace_ts = int(new_exp.timestamp())
+    grace_ts = int(_py2timestamp(new_exp))
+
+    fs_gexp = session.get("fs_gexp", None)
+    if fs_gexp:
+        # if now.timestamp() < fs_gexp:
+        if _py2timestamp(now) < fs_gexp:
+            # Within grace period - extend it and we're good.
+            session["fs_gexp"] = grace_ts
+            return True
+
+    authn_time = datetime.datetime.utcfromtimestamp(session["fs_paa"])
     # allow for some time drift where it's possible authn_time is in the future
     # but lets be cautious and not allow arbitrary future times
-    allow_window = timedelta(minutes=within_minutes)
-    delta = datetime.datetime.utcnow() - authn_time
-    if allow_window > delta > -allow_window:
+    delta = now - authn_time
+    if within > delta > -within:
+        session["fs_gexp"] = grace_ts
         return True
     return False
 
