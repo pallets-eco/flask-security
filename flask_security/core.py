@@ -144,6 +144,7 @@ _default_config = {
     "TWO_FACTOR_QRCODE_URL": "/tf-qrcode",
     "TWO_FACTOR_RESCUE_URL": "/tf-rescue",
     "TWO_FACTOR_CONFIRM_URL": "/tf-confirm",
+    "LOGOUT_METHODS": ["GET", "POST"],
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
     "CONFIRM_ERROR_VIEW": None,

@@ -210,6 +210,41 @@ def test_passwordless_custom_form(app, sqlalchemy_datastore):
     assert b"My Passwordless Email Address Field" in response.data
 
 
+@pytest.mark.parametrize('logout_methods', (
+    ["GET", "POST"],
+    ["GET"],
+    ["POST"],
+))
+def test_logout_methods(app, sqlalchemy_datastore, logout_methods):
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{"SECURITY_LOGOUT_METHODS": logout_methods}
+    )
+
+    client = app.test_client()
+
+    authenticate(client)
+
+    response = client.get("/logout", follow_redirects=True)
+
+    if "GET" in logout_methods:
+        assert response.status_code == 200
+
+        authenticate(client)
+
+    else:
+        assert response.status_code == 405  # method not allowed
+
+    response = client.post("/logout", follow_redirects=True)
+
+    if "POST" in logout_methods:
+        assert response.status_code == 200
+
+    else:
+        assert response.status_code == 405  # method not allowed
+
+
 def test_addition_identity_attributes(app, sqlalchemy_datastore):
     init_app_with_options(
         app,
