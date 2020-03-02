@@ -468,6 +468,13 @@ Login/Logout
     Default:``"/logout"``.
 
 
+.. py:data:: SECURITY_LOGOUT_METHODS
+
+    Specifies the HTTP request methods that the logout URL accepts. Specify ``None`` to disable the logout URL (and implement your own).
+
+    Default:``["GET", "POST"]``.
+
+
 .. py:data:: SECURITY_POST_LOGIN_VIEW
 
     Specifies the default view to redirect to after a user logs in. This value can be set to a URL
