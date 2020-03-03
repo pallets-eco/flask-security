@@ -471,8 +471,9 @@ Login/Logout
 .. py:data:: SECURITY_LOGOUT_METHODS
 
     Specifies the HTTP request methods that the logout URL accepts. Specify ``None`` to disable the logout URL (and implement your own).
+    Configuring with just ``["POST"]`` is slightly more secure. The default includes ``"GET"`` for backwards compatibility.
 
-    Default:``["GET", "POST"]``.
+    Default: ``["GET", "POST"]``.
 
 
 .. py:data:: SECURITY_POST_LOGIN_VIEW
