@@ -1031,7 +1031,10 @@ def create_blueprint(state, import_name, json_encoder=None):
     if json_encoder:
         bp.json_encoder = json_encoder
 
-    bp.route(state.logout_url, methods=["GET", "POST"], endpoint="logout")(logout)
+    if state.logout_methods is not None:
+        bp.route(state.logout_url, methods=state.logout_methods, endpoint="logout")(
+            logout
+        )
 
     if state.passwordless:
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(send_login)
