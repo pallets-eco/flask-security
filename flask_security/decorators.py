@@ -90,14 +90,16 @@ def default_reauthn_handler(within, grace, headers=None):
 
     if _security._want_json(request):
         # TODO can/should we response with a WWW-Authenticate Header in all cases?
+        is_us = config_value("UNIFIED_SIGNIN")
         payload = json_error_response(errors=m)
+        payload["reauth_required"] = True
+        payload["unified_signin_enabled"] = is_us
         return _security._render_json(payload, 401, headers, None)
 
-    view = config_value("REAUTHENTICATE_VIEW")
-    if callable(view):
-        view = view()
-    elif not view:
-        view = _security.login_url
+    if config_value("UNIFIED_SIGNIN"):
+        view = _security.us_verify_url
+    else:
+        view = _security.verify_url
     if view:
         do_flash(m, c)
         redirect_url = get_url(view, qparams={"next": request.url})
@@ -274,7 +276,7 @@ def auth_required(*auth_methods, **kwargs):
             - If > 0, then the caller must have authenticated within the time specified
               (as measured using the session cookie).
             - If 0 and not within the grace period (see below) the caller will
-              always be redirected to re-login.
+              always be redirected to re-authenticate.
             - If < 0 (the default) no freshness check is performed.
 
         Note that Basic Auth, by definition, is always 'fresh' and will never result in

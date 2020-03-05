@@ -344,6 +344,23 @@ class LoginForm(Form, NextFormMixin):
         return True
 
 
+class VerifyForm(Form, PasswordFormMixin):
+    """The verify authentication form"""
+
+    user = None
+    submit = SubmitField(get_form_field_label("verify_password"))
+
+    def validate(self):
+        if not super(VerifyForm, self).validate():
+            return False
+
+        self.user = current_user
+        if not self.user.verify_and_update_password(self.password.data):
+            self.password.errors.append(get_message("INVALID_PASSWORD")[0])
+            return False
+        return True
+
+
 class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
     """ This form is used for registering when 'confirmable' is set.
     The only difference between this and the other RegisterForm is that

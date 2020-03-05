@@ -140,16 +140,6 @@ These configuration keys are used globally across all features.
 
     .. versionadded:: 3.4.0
 
-.. py:data:: SECURITY_FRESHNESS_GRACE_PERIOD
-
-    When protecting an endpoint with :meth:`flask_security.auth_required` and requesting a freshness
-    test, this is the default grace period if none is provided. Please see
-    :meth:`flask_security.check_and_update_authn_fresh` for details.
-
-    Default: timedelta(hours=2)
-
-    .. versionadded:: 3.4.0
-
 .. py:data:: SECURITY_TOKEN_AUTHENTICATION_KEY
 
     Specifies the query string parameter to read when using token authentication.
@@ -374,6 +364,35 @@ These are used by the Two-Factor and Unified Signin features.
 
     .. versionadded:: 3.4.0
 
+.. py:data:: SECURITY_FRESHNESS
+
+    A timedelta used to protect endpoints that alter sensitive information.
+    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`.
+    Refer to :meth:`flask_security.auth_required` for details.
+    Setting this to a negative number will disable any freshness checking and
+    the endpoints :py:data:`SECURITY_VERIFY_URL`, :py:data:`SECURITY_US_VERIFY_URL`
+    and :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL` won't be registered.
+    Setting this to 0 results in undefined behavior.
+
+    Default: timedelta(hours=24)
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_FRESHNESS_GRACE_PERIOD
+
+    A timedelta that provides a grace period when altering sensitive
+    information.
+    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`.
+    Refer to :meth:`flask_security.auth_required` for details.
+    N.B. To avoid strange behavior, be sure to set the grace period less than
+    the freshness period.
+    Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
+
+    Default: timedelta(hours=1)
+
+    .. versionadded:: 3.4.0
+
+
 Core - rarely need changing
 ----------------------------
 
@@ -499,24 +518,27 @@ Login/Logout
 
     Default: ``None``.
 
-.. py:data:: SECURITY_REAUTHENTICATE_VIEW
-
-    Specifies the view to redirect to if a user attempts to access a URL/endpoint that they are required
-    to have a 'fresh' login (see :meth:`flask_security.auth_required`).
-    If this value is ``None``, then the user is redirected to :py:data`SECURITY_LOGIN_URL` -
-    if that is NONE the user is presented with a default HTTP 401 response.
-    This can be an endpoint name or a callable. The default redirects to the
-    login page. This possibly isn't the best user experience - but is 'correct'.
-
-    Default: ``None``
-
-    .. versionadded:: 3.4.0
-
 .. py:data:: SECURITY_LOGIN_USER_TEMPLATE
 
     Specifies the path to the template for the user login page.
 
     Default:``security/login_user.html``.
+
+.. py:data:: SECURITY_VERIFY_URL
+
+    Specifies the re-authenticate URL. If :py:data:`SECURITY_FRESHNESS` evaluates to < 0; this
+    endpoint won't be registered.
+
+    Default: ``"/verify"``
+
+.. py:data:: SECURITY_POST_VERIFY_URL
+
+    Specifies the default view to redirect to after a user successfully re-authenticates either via
+    the :py:data:`SECURITY_VERIFY_URL` or the :py:data:`SECURITY_US_VERIFY_URL`.
+    Normally this won't need to be set and after the verification/re-authentication, the referring
+    view (held in the ``next`` parameter) will be redirected to.
+
+    Default: ``None``.
 
 Registerable
 ------------
@@ -873,12 +895,12 @@ Unified Signin
 
     Default: ``"/us-signin"``
 
-.. py:data:: SECURITY_US_SEND_CODE_URL
+.. py:data:: SECURITY_US_SIGNIN_SEND_CODE_URL
 
     Endpoint that given an identity, and a previously setup authentication method, will
     generate and return a one time code. This isn't necessary when using an authenticator app.
 
-    Default: ``"/us-send-code"``
+    Default: ``"/us-signin/send-code"``
 
 .. py:data:: SECURITY_US_SETUP_URL
 
@@ -900,6 +922,22 @@ Unified Signin
 
     Default: ``"/us-qrcode"``
 
+.. py:data:: SECURITY_US_VERIFY_URL
+
+    This endpoint handles re-authentication, the caller must be already authenticated
+    and then enter in their primary credentials (password/passcode) again. This is
+    used when an endpoint (such as ``/us-setup``) fails freshness checks.
+    This endpoint won't be registered if :py:data:`SECURITY_FRESHNESS` evaluates to < 0.
+
+    Default: ``"/us-verify"``
+
+.. py:data:: SECURITY_US_VERIFY_SEND_CODE_URL
+
+    As part of ``/us-verify``, this endpoint will send the appropriate code.
+    This endpoint won't be registered if :py:data:`SECURITY_FRESHNESS` evaluates to < 0.
+
+    Default: ``"/us-verify/send-code"``
+
 .. py:data:: SECURITY_US_POST_SETUP_VIEW
 
     Specifies the view to redirect to after a user successfully setups an authentication method (non-json).
@@ -915,6 +953,10 @@ Unified Signin
 .. py:data:: SECURITY_US_SETUP_TEMPLATE
 
     Default: ``"security/us_setup.html"``
+
+.. py:data:: SECURITY_US_VERIFY_TEMPLATE
+
+    Default: ``"security/us_verify.html"``
 
 .. py:data:: SECURITY_US_ENABLED_METHODS
 
@@ -957,7 +999,7 @@ Additional relevant configuration variables:
       used for identity.
     * :py:data:`SECURITY_USER_IDENTITY_MAPPINGS` - Defines the order and methods for parsing identity.
     * :py:data:`SECURITY_DEFAULT_REMEMBER_ME`
-    * :py:data:`SECURITY_SMS_SERVICE` - When SMS is enabled in :py:data:`SECURITY_US_ENABLED_METHODS`
+    * :py:data:`SECURITY_SMS_SERVICE` - When SMS is enabled in :py:data:`SECURITY_US_ENABLED_METHODS`.
     * :py:data:`SECURITY_SMS_SERVICE_CONFIG`
     * :py:data:`SECURITY_TOTP_SECRETS`
     * :py:data:`SECURITY_TOTP_ISSUER`
@@ -965,6 +1007,8 @@ Additional relevant configuration variables:
     * :py:data:`SECURITY_LOGIN_ERROR_VIEW` - The user is redirected here if
       :py:data:`SECURITY_US_VERIFY_LINK_URL` has an error and the request is json and
       :py:data:`SECURITY_REDIRECT_BEHAVIOR` equals ``"spa"``.
+    * :py:data:`SECURITY_FRESHNESS` - Used to protect /us-setup.
+    * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /us-setup.
 
 Passwordless
 -------------
@@ -1053,15 +1097,16 @@ A list of all URLs and Views:
 * ``SECURITY_POST_RESET_VIEW``
 * ``SECURITY_POST_CHANGE_VIEW``
 * ``SECURITY_UNAUTHORIZED_VIEW``
-* :py:data:`SECURITY_REAUTHENTICATE_VIEW`
 * ``SECURITY_RESET_VIEW``
 * ``SECURITY_RESET_ERROR_VIEW``
 * ``SECURITY_LOGIN_ERROR_VIEW``
 * :py:data:`SECURITY_US_SIGNIN_URL`
 * :py:data:`SECURITY_US_QRCODE_URL`
 * :py:data:`SECURITY_US_SETUP_URL`
-* :py:data:`SECURITY_US_SEND_CODE_URL`
+* :py:data:`SECURITY_US_SIGNIN_SEND_CODE_URL`
 * :py:data:`SECURITY_US_VERIFY_LINK_URL`
+* :py:data:`SECURITY_US_VERIFY_URL`
+* :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL`
 * :py:data:`SECURITY_US_POST_SETUP_VIEW`
 
 Template Paths
@@ -1080,6 +1125,7 @@ A list of all templates:
 * ``SECURITY_TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE``
 * :py:data:`SECURITY_US_SIGNIN_TEMPLATE`
 * :py:data:`SECURITY_US_SETUP_TEMPLATE`
+* :py:data:`SECURITY_US_VERIFY_TEMPLATE`
 
 Messages
 -------------
@@ -1106,6 +1152,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_INVALID_EMAIL_ADDRESS``
 * ``SECURITY_MSG_INVALID_LOGIN_TOKEN``
 * ``SECURITY_MSG_INVALID_PASSWORD``
+* ``SECURITY_MSG_INVALID_PASSWORD_CODE``
 * ``SECURITY_MSG_INVALID_REDIRECT``
 * ``SECURITY_MSG_INVALID_RESET_PASSWORD_TOKEN``
 * ``SECURITY_MSG_LOGIN``
@@ -1126,6 +1173,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_PASSWORD_TOO_SIMPLE``
 * ``SECURITY_MSG_PHONE_INVALID``
 * ``SECURITY_MSG_REAUTHENTICATION_REQUIRED``
+* ``SECURITY_MSG_REAUTHENTICATION_SUCCESSFUL``
 * ``SECURITY_MSG_REFRESH``
 * ``SECURITY_MSG_RETYPE_PASSWORD_MISMATCH``
 * ``SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN``

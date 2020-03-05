@@ -1,0 +1,13 @@
+{% extends "security/base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+
+{% block content %}
+    {% include "security/_messages.html" %}
+    <h1>{{ _("Please Enter Your Password") }}</h1>
+    <form action="{{ url_for_security("verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
+          name="verify_form">
+        {{ verify_form.hidden_tag() }}
+        {{ render_field_with_errors(verify_form.password) }}
+        {{ render_field(verify_form.submit) }}
+    </form>
+{% endblock %}

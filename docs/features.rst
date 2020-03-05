@@ -146,6 +146,11 @@ an authenticator application, the :py:data:`SECURITY_US_MFA_REQUIRED` configurat
 determines which primary authentication mechanisms require a second factor. By default
 limited to ``email`` and ``password`` (if two-factor is enabled).
 
+Be aware that by default, the :py:data:`SECURITY_US_SETUP_URL` endpoint is protected
+with a freshness check (see :meth:`flask_security.auth_required`) which means it requires a session
+cookie to function properly. This is true even if using JSON payload or token authentication.
+If you disable the freshness check then sessions aren't required.
+
 `Current Limited Functionality`:
 
     * Change password does not work if a user registers without a password. However

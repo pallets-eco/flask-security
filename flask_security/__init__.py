@@ -48,6 +48,7 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorVerifyCodeForm,
     TwoFactorVerifyPasswordForm,
+    VerifyForm,
 )
 from .phone_util import PhoneUtil
 from .signals import (
@@ -72,6 +73,7 @@ from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
     UnifiedSigninSetupVerifyForm,
+    UnifiedVerifyForm,
     us_send_security_token,
 )
 from .utils import (

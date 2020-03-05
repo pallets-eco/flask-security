@@ -13,6 +13,7 @@
 from datetime import timedelta
 import hashlib
 import mock
+import re
 import sys
 import time
 
@@ -715,10 +716,7 @@ def test_phone_util_override(app):
 
 
 def test_authn_freshness(app, client, get_message):
-    """
-    Test freshness using default reauthn_handler
-    REAUTHENTICATE_VIEW {None (default), custom}
-    """
+    """ Test freshness using default reauthn_handler """
 
     @auth_required(within=30, grace=0)
     def myview():
@@ -728,26 +726,26 @@ def test_authn_freshness(app, client, get_message):
     def myspecialview():
         return Response(status=200)
 
-    def myreauthnview():
-        pass
-
     app.add_url_rule("/myview", view_func=myview, methods=["GET"])
     app.add_url_rule("/myspecialview", view_func=myspecialview, methods=["GET"])
-    app.add_url_rule("/myreauthnview", view_func=myreauthnview, methods=["GET"])
     authenticate(client)
 
     # This should work and not be redirected
     response = client.get("/myview", follow_redirects=False)
     assert response.status_code == 200
 
-    # This should require additional authn. With default REAUTHENTICATE_VIEW set should
-    # just redirect to login
+    # This should require additional authn and redirect to verify
     time.sleep(0.1)
-    response = client.get("/myspecialview", follow_redirects=False)
-    assert response.status_code == 302
-    assert (
-        response.location
-        == "http://localhost/login?next=http%3A%2F%2Flocalhost%2Fmyspecialview"
+    with capture_flashes() as flashes:
+        response = client.get("/myspecialview", follow_redirects=False)
+        assert response.status_code == 302
+        assert (
+            response.location
+            == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Fmyspecialview"
+        )
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "REAUTHENTICATION_REQUIRED"
     )
 
     # Test json error response
@@ -756,28 +754,6 @@ def test_authn_freshness(app, client, get_message):
     assert response.json["response"]["error"].encode("utf-8") == get_message(
         "REAUTHENTICATION_REQUIRED"
     )
-
-    app.config["SECURITY_REAUTHENTICATE_VIEW"] = "myreauthnview"
-    time.sleep(0.1)
-    with capture_flashes() as flashes:
-        response = client.get("/myspecialview", follow_redirects=False)
-        assert response.status_code == 302
-        assert (
-            response.location == "http://localhost/"
-            "myreauthnview?next=http%3A%2F%2Flocalhost%2Fmyspecialview"
-        )
-
-    assert flashes[0]["category"] == "error"
-    assert flashes[0]["message"].encode("utf-8") == get_message(
-        "REAUTHENTICATION_REQUIRED"
-    )
-
-    # Test that if we send in a callable it calls it and DOESN'T default to /login
-    # even though our callable returns None.
-    app.config["SECURITY_REAUTHENTICATE_VIEW"] = lambda: None
-    time.sleep(0.1)
-    response = client.get("/myspecialview", follow_redirects=False)
-    assert response.status_code == 401
 
 
 def test_authn_freshness_handler(app, client, get_message):
@@ -867,10 +843,71 @@ def test_authn_freshness_nc(app, client_nc, get_message):
     token = response.json["response"]["user"]["authentication_token"]
     h = {"Authentication-Token": token}
 
-    # This should fail- with default REAUTHENTICATE_VIEW - should be a redirect
+    # This should fail - should be a redirect
     response = client_nc.get("/myview", headers=h, follow_redirects=False)
     assert response.status_code == 302
     assert (
         response.location
-        == "http://localhost/login?next=http%3A%2F%2Flocalhost%2Fmyview"
+        == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Fmyview"
     )
+
+
+def test_verify_fresh(app, client, get_message):
+    # Hit a fresh-required endpoint and walk through verify
+    authenticate(client)
+
+    with capture_flashes() as flashes:
+        response = client.get("/fresh", follow_redirects=True)
+        assert b"Please Enter Your Password" in response.data
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "REAUTHENTICATION_REQUIRED"
+    )
+    form_response = response.data.decode("utf-8")
+    matcher = re.match(
+        r'.*action="([^"]*)".*', form_response, re.IGNORECASE | re.DOTALL
+    )
+    verify_url = matcher.group(1)
+
+    response = client.get(verify_url)
+    assert b"Please Enter Your Password" in response.data
+
+    response = client.post(
+        verify_url, data=dict(password="not my password"), follow_redirects=False
+    )
+    assert b"Please Enter Your Password" in response.data
+
+    response = client.post(
+        verify_url, data=dict(password="password"), follow_redirects=False
+    )
+    assert response.location == "http://localhost/fresh"
+
+    # should be fine now
+    response = client.get("/fresh", follow_redirects=True)
+    assert b"Fresh Only" in response.data
+
+
+def test_verify_fresh_json(app, client, get_message):
+    # Hit a fresh-required endpoint and walk through verify
+    authenticate(client)
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    response = client.get("/fresh", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+
+    response = client.get("/verify")
+    assert b"Please Enter Your Password" in response.data
+
+    response = client.post(
+        "/verify", json=dict(password="not my password"), headers=headers
+    )
+    assert response.status_code == 400
+
+    response = client.post("/verify", json=dict(password="password"), headers=headers)
+    assert response.status_code == 200
+
+    # should be fine now
+    response = client.get("/fresh", headers=headers)
+    assert response.status_code == 200
+    assert response.json["title"] == "Fresh Only"

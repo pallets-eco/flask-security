@@ -14,7 +14,6 @@
     password or one of US_ENABLED_METHODS.
 
     Finish up:
-    - setup should probably require a 'fresh' authentication - as 2FA does.
     - should we support a way that /logout redirects to us-signin rather than /login?
     - we should be able to add a phone number as part of setup even w/o any METHODS -
       i.e. to allow login with any identity (phone) and a password.
@@ -35,9 +34,10 @@
 """
 
 import sys
+import time
 
 from flask import current_app as app
-from flask import abort, after_this_request, redirect, request
+from flask import abort, after_this_request, redirect, request, session
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
@@ -57,11 +57,13 @@ from .utils import (
     config_value,
     do_flash,
     get_post_login_redirect,
+    get_post_verify_redirect,
     get_message,
     get_url,
     get_within_delta,
     json_error_response,
     login_user,
+    propagate_next,
     suppress_form_csrf,
     url_for_security,
 )
@@ -109,26 +111,18 @@ def _us_common_validate(form):
     return True
 
 
-class UnifiedSigninForm(Form):
-    """ A unified login form
-    For either identity/password or request and enter code.
+class _UnifiedPassCodeForm(Form):
+    """ Common form for signin and verify/reauthenticate.
     """
 
     user = None
     authn_via = None
 
-    identity = StringField(
-        get_form_field_label("identity"),
-        validators=[Required()],
-        render_kw={"placeholder": _("email, phone, username")},
-    )
-
     passcode = StringField(
         get_form_field_label("passcode"),
         render_kw={"placeholder": _("Code or Password")},
     )
-    remember = BooleanField(get_form_field_label("remember_me"))
-    submit = SubmitField(get_form_field_label("signin"))
+    submit = SubmitField(get_form_field_label("submit"))
 
     chosen_method = RadioField(
         _("Available Methods"),
@@ -138,31 +132,37 @@ class UnifiedSigninForm(Form):
     submit_send_code = SubmitField(get_form_field_label("sendcode"))
 
     def __init__(self, *args, **kwargs):
-        super(UnifiedSigninForm, self).__init__(*args, **kwargs)
-        self.remember.default = config_value("DEFAULT_REMEMBER_ME")
+        super(_UnifiedPassCodeForm, self).__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(UnifiedSigninForm, self).validate():
+        if not super(_UnifiedPassCodeForm, self).validate():
             return False
-
-        # For either - require a valid identity
-        if not _us_common_validate(self):
-            return False
+        if not self.user:
+            # This is sign-in case.
+            if not _us_common_validate(self):
+                return False
 
         if self.submit.data:
-            # This is login - verify passcode/password
+            # This is authn - verify passcode/password
             # Since we have a unique totp_secret for each method - we
             # can figure out which mechanism was used.
+            # Note that password check requires a string (not int or None)
+            passcode = self.passcode.data
+            if not passcode:
+                self.passcode.errors.append(get_message("INVALID_PASSWORD_CODE")[0])
+                return False
+            passcode = str(passcode)
+
             ok = False
             totp_secrets = self.user.us_get_totp_secrets()
             for method in config_value("US_ENABLED_METHODS"):
                 if method == "password":
-                    if self.user.verify_and_update_password(self.passcode.data):
+                    if self.user.verify_and_update_password(passcode):
                         ok = True
                         break
                 else:
                     if method in totp_secrets and _security._totp_factory.verify_totp(
-                        token=self.passcode.data,
+                        token=passcode,
                         totp_secret=totp_secrets[method],
                         user=self.user,
                         window=config_value("US_TOKEN_VALIDITY"),
@@ -170,21 +170,13 @@ class UnifiedSigninForm(Form):
                         ok = True
                         break
             if not ok:
-                self.passcode.errors.append(get_message("INVALID_PASSWORD")[0])
+                self.passcode.errors.append(get_message("INVALID_PASSWORD_CODE")[0])
                 return False
 
             self.authn_via = method
-
-            # Only check this once authenticated to not give away info
-            if requires_confirmation(self.user):
-                self.identity.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
-                return False
             return True
         elif self.submit_send_code.data:
-            # Send a code - identity and chosen_method must be valid
-            # Note: we don't check for NOT CONFIRMED account here and go
-            # ahead and send a code - but above we check and won't let them sign in.
-            # The idea is to not expose info if not authenticated
+            # Send a code - chosen_method must be valid
             if self.chosen_method.data not in config_value("US_ENABLED_METHODS"):
                 self.chosen_method.errors.append(
                     get_message("US_METHOD_NOT_AVAILABLE")[0]
@@ -196,6 +188,52 @@ class UnifiedSigninForm(Form):
                 return False
             return True
         return False  # pragma: no cover
+
+
+class UnifiedSigninForm(_UnifiedPassCodeForm):
+    """ A unified login form
+    For either identity/password or request and enter code.
+    """
+
+    user = None
+
+    identity = StringField(
+        get_form_field_label("identity"),
+        validators=[Required()],
+        render_kw={"placeholder": _("email, phone, username")},
+    )
+    remember = BooleanField(get_form_field_label("remember_me"))
+
+    def __init__(self, *args, **kwargs):
+        super(UnifiedSigninForm, self).__init__(*args, **kwargs)
+        self.remember.default = config_value("DEFAULT_REMEMBER_ME")
+
+    def validate(self):
+        self.user = None
+        if not super(UnifiedSigninForm, self).validate():
+            return False
+
+        if self.submit.data:
+            # This is login
+            # Only check this once authenticated to not give away info
+            if requires_confirmation(self.user):
+                self.identity.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
+                return False
+        return True
+
+
+class UnifiedVerifyForm(_UnifiedPassCodeForm):
+    """ Verify authentication.
+    This is for freshness 'reauthentication' required.
+    """
+
+    user = None
+
+    def validate(self):
+        self.user = current_user
+        if not super(UnifiedVerifyForm, self).validate():
+            return False
+        return True
 
 
 class UnifiedSigninSetupForm(Form):
@@ -267,9 +305,33 @@ class UnifiedSigninSetupVerifyForm(Form):
         return True
 
 
+def _send_code_helper(form):
+    # send code
+    user = form.user
+    method = form.chosen_method.data
+    totp_secrets = user.us_get_totp_secrets()
+    if method not in totp_secrets:
+        after_this_request(_commit)
+        totp_secrets[method] = _security._totp_factory.generate_totp_secret()
+        user.us_put_totp_secrets(totp_secrets)
+
+    msg = user.us_send_security_token(
+        method,
+        totp_secret=totp_secrets[method],
+        phone_number=user.us_phone_number,
+        send_magic_link=True,
+    )
+    code_sent = True
+    if msg:
+        # send code didn't work
+        code_sent = False
+        form.chosen_method.errors.append(msg)
+    return code_sent, msg
+
+
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
-def us_send_code():
+def us_signin_send_code():
     """
     Send code view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -287,27 +349,7 @@ def us_send_code():
     form.submit_send_code.data = True
 
     if form.validate_on_submit():
-        # send code
-        user = form.user
-        method = form.chosen_method.data
-        totp_secrets = user.us_get_totp_secrets()
-        if method not in totp_secrets:
-            after_this_request(_commit)
-            totp_secrets[method] = _security._totp_factory.generate_totp_secret()
-            user.us_put_totp_secrets(totp_secrets)
-
-        msg = user.us_send_security_token(
-            method,
-            totp_secret=totp_secrets[method],
-            phone_number=user.us_phone_number,
-            send_magic_link=True,
-        )
-        code_sent = True
-        if msg:
-            # send code didn't work
-            code_sent = False
-            form.chosen_method.errors.append(msg)
-
+        code_sent, msg = _send_code_helper(form)
         if _security._want_json(request):
             # Not authenticated yet - so don't send any user info.
             return base_render_json(
@@ -335,6 +377,62 @@ def us_send_code():
         methods=config_value("US_ENABLED_METHODS"),
         skip_loginmenu=True,
         **_security._run_ctx_processor("us_signin")
+    )
+
+
+@auth_required()
+def us_verify_send_code():
+    """
+    Send code during verify.
+    """
+    form_class = _security.us_verify_form
+
+    if request.is_json:
+        if request.content_length:
+            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
+        else:
+            form = form_class(formdata=None, meta=suppress_form_csrf())
+    else:
+        form = form_class(meta=suppress_form_csrf())
+    form.submit_send_code.data = True
+
+    if form.validate_on_submit():
+        code_sent, msg = _send_code_helper(form)
+        if _security._want_json(request):
+            # Not authenticated yet - so don't send any user info.
+            return base_render_json(
+                form, include_user=False, error_status_code=500 if msg else 400
+            )
+
+        return _security.render_template(
+            config_value("US_VERIFY_TEMPLATE"),
+            us_verify_form=form,
+            methods=config_value("US_ENABLED_METHODS"),
+            chosen_method=form.chosen_method.data,
+            code_sent=code_sent,
+            skip_login_menu=True,
+            send_code_to=get_url(
+                _security.us_verify_send_code_url,
+                qparams={"next": propagate_next(request.url)},
+            ),
+            **_security._run_ctx_processor("us_verify")
+        )
+
+    # Here on GET or failed validation
+    if _security._want_json(request):
+        payload = {"methods": config_value("US_ENABLED_METHODS")}
+        return base_render_json(form, additional=payload)
+
+    return _security.render_template(
+        config_value("US_VERIFY_TEMPLATE"),
+        us_verify_form=form,
+        methods=config_value("US_ENABLED_METHODS"),
+        skip_login_menu=True,
+        send_code_to=get_url(
+            _security.us_verify_send_code_url,
+            qparams={"next": propagate_next(request.url)},
+        ),
+        **_security._run_ctx_processor("us_verify")
     )
 
 
@@ -395,6 +493,57 @@ def us_signin():
         methods=config_value("US_ENABLED_METHODS"),
         skip_login_menu=True,
         **_security._run_ctx_processor("us_signin")
+    )
+
+
+@auth_required()
+def us_verify():
+    """
+    Re-authenticate to reset freshness time.
+    This is likely the result of a reauthn_handler redirect, which
+    will have filled in ?next=xxx - which we want to carefully not lose as we
+    go through these steps.
+    """
+    form_class = _security.us_verify_form
+
+    if request.is_json:
+        if request.content_length:
+            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
+        else:
+            form = form_class(formdata=None, meta=suppress_form_csrf())
+    else:
+        form = form_class(meta=suppress_form_csrf())
+    form.submit.data = True
+
+    if form.validate_on_submit():
+        # verified - so set freshness time.
+        session["fs_paa"] = time.time()
+
+        if _security._want_json(request):
+            return base_render_json(form, include_auth_token=True)
+
+        do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
+        return redirect(get_post_verify_redirect())
+
+    # Here on GET or failed POST validate
+    if _security._want_json(request):
+        payload = {
+            "methods": config_value("US_ENABLED_METHODS"),
+        }
+        return base_render_json(form, additional=payload)
+
+    # On error - wipe code
+    form.passcode.data = None
+    return _security.render_template(
+        config_value("US_VERIFY_TEMPLATE"),
+        us_verify_form=form,
+        methods=config_value("US_ENABLED_METHODS"),
+        skip_login_menu=True,
+        send_code_to=get_url(
+            _security.us_verify_send_code_url,
+            qparams={"next": propagate_next(request.url)},
+        ),
+        **_security._run_ctx_processor("us_verify")
     )
 
 
@@ -462,7 +611,10 @@ def us_verify_link():
     return redirect(get_post_login_redirect())
 
 
-@auth_required()
+@auth_required(
+    within=lambda: config_value("FRESHNESS"),
+    grace=lambda: config_value("FRESHNESS_GRACE_PERIOD"),
+)
 def us_setup():
     """
     Change unified sign in methods.

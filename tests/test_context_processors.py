@@ -24,6 +24,7 @@ from utils import authenticate, logout
     forgot_password_template="custom_security/forgot_password.html",
     send_confirmation_template="custom_security/send_confirmation.html",
     register_user_template="custom_security/register_user.html",
+    verify_template="custom_security/verify.html",
 )
 def test_context_processors(client, app):
     @app.security.context_processor
@@ -45,6 +46,17 @@ def test_context_processors(client, app):
     response = client.get("/login")
     assert b"global" in response.data
     assert b"bar" in response.data
+
+    @app.security.verify_context_processor
+    def verify():
+        return {"foo": "bar"}
+
+    authenticate(client)
+    response = client.get("/verify")
+    assert b"CUSTOM VERIFY USER" in response.data
+    assert b"global" in response.data
+    assert b"bar" in response.data
+    logout(client)
 
     @app.security.register_context_processor
     def register():
@@ -154,6 +166,7 @@ def test_two_factor_context_processors(client, app):
 @pytest.mark.settings(
     us_setup_template="custom_security/us_setup.html",
     us_signin_template="custom_security/us_signin.html",
+    us_verify_template="custom_security/us_verify.html",
 )
 def test_unified_signin_context_processors(client, app):
     @app.security.context_processor
@@ -170,7 +183,7 @@ def test_unified_signin_context_processors(client, app):
     assert b"global" in response.data
     assert b"signin" in response.data
 
-    response = client.get("/us-send-code")
+    response = client.get("/us-signin/send-code")
     assert b"CUSTOM UNIFIED SIGN IN" in response.data
     assert b"global" in response.data
     assert b"signin" in response.data
@@ -187,5 +200,22 @@ def test_unified_signin_context_processors(client, app):
 
     response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
     assert b"CUSTOM UNIFIED SIGNIN SETUP" in response.data
+    assert b"global" in response.data
+    assert b"setup" in response.data
+
+    @app.security.us_verify_context_processor
+    def verify_ctx():
+        return {"foo": "setup"}
+
+    us_authenticate(client)
+    response = client.get("us-verify")
+    assert b"CUSTOM UNIFIED VERIFY" in response.data
+    assert b"global" in response.data
+    assert b"setup" in response.data
+
+    response = client.post(
+        "us-verify", data=dict(chosen_method="sms", phone="555-1212")
+    )
+    assert b"CUSTOM UNIFIED VERIFY" in response.data
     assert b"global" in response.data
     assert b"setup" in response.data

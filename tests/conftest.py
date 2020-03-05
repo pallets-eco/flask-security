@@ -203,6 +203,14 @@ def app(request):
     def unauthz():
         return render_template("index.html", content="Unauthorized")
 
+    @app.route("/fresh", methods=["GET", "POST"])
+    @auth_required(within=0)
+    def fresh():
+        if app.security._want_json(flask_request):
+            return jsonify(title="Fresh Only")
+        else:
+            return render_template("index.html", content="Fresh Only")
+
     return app
 
 

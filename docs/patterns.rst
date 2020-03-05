@@ -28,10 +28,6 @@ Also, if you annotate your endpoints with JUST an authorization decorator, you w
 get a 401 response, and (for forms) you won't be redirected to your login page. In this case
 you will always get a 403 status code (assuming you don't override the default handlers).
 
-:func:`.auth_required` also provides a mechanism to check for freshness; that is, require that the
-caller has authenticated within a specified window. This is commonly used when the endpoint is protecting
-modifications to sensitive information. Flask-Security uses this as part of securing the :ref:`unified-sign-in` setup endpoint.
-
 While these annotations are quick and easy, it is likely that they won't completely satisfy
 all an application's authorization requirements. A common example might be that a user can
 only edit their own posts/documents. In cases like this - it is nice to have a uniform way
@@ -61,6 +57,22 @@ own code. Then use Flask's ``errorhandler`` to catch that exception and create t
             raise MyForbiddenException(msg='You can only update docs you own')
 
 
+Freshness
+++++++++++
+A common pattern for browser-based sites is to use sessions to manage identity. This is usually
+implemented using session cookies. These cookies expire once the session (browser tab) is closed. This is very
+convenient, and keep the users from having to constantly re-authenticate. The downside is that sessions can easily be
+open for days or weeks. This adds to the security risk that some bad-actor or XSS gets control of the browser and then can
+do anything the user can. To mitigate that, operations that change fundamental identity characteristics (such as email, password, etc.)
+can be protected by requiring a 'fresh' or recent authentication. Flask-Security supports this with the following:
+
+    - :func:`.auth_required` takes parameters that define how recent the authentication must have happened. In addition a grace
+      period can be specified so that multiple step operations don't require re-authentication in the middle.
+    - A default :meth:`.Security.reauthn_handler` that is called when a request fails the recent authentication check
+    - :py:data:`SECURITY_VERIFY_URL` and :py:data:`SECURITY_US_VERIFY_URL` endpoints that request the user to re-authenticate
+    - VerifyForm and UsVerifyForm forms that can be extended.
+
+Flask-Security itself uses this as part of securing the :ref:`unified-sign-in` setup endpoint.
 
 .. _pass_validation_topic:
 

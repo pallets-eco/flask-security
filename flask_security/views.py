@@ -32,6 +32,7 @@
 """
 
 import sys
+import time
 
 from flask import (
     Blueprint,
@@ -57,11 +58,13 @@ from .passwordless import login_token_status, send_login_instructions
 from .quart_compat import get_quart_status
 from .unified_signin import (
     us_signin,
+    us_signin_send_code,
     us_qrcode,
-    us_send_code,
     us_setup,
     us_setup_verify,
+    us_verify,
     us_verify_link,
+    us_verify_send_code,
 )
 from .recoverable import (
     reset_password_token_status,
@@ -83,6 +86,7 @@ from .utils import (
     get_post_login_redirect,
     get_post_logout_redirect,
     get_post_register_redirect,
+    get_post_verify_redirect,
     get_url,
     json_error_response,
     login_user,
@@ -194,6 +198,38 @@ def login():
         return _security.render_template(
             config_value("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
         )
+
+
+@auth_required()
+def verify():
+    """View function which handles a authentication verification request.
+    """
+    form_class = _security.verify_form
+
+    if request.is_json:
+        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
+    else:
+        form = form_class(meta=suppress_form_csrf())
+
+    if form.validate_on_submit():
+        # form may have called verify_and_update_password()
+        after_this_request(_commit)
+
+        # verified - so set freshness time.
+        session["fs_paa"] = time.time()
+
+        if _security._want_json(request):
+            return base_render_json(form)
+        do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
+        return redirect(get_post_verify_redirect())
+
+    if _security._want_json(request):
+        assert form.user == current_user
+        return base_render_json(form)
+
+    return _security.render_template(
+        config_value("VERIFY_TEMPLATE"), verify_form=form, **_ctx("verify")
+    )
 
 
 def logout():
@@ -1018,7 +1054,7 @@ def _tf_illegal_state(form, redirect_to):
         return base_render_json(form)
 
 
-def create_blueprint(state, import_name, json_encoder=None):
+def create_blueprint(app, state, import_name, json_encoder=None):
     """Creates the security extension blueprint"""
 
     bp = Blueprint(
@@ -1046,10 +1082,17 @@ def create_blueprint(state, import_name, json_encoder=None):
     else:
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(login)
 
+    bp.route(state.verify_url, methods=["GET", "POST"], endpoint="verify")(verify)
+
     if state.unified_signin:
         bp.route(state.us_signin_url, methods=["GET", "POST"], endpoint="us_signin")(
             us_signin
         )
+        bp.route(
+            state.us_signin_send_code_url,
+            methods=["GET", "POST"],
+            endpoint="us_signin_send_code",
+        )(us_signin_send_code)
         bp.route(state.us_setup_url, methods=["GET", "POST"], endpoint="us_setup")(
             us_setup
         )
@@ -1058,9 +1101,18 @@ def create_blueprint(state, import_name, json_encoder=None):
             methods=["GET", "POST"],
             endpoint="us_setup_verify",
         )(us_setup_verify)
-        bp.route(
-            state.us_send_code_url, methods=["GET", "POST"], endpoint="us_send_code"
-        )(us_send_code)
+
+        # Freshness verification
+        if config_value("FRESHNESS", app=app).total_seconds() >= 0:
+            bp.route(
+                state.us_verify_url, methods=["GET", "POST"], endpoint="us_verify"
+            )(us_verify)
+            bp.route(
+                state.us_verify_send_code_url,
+                methods=["GET", "POST"],
+                endpoint="us_verify_send_code",
+            )(us_verify_send_code)
+
         bp.route(state.us_verify_link_url, methods=["GET"], endpoint="us_verify_link")(
             us_verify_link
         )
