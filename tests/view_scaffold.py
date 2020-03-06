@@ -69,6 +69,8 @@ def create_app():
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
+    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=5)
+    app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
 
     # Make this plaintext for most tests - reduces unit test time by 50%
     app.config["SECURITY_PASSWORD_HASH"] = "plaintext"
@@ -151,7 +153,7 @@ def create_app():
     @us_security_token_sent.connect_via(app)
     def on_us_token_sent(myapp, user, token, method, **extra):
         flash(
-            "User {} was sent passwordless token {} via {}".format(
+            "User {} was sent sign in code {} via {}".format(
                 user.calc_username(), token, method
             )
         )

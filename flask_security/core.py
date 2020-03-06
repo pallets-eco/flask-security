@@ -47,6 +47,7 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
+    VerifyForm,
 )
 from .phone_util import PhoneUtil
 from .twofactor import tf_send_security_token
@@ -54,6 +55,7 @@ from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
     UnifiedSigninSetupVerifyForm,
+    UnifiedVerifyForm,
     us_send_security_token,
 )
 from .totp import Totp
@@ -139,6 +141,7 @@ _default_config = {
     "RESET_URL": "/reset",
     "CHANGE_URL": "/change",
     "CONFIRM_URL": "/confirm",
+    "VERIFY_URL": "/verify",
     "TWO_FACTOR_SETUP_URL": "/tf-setup",
     "TWO_FACTOR_TOKEN_VALIDATION_URL": "/tf-validate",
     "TWO_FACTOR_QRCODE_URL": "/tf-qrcode",
@@ -152,8 +155,8 @@ _default_config = {
     "POST_CONFIRM_VIEW": None,
     "POST_RESET_VIEW": None,
     "POST_CHANGE_VIEW": None,
+    "POST_VERIFY_VIEW": None,
     "UNAUTHORIZED_VIEW": None,
-    "REAUTHENTICATE_VIEW": None,
     "RESET_ERROR_VIEW": None,
     "RESET_VIEW": None,
     "LOGIN_ERROR_VIEW": None,
@@ -166,6 +169,7 @@ _default_config = {
     "CHANGE_PASSWORD_TEMPLATE": "security/change_password.html",
     "SEND_CONFIRMATION_TEMPLATE": "security/send_confirmation.html",
     "SEND_LOGIN_TEMPLATE": "security/send_login.html",
+    "VERIFY_TEMPLATE": "security/verify.html",
     "TWO_FACTOR_VERIFY_CODE_TEMPLATE": "security/two_factor_verify_code.html",
     "TWO_FACTOR_SETUP_TEMPLATE": "security/two_factor_setup.html",
     "TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE": "security/two_factor_verify_password.html",
@@ -186,7 +190,6 @@ _default_config = {
     "TWO_FACTOR_SMS_VALIDITY": 120,
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "5 days",
-    "FRESHNESS_GRACE_PERIOD": timedelta(hours=2),
     "LOGIN_WITHOUT_CONFIRMATION": False,
     "AUTO_LOGIN_AFTER_CONFIRM": True,
     "EMAIL_SENDER": LocalProxy(
@@ -219,6 +222,8 @@ _default_config = {
         {"us_phone_number": uia_phone_mapper},
     ],
     "PHONE_REGION_DEFAULT": "US",
+    "FRESHNESS": timedelta(hours=24),
+    "FRESHNESS_GRACE_PERIOD": timedelta(hours=1),
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
     "DATETIME_FACTORY": datetime.utcnow,
@@ -246,13 +251,16 @@ _default_config = {
     "UNIFIED_SIGNIN": False,
     "US_SETUP_SALT": "us-setup-salt",
     "US_SIGNIN_URL": "/us-signin",
+    "US_SIGNIN_SEND_CODE_URL": "/us-signin/send-code",
     "US_SETUP_URL": "/us-setup",
-    "US_SEND_CODE_URL": "/us-send-code",
+    "US_VERIFY_URL": "/us-verify",
+    "US_VERIFY_SEND_CODE_URL": "/us-verify/send-code",
     "US_VERIFY_LINK_URL": "/us-verify-link",
     "US_QRCODE_URL": "/us-qrcode",
     "US_POST_SETUP_VIEW": None,
     "US_SIGNIN_TEMPLATE": "security/us_signin.html",
     "US_SETUP_TEMPLATE": "security/us_setup.html",
+    "US_VERIFY_TEMPLATE": "security/us_verify.html",
     "US_ENABLED_METHODS": ["password", "email", "authenticator", "sms"],
     "US_MFA_REQUIRED": ["password", "email"],
     "US_TOKEN_VALIDITY": 120,
@@ -351,6 +359,7 @@ _default_messages = {
     "PHONE_INVALID": (_("Phone number not valid e.g. missing country code"), "error"),
     "USER_DOES_NOT_EXIST": (_("Specified user does not exist"), "error"),
     "INVALID_PASSWORD": (_("Invalid password"), "error"),
+    "INVALID_PASSWORD_CODE": (_("Password or code submitted is not valid"), "error"),
     "PASSWORDLESS_LOGIN_SUCCESSFUL": (_("You have successfully logged in."), "success"),
     "FORGOT_PASSWORD": (_("Forgot password?"), "info"),
     "PASSWORD_RESET": (
@@ -367,6 +376,7 @@ _default_messages = {
     "PASSWORD_CHANGE": (_("You successfully changed your password."), "success"),
     "LOGIN": (_("Please log in to access this page."), "info"),
     "REFRESH": (_("Please reauthenticate to access this page."), "info"),
+    "REAUTHENTICATION_SUCCESSFUL": (_("Reauthentication successful"), "info"),
     "ANONYMOUS_USER_REQUIRED": (
         _("You can only access this endpoint when not logged in."),
         "error",
@@ -407,6 +417,7 @@ _default_messages = {
 
 _default_forms = {
     "login_form": LoginForm,
+    "verify_form": VerifyForm,
     "confirm_register_form": ConfirmRegisterForm,
     "register_form": RegisterForm,
     "forgot_password_form": ForgotPasswordForm,
@@ -421,6 +432,7 @@ _default_forms = {
     "us_signin_form": UnifiedSigninForm,
     "us_setup_form": UnifiedSigninSetupForm,
     "us_setup_verify_form": UnifiedSigninSetupVerifyForm,
+    "us_verify_form": UnifiedVerifyForm,
 }
 
 
@@ -940,6 +952,9 @@ class _SecurityState(object):
     def send_login_context_processor(self, fn):
         self._add_ctx_processor("send_login", fn)
 
+    def verify_context_processor(self, fn):
+        self._add_ctx_processor("verify", fn)
+
     def mail_context_processor(self, fn):
         self._add_ctx_processor("mail", fn)
 
@@ -957,6 +972,9 @@ class _SecurityState(object):
 
     def us_setup_context_processor(self, fn):
         self._add_ctx_processor("us_setup", fn)
+
+    def us_verify_context_processor(self, fn):
+        self._add_ctx_processor("us_verify", fn)
 
     def send_mail_task(self, fn):
         self._send_mail_task = fn
@@ -1001,6 +1019,7 @@ class Security(object):
     :param datastore: An instance of a user datastore.
     :param register_blueprint: to register the Security blueprint or not.
     :param login_form: set form for the login view
+    :param verify_form: set form for re-authentication due to freshness check
     :param register_form: set form for the register view when
             *SECURITY_CONFIRMABLE* is false
     :param confirm_register_form: set form for the register view when
@@ -1016,7 +1035,8 @@ class Security(object):
     :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
-    :param us_setup_verify_form: set from for the unified sign in setup verify view
+    :param us_setup_verify_form: set form for the unified sign in setup verify view
+    :param us_verify_form: set form for re-authenticating due to freshness check
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates. The default is Flask's
      render_template() function.
@@ -1028,8 +1048,11 @@ class Security(object):
      Defaults to :class:`PhoneUtil`
 
     .. versionchanged:: 3.4.0
-        ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form`` added as part of
-        the :ref:`unified-sign-in` feature.
+        ``verify_form`` added as part of freshness/re-authentication
+
+    .. versionchanged:: 3.4.0
+        ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form``
+        ``us_verify_form`` added as part of the :ref:`unified-sign-in` feature.
 
     .. versionchanged:: 3.4.0
         ``totp_cls`` added to enable applications to implement replay protection - see
@@ -1093,7 +1116,7 @@ class Security(object):
 
         if register_blueprint:
             bp = create_blueprint(
-                state, __name__, json_encoder=kwargs["json_encoder_cls"]
+                app, state, __name__, json_encoder=kwargs["json_encoder_cls"]
             )
             app.register_blueprint(bp)
             app.context_processor(_context_processor)
@@ -1363,9 +1386,10 @@ class Security(object):
         flask.errorhandler(<exception>)
 
         The default implementation will return a 401 response if the request was JSON,
-        otherwise redirects to :py:data:`SECURITY_REAUTHENTICATE_VIEW` or
-        if that is None to :py:data:`SECURITY_LOGIN_URL` and if that is None
-        it sends an abort(401).
+        otherwise redirects to :py:data:`SECURITY_US_VERIFY_URL`
+        (if :py:data:`SECURITY_UNIFIED_SIGNIN` is enabled)
+        else to :py:data:`SECURITY_VERIFY_URL`.
+        If both of those are None it sends an abort(401).
 
         See :meth:`flask_security.auth_required` for details about freshness checking.
 

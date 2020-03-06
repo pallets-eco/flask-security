@@ -39,6 +39,7 @@ An example configuration::
     SECURITY_CHANGEABLE = True
     SECURITY_CONFIRMABLE = True
     SECURITY_REGISTERABLE = True
+    SECURITY_UNIFIED_SIGNIN = True
 
     # These need to be defined to handle redirects
     # As defined in the API documentation - they will receive the relevant context

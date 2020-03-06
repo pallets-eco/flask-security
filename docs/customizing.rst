@@ -21,11 +21,13 @@ following is a list of view templates:
 * `security/change_password.html`
 * `security/send_confirmation.html`
 * `security/send_login.html`
+* `security/verify.html`
 * `security/two_factor_verify_password.html`
 * `security/two_factor_setup.html`
 * `security/two_factor_verify_code.html`
 * `security/us_signin.html`
 * `security/us_setup.html`
+* `security/us_verify.html`
 
 Overriding these templates is simple:
 

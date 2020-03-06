@@ -45,10 +45,10 @@ from .signals import (
 )
 
 try:  # pragma: no cover
-    from urlparse import parse_qsl, urlsplit, urlunsplit
+    from urlparse import parse_qsl, parse_qs, urlsplit, urlunsplit
     from urllib import urlencode
 except ImportError:  # pragma: no cover
-    from urllib.parse import parse_qsl, urlsplit, urlunsplit, urlencode
+    from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
@@ -130,7 +130,7 @@ def login_user(user, remember=None, authn_via=None):
 
         _datastore.put(user)
 
-    session["fs_cc"] = "set"
+    session["fs_cc"] = "set"  # CSRF cookie
     session["fs_paa"] = time.time()  # Primary authentication at - timestamp
 
     identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
@@ -164,6 +164,10 @@ def logout_user():
         current_app._get_current_object(), identity=AnonymousIdentity()
     )
     _logout_user()
+
+
+def _py2timestamp(dt):
+    return time.mktime(dt.timetuple()) + dt.microsecond / 1e6
 
 
 def check_and_update_authn_fresh(within, grace):
@@ -202,9 +206,6 @@ def check_and_update_authn_fresh(within, grace):
         # No session, you can't play.
         return False
 
-    def _py2timestamp(dt):
-        return time.mktime(dt.timetuple()) + dt.microsecond / 1e6
-
     now = datetime.datetime.utcnow()
     new_exp = now + grace
     # grace_ts = int(new_exp.timestamp())
@@ -217,6 +218,11 @@ def check_and_update_authn_fresh(within, grace):
             # Within grace period - extend it and we're good.
             session["fs_gexp"] = grace_ts
             return True
+
+    # Special case 0 - return False always, but set grace period.
+    if within.total_seconds() == 0:
+        session["fs_gexp"] = grace_ts
+        return False
 
     authn_time = datetime.datetime.utcfromtimestamp(session["fs_paa"])
     # allow for some time drift where it's possible authn_time is in the future
@@ -490,6 +496,10 @@ def get_post_logout_redirect(declared=None):
     return get_post_action_redirect("SECURITY_POST_LOGOUT_VIEW", declared)
 
 
+def get_post_verify_redirect(declared=None):
+    return get_post_action_redirect("SECURITY_POST_VERIFY_VIEW", declared)
+
+
 def find_redirect(key):
     """Returns the URL to redirect to after a user logs in successfully.
 
@@ -501,6 +511,15 @@ def find_redirect(key):
         or "/"
     )
     return rv
+
+
+def propagate_next(url):
+    # return either URL or, if URL already has a ?next=xx, return that.
+    url_next = urlsplit(url)
+    qparams = parse_qs(url_next.query)
+    if "next" in qparams:
+        return qparams["next"][0]
+    return url
 
 
 def get_config(app):

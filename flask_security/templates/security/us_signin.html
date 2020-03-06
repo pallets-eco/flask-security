@@ -22,7 +22,7 @@
         {% if code_sent %}
           <p>{{ _("Code has been sent") }}
         {% endif %}
-        {{ render_field(us_signin_form.submit_send_code, formaction=url_for_security('us_send_code')) }}
+        {{ render_field(us_signin_form.submit_send_code, formaction=url_for_security('us_signin_send_code')) }}
       {% endif %}
       </form>
   {% include "security/_menu.html" %}
