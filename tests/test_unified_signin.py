@@ -191,14 +191,16 @@ def test_simple_login_json(app, client_nc, get_message):
     with capture_flashes() as flashes:
 
         response = client_nc.get("/us-signin", headers=headers)
+        jresponse = response.json["response"]
+        assert jresponse["methods"] == app.config["SECURITY_US_ENABLED_METHODS"]
         assert (
-            response.json["response"]["methods"]
-            == app.config["SECURITY_US_ENABLED_METHODS"]
-        )
-        assert (
-            response.json["response"]["identity_attributes"]
+            jresponse["identity_attributes"]
             == app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
         )
+        code_methods = list(app.config["SECURITY_US_ENABLED_METHODS"])
+        if "password" in code_methods:
+            code_methods.remove("password")
+        assert jresponse["code_methods"] == code_methods
 
         with capture_send_code_requests() as requests:
             with app.mail.record_messages() as outbox:
@@ -442,6 +444,7 @@ def test_setup_json(app, client_nc, get_message):
     response = client_nc.get("/us-setup", headers=headers)
     assert response.status_code == 200
     assert response.json["response"]["methods"] == ["email", "sms"]
+    assert response.json["response"]["code_methods"] == ["email", "sms"]
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
@@ -617,6 +620,16 @@ def test_verify_json(app, client, get_message):
         "authenticator",
         "sms",
     ]
+    assert response.json["response"]["code_methods"] == [
+        "email",
+        "authenticator",
+        "sms",
+    ]
+
+    response = client.post(
+        "us-verify/send-code", json=dict(chosen_method="orb"), headers=headers,
+    )
+    assert response.status_code == 400
 
     # Verify using SMS
     sms_sender = SmsSenderFactory.createSender("test")
@@ -1089,3 +1102,15 @@ def test_replace_send_code(app, get_message):
         data = dict(identity="trp@lp.com", chosen_method="sms")
         response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
         assert b"Code has been sent" in response.data
+
+
+@pytest.mark.settings(us_enabled_methods=["password"])
+def test_only_passwd(app, client, get_message):
+    authenticate(client)
+    response = client.get("us-setup")
+    assert b"No code method" in response.data
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.get("us-setup", headers=headers)
+    assert response.json["response"]["methods"] == ["password"]
+    assert not response.json["response"]["code_methods"]
