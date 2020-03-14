@@ -197,11 +197,7 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
 
     user = None
 
-    identity = StringField(
-        get_form_field_label("identity"),
-        validators=[Required()],
-        render_kw={"placeholder": _("email, phone, username")},
-    )
+    identity = StringField(get_form_field_label("identity"), validators=[Required()],)
     remember = BooleanField(get_form_field_label("remember_me"))
 
     def __init__(self, *args, **kwargs):
@@ -348,6 +344,9 @@ def us_signin_send_code():
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
 
+    code_methods = list(config_value("US_ENABLED_METHODS"))
+    if "password" in code_methods:
+        code_methods.remove("password")
     if form.validate_on_submit():
         code_sent, msg = _send_code_helper(form)
         if _security._want_json(request):
@@ -360,6 +359,7 @@ def us_signin_send_code():
             config_value("US_SIGNIN_TEMPLATE"),
             us_signin_form=form,
             methods=config_value("US_ENABLED_METHODS"),
+            code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             code_sent=code_sent,
             skip_loginmenu=True,
@@ -375,6 +375,7 @@ def us_signin_send_code():
         config_value("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,
         methods=config_value("US_ENABLED_METHODS"),
+        code_methods=code_methods,
         skip_loginmenu=True,
         **_security._run_ctx_processor("us_signin")
     )
@@ -396,6 +397,9 @@ def us_verify_send_code():
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
 
+    code_methods = list(config_value("US_ENABLED_METHODS"))
+    if "password" in code_methods:
+        code_methods.remove("password")
     if form.validate_on_submit():
         code_sent, msg = _send_code_helper(form)
         if _security._want_json(request):
@@ -408,6 +412,7 @@ def us_verify_send_code():
             config_value("US_VERIFY_TEMPLATE"),
             us_verify_form=form,
             methods=config_value("US_ENABLED_METHODS"),
+            code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             code_sent=code_sent,
             skip_login_menu=True,
@@ -427,6 +432,7 @@ def us_verify_send_code():
         config_value("US_VERIFY_TEMPLATE"),
         us_verify_form=form,
         methods=config_value("US_ENABLED_METHODS"),
+        code_methods=code_methods,
         skip_login_menu=True,
         send_code_to=get_url(
             _security.us_verify_send_code_url,
@@ -478,9 +484,13 @@ def us_signin():
         return redirect(get_post_login_redirect())
 
     # Here on GET or failed POST validate
+    code_methods = list(config_value("US_ENABLED_METHODS"))
+    if "password" in code_methods:
+        code_methods.remove("password")
     if _security._want_json(request):
         payload = {
             "methods": config_value("US_ENABLED_METHODS"),
+            "code_methods": code_methods,
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
         }
         return base_render_json(form, include_user=False, additional=payload)
@@ -491,6 +501,7 @@ def us_signin():
         config_value("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,
         methods=config_value("US_ENABLED_METHODS"),
+        code_methods=code_methods,
         skip_login_menu=True,
         **_security._run_ctx_processor("us_signin")
     )
@@ -515,6 +526,10 @@ def us_verify():
         form = form_class(meta=suppress_form_csrf())
     form.submit.data = True
 
+    code_methods = list(config_value("US_ENABLED_METHODS"))
+    if "password" in code_methods:
+        code_methods.remove("password")
+
     if form.validate_on_submit():
         # verified - so set freshness time.
         session["fs_paa"] = time.time()
@@ -529,6 +544,7 @@ def us_verify():
     if _security._want_json(request):
         payload = {
             "methods": config_value("US_ENABLED_METHODS"),
+            "code_methods": code_methods,
         }
         return base_render_json(form, additional=payload)
 
@@ -537,7 +553,7 @@ def us_verify():
     return _security.render_template(
         config_value("US_VERIFY_TEMPLATE"),
         us_verify_form=form,
-        methods=config_value("US_ENABLED_METHODS"),
+        code_methods=code_methods,
         skip_login_menu=True,
         send_code_to=get_url(
             _security.us_verify_send_code_url,
@@ -632,6 +648,10 @@ def us_setup():
     else:
         form = form_class(meta=suppress_form_csrf())
 
+    code_methods = list(config_value("US_ENABLED_METHODS"))
+    if "password" in code_methods:
+        code_methods.remove("password")
+
     if form.validate_on_submit():
         method = form.chosen_method.data
         totp_secrets = current_user.us_get_totp_secrets()
@@ -662,6 +682,7 @@ def us_setup():
             return _security.render_template(
                 config_value("US_SETUP_TEMPLATE"),
                 methods=config_value("US_ENABLED_METHODS"),
+                code_methods=code_methods,
                 us_setup_form=form,
                 **_security._run_ctx_processor("us_setup")
             )
@@ -674,6 +695,7 @@ def us_setup():
         return _security.render_template(
             config_value("US_SETUP_TEMPLATE"),
             methods=config_value("US_ENABLED_METHODS"),
+            code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             us_setup_form=form,
             us_setup_verify_form=_security.us_setup_verify_form(),
@@ -687,6 +709,7 @@ def us_setup():
         payload = {
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
             "methods": config_value("US_ENABLED_METHODS"),
+            "code_methods": code_methods,
             "phone": current_user.us_phone_number,
         }
         return base_render_json(form, include_user=False, additional=payload)
@@ -696,6 +719,7 @@ def us_setup():
     return _security.render_template(
         config_value("US_SETUP_TEMPLATE"),
         methods=config_value("US_ENABLED_METHODS"),
+        code_methods=code_methods,
         us_setup_form=form,
         **_security._run_ctx_processor("us_setup")
     )

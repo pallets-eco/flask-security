@@ -11,10 +11,10 @@
       {{ render_field_with_errors(us_signin_form.passcode) }}
       {{ render_field_with_errors(us_signin_form.remember) }}
       {{ render_field(us_signin_form.submit) }}
-      {% if methods %}
+      {% if code_methods %}
         <h4>{{  _("Request one-time code be sent") }}</h4>
         {% for subfield in us_signin_form.chosen_method %}
-          {% if subfield.data in methods %}
+          {% if subfield.data in code_methods %}
             {{ render_field_with_errors(subfield) }}
           {% endif %}
         {% endfor %}

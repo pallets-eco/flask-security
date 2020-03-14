@@ -7,9 +7,6 @@
   {% if security.unified_signin and not skip_login_menu %}
   <li><a href="{{ url_for_security('us_signin') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">{{ _("Unified Sign In") }}</a><br/></li>
   {% endif %}
-  {% if security.unified_signin %}
-      <li><a href="{{ url_for_security('us_setup') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">{{ _("Unified Setup") }}</a><br/></li>
-  {% endif %}
   {% if security.registerable %}
   <li><a href="{{ url_for_security('register') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">{{ _('Register') }}</a><br/></li>
   {% endif %}

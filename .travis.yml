@@ -45,7 +45,7 @@ env:
 
 before_install:
   - "travis_retry pip install --upgrade pip setuptools"
-  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "travis_retry pip install twine wheel coveralls click==7.0.0 requirements-builder"
   - "requirements-builder -e all --level=min setup.py > .travis-lowest-requirements.txt"
   - "requirements-builder -e all --level=pypi setup.py > .travis-release-requirements.txt"
 
