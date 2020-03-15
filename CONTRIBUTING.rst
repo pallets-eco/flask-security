@@ -101,7 +101,7 @@ Edit - it is a WYSIWYG editor and will show you errors. Once you save (as yaml) 
 need to look at what it will render as::
 
     $ python setup.py build_sphinx
-    $ http-server
+    $ http-server -p 8081
 
 Then in your browser navigate to::
 
