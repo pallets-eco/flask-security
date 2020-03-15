@@ -1045,7 +1045,8 @@ Passwordless
 
 .. py:data:: SECURITY_LOGIN_ERROR_VIEW
 
-    Specifies the view/URL to redirect to after a GET passwordless link when there is an error.
+    Specifies the view/URL to redirect to after a GET passwordless link or GET
+    unified sign in magic link when there is an error.
     This is only valid if ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``.
     Query params in the redirect will contain the error.
 

@@ -17,7 +17,6 @@
     - should we support a way that /logout redirects to us-signin rather than /login?
     - we should be able to add a phone number as part of setup even w/o any METHODS -
       i.e. to allow login with any identity (phone) and a password.
-    - openapi.yaml
     - add new example?
     - add username as last IDENTITY_MAPPING and allow anything...?? or just in example?
 
@@ -81,6 +80,10 @@ else:
     def _commit(response=None):
         _datastore.commit()
         return response
+
+
+def _compute_code_methods():
+    return list(set(config_value("US_ENABLED_METHODS")) - {"password", "authenticator"})
 
 
 def _us_common_validate(form):
@@ -344,9 +347,8 @@ def us_signin_send_code():
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
 
-    code_methods = list(config_value("US_ENABLED_METHODS"))
-    if "password" in code_methods:
-        code_methods.remove("password")
+    code_methods = _compute_code_methods()
+
     if form.validate_on_submit():
         code_sent, msg = _send_code_helper(form)
         if _security._want_json(request):
@@ -368,7 +370,11 @@ def us_signin_send_code():
 
     # Here on GET or failed validation
     if _security._want_json(request):
-        payload = {"methods": config_value("US_ENABLED_METHODS")}
+        payload = {
+            "methods": config_value("US_ENABLED_METHODS"),
+            "code_methods": code_methods,
+            "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
+        }
         return base_render_json(form, include_user=False, additional=payload)
 
     return _security.render_template(
@@ -397,9 +403,8 @@ def us_verify_send_code():
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
 
-    code_methods = list(config_value("US_ENABLED_METHODS"))
-    if "password" in code_methods:
-        code_methods.remove("password")
+    code_methods = _compute_code_methods()
+
     if form.validate_on_submit():
         code_sent, msg = _send_code_helper(form)
         if _security._want_json(request):
@@ -425,7 +430,10 @@ def us_verify_send_code():
 
     # Here on GET or failed validation
     if _security._want_json(request):
-        payload = {"methods": config_value("US_ENABLED_METHODS")}
+        payload = {
+            "methods": config_value("US_ENABLED_METHODS"),
+            "code_methods": code_methods,
+        }
         return base_render_json(form, additional=payload)
 
     return _security.render_template(
@@ -442,14 +450,36 @@ def us_verify_send_code():
     )
 
 
-@anonymous_user_required
 @unauth_csrf(fall_through=True)
 def us_signin():
     """
     Unified sign in view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a passcode (password or OTP).
+
+    Allow already authenticated users. For GET this is useful for
+    single-page-applications on refresh - session still active but need to
+    access user info and csrf-token.
+    For POST - redirects to POST_LOGIN_VIEW (forms) or returns 400 (json).
     """
+
+    if current_user.is_authenticated and request.method == "POST":
+        # Just redirect current_user to POST_LOGIN_VIEW (or next).
+        # While its tempting to try to logout the current user and login the
+        # new requested user - that simply doesn't work with CSRF.
+
+        # While this is close to anonymous_user_required - it differs in that
+        # it uses get_post_login_redirect which correctly handles 'next'.
+        # TODO: consider changing anonymous_user_required to also call
+        # get_post_login_redirect - not sure why it never has?
+        if _security._want_json(request):
+            payload = json_error_response(
+                errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
+            )
+            return _security._render_json(payload, 400, None, None)
+        else:
+            return redirect(get_post_login_redirect())
+
     form_class = _security.us_signin_form
 
     if request.is_json:
@@ -484,9 +514,7 @@ def us_signin():
         return redirect(get_post_login_redirect())
 
     # Here on GET or failed POST validate
-    code_methods = list(config_value("US_ENABLED_METHODS"))
-    if "password" in code_methods:
-        code_methods.remove("password")
+    code_methods = _compute_code_methods()
     if _security._want_json(request):
         payload = {
             "methods": config_value("US_ENABLED_METHODS"),
@@ -494,6 +522,11 @@ def us_signin():
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
         }
         return base_render_json(form, include_user=False, additional=payload)
+
+    if current_user.is_authenticated:
+        # Basically a no-op if authenticated - just perform the same
+        # post-login redirect as if user just logged in.
+        return redirect(get_post_login_redirect())
 
     # On error - wipe code
     form.passcode.data = None
@@ -526,9 +559,7 @@ def us_verify():
         form = form_class(meta=suppress_form_csrf())
     form.submit.data = True
 
-    code_methods = list(config_value("US_ENABLED_METHODS"))
-    if "password" in code_methods:
-        code_methods.remove("password")
+    code_methods = _compute_code_methods()
 
     if form.validate_on_submit():
         # verified - so set freshness time.
@@ -609,6 +640,17 @@ def us_verify_link():
         and "email" in config_value("US_MFA_REQUIRED")
         and (config_value("TWO_FACTOR_REQUIRED") or is_tf_setup(user))
     ):
+        # tf_login doesn't know anything about "spa" etc. In general two-factor
+        # isn't quite ready for SPA. So we return an error via a redirect rather
+        # than mess up SPA applications. To be clear - this simply doesn't
+        # work - using a magic link w/ 2FA - need to use code.
+        if _security.redirect_behavior == "spa":
+            return redirect(
+                get_url(
+                    _security.login_error_view,
+                    qparams=user.get_redirect_qparams({"tf_required": 1}),
+                )
+            )
         return tf_login(user, primary_authn_via="email")
 
     login_user(user, authn_via=["email"])
@@ -648,9 +690,7 @@ def us_setup():
     else:
         form = form_class(meta=suppress_form_csrf())
 
-    code_methods = list(config_value("US_ENABLED_METHODS"))
-    if "password" in code_methods:
-        code_methods.remove("password")
+    code_methods = _compute_code_methods()
 
     if form.validate_on_submit():
         method = form.chosen_method.data
@@ -696,6 +736,7 @@ def us_setup():
             config_value("US_SETUP_TEMPLATE"),
             methods=config_value("US_ENABLED_METHODS"),
             code_methods=code_methods,
+            code_sent=True,
             chosen_method=form.chosen_method.data,
             us_setup_form=form,
             us_setup_verify_form=_security.us_setup_verify_form(),
@@ -843,8 +884,7 @@ def us_send_security_token(
     :param totp_secret: the unique shared secret of the user
     :param phone_number: If 'sms' phone number to send to
     :param send_magic_link: If true a magic link that can be clicked on will be sent.
-
-    This shouldn't be sent during a setup.
+            This shouldn't be sent during a setup.
 
     There is no return value - it is assumed that exceptions are thrown by underlying
     methods that callers can catch.

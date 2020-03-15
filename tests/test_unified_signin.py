@@ -90,7 +90,7 @@ def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
         app.security.datastore.commit()
 
 
-def test_simple_login(app, client, get_message):
+def test_simple_signin(app, client, get_message):
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -179,7 +179,7 @@ def test_simple_login(app, client, get_message):
     assert "remember_token" not in [c.name for c in client.cookie_jar]
 
 
-def test_simple_login_json(app, client_nc, get_message):
+def test_simple_signin_json(app, client_nc, get_message):
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -197,10 +197,7 @@ def test_simple_login_json(app, client_nc, get_message):
             jresponse["identity_attributes"]
             == app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
         )
-        code_methods = list(app.config["SECURITY_US_ENABLED_METHODS"])
-        if "password" in code_methods:
-            code_methods.remove("password")
-        assert jresponse["code_methods"] == code_methods
+        assert set(jresponse["code_methods"]) == {"email", "sms"}
 
         with capture_send_code_requests() as requests:
             with app.mail.record_messages() as outbox:
@@ -264,6 +261,41 @@ def test_simple_login_json(app, client_nc, get_message):
         assert response.status_code == 200
         assert "authentication_token" in response.json["response"]["user"]
     assert len(flashes) == 0
+
+
+@pytest.mark.settings(post_login_view="/post_login")
+def test_get_already_authenticated(client):
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+    response = client.get("/us-signin", follow_redirects=True)
+    assert b"Post Login" in response.data
+
+
+@pytest.mark.settings(post_login_view="/post_login")
+def test_get_already_authenticated_next(client):
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+    # This should override post_login_view
+    response = client.get("/us-signin?next=/page1", follow_redirects=True)
+    assert b"Page 1" in response.data
+
+
+@pytest.mark.settings(post_login_view="/post_login")
+def test_post_already_authenticated(client, get_message):
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/us-signin", data=data, follow_redirects=True)
+    assert b"Post Login" in response.data
+    response = client.post("/us-signin?next=/page1", data=data, follow_redirects=True)
+    assert b"Page 1" in response.data
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.post("/us-signin", json=data, headers=headers)
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "ANONYMOUS_USER_REQUIRED"
+    )
 
 
 def test_verify_link(app, client, get_message):
@@ -399,6 +431,7 @@ def test_setup(app, client, get_message):
     response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
     assert response.status_code == 200
     assert get_message("PHONE_INVALID") in response.data
+    assert b"Code has been sent" not in response.data
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client.post(
@@ -406,6 +439,7 @@ def test_setup(app, client, get_message):
     )
     assert response.status_code == 200
     assert b"Submit Code" in response.data
+    assert b"Code has been sent" in response.data
     matcher = re.match(
         r'.*<form action="([^\s]*)".*',
         response.data.decode("utf-8"),
@@ -418,6 +452,34 @@ def test_setup(app, client, get_message):
     assert get_message("INVALID_CODE") in response.data
 
     code = sms_sender.messages[0].split()[-1].strip(".")
+    response = client.post(verify_url, data=dict(code=code), follow_redirects=True)
+    assert response.status_code == 200
+    assert get_message("US_SETUP_SUCCESSFUL") in response.data
+
+
+def test_setup_email(app, client, get_message):
+    # setup with email - make sure magic link isn't sent and code is.
+    us_authenticate(client)
+    with app.mail.record_messages() as outbox:
+        response = client.post("us-setup", data=dict(chosen_method="email"))
+        assert response.status_code == 200
+        assert b"Code has been sent" in response.data
+
+        matcher = re.match(
+            r'.*<form action="([^\s]*)".*',
+            response.data.decode("utf-8"),
+            re.IGNORECASE | re.DOTALL,
+        )
+        verify_url = matcher.group(1)
+
+    # verify no magic link
+    matcher = re.match(
+        r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
+    )
+    assert not matcher
+    # grab real code
+    matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
+    code = matcher.group(1)
     response = client.post(verify_url, data=dict(code=code), follow_redirects=True)
     assert response.status_code == 200
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
@@ -444,7 +506,7 @@ def test_setup_json(app, client_nc, get_message):
     response = client_nc.get("/us-setup", headers=headers)
     assert response.status_code == 200
     assert response.json["response"]["methods"] == ["email", "sms"]
-    assert response.json["response"]["code_methods"] == ["email", "sms"]
+    assert set(response.json["response"]["code_methods"]) == {"email", "sms"}
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
@@ -620,11 +682,10 @@ def test_verify_json(app, client, get_message):
         "authenticator",
         "sms",
     ]
-    assert response.json["response"]["code_methods"] == [
+    assert set(response.json["response"]["code_methods"]) == {
         "email",
-        "authenticator",
         "sms",
-    ]
+    }
 
     response = client.post(
         "us-verify/send-code", json=dict(chosen_method="orb"), headers=headers,
@@ -974,6 +1035,36 @@ def test_tf_link(app, client, get_message):
     assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") not in response.data
     message = b"Two-factor authentication adds an extra layer of security"
     assert message in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    two_factor_required=True,
+    redirect_host="localhost:8081",
+    redirect_behavior="spa",
+    login_error_view="/login-error",
+)
+def test_tf_link_spa(app, client, get_message):
+    # Verify two-factor required when using magic link and SPA
+    # This currently isn't supported and should redirect to an error.
+    with app.mail.record_messages() as outbox:
+        response = client.post(
+            "/us-signin/send-code",
+            data=dict(identity="matt@lp.com", chosen_method="email"),
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert b"Sign In" in response.data
+
+    matcher = re.match(
+        r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
+    )
+    magic_link = matcher.group(1)
+    response = client.get(magic_link, follow_redirects=False)
+    assert (
+        response.location
+        == "http://localhost:8081/login-error?tf_required=1&email=matt%40lp.com"
+    )
 
 
 @pytest.mark.two_factor()

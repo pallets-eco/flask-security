@@ -22,6 +22,9 @@
           <p>{{ _("Open your authenticator app on your device and scan the following qrcode to start receiving codes:") }}</p>
           <p><img alt="{{ _("Passwordless QRCode") }}" id="qrcode" src="{{ url_for_security("us_qrcode", token=state) }}"></p>
         {% endif %}
+        {% if code_sent %}
+          <p>{{ _("Code has been sent") }}
+        {% endif %}
         {{ render_field(us_setup_form.submit) }}
       {% else %}
         <h3>{{  _("No code methods have been enabled - nothing to setup") }}</h3>

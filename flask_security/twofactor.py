@@ -146,7 +146,7 @@ def tf_login(user, remember=None, primary_authn_via=None):
     """ Helper for two-factor authentication login
 
     This is called only when login/password have already been validated.
-    This can be from login, register, and/or confirm.
+    This can be from login, register, confirm, unified sign in, unified magic link.
 
     The result of this is either sending a 2FA token OR starting setup for new user.
     In either case we do NOT log in user, so we must store some info in session to
@@ -185,7 +185,7 @@ def tf_login(user, remember=None, primary_authn_via=None):
         if msg:
             # send code didn't work
             if not _security._want_json(request):
-                # This is a mess - we are deep down in the login flow.
+                # This is a mess - we are deep down in the login/unified sign in flow.
                 do_flash(msg, "error")
                 return redirect(url_for_security("login"))
             else:

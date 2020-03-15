@@ -54,8 +54,7 @@ paths:
                 example: redirect(SECURITY_POST_LOGIN_VIEW)
     post:
       summary: Login to application
-      description: Supports both json and form request types. If the caller is already logged in, then in the form case, they are redirected to SECURITY_POST_LOGIN_VIEW, for a json
-        request, a 400 is returned.
+      description: Supports both json and form request types. If the caller is already logged in, then in the form case, they are redirected to SECURITY_POST_LOGIN_VIEW, for a json request, a 400 is returned.
       parameters:
         - name: next
           in: query
@@ -87,9 +86,11 @@ paths:
                 example: render_template(SECURITY_LOGIN_USER_TEMPLATE) with error values
         302:
           description: >
-            Success or failure with form data body OR caller already authenticated/logged in.
-            Note that in the already logged in case, the form body is ignored and the redirect is
-            done in the context/session if the calling user.
+            If the caller already authenticated, the form contents is ignored and a
+            redirect is done: redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW).
+            
+            If the caller is NOT already authenticated, and the form contents are
+            validated the caller will be redirected to:
             redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW)
           headers:
             Location:
@@ -549,7 +550,418 @@ paths:
                                              SECURITY_CONFIRM_URL
               schema:
                 type: string
+  /us-signin:
+    get:
+      summary: Unified Sign In.
+      responses:
+        200:
+          description: Sign in form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_US_SIGNIN_TEMPLATE)
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: string
+                    description: Config setting SECURITY_US_ENABLED_METHODS
+                  code_methods:
+                    type: string
+                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+                  identity_attributes:
+                    type: string
+                    description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
+    post:
+      summary: Unified Sign In.
+      parameters:
+        - $ref: '#/components/parameters/include_auth_token'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsSignin"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UsSignin"
+      responses:
+        200:
+          description: Unified Sign In response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsSigninJsonResponse"
+            text/html:
+              schema:
+                description: Unsuccessful sign in
+                type: string
+                example: render_template(SECURITY_US_SIGNIN_TEMPLATE) with error values
+        302:
+          description: >
+            If the caller already authenticated, the form contents is ignored and a
+            redirect is done: redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW).
+            
+            If the caller is NOT already authenticated, and the form contents are
+            validated the caller will be redirected to:
+            redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW)
+          headers:
+            Location:
+              description: redirect
+              schema:
+                type: string
+                example: redirect(SECURITY_POST_LOGIN_VIEW)
+        400:
+          description: Errors while validating attributes, or caller already authenticated/logged in.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /us-signin/send-code:
+    get:
+      summary: Unified Sign In send authentication code
+      responses:
+        200:
+          description: Send Code form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_US_SIGNIN_TEMPLATE)
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: string
+                    description: Config setting SECURITY_US_ENABLED_METHODS
+                  code_methods:
+                    type: string
+                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+                  identity_attributes:
+                    type: string
+                    description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
+    post:
+      summary: Send Code for unified sign in.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsSigninSendCode"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UsSigninSendCode"
+      responses:
+        200:
+          description: Send code response
+          content:
+            application/json:
+              schema:
+                  description: Code successfully sent
+            text/html:
+              schema:
+                description: Validation error, code send error, or code successfully sent
+                type: string
+                example: render_template(SECURITY_US_SIGNIN_TEMPLATE) with error values
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"    
+        500:
+          description: Error when trying to send code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+                
+  /us-verify:
+    get:
+      summary: Unified sign in re-authentication.
+      description: >
+        If an endpoint is protected with @auth_required() with a freshness declaration
+        this endpoint will be called to request an already signed in user to re-authenticate.
+      responses:
+        200:
+          description: Verify/re-authenticate form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_US_VERIFY_TEMPLATE)
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: string
+                    description: Config setting SECURITY_US_ENABLED_METHODS
+                  code_methods:
+                    type: string
+                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+    post:
+      summary: Unified sign in re-authentication
+      parameters:
+        - $ref: '#/components/parameters/include_auth_token'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsSigninVerify"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UsSigninVerify"
+      responses:
+        200:
+          description: Verify/re-authenticate response.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - description: >
+                      The user successfully re-authenticated.
+                  - $ref: "#/components/schemas/DefaultJsonResponse"
+            text/html:
+              schema:
+                description: Unsuccessful re-authentication.
+                type: string
+                example: render_template(SECURITY_US_VERIFY_TEMPLATE) with error values
+        302:
+          description: User successfully re-authenticated when using form based request.
+          headers:
+            Location:
+              description: redirect
+              schema:
+                type: string
+                example: redirect(next) or redirect(SECURITY_POST_VERIFY_VIEW)
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /us-verify/send-code:
+    get:
+      summary: Unified sign in verify/re-authenticate send authentication code
+      responses:
+        200:
+          description: Send Code form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_US_VERIFY_TEMPLATE)
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: string
+                    description: Config setting SECURITY_US_ENABLED_METHODS
+                  code_methods:
+                    type: string
+                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+    post:
+      summary: Send Code for unified sign in verify.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsSigninVerifySendCode"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UsSigninVerifySendCode"
+      responses:
+        200:
+          description: Send code response
+          content:
+            application/json:
+              schema:
+                  description: Code successfully sent
+            text/html:
+              schema:
+                description: Validation error, code send error, or code successfully sent
+                type: string
+                example: render_template(SECURITY_US_VERIFY_TEMPLATE) with error values
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"    
+        500:
+          description: Error when trying to send code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /us-setup:
+    get:
+      summary: Unified sign in setup passcode options.
+      responses:
+        200:
+          description: Setup form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_US_SETUP_TEMPLATE)
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: string
+                    description: Config setting SECURITY_US_ENABLED_METHODS
+                  code_methods:
+                    type: string
+                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+                  identity_attributes:
+                    type: string
+                    description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
+                  phone:
+                    type: string
+                    description: existing configured phone number
+    post:
+      summary: Unified sign in setup.
+      description: >
+        An authenticated user can call this endpoint to update or add additional methods for authenticating (e.g. sms, authenticator app). This is controlled by application configuration settings SECURITY_US_ENABLED_METHODS. This endpoint is protected by a 'freshness' check - meaning the caller will be required to have authenticated recently. In addition, to ensure correctness, the newly setup method must be verified by sending and entering a code prior to it being permanently stored. This verification process is also time-limited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsSetup"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UsSetup"
+      responses:
+        200:
+          description: Unified sign in setup response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsSetupJsonResponse"
+            text/html:
+              schema:
+                description: Invalid form values or verification code sent successfully and should be entered into the form.
+                type: string
+                example: render_template(SECURITY_US_SETUP_TEMPLATE) with error values
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+        500:
+          description: Error when trying to send code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /us-setup/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Verify unified sign in setup request.
+      description: >
+        This does nothing but redirect back to the setup form.
+      responses:
+        200:
+          description: Get form.
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_US_SETUP_TEMPLATE)
+              
+    post:
+      summary: Verify code sent and store setup method.
+      responses:
+        200:
+          description: Successfully verifed and setup sign in method.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsSetupVerifyJsonResponse"
+        302:
+          description: Successfuly verified and setup sign in method.
+          headers:
+            Location:
+              description: |
+                On form-success: SECURITY_POST_SETUP_VIEW or
+                                 SECURITY_POST_LOGIN_VIEW
+              schema:
+                type: string
+  /us-verify-link:
+    parameters:
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+    get:
+      summary: A magic link to authenticate (instead of manually entering a code).
+      description: >
+        This is the result of getting a passcode link and is usually
+        the result of clicking the link from an email.
+        This ALWAYS results in a 302 redirect.
+        N.B. Magic link with 2FA enabled does not work and the SPA will get a redirect to the login error page with tf_required. Must use code option instead.
+      responses:
+        302:
+          description: >
+            Redirects depending on success/error and whether
+            __SECURITY_REDIRECT_BEHAVIOR__ == 'spa'. Also, if Two-Factor authentication has been enabled, further authentication/redirects might be required.
+          headers:
+            Location:
+              description: |
+                On spa-success: SECURITY_POST_LOGIN_VIEW?email={email}
 
+                On spa-error-expired: SECURITY_LOGIN_ERROR_VIEW?error={msg}
+
+                On spa-error-invalid-token: SECURITY_LOGIN_ERROR_VIEW?error={msg}
+                
+                On spa-two-factor-required: SECURITY_LOGIN_ERROR_VIEW?tf_required=1
+
+                On form-success: SECURITY_POST_LOGIN_VIEW
+
+                On form-error-expired: SECURITY_US_SIGNIN_URL
+
+                On form-error-invalid-token: SECURITY_US_SIGNIN_URL
+                
+                On form-success and two-factor: SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL or SECURITY_TWO_FACTOR_SETUP_URL
+              schema:
+                type: string
+  /us-qrcode/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Display a QRCode for setting up an authenticator app.
+      responses:
+        200:
+          description: Display QRCode.
+          content:
+            image/svg+xml:
+              schema:
+                description: QRCode
+        400:
+          description: Token invalid or expired.
+        404:
+          description: authenticator not configured.
+              
 components:
   schemas:
     Login:
@@ -570,7 +982,6 @@ components:
             If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
     DefaultJsonResponse:
       type: object
-      required: [user]
       properties:
         user:
           type: object
@@ -688,6 +1099,126 @@ components:
           type: string
           description: >
             Email address to send link email to.
+    UsSignin:
+      type: object
+      required: [identity, passcode]
+      properties:
+        identity:
+          type: string
+          description: Configured by SECURITY_USER_IDENTITY_ATTRIBUTES
+          example: me@you.com, +16505551212
+        passcode:
+          type: string
+          description: password or code
+        remember_me:
+          type: boolean
+    UsSigninJsonResponse:
+      type: object
+      description: >
+        The user successfully signed in. Note that depending on SECURITY_TWO_FACTOR and SECURITY_US_MFA_REQUIRED configuration variables, a second form of authentication might be required.
+      required: [meta, response]
+      properties:
+        meta:
+          type: object
+          required: [code]
+          properties:
+            code:
+              type: integer
+              example: 200
+              description: Http status code
+        response:
+          type: object
+          properties:
+            tf_required:
+              type: boolean
+              description: If two-factor authentication is required for caller.
+            tf_state:
+              type: string
+              description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
+            tf_primary_method:
+              type: string
+              description: Which method was used to send code.
+    UsSigninSendCode:
+      type: object
+      required: [identity, chosen_method]
+      properties:
+        identity:
+          type: string
+          description: Configured by SECURITY_USER_IDENTITY_ATTRIBUTES
+          example: me@you.com, +16505551212
+        chosen_method:
+          type: string
+          description: which method should be used to send the code, as configured with SECURITY_US_ENABLED_METHODS
+    UsSigninVerify:
+      type: object
+      required: [passcode]
+      properties:
+        passcode:
+          type: string
+          description: password or code
+    UsSigninVerifySendCode:
+      type: object
+      required: [chosen_method]
+      properties:
+        chosen_method:
+          type: string
+          description: which method should be used to send the code, as configured with SECURITY_US_ENABLED_METHODS
+    UsSetup:
+      type: object
+      required: [chosen_method]
+      properties:
+        chosen_method:
+          type: string
+          description: which method should be used to send the code, as configured with SECURITY_US_ENABLED_METHODS
+        new_totp_secret:
+          type: boolean
+          description: if set to True a new totp secret for the chosen method will be generated. This will for example invalidate prior codes and authenticator setup.
+        phone:
+          type: string
+          description: phone number (this will be normalized)
+    UsSetupJsonResponse:
+      type: object
+      required: [meta, response]
+      properties:
+        meta:
+          type: object
+          required: [code]
+          properties:
+            code:
+              type: integer
+              example: 200
+              description: Http status code
+        response:
+          type: object
+          properties:
+            chosen_method:
+              type: string
+              description: The chosen_method as passed into API.
+            state:
+              type: string
+              description: Opaque blob that must be pass to /us-setup-verify. This is a signed, timed token.
+    UsSetupVerifyJsonResponse:
+      type: object
+      required: [meta, response]
+      properties:
+        meta:
+          type: object
+          required: [code]
+          properties:
+            code:
+              type: integer
+              example: 200
+              description: Http status code
+        response:
+          type: object
+          properties:
+            chosen_method:
+              type: string
+              description: The chosen_method as passed into API.
+            phone:
+              type: string
+              description: Phone number if set.
+      
   headers:
     X-CSRF-Token:
       description: CSRF token
