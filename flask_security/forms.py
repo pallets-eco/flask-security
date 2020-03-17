@@ -266,6 +266,9 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
     def validate(self):
         if not super(ForgotPasswordForm, self).validate():
             return False
+        if not self.user.is_active:
+            self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
+            return False
         if requires_confirmation(self.user):
             self.email.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False

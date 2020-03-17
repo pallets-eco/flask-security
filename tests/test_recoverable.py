@@ -510,3 +510,17 @@ def test_easy_password(client, get_message):
     )
 
     assert b"This is a very common password" in response.data
+
+
+def test_reset_inactive(client, get_message):
+    response = client.post(
+        "/reset", data=dict(email="tiya@lp.com"), follow_redirects=True
+    )
+    assert get_message("DISABLED_ACCOUNT") in response.data
+
+    response = client.post(
+        "/reset",
+        json=dict(email="tiya@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400

@@ -1061,10 +1061,12 @@ def test_tf_link_spa(app, client, get_message):
     )
     magic_link = matcher.group(1)
     response = client.get(magic_link, follow_redirects=False)
-    assert (
-        response.location
-        == "http://localhost:8081/login-error?tf_required=1&email=matt%40lp.com"
-    )
+    split = urlsplit(response.location)
+    assert "localhost:8081" == split.netloc
+    assert "/login-error" == split.path
+    qparams = dict(parse_qsl(split.query))
+    assert qparams["tf_required"] == "1"
+    assert qparams["email"] == "matt@lp.com"
 
 
 @pytest.mark.two_factor()
