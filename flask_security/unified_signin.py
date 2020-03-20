@@ -3,7 +3,7 @@
     flask_security.unified_signin
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security Unified signin module
+    Flask-Security Unified Signin module
 
     :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
@@ -17,7 +17,6 @@
     - should we support a way that /logout redirects to us-signin rather than /login?
     - we should be able to add a phone number as part of setup even w/o any METHODS -
       i.e. to allow login with any identity (phone) and a password.
-    - add new example?
     - add username as last IDENTITY_MAPPING and allow anything...?? or just in example?
 
     Consider/Questions:

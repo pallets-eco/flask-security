@@ -278,7 +278,11 @@ These configuration keys are used globally across all features.
         ],
 
     Be aware that ONLY those attributes listed in ``SECURITY_USER_IDENTITY_ATTRIBUTES``
-    will be considered - regardless of the setting in this variable.
+    will be considered - regardless of the setting of this variable.
+
+    .. danger::
+        Make sure that any columns listed here are marked Unique in your UserDataStore
+        model.
 
     .. versionadded:: 3.4.0
 

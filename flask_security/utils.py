@@ -21,7 +21,7 @@ import warnings
 from contextlib import contextmanager
 from datetime import timedelta
 
-from flask import _request_ctx_stack, current_app, flash, request, session, url_for
+from flask import _request_ctx_stack, current_app, flash, g, request, session, url_for
 from flask.json import JSONEncoder
 from flask.signals import message_flashed
 from flask_login import login_user as _login_user
@@ -159,6 +159,9 @@ def logout_user():
     csrf_field_name = find_csrf_field_name()
     if csrf_field_name:
         session.pop(csrf_field_name, None)
+        # Flask-WTF 'caches' csrf_token - and only set the session if not already
+        # in 'g'. Be sure to clear both. This affects at least /confirm
+        g.pop(csrf_field_name, None)
     session["fs_cc"] = "clear"
     identity_changed.send(
         current_app._get_current_object(), identity=AnonymousIdentity()
