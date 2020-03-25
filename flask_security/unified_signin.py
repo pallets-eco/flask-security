@@ -254,10 +254,6 @@ class UnifiedSigninSetupForm(Form):
         ],
     )
     phone = StringField(get_form_field_label("phone"))
-
-    # By default we don't create a new totp_secret since that would invalidate
-    # any authenticator setup. Allow user to request a reset.
-    new_totp_secret = BooleanField(get_form_field_label("new_totp_secret"))
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
@@ -698,11 +694,10 @@ def us_setup():
 
     if form.validate_on_submit():
         method = form.chosen_method.data
-        totp_secrets = current_user.us_get_totp_secrets()
-        if method not in totp_secrets or form.new_totp_secret.data:
-            totp = _security._totp_factory.generate_totp_secret()
-        else:
-            totp = totp_secrets[method]
+        # Always generate a totp_secret. We don't set it in the DB until
+        # user has successfully validated.
+        totp = _security._totp_factory.generate_totp_secret()
+
         # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
         # to send it to the user.
         state = {

@@ -1170,9 +1170,6 @@ components:
         chosen_method:
           type: string
           description: which method should be used to send the code, as configured with SECURITY_US_ENABLED_METHODS
-        new_totp_secret:
-          type: boolean
-          description: if set to True a new totp secret for the chosen method will be generated. This will for example invalidate prior codes and authenticator setup.
         phone:
           type: string
           description: phone number (this will be normalized)

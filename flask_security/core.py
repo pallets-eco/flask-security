@@ -1052,7 +1052,7 @@ class Security(object):
         ``verify_form`` added as part of freshness/re-authentication
 
     .. versionchanged:: 3.4.0
-        ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form``
+        ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form``, and
         ``us_verify_form`` added as part of the :ref:`unified-sign-in` feature.
 
     .. versionchanged:: 3.4.0
