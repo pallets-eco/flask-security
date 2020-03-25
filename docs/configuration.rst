@@ -263,6 +263,10 @@ These configuration keys are used globally across all features.
 
     Default: ``['email']``.
 
+    .. danger::
+        Make sure that any attributes listed here are marked Unique in your UserDataStore
+        model.
+
 .. py:data:: SECURITY_USER_IDENTITY_MAPPINGS
 
     Defines the order and matching that will be applied when validating the
@@ -277,12 +281,8 @@ These configuration keys are used globally across all features.
             {"us_phone_number": uia_phone_mapper},
         ],
 
-    Be aware that ONLY those attributes listed in ``SECURITY_USER_IDENTITY_ATTRIBUTES``
+    Be aware that ONLY those attributes listed in :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`
     will be considered - regardless of the setting of this variable.
-
-    .. danger::
-        Make sure that any columns listed here are marked Unique in your UserDataStore
-        model.
 
     .. versionadded:: 3.4.0
 
@@ -995,6 +995,13 @@ Unified Signin
     token expires. Always pluralize the time unit for this value.
 
     Default: "30 minutes"
+
+.. py:data:: SECURITY_US_SIGNIN_REPLACES_LOGIN
+
+    If set, then the :py:data:`SECURITY_LOGIN_URL` will be registered to the ``us-signin`` endpoint.
+    Doing this will mean that logout will properly redirect to the us-signin endpoint.
+
+    Default: ``False``
 
 
 Additional relevant configuration variables:

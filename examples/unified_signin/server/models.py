@@ -20,7 +20,8 @@ class Role(db.Model, fsqla.FsRoleMixin):
 
 
 class User(db.Model, fsqla.FsUserMixin):
-    blogs = db.relationship("Blog", backref="user", lazy="dynamic")
+    # Because we set "us_phone_number" as a USER_IDENTITY - it must be unique
+    us_phone_number = db.Column(db.String(128), unique=True, nullable=True)
     pass
 
 

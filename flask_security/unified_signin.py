@@ -14,7 +14,6 @@
     password or one of US_ENABLED_METHODS.
 
     Finish up:
-    - should we support a way that /logout redirects to us-signin rather than /login?
     - we should be able to add a phone number as part of setup even w/o any METHODS -
       i.e. to allow login with any identity (phone) and a password.
     - add username as last IDENTITY_MAPPING and allow anything...?? or just in example?
@@ -82,7 +81,13 @@ else:
 
 
 def _compute_code_methods():
+    # Return list of methods that actually send codes
     return list(set(config_value("US_ENABLED_METHODS")) - {"password", "authenticator"})
+
+
+def _compute_setup_methods():
+    # Return list of methods that require setup
+    return list(set(config_value("US_ENABLED_METHODS")) - {"password"})
 
 
 def _us_common_validate(form):
@@ -689,7 +694,7 @@ def us_setup():
     else:
         form = form_class(meta=suppress_form_csrf())
 
-    code_methods = _compute_code_methods()
+    setup_methods = _compute_setup_methods()
 
     if form.validate_on_submit():
         method = form.chosen_method.data
@@ -721,7 +726,7 @@ def us_setup():
             return _security.render_template(
                 config_value("US_SETUP_TEMPLATE"),
                 methods=config_value("US_ENABLED_METHODS"),
-                code_methods=code_methods,
+                setup_methods=setup_methods,
                 us_setup_form=form,
                 **_security._run_ctx_processor("us_setup")
             )
@@ -734,8 +739,8 @@ def us_setup():
         return _security.render_template(
             config_value("US_SETUP_TEMPLATE"),
             methods=config_value("US_ENABLED_METHODS"),
-            code_methods=code_methods,
-            code_sent=True,
+            setup_methods=setup_methods,
+            code_sent=form.chosen_method.data in _compute_code_methods(),
             chosen_method=form.chosen_method.data,
             us_setup_form=form,
             us_setup_verify_form=_security.us_setup_verify_form(),
@@ -749,7 +754,7 @@ def us_setup():
         payload = {
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
             "methods": config_value("US_ENABLED_METHODS"),
-            "code_methods": code_methods,
+            "setup_methods": setup_methods,
             "phone": current_user.us_phone_number,
         }
         return base_render_json(form, include_user=False, additional=payload)
@@ -759,7 +764,7 @@ def us_setup():
     return _security.render_template(
         config_value("US_SETUP_TEMPLATE"),
         methods=config_value("US_ENABLED_METHODS"),
-        code_methods=code_methods,
+        setup_methods=setup_methods,
         us_setup_form=form,
         **_security._run_ctx_processor("us_setup")
     )

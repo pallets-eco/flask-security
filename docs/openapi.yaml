@@ -814,9 +814,9 @@ paths:
                   methods:
                     type: string
                     description: Config setting SECURITY_US_ENABLED_METHODS
-                  code_methods:
+                  setup_methods:
                     type: string
-                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+                    description: All SECURITY_US_ENABLED_METHODS that require setup.
                   identity_attributes:
                     type: string
                     description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES

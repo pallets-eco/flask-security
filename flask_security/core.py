@@ -266,6 +266,7 @@ _default_config = {
     "US_TOKEN_VALIDITY": 120,
     "US_EMAIL_SUBJECT": _("Verification Code"),
     "US_SETUP_WITHIN": "30 minutes",
+    "US_SIGNIN_REPLACES_LOGIN": False,
     "CSRF_PROTECT_MECHANISMS": AUTHN_MECHANISMS,
     "CSRF_IGNORE_UNAUTH_ENDPOINTS": False,
     "CSRF_COOKIE": {"key": None},
