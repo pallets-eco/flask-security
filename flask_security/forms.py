@@ -67,7 +67,6 @@ _default_field_labels = {
     "submit": _("Submit"),
     "submitcode": _("Submit Code"),
     "error": _("Error(s)"),
-    "new_totp_secret": _("Generate new TOTP secret"),
     "identity": _("Identity"),
     "sendcode": _("Send Code"),
     "passcode": _("Passcode"),

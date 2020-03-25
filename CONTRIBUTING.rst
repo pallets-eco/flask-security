@@ -113,6 +113,15 @@ Then in your browser navigate to::
 Please note that changing ``openapi.yaml`` won't re-trigger a docs build - so you might
 have to manually delete ``docs/_build``.
 
+Updating Translations
+---------------------
+If you change any translatable strings (such as new messages, modified forms, etc.)
+you need to re-generate the translations::
+
+    $ python setup.py extract_messages
+    $ python setup.py update_catalog
+    $ python setup.py compile_catalog
+
 Testing
 -------
 Unit tests are critical since Flask-Security is a piece of middleware. They also
