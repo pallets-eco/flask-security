@@ -1078,6 +1078,8 @@ def create_blueprint(app, state, import_name, json_encoder=None):
             state.login_url + slash_url_suffix(state.login_url, "<token>"),
             endpoint="token_login",
         )(token_login)
+    elif config_value("US_SIGNIN_REPLACES_LOGIN", app=app):
+        bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(us_signin)
 
     else:
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(login)

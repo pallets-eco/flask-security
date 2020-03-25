@@ -63,23 +63,21 @@ def create_app():
     app.config["DEBUG"] = True
     # SECRET_KEY generated using: secrets.token_urlsafe()
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
+    # PASSWORD_SALT secrets.SystemRandom().getrandbits(128)
+    app.config["SECURITY_PASSWORD_SALT"] = "156043940537155509276282232127182067465"
+
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = False
     app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = ["email", "us_phone_number"]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["password"]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["authenticator", "password"]
+    # app.config["SECURITY_US_SIGNIN_REPLACES_LOGIN"] = True
 
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
     app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=5)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
-
-    # Make this plaintext for most tests - reduces unit test time by 50%
-    app.config["SECURITY_PASSWORD_HASH"] = "plaintext"
-    # Make this hex_md5 for token tests
-    app.config["SECURITY_HASHING_SCHEMES"] = ["hex_md5"]
-    app.config["SECURITY_DEPRECATED_HASHING_SCHEMES"] = []
 
     # Turn on all features (except passwordless since that removes normal login)
     for opt in [

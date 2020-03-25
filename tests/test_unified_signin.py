@@ -506,7 +506,7 @@ def test_setup_json(app, client_nc, get_message):
     response = client_nc.get("/us-setup", headers=headers)
     assert response.status_code == 200
     assert response.json["response"]["methods"] == ["email", "sms"]
-    assert set(response.json["response"]["code_methods"]) == {"email", "sms"}
+    assert set(response.json["response"]["setup_methods"]) == {"email", "sms"}
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
@@ -1201,9 +1201,27 @@ def test_replace_send_code(app, get_message):
 def test_only_passwd(app, client, get_message):
     authenticate(client)
     response = client.get("us-setup")
-    assert b"No code method" in response.data
+    assert b"No method" in response.data
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.get("us-setup", headers=headers)
     assert response.json["response"]["methods"] == ["password"]
-    assert not response.json["response"]["code_methods"]
+    assert not response.json["response"]["setup_methods"]
+
+
+@pytest.mark.settings(us_enabled_methods=["password", "authenticator"])
+def test_passwd_and_authenticator(app, client, get_message):
+    authenticate(client)
+    response = client.get("us-setup")
+    assert b"authenticator app" in response.data
+
+    # Check that we get QRcode URL and no 'code sent'
+    response = client.post("us-setup", data=dict(chosen_method="authenticator"))
+    assert response.status_code == 200
+    assert b"Code has been sent" not in response.data
+    assert b"Open your authenticator app" in response.data
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.get("us-setup", headers=headers)
+    assert response.json["response"]["methods"] == ["password", "authenticator"]
+    assert response.json["response"]["setup_methods"] == ["authenticator"]
