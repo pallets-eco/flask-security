@@ -28,7 +28,7 @@ addons:
       - aspell-pt
       - aspell-ru
 
-matrix:
+jobs:
   allow_failures:
     - python: pypy3.5-6.0
 
@@ -60,7 +60,7 @@ script:
     set -e;
     if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
      # Test against a real DB (postgres)
-     python setup.py test --addopts --realdburl=postgres://postgres@localhost/;
+     python setup.py test --addopts --realdburl=postgresql://postgres@localhost/;
      python setup.py build_sphinx compile_catalog;
      echo "Running msgcheck";
      msgcheck -pwW flask_security/translations/*/LC_MESSAGES/flask_security.po;
@@ -83,13 +83,13 @@ branches:
 
 deploy:
   provider: pypi
-  user: jwag956
+  username: jwag956
   password:
     secure: aFW/8LFbdFnwAjgPdoP09mVN+BsxeYDCAraSpBEV8aNZs7f4dyk9C3GxY2at2DEMreq8ZSaE/vRA9Zp7udo4hSYu1X2Akv8oXvlxxwJsDZJ5fNJ8N9q/rd6bKQ77x2Bp9NhQZd7b0moV2VMkUQQFQeaD6dnQG1GWR5ARbsVvnnQ4GTWiurATc8k9y+WT99ptovSYBmLX6tqqRsK0MgzEwK+5yO3wgFKwAjxG2fwOyG5Q/KC53NtBBPcoYgm4zeuksvFhMu4ztHCQRwVH5GHUacgrgXn3MGy5rlwuXLcpLu+K014ftoOZBN+26dZB3IAqwCwBDPJ56zFqjB0td90ZECwi2fXHBcXev//dmD+U+iZyQlbe+JEhervkehkHg4Fue7IhfzVQGOsDeEH6oRyY+30W2YjkRfRa3xaSLORqRHFN6JKVVVo4FvqbzhCuscKKZyGaA/1ZPDETAwpuHjLKoEMCjlKumXXpoAU+MR7sW886VpQ6j8wOi+A6G1A5fYqUdLNc/ZPeWM/Zah0pKtMMgx3mqmWUkeTP6ZViVc9h6pkqXTL6yHJa4CnOoWbWknV/yYKdXhKsYNhG7nFkqbTybJD1UI5R632dvYI4Dp2nYTWNj2cD643sX/WW6azlb0dN1LvznKzxeG18Y6DoyPCeydzPnLjZUIzB1TD/MZ11mVI=
   distributions: "compile_catalog sdist bdist_wheel"
+  skip_cleanup: true
   on:
     repo: jwag956/flask-security
     tags: true
-    skip_cleanup: true
     python: "3.7"
     condition: $REQUIREMENTS = release
