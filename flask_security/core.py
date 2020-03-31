@@ -1048,18 +1048,18 @@ class Security(object):
     :param phone_util_cls: Class to use for phone number utilities.
      Defaults to :class:`PhoneUtil`
 
-    .. versionchanged:: 3.4.0
+    .. versionadded:: 3.4.0
         ``verify_form`` added as part of freshness/re-authentication
 
-    .. versionchanged:: 3.4.0
+    .. versionadded:: 3.4.0
         ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form``, and
         ``us_verify_form`` added as part of the :ref:`unified-sign-in` feature.
 
-    .. versionchanged:: 3.4.0
+    .. versionadded:: 3.4.0
         ``totp_cls`` added to enable applications to implement replay protection - see
         :py:class:`Totp`.
 
-    .. versionchanged:: 3.4.0
+    .. versionadded:: 3.4.0
         ``phone_util_cls`` added to allow different phone number
          parsing implementations - see :py:class:`PhoneUtil`
     """

@@ -3,11 +3,21 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.0.0
+-------------
+
+Released Target xxx
+
+- Removal of python 2.7 support
+- Removal of token caching feature (a relatively new feature that has some systemic issues)
+
 Version 3.4.0
 -------------
 
-Released Target Feb 2020
+Released Target March 2020
 
+Features
+++++++++
 - (:pr:`257`) Support a unified sign in feature. Please see :ref:`unified-sign-in`.
 - (:pr:`265`) Add phone number validation class. This is used in both unified sign in
   as well as two-factor when using ``sms``.
@@ -17,6 +27,30 @@ Released Target Feb 2020
   validator that offers complexity and breached support.
 - (:issue:`266`) Provide interface to two-factor send_token so that applications
   can provide error mitigation. Defaults to returning errors if can't send the verification code.
+- (:pr:`247`) Updated all-inclusive data models (fsqlaV2). Add fields necessary for the new unified sign in feature
+  and changed 'username' to be unique (but not required).
+- (:pr:`245`) Use fs_uniquifier as the default Flask-Login 'alternative token'. Basically
+  this means that changing the fs_uniquifier will cause outstanding auth tokens, session and remember me
+  cookies to be invalidated. So if an account gets compromised, an admin can easily stop access. Prior to this
+  cookies were storing the 'id' which is the user's primary key - difficult to change! (kishi85)
+
+Fixed
++++++
+- (:issue:`273`) Don't allow reset password for accounts that are disabled.
+- (:issue:`282`) Add configuration that disallows GET for logout. Allowing GET can
+  cause some denial of service issues. The default still allows GET for backwards
+  compatibility. (kantorii)
+- (:issue:`258`) Reset password wasn't integrated into the two-factor feature and therefore
+  two-factor auth could be bypassed.
+- (:issue:`254`) Allow lists and sets as underlying permissions. (pffs)
+- (:issue:`251`) Allow a registration form to have additional fields that aren't part of the user model
+  that are just passed to the user_registered.send signal, where the application can perform arbitrary
+  additional actions required during registration. (kuba-lilz)
+- (:issue:`249`) Add configuration to disable the 'role-joining' optimization for SQLAlchemy. (pffs)
+- (:issue:`238`) Fix more issues with atomically setting the new TOTP secret when setting up two-factor. (kishi85)
+- (:pr:`240`) Fix Quart Compatibility. (ristellise)
+- (:issue:`232`) CSRF Cookie not being set when using 'Remember Me' cookie to re-sign in. (kishi85)
+- (:issue:`229`) Two-factor enabled accounts didn't work with the Remember Me feature. (kishi85)
 
 As part of adding unified sign in, there were many similarities with two-factor.
 Some refactoring was done to unify naming, configuration variables etc.

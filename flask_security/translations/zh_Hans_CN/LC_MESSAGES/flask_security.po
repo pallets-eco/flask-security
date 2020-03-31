@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2019-12-14 21:54-0800\n"
+"POT-Creation-Date: 2020-03-25 13:58-0700\n"
 "PO-Revision-Date: 2018-08-02 19:55+0800\n"
 "Last-Translator: SteinKuo <guoming054@gmail.com>\n"
 "Language: zh_CN\n"
@@ -17,310 +17,444 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.7.0\n"
+"Generated-By: Babel 2.8.0\n"
 
-#: flask_security/core.py:179
+#: flask_security/core.py:208
 msgid "Login Required"
 msgstr "需要登录"
 
-#: flask_security/core.py:180
+#: flask_security/core.py:209
 #: flask_security/templates/security/email/two_factor_instructions.html:1
+#: flask_security/templates/security/email/us_instructions.html:1
 msgid "Welcome"
 msgstr "欢迎"
 
-#: flask_security/core.py:181
+#: flask_security/core.py:210
 msgid "Please confirm your email"
 msgstr "请激活你的电子邮箱"
 
-#: flask_security/core.py:182
+#: flask_security/core.py:211
 msgid "Login instructions"
 msgstr "登录邮件"
 
-#: flask_security/core.py:183
+#: flask_security/core.py:212
 #: flask_security/templates/security/email/reset_notice.html:1
 msgid "Your password has been reset"
 msgstr "你的密码已重置"
 
-#: flask_security/core.py:184
+#: flask_security/core.py:213
 msgid "Your password has been changed"
 msgstr "你的密码已更改"
 
-#: flask_security/core.py:185
+#: flask_security/core.py:214
 msgid "Password reset instructions"
 msgstr "密码重置"
 
-#: flask_security/core.py:188
+#: flask_security/core.py:217
 msgid "Two-factor Login"
 msgstr ""
 
-#: flask_security/core.py:189
+#: flask_security/core.py:218
 msgid "Two-factor Rescue"
 msgstr ""
 
-#: flask_security/core.py:219
+#: flask_security/core.py:267
+msgid "Verification Code"
+msgstr ""
+
+#: flask_security/core.py:283
+msgid "Input not appropriate for requested API"
+msgstr ""
+
+#: flask_security/core.py:284
 msgid "You do not have permission to view this resource."
 msgstr "你无权查看此资源！"
 
-#: flask_security/core.py:221
+#: flask_security/core.py:286
 msgid "You are not authenticated. Please supply the correct credentials."
 msgstr ""
 
-#: flask_security/core.py:225
+#: flask_security/core.py:290
+#, fuzzy
+msgid "You must re-authenticate to access this endpoint"
+msgstr "请重新进行身份验证，以访问此页面。"
+
+#: flask_security/core.py:294
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
 msgstr "谢谢你。已发送激活邮件到 %(email)s。"
 
-#: flask_security/core.py:228
+#: flask_security/core.py:297
 msgid "Thank you. Your email has been confirmed."
 msgstr "谢谢。你的邮箱已激活！"
 
-#: flask_security/core.py:229
+#: flask_security/core.py:298
 msgid "Your email has already been confirmed."
 msgstr "你的邮箱已激活！"
 
-#: flask_security/core.py:230
+#: flask_security/core.py:299
 msgid "Invalid confirmation token."
 msgstr "无效验证码！"
 
-#: flask_security/core.py:232
+#: flask_security/core.py:301
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s 已关联账户。"
 
-#: flask_security/core.py:235
+#: flask_security/core.py:304
 msgid "Password does not match"
 msgstr "密码不匹配"
 
-#: flask_security/core.py:236
+#: flask_security/core.py:305
 msgid "Passwords do not match"
 msgstr "密码不匹配"
 
-#: flask_security/core.py:237
+#: flask_security/core.py:306
 msgid "Redirections outside the domain are forbidden"
 msgstr "禁止域名外重定向"
 
-#: flask_security/core.py:239
+#: flask_security/core.py:308
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr "重置密码邮件已发送到 %(email)s。"
 
-#: flask_security/core.py:243
+#: flask_security/core.py:312
 #, python-format
 msgid ""
 "You did not reset your password within %(within)s. New instructions have "
 "been sent to %(email)s."
 msgstr "你未在 %(within)s 重置密码。新重置密码邮件已发送到 %(email)s。"
 
-#: flask_security/core.py:249
+#: flask_security/core.py:318
 msgid "Invalid reset password token."
 msgstr "密码重置验证码无效！"
 
-#: flask_security/core.py:250
+#: flask_security/core.py:319
 msgid "Email requires confirmation."
 msgstr "请先激活邮箱。"
 
-#: flask_security/core.py:252
+#: flask_security/core.py:321
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr "激活邮件已发送到  %(email)s。"
 
-#: flask_security/core.py:256
+#: flask_security/core.py:325
 #, python-format
 msgid ""
 "You did not confirm your email within %(within)s. New instructions to "
 "confirm your email have been sent to %(email)s."
 msgstr "你未在 %(within)s 激活邮箱。新激活邮件已发送到 %(email)s。"
 
-#: flask_security/core.py:264
+#: flask_security/core.py:333
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
 "sent to %(email)s."
 msgstr "你未在 %(within)s 登录账户。新登录邮件已发送到 %(email)s。"
 
-#: flask_security/core.py:271
+#: flask_security/core.py:340
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr "登录邮件已发送到 %(email)s。"
 
-#: flask_security/core.py:274
+#: flask_security/core.py:343
 msgid "Invalid login token."
 msgstr "无效登录验证码！"
 
-#: flask_security/core.py:275
+#: flask_security/core.py:344
 msgid "Account is disabled."
 msgstr "账户已被禁用！"
 
-#: flask_security/core.py:276
+#: flask_security/core.py:345
 msgid "Email not provided"
 msgstr "未填写电子邮箱"
 
-#: flask_security/core.py:277
+#: flask_security/core.py:346
 msgid "Invalid email address"
 msgstr "无效邮箱地址"
 
-#: flask_security/core.py:278
+#: flask_security/core.py:347
+#, fuzzy
+msgid "Invalid code"
+msgstr "密码不正确"
+
+#: flask_security/core.py:348
 msgid "Password not provided"
 msgstr "未填写密码"
 
-#: flask_security/core.py:279
+#: flask_security/core.py:349
 msgid "No password is set for this user"
 msgstr "此账户未设置密码"
 
-#: flask_security/core.py:280
-msgid "Password must be at least 6 characters"
+#: flask_security/core.py:351
+#, fuzzy, python-format
+msgid "Password must be at least %(length)s characters"
 msgstr "密码至少6个字符"
 
-#: flask_security/core.py:281
+#: flask_security/core.py:354
+msgid "Password not complex enough"
+msgstr ""
+
+#: flask_security/core.py:355
+msgid "Password on breached list"
+msgstr ""
+
+#: flask_security/core.py:357
+msgid "Failed to contact breached passwords site"
+msgstr ""
+
+#: flask_security/core.py:360
+msgid "Phone number not valid e.g. missing country code"
+msgstr ""
+
+#: flask_security/core.py:361
 msgid "Specified user does not exist"
 msgstr "此用户不存在"
 
-#: flask_security/core.py:282
+#: flask_security/core.py:362
 msgid "Invalid password"
 msgstr "密码不正确"
 
-#: flask_security/core.py:283
+#: flask_security/core.py:363
+msgid "Password or code submitted is not valid"
+msgstr ""
+
+#: flask_security/core.py:364
 msgid "You have successfully logged in."
 msgstr "你已成功登录！"
 
-#: flask_security/core.py:284
+#: flask_security/core.py:365
 msgid "Forgot password?"
 msgstr "忘记密码？"
 
-#: flask_security/core.py:286
+#: flask_security/core.py:367
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
 msgstr "你的密码已成功重置，并已自动登录。"
 
-#: flask_security/core.py:293
+#: flask_security/core.py:374
 msgid "Your new password must be different than your previous password."
 msgstr "你的新密码不能与当前密码相同。"
 
-#: flask_security/core.py:296
+#: flask_security/core.py:377
 msgid "You successfully changed your password."
 msgstr "你已成功更改密码！"
 
-#: flask_security/core.py:297
+#: flask_security/core.py:378
 msgid "Please log in to access this page."
 msgstr "请登录访问此页面。"
 
-#: flask_security/core.py:298
+#: flask_security/core.py:379
 msgid "Please reauthenticate to access this page."
 msgstr "请重新进行身份验证，以访问此页面。"
 
-#: flask_security/core.py:300
+#: flask_security/core.py:380
+msgid "Reauthentication successful"
+msgstr ""
+
+#: flask_security/core.py:382
 msgid "You can only access this endpoint when not logged in."
 msgstr ""
 
-#: flask_security/core.py:303
+#: flask_security/core.py:385
+msgid "Failed to send code. Please try again later"
+msgstr ""
+
+#: flask_security/core.py:386
 msgid "Invalid Token"
 msgstr ""
 
-#: flask_security/core.py:304
+#: flask_security/core.py:387
 msgid "Your token has been confirmed"
 msgstr ""
 
-#: flask_security/core.py:306
+#: flask_security/core.py:389
 msgid "You successfully changed your two-factor method."
 msgstr ""
 
-#: flask_security/core.py:310
+#: flask_security/core.py:393
 msgid "You successfully confirmed password"
 msgstr ""
 
-#: flask_security/core.py:314
+#: flask_security/core.py:397
 msgid "Password confirmation is needed in order to access page"
 msgstr ""
 
-#: flask_security/core.py:318
+#: flask_security/core.py:401
 msgid "You currently do not have permissions to access this page"
 msgstr ""
 
-#: flask_security/core.py:321
+#: flask_security/core.py:404
 msgid "Marked method is not valid"
 msgstr ""
 
-#: flask_security/core.py:323
+#: flask_security/core.py:406
 msgid "You successfully disabled two factor authorization."
 msgstr ""
 
-#: flask_security/forms.py:47
+#: flask_security/core.py:409
+msgid "Requested method is not valid"
+msgstr ""
+
+#: flask_security/core.py:411
+#, python-format
+msgid "Setup must be completed within %(within)s. Please start over."
+msgstr ""
+
+#: flask_security/core.py:414
+msgid "Unified sign in setup successful"
+msgstr ""
+
+#: flask_security/core.py:415
+msgid "You must specify a valid identity to sign in"
+msgstr ""
+
+#: flask_security/core.py:416
+#, python-format
+msgid "Use this code to sign in: %(code)s."
+msgstr ""
+
+#: flask_security/forms.py:50
 msgid "Email Address"
 msgstr "邮箱地址"
 
-#: flask_security/forms.py:48
+#: flask_security/forms.py:51
 msgid "Password"
 msgstr "密码"
 
-#: flask_security/forms.py:49
+#: flask_security/forms.py:52
 msgid "Remember Me"
 msgstr "记住我"
 
-#: flask_security/forms.py:50 flask_security/templates/security/_menu.html:4
+#: flask_security/forms.py:53 flask_security/templates/security/_menu.html:5
 #: flask_security/templates/security/login_user.html:6
 #: flask_security/templates/security/send_login.html:6
 msgid "Login"
 msgstr "登录"
 
-#: flask_security/forms.py:51 flask_security/templates/security/_menu.html:6
+#: flask_security/forms.py:54
+#: flask_security/templates/security/email/us_instructions.html:8
+#: flask_security/templates/security/us_signin.html:6
+msgid "Sign In"
+msgstr ""
+
+#: flask_security/forms.py:55 flask_security/templates/security/_menu.html:11
 #: flask_security/templates/security/register_user.html:6
 msgid "Register"
 msgstr "注册"
 
-#: flask_security/forms.py:52
+#: flask_security/forms.py:56
 msgid "Resend Confirmation Instructions"
 msgstr "重新发送邮件验证"
 
-#: flask_security/forms.py:53
+#: flask_security/forms.py:57
 msgid "Recover Password"
 msgstr "恢复密码"
 
-#: flask_security/forms.py:54
+#: flask_security/forms.py:58
 msgid "Reset Password"
 msgstr "重置密码"
 
-#: flask_security/forms.py:55
+#: flask_security/forms.py:59
 msgid "Retype Password"
 msgstr "再次确认密码"
 
-#: flask_security/forms.py:56
+#: flask_security/forms.py:60
 msgid "New Password"
 msgstr "新密码"
 
-#: flask_security/forms.py:57
+#: flask_security/forms.py:61
 msgid "Change Password"
 msgstr "更改密码"
 
-#: flask_security/forms.py:58
+#: flask_security/forms.py:62
 msgid "Send Login Link"
 msgstr "发送登录链接"
 
-#: flask_security/forms.py:59
+#: flask_security/forms.py:63
 msgid "Verify Password"
 msgstr ""
 
-#: flask_security/forms.py:60
+#: flask_security/forms.py:64
 msgid "Change Method"
 msgstr ""
 
-#: flask_security/forms.py:61
+#: flask_security/forms.py:65
 msgid "Phone Number"
 msgstr ""
 
-#: flask_security/forms.py:62
+#: flask_security/forms.py:66
 msgid "Authentication Code"
+msgstr ""
+
+#: flask_security/forms.py:67
+msgid "Submit"
+msgstr ""
+
+#: flask_security/forms.py:68
+msgid "Submit Code"
+msgstr ""
+
+#: flask_security/forms.py:69
+msgid "Error(s)"
+msgstr ""
+
+#: flask_security/forms.py:70
+msgid "Identity"
+msgstr ""
+
+#: flask_security/forms.py:71
+msgid "Send Code"
+msgstr ""
+
+#: flask_security/forms.py:72
+#, fuzzy
+msgid "Passcode"
+msgstr "密码"
+
+#: flask_security/unified_signin.py:130
+#, fuzzy
+msgid "Code or Password"
+msgstr "恢复密码"
+
+#: flask_security/unified_signin.py:135 flask_security/unified_signin.py:246
+msgid "Available Methods"
+msgstr ""
+
+#: flask_security/unified_signin.py:136
+msgid "Via email"
+msgstr ""
+
+#: flask_security/unified_signin.py:136
+msgid "Via SMS"
+msgstr ""
+
+#: flask_security/unified_signin.py:248
+msgid "Set up using email"
+msgstr ""
+
+#: flask_security/unified_signin.py:251
+msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
+msgstr ""
+
+#: flask_security/unified_signin.py:253
+msgid "Set up using SMS"
 msgstr ""
 
 #: flask_security/templates/security/_menu.html:2
 msgid "Menu"
 msgstr "菜单"
 
-#: flask_security/templates/security/_menu.html:9
+#: flask_security/templates/security/_menu.html:8
+msgid "Unified Sign In"
+msgstr ""
+
+#: flask_security/templates/security/_menu.html:14
 msgid "Forgot password"
 msgstr "忘记密码"
 
-#: flask_security/templates/security/_menu.html:12
+#: flask_security/templates/security/_menu.html:17
 msgid "Confirm account"
 msgstr "激活账户"
 
@@ -355,6 +489,7 @@ msgid "To complete logging in, please enter the code sent to your mail"
 msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:21
+#: flask_security/templates/security/us_setup.html:21
 msgid ""
 "Open your authenticator app on your device and scan the following qrcode "
 "to start receiving codes:"
@@ -385,8 +520,38 @@ msgid "A mail was sent to us in order to reset your application account"
 msgstr ""
 
 #: flask_security/templates/security/two_factor_verify_password.html:6
+#: flask_security/templates/security/verify.html:6
 msgid "Please Enter Your Password"
 msgstr ""
+
+#: flask_security/templates/security/us_setup.html:6
+msgid "Setup Unified Sign In options"
+msgstr ""
+
+#: flask_security/templates/security/us_setup.html:22
+msgid "Passwordless QRCode"
+msgstr ""
+
+#: flask_security/templates/security/us_setup.html:25
+#: flask_security/templates/security/us_signin.html:23
+#: flask_security/templates/security/us_verify.html:21
+#, fuzzy
+msgid "Code has been sent"
+msgstr "你的密码已重置"
+
+#: flask_security/templates/security/us_setup.html:29
+msgid "No methods have been enabled - nothing to setup"
+msgstr ""
+
+#: flask_security/templates/security/us_signin.html:15
+#: flask_security/templates/security/us_verify.html:13
+msgid "Request one-time code be sent"
+msgstr ""
+
+#: flask_security/templates/security/us_verify.html:6
+#, fuzzy
+msgid "Please re-authenticate"
+msgstr "请重新进行身份验证，以访问此页面。"
 
 #: flask_security/templates/security/email/change_notice.html:1
 msgid "Your password has been changed."
@@ -434,6 +599,16 @@ msgstr ""
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 msgid "can not access mail account"
 msgstr ""
+
+#: flask_security/templates/security/email/us_instructions.html:3
+#, fuzzy
+msgid "You can sign into your account using the following code:"
+msgstr "你可以通过下面链接登录的你的账户："
+
+#: flask_security/templates/security/email/us_instructions.html:6
+#, fuzzy
+msgid "Or use the the link below:"
+msgstr "你可以通过下面链接激活你的邮箱："
 
 #: flask_security/templates/security/email/welcome.html:4
 msgid "You can confirm your email through the link below:"
