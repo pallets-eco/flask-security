@@ -99,7 +99,7 @@ These configuration keys are used globally across all features.
 
     Specifies additional options to be passed to the hashing method. This is deprecated as of passlib 1.7.
 
-    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_PASSWORD_PASSLIB_OPTIONS`
+    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS`
 
 .. py:data:: SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS
 

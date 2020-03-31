@@ -656,7 +656,7 @@ def pytest_addoption(parser):
         action="store",
         default=None,
         help="""Set url for using real database for testing.
-        For postgres: 'postgresql://user:password@host/')""",
+        For postgres: 'postgres://user:password@host/')""",
     )
 
 
@@ -668,7 +668,7 @@ def realdburl(request):
     compared to sqlite
     To use postgres you need to of course run a postgres instance on localhost
     then pass in an extra arg to pytest:
-    --realdburl postgresql://<user>@localhost/
+    --realdburl postgres://<user>@localhost/
     For mysql same - just download and add a root password.
     --realdburl "mysql+pymysql://root:<password>@localhost/"
     """

@@ -60,7 +60,7 @@ script:
     set -e;
     if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
      # Test against a real DB (postgres)
-     python setup.py test --addopts --realdburl=postgresql://postgres@localhost/;
+     python setup.py test --addopts --realdburl=postgres://postgres@localhost/;
      python setup.py build_sphinx compile_catalog;
      echo "Running msgcheck";
      msgcheck -pwW flask_security/translations/*/LC_MESSAGES/flask_security.po;
