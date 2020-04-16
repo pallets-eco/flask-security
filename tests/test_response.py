@@ -58,8 +58,9 @@ def test_default_unauthn(app, client):
     response = client.get("/multi_auth", headers={"Accept": "application/json"})
     assert response.status_code == 401
     assert response.json["meta"]["code"] == 401
-    # Since "basic" is acceptible - we should get a WWW-Authenticate header back
-    assert "WWW-Authenticate" in response.headers
+    # While "Basic" is acceptable, we never get a WWW-Authenticate header back since
+    # most browsers intercept it.
+    assert "WWW-Authenticate" not in response.headers
 
 
 @pytest.mark.settings(login_url="/mylogin", url_prefix="/myprefix")

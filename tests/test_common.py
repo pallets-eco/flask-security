@@ -428,8 +428,7 @@ def test_http_auth_no_authentication_json(client, get_message):
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
-    assert "WWW-Authenticate" in response.headers
-    assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
+    assert "WWW-Authenticate" not in response.headers
 
 
 @pytest.mark.settings(backwards_compat_unauthn=True)
@@ -448,6 +447,9 @@ def test_invalid_http_auth_invalid_username(client):
 
 @pytest.mark.settings(backwards_compat_unauthn=False)
 def test_invalid_http_auth_invalid_username_json(client, get_message):
+    # While Basic auth is allowed with JSON - we never expect a WWW-Authenticate
+    # header - since that is captured by most browsers and they pop up a
+    # login form.
     response = client.get(
         "/http",
         headers={
@@ -461,8 +463,7 @@ def test_invalid_http_auth_invalid_username_json(client, get_message):
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
-    assert "WWW-Authenticate" in response.headers
-    assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
+    assert "WWW-Authenticate" not in response.headers
 
 
 @pytest.mark.settings(backwards_compat_unauthn=True)

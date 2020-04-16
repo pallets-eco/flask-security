@@ -1376,11 +1376,10 @@ class Security(object):
         Callback when endpoint required a fresh authentication.
         This is called by :func:`auth_required`.
 
-        :param cb: Callback function with signature (within, grace, headers=None)
+        :param cb: Callback function with signature (within, grace)
 
             :within: timedelta that endpoint required fresh authentication within.
             :grace: timedelta of grace period that endpoint allowed.
-            :headers: dict of headers to return
 
         Should return a Response or something Flask can create a Response from.
         Can raise an exception if it is handled as part of
