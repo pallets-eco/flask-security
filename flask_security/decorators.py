@@ -269,7 +269,7 @@ def auth_required(*auth_methods, **kwargs):
             return 'Dashboard'
 
     :param auth_methods: Specified mechanisms (token, basic, session). If not specified
-        then ["token", "session"] will be tried.
+        then all current available mechanisms will be tried.
     :kwparam within: Add 'freshness' check to authentication. Is either an int
         specifying # of minutes, or a callable that returns a timedelta. For timedeltas,
         timedelta.total_seconds() is used for the calculations:
@@ -305,11 +305,6 @@ def auth_required(*auth_methods, **kwargs):
     .. versionchanged:: 3.4.0
         Added ``within`` and ``grace`` parameters to enforce a freshness check.
 
-    .. versionchanged:: 3.4.1
-        Don't default to using "basic" - since if the endpoint doesn't authn and
-        "basic" is set, it will return a WWW-Authenticate header which caused browsers
-        to pop up their internal username/password form.
-
     """
 
     login_mechanisms = {
@@ -319,7 +314,7 @@ def auth_required(*auth_methods, **kwargs):
     }
     mechanisms_order = ["token", "session", "basic"]
     if not auth_methods:
-        auth_methods = {"session", "token"}
+        auth_methods = {"basic", "session", "token"}
     else:
         auth_methods = [am for am in auth_methods]
 
