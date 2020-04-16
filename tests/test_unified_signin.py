@@ -28,6 +28,7 @@ from flask_security import (
     SmsSenderFactory,
     SQLAlchemyUserDatastore,
     UserMixin,
+    uia_email_mapper,
     us_profile_changed,
     us_security_token_sent,
     user_authenticated,
@@ -192,7 +193,9 @@ def test_simple_signin_json(app, client_nc, get_message):
 
         response = client_nc.get("/us-signin", headers=headers)
         jresponse = response.json["response"]
-        assert jresponse["methods"] == app.config["SECURITY_US_ENABLED_METHODS"]
+        assert (
+            jresponse["available_methods"] == app.config["SECURITY_US_ENABLED_METHODS"]
+        )
         assert (
             jresponse["identity_attributes"]
             == app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
@@ -529,11 +532,11 @@ def test_setup(app, client, get_message):
     verify_url = matcher.group(1)
 
     # Try invalid code
-    response = client.post(verify_url, data=dict(code=12345), follow_redirects=True)
-    assert get_message("INVALID_CODE") in response.data
+    response = client.post(verify_url, data=dict(passcode=12345), follow_redirects=True)
+    assert get_message("INVALID_PASSWORD_CODE") in response.data
 
     code = sms_sender.messages[0].split()[-1].strip(".")
-    response = client.post(verify_url, data=dict(code=code), follow_redirects=True)
+    response = client.post(verify_url, data=dict(passcode=code), follow_redirects=True)
     assert response.status_code == 200
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
@@ -561,7 +564,7 @@ def test_setup_email(app, client, get_message):
     # grab real code
     matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
     code = matcher.group(1)
-    response = client.post(verify_url, data=dict(code=code), follow_redirects=True)
+    response = client.post(verify_url, data=dict(passcode=code), follow_redirects=True)
     assert response.status_code == 200
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
@@ -586,8 +589,9 @@ def test_setup_json(app, client_nc, get_message):
     }
     response = client_nc.get("/us-setup", headers=headers)
     assert response.status_code == 200
-    assert response.json["response"]["methods"] == ["email", "sms"]
+    assert response.json["response"]["available_methods"] == ["email", "sms"]
     assert set(response.json["response"]["setup_methods"]) == {"email", "sms"}
+    assert response.json["response"]["active_methods"] == ["email"]
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
@@ -601,19 +605,24 @@ def test_setup_json(app, client_nc, get_message):
 
     # send invalid code
     response = client_nc.post(
-        "/us-setup/" + state, json=dict(code=12344), headers=headers
+        "/us-setup/" + state, json=dict(passcode=12344), headers=headers
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["code"][0].encode(
+    assert response.json["response"]["errors"]["passcode"][0].encode(
         "utf-8"
-    ) == get_message("INVALID_CODE")
+    ) == get_message("INVALID_PASSWORD_CODE")
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client_nc.post(
-        "/us-setup/" + state, json=dict(code=code), headers=headers
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
     )
     assert response.status_code == 200
     assert response.json["response"]["chosen_method"] == "sms"
     assert response.json["response"]["phone"] == "+16505551212"
+
+    # Verify sms in list of 'active' methods
+    response = client_nc.get("/us-setup", headers=headers)
+    assert response.status_code == 200
+    assert set(response.json["response"]["active_methods"]) == {"email", "sms"}
 
     # now login with phone - send in different format than we set up with.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -657,7 +666,7 @@ def test_setup_bad_token(app, client, get_message):
 
     # bogus state
     response = client.post(
-        "/us-setup/" + "not a token", json=dict(code=12345), headers=headers
+        "/us-setup/" + "not a token", json=dict(passcode=12345), headers=headers
     )
     assert response.status_code == 400
     assert response.json["response"]["error"].encode("utf-8") == get_message(
@@ -666,7 +675,7 @@ def test_setup_bad_token(app, client, get_message):
 
     # same w/o json
     response = client.post(
-        "/us-setup/" + "not a token", data=dict(code=12345), follow_redirects=True
+        "/us-setup/" + "not a token", data=dict(passcode=12345), follow_redirects=True
     )
     assert get_message("API_ERROR") in response.data
 
@@ -688,7 +697,9 @@ def test_setup_timeout(app, client, get_message):
     time.sleep(1)
 
     code = sms_sender.messages[0].split()[-1].strip(".")
-    response = client.post("/us-setup/" + state, json=dict(code=code), headers=headers)
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    )
     assert response.status_code == 400
     assert response.json["response"]["error"].encode("utf-8") == get_message(
         "US_SETUP_EXPIRED", within=app.config["SECURITY_US_SETUP_WITHIN"]
@@ -757,7 +768,7 @@ def test_verify_json(app, client, get_message):
 
     # figure out which methods are usable
     response = client.get("us-verify", headers=headers)
-    assert response.json["response"]["methods"] == [
+    assert response.json["response"]["available_methods"] == [
         "password",
         "email",
         "authenticator",
@@ -818,9 +829,9 @@ def test_invalid_method(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     response = client.get("/us-signin", headers=headers)
-    assert response.json["response"]["methods"] == ["sms"]
+    assert response.json["response"]["available_methods"] == ["sms"]
     response = client.get("/us-signin/send-code", headers=headers)
-    assert response.json["response"]["methods"] == ["sms"]
+    assert response.json["response"]["available_methods"] == ["sms"]
 
     # verify json error
     response = client.post(
@@ -850,7 +861,7 @@ def test_invalid_method_setup(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     response = client.get("/us-setup", headers=headers)
-    assert response.json["response"]["methods"] == ["sms", "email"]
+    assert response.json["response"]["available_methods"] == ["sms", "email"]
 
     # verify json error
     response = client.post(
@@ -900,12 +911,16 @@ def test_setup_new_totp(app, client, get_message):
     assert response.status_code == 200
     state = response.json["response"]["state"]
     # Use old code
-    response = client.post("/us-setup/" + state, json=dict(code=code), headers=headers)
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    )
     assert response.status_code == 400
 
     # Use new code
     code = sms_sender2.messages[0].split()[-1].strip(".")
-    response = client.post("/us-setup/" + state, json=dict(code=code), headers=headers)
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    )
     assert response.status_code == 200
     assert response.json["response"]["chosen_method"] == "sms"
     assert response.json["response"]["phone"] == "+16505551212"
@@ -932,7 +947,9 @@ def test_qrcode(app, client, get_message):
 
     # Generate token from passed totp_secret and confirm setup
     code = app.security._totp_factory.generate_totp_password(totp_secret)
-    response = client.post("/us-setup/" + state, json=dict(code=code), headers=headers)
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    )
     assert response.status_code == 200
     assert response.json["response"]["chosen_method"] == "authenticator"
 
@@ -1034,11 +1051,14 @@ def test_can_add_password(app, client, get_message):
 
 @pytest.mark.settings(
     us_enabled_methods=["password"],
-    user_identity_attributes=["email", "us_phone_number"],
+    user_identity_attributes=["email", "username"],
+    user_identity_mappings=[{"email": uia_email_mapper}, {"username": lambda x: x}],
 )
 def test_regular_login(app, client, get_message):
     # If "password" in methods - then should be able to login with good-ol
-    # login/password
+    # login/password.
+    # By having username - this also checks that we properly stop at the first
+    # mapping.
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -1180,7 +1200,7 @@ def test_tf_not(app, client, get_message):
     )
     verify_url = matcher.group(1)
     code = sms_sender.messages[0].split()[-1].strip(".")
-    response = client.post(verify_url, data=dict(code=code), follow_redirects=True)
+    response = client.post(verify_url, data=dict(passcode=code), follow_redirects=True)
     assert response.status_code == 200
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
@@ -1286,7 +1306,7 @@ def test_only_passwd(app, client, get_message):
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.get("us-setup", headers=headers)
-    assert response.json["response"]["methods"] == ["password"]
+    assert response.json["response"]["available_methods"] == ["password"]
     assert not response.json["response"]["setup_methods"]
 
 
@@ -1304,7 +1324,10 @@ def test_passwd_and_authenticator(app, client, get_message):
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.get("us-setup", headers=headers)
-    assert response.json["response"]["methods"] == ["password", "authenticator"]
+    assert response.json["response"]["available_methods"] == [
+        "password",
+        "authenticator",
+    ]
     assert response.json["response"]["setup_methods"] == ["authenticator"]
 
 
@@ -1336,7 +1359,9 @@ def test_totp_generation(app, client, get_message):
 
     # Generate token from passed totp_secret and confirm setup
     code = app.security._totp_factory.generate_totp_password(totp_secret)
-    response = client.post("/us-setup/" + state, json=dict(code=code), headers=headers)
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    )
     assert response.status_code == 200
     assert response.json["response"]["chosen_method"] == "authenticator"
 
@@ -1366,7 +1391,7 @@ def test_totp_generation(app, client, get_message):
 
     # validate with wrong code
     response = client.post(
-        "/us-setup/" + state, json=dict(code=123345), headers=headers
+        "/us-setup/" + state, json=dict(passcode=123345), headers=headers
     )
     assert response.status_code == 400
 
@@ -1386,7 +1411,9 @@ def test_totp_generation(app, client, get_message):
     assert response.status_code == 200
     code = sms_sender.messages[0].split()[-1].strip(".")
     state = response.json["response"]["state"]
-    response = client.post("/us-setup/" + state, json=dict(code=code), headers=headers)
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    )
     assert response.status_code == 200
     assert response.json["response"]["chosen_method"] == "sms"
     assert response.json["response"]["phone"] == "+16505551212"

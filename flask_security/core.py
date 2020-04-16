@@ -53,7 +53,7 @@ from .twofactor import tf_send_security_token
 from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,
-    UnifiedSigninSetupVerifyForm,
+    UnifiedSigninSetupValidateForm,
     UnifiedVerifyForm,
     us_send_security_token,
 )
@@ -230,7 +230,7 @@ _default_config = {
     "VERIFY_HASH_CACHE_TTL": 60 * 5,
     "VERIFY_HASH_CACHE_MAX_SIZE": 500,
     "TOTP_SECRETS": None,
-    "TOTP_ISSUER": "service_name",
+    "TOTP_ISSUER": None,
     "SMS_SERVICE": "Dummy",
     "SMS_SERVICE_CONFIG": {
         "ACCOUNT_SID": None,
@@ -431,7 +431,7 @@ _default_forms = {
     "two_factor_rescue_form": TwoFactorRescueForm,
     "us_signin_form": UnifiedSigninForm,
     "us_setup_form": UnifiedSigninSetupForm,
-    "us_setup_verify_form": UnifiedSigninSetupVerifyForm,
+    "us_setup_validate_form": UnifiedSigninSetupValidateForm,
     "us_verify_form": UnifiedVerifyForm,
 }
 
@@ -1014,7 +1014,7 @@ class Security(object):
     :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
-    :param us_setup_verify_form: set form for the unified sign in setup verify view
+    :param us_setup_validate_form: set form for the unified sign in setup validate view
     :param us_verify_form: set form for re-authenticating due to freshness check
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates. The default is Flask's
@@ -1030,7 +1030,7 @@ class Security(object):
         ``verify_form`` added as part of freshness/re-authentication
 
     .. versionadded:: 3.4.0
-        ``us_signin_form``, ``us_setup_form``, ``us_setup_verify_form``, and
+        ``us_signin_form``, ``us_setup_form``, ``us_setup_validate_form``, and
         ``us_verify_form`` added as part of the :ref:`unified-sign-in` feature.
 
     .. versionadded:: 3.4.0
@@ -1201,17 +1201,24 @@ class Security(object):
             self._check_modules("pyqrcode", "TWO_FACTOR or UNIFIED_SIGNIN")
             self._check_modules("cryptography", "TWO_FACTOR or UNIFIED_SIGNIN")
 
-            sms_service = cv("SMS_SERVICE", app=app)
-            if sms_service == "Twilio":  # pragma: no cover
-                self._check_modules("twilio", "TWO_FACTOR or UNIFIED_SIGNIN")
-            if (
-                "sms" in cv("US_ENABLED_METHODS", app=app)
-                or "sms" in cv("TWO_FACTOR_ENABLED_METHODS", app=app)
-            ) and state.phone_util_cls == PhoneUtil:
-                self._check_modules("phonenumbers", "SMS")
+            need_sms = (
+                cv("UNIFIED_SIGNIN", app=app)
+                and "sms" in cv("US_ENABLED_METHODS", app=app)
+            ) or (
+                cv("TWO_FACTOR", app=app)
+                and "sms" in cv("TWO_FACTOR_ENABLED_METHODS", app=app)
+            )
+            if need_sms:
+                sms_service = cv("SMS_SERVICE", app=app)
+                if sms_service == "Twilio":  # pragma: no cover
+                    self._check_modules("twilio", "SMS")
+                if state.phone_util_cls == PhoneUtil:
+                    self._check_modules("phonenumbers", "SMS")
 
             secrets = cv("TOTP_SECRETS", app=app)
             issuer = cv("TOTP_ISSUER", app=app)
+            if not secrets or not issuer:
+                raise ValueError("Both TOTP_SECRETS and TOTP_ISSUER must be set")
             state.totp_factory(state.totp_cls(secrets, issuer))
 
         if cv("USE_VERIFY_PASSWORD_CACHE", app=app):

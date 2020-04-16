@@ -90,6 +90,17 @@ def _compute_setup_methods():
     return list(set(config_value("US_ENABLED_METHODS")) - {"password"})
 
 
+def _compute_active_methods(user):
+    # Compute methods already setup. The only oddity is that 'email'
+    # can be 'auto-setup' - so include that.
+    active_methods = set(config_value("US_ENABLED_METHODS")) & set(
+        _datastore.us_get_totp_secrets(user).keys()
+    )
+    if "email" in config_value("US_ENABLED_METHODS"):
+        active_methods |= {"email"}
+    return list(active_methods)
+
+
 def _us_common_validate(form):
     # Be aware - this has side effect on the form - it will fill in
     # the form.user
@@ -98,6 +109,8 @@ def _us_common_validate(form):
     # request gave us. Note that we give up on the first 'match' even if that
     # doesn't yield a user. Why?
     for mapping in config_value("USER_IDENTITY_MAPPINGS"):
+        # What we want is an ordered dict - but those don't exist for py27 -
+        # so there is really just one element here.
         for ua, mapper in mapping.items():
             # Make sure we don't validate on a column that application
             # hasn't specifically configured as a unique/identity column
@@ -108,14 +121,16 @@ def _us_common_validate(form):
                 idata = mapper(form.identity.data)
                 if idata is not None:
                     form.user = _datastore.find_user(**{ua: idata})
-
-    if not form.user:
-        form.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
-        return False
-    if not form.user.is_active:
-        form.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
-        return False
-    return True
+                    if not form.user:
+                        form.identity.errors.append(
+                            get_message("US_SPECIFY_IDENTITY")[0]
+                        )
+                        return False
+                    if not form.user.is_active:
+                        form.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
+                        return False
+                    return True
+    return False
 
 
 class _UnifiedPassCodeForm(Form):
@@ -284,30 +299,30 @@ class UnifiedSigninSetupForm(Form):
         return True
 
 
-class UnifiedSigninSetupVerifyForm(Form):
+class UnifiedSigninSetupValidateForm(Form):
     """The unified sign in setup validation form """
 
     # These 2 filled in by view
     user = None
     totp_secret = None
 
-    code = StringField(get_form_field_label("code"), validators=[Required()])
+    passcode = StringField(get_form_field_label("passcode"), validators=[Required()])
     submit = SubmitField(get_form_field_label("submitcode"))
 
     def __init__(self, *args, **kwargs):
-        super(UnifiedSigninSetupVerifyForm, self).__init__(*args, **kwargs)
+        super(UnifiedSigninSetupValidateForm, self).__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(UnifiedSigninSetupVerifyForm, self).validate():
+        if not super(UnifiedSigninSetupValidateForm, self).validate():
             return False
 
         if not _security._totp_factory.verify_totp(
-            token=self.code.data,
+            token=self.passcode.data,
             totp_secret=self.totp_secret,
             user=self.user,
             window=config_value("US_TOKEN_VALIDITY"),
         ):
-            self.code.errors.append(get_message("INVALID_CODE")[0])
+            self.passcode.errors.append(get_message("INVALID_PASSWORD_CODE")[0])
             return False
 
         return True
@@ -372,7 +387,7 @@ def us_signin_send_code():
         return _security.render_template(
             config_value("US_SIGNIN_TEMPLATE"),
             us_signin_form=form,
-            methods=config_value("US_ENABLED_METHODS"),
+            available_methods=config_value("US_ENABLED_METHODS"),
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             code_sent=code_sent,
@@ -383,7 +398,7 @@ def us_signin_send_code():
     # Here on GET or failed validation
     if _security._want_json(request):
         payload = {
-            "methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": config_value("US_ENABLED_METHODS"),
             "code_methods": code_methods,
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
         }
@@ -392,7 +407,7 @@ def us_signin_send_code():
     return _security.render_template(
         config_value("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,
-        methods=config_value("US_ENABLED_METHODS"),
+        available_methods=config_value("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_loginmenu=True,
         **_security._run_ctx_processor("us_signin")
@@ -428,7 +443,7 @@ def us_verify_send_code():
         return _security.render_template(
             config_value("US_VERIFY_TEMPLATE"),
             us_verify_form=form,
-            methods=config_value("US_ENABLED_METHODS"),
+            available_methods=config_value("US_ENABLED_METHODS"),
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             code_sent=code_sent,
@@ -443,7 +458,7 @@ def us_verify_send_code():
     # Here on GET or failed validation
     if _security._want_json(request):
         payload = {
-            "methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": config_value("US_ENABLED_METHODS"),
             "code_methods": code_methods,
         }
         return base_render_json(form, additional=payload)
@@ -451,7 +466,7 @@ def us_verify_send_code():
     return _security.render_template(
         config_value("US_VERIFY_TEMPLATE"),
         us_verify_form=form,
-        methods=config_value("US_ENABLED_METHODS"),
+        available_methods=config_value("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_login_menu=True,
         send_code_to=get_url(
@@ -529,7 +544,7 @@ def us_signin():
     code_methods = _compute_code_methods()
     if _security._want_json(request):
         payload = {
-            "methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": config_value("US_ENABLED_METHODS"),
             "code_methods": code_methods,
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
         }
@@ -545,7 +560,7 @@ def us_signin():
     return _security.render_template(
         config_value("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,
-        methods=config_value("US_ENABLED_METHODS"),
+        available_methods=config_value("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_login_menu=True,
         **_security._run_ctx_processor("us_signin")
@@ -586,7 +601,7 @@ def us_verify():
     # Here on GET or failed POST validate
     if _security._want_json(request):
         payload = {
-            "methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": config_value("US_ENABLED_METHODS"),
             "code_methods": code_methods,
         }
         return base_render_json(form, additional=payload)
@@ -703,6 +718,7 @@ def us_setup():
         form = form_class(meta=suppress_form_csrf())
 
     setup_methods = _compute_setup_methods()
+    active_methods = _compute_active_methods(current_user)
 
     if form.validate_on_submit():
         method = form.chosen_method.data
@@ -712,10 +728,13 @@ def us_setup():
 
         # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
         # to send it to the user.
+        # Only check phone number if SMS (see form validate)
         state = {
             "totp_secret": totp,
             "chosen_method": method,
-            "phone_number": _security._phone_util.get_canonical_form(form.phone.data),
+            "phone_number": _security._phone_util.get_canonical_form(form.phone.data)
+            if method == "sms"
+            else None,
         }
         msg = current_user.us_send_security_token(
             method=method,
@@ -732,7 +751,8 @@ def us_setup():
                 )
             return _security.render_template(
                 config_value("US_SETUP_TEMPLATE"),
-                methods=config_value("US_ENABLED_METHODS"),
+                available_methods=config_value("US_ENABLED_METHODS"),
+                active_methods=active_methods,
                 setup_methods=setup_methods,
                 us_setup_form=form,
                 **_security._run_ctx_processor("us_setup")
@@ -745,12 +765,13 @@ def us_setup():
             return base_render_json(form, include_user=False, additional=payload)
         return _security.render_template(
             config_value("US_SETUP_TEMPLATE"),
-            methods=config_value("US_ENABLED_METHODS"),
+            available_methods=config_value("US_ENABLED_METHODS"),
+            active_methods=active_methods,
             setup_methods=setup_methods,
             code_sent=form.chosen_method.data in _compute_code_methods(),
             chosen_method=form.chosen_method.data,
             us_setup_form=form,
-            us_setup_verify_form=_security.us_setup_verify_form(),
+            us_setup_validate_form=_security.us_setup_validate_form(),
             state=state_token,
             **_security._run_ctx_processor("us_setup")
         )
@@ -760,7 +781,8 @@ def us_setup():
     if _security._want_json(request):
         payload = {
             "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
-            "methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": config_value("US_ENABLED_METHODS"),
+            "active_methods": active_methods,
             "setup_methods": setup_methods,
             "phone": current_user.us_phone_number,
         }
@@ -770,7 +792,8 @@ def us_setup():
     form.phone.data = current_user.us_phone_number
     return _security.render_template(
         config_value("US_SETUP_TEMPLATE"),
-        methods=config_value("US_ENABLED_METHODS"),
+        available_methods=config_value("US_ENABLED_METHODS"),
+        active_methods=active_methods,
         setup_methods=setup_methods,
         us_setup_form=form,
         **_security._run_ctx_processor("us_setup")
@@ -778,14 +801,14 @@ def us_setup():
 
 
 @auth_required()
-def us_setup_verify(token):
+def us_setup_validate(token):
     """
-    Verify new setup.
+    Validate new setup.
     The token is the state variable which is signed and timed
     and contains all the state that once confirmed will be stored in the user record.
     """
 
-    form_class = _security.us_setup_verify_form
+    form_class = _security.us_setup_validate_form
 
     if request.is_json:
         form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
@@ -836,7 +859,7 @@ def us_setup_verify(token):
     # Code not correct/outdated.
     if _security._want_json(request):
         return base_render_json(form, include_user=False)
-    m, c = get_message("INVALID_CODE")
+    m, c = get_message("INVALID_PASSWORD_CODE")
     do_flash(m, c)
     return redirect(url_for_security("us_setup"))
 

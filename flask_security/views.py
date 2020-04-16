@@ -61,7 +61,7 @@ from .unified_signin import (
     us_signin_send_code,
     us_qrcode,
     us_setup,
-    us_setup_verify,
+    us_setup_validate,
     us_verify,
     us_verify_link,
     us_verify_send_code,
@@ -1101,8 +1101,8 @@ def create_blueprint(app, state, import_name, json_encoder=None):
         bp.route(
             state.us_setup_url + slash_url_suffix(state.us_setup_url, "<token>"),
             methods=["GET", "POST"],
-            endpoint="us_setup_verify",
-        )(us_setup_verify)
+            endpoint="us_setup_validate",
+        )(us_setup_validate)
 
         # Freshness verification
         if config_value("FRESHNESS", app=app).total_seconds() >= 0:

@@ -286,6 +286,20 @@ These configuration keys are used globally across all features.
     Be aware that ONLY those attributes listed in :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`
     will be considered - regardless of the setting of this variable.
 
+    Mapping functions take a single argument - ``identity`` from the form
+    and should return ``None`` if the ``identity`` argument isn't in a format
+    suitable for the attribute. If the ``identity`` argument format matches, it
+    should be returned, optionally having had some canonicalization performed.
+    The returned result will be used to look up the identity in the UserDataStore.
+
+    The provided :meth:`flask_security.uia_phone_mapper` for example performs
+    phone number normalization using the ``phonenumbers`` package.
+
+    .. tip::
+        If your mapper performs any sort of canonicalization/normalization,
+        make sure you apply the exact same transformation in your form validator
+        when setting the field.
+
     .. versionadded:: 3.4.0
 
 .. py:data:: SECURITY_DEFAULT_REMEMBER_ME
@@ -329,7 +343,8 @@ These are used by the Two-Factor and Unified Signin features.
 
     .. code-block:: python
 
-        "{1: <result of passlib.totp.generate_secret()>}"
+        from passlib import totp
+        "{1: <result of totp.generate_secret()>}"
 
     See: `Totp`_ for details.
 
@@ -340,7 +355,7 @@ These are used by the Two-Factor and Unified Signin features.
     Specifies the name of the service or application that the user is authenticating to.
     This will be the name displayed by most authenticator apps.
 
-    Default: ``service_name``.
+    Default: ``None``.
 
     .. versionadded:: 3.4.0
 
