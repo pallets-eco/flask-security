@@ -73,13 +73,15 @@ def default_unauthn_handler(mechanisms, headers=None):
     if config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
-        # TODO can/should we response with a WWW-Authenticate Header in all cases?
+        # Ignore headers since today, the only thing in there might be WWW-Authenticate
+        # and we never want to send that in a JSON response (browsers will intercept
+        # that and pop up their own login form).
         payload = json_error_response(errors=msg)
-        return _security._render_json(payload, 401, headers, None)
+        return _security._render_json(payload, 401, None, None)
     return _security.login_manager.unauthorized()
 
 
-def default_reauthn_handler(within, grace, headers=None):
+def default_reauthn_handler(within, grace):
     """ Default callback for 'freshness' related authn failures.
 
     If caller wants JSON - return 401
@@ -89,12 +91,11 @@ def default_reauthn_handler(within, grace, headers=None):
     m, c = get_message("REAUTHENTICATION_REQUIRED")
 
     if _security._want_json(request):
-        # TODO can/should we response with a WWW-Authenticate Header in all cases?
         is_us = config_value("UNIFIED_SIGNIN")
         payload = json_error_response(errors=m)
         payload["reauth_required"] = True
         payload["unified_signin_enabled"] = is_us
-        return _security._render_json(payload, 401, headers, None)
+        return _security._render_json(payload, 401, None, None)
 
     if config_value("UNIFIED_SIGNIN"):
         view = _security.us_verify_url
@@ -268,7 +269,7 @@ def auth_required(*auth_methods, **kwargs):
             return 'Dashboard'
 
     :param auth_methods: Specified mechanisms (token, basic, session). If not specified
-        then all current available mechanisms will be tried.
+        then ["token", "session"] will be tried.
     :kwparam within: Add 'freshness' check to authentication. Is either an int
         specifying # of minutes, or a callable that returns a timedelta. For timedeltas,
         timedelta.total_seconds() is used for the calculations:
@@ -304,6 +305,11 @@ def auth_required(*auth_methods, **kwargs):
     .. versionchanged:: 3.4.0
         Added ``within`` and ``grace`` parameters to enforce a freshness check.
 
+    .. versionchanged:: 3.4.1
+        Don't default to using "basic" - since if the endpoint doesn't authn and
+        "basic" is set, it will return a WWW-Authenticate header which caused browsers
+        to pop up their internal username/password form.
+
     """
 
     login_mechanisms = {
@@ -313,7 +319,7 @@ def auth_required(*auth_methods, **kwargs):
     }
     mechanisms_order = ["token", "session", "basic"]
     if not auth_methods:
-        auth_methods = {"basic", "session", "token"}
+        auth_methods = {"session", "token"}
     else:
         auth_methods = [am for am in auth_methods]
 
@@ -351,7 +357,7 @@ def auth_required(*auth_methods, **kwargs):
                     if method != "basic" and not check_and_update_authn_fresh(
                         within, grace
                     ):
-                        return _security._reauthn_handler(within, grace, headers=h,)
+                        return _security._reauthn_handler(within, grace)
                     handle_csrf(method)
                     return fn(*args, **dkwargs)
             if _security._unauthorized_callback:
