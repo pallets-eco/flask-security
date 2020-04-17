@@ -149,6 +149,7 @@ class _UnifiedPassCodeForm(Form):
             if not _us_common_validate(self):
                 return False
 
+        totp_secrets = _datastore.us_get_totp_secrets(self.user)
         if self.submit.data:
             # This is authn - verify passcode/password
             # Since we have a unique totp_secret for each method - we
@@ -161,7 +162,6 @@ class _UnifiedPassCodeForm(Form):
             passcode = str(passcode)
 
             ok = False
-            totp_secrets = self.user.us_get_totp_secrets()
             for method in config_value("US_ENABLED_METHODS"):
                 if method == "password":
                     if self.user.verify_and_update_password(passcode):
@@ -184,12 +184,21 @@ class _UnifiedPassCodeForm(Form):
             return True
         elif self.submit_send_code.data:
             # Send a code - chosen_method must be valid
-            if self.chosen_method.data not in config_value("US_ENABLED_METHODS"):
+            cm = self.chosen_method.data
+            if cm not in config_value("US_ENABLED_METHODS"):
                 self.chosen_method.errors.append(
                     get_message("US_METHOD_NOT_AVAILABLE")[0]
                 )
                 return False
-            if self.chosen_method.data == "sms" and not self.user.us_phone_number:
+            # Don't require 'email' to be setup since in the case of no password
+            # we have to rely on the 'confirmation' email as verification.
+            # In send_code_helper, we will setup the totp_secret for email on the fly.
+            if cm != "email" and cm not in totp_secrets:
+                self.chosen_method.errors.append(
+                    get_message("US_METHOD_NOT_AVAILABLE")[0]
+                )
+                return False
+            if cm == "sms" and not self.user.us_phone_number:
                 # They need to us-setup!
                 self.chosen_method.errors.append(get_message("PHONE_INVALID")[0])
                 return False
@@ -308,11 +317,14 @@ def _send_code_helper(form):
     # send code
     user = form.user
     method = form.chosen_method.data
-    totp_secrets = user.us_get_totp_secrets()
-    if method not in totp_secrets:
+    totp_secrets = _datastore.us_get_totp_secrets(user)
+    # We 'auto-setup' email since in the case of no password the normal us-setup
+    # mechanisms of course don't work. We rely on the fact that the user went
+    # through the 'confirmation' process to validate the email.
+    if method == "email" and method not in totp_secrets:
         after_this_request(_commit)
         totp_secrets[method] = _security._totp_factory.generate_totp_secret()
-        user.us_put_totp_secrets(totp_secrets)
+        _datastore.us_put_totp_secrets(user, totp_secrets)
 
     msg = user.us_send_security_token(
         method,
@@ -617,7 +629,7 @@ def us_verify_link():
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
-    totp_secrets = user.us_get_totp_secrets()
+    totp_secrets = _datastore.us_get_totp_secrets(user)
     if "email" not in totp_secrets or not _security._totp_factory.verify_totp(
         token=request.args.get("code"),
         totp_secret=totp_secrets["email"],
@@ -800,12 +812,8 @@ def us_setup_verify(token):
     if form.validate_on_submit():
         after_this_request(_commit)
         method = state["chosen_method"]
-        totp_secrets = current_user.us_get_totp_secrets()
-
-        totp_secrets[method] = state["totp_secret"]
-        if method == "sms":
-            current_user.us_phone_number = state["phone_number"]
-        current_user.us_put_totp_secrets(totp_secrets)
+        phone = state["phone_number"] if method == "sms" else None
+        _datastore.us_set(current_user, method, state["totp_secret"], phone)
 
         us_profile_changed.send(
             app._get_current_object(), user=current_user, method=method

@@ -101,15 +101,7 @@ def complete_two_factor_process(
      and perform action accordingly
     """
 
-    # update changed primary_method
-    if user.tf_primary_method != primary_method:
-        user.tf_primary_method = primary_method
-        _datastore.put(user)
-
-    # update changed totp_secret
-    if user.tf_totp_secret != totp_secret:
-        user.tf_totp_secret = totp_secret
-        _datastore.put(user)
+    _datastore.tf_set(user, primary_method, totp_secret=totp_secret)
 
     # if we are changing two-factor method
     if is_changing:
@@ -131,9 +123,7 @@ def complete_two_factor_process(
 def tf_disable(user):
     """ Disable two factor for user """
     tf_clean_session()
-    user.tf_primary_method = None
-    user.tf_totp_secret = None
-    _datastore.put(user)
+    _datastore.tf_reset(user)
     tf_disabled.send(app._get_current_object(), user=user)
 
 

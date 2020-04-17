@@ -85,8 +85,8 @@ def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
     # A quick way to 'setup' SMS
     with app.test_request_context("/"):
         user = app.security.datastore.find_user(email=email)
-        user.us_phone_number = phone
-        app.security.datastore.put(user)
+        totp_secret = app.security._totp_factory.generate_totp_secret()
+        app.security.datastore.us_set(user, "sms", totp_secret, phone)
         app.security.datastore.commit()
 
 
@@ -261,6 +261,87 @@ def test_simple_signin_json(app, client_nc, get_message):
         assert response.status_code == 200
         assert "authentication_token" in response.json["response"]["user"]
     assert len(flashes) == 0
+
+
+def test_admin_setup_user_reset(app, client_nc, get_message):
+    # Test that we can setup SMS using datastore admin method, and that
+    # the datastore admin reset (reset_user_access) disables it.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    set_phone(app)
+    response = client_nc.post(
+        "/us-signin/send-code",
+        json=dict(identity="matt@lp.com", chosen_method="sms"),
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+
+    assert len(sms_sender.messages) == 1
+    code = sms_sender.messages[0].split()[-1].strip(".")
+    response = client_nc.post(
+        "/us-signin?include_auth_token",
+        json=dict(identity="matt@lp.com", passcode=code),
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+
+    # logout, reset access
+    logout(client_nc)
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.reset_user_access(user)
+        app.security.datastore.commit()
+
+    response = client_nc.post(
+        "/us-signin/send-code",
+        json=dict(identity="matt@lp.com", chosen_method="sms"),
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["chosen_method"][0].encode(
+        "utf-8"
+    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    # Nothing should have been sent.
+    assert len(sms_sender.messages) == 1
+
+
+def test_admin_setup_reset(app, client_nc, get_message):
+    # Test that we can setup SMS using datastore admin method, and that
+    # the datastore admin reset (us_reset) disables it.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    set_phone(app)
+    response = client_nc.post(
+        "/us-signin/send-code",
+        json=dict(identity="matt@lp.com", chosen_method="sms"),
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert len(sms_sender.messages) == 1
+
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.us_reset(user)
+        app.security.datastore.commit()
+
+    response = client_nc.post(
+        "/us-signin/send-code",
+        json=dict(identity="matt@lp.com", chosen_method="sms"),
+        headers=headers,
+        follow_redirects=True,
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["chosen_method"][0].encode(
+        "utf-8"
+    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    # Nothing should have been sent.
+    assert len(sms_sender.messages) == 1
 
 
 @pytest.mark.settings(post_login_view="/post_login")
@@ -1235,7 +1316,8 @@ def test_totp_generation(app, client, get_message):
 
     authenticate(client, email="dave@lp.com")
     with app.app_context():
-        ts = app.security.datastore.find_user(email="dave@lp.com").us_get_totp_secrets()
+        user = app.security.datastore.find_user(email="dave@lp.com")
+        ts = app.security.datastore.us_get_totp_secrets(user)
         assert "authenticator" not in ts
 
     response = client.post(
@@ -1260,7 +1342,8 @@ def test_totp_generation(app, client, get_message):
 
     # success - totp_secret in DB should have been saved
     with app.app_context():
-        ts = app.security.datastore.find_user(email="dave@lp.com").us_get_totp_secrets()
+        user = app.security.datastore.find_user(email="dave@lp.com")
+        ts = app.security.datastore.us_get_totp_secrets(user)
         assert totp_secret == ts["authenticator"]
 
     # Ok - setup again, this time don't verify and
@@ -1289,7 +1372,8 @@ def test_totp_generation(app, client, get_message):
 
     # Make sure totp_secret in DB didn't change
     with app.app_context():
-        ts = app.security.datastore.find_user(email="dave@lp.com").us_get_totp_secrets()
+        user = app.security.datastore.find_user(email="dave@lp.com")
+        ts = app.security.datastore.us_get_totp_secrets(user)
         assert totp_secret == ts["authenticator"]
 
     # Now setup SMS and verify that authenticator totp hasn't changed
@@ -1309,5 +1393,6 @@ def test_totp_generation(app, client, get_message):
 
     # make sure authenticator totp hasn't changed.
     with app.app_context():
-        ts = app.security.datastore.find_user(email="dave@lp.com").us_get_totp_secrets()
+        user = app.security.datastore.find_user(email="dave@lp.com")
+        ts = app.security.datastore.us_get_totp_secrets(user)
         assert totp_secret == ts["authenticator"]
