@@ -13,7 +13,6 @@
 """
 
 from datetime import datetime, timedelta
-import json
 import warnings
 import sys
 
@@ -844,27 +843,6 @@ class UserMixin(BaseUserMixin):
                 break
         return str(cusername) if cusername is not None else ""
 
-    def us_get_totp_secrets(self):
-        """ Return totp secrets.
-        These are json encoded in the DB.
-
-        Returns a dict with methods as keys and secrets as values.
-
-        .. versionadded:: 3.4.0
-        """
-        if not self.us_totp_secrets:
-            return {}
-        return json.loads(self.us_totp_secrets)
-
-    def us_put_totp_secrets(self, secrets):
-        """ Save secrets. Assume to be a dict (or None)
-        with keys as methods, and values as (encrypted) secrets.
-
-        .. versionadded:: 3.4.0
-        """
-        self.us_totp_secrets = json.dumps(secrets) if secrets else None
-        return _datastore.put(self)
-
     def us_send_security_token(self, method, **kwargs):
         """ Generate and send the security code for unified sign in.
 
@@ -1362,10 +1340,10 @@ class Security(object):
 
         Should return a Response or something Flask can create a Response from.
         Can raise an exception if it is handled as part of
-        flask.errorhandler(<exception>)
+        ``flask.errorhandler(<exception>)``
 
         The default implementation will return a 401 response if the request was JSON,
-        otherwise lets flask_login.login_manager.unauthorized() handle redirects.
+        otherwise lets ``flask_login.login_manager.unauthorized()`` handle redirects.
 
         .. versionadded:: 3.3.0
         """
@@ -1383,13 +1361,13 @@ class Security(object):
 
         Should return a Response or something Flask can create a Response from.
         Can raise an exception if it is handled as part of
-        flask.errorhandler(<exception>)
+        ``flask.errorhandler(<exception>)``
 
         The default implementation will return a 401 response if the request was JSON,
-        otherwise redirects to :py:data:`SECURITY_US_VERIFY_URL`
+        otherwise will redirect to :py:data:`SECURITY_US_VERIFY_URL`
         (if :py:data:`SECURITY_UNIFIED_SIGNIN` is enabled)
         else to :py:data:`SECURITY_VERIFY_URL`.
-        If both of those are None it sends an abort(401).
+        If both of those are None it sends an ``abort(401)``.
 
         See :meth:`flask_security.auth_required` for details about freshness checking.
 
@@ -1400,7 +1378,7 @@ class Security(object):
     def password_validator(self, cb):
         """
         Callback for validating a user password.
-        This is called on registration as well a change and reset password.
+        This is called on registration as well as change and reset password.
         For registration, ``kwargs`` will be all the form input fields that are
         attributes of the user model.
         For reset/change, ``kwargs`` will be user=UserModel

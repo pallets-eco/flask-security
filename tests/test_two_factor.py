@@ -606,6 +606,65 @@ def test_recoverable(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
+def test_admin_setup_reset(app, client, get_message):
+    # Verify can use administrative datastore method to setup SMS
+    # and that administrative reset removes access.
+    sms_sender = SmsSenderFactory.createSender("test")
+
+    data = dict(email="gene@lp.com", password="password")
+    response = client.post(
+        "/login", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.json["response"]["tf_required"]
+
+    # we shouldn't be logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == "http://localhost/login?next=%2Fprofile"
+
+    # Use admin to setup gene's SMS/phone.
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gene@lp.com")
+        totp_secret = app.security._totp_factory.generate_totp_secret()
+        app.security.datastore.tf_set(user, "sms", totp_secret, phone="+442083661177")
+        app.security.datastore.commit()
+
+    response = authenticate(client, "gene@lp.com")
+    session = get_session(response)
+    assert session["tf_state"] == "ready"
+
+    # Grab code that was sent
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"Your token has been confirmed" in response.data
+
+    # verify we are logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+    # logout
+    logout(client)
+
+    # use administrative reset method
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gene@lp.com")
+        app.security.datastore.reset_user_access(user)
+        app.security.datastore.commit()
+
+    data = dict(email="gene@lp.com", password="password")
+    response = client.post(
+        "/login", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "setup_from_login"
+
+    # we shouldn't be logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 302
+
+
+@pytest.mark.settings(two_factor_required=True)
 def test_datastore(app, client):
     # Test that user record is properly set after proper 2FA setup.
     sms_sender = SmsSenderFactory.createSender("test")

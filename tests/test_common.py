@@ -670,10 +670,9 @@ def test_change_uniquifier(app, client_nc):
     verify_token(client_nc, token)
 
     # now change uniquifier
-    # deactivate matt
     with app.test_request_context("/"):
         user = app.security.datastore.find_user(email="matt@lp.com")
-        app.security.datastore.set_uniquifier(user)
+        app.security.datastore.reset_user_access(user)
         app.security.datastore.commit()
 
     verify_token(client_nc, token, status=401)

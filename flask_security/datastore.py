@@ -9,6 +9,7 @@
     :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+import json
 import uuid
 
 from .utils import config_value, get_identity_attributes, string_types
@@ -120,10 +121,11 @@ class UserDatastore(object):
     :param user_model: A user model class definition
     :param role_model: A role model class definition
 
-    Be aware that for mutating operations, the user/role will be added to the
-    datastore (by calling self.put(<object>). If the datastore is session based
-    (such as for SQLAlchemyDatastore) it is up to caller to actually
-    commit the transaction by calling datastore.commit().
+    .. important::
+        For mutating operations, the user/role will be added to the
+        datastore (by calling self.put(<object>). If the datastore is session based
+        (such as for SQLAlchemyDatastore) it is up to caller to actually
+        commit the transaction by calling datastore.commit().
     """
 
     def __init__(self, user_model, role_model):
@@ -319,6 +321,126 @@ class UserDatastore(object):
         :param user: The user to delete
         """
         self.delete(user)
+
+    def reset_user_access(self, user):
+        """
+        Use this method to reset user authentication methods in the case of compromise.
+        This will:
+
+            * reset fs_uniquifier - which causes session cookie, remember cookie, auth
+              tokens to be unusable
+            * remove all unified signin TOTP secrets so those can't be used
+            * remove all two-factor secrets so those can't be used
+
+        Note that if using unified sign in and allow 'email' as a way to receive a code
+        if the email is compromised - login is still possible. To handle this - it
+        is better to deactivate the user.
+
+        Note - this method isn't used directly by Flask-Security - it is provided
+        as a helper for an applications administrative needs.
+
+        Remember to call commit on DB if needed.
+
+        .. versionadded:: 3.4.1
+        """
+        self.set_uniquifier(user)
+        if hasattr(user, "us_totp_secrets"):
+            self.us_reset(user)
+        if hasattr(user, "tf_primary_method"):
+            self.tf_reset(user)
+
+    def tf_set(self, user, primary_method, totp_secret=None, phone=None):
+        """ Set two-factor info into user record.
+        This carefully only changes things if different.
+
+        If totp_secret isn't provided - existing one won't be changed.
+        If phone isn't provided, the existing phone number won't be changed.
+
+        This could be called from an application to apiori setup a user for two factor
+        without the user having to go through the setup process.
+
+        To get a totp_secret - use ``app.security._totp_factory.generate_totp_secret()``
+
+        .. versionadded: 3.4.1
+        """
+
+        changed = False
+        if user.tf_primary_method != primary_method:
+            user.tf_primary_method = primary_method
+            changed = True
+        if totp_secret and user.tf_totp_secret != totp_secret:
+            user.tf_totp_secret = totp_secret
+            changed = True
+        if phone and user.tf_phone_number != phone:
+            user.tf_phone_number = phone
+            changed = True
+        if changed:
+            self.put(user)
+
+    def tf_reset(self, user):
+        """ Disable two-factor auth for user
+
+        .. versionadded: 3.4.1
+        """
+        user.tf_primary_method = None
+        user.tf_totp_secret = None
+        user.tf_phone_number = None
+        self.put(user)
+
+    def us_get_totp_secrets(self, user):
+        """ Return totp secrets.
+        These are json encoded in the DB.
+
+        Returns a dict with methods as keys and secrets as values.
+
+        .. versionadded:: 3.4.0
+        """
+        if not user.us_totp_secrets:
+            return {}
+        return json.loads(user.us_totp_secrets)
+
+    def us_put_totp_secrets(self, user, secrets):
+        """ Save secrets. Assume to be a dict (or None)
+        with keys as methods, and values as (encrypted) secrets.
+
+        .. versionadded:: 3.4.0
+        """
+        user.us_totp_secrets = json.dumps(secrets) if secrets else None
+        self.put(user)
+
+    def us_set(self, user, method, totp_secret=None, phone=None):
+        """ Set unified sign in info into user record.
+
+        If totp_secret isn't provided - existing one won't be changed.
+        If phone isn't provided, the existing phone number won't be changed.
+
+        This could be called from an application to apiori setup a user for unified
+        sign in without the user having to go through the setup process.
+
+        To get a totp_secret - use ``app.security._totp_factory.generate_totp_secret()``
+
+        .. versionadded: 3.4.1
+        """
+
+        if totp_secret:
+            totp_secrets = self.us_get_totp_secrets(user)
+            totp_secrets[method] = totp_secret
+            self.us_put_totp_secrets(user, totp_secrets)
+        if phone and user.us_phone_number != phone:
+            user.us_phone_number = phone
+            self.put(user)
+
+    def us_reset(self, user):
+        """ Disable unified sign in for user.
+        Be aware that if "email" is an allowed way to receive codes, they
+        will still work (as totp secrets are generated on the fly).
+        This will disable authenticator app and SMS.
+
+        .. versionadded: 3.4.1
+        """
+        user.us_totp_secrets = None
+        user.us_phone_number = None
+        self.put(user)
 
 
 class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
