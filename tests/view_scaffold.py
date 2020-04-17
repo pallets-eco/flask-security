@@ -71,6 +71,7 @@ def create_app():
     app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = ["email", "us_phone_number"]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["password"]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["authenticator", "password"]
+
     # app.config["SECURITY_US_SIGNIN_REPLACES_LOGIN"] = True
 
     app.config["SECURITY_TOTP_SECRETS"] = {
