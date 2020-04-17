@@ -564,7 +564,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  methods:
+                  available_methods:
                     type: string
                     description: Config setting SECURITY_US_ENABLED_METHODS
                   code_methods:
@@ -694,7 +694,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  methods:
+                  available_methods:
                     type: string
                     description: Config setting SECURITY_US_ENABLED_METHODS
                   code_methods:
@@ -811,9 +811,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  methods:
+                  available_methods:
                     type: string
                     description: Config setting SECURITY_US_ENABLED_METHODS
+                  active_methods:
+                    type: string
+                    description: Methods that have already been setup.
                   setup_methods:
                     type: string
                     description: All SECURITY_US_ENABLED_METHODS that require setup.
@@ -868,7 +871,7 @@ paths:
         schema:
           type: string
     get:
-      summary: Verify unified sign in setup request.
+      summary: Validate unified sign in setup request.
       description: >
         This does nothing but redirect back to the setup form.
       responses:
@@ -880,16 +883,25 @@ paths:
                 example: render_template(SECURITY_US_SETUP_TEMPLATE)
               
     post:
-      summary: Verify code sent and store setup method.
+      summary: Validate passcode sent and store setup method.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsSetupValidateRequest"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UsSetupValidateRequest"
       responses:
         200:
-          description: Successfully verifed and setup sign in method.
+          description: Successfully validated and persisted sign in method.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UsSetupVerifyJsonResponse"
+                $ref: "#/components/schemas/UsSetupValidateJsonResponse"
         302:
-          description: Successfuly verified and setup sign in method.
+          description: Successfuly validated and persisted sign in method.
           headers:
             Location:
               description: |
@@ -897,6 +909,12 @@ paths:
                                  SECURITY_POST_LOGIN_VIEW
               schema:
                 type: string
+        400:
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /us-verify-link:
     parameters:
       - name: email
@@ -1172,7 +1190,7 @@ components:
           description: which method should be used to send the code, as configured with SECURITY_US_ENABLED_METHODS
         phone:
           type: string
-          description: phone number (this will be normalized)
+          description: phone number (this will be normalized). Required if chosen_method == "sms".
     UsSetupJsonResponse:
       type: object
       required: [meta, response]
@@ -1193,8 +1211,15 @@ components:
               description: The chosen_method as passed into API.
             state:
               type: string
-              description: Opaque blob that must be pass to /us-setup-verify. This is a signed, timed token.
-    UsSetupVerifyJsonResponse:
+              description: Opaque blob that must be pass to /us-setup/<state>. This is a signed, timed token.
+    UsSetupValidateRequest:
+      type: object
+      required: [passcode]
+      properties:
+        passcode:
+          type: string
+          description: Code/Passcode as received from method being setup.
+    UsSetupValidateJsonResponse:
       type: object
       required: [meta, response]
       properties:

@@ -122,7 +122,7 @@ The following is a list of all the available form overrides:
 * ``two_factor_rescue_form``: Two-factor help user form
 * ``us_signin_form``: Unified sign in form
 * ``us_setup_form``: Unified sign in setup form
-* ``us_setup_verify_form``: Unified sign in setup verify form
+* ``us_setup_validate_form``: Unified sign in setup validation form
 
 .. tip::
     Changing/extending the form class won't directly change how it is displayed.
