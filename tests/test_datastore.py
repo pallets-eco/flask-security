@@ -471,3 +471,39 @@ def test_uuid(app, request, tmpdir, realdburl):
     with app.app_context():
         user = ds.get_user("matt@lp.com")
         assert not user
+
+
+def test_user_loader(app, sqlalchemy_datastore):
+    # user_loader now tries first to match fs_uniquifier then match user.id
+    # While we know that fs_uniquifier is a string - we don't know what user.id is
+    # and we know that psycopg2 is really finicky about this.
+    from flask_security.core import _user_loader
+
+    init_app_with_options(app, sqlalchemy_datastore)
+    with app.app_context():
+        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
+
+        # normal case
+        user = _user_loader(jill.fs_uniquifier)
+        assert user.email == "jill@lp.com"
+
+        # send in an int - make sure it is cast to string for check against
+        # fs_uniquifier
+        user = _user_loader(1000)
+        assert not user
+        # with psycopg2 this will lock up DB but since we pass exceptions we can
+        # check this by trying some other DB operation
+        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
+        assert jill
+
+        # This works since DBs seem to try to cast to underlying type
+        user = _user_loader("10")
+        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
+        assert jill
+
+        # Since this doesn't match an existing fs_uniqifier, and user.id is an int
+        # this will make pyscopg2 angry. This test verifies that we don't in fact
+        # try to take a string and use it to lookup an int.
+        user = _user_loader("someunknown")
+        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
+        assert jill

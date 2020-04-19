@@ -437,21 +437,24 @@ _default_forms = {
 
 
 def _user_loader(user_id):
-    # Try to load based on fs_uniquifier (alternative_id) first
+    """ Try to load based on fs_uniquifier (alternative_id) if available.
+
+    Note that we don't try, and fall back to the other - primarily because some DBs
+    and drivers (psycopg2) really really hate getting mismatched types during queries.
+    They hate it enough that they abort the 'transaction' and refuse to do anything
+    in the future until the transaction is rolled-back. But we don't really control
+    that and there doesn't seem to be any way to catch the actual offensive query -
+    just next time and forever, things fail.
+    This assumes that if the app has fs_uniquifier, it is non-nullable as we specify
+    so we use that and only that.
+    """
     if hasattr(_datastore.user_model, "fs_uniquifier"):
-        try:
-            user = _security.datastore.find_user(fs_uniquifier=user_id)
-            if user and user.active:
-                return user
-        except Exception:
-            pass
-    # Load based on user.id as fallback method for upstream data
-    try:
-        user = _security.datastore.find_user(id=user_id)
-        if user and user.active:
-            return user
-    except Exception:
-        pass
+        selector = dict(fs_uniquifier=str(user_id))
+    else:
+        selector = dict(id=user_id)
+    user = _security.datastore.find_user(**selector)
+    if user and user.active:
+        return user
     return None
 
 

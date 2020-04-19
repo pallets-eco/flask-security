@@ -7,7 +7,7 @@ and `Role` model. The fields on your models must follow a particular convention
 depending on the functionality your app requires. Aside from this, you're free
 to add any additional fields to your model(s) if you want.
 
-As more features are added to Flask-Security, the requirements for required fields and tables grow.
+As more features are added to Flask-Security, the list of required fields and tables grow.
 As you use these features, and therefore use these fields and tables, database migrations are required;
 which are a bit of a pain. To make things easier - Flask-Security includes mixins that
 contain ALL the fields and tables required for all features. They also contain
@@ -24,18 +24,18 @@ your `User` and `Role` model should include the following fields:
 
 **User**
 
-* ``id``
-* ``email``
-* ``password``
-* ``active``
-* ``fs_uniquifier``
+* ``id`` (primary key - integer, string, or uuid)
+* ``email`` (for most features - unique, non-nullable)
+* ``password`` (non-nullable)
+* ``active`` (boolean, non-nullable)
+* ``fs_uniquifier`` (unique, non-nullable)
 
 
 **Role**
 
-* ``id``
-* ``name``
-* ``description``
+* ``id`` (primary key - integer)
+* ``name`` (unique, non-nullable)
+* ``description`` (string)
 
 
 Additional Functionality
@@ -51,7 +51,7 @@ If you enable account confirmation by setting your application's
 `SECURITY_CONFIRMABLE` configuration value to `True`, your `User` model will
 require the following additional field:
 
-* ``confirmed_at``
+* ``confirmed_at`` (datetime)
 
 Trackable
 ^^^^^^^^^
@@ -60,11 +60,11 @@ If you enable user tracking by setting your application's `SECURITY_TRACKABLE`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
-* ``last_login_at``
-* ``current_login_at``
-* ``last_login_ip``
-* ``current_login_ip``
-* ``login_count``
+* ``last_login_at`` (datetime)
+* ``current_login_at`` (datetime)
+* ``last_login_ip`` (string)
+* ``current_login_ip`` (string)
+* ``login_count`` (integer)
 
 Two_Factor
 ^^^^^^^^^^
@@ -73,13 +73,13 @@ If you enable two-factor by setting your application's `SECURITY_TWO_FACTOR`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
-* ``tf_totp_secret``
-* ``tf_primary_method``
+* ``tf_totp_secret`` (string)
+* ``tf_primary_method`` (string)
 
 If you include 'sms' in `SECURITY_TWO_FACTOR_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
-* ``tf_phone_number``
+* ``tf_phone_number`` (string)
 
 Unified Sign In
 ^^^^^^^^^^^^^^^
@@ -93,14 +93,14 @@ additional fields:
 If you include 'sms' in :py:data:`SECURITY_US_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
-* ``us_phone_number``
+* ``us_phone_number`` (string)
 
 Permissions
 ^^^^^^^^^^^
 If you want to protect endpoints with permissions, and assign permissions to roles
 that are then assigned to users the Role model requires:
 
-* ``permissions``
+* ``permissions`` (UnicodeText)
 
 Custom User Payload
 ^^^^^^^^^^^^^^^^^^^
