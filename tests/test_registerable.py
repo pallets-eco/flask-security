@@ -311,3 +311,37 @@ def test_easy_password(app, sqlalchemy_datastore):
         "Password not complex enough"
         in response.json["response"]["errors"]["password"][0]
     )
+
+
+def test_nullable_username(app, sqlalchemy_datastore):
+    # sqlalchemy datastore uses fsqlav2 which has username as unique and nullable
+    # make sure can register multiple users with no username
+    # Note that current WTForms (2.2.1) has a bug where StringFields can never be
+    # None - it changes them to an empty string. DBs don't like that if you have
+    # your column be 'nullable'.
+    class NullableStringField(StringField):
+        def process_formdata(self, valuelist):
+            if valuelist:
+                self.data = valuelist[0]
+
+    class MyRegisterForm(ConfirmRegisterForm):
+        username = NullableStringField("Username")
+
+    app.config["SECURITY_CONFIRM_REGISTER_FORM"] = MyRegisterForm
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+
+    client = app.test_client()
+
+    data = dict(email="u1@test.com", password="password", password_confirm="password")
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    data = dict(email="u2@test.com", password="password", password_confirm="password")
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 200
