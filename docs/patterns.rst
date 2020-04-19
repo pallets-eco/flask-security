@@ -68,7 +68,7 @@ can be protected by requiring a 'fresh' or recent authentication. Flask-Security
 
     - :func:`.auth_required` takes parameters that define how recent the authentication must have happened. In addition a grace
       period can be specified so that multiple step operations don't require re-authentication in the middle.
-    - A default :meth:`.Security.reauthn_handler` that is called when a request fails the recent authentication check
+    - A default :meth:`.Security.reauthn_handler` that is called when a request fails the recent authentication check.
     - :py:data:`SECURITY_VERIFY_URL` and :py:data:`SECURITY_US_VERIFY_URL` endpoints that request the user to re-authenticate
     - VerifyForm and UsVerifyForm forms that can be extended.
 

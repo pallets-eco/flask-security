@@ -6,15 +6,36 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 4.0.0
 -------------
 
-Released Target xxx
+Release Target 2020
 
-- Removal of python 2.7 support
+- Removal of python 2.7 and <3.6 support
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
+- Other possible breaking changes tracked `here`_
+
+.. _here: https://github.com/jwag956/flask-security/issues/85
+
+Version 3.4.1
+--------------
+
+Released TBD April xx, 2020
+
+Fix a bunch of bugs in new unified sign in along with a couple other regressions.
+
+Fixed
++++++
+- (:issue:`298`) Alternative ID feature ran afoul of postgres/psycopg2 finickiness.
+- (:issue:`300`) JSON 401 responses had WWW-Authenticate Header attached - that caused
+  browsers to pop up their own login/password form. Not what applications want.
+- (:issue:`280`) Allow admin/api to setup TFA (and unified sign in) out of band.
+  Please see :meth:`.UserDatastore.tf_set`, :meth:`.UserDatastore.tf_reset`,
+  :meth:`.UserDatastore.us_set`, :meth:`.UserDatastore.us_reset` and
+  :meth:`.UserDatastore.reset_user_access`.
+
 
 Version 3.4.0
 -------------
 
-Released Target March 2020
+Released March 31, 2020
 
 Features
 ++++++++
