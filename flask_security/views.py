@@ -576,8 +576,7 @@ def reset_password(token):
 
     if invalid or expired:
         if _security._want_json(request):
-            form._errors = m
-            return base_render_json(form)
+            return _security._render_json(json_error_response(m), 400, None, None)
         else:
             return redirect(url_for_security("forgot_password"))
 
@@ -975,8 +974,7 @@ def two_factor_verify_password():
             do_flash(m, c)
             return redirect(url_for_security("two_factor_setup"))
         else:
-            form._errors = m
-            return base_render_json(form)
+            return _security._render_json(json_error_response(m), 400, None, None)
 
     if _security._want_json(request):
         assert form.user == current_user
@@ -1050,8 +1048,7 @@ def _tf_illegal_state(form, redirect_to):
         do_flash(m, c)
         return redirect(get_url(redirect_to))
     else:
-        form._errors = m
-        return base_render_json(form)
+        return _security._render_json(json_error_response(m), 400, None, None)
 
 
 def create_blueprint(app, state, import_name, json_encoder=None):
