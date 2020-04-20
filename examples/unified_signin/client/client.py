@@ -121,7 +121,7 @@ def ussetup(server_url, session, password, phone):
     code = jbody["sms"].split()[-1].strip(".")
     resp = session.post(
         "{}/us-setup/{}".format(server_url, state),
-        json={"code": code},
+        json={"passcode": code},
         headers={"X-XSRF-Token": csrf_token},
     )
     check_error(resp)
