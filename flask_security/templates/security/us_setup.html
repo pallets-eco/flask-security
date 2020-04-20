@@ -8,6 +8,13 @@
           name="us_setup_form">
       {{ us_setup_form.hidden_tag() }}
       {% if setup_methods %}
+        <p>Currently Active options:
+        {% if active_methods %}
+          {{ ", ".join(active_methods) }}
+        {% else %}
+          None.
+        {% endif %}
+        </p>
         {% for subfield in us_setup_form.chosen_method %}
           {% if subfield.data in available_methods %}
               {{ render_field_with_errors(subfield) }}
