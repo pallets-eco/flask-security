@@ -17,9 +17,9 @@ Release Target 2020
 Version 3.4.1
 --------------
 
-Released TBD April xx, 2020
+Released April 22, 2020
 
-Fix a bunch of bugs in new unified sign in along with a couple other regressions.
+Fix a bunch of bugs in new unified sign in along with a couple other major issues.
 
 Fixed
 +++++
@@ -30,6 +30,9 @@ Fixed
   Please see :meth:`.UserDatastore.tf_set`, :meth:`.UserDatastore.tf_reset`,
   :meth:`.UserDatastore.us_set`, :meth:`.UserDatastore.us_reset` and
   :meth:`.UserDatastore.reset_user_access`.
+- (:pr:`305`) We used form._errors which wasn't very pythonic, and it was
+  removed in WTForms 2.3.0.
+- (:pr:`310`) WTForms 2.3.0 made email_validator optional - we need it.
 
 
 Version 3.4.0

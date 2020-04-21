@@ -63,6 +63,7 @@ install_requires = [
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=0.14.2",
     "Flask-BabelEx>=0.9.3",
+    "email-validator>=1.0.5",
     "itsdangerous>=1.1.0",
     "passlib>=1.7.1",
 ]
