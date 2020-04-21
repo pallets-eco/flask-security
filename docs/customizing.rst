@@ -194,23 +194,32 @@ Sometimes it makes sense to send emails via a task queue, such as `Celery`_.
 To delay the sending of emails, you can use the ``@security.send_mail_task``
 decorator like so::
 
+
+    from flask_mail import Message
+    
     # Setup the task
     @celery.task
-    def send_security_email(msg):
+    def send_flask_mail(**kwargs):
         # Use the Flask-Mail extension instance to send the incoming ``msg`` parameter
         # which is an instance of `flask_mail.Message`
-        mail.send(msg)
+        mail.send(Message(**kwargs))
 
     @security.send_mail_task
-    def delay_security_email(msg):
-        send_security_email.delay(msg)
+    def delay_flask_security_mail(msg):
+        send_flask_mail.delay(
+            subject=msg.subject,
+            sender=msg.sender,
+            recipients=msg.recipients,
+            body=msg.body,
+            html=msg.html,
+        )
 
 If factory method is going to be used for initialization, use ``_SecurityState``
 object returned by ``init_app`` method to initialize Celery tasks instead of using
 ``security.send_mail_task`` directly like so::
 
     from flask import Flask
-    from flask_mail import Mail
+    from flask_mail import Mail, Message
     from flask_security import Security, SQLAlchemyUserDatastore
     from celery import Celery
 
@@ -225,8 +234,8 @@ object returned by ``init_app`` method to initialize Celery tasks instead of usi
         app.config.from_object(config)
 
         @celery.task
-        def send_flask_mail(msg):
-            mail.send(msg)
+        def send_flask_mail(**kwargs):
+            mail.send(Message(**kwargs))
 
         mail.init_app(app)
         datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -235,7 +244,13 @@ object returned by ``init_app`` method to initialize Celery tasks instead of usi
         # Flexible way for defining custom mail sending task.
         @security_ctx.send_mail_task
         def delay_flask_security_mail(msg):
-            send_flask_mail.delay(msg)
+            send_flask_mail.delay(
+                subject=msg.subject,
+                sender=msg.sender,
+                recipients=msg.recipients,
+                body=msg.body,
+                html=msg.html,
+            )
 
         # A shortcut.
         security_ctx.send_mail_task(send_flask_mail.delay)
