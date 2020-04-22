@@ -513,13 +513,13 @@ def _request_loader(request):
 
 def _identity_loader():
     if not isinstance(current_user._get_current_object(), AnonymousUserMixin):
-        identity = Identity(current_user.id)
+        identity = Identity(current_user.get_id())
         return identity
 
 
 def _on_identity_loaded(sender, identity):
     if hasattr(current_user, "id"):
-        identity.provides.add(UserNeed(current_user.id))
+        identity.provides.add(UserNeed(current_user.get_id()))
 
     for role in getattr(current_user, "roles", []):
         identity.provides.add(RoleNeed(role.name))
@@ -745,7 +745,7 @@ class UserMixin(BaseUserMixin):
 
         This data MUST be securely signed using the ``remember_token_serializer``
         """
-        data = [str(self.id), hash_data(self.password)]
+        data = [str(self.get_id()), hash_data(self.password)]
         if hasattr(self, "fs_uniquifier"):
             data.append(self.fs_uniquifier)
         return _security.remember_token_serializer.dumps(data)
@@ -798,7 +798,7 @@ class UserMixin(BaseUserMixin):
 
     def get_security_payload(self):
         """Serialize user object as response payload."""
-        return {"id": str(self.id)}
+        return {"id": str(self.get_id())}
 
     def get_redirect_qparams(self, existing=None):
         """Return user info that will be added to redirect query params.

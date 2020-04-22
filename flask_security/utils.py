@@ -133,7 +133,8 @@ def login_user(user, remember=None, authn_via=None):
     session["fs_cc"] = "set"  # CSRF cookie
     session["fs_paa"] = time.time()  # Primary authentication at - timestamp
 
-    identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+    identity_changed.send(
+        current_app._get_current_object(), identity=Identity(user.get_id()))
 
     user_authenticated.send(
         current_app._get_current_object(), user=user, authn_via=authn_via
