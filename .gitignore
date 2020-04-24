@@ -66,3 +66,15 @@ Session.vim
 
 # pre-commit config
 .pre-commit-config.yaml
+
+### Emacs template
+# -*- mode: gitignore; -*-
+# *~
+**/*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
