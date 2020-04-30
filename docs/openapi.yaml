@@ -16,15 +16,15 @@ info:
     In particular
     it can't represent both form input and JSON input - but all APIs take both.
 
-    You can download the latest spec from: https://github.com/jwag956/flask-security/blob/master/docs/openapi.yaml
+    You can download the latest spec from: https://github.com/Flask-Middleware/flask-security/blob/master/docs/openapi.yaml
   version: 1.0.0
   title: "Flask-Security External API"
   contact:
     name: Flask-Security-Too
-    url: https://github.com/jwag956/flask-security
+    url: https://github.com/Flask-Middleware/flask-security
   license:
     name: MIT
-    url: https://github.com/jwag956/flask-security/blob/master/LICENSE
+    url: https://github.com/Flask-Middleware/flask-security/blob/master/LICENSE
 paths:
   /login:
     get:
@@ -88,7 +88,7 @@ paths:
           description: >
             If the caller already authenticated, the form contents is ignored and a
             redirect is done: redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW).
-            
+
             If the caller is NOT already authenticated, and the form contents are
             validated the caller will be redirected to:
             redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW)
@@ -539,7 +539,7 @@ paths:
 
                 On form-success: SECURITY_POST_CONFIRM_VIEW or
                                  SECURITY_POST_LOGIN_VIEW
-                                 
+
                 On form-success (no auto-login): SECURITY_POST_CONFIRM_VIEW or
                                  SECURITY_LOGIN_URL
 
@@ -602,7 +602,7 @@ paths:
           description: >
             If the caller already authenticated, the form contents is ignored and a
             redirect is done: redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW).
-            
+
             If the caller is NOT already authenticated, and the form contents are
             validated the caller will be redirected to:
             redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW)
@@ -669,14 +669,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DefaultJsonErrorResponse"    
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
         500:
           description: Error when trying to send code.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
-                
+
   /us-verify:
     get:
       summary: Unified sign in re-authentication.
@@ -790,7 +790,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DefaultJsonErrorResponse"    
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
         500:
           description: Error when trying to send code.
           content:
@@ -881,7 +881,7 @@ paths:
             text/html:
               schema:
                 example: render_template(SECURITY_US_SETUP_TEMPLATE)
-              
+
     post:
       summary: Validate passcode sent and store setup method.
       requestBody:
@@ -947,7 +947,7 @@ paths:
                 On spa-error-expired: SECURITY_LOGIN_ERROR_VIEW?error={msg}
 
                 On spa-error-invalid-token: SECURITY_LOGIN_ERROR_VIEW?error={msg}
-                
+
                 On spa-two-factor-required: SECURITY_LOGIN_ERROR_VIEW?tf_required=1
 
                 On form-success: SECURITY_POST_LOGIN_VIEW
@@ -955,7 +955,7 @@ paths:
                 On form-error-expired: SECURITY_US_SIGNIN_URL
 
                 On form-error-invalid-token: SECURITY_US_SIGNIN_URL
-                
+
                 On form-success and two-factor: SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL or SECURITY_TWO_FACTOR_SETUP_URL
               schema:
                 type: string
@@ -979,7 +979,7 @@ paths:
           description: Token invalid or expired.
         404:
           description: authenticator not configured.
-              
+
 components:
   schemas:
     Login:
@@ -1240,7 +1240,7 @@ components:
             phone:
               type: string
               description: Phone number if set.
-      
+
   headers:
     X-CSRF-Token:
       description: CSRF token

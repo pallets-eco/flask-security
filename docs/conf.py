@@ -58,7 +58,7 @@ author = "Matt Wright & Chris Wagner"
 # built documents.
 #
 # The short X.Y version.
-version = "3.4.1"
+version = "3.4.2"
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -113,9 +113,12 @@ html_theme_options = {"index_sidebar_logo": False}
 html_context = {
     "project_links": [
         ProjectLink("PyPI releases", "https://pypi.org/project/Flask-Security-Too/"),
-        ProjectLink("Source Code", "https://github.com/jwag956/flask-security/"),
         ProjectLink(
-            "Issue Tracker", "https://github.com/jwag956/flask-security/issues/"
+            "Source Code", "https://github.com/Flask-Middleware/flask-security/"
+        ),
+        ProjectLink(
+            "Issue Tracker",
+            "https://github.com/Flask-Middleware/flask-security/issues/",
         ),
     ]
 }
@@ -264,4 +267,4 @@ intersphinx_mapping = {"https://docs.python.org/3": None}
 
 # -- Options for sphinx-issues ---------------------------------------------
 # Github repo
-issues_github_path = "jwag956/flask-security"
+issues_github_path = "Flask-Middleware/flask-security"

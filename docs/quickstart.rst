@@ -452,4 +452,4 @@ in 2 ways:
 Look in the `Flask-Security repo`_ *examples* directory for actual code that implements the
 first approach.
 
-.. _Flask-Security repo: https://github.com/jwag956/flask-security
+.. _Flask-Security repo: https://github.com/Flask-Middleware/flask-security

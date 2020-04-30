@@ -12,7 +12,14 @@ Release Target 2020
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
 - Other possible breaking changes tracked `here`_
 
-.. _here: https://github.com/jwag956/flask-security/issues/85
+.. _here: https://github.com/Flask-Middleware/flask-security/issues/85
+
+Version 3.4.2
+-------------
+
+Released May x, 2020
+
+Only change is to move repo to the Flask-Middleware github organization.
 
 Version 3.4.1
 --------------

@@ -1,21 +1,21 @@
 Flask-Security
 ===================
 
-.. image:: https://travis-ci.org/jwag956/flask-security.svg?branch=master
-    :target: https://travis-ci.org/jwag956/flask-security
+.. image:: https://travis-ci.org/Flask-Middleware/flask-security.svg?branch=master
+    :target: https://travis-ci.org/Flask-Middleware/flask-security
 
-.. image:: https://coveralls.io/repos/github/jwag956/flask-security/badge.svg?branch=master
-    :target: https://coveralls.io/github/jwag956/flask-security?branch=master
+.. image:: https://coveralls.io/repos/github/Flask-Middleware/flask-security/badge.svg?branch=master
+    :target: https://coveralls.io/github/Flask-Middleware/flask-security?branch=master
 
-.. image:: https://img.shields.io/github/tag/jwag956/flask-security.svg
-    :target: https://github.com/jwag956/flask-security/releases
+.. image:: https://img.shields.io/github/tag/Flask-Middleware/flask-security.svg
+    :target: https://github.com/Flask-Middleware/flask-security/releases
 
 .. image:: https://img.shields.io/pypi/dm/flask-security-too.svg
     :target: https://pypi.python.org/pypi/flask-security-too
     :alt: Downloads
 
-.. image:: https://img.shields.io/github/license/jwag956/flask-security.svg
-    :target: https://github.com/jwag956/flask-security/blob/master/LICENSE
+.. image:: https://img.shields.io/github/license/Flask-Middleware/flask-security.svg
+    :target: https://github.com/Flask-Middleware/flask-security/blob/master/LICENSE
     :alt: License
 
 .. image:: https://readthedocs.org/projects/flask-security-too/badge/?version=latest
@@ -55,7 +55,7 @@ Issues and pull requests are welcome. Other maintainers are also welcome. Unlike
 the original Flask-Security - issue pull requests against the *master* branch.
 Please consult these `contributing`_ guidelines.
 
-.. _contributing: https://github.com/jwag956/flask-security/blob/master/CONTRIBUTING.rst
+.. _contributing: https://github.com/Flask-Middleware/flask-security/blob/master/CONTRIBUTING.rst
 
 Installing
 ----------
@@ -71,5 +71,5 @@ Resources
 
 - `Documentation <https://flask-security-too.readthedocs.io/>`_
 - `Releases <https://pypi.org/project/Flask-Security-Too/>`_
-- `Issue Tracker <https://github.com/jwag956/flask-security/issues>`_
-- `Code <https://github.com/jwag956/flask-security/>`_
+- `Issue Tracker <https://github.com/Flask-Middleware/flask-security/issues>`_
+- `Code <https://github.com/Flask-Middleware/flask-security/>`_
