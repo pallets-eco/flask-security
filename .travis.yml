@@ -89,7 +89,7 @@ deploy:
   distributions: "compile_catalog sdist bdist_wheel"
   skip_cleanup: true
   on:
-    repo: Flask-Middldeware/flask-security
+    repo: Flask-Middleware/flask-security
     tags: true
     python: "3.7"
     condition: $REQUIREMENTS = release
