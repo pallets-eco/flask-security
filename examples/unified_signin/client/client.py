@@ -44,8 +44,8 @@ def check_error(resp):
     if "errors" in rdata:
         # these are form errors a dict of form label: [list of errors]
         msgs = []
-        for l, emsgs in rdata["errors"].items():
-            msgs.extend(["{}-{}".format(l, msg) for msg in emsgs])
+        for label, emsgs in rdata["errors"].items():
+            msgs.extend(["{}-{}".format(label, msg) for msg in emsgs])
         raise ApiException(msgs, resp.status_code)
     if resp.status_code >= 400:
         raise ApiException("Error status w/o response", resp.status_code)
