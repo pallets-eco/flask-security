@@ -280,7 +280,7 @@ Version 3.2.0
 
 Released June 26th 2019
 
-- (opr #839) Support caching of authentication token (eregnier).
+- (:pr:`80`) Support caching of authentication token (eregnier `opr #839 <https://github.com/mattupstate/flask-security/pull/839>`_).
   This adds a new configuration variable *SECURITY_USE_VERIFY_PASSWORD_CACHE*
   which enables a cache (with configurable TTL) for authentication tokens.
   This is a big performance boost for those accessing Flask-Security via token
@@ -301,17 +301,17 @@ Version 3.1.0
 
 Released never
 
-- (opr #487) Use Security.render_template in mails too (noirbizarre)
-- (opr #679) Optimize DB accesses by using an SQL JOIN when retrieving a user. (nfvs)
-- (opr #697) Add base template to security templates (grihabor)
-- (opr #633) datastore: get user by numeric identity attribute (jirikuncar)
-- (opr #703) bugfix: support application factory pattern (briancappello)
-- (opr #714) Make SECURITY_PASSWORD_SINGLE_HASH a list of scheme ignoring double hash (noirbizarre )
-- (opr #717) Allow custom login_manager to be passed in to Flask-Security (jaza)
-- (opr #727) Docs for OAauth2-based custom login manager (jaza)
-- (opr #779) core: make the User model check the password (mklassen)
-- (opr #730) Customizable send_mail (abulte)
-- (opr #726) core: fix default for UNAUTHORIZED_VIEW (jirijunkar)
+- (:pr:`53`) Use Security.render_template in mails too (noirbizarre `opr #487 <https://github.com/mattupstate/flask-security/pull/487>`_)
+- (:pr:`56`) Optimize DB accesses by using an SQL JOIN when retrieving a user. (nfvs `opr #679 <https://github.com/mattupstate/flask-security/pull/679>`_)
+- (:pr:`57`) Add base template to security templates (grihabor `opr #697 <https://github.com/mattupstate/flask-security/pull/697>`_)
+- (:pr:`73`) datastore: get user by numeric identity attribute (jirikuncar `opr #633 <https://github.com/mattupstate/flask-security/pull/633>`_)
+- (:pr:`58`) bugfix: support application factory pattern (briancappello `opr #703 <https://github.com/mattupstate/flask-security/pull/703>`_)
+- (:pr:`60`) Make SECURITY_PASSWORD_SINGLE_HASH a list of scheme ignoring double hash (noirbizarre `opr #714 <https://github.com/mattupstate/flask-security/pull/714>`_)
+- (:pr:`61`) Allow custom login_manager to be passed in to Flask-Security (jaza `opr #717 <https://github.com/mattupstate/flask-security/pull/717>`_)
+- (:pr:`62`) Docs for OAauth2-based custom login manager (jaza `opr #727 <https://github.com/mattupstate/flask-security/pull/727>`_)
+- (:pr:`63`) core: make the User model check the password (mklassen `opr #779 <https://github.com/mattupstate/flask-security/pull/779>`_)
+- (:pr:`64`) Customizable send_mail (abulte `opr #730 <https://github.com/mattupstate/flask-security/pull/730>`_)
+- (:pr:`68`) core: fix default for UNAUTHORIZED_VIEW (jirijunkar `opr #726 <https://github.com/mattupstate/flask-security/pull/726>`_)
 
 These should all be backwards compatible.
 
