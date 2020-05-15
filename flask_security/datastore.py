@@ -11,7 +11,7 @@
 import json
 import uuid
 
-from .utils import config_value, get_identity_attributes, string_types
+from .utils import config_value, get_identity_attributes
 
 
 class Datastore:
@@ -132,9 +132,9 @@ class UserDatastore:
         self.role_model = role_model
 
     def _prepare_role_modify_args(self, user, role):
-        if isinstance(user, string_types):
+        if isinstance(user, str):
             user = self.find_user(email=user)
-        if isinstance(role, string_types):
+        if isinstance(role, str):
             role = self.find_role(role)
         return user, role
 
@@ -273,7 +273,7 @@ class UserDatastore:
             perms = kwargs["permissions"]
             if isinstance(perms, list) or isinstance(perms, set):
                 perms = ",".join(perms)
-            elif isinstance(perms, string_types):
+            elif isinstance(perms, str):
                 # squash spaces.
                 perms = ",".join([p.strip() for p in perms.split(",")])
             kwargs["permissions"] = perms

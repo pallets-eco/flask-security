@@ -11,13 +11,10 @@
 
 from contextlib import contextmanager
 from datetime import timedelta
-
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
+from unittest.mock import Mock
 import re
 import time
+from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
@@ -33,11 +30,6 @@ from flask_security import (
     user_authenticated,
 )
 from flask_security.utils import capture_flashes, capture_reset_password_requests
-
-try:
-    from urlparse import parse_qsl, urlsplit
-except ImportError:  # pragma: no cover
-    from urllib.parse import parse_qsl, urlsplit
 
 pytestmark = pytest.mark.unified_signin()
 

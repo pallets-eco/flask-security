@@ -30,7 +30,6 @@
     authenticated (via session?) as well as unauthenticated access.
 """
 
-import sys
 import time
 
 from flask import (
@@ -97,8 +96,19 @@ from .utils import (
 
 if get_quart_status():  # pragma: no cover
     from quart import make_response, redirect
+
+    async def _commit(response=None):
+        _datastore.commit()
+        return response
+
+
 else:
     from flask import make_response, redirect
+
+    def _commit(response=None):
+        _datastore.commit()
+        return response
+
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
@@ -114,16 +124,6 @@ def default_render_json(payload, code, headers, user):
     headers["Content-Type"] = "application/json"
     payload = dict(meta=dict(code=code), response=payload)
     return make_response(jsonify(payload), code, headers)
-
-
-PY3 = sys.version_info[0] == 3
-if PY3 and get_quart_status():  # pragma: no cover
-    from .async_compat import _commit  # noqa: F401
-else:
-
-    def _commit(response=None):
-        _datastore.commit()
-        return response
 
 
 def _ctx(endpoint):

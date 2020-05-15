@@ -52,7 +52,6 @@ from flask_security.utils import (
     json_error_response,
     hash_data,
     send_mail,
-    string_types,
     uia_phone_mapper,
     verify_hash,
 )
@@ -336,9 +335,9 @@ def test_legacy_hash(in_app_context, data):
 
 def test_hash_data(in_app_context):
     data = hash_data(b"hello")
-    assert isinstance(data, string_types)
+    assert isinstance(data, str)
     data = hash_data("hellö")
-    assert isinstance(data, string_types)
+    assert isinstance(data, str)
 
 
 def test_verify_hash(in_app_context):

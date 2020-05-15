@@ -10,6 +10,7 @@
 
 import base64
 import json
+from http.cookiejar import Cookie
 import pytest
 
 from flask import Blueprint
@@ -22,11 +23,6 @@ from utils import (
     populate_data,
     verify_token,
 )
-
-try:
-    from cookielib import Cookie
-except ImportError:
-    from http.cookiejar import Cookie
 
 
 def test_login_view(client):
