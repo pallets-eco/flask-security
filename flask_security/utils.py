@@ -14,11 +14,13 @@ import datetime
 from functools import partial
 import hashlib
 import hmac
-import sys
 import time
 import warnings
 from contextlib import contextmanager
 from datetime import timedelta
+from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
+import urllib.request
+import urllib.error
 
 from flask import _request_ctx_stack, current_app, flash, g, request, session, url_for
 from flask.json import JSONEncoder
@@ -43,12 +45,6 @@ from .signals import (
     user_registered,
 )
 
-try:  # pragma: no cover
-    from urlparse import parse_qsl, parse_qs, urlsplit, urlunsplit
-    from urllib import urlencode
-except ImportError:  # pragma: no cover
-    from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
-
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
 
@@ -59,15 +55,6 @@ _pwd_context = LocalProxy(lambda: _security.pwd_context)
 _hashing_context = LocalProxy(lambda: _security.hashing_context)
 
 localize_callback = LocalProxy(lambda: _security.i18n_domain.gettext)
-
-PY3 = sys.version_info[0] == 3
-
-if PY3:  # pragma: no cover
-    string_types = (str,)  # noqa
-    text_type = str  # noqa
-else:  # pragma: no cover
-    string_types = (basestring,)  # noqa
-    text_type = unicode  # noqa
 
 FsPermNeed = partial(Need, "fsperm")
 FsPermNeed.__doc__ = """A need with the method preset to `"fsperm"`."""
@@ -168,10 +155,6 @@ def logout_user():
     _logout_user()
 
 
-def _py2timestamp(dt):
-    return time.mktime(dt.timetuple()) + dt.microsecond / 1e6
-
-
 def check_and_update_authn_fresh(within, grace):
     """ Check if user authenticated within specified time and update grace period.
 
@@ -210,13 +193,11 @@ def check_and_update_authn_fresh(within, grace):
 
     now = datetime.datetime.utcnow()
     new_exp = now + grace
-    # grace_ts = int(new_exp.timestamp())
-    grace_ts = int(_py2timestamp(new_exp))
+    grace_ts = int(new_exp.timestamp())
 
     fs_gexp = session.get("fs_gexp", None)
     if fs_gexp:
-        # if now.timestamp() < fs_gexp:
-        if _py2timestamp(now) < fs_gexp:
+        if now.timestamp() < fs_gexp:
             # Within grace period - extend it and we're good.
             session["fs_gexp"] = grace_ts
             return True
@@ -348,7 +329,7 @@ def encode_string(string):
 
     :param string: The string to encode"""
 
-    if isinstance(string, text_type):
+    if isinstance(string, str):
         string = string.encode("utf-8")
     return string
 
@@ -534,7 +515,7 @@ def get_config(app):
     prefix = "SECURITY_"
 
     def strip_prefix(tup):
-        return (tup[0].replace("SECURITY_", ""), tup[1])
+        return tup[0].replace("SECURITY_", ""), tup[1]
 
     return dict([strip_prefix(i) for i in items if i[0].startswith(prefix)])
 
@@ -865,14 +846,7 @@ def default_want_json(req):
 def json_error_response(errors):
     """ Helper to create an error response that adheres to the openapi spec.
     """
-    # Python 2 and 3 compatibility for checking if something is a string.
-    try:  # pragma: no cover
-        basestring
-        string_type_check = (basestring, unicode)
-    except NameError:  # pragma: no cover
-        string_type_check = str
-
-    if isinstance(errors, string_type_check):
+    if isinstance(errors, str):
         # When the errors is a string, use the response/error/message format
         response_json = dict(error=errors)
     elif isinstance(errors, dict):
@@ -1132,8 +1106,6 @@ def pwned(password):
     :return: Count of password in DB (0 means hasn't been compromised)
      Can raise HTTPError
 
-    Only implemented for python 3
-
     .. versionadded:: 3.4.0
     """
 
@@ -1143,21 +1115,15 @@ def pwned(password):
 
     sha1 = hashlib.sha1(password.encode("utf8")).hexdigest()
 
-    if PY3:
-        import urllib.request
-        import urllib.error
+    req = urllib.request.Request(
+        url="https://api.pwnedpasswords.com/range/{}".format(sha1[:5].upper()),
+        headers={"User-Agent": "Flask-Security (Python)"},
+    )
+    # Might raise HTTPError
+    with urllib.request.urlopen(req) as f:
+        response = f.read()
 
-        req = urllib.request.Request(
-            url="https://api.pwnedpasswords.com/range/{}".format(sha1[:5].upper()),
-            headers={"User-Agent": "Flask-Security (Python)"},
-        )
-        # Might raise HTTPError
-        with urllib.request.urlopen(req) as f:
-            response = f.read()
+    raw = response.decode("utf-8-sig")
 
-        raw = response.decode("utf-8-sig")
-
-        entries = dict(map(convert_password_tuple, raw.upper().split("\r\n")))
-        return entries.get(sha1[5:].upper(), 0)
-
-    raise NotImplementedError()
+    entries = dict(map(convert_password_tuple, raw.upper().split("\r\n")))
+    return entries.get(sha1[5:].upper(), 0)

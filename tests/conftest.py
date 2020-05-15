@@ -12,11 +12,7 @@ import os
 import tempfile
 import time
 from datetime import datetime
-
-try:
-    from urlparse import urlsplit
-except ImportError:  # pragma: no cover
-    from urllib.parse import urlsplit
+from urllib.parse import urlsplit
 
 import pytest
 from flask import Flask, Response, render_template
@@ -634,10 +630,7 @@ def datastore(request, app, tmpdir, realdburl):
 
 @pytest.fixture()
 def script_info(app, datastore):
-    try:
-        from flask.cli import ScriptInfo
-    except ImportError:
-        from flask_cli import ScriptInfo
+    from flask.cli import ScriptInfo
 
     def create_app(info):
         app.config.update(

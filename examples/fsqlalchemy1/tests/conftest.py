@@ -1,9 +1,6 @@
 # Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
 
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
+from unittest.mock import Mock
 import pytest
 
 

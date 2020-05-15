@@ -13,7 +13,6 @@
 
 from datetime import datetime, timedelta
 import warnings
-import sys
 
 import pkg_resources
 from flask import _request_ctx_stack, current_app, render_template
@@ -71,7 +70,6 @@ from .utils import (
     hash_data,
     localize_callback,
     send_mail,
-    string_types,
     uia_email_mapper,
     uia_phone_mapper,
     url_for_security,
@@ -775,7 +773,7 @@ class UserMixin(BaseUserMixin):
         """Returns `True` if the user identifies with the specified role.
 
         :param role: A role name or `Role` instance"""
-        if isinstance(role, string_types):
+        if isinstance(role, str):
             return role in (role.name for role in self.roles)
         else:
             return role in self.roles
@@ -1231,21 +1229,9 @@ class Security:
         return state
 
     def _check_modules(self, module, config_name):  # pragma: no cover
-        PY3 = sys.version_info[0] == 3
-        if PY3:
-            from importlib.util import find_spec
+        from importlib.util import find_spec
 
-            module_exists = find_spec(module)
-
-        else:
-            import imp
-
-            try:
-                imp.find_module(module)
-                module_exists = True
-            except ImportError:
-                module_exists = False
-
+        module_exists = find_spec(module)
         if not module_exists:
             raise ValueError(f"{module} is required for {config_name}")
 

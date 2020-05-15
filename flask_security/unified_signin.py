@@ -29,11 +29,10 @@
 
 """
 
-import sys
 import time
 
 from flask import current_app as app
-from flask import abort, after_this_request, redirect, request, session
+from flask import abort, after_this_request, request, session
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
@@ -68,11 +67,16 @@ from .utils import (
 _security = LocalProxy(lambda: app.extensions["security"])
 _datastore = LocalProxy(lambda: _security.datastore)
 
+if get_quart_status():  # pragma: no cover
+    from quart import redirect
 
-PY3 = sys.version_info[0] == 3
-if PY3 and get_quart_status():  # pragma: no cover
-    from .async_compat import _commit  # noqa: F401
+    async def _commit(response=None):
+        _datastore.commit()
+        return response
+
+
 else:
+    from flask import redirect
 
     def _commit(response=None):
         _datastore.commit()

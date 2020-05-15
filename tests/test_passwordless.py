@@ -6,6 +6,7 @@
 """
 
 import time
+from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
@@ -16,13 +17,7 @@ from flask_security.signals import login_instructions_sent
 from flask_security.utils import (
     capture_flashes,
     capture_passwordless_login_requests,
-    string_types,
 )
-
-try:
-    from urlparse import parse_qsl, urlsplit
-except ImportError:  # pragma: no cover
-    from urllib.parse import parse_qsl, urlsplit
 
 pytestmark = pytest.mark.passwordless()
 
@@ -34,7 +29,7 @@ def test_trackable_flag(app, client, get_message):
     def on_instructions_sent(app, user, login_token):
         assert isinstance(app, Flask)
         assert isinstance(user, UserMixin)
-        assert isinstance(login_token, string_types)
+        assert isinstance(login_token, str)
         recorded.append(user)
 
     # Test disabled account

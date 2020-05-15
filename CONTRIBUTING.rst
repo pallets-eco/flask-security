@@ -76,7 +76,7 @@ these steps:
   #. When done, verify unit tests, syntax etc. all pass::
 
         $ python setup.py test
-        $ pre-commit run
+        $ pre-commit run --all-files
         $ python setup.py build_sphinx compile_catalog
 
   #. When the tests are successful, commit your changes

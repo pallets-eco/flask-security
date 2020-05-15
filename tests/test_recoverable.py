@@ -6,6 +6,7 @@
 """
 
 import time
+from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
@@ -17,13 +18,7 @@ from flask_security.signals import password_reset, reset_password_instructions_s
 from flask_security.utils import (
     capture_flashes,
     capture_reset_password_requests,
-    string_types,
 )
-
-try:
-    from urlparse import parse_qsl, urlsplit
-except ImportError:  # pragma: no cover
-    from urllib.parse import parse_qsl, urlsplit
 
 pytestmark = pytest.mark.recoverable()
 
@@ -40,7 +35,7 @@ def test_recoverable_flag(app, client, get_message):
     def on_instructions_sent(app, user, token):
         assert isinstance(app, Flask)
         assert isinstance(user, UserMixin)
-        assert isinstance(token, string_types)
+        assert isinstance(token, str)
         recorded_instructions_sent.append(user)
 
     # Test the reset view

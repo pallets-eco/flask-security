@@ -6,6 +6,7 @@
 """
 
 import time
+from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
@@ -14,12 +15,7 @@ from utils import authenticate, logout
 from flask_security.core import UserMixin
 from flask_security.confirmable import generate_confirmation_token
 from flask_security.signals import confirm_instructions_sent, user_confirmed
-from flask_security.utils import capture_flashes, capture_registrations, string_types
-
-try:
-    from urlparse import parse_qsl, urlsplit
-except ImportError:  # pragma: no cover
-    from urllib.parse import parse_qsl, urlsplit
+from flask_security.utils import capture_flashes, capture_registrations
 
 pytestmark = pytest.mark.confirmable()
 
@@ -39,7 +35,7 @@ def test_confirmable_flag(app, client, sqlalchemy_datastore, get_message):
     def on_instructions_sent(app, user, token):
         assert isinstance(app, Flask)
         assert isinstance(user, UserMixin)
-        assert isinstance(token, string_types)
+        assert isinstance(token, str)
         recorded_instructions_sent.append(user)
 
     # Test login before confirmation
