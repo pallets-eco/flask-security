@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.forms
     ~~~~~~~~~~~~~~~~~~~~
@@ -73,7 +72,7 @@ _default_field_labels = {
 }
 
 
-class ValidatorMixin(object):
+class ValidatorMixin:
     """
     This is called at import time - so there is no app context.
     Validators have state - namely self.message - but we need that
@@ -89,7 +88,7 @@ class ValidatorMixin(object):
             del kwargs["message"]
         else:
             self._original_message = None
-        super(ValidatorMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __call__(self, form, field):
         if self._original_message and (
@@ -101,7 +100,7 @@ class ValidatorMixin(object):
                 self.message = make_lazy_string(_local_xlate, cv[0])
             else:
                 self.message = self._original_message
-        return super(ValidatorMixin, self).__call__(form, field)
+        return super().__call__(form, field)
 
 
 class EqualTo(ValidatorMixin, validators.EqualTo):
@@ -156,7 +155,7 @@ class Form(BaseForm):
     def __init__(self, *args, **kwargs):
         if current_app.testing:
             self.TIME_LIMIT = None
-        super(Form, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class EmailFormMixin:
@@ -235,7 +234,7 @@ class RegisterFormMixin:
                 return True
 
         fields = inspect.getmembers(self, is_field_and_user_attr)
-        return dict((key, value.data) for key, value in fields)
+        return {key: value.data for key, value in fields}
 
 
 class SendConfirmationForm(Form, UserEmailFormMixin):
@@ -244,12 +243,12 @@ class SendConfirmationForm(Form, UserEmailFormMixin):
     submit = SubmitField(get_form_field_label("send_confirmation"))
 
     def __init__(self, *args, **kwargs):
-        super(SendConfirmationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if request.method == "GET":
             self.email.data = request.args.get("email", None)
 
     def validate(self):
-        if not super(SendConfirmationForm, self).validate():
+        if not super().validate():
             return False
         if self.user.confirmed_at is not None:
             self.email.errors.append(get_message("ALREADY_CONFIRMED")[0])
@@ -263,7 +262,7 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
     submit = SubmitField(get_form_field_label("recover_password"))
 
     def validate(self):
-        if not super(ForgotPasswordForm, self).validate():
+        if not super().validate():
             return False
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
@@ -280,10 +279,10 @@ class PasswordlessLoginForm(Form, UserEmailFormMixin):
     submit = SubmitField(get_form_field_label("send_login_link"))
 
     def __init__(self, *args, **kwargs):
-        super(PasswordlessLoginForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(PasswordlessLoginForm, self).validate():
+        if not super().validate():
             return False
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
@@ -302,7 +301,7 @@ class LoginForm(Form, NextFormMixin):
     submit = SubmitField(get_form_field_label("login"))
 
     def __init__(self, *args, **kwargs):
-        super(LoginForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self.next.data:
             self.next.data = request.args.get("next", "")
         self.remember.default = config_value("DEFAULT_REMEMBER_ME")
@@ -311,7 +310,7 @@ class LoginForm(Form, NextFormMixin):
             and not self.password.description
         ):
             html = Markup(
-                u'<a href="{url}">{message}</a>'.format(
+                '<a href="{url}">{message}</a>'.format(
                     url=url_for_security("forgot_password"),
                     message=get_message("FORGOT_PASSWORD")[0],
                 )
@@ -319,7 +318,7 @@ class LoginForm(Form, NextFormMixin):
             self.password.description = html
 
     def validate(self):
-        if not super(LoginForm, self).validate():
+        if not super().validate():
             return False
 
         self.user = _datastore.get_user(self.email.data)
@@ -353,7 +352,7 @@ class VerifyForm(Form, PasswordFormMixin):
     submit = SubmitField(get_form_field_label("verify_password"))
 
     def validate(self):
-        if not super(VerifyForm, self).validate():
+        if not super().validate():
             return False
 
         self.user = current_user
@@ -375,7 +374,7 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
     )
 
     def validate(self):
-        if not super(ConfirmRegisterForm, self).validate():
+        if not super().validate():
             return False
 
         # To support unified sign in - we permit registering with no password.
@@ -416,7 +415,7 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
     )
 
     def validate(self):
-        if not super(RegisterForm, self).validate():
+        if not super().validate():
             return False
         if not config_value("UNIFIED_SIGNIN"):
             # password_confirm required
@@ -428,7 +427,7 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
         return True
 
     def __init__(self, *args, **kwargs):
-        super(RegisterForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self.next.data:
             self.next.data = request.args.get("next", "")
 
@@ -439,7 +438,7 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
     submit = SubmitField(get_form_field_label("reset_password"))
 
     def validate(self):
-        if not super(ResetPasswordForm, self).validate():
+        if not super().validate():
             return False
 
         pbad = _security._password_validator(
@@ -469,7 +468,7 @@ class ChangePasswordForm(Form, PasswordFormMixin):
     submit = SubmitField(get_form_field_label("change_password"))
 
     def validate(self):
-        if not super(ChangePasswordForm, self).validate():
+        if not super().validate():
             return False
 
         if not current_user.verify_and_update_password(self.password.data):
@@ -506,7 +505,7 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
-        super(TwoFactorSetupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self):
         # TODO: the super class validate is never called - thus we have to
@@ -542,7 +541,7 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
     submit = SubmitField(get_form_field_label("submitcode"))
 
     def __init__(self, *args, **kwargs):
-        super(TwoFactorVerifyCodeForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self):
         # codes sent by sms or mail will be valid for another window cycle
@@ -579,7 +578,7 @@ class TwoFactorVerifyPasswordForm(Form, PasswordFormMixin):
     submit = SubmitField(get_form_field_label("verify_password"))
 
     def validate(self):
-        if not super(TwoFactorVerifyPasswordForm, self).validate():
+        if not super().validate():
             return False
 
         self.user = current_user
@@ -603,9 +602,9 @@ class TwoFactorRescueForm(Form):
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
-        super(TwoFactorRescueForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(TwoFactorRescueForm, self).validate():
+        if not super().validate():
             return False
         return True

@@ -126,4 +126,3 @@ serializable object:
                 'name': self.name,
                 'email': self.email
             }
-

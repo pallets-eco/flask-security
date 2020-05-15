@@ -626,4 +626,3 @@ msgstr "Confirma tu correo electrónico haciendo clic aquí:"
 #: flask_security/templates/security/email/welcome.html:4
 msgid "You can confirm your email through the link below:"
 msgstr "Confirma tu correo electrónico haciendo clic aquí:"
-

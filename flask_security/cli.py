@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.cli
     ~~~~~~~~~~~~~~~~~~
@@ -10,7 +9,6 @@
     :license: MIT, see LICENSE for more details.
 """
 
-from __future__ import absolute_import, print_function
 
 from functools import wraps
 
@@ -129,8 +127,7 @@ def roles_add(user, role):
         raise click.UsageError("Cannot find role.")
     if _datastore.add_role_to_user(user, role):
         click.secho(
-            'Role "{0}" added to user "{1}" ' "successfully.".format(role, user),
-            fg="green",
+            f'Role "{role}" added to user "{user}" successfully.', fg="green",
         )
     else:
         raise click.UsageError("Cannot add role to user.")
@@ -150,8 +147,7 @@ def roles_remove(user, role):
         raise click.UsageError("Cannot find role.")
     if _datastore.remove_role_from_user(user, role):
         click.secho(
-            'Role "{0}" removed from user "{1}" ' "successfully.".format(role, user),
-            fg="green",
+            f'Role "{role}" removed from user "{user}" successfully.', fg="green",
         )
     else:
         raise click.UsageError("Cannot remove role from user.")
@@ -167,9 +163,9 @@ def users_activate(user):
     if user_obj is None:
         raise click.UsageError("ERROR: User not found.")
     if _datastore.activate_user(user_obj):
-        click.secho('User "{0}" has been activated.'.format(user), fg="green")
+        click.secho(f'User "{user}" has been activated.', fg="green")
     else:
-        click.secho('User "{0}" was already activated.'.format(user), fg="yellow")
+        click.secho(f'User "{user}" was already activated.', fg="yellow")
 
 
 @users.command("deactivate")
@@ -182,6 +178,6 @@ def users_deactivate(user):
     if user_obj is None:
         raise click.UsageError("ERROR: User not found.")
     if _datastore.deactivate_user(user_obj):
-        click.secho('User "{0}" has been deactivated.'.format(user), fg="green")
+        click.secho(f'User "{user}" has been deactivated.', fg="green")
     else:
-        click.secho('User "{0}" was already deactivated.'.format(user), fg="yellow")
+        click.secho(f'User "{user}" was already deactivated.', fg="yellow")

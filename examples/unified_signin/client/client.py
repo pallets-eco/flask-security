@@ -45,7 +45,7 @@ def check_error(resp):
         # these are form errors a dict of form label: [list of errors]
         msgs = []
         for label, emsgs in rdata["errors"].items():
-            msgs.extend(["{}-{}".format(label, msg) for msg in emsgs])
+            msgs.extend([f"{label}-{msg}" for msg in emsgs])
         raise ApiException(msgs, resp.status_code)
     if resp.status_code >= 400:
         raise ApiException("Error status w/o response", resp.status_code)
@@ -57,11 +57,11 @@ def register(server_url, session, email, password):
     # Use the backdoor to grab confirmation email and confirm.
 
     resp = session.post(
-        "{}/register".format(server_url), json={"email": email, "password": password},
+        f"{server_url}/register", json={"email": email, "password": password},
     )
     check_error(resp)
 
-    resp = session.get("{}/api/popmail".format(server_url))
+    resp = session.get(f"{server_url}/api/popmail")
     if resp.status_code != 200:
         raise ApiException("popmail error", resp.status_code)
 
@@ -85,7 +85,7 @@ def ussetup(server_url, session, password, phone):
 
     csrf_token = session.cookies["XSRF-TOKEN"]
     resp = session.post(
-        "{}/us-setup".format(server_url),
+        f"{server_url}/us-setup",
         json={"chosen_method": "us_phone_number", "phone": phone},
         headers={"X-XSRF-Token": csrf_token},
     )
@@ -97,7 +97,7 @@ def ussetup(server_url, session, password, phone):
 
     # re-verify
     resp = session.post(
-        "{}/us-verify".format(server_url),
+        f"{server_url}/us-verify",
         json={"passcode": password},
         headers={"X-XSRF-Token": csrf_token},
     )
@@ -105,7 +105,7 @@ def ussetup(server_url, session, password, phone):
 
     # try again
     resp = session.post(
-        "{}/us-setup".format(server_url),
+        f"{server_url}/us-setup",
         json={"chosen_method": "sms", "phone": phone},
         headers={"X-XSRF-Token": csrf_token},
     )
@@ -113,14 +113,14 @@ def ussetup(server_url, session, password, phone):
     jbody = resp.json()
     state = jbody["response"]["state"]
 
-    resp = session.get("{}/api/popsms".format(server_url))
+    resp = session.get(f"{server_url}/api/popsms")
     if resp.status_code != 200:
         raise ApiException("popsms error", resp.status_code)
 
     jbody = resp.json()
     code = jbody["sms"].split()[-1].strip(".")
     resp = session.post(
-        "{}/us-setup/{}".format(server_url, state),
+        f"{server_url}/us-setup/{state}",
         json={"passcode": code},
         headers={"X-XSRF-Token": csrf_token},
     )
@@ -130,20 +130,19 @@ def ussetup(server_url, session, password, phone):
 def sms_signin(server_url, session, username, phone):
     # Sign in using SMS code.
     session.post(
-        "{}/us-signin/send-code".format(server_url),
+        f"{server_url}/us-signin/send-code",
         json={"identity": username, "chosen_method": "sms"},
     )
 
     # Fetch code via test API
-    resp = session.get("{}/api/popsms".format(server_url))
+    resp = session.get(f"{server_url}/api/popsms")
     if resp.status_code != 200:
         raise ApiException("popsms error", resp.status_code)
 
     jbody = resp.json()
     code = jbody["sms"].split()[-1].strip(".")
     resp = session.post(
-        "{}/us-signin".format(server_url),
-        json={"identity": username, "passcode": code},
+        f"{server_url}/us-signin", json={"identity": username, "passcode": code},
     )
     check_error(resp)
 
@@ -165,7 +164,7 @@ def runit():
             server_url, session, username, mypassword,
         )
         # verify confirmed and logged in
-        resp = session.get("{}/api/health".format(server_url))
+        resp = session.get(f"{server_url}/api/health")
         assert resp.status_code == 200
         jresp = resp.json()
         assert jresp["secret"] == "lush oranges"
@@ -174,17 +173,17 @@ def runit():
         ussetup(server_url, session, mypassword, myphone)
 
         # Verify can sign in with SMS
-        session.post("{}/logout".format(server_url))
+        session.post(f"{server_url}/logout")
         sms_signin(server_url, session, username, myphone)
 
         # verify logged in
-        resp = session.get("{}/api/health".format(server_url))
+        resp = session.get(f"{server_url}/api/health")
         assert resp.status_code == 200
         jresp = resp.json()
         assert jresp["secret"] == "lush oranges"
 
     except ApiException as exc:
-        logging.error("{}".format(exc.get_msgs()))
+        logging.error(f"{exc.get_msgs()}")
 
 
 if __name__ == "__main__":

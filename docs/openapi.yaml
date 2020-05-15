@@ -1253,4 +1253,3 @@ components:
       in: query
       schema:
         type: string
-

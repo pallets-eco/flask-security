@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.babel
     ~~~~~~~~~~~~~~~~~~~~
@@ -12,7 +11,7 @@ from wtforms.i18n import messages_path
 wtforms_domain = Domain(messages_path(), domain="wtforms")
 
 
-class Translations(object):
+class Translations:
     """Fixes WTForms translation support and uses wtforms translations."""
 
     def gettext(self, string):

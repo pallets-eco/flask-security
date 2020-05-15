@@ -620,4 +620,3 @@ msgstr "Вы можете подтвердить свой почтовый ад�
 #: flask_security/templates/security/email/welcome.html:4
 msgid "You can confirm your email through the link below:"
 msgstr "Вы можете подтвердить свой почтовый адрес перейдя по ссылке:"
-

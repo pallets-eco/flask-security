@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.phone_util
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -14,7 +13,7 @@
 from .utils import config_value, get_message
 
 
-class PhoneUtil(object):
+class PhoneUtil:
     """
     Provide parsing and validation for user inputted phone numbers.
     Subclass this to use a different underlying phone number parsing library.

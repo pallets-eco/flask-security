@@ -3,15 +3,13 @@ notifications:
 
 language: python
 
-dist: xenial
+dist: bionic
 
 python:
-  - "2.7"
-  - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
-  - pypy3.5-6.0
+  - pypy3
 
 addons:
   apt:
@@ -30,11 +28,13 @@ addons:
 
 jobs:
   allow_failures:
-    - python: pypy3.5-6.0
+    - python: pypy3
 
 cache:
   - apt
   - pip
+  - directories:
+      - $HOME/.cache/pre-commit
 
 services:
   - postgresql
@@ -59,6 +59,8 @@ script:
   - >
     set -e;
     if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
+     # Just run once - seems to have issues running on multiple environements.
+     pre-commit run --all-files --show-diff-on-failure
      # Test against a real DB (postgres)
      python setup.py test --addopts --realdburl=postgres://postgres@localhost/;
      python setup.py build_sphinx compile_catalog;

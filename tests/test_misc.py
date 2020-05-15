@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     test_misc
     ~~~~~~~~~~~
@@ -328,7 +327,7 @@ def test_change_hash_type(app, sqlalchemy_datastore):
 
 
 @pytest.mark.settings(hashing_schemes=["hex_md5"], deprecated_hashing_schemes=[])
-@pytest.mark.parametrize("data", [u"hellö", b"hello"])
+@pytest.mark.parametrize("data", ["hellö", b"hello"])
 def test_legacy_hash(in_app_context, data):
     legacy_hash = hashlib.md5(encode_string(data)).hexdigest()
     new_hash = hash_data(data)
@@ -338,22 +337,22 @@ def test_legacy_hash(in_app_context, data):
 def test_hash_data(in_app_context):
     data = hash_data(b"hello")
     assert isinstance(data, string_types)
-    data = hash_data(u"hellö")
+    data = hash_data("hellö")
     assert isinstance(data, string_types)
 
 
 def test_verify_hash(in_app_context):
-    data = hash_data(u"hellö")
-    assert verify_hash(data, u"hellö") is True
-    assert verify_hash(data, u"hello") is False
+    data = hash_data("hellö")
+    assert verify_hash(data, "hellö") is True
+    assert verify_hash(data, "hello") is False
 
-    legacy_data = hashlib.md5(encode_string(u"hellö")).hexdigest()
-    assert verify_hash(legacy_data, u"hellö") is True
-    assert verify_hash(legacy_data, u"hello") is False
+    legacy_data = hashlib.md5(encode_string("hellö")).hexdigest()
+    assert verify_hash(legacy_data, "hellö") is True
+    assert verify_hash(legacy_data, "hello") is False
 
 
 @pytest.mark.settings(
-    password_salt=u"öööööööööööööööööööööööööööööööööö", password_hash="bcrypt"
+    password_salt="öööööööööööööööööööööööööööööööööö", password_hash="bcrypt"
 )
 def test_password_unicode_password_salt(client):
     response = authenticate(client)
@@ -447,7 +446,7 @@ def test_no_email_sender(app):
     """
     app.config["MAIL_DEFAULT_SENDER"] = "test@testme.com"
 
-    class TestUser(object):
+    class TestUser:
         def __init__(self, email):
             self.email = email
 
@@ -698,7 +697,7 @@ def test_method_view(app, client):
 
 
 def test_phone_util_override(app):
-    class MyPhoneUtil(object):
+    class MyPhoneUtil:
         def validate_phone_number(self, input_data):
             return "call-me"
 

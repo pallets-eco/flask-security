@@ -196,7 +196,7 @@ decorator like so::
 
 
     from flask_mail import Message
-    
+
     # Setup the task
     @celery.task
     def send_flask_mail(**kwargs):

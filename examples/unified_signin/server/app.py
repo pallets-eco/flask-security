@@ -23,7 +23,7 @@ from flask_wtf import CSRFProtect
 from models import db, user_datastore
 
 
-class CaptureMail(object):
+class CaptureMail:
     # A hack Mail service that simply captures what would be sent.
     def __init__(self, app):
         app.extensions["mail"] = self
@@ -43,7 +43,7 @@ class SmsCaptureSender(SmsSenderBaseClass):
     SmsSenderBaseClass.messages = []
 
     def __init__(self):
-        super(SmsCaptureSender, self).__init__()
+        super().__init__()
         SmsSenderBaseClass.messages = []
 
     def send_sms(self, from_number, to_number, msg):
