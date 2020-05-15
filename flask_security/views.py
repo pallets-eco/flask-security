@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.views
     ~~~~~~~~~~~~~~~~~~~~
@@ -591,7 +590,7 @@ def reset_password(token):
         login_user(user, authn_via=["reset"])
         if _security._want_json(request):
             login_form = _security.login_form(MultiDict({"email": user.email}))
-            setattr(login_form, "user", user)
+            login_form.user = user
             return base_render_json(login_form, include_auth_token=True)
         else:
             do_flash(*get_message("PASSWORD_RESET"))
@@ -839,8 +838,8 @@ def two_factor_token_validation():
         totp_secret = session["tf_totp_secret"]
         form.user = current_user
 
-    setattr(form, "primary_method", pm)
-    setattr(form, "tf_totp_secret", totp_secret)
+    form.primary_method = pm
+    form.tf_totp_secret = totp_secret
     if form.validate_on_submit():
         # Success - log in user and clear all session variables
         completion_message = complete_two_factor_process(

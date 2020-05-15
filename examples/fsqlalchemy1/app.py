@@ -117,7 +117,7 @@ def create_users():
     blog = app.blog_cls(text="my first blog", user=real_user)
     db.session.add(blog)
     db.session.commit()
-    print("First blog id {}".format(blog.id))
+    print(f"First blog id {blog.id}")
 
 
 # Views

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     test_entities
     ~~~~~~~~~~~~~
@@ -76,40 +75,28 @@ def test_fsqla_fields():
         "tf_primary_method",
         "tf_totp_secret",
     }
-    attrs = set(
-        [
-            a[0]
-            for a in get_user_attributes(fsqla.FsUserMixin)
-            if isinstance(a[1], Column)
-        ]
-    )
+    attrs = {
+        a[0] for a in get_user_attributes(fsqla.FsUserMixin) if isinstance(a[1], Column)
+    }
     assert attrs == v1_user_attrs
 
     v2_user_attrs = {"us_totp_secrets", "us_phone_number"}
-    attrs = set(
-        [
-            a[0]
-            for a in get_user_attributes(fsqla_v2.FsUserMixin)
-            if isinstance(a[1], Column)
-        ]
-    )
+    attrs = {
+        a[0]
+        for a in get_user_attributes(fsqla_v2.FsUserMixin)
+        if isinstance(a[1], Column)
+    }
     assert attrs == v1_user_attrs.union(v2_user_attrs)
 
     v1_role_attrs = {"id", "name", "description", "permissions", "update_datetime"}
-    attrs = set(
-        [
-            a[0]
-            for a in get_user_attributes(fsqla.FsRoleMixin)
-            if isinstance(a[1], Column)
-        ]
-    )
+    attrs = {
+        a[0] for a in get_user_attributes(fsqla.FsRoleMixin) if isinstance(a[1], Column)
+    }
     assert attrs == v1_role_attrs
 
-    attrs = set(
-        [
-            a[0]
-            for a in get_user_attributes(fsqla_v2.FsRoleMixin)
-            if isinstance(a[1], Column)
-        ]
-    )
+    attrs = {
+        a[0]
+        for a in get_user_attributes(fsqla_v2.FsRoleMixin)
+        if isinstance(a[1], Column)
+    }
     assert attrs == v1_role_attrs

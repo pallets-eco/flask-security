@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security
     ~~~~~~~~~~~~~~
@@ -101,4 +100,4 @@ from .utils import (
     verify_and_update_password,
 )
 
-__version__ = "3.4.2"
+__version__ = "4.0.0.dev1"

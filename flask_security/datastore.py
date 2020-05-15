@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.datastore
     ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,7 +14,7 @@ import uuid
 from .utils import config_value, get_identity_attributes, string_types
 
 
-class Datastore(object):
+class Datastore:
     def __init__(self, db):
         self.db = db
 
@@ -115,7 +114,7 @@ class PonyDatastore(Datastore):
         model.delete()
 
 
-class UserDatastore(object):
+class UserDatastore:
     """Abstracted user datastore.
 
     :param user_model: A user model class definition
@@ -521,7 +520,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
     """
 
     def __init__(self, session, user_model, role_model):
-        class PretendFlaskSQLAlchemyDb(object):
+        class PretendFlaskSQLAlchemyDb:
             """ This is a pretend db object, so we can just pass in a session.
             """
 
@@ -533,7 +532,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
         )
 
     def commit(self):
-        super(SQLAlchemySessionUserDatastore, self).commit()
+        super().commit()
 
 
 class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
@@ -722,12 +721,12 @@ class PonyUserDatastore(PonyDatastore, UserDatastore):
 
     @with_pony_session
     def add_role_to_user(self, *args, **kwargs):
-        return super(PonyUserDatastore, self).add_role_to_user(*args, **kwargs)
+        return super().add_role_to_user(*args, **kwargs)
 
     @with_pony_session
     def create_user(self, **kwargs):
-        return super(PonyUserDatastore, self).create_user(**kwargs)
+        return super().create_user(**kwargs)
 
     @with_pony_session
     def create_role(self, **kwargs):
-        return super(PonyUserDatastore, self).create_role(**kwargs)
+        return super().create_role(**kwargs)

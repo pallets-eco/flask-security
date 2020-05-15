@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Flask-Security documentation build configuration file, created by
 # sphinx-quickstart on Mon Mar 12 15:35:21 2012.
@@ -49,8 +48,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"Flask-Security"
-copyright = u"2012-2020"
+project = "Flask-Security"
+copyright = "2012-2020"
 author = "Matt Wright & Chris Wagner"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -58,7 +57,7 @@ author = "Matt Wright & Chris Wagner"
 # built documents.
 #
 # The short X.Y version.
-version = "3.4.2"
+version = "4.0.0"
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -168,7 +167,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-    ("index", "Flask-Security.tex", u"Flask-Security Documentation", author, "manual")
+    ("index", "Flask-Security.tex", "Flask-Security Documentation", author, "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -201,8 +200,8 @@ texinfo_documents = [
     (
         "index",
         "Flask-Security",
-        u"Flask-Security Documentation",
-        u"Matt Wright",
+        "Flask-Security Documentation",
+        "Matt Wright",
         "Flask-Security",
         "One line description of project.",
         "Miscellaneous",
@@ -222,10 +221,10 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u"Flask-Security"
-epub_author = u"Matt Wright"
-epub_publisher = u"J. Christopher Wagner"
-epub_copyright = u"2012-2019"
+epub_title = "Flask-Security"
+epub_author = "Matt Wright"
+epub_publisher = "J. Christopher Wagner"
+epub_copyright = "2012-2020"
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

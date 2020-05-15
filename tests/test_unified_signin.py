@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     test_unified_signin
     ~~~~~~~~~~~~~~~~~~~
@@ -666,7 +665,7 @@ def test_setup_bad_token(app, client, get_message):
 
     # bogus state
     response = client.post(
-        "/us-setup/" + "not a token", json=dict(passcode=12345), headers=headers
+        "/us-setup/not a token", json=dict(passcode=12345), headers=headers
     )
     assert response.status_code == 400
     assert response.json["response"]["error"].encode("utf-8") == get_message(
@@ -675,7 +674,7 @@ def test_setup_bad_token(app, client, get_message):
 
     # same w/o json
     response = client.post(
-        "/us-setup/" + "not a token", data=dict(passcode=12345), follow_redirects=True
+        "/us-setup/not a token", data=dict(passcode=12345), follow_redirects=True
     )
     assert get_message("API_ERROR") in response.data
 
