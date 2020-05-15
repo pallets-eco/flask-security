@@ -166,30 +166,6 @@ These configuration keys are used globally across all features.
 
     Default: ``Login Required``
 
-.. py:data:: SECURITY_USE_VERIFY_PASSWORD_CACHE
-
-    If ``True`` enables cache for token verification, which speeds up further
-    calls to authenticated routes using authentication-token and slow hash algorithms (like bcrypt).
-    If you set this - you must ensure that `cachetools`_ is installed.
-    **Note: this will likely be deprecated and removed in 4.0. It**
-    **has known limitations, and there is now a better/faster way to**
-    **generate and verify auth tokens.**
-
-    Default: ``None``.
-
-.. py:data:: SECURITY_VERIFY_HASH_CACHE_MAX_SIZE
-
-    Limitation for token validation cache size. Rules are the ones of TTLCache of
-    cachetools package.
-
-    Default: ``500``
-
-.. py:data:: SECURITY_VERIFY_HASH_CACHE_TTL
-
-    Time to live for password check cache entries.
-
-    Default: ``300`` (5 minutes)
-
 .. py:data:: SECURITY_REDIRECT_BEHAVIOR
 
     Passwordless login, confirmation, and reset password have GET endpoints that validate
@@ -489,7 +465,6 @@ Core - rarely need changing
 .. _Totp: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#totp-encryption-setup
 .. _set_cookie: https://flask.palletsprojects.com/en/1.1.x/api/?highlight=set_cookie#flask.Response.set_cookie
 .. _axios: https://github.com/axios/axios
-.. _cachetools: https://pypi.org/project/cachetools/
 .. _bcrypt: https://pypi.org/project/bcrypt/
 .. _argon2: https://pypi.org/project/argon2-cffi/
 
