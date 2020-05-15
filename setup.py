@@ -15,7 +15,6 @@ tests_require = [
     "Flask-SQLAlchemy>=2.3",
     "argon2_cffi>=19.1.0",
     "bcrypt>=3.1.5",
-    "cachetools>=3.1.0",
     "check-manifest>=0.25",
     "coverage>=4.5.4",
     "cryptography>=2.3.1",

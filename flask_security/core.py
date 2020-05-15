@@ -24,7 +24,7 @@ from flask_principal import Identity, Principal, RoleNeed, UserNeed, identity_lo
 from itsdangerous import URLSafeTimedSerializer
 from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
-from werkzeug.local import LocalProxy, Local
+from werkzeug.local import LocalProxy
 
 from .decorators import (
     default_reauthn_handler,
@@ -77,12 +77,10 @@ from .utils import (
     verify_hash,
 )
 from .views import create_blueprint, default_render_json
-from .cache import VerifyHashCache
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
 _datastore = LocalProxy(lambda: _security.datastore)
-local_cache = Local()
 
 # List of authentication mechanisms supported.
 AUTHN_MECHANISMS = ("basic", "session", "token")
@@ -223,9 +221,6 @@ _default_config = {
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
     "DATETIME_FACTORY": datetime.utcnow,
-    "USE_VERIFY_PASSWORD_CACHE": False,
-    "VERIFY_HASH_CACHE_TTL": 60 * 5,
-    "VERIFY_HASH_CACHE_MAX_SIZE": 500,
     "TOTP_SECRETS": None,
     "TOTP_ISSUER": None,
     "SMS_SERVICE": "Dummy",
@@ -474,8 +469,6 @@ def _request_loader(request):
         if isinstance(data, dict):
             token = data.get(args_key, token)
 
-    use_cache = cv("USE_VERIFY_PASSWORD_CACHE")
-
     try:
         data = _security.remember_token_serializer.loads(
             token, max_age=_security.token_max_age
@@ -486,24 +479,9 @@ def _request_loader(request):
     except Exception:
         user = None
 
-    if not user:
-        return _security.login_manager.anonymous_user()
-    if use_cache:
-        cache = getattr(local_cache, "verify_hash_cache", None)
-        if cache is None:
-            cache = VerifyHashCache()
-            local_cache.verify_hash_cache = cache
-        if cache.has_verify_hash_cache(user):
-            _request_ctx_stack.top.fs_authn_via = "token"
-            return user
-        if user.verify_auth_token(data):
-            _request_ctx_stack.top.fs_authn_via = "token"
-            cache.set_cache(user)
-            return user
-    else:
-        if user.verify_auth_token(data):
-            _request_ctx_stack.top.fs_authn_via = "token"
-            return user
+    if user and user.verify_auth_token(data):
+        _request_ctx_stack.top.fs_authn_via = "token"
+        return user
 
     return _security.login_manager.anonymous_user()
 
@@ -1220,9 +1198,6 @@ class Security:
             if not secrets or not issuer:
                 raise ValueError("Both TOTP_SECRETS and TOTP_ISSUER must be set")
             state.totp_factory(state.totp_cls(secrets, issuer))
-
-        if cv("USE_VERIFY_PASSWORD_CACHE", app=app):
-            self._check_modules("cachetools", "USE_VERIFY_PASSWORD_CACHE")
 
         if cv("PASSWORD_COMPLEXITY_CHECKER", app=app) == "zxcvbn":
             self._check_modules("zxcvbn", "PASSWORD_COMPLEXITY_CHECKER")
