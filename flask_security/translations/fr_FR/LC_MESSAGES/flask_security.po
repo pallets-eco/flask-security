@@ -627,4 +627,3 @@ msgid "You can confirm your email through the link below:"
 msgstr ""
 "Vous pouvez confirmer votre votre adresse email via le lien ci-"
 "dessous&thinsp;:"
-

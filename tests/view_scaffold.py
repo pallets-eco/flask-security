@@ -50,7 +50,7 @@ def _find_bool(v):
     return v
 
 
-class FlashMail(object):
+class FlashMail:
     def __init__(self, app):
         app.extensions["mail"] = self
 
@@ -138,11 +138,11 @@ def create_app():
 
     @user_registered.connect_via(app)
     def on_user_registered(myapp, user, confirm_token, **extra):
-        flash("To confirm {} - go to /confirm/{}".format(user.email, confirm_token))
+        flash(f"To confirm {user.email} - go to /confirm/{confirm_token}")
 
     @reset_password_instructions_sent.connect_via(app)
     def on_reset(myapp, user, token, **extra):
-        flash("Go to /reset/{}".format(token))
+        flash(f"Go to /reset/{token}")
 
     @tf_security_token_sent.connect_via(app)
     def on_token_sent(myapp, user, token, method, **extra):

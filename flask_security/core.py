@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.core
     ~~~~~~~~~~~~~~~~~~~
@@ -570,7 +569,7 @@ def _get_pwd_context(app):
         schemes=schemes,
         default=pw_hash,
         deprecated=deprecated,
-        **cv("PASSWORD_HASH_PASSLIB_OPTIONS", app=app)
+        **cv("PASSWORD_HASH_PASSLIB_OPTIONS", app=app),
     )
     return cc
 
@@ -637,7 +636,7 @@ def _context_processor():
     return dict(url_for_security=url_for_security, security=_security)
 
 
-class RoleMixin(object):
+class RoleMixin:
     """Mixin for `Role` model definitions"""
 
     def __eq__(self, other):
@@ -667,7 +666,7 @@ class RoleMixin(object):
             else:
                 # Assume this is a comma separated list
                 return set(self.permissions.split(","))
-        return set([])
+        return set()
 
     def add_permissions(self, permissions):
         """
@@ -894,7 +893,7 @@ class AnonymousUser(AnonymousUserMixin):
         return False
 
 
-class _SecurityState(object):
+class _SecurityState:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key.lower(), value)
@@ -994,7 +993,7 @@ class _SecurityState(object):
         self._password_validator = cb
 
 
-class Security(object):
+class Security:
     """The :class:`Security` class initializes the Flask-Security extension.
 
     :param app: The application.
@@ -1248,7 +1247,7 @@ class Security(object):
                 module_exists = False
 
         if not module_exists:
-            raise ValueError("{} is required for {}".format(module, config_name))
+            raise ValueError(f"{module} is required for {config_name}")
 
         return module_exists
 

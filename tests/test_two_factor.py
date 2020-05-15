@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     test_two_factor
     ~~~~~~~~~~~~~~~~~
@@ -32,7 +31,7 @@ SmsSenderFactory.senders["test"] = SmsTestSender
 SmsSenderFactory.senders["bad"] = SmsBadSender
 
 
-class TestMail(object):
+class TestMail:
     def __init__(self):
         self.count = 0
         self.msg = None
@@ -345,7 +344,7 @@ def test_two_factor_flag(app, client):
     assert message in response.data
     rescue_data = dict(help_setup="no_mail_access")
     response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
-    message = b"A mail was sent to us in order" + b" to reset your application account"
+    message = b"A mail was sent to us in order to reset your application account"
     assert message in response.data
 
 

@@ -44,10 +44,10 @@ these steps:
   #. (Optional, but recommended) Create a Python 3.6 (or greater) virtualenv to work in,
      and activate it.
 
-  #.  Fork the repo `Flask-Security <https://github.com/Flask-Middleware/flask-security>`_
+  #. Fork the repo `Flask-Security <https://github.com/Flask-Middleware/flask-security>`_
       (look for the "Fork" button).
 
-  #.  Clone your fork locally::
+  #. Clone your fork locally::
 
         $ git clone https://github.com/<your-username>/flask-security
 
@@ -55,13 +55,17 @@ these steps:
 
      $ git checkout -b name-of-your-bugfix-or-feature
 
-  #.  Change directory to flask_security::
+  #. Change directory to flask_security::
 
         $ cd flask_security
 
-  #.  Install the requirements::
+  #. Install the requirements::
 
         $ pip install -e .[tests]
+
+  #. Install pre-commit hooks::
+
+        $ pre-commit install
 
   #. Develop the Feature/Bug Fix and edit
 
@@ -72,6 +76,7 @@ these steps:
   #. When done, verify unit tests, syntax etc. all pass::
 
         $ python setup.py test
+        $ pre-commit run
         $ python setup.py build_sphinx compile_catalog
 
   #. When the tests are successful, commit your changes

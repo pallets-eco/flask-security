@@ -613,4 +613,3 @@ msgstr "你可以通过下面链接激活你的邮箱："
 #: flask_security/templates/security/email/welcome.html:4
 msgid "You can confirm your email through the link below:"
 msgstr "你可以通过下面链接激活你的邮箱："
-

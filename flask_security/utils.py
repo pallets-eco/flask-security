@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.utils
     ~~~~~~~~~~~~~~~~~~~~
@@ -340,7 +339,7 @@ def hash_password(password):
         password,
         **config_value("PASSWORD_HASH_OPTIONS", default={}).get(
             _security.password_hash, {}
-        )
+        ),
     )
 
 
@@ -446,7 +445,7 @@ def transform_url(url, qparams=None, **kwargs):
 
 
 def get_security_endpoint_name(endpoint):
-    return "%s.%s" % (_security.blueprint_name, endpoint)
+    return f"{_security.blueprint_name}.{endpoint}"
 
 
 def url_for_security(endpoint, **values):
@@ -707,12 +706,12 @@ def uia_email_mapper(identity):
     """
 
     # Fake up enough to invoke the WTforms email validator.
-    class FakeField(object):
+    class FakeField:
         pass
 
     email_validator = validators.Email(message="nothing")
     field = FakeField()
-    setattr(field, "data", identity)
+    field.data = identity
     try:
         email_validator(None, field)
     except ValidationError:
@@ -857,7 +856,7 @@ def default_want_json(req):
     if not hasattr(req.accept_mimetypes, "best"):  # pragma: no cover
         # Alright. we dont have the best property, lets add it ourselves.
         # This is for quart compatibility
-        setattr(accept_mimetypes, "best", best)
+        accept_mimetypes.best = best
     if accept_mimetypes.best == "application/json":
         return True
     return False
@@ -968,9 +967,7 @@ def capture_flashes():
         message_flashed.disconnect(_on)
 
 
-class SmsSenderBaseClass(object):
-    __metaclass__ = abc.ABCMeta
-
+class SmsSenderBaseClass(metaclass=abc.ABCMeta):
     def __init__(self):
         pass
 
@@ -989,7 +986,7 @@ class DummySmsSender(SmsSenderBaseClass):
         return
 
 
-class SmsSenderFactory(object):
+class SmsSenderFactory:
     senders = {"Dummy": DummySmsSender}
 
     @classmethod

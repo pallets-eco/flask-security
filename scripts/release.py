@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     make-release
     ~~~~~~~~~~~~
@@ -31,7 +30,7 @@ def parse_changelog():
     with open("CHANGES") as f:
         lineiter = iter(f)
         for line in lineiter:
-            match = re.search("^Version\s+(.*)", line.strip())  # noqa
+            match = re.search(r"^Version\s+(.*)", line.strip())  # noqa
 
             if match is None:
                 continue

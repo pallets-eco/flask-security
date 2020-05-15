@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     test_csrf
     ~~~~~~~~~~~~~~~~~
@@ -34,7 +33,7 @@ def mp_validate_csrf():
         flask_wtf.csrf.validate_csrf = orig_validate_csrf
 
 
-class MpValidateCsrf(object):
+class MpValidateCsrf:
     success = 0
     failure = 0
 
@@ -84,7 +83,7 @@ def json_login(
         data["csrf_token"] = csrf_token
 
     response = client.post(
-        endpoint or "/login" + "?include_auth_token",
+        endpoint or "/login?include_auth_token",
         content_type="application/json",
         json=data,
         headers=headers,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     utils
     ~~~~~
@@ -32,10 +31,10 @@ def authenticate(
 
 
 def json_authenticate(client, email="matt@lp.com", password="password", endpoint=None):
-    data = '{"email": "%s", "password": "%s"}' % (email, password)
+    data = f'{{"email": "{email}", "password": "{password}"}}'
 
     # Get auth token always
-    ep = endpoint or "/login" + "?include_auth_token"
+    ep = endpoint or "/login?include_auth_token"
     return client.post(ep, content_type="application/json", data=data)
 
 
@@ -184,7 +183,7 @@ class SmsTestSender(SmsSenderBaseClass):
     SmsSenderBaseClass.count = 0
 
     def __init__(self):
-        super(SmsTestSender, self).__init__()
+        super().__init__()
         SmsSenderBaseClass.count = 0
         SmsSenderBaseClass.messages = []
 
@@ -199,4 +198,4 @@ class SmsTestSender(SmsSenderBaseClass):
 
 class SmsBadSender(SmsSenderBaseClass):
     def send_sms(self, from_number, to_number, msg):
-        raise ValueError("Unknown number: {}".format(to_number))
+        raise ValueError(f"Unknown number: {to_number}")

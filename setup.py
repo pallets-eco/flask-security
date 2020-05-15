@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Simple security for Flask apps."""
 
-import io
 import re
 from setuptools import find_packages, setup
 
-with io.open("README.rst", "rt", encoding="utf8") as f:
+with open("README.rst", encoding="utf8") as f:
     readme = f.read()
 
-with io.open("flask_security/__init__.py", "rt", encoding="utf8") as f:
+with open("flask_security/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 tests_require = [
@@ -29,6 +26,7 @@ tests_require = [
     "msgcheck>=2.9",
     "pony>=0.7.11",
     "phonenumberslite>=8.11.1",
+    "pre-commit>=2.4.0",
     "psycopg2>=2.8.4",
     "pydocstyle>=1.0.0",
     "pymysql>=0.9.3",
@@ -90,7 +88,7 @@ setup(
     zip_safe=False,
     include_package_data=True,
     platforms="any",
-    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",
+    python_requires=">=3.6",
     extras_require=extras_require,
     install_requires=install_requires,
     setup_requires=setup_requires,
@@ -104,10 +102,7 @@ setup(
         "Programming Language :: Python",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

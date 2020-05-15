@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     flask_security.unified_signin
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -154,10 +153,10 @@ class _UnifiedPassCodeForm(Form):
     submit_send_code = SubmitField(get_form_field_label("sendcode"))
 
     def __init__(self, *args, **kwargs):
-        super(_UnifiedPassCodeForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(_UnifiedPassCodeForm, self).validate():
+        if not super().validate():
             return False
         if not self.user:
             # This is sign-in case.
@@ -232,12 +231,12 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
     remember = BooleanField(get_form_field_label("remember_me"))
 
     def __init__(self, *args, **kwargs):
-        super(UnifiedSigninForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.remember.default = config_value("DEFAULT_REMEMBER_ME")
 
     def validate(self):
         self.user = None
-        if not super(UnifiedSigninForm, self).validate():
+        if not super().validate():
             return False
 
         if self.submit.data:
@@ -258,7 +257,7 @@ class UnifiedVerifyForm(_UnifiedPassCodeForm):
 
     def validate(self):
         self.user = current_user
-        if not super(UnifiedVerifyForm, self).validate():
+        if not super().validate():
             return False
         return True
 
@@ -281,10 +280,10 @@ class UnifiedSigninSetupForm(Form):
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
-        super(UnifiedSigninSetupForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(UnifiedSigninSetupForm, self).validate():
+        if not super().validate():
             return False
         if self.chosen_method.data not in config_value("US_ENABLED_METHODS"):
             self.chosen_method.errors.append(get_message("US_METHOD_NOT_AVAILABLE")[0])
@@ -310,10 +309,10 @@ class UnifiedSigninSetupValidateForm(Form):
     submit = SubmitField(get_form_field_label("submitcode"))
 
     def __init__(self, *args, **kwargs):
-        super(UnifiedSigninSetupValidateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self):
-        if not super(UnifiedSigninSetupValidateForm, self).validate():
+        if not super().validate():
             return False
 
         if not _security._totp_factory.verify_totp(

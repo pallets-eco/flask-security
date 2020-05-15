@@ -1,7 +1,7 @@
 # Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
 
 
-class WrapApp(object):
+class WrapApp:
     def __init__(self, app, user_cls=None, role_cls=None, mocks=None):
         """ Used to help create a app test fixture - with optionally passing in mocks
         """
