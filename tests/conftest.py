@@ -325,7 +325,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + path
 
-    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], convert_unicode=True)
+    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     db_session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
     )

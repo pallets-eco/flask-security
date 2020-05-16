@@ -18,7 +18,14 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
-from tests.test_utils import SmsBadSender, SmsTestSender, authenticate, logout
+from tests.test_utils import (
+    SmsBadSender,
+    SmsTestSender,
+    authenticate,
+    capture_flashes,
+    capture_reset_password_requests,
+    logout,
+)
 
 from flask_security import (
     SmsSenderFactory,
@@ -29,7 +36,6 @@ from flask_security import (
     us_security_token_sent,
     user_authenticated,
 )
-from flask_security.utils import capture_flashes, capture_reset_password_requests
 
 pytestmark = pytest.mark.unified_signin()
 

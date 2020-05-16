@@ -10,14 +10,14 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
-from tests.test_utils import logout
+from tests.test_utils import (
+    capture_flashes,
+    capture_passwordless_login_requests,
+    logout,
+)
 
 from flask_security.core import UserMixin
 from flask_security.signals import login_instructions_sent
-from flask_security.utils import (
-    capture_flashes,
-    capture_passwordless_login_requests,
-)
 
 pytestmark = pytest.mark.passwordless()
 

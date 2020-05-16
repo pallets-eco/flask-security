@@ -377,7 +377,7 @@ def test_modify_permissions_multi(app, datastore):
 
 
 def test_modify_permissions_unsupported(app, datastore):
-    from conftest import PonyUserDatastore
+    from tests.conftest import PonyUserDatastore
 
     ds = datastore
     if hasattr(datastore.role_model, "permissions"):
@@ -409,7 +409,7 @@ def test_uuid(app, request, tmpdir, realdburl):
     from sqlalchemy.orm import relationship, backref
 
     from flask_security import SQLAlchemyUserDatastore
-    from conftest import _setup_realdb, _teardown_realdb
+    from tests.conftest import _setup_realdb, _teardown_realdb
 
     # UUID type only supported by postgres - not sqlite.
     if not realdburl or "postgres" not in realdburl:

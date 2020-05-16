@@ -567,10 +567,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
                 pass
 
     def find_user(self, **kwargs):
-        try:
-            from mongoengine.queryset import Q, QCombination
-        except ImportError:
-            from mongoengine.queryset.visitor import Q, QCombination
+        from mongoengine.queryset.visitor import Q, QCombination
         from mongoengine.errors import ValidationError
 
         queries = map(lambda i: Q(**{i[0]: i[1]}), kwargs.items())

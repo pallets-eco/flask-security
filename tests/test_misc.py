@@ -20,6 +20,8 @@ import pytest
 
 from tests.test_utils import (
     authenticate,
+    capture_flashes,
+    capture_reset_password_requests,
     check_xlation,
     init_app_with_options,
     json_authenticate,
@@ -46,8 +48,6 @@ from flask_security.forms import (
 )
 from flask_security import auth_required
 from flask_security.utils import (
-    capture_flashes,
-    capture_reset_password_requests,
     encode_string,
     json_error_response,
     hash_data,
