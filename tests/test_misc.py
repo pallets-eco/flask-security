@@ -11,7 +11,7 @@
 
 from datetime import timedelta
 import hashlib
-import mock
+from unittest import mock
 import re
 import sys
 import time
