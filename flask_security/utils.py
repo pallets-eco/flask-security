@@ -16,7 +16,6 @@ import hashlib
 import hmac
 import time
 import warnings
-from contextlib import contextmanager
 from datetime import timedelta
 from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
 import urllib.request
@@ -24,7 +23,6 @@ import urllib.error
 
 from flask import _request_ctx_stack, current_app, flash, g, request, session, url_for
 from flask.json import JSONEncoder
-from flask.signals import message_flashed
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
 from flask_login import current_user
@@ -38,12 +36,7 @@ from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
 from .quart_compat import best
-from .signals import (
-    login_instructions_sent,
-    reset_password_instructions_sent,
-    user_authenticated,
-    user_registered,
-)
+from .signals import user_authenticated
 
 # Convenient references
 _security = LocalProxy(lambda: current_app.extensions["security"])
@@ -871,74 +864,6 @@ class FsJsonEncoder(JSONEncoder):
             return str(obj)
         else:
             return JSONEncoder.default(self, obj)
-
-
-@contextmanager
-def capture_passwordless_login_requests():
-    login_requests = []
-
-    def _on(app, **data):
-        login_requests.append(data)
-
-    login_instructions_sent.connect(_on)
-
-    try:
-        yield login_requests
-    finally:
-        login_instructions_sent.disconnect(_on)
-
-
-@contextmanager
-def capture_registrations():
-    """Testing utility for capturing registrations.
-    """
-    registrations = []
-
-    def _on(app, **data):
-        registrations.append(data)
-
-    user_registered.connect(_on)
-
-    try:
-        yield registrations
-    finally:
-        user_registered.disconnect(_on)
-
-
-@contextmanager
-def capture_reset_password_requests(reset_password_sent_at=None):
-    """Testing utility for capturing password reset requests.
-
-    :param reset_password_sent_at: An optional datetime object to set the
-                                   user's `reset_password_sent_at` to
-    """
-    reset_requests = []
-
-    def _on(app, **data):
-        reset_requests.append(data)
-
-    reset_password_instructions_sent.connect(_on)
-
-    try:
-        yield reset_requests
-    finally:
-        reset_password_instructions_sent.disconnect(_on)
-
-
-@contextmanager
-def capture_flashes():
-    """Testing utility for capturing flashes."""
-    flashes = []
-
-    def _on(app, **data):
-        flashes.append(data)
-
-    message_flashed.connect(_on)
-
-    try:
-        yield flashes
-    finally:
-        message_flashed.disconnect(_on)
 
 
 class SmsSenderBaseClass(metaclass=abc.ABCMeta):

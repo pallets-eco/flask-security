@@ -171,8 +171,7 @@ and models.py. You can also do the models a folder and spread your tables there.
     from sqlalchemy.orm import scoped_session, sessionmaker
     from sqlalchemy.ext.declarative import declarative_base
 
-    engine = create_engine('sqlite:////tmp/test.db', \
-                           convert_unicode=True)
+    engine = create_engine('sqlite:////tmp/test.db')
     db_session = scoped_session(sessionmaker(autocommit=False,
                                              autoflush=False,
                                              bind=engine))

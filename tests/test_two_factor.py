@@ -17,11 +17,11 @@ from flask_security import (
     SmsSenderFactory,
     reset_password_instructions_sent,
 )
-from flask_security.utils import capture_flashes
 from tests.test_utils import (
     SmsBadSender,
     SmsTestSender,
     authenticate,
+    capture_flashes,
     get_session,
     logout,
 )
@@ -33,7 +33,7 @@ SmsSenderFactory.senders["test"] = SmsTestSender
 SmsSenderFactory.senders["bad"] = SmsBadSender
 
 
-class TestMail:
+class MockMail:
     def __init__(self):
         self.count = 0
         self.msg = None
@@ -216,7 +216,7 @@ def test_two_factor_flag(app, client):
 
     # change method (from sms to mail)
     setup_data = dict(setup="email")
-    testMail = TestMail()
+    testMail = MockMail()
     app.extensions["mail"] = testMail
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"
@@ -848,7 +848,7 @@ def test_email_salutation(app, client):
     authenticate(client, email="jill@lp.com")
     client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
 
-    test_mail = TestMail()
+    test_mail = MockMail()
     app.extensions["mail"] = test_mail
     response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"
@@ -865,7 +865,7 @@ def test_username_salutation(app, client):
     authenticate(client, email="jill@lp.com")
     client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
 
-    test_mail = TestMail()
+    test_mail = MockMail()
     app.extensions["mail"] = test_mail
     response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"To complete logging in, please enter the code sent to your mail"

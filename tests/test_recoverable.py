@@ -12,6 +12,8 @@ import pytest
 from flask import Flask
 from tests.test_utils import (
     authenticate,
+    capture_flashes,
+    capture_reset_password_requests,
     json_authenticate,
     json_logout,
     logout,
@@ -21,10 +23,6 @@ from tests.test_utils import (
 from flask_security.core import UserMixin
 from flask_security.forms import LoginForm
 from flask_security.signals import password_reset, reset_password_instructions_sent
-from flask_security.utils import (
-    capture_flashes,
-    capture_reset_password_requests,
-)
 
 pytestmark = pytest.mark.recoverable()
 
