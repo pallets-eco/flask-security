@@ -18,32 +18,28 @@ tests_require = [
     "check-manifest>=0.25",
     "coverage>=4.5.4",
     "cryptography>=2.3.1",
-    "isort>=4.2.2",
-    "mock>=1.3.0",
-    "mongoengine>=0.15.3",
+    "mongoengine>=0.18.0",
     "mongomock>=3.14.0",
     "msgcheck>=2.9",
     "pony>=0.7.11",
     "phonenumberslite>=8.11.1",
     "pre-commit>=2.4.0",
     "psycopg2>=2.8.4",
-    "pydocstyle>=1.0.0",
+    "pydocstyle>=5.0.0",
     "pymysql>=0.9.3",
     "pyqrcode>=1.2",
-    "pytest-black>=0.3.8",
     "pytest-cache>=1.0",
     "pytest-cov>=2.5.1",
-    "pytest-flake8>=1.0.6",
     "pytest-mongo>=1.2.1",
-    "pytest>=3.5.1",
-    "sqlalchemy>=1.2.6",
-    "sqlalchemy-utils>=0.33.0",
+    "pytest>=5.2.0",
+    "sqlalchemy>=1.3.6",
+    "sqlalchemy-utils>=0.34.1",
     "werkzeug>=0.15.5",
     "zxcvbn~=4.4.28",
 ]
 
 extras_require = {
-    "docs": ["Pallets-Sphinx-Themes>=1.2.0", "Sphinx>=1.8.5", "sphinx-issues>=1.2.0"],
+    "docs": ["Pallets-Sphinx-Themes>=1.2.1", "Sphinx>=3.0.3", "sphinx-issues>=1.2.0"],
     "tests": tests_require,
 }
 
@@ -51,10 +47,10 @@ extras_require["all"] = []
 for reqs in extras_require.values():
     extras_require["all"].extend(reqs)
 
-setup_requires = ["Babel>=1.3", "pytest-runner>=2.6.2", "twine", "wheel"]
+setup_requires = ["Babel>=1.3", "pytest-runner>=5.2", "twine", "wheel"]
 
 install_requires = [
-    "Flask>=1.0.2",
+    "Flask>=1.1.1",
     "Flask-Login>=0.4.1",
     "Flask-Mail>=0.9.1",
     "Flask-Principal>=0.4.0",
@@ -62,7 +58,7 @@ install_requires = [
     "Flask-BabelEx>=0.9.3",
     "email-validator>=1.0.5",
     "itsdangerous>=1.1.0",
-    "passlib>=1.7.1",
+    "passlib>=1.7.2",
 ]
 
 packages = find_packages()
