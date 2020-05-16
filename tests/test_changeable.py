@@ -12,10 +12,10 @@ import sys
 
 import pytest
 from flask import Flask
-from utils import authenticate, json_authenticate, verify_token
 
 from flask_security.core import UserMixin
 from flask_security.signals import password_changed
+from tests.test_utils import authenticate, json_authenticate, verify_token
 
 pytestmark = pytest.mark.changeable()
 

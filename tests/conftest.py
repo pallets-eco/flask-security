@@ -21,7 +21,6 @@ from flask import request as flask_request
 from flask.json import JSONEncoder
 from flask_babelex import Babel
 from flask_mail import Mail
-from utils import populate_data
 
 from flask_security import (
     MongoEngineUserDatastore,
@@ -41,6 +40,8 @@ from flask_security import (
     permissions_accepted,
     permissions_required,
 )
+
+from tests.test_utils import populate_data
 
 
 @pytest.fixture()

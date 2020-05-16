@@ -9,7 +9,7 @@ import timeit
 
 import pytest
 from pytest import raises
-from utils import authenticate, init_app_with_options
+from tests.test_utils import authenticate, init_app_with_options
 from passlib.hash import argon2, pbkdf2_sha256, django_pbkdf2_sha256, plaintext
 
 from flask_security.utils import hash_password, verify_password, get_hmac

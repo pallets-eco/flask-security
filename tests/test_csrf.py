@@ -15,7 +15,7 @@ import flask_wtf.csrf
 import pytest
 from flask_wtf import CSRFProtect
 
-from utils import get_session, logout
+from tests.test_utils import get_session, logout
 
 
 REAL_VALIDATE_CSRF = None

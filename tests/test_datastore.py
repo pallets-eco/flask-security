@@ -11,7 +11,7 @@
 
 import datetime
 from pytest import raises, skip
-from utils import init_app_with_options, get_num_queries, is_sqlalchemy
+from tests.test_utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
 from flask_security import RoleMixin, Security, UserMixin
 from flask_security.datastore import Datastore, UserDatastore

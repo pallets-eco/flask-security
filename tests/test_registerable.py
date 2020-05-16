@@ -7,7 +7,7 @@
 
 import pytest
 from flask import Flask
-from utils import authenticate, logout
+from tests.test_utils import authenticate, logout
 
 from flask_security import Security
 from flask_security.core import UserMixin

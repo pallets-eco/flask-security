@@ -8,7 +8,7 @@
 import base64
 
 import pytest
-from utils import authenticate, logout
+from tests.test_utils import authenticate, logout
 
 
 @pytest.mark.settings(

@@ -10,7 +10,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
-from utils import logout
+from tests.test_utils import logout
 
 from flask_security.core import UserMixin
 from flask_security.signals import login_instructions_sent

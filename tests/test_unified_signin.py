@@ -18,7 +18,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
-from utils import SmsBadSender, SmsTestSender, authenticate, logout
+from tests.test_utils import SmsBadSender, SmsTestSender, authenticate, logout
 
 from flask_security import (
     SmsSenderFactory,

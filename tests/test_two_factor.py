@@ -11,8 +11,6 @@
 from unittest.mock import Mock
 
 import pytest
-
-from utils import SmsBadSender, SmsTestSender, authenticate, get_session, logout
 from flask_principal import identity_changed
 from flask_security import (
     SQLAlchemyUserDatastore,
@@ -20,6 +18,13 @@ from flask_security import (
     reset_password_instructions_sent,
 )
 from flask_security.utils import capture_flashes
+from tests.test_utils import (
+    SmsBadSender,
+    SmsTestSender,
+    authenticate,
+    get_session,
+    logout,
+)
 
 pytestmark = pytest.mark.two_factor()
 
@@ -462,7 +467,7 @@ def test_evil_validate(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in utils.py
+    # Jill is 4th user to be added in test_utils.py
     assert signalled_identity[0] == 4
     del signalled_identity[:]
 
@@ -489,7 +494,7 @@ def test_opt_in(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in utils.py
+    # Jill is 4th user to be added in test_utils.py
     assert signalled_identity[0] == 4
     del signalled_identity[:]
 
@@ -560,7 +565,7 @@ def test_opt_in(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in utils.py
+    # Jill is 4th user to be added in test_utils.py
     assert signalled_identity[0] == 4
 
 
@@ -715,7 +720,7 @@ def test_totp_secret_generation(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in utils.py
+    # Jill is 4th user to be added in test_utils.py
     assert signalled_identity[0] == 4
     del signalled_identity[:]
 
