@@ -7,10 +7,11 @@
 
 import pytest
 from flask import after_this_request, redirect
-from utils import authenticate, logout
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask_security import login_user
+
+from tests.test_utils import authenticate, logout
 
 pytestmark = pytest.mark.trackable()
 

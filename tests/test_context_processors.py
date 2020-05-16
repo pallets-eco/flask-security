@@ -6,9 +6,9 @@
 """
 
 import pytest
-from test_two_factor import tf_authenticate
-from test_unified_signin import authenticate as us_authenticate
-from utils import authenticate, logout
+from tests.test_two_factor import tf_authenticate
+from tests.test_unified_signin import authenticate as us_authenticate
+from tests.test_utils import authenticate, logout
 
 
 @pytest.mark.recoverable()

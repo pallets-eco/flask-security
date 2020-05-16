@@ -15,7 +15,7 @@ import pytest
 
 from flask import Blueprint
 
-from utils import (
+from tests.test_utils import (
     authenticate,
     json_authenticate,
     get_num_queries,

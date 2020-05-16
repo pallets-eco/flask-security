@@ -10,7 +10,13 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
-from utils import authenticate, json_authenticate, json_logout, logout, verify_token
+from tests.test_utils import (
+    authenticate,
+    json_authenticate,
+    json_logout,
+    logout,
+    verify_token,
+)
 
 from flask_security.core import UserMixin
 from flask_security.forms import LoginForm

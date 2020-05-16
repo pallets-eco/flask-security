@@ -10,12 +10,13 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
-from utils import authenticate, logout
 
 from flask_security.core import UserMixin
 from flask_security.confirmable import generate_confirmation_token
 from flask_security.signals import confirm_instructions_sent, user_confirmed
 from flask_security.utils import capture_flashes, capture_registrations
+
+from tests.test_utils import authenticate, logout
 
 pytestmark = pytest.mark.confirmable()
 

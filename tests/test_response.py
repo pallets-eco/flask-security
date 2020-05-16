@@ -12,7 +12,7 @@ import pytest
 
 from flask import jsonify
 
-from utils import authenticate
+from tests.test_utils import authenticate
 
 
 def test_render_json(app, client):

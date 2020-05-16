@@ -18,7 +18,7 @@ import time
 
 import pytest
 
-from utils import (
+from tests.test_utils import (
     authenticate,
     check_xlation,
     init_app_with_options,
