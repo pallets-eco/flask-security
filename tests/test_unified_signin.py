@@ -379,6 +379,7 @@ def test_post_already_authenticated(client, get_message):
     )
 
 
+@pytest.mark.settings(us_email_subject="Code For You")
 def test_verify_link(app, client, get_message):
     auths = []
 
@@ -395,6 +396,9 @@ def test_verify_link(app, client, get_message):
         assert response.status_code == 200
         assert b"Sign In" in response.data
 
+    assert outbox[0].recipients == ["matt@lp.com"]
+    assert outbox[0].sender == "no-reply@localhost"
+    assert outbox[0].subject == "Code For You"
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
     )

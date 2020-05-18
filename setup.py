@@ -10,6 +10,7 @@ with open("flask_security/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 tests_require = [
+    "Flask-Mail>=0.9.1",
     "Flask-Mongoengine>=0.9.5",
     "peewee>=3.11.2",
     "Flask-SQLAlchemy>=2.3",
@@ -52,7 +53,6 @@ setup_requires = ["Babel>=1.3", "pytest-runner>=5.2", "twine", "wheel"]
 install_requires = [
     "Flask>=1.1.1",
     "Flask-Login>=0.4.1",
-    "Flask-Mail>=0.9.1",
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=0.14.2",
     "Flask-BabelEx>=0.9.3",

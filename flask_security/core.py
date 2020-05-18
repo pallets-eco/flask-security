@@ -46,6 +46,7 @@ from .forms import (
     TwoFactorRescueForm,
     VerifyForm,
 )
+from .mail_util import MailUtil
 from .phone_util import PhoneUtil
 from .twofactor import tf_send_security_token
 from .unified_signin import (
@@ -69,7 +70,6 @@ from .utils import (
     get_message,
     hash_data,
     localize_callback,
-    send_mail,
     uia_email_mapper,
     uia_phone_mapper,
     url_for_security,
@@ -586,8 +586,6 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             confirm_serializer=_get_serializer(app, "confirm"),
             us_setup_serializer=_get_serializer(app, "us_setup"),
             _context_processors={},
-            _send_mail_task=None,
-            _send_mail=kwargs.get("send_mail", send_mail),
             _unauthorized_callback=None,
             _render_json=default_render_json,
             _want_json=default_want_json,
@@ -933,12 +931,6 @@ class _SecurityState:
     def us_verify_context_processor(self, fn):
         self._add_ctx_processor("us_verify", fn)
 
-    def send_mail_task(self, fn):
-        self._send_mail_task = fn
-
-    def send_mail(self, fn):
-        self._send_mail = fn
-
     def unauthorized_handler(self, fn):
         warnings.warn(
             "'unauthorized_handler' has been replaced with"
@@ -997,12 +989,12 @@ class Security:
     :param anonymous_user: class to use for anonymous user
     :param render_template: function to use to render templates. The default is Flask's
      render_template() function.
-    :param send_mail: function to use to send email. Defaults to :func:`send_mail`
     :param json_encoder_cls: Class to use as blueprint.json_encoder.
      Defaults to :class:`FsJsonEncoder`
     :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
     :param phone_util_cls: Class to use for phone number utilities.
      Defaults to :class:`PhoneUtil`
+    :param mail_util_cls: Class to use for sending emails. Defaults to :class:`MailUtil`
 
     .. versionadded:: 3.4.0
         ``verify_form`` added as part of freshness/re-authentication
@@ -1018,6 +1010,12 @@ class Security:
     .. versionadded:: 3.4.0
         ``phone_util_cls`` added to allow different phone number
          parsing implementations - see :py:class:`PhoneUtil`
+
+    .. versionadded:: 4.0.0
+        ``mail_util_cls`` added to isolate mailing handling
+
+    .. deprecated:: 4.0.0
+        ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -1060,6 +1058,8 @@ class Security:
             kwargs.setdefault("totp_cls", Totp)
         if "phone_util_cls" not in kwargs:
             kwargs.setdefault("phone_util_cls", PhoneUtil)
+        if "mail_util_cls" not in kwargs:
+            kwargs.setdefault("mail_util_cls", MailUtil)
 
         for key, value in _default_config.items():
             app.config.setdefault("SECURITY_" + key, value)
@@ -1144,6 +1144,10 @@ class Security:
         def _init_phone_util():
             state._phone_util = state.phone_util_cls()
 
+        @app.before_first_request
+        def _init_mail_util():
+            state._mail_util = state.mail_util_cls()
+
         app.extensions["security"] = state
 
         if hasattr(app, "cli"):
@@ -1214,17 +1218,6 @@ class Security:
 
     def render_template(self, *args, **kwargs):
         return render_template(*args, **kwargs)
-
-    def send_mail(self, fn):
-        """ Function used to send emails.
-
-        :param fn: Function with signature(subject, recipient, template, context)
-
-        See :meth:`send_mail` for details.
-
-        .. versionadded:: 3.1.0
-        """
-        self._state._send_mail = fn
 
     def render_json(self, cb):
         """ Callback to render response payload as JSON.
