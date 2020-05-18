@@ -27,7 +27,6 @@ from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
 from flask_login import current_user
 from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
-from flask_mail import Message
 from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
 from wtforms import validators, ValidationError
@@ -556,7 +555,7 @@ def get_within_delta(key, app=None):
 
 
 def send_mail(subject, recipient, template, **context):
-    """Send an email via the Flask-Mail extension.
+    """Send an email.
 
     :param subject: Email subject
     :param recipient: Email recipient
@@ -567,24 +566,21 @@ def send_mail(subject, recipient, template, **context):
     context.setdefault("security", _security)
     context.update(_security._run_ctx_processor("mail"))
 
+    body = None
+    html = None
+    ctx = ("security/email", template)
+    if config_value("EMAIL_PLAINTEXT"):
+        body = _security.render_template("%s/%s.txt" % ctx, **context)
+    if config_value("EMAIL_HTML"):
+        html = _security.render_template("%s/%s.html" % ctx, **context)
+
     sender = _security.email_sender
     if isinstance(sender, LocalProxy):
         sender = sender._get_current_object()
 
-    msg = Message(subject, sender=sender, recipients=[recipient])
-
-    ctx = ("security/email", template)
-    if config_value("EMAIL_PLAINTEXT"):
-        msg.body = _security.render_template("%s/%s.txt" % ctx, **context)
-    if config_value("EMAIL_HTML"):
-        msg.html = _security.render_template("%s/%s.html" % ctx, **context)
-
-    if _security._send_mail_task:
-        _security._send_mail_task(msg)
-        return
-
-    mail = current_app.extensions.get("mail")
-    mail.send(msg)
+    _security._mail_util.send_mail(
+        template, subject, recipient, str(sender), body, html, context.get("user", None)
+    )
 
 
 def get_token_status(token, serializer, max_age=None, return_data=False):

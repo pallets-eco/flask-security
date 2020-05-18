@@ -49,6 +49,7 @@ from .forms import (
     TwoFactorVerifyPasswordForm,
     VerifyForm,
 )
+from .mail_util import MailUtil
 from .phone_util import PhoneUtil
 from .signals import (
     confirm_instructions_sent,

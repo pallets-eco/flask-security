@@ -59,6 +59,7 @@ from .utils import (
     json_error_response,
     login_user,
     propagate_next,
+    send_mail,
     suppress_form_csrf,
     url_for_security,
 )
@@ -935,7 +936,7 @@ def us_send_security_token(
             login_link = url_for_security(
                 "us_verify_link", email=user.email, code=token, _external=True
             )
-        _security._send_mail(
+        send_mail(
             config_value("US_EMAIL_SUBJECT"),
             user.email,
             "us_instructions",

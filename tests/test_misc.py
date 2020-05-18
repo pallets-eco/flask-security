@@ -58,45 +58,22 @@ from flask_security.utils import (
 
 
 @pytest.mark.recoverable()
-def test_async_email_task(app, client):
-    app.mail_sent = False
-
-    @app.security.send_mail_task
-    def send_email(msg):
-        app.mail_sent = True
-
-    client.post("/reset", data=dict(email="matt@lp.com"))
-    assert app.mail_sent is True
-
-
-@pytest.mark.recoverable()
-def test_alt_send_mail(app, sqlalchemy_datastore):
-    """ Verify that can override the send_mail method. """
-    app.mail_sent = False
-
-    def send_email(subject, email, template, **kwargs):
-        app.mail_sent = True
+def test_my_mail_util(app, sqlalchemy_datastore):
+    class MyMailUtil:
+        def send_mail(self, template, subject, recipient, sender, body, html, user):
+            assert template == "reset_instructions"
+            assert subject == app.config["SECURITY_EMAIL_SUBJECT_PASSWORD_RESET"]
+            assert recipient == "matt@lp.com"
+            assert user.email == "matt@lp.com"
+            assert sender == "no-reply@localhost"
+            assert isinstance(sender, str)
 
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"send_mail": send_email}}
+        app, sqlalchemy_datastore, **{"security_args": {"mail_util_cls": MyMailUtil}}
     )
+
     client = app.test_client()
-
     client.post("/reset", data=dict(email="matt@lp.com"))
-    assert app.mail_sent is True
-
-
-@pytest.mark.recoverable()
-def test_alt_send_mail_decorator(app, client):
-    """ Verify that can override the send_mail method. """
-    app.mail_sent = False
-
-    @app.security.send_mail
-    def send_email(subject, email, template, **kwargs):
-        app.mail_sent = True
-
-    client.post("/reset", data=dict(email="matt@lp.com"))
-    assert app.mail_sent is True
 
 
 def test_register_blueprint_flag(app, sqlalchemy_datastore):
@@ -453,6 +430,7 @@ def test_no_email_sender(app):
     security.init_app(app)
 
     with app.app_context():
+        app.try_trigger_before_first_request_functions()
         user = TestUser("matt@lp.com")
         with app.mail.record_messages() as outbox:
             send_mail("Test Default Sender", user.email, "welcome", user=user)

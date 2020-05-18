@@ -6,18 +6,32 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 4.0.0
 -------------
 
-Release Target 2020
+Release Target Summer 2020
 
 - Removal of python 2.7 and <3.6 support
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
 - Other possible breaking changes tracked `here`_
+
+Features
+++++++++
+- Removal of python 2.7 and <3.6 support
+- Removal of token caching feature (a relatively new feature that has some systemic issues)
+- (:pr:`xxx`) Remove dependence on Flask-Mail and refactor.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+- (:pr:`xxx`) Remove dependence on Flask-Mail and refactor. The ``send_mail_task`` and
+  ``send_mail`` methods have been removed and replaced with a new :class:`.MailUtil` class.
+  If your application didn't use either of the deprecated methods, then the only change required
+  is to add Flask-Mail to your package requirements (since Flask-Security no longer lists it).
+  Please see the :ref:`emails_topic` for updated examples.
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
 Version 3.4.2
 -------------
 
-Released May x, 2020
+Released May 2, 2020
 
 Only change is to move repo to the Flask-Middleware github organization.
 

@@ -138,11 +138,16 @@ Utils
 .. autoclass:: flask_security.PhoneUtil
   :members:
 
+.. autoclass:: flask_security.MailUtil
+  :members:
+
 .. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms
 
 .. autoclass:: flask_security.SmsSenderFactory
   :members: createSender
+
+.. _signals_topic:
 
 Signals
 -------

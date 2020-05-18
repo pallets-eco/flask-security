@@ -979,6 +979,8 @@ Unified Signin
 
 .. py:data:: SECURITY_US_EMAIL_SUBJECT
 
+    Sets the email subject when sending the verification code via email.
+
     Default: ``_("Verification Code")``
 
 .. py:data:: SECURITY_US_SETUP_WITHIN

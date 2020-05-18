@@ -89,6 +89,7 @@ from .utils import (
     json_error_response,
     login_user,
     logout_user,
+    send_mail,
     slash_url_suffix,
     suppress_form_csrf,
     url_for_security,
@@ -931,7 +932,7 @@ def two_factor_rescue():
                     )
         # send app provider a mail message regarding trouble
         elif problem == "no_mail_access":
-            _security._send_mail(
+            send_mail(
                 config_value("EMAIL_SUBJECT_TWO_FACTOR_RESCUE"),
                 config_value("TWO_FACTOR_RESCUE_MAIL"),
                 "two_factor_rescue",

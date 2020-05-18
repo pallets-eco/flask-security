@@ -17,6 +17,7 @@ from .utils import (
     config_value,
     get_token_status,
     hash_data,
+    send_mail,
     url_for_security,
     verify_hash,
 )
@@ -40,7 +41,7 @@ def send_confirmation_instructions(user):
 
     confirmation_link, token = generate_confirmation_link(user)
 
-    _security._send_mail(
+    send_mail(
         config_value("EMAIL_SUBJECT_CONFIRM"),
         user.email,
         "confirmation_instructions",

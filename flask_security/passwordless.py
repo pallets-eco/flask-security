@@ -12,7 +12,7 @@ from flask import current_app as app
 from werkzeug.local import LocalProxy
 
 from .signals import login_instructions_sent
-from .utils import config_value, get_token_status, url_for_security
+from .utils import config_value, get_token_status, send_mail, url_for_security
 
 # Convenient references
 _security = LocalProxy(lambda: app.extensions["security"])
@@ -24,12 +24,11 @@ def send_login_instructions(user):
     """Sends the login instructions email for the specified user.
 
     :param user: The user to send the instructions to
-    :param token: The login token
     """
     token = generate_login_token(user)
     login_link = url_for_security("token_login", token=token, _external=True)
 
-    _security._send_mail(
+    send_mail(
         config_value("EMAIL_SUBJECT_PASSWORDLESS"),
         user.email,
         "login_instructions",

@@ -142,6 +142,8 @@ modified an existing security template) just use that method::
 
     {{ _fsdomain("Login") }}
 
+.. _emails_topic:
+
 Emails
 ------
 
@@ -156,9 +158,9 @@ The following is a list of email templates:
 * `security/email/reset_instructions.html`
 * `security/email/reset_instructions.txt`
 * `security/email/reset_notice.html`
+* `security/email/reset_notice.txt`
 * `security/email/change_notice.txt`
 * `security/email/change_notice.html`
-* `security/email/reset_notice.txt`
 * `security/email/welcome.html`
 * `security/email/welcome.txt`
 * `security/email/two_factor_instructions.html`
@@ -187,36 +189,74 @@ templates, you can specify an email context processor with the
         return dict(hello="world")
 
 
+There are many configuration variables associated with emails, and each template
+will receive a slightly different context. The ``Gate Config`` column are configuration variables that if set
+to ``False`` will bypass sending of the email (they all default to ``True``).
+In most cases, in addition to an email being sent, a :ref:`Signal <signals_topic>` is sent.
+The table below summarizes all this:
+
+=============================   ================================   ====================================== ====================== ===============================
+**Template Name**               **Gate Config**                    **Subject Config**                     **Context Vars**       **Signal Sent**
+-----------------------------   --------------------------------   -------------------------------------- ---------------------- -------------------------------
+confirmation_instructions       N/A                                EMAIL_SUBJECT_CONFIRM                  - user                 confirm_instructions_sent
+                                                                                                          - confirmation_link
+
+login_instructions              N/A                                EMAIL_SUBJECT_PASSWORDLESS             - user                 login_instructions_sent
+                                                                                                          - login_link
+
+
+reset_instructions              SEND_PASSWORD_RESET_EMAIL          EMAIL_SUBJECT_PASSWORD_RESET           - user                 reset_password_instructions_sent
+                                                                                                          - reset_link
+
+
+reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL   EMAIL_SUBJECT_PASSWORD_NOTICE          - user                 password_reset
+
+change_notice                   SEND_PASSWORD_CHANGE_EMAIL         EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE   - user                 password_changed
+
+welcome
+
+two_factor_instructions         N/A                                EMAIL_SUBJECT_TWO_FACTOR               - user                 tf_security_token_sent
+                                                                                                          - token
+                                                                                                          - username
+
+two_factor_rescue               N/A                                EMAIL_SUBJECT_TWO_FACTOR_RESCUE        - user                 N/A
+
+us_instructions                 N/A                                US_EMAIL_SUBJECT                       - user                 us_security_token_sent
+                                                                                                          - token
+                                                                                                          - login_link
+                                                                                                          - username
+=============================   ================================   ====================================== ====================== ===============================
+
+When sending an email, Flask-Security goes through the following steps:
+
+  #. Call the email context processor as described above
+
+  #. Calls ``render_template`` (as configured at Flask-Security initialization time) with the
+     context and template to produce a text and/or html version of the message
+
+  #. Calls :meth:`.MailUtil.send_mail` with all the required parameters.
+
+The default implementation of ``MailUtil.send_mail`` uses Flask-Mail to create and send the message.
+By providing your own implementation, you can use any available python email handling package.
+
 Emails with Celery
-------------------
+++++++++++++++++++
 
 Sometimes it makes sense to send emails via a task queue, such as `Celery`_.
-To delay the sending of emails, you can use the ``@security.send_mail_task``
-decorator like so::
+This is supported by providing your own implementation of the :class:`.MailUtil` class::
 
+    class MyMailUtil:
 
-    from flask_mail import Message
+        def send_mail(self, template, subject, recipient, sender, body, html, user, **kwargs):
+            send_flask_mail.delay(
+                subject=subject,
+                sender=sender,
+                recipients=recipients,
+                body=body,
+                html=html,
+            )
 
-    # Setup the task
-    @celery.task
-    def send_flask_mail(**kwargs):
-        # Use the Flask-Mail extension instance to send the incoming ``msg`` parameter
-        # which is an instance of `flask_mail.Message`
-        mail.send(Message(**kwargs))
-
-    @security.send_mail_task
-    def delay_flask_security_mail(msg):
-        send_flask_mail.delay(
-            subject=msg.subject,
-            sender=msg.sender,
-            recipients=msg.recipients,
-            body=msg.body,
-            html=msg.html,
-        )
-
-If factory method is going to be used for initialization, use ``_SecurityState``
-object returned by ``init_app`` method to initialize Celery tasks instead of using
-``security.send_mail_task`` directly like so::
+Then register your class as part of Flask-Security initialization::
 
     from flask import Flask
     from flask_mail import Mail, Message
@@ -227,63 +267,10 @@ object returned by ``init_app`` method to initialize Celery tasks instead of usi
     security = Security()
     celery = Celery()
 
-    def create_app(config):
-        """Initialize Flask instance."""
-
-        app = Flask(__name__)
-        app.config.from_object(config)
-
-        @celery.task
-        def send_flask_mail(**kwargs):
-            mail.send(Message(**kwargs))
-
-        mail.init_app(app)
-        datastore = SQLAlchemyUserDatastore(db, User, Role)
-        security_ctx = security.init_app(app, datastore)
-
-        # Flexible way for defining custom mail sending task.
-        @security_ctx.send_mail_task
-        def delay_flask_security_mail(msg):
-            send_flask_mail.delay(
-                subject=msg.subject,
-                sender=msg.sender,
-                recipients=msg.recipients,
-                body=msg.body,
-                html=msg.html,
-            )
-
-        # A shortcut.
-        security_ctx.send_mail_task(send_flask_mail.delay)
-
-        return app
-
-Note that ``flask_mail.Message`` may not be serialized as an argument passed to
-Celery. The practical way with custom serialization may look like so::
 
     @celery.task
     def send_flask_mail(**kwargs):
-            mail.send(Message(**kwargs))
-
-    @security_ctx.send_mail_task
-    def delay_flask_security_mail(msg):
-        send_flask_mail.delay(subject=msg.subject, sender=msg.sender,
-                              recipients=msg.recipients, body=msg.body,
-                              html=msg.html)
-
-.. _Celery: http://www.celeryproject.org/
-
-
-Custom send_mail method
------------------------
-
-It's also possible to completely override the ``security.send_mail`` method to
-implement your own logic.
-
-For example, you might want to use an alternative email library like `Flask-Emails`::
-
-    from flask import Flask
-    from flask_security import Security, SQLAlchemyUserDatastore
-    from flask_emails import Message
+        mail.send(Message(**kwargs))
 
     def create_app(config):
         """Initialize Flask instance."""
@@ -291,22 +278,14 @@ For example, you might want to use an alternative email library like `Flask-Emai
         app = Flask(__name__)
         app.config.from_object(config)
 
-        def custom_send_mail(subject, recipient, template, **context):
-            ctx = ('security/email', template)
-            message = Message(
-                subject=subject,
-                html=_security.render_template('%s/%s.html' % ctx, **context))
-            message.send(mail_to=[recipient])
-
+        mail.init_app(app)
         datastore = SQLAlchemyUserDatastore(db, User, Role)
-        Security(app, datastore, send_mail=custom_send_mail)
+        security.init_app(app, datastore, mail_util_cls=MyMailUtil)
 
         return app
 
-.. note::
+.. _Celery: http://www.celeryproject.org/
 
-    The above ``security.send_mail_task`` override will be useless if you
-    override the entire ``send_mail`` method.
 
 .. _responsetopic:
 
@@ -320,13 +299,13 @@ JSON Response
 Applications that support a JSON based API need to be able to have a uniform
 API response. Flask-Security has a default way to render its API responses - which can
 be easily overridden by providing a callback function via :meth:`.Security.render_json`.
-As documented in :meth:`.Security.render_json`, be aware that Flask-Security registers
+Be aware that Flask-Security registers
 its own JsonEncoder on its blueprint.
 
 401, 403, Oh My
 +++++++++++++++
 For a very long read and discussion; look at `this`_. Out of the box, Flask-Security in
-tandem with Flask-Login, behaves as follows:
+tandem with Flask-Login, behave as follows:
 
     * If authentication fails as the result of a `@login_required`, `@auth_required`,
       `@http_auth_required`, or `@token_auth_required` then if the request 'wants' a JSON
