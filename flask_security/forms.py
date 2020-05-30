@@ -345,7 +345,7 @@ class LoginForm(Form, NextFormMixin):
         return True
 
 
-class VerifyForm(Form, PasswordFormMixin):
+class VerifyForm(Form, PasswordFormMixin, NextFormMixin):
     """The verify authentication form"""
 
     user = None
