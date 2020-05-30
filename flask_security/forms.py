@@ -351,6 +351,11 @@ class VerifyForm(Form, PasswordFormMixin, NextFormMixin):
     user = None
     submit = SubmitField(get_form_field_label("verify_password"))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.next.data:
+            self.next.data = request.args.get("next", "")
+    
     def validate(self):
         if not super().validate():
             return False
