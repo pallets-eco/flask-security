@@ -25,6 +25,7 @@ from tests.test_utils import (
     check_xlation,
     init_app_with_options,
     json_authenticate,
+    logout,
     populate_data,
 )
 
@@ -46,7 +47,7 @@ from flask_security.forms import (
     email_validator,
     valid_user_email,
 )
-from flask_security import auth_required
+from flask_security import auth_required, roles_required
 from flask_security.utils import (
     encode_string,
     json_error_response,
@@ -887,3 +888,45 @@ def test_verify_fresh_json(app, client, get_message):
     response = client.get("/fresh", headers=headers)
     assert response.status_code == 200
     assert response.json["title"] == "Fresh Only"
+
+
+@pytest.mark.settings(verify_url="/auth/")
+def test_verify_next(app, client, get_message):
+    authenticate(client)
+    response = client.post(
+        "/auth/?next=http://localhost/mynext",
+        data=dict(password="password"),
+        follow_redirects=False,
+    )
+    assert response.location == "http://localhost/mynext"
+
+    response = client.post(
+        "/auth/?next=http%3A%2F%2F127.0.0.1%3A5000%2Fdashboard%2Fsettings%2F",
+        data=dict(password="password"),
+        follow_redirects=False,
+        base_url="http://127.0.0.1:5000",
+    )
+    assert response.location == "http://127.0.0.1:5000/dashboard/settings/"
+
+
+def test_direct_decorator(app, client, get_message):
+    """ Test/show calling the auth_required decorator directly """
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    def myview():
+        return roles_required("author")(domyview)()
+
+    def domyview():
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+
+    authenticate(client)
+    response = client.get("/myview", headers=headers)
+    assert response.status_code == 403
+
+    logout(client)
+
+    authenticate(client, email="jill@lp.com")
+    response = client.get("/myview", headers=headers)
+    assert response.status_code == 200
