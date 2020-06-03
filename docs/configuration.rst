@@ -518,7 +518,7 @@ Login/Logout
 
     Specifies the path to the template for the user login page.
 
-    Default:``security/login_user.html``.
+    Default: ``"security/login_user.html"``.
 
 .. py:data:: SECURITY_VERIFY_URL
 
@@ -526,6 +526,13 @@ Login/Logout
     endpoint won't be registered.
 
     Default: ``"/verify"``
+
+
+.. py:data:: SECURITY_VERIFY_TEMPLATE
+
+    Specifies the path to the template for the verify password page.
+
+    Default: ``"security/verify.html"``.
 
 .. py:data:: SECURITY_POST_VERIFY_URL
 
@@ -632,7 +639,7 @@ Confirmable
     Specifies if a user may login before confirming their email when
     the value of ``SECURITY_CONFIRMABLE`` is set to ``True``.
 
-    Default:``False``.
+    Default: ``False``.
 
 Changeable
 ----------
@@ -1086,6 +1093,7 @@ A list of all URLs and Views:
 
 * ``SECURITY_LOGIN_URL``
 * ``SECURITY_LOGOUT_URL``
+* :py:data:`SECURITY_VERIFY_URL`
 * ``SECURITY_REGISTER_URL``
 * ``SECURITY_RESET_URL``
 * ``SECURITY_CHANGE_URL``
@@ -1121,6 +1129,7 @@ A list of all templates:
 
 * ``SECURITY_FORGOT_PASSWORD_TEMPLATE``
 * ``SECURITY_LOGIN_USER_TEMPLATE``
+* :py:data:`SECURITY_VERIFY_TEMPLATE`
 * ``SECURITY_REGISTER_USER_TEMPLATE``
 * ``SECURITY_RESET_PASSWORD_TEMPLATE``
 * ``SECURITY_CHANGE_PASSWORD_TEMPLATE``
