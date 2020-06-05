@@ -51,6 +51,7 @@ from flask_security import auth_required, roles_required
 from flask_security.utils import (
     encode_string,
     json_error_response,
+    get_request_attr,
     hash_data,
     send_mail,
     uia_phone_mapper,
@@ -929,4 +930,20 @@ def test_direct_decorator(app, client, get_message):
 
     authenticate(client, email="jill@lp.com")
     response = client.get("/myview", headers=headers)
+    assert response.status_code == 200
+
+
+def test_authn_via(app, client, get_message):
+    """ Test that we get correct fs_authn_via set in request """
+
+    @auth_required(within=30, grace=0)
+    def myview():
+        assert get_request_attr("fs_authn_via") == "session"
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+    authenticate(client)
+
+    # This should work and not be redirected
+    response = client.get("/myview", follow_redirects=False)
     assert response.status_code == 200

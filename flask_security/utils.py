@@ -57,6 +57,26 @@ def _(translate):
     return translate
 
 
+def get_request_attr(name):
+    """ Retrieve a request local attribute.
+
+    Currently public attributes are:
+
+    **fs_authn_via**
+        will be set to the authentication mechanism (session, token, basic)
+        that the current request was authenticated with.
+
+    Returns None if attribute doesn't exist.
+
+    .. versionadded:: 4.0.0
+    """
+    return getattr(_request_ctx_stack.top, name, None)
+
+
+def set_request_attr(name, value):
+    return setattr(_request_ctx_stack.top, name, value)
+
+
 def find_csrf_field_name():
     """
     We need to clear it on logout (since that isn't being done by Flask-WTF).
@@ -147,7 +167,7 @@ def logout_user():
     _logout_user()
 
 
-def check_and_update_authn_fresh(within, grace):
+def check_and_update_authn_fresh(within, grace, method=None):
     """ Check if user authenticated within specified time and update grace period.
 
     :param within: A timedelta specifying the maximum time in the past that the caller
@@ -156,6 +176,8 @@ def check_and_update_authn_fresh(within, grace):
                   will set a grace period for which freshness won't be checked.
                   The intent here is that the caller shouldn't get part-way though
                   a set of operations and suddenly be required to authenticate again.
+    :param method: Optional - if set and == "basic" then will always return True.
+                  (since basic-auth sends username/password on every request)
 
     If within.total_seconds() is negative, will always return True (always 'fresh').
     This effectively just disables this entire mechanism.
@@ -167,13 +189,20 @@ def check_and_update_authn_fresh(within, grace):
     return False (not fresh).
 
     Be aware that for this to work, sessions and therefore session cookies
-    must be functioning and being sent as part of the request.
+    must be functioning and being sent as part of the request. If the required
+    state isn't in the session cookie then return False (not 'fresh').
 
     .. warning::
         Be sure the caller is already authenticated PRIOR to calling this method.
 
     .. versionadded:: 3.4.0
+
+    .. versionchanged:: 4.0.0
+        Added `method` parameter.
     """
+
+    if method == "basic":
+        return True
 
     if within.total_seconds() < 0:
         # this means 'always fresh'
@@ -341,8 +370,7 @@ def suppress_form_csrf():
     If app doesn't want CSRF for unauth endpoints then check if caller is authenticated
     or not (many endpoints can be called either way).
     """
-    ctx = _request_ctx_stack.top
-    if hasattr(ctx, "fs_ignore_csrf") and ctx.fs_ignore_csrf:
+    if get_request_attr("fs_ignore_csrf"):
         # This is the case where CsrfProtect was already called (e.g. @auth_required)
         return {"csrf": False}
     if (

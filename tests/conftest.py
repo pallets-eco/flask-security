@@ -34,6 +34,7 @@ from flask_security import (
     auth_required,
     auth_token_required,
     http_auth_required,
+    get_request_attr,
     login_required,
     roles_accepted,
     roles_required,
@@ -122,16 +123,19 @@ def app(request):
     @http_auth_required
     @permissions_required("admin")
     def http_admin_required():
+        assert get_request_attr("fs_authn_via") == "basic"
         return "HTTP Authentication"
 
     @app.route("/http_custom_realm")
     @http_auth_required("My Realm")
     def http_custom_realm():
+        assert get_request_attr("fs_authn_via") == "basic"
         return render_template("index.html", content="HTTP Authentication")
 
     @app.route("/token", methods=["GET", "POST"])
     @auth_token_required
     def token():
+        assert get_request_attr("fs_authn_via") == "token"
         return render_template("index.html", content="Token Authentication")
 
     @app.route("/multi_auth")
@@ -154,6 +158,7 @@ def app(request):
     @app.route("/admin")
     @roles_required("admin")
     def admin():
+        assert get_request_attr("fs_authn_via") == "session"
         return render_template("index.html", content="Admin Page")
 
     @app.route("/admin_and_editor")
@@ -182,10 +187,6 @@ def app(request):
     @permissions_required("full-write", "super")
     def admin_perm_required():
         return render_template("index.html", content="Admin Page required")
-
-    @app.route("/unauthorized")
-    def unauthorized():
-        return render_template("unauthorized.html")
 
     @app.route("/page1")
     def page_1():

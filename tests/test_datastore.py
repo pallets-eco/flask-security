@@ -479,7 +479,7 @@ def test_user_loader(app, sqlalchemy_datastore):
     from flask_security.core import _user_loader
 
     init_app_with_options(app, sqlalchemy_datastore)
-    with app.app_context():
+    with app.test_request_context():
         jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
 
         # normal case
