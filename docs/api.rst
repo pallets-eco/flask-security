@@ -96,6 +96,8 @@ Utils
 
 .. autofunction:: flask_security.get_hmac
 
+.. autofunction:: flask_security.get_request_attr
+
 .. autofunction:: flask_security.verify_password
 
 .. autofunction:: flask_security.verify_and_update_password

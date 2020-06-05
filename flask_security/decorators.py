@@ -28,6 +28,7 @@ from .utils import (
     get_url,
     check_and_update_authn_fresh,
     json_error_response,
+    set_request_attr,
 )
 
 # Convenient references
@@ -219,6 +220,7 @@ def http_auth_required(realm):
         def wrapper(*args, **kwargs):
             if _check_http_auth():
                 handle_csrf("basic")
+                set_request_attr("fs_authn_via", "basic")
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
@@ -248,6 +250,7 @@ def auth_token_required(fn):
     def decorated(*args, **kwargs):
         if _check_token():
             handle_csrf("token")
+            set_request_attr("fs_authn_via", "token")
             return fn(*args, **kwargs)
         if _security._unauthorized_callback:
             return _security._unauthorized_callback()
@@ -295,6 +298,9 @@ def auth_required(*auth_methods, **kwargs):
 
     On authentication failure `.Security.unauthorized_callback` (deprecated)
     or :meth:`.Security.unauthn_handler` will be called.
+
+    As a side effect, upon successful authentication, the request global
+     ``fs_authn_via`` will be set to the method ("basic", "token", "session")
 
     .. versionchanged:: 3.3.0
        If ``auth_methods`` isn't specified, then all will be tried. Authentication
@@ -348,11 +354,10 @@ def auth_required(*auth_methods, **kwargs):
                     # successfully authenticated. Basic auth is by definition 'fresh'.
                     # Note that using token auth is ok - but caller still has to pass
                     # in a session cookie...
-                    if method != "basic" and not check_and_update_authn_fresh(
-                        within, grace
-                    ):
+                    if not check_and_update_authn_fresh(within, grace, method):
                         return _security._reauthn_handler(within, grace)
                     handle_csrf(method)
+                    set_request_attr("fs_authn_via", method)
                     return fn(*args, **dkwargs)
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()

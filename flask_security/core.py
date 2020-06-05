@@ -70,6 +70,7 @@ from .utils import (
     get_message,
     hash_data,
     localize_callback,
+    set_request_attr,
     uia_email_mapper,
     uia_phone_mapper,
     url_for_security,
@@ -446,6 +447,7 @@ def _user_loader(user_id):
         selector = dict(id=user_id)
     user = _security.datastore.find_user(**selector)
     if user and user.active:
+        set_request_attr("fs_authn_via", "session")
         return user
     return None
 
@@ -480,7 +482,7 @@ def _request_loader(request):
         user = None
 
     if user and user.verify_auth_token(data):
-        _request_ctx_stack.top.fs_authn_via = "token"
+        set_request_attr("fs_authn_via", "token")
         return user
 
     return _security.login_manager.anonymous_user()

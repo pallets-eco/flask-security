@@ -82,6 +82,7 @@ from .utils import (
     SmsSenderFactory,
     check_and_get_token_status,
     get_hmac,
+    get_request_attr,
     get_token_status,
     get_url,
     hash_password,
