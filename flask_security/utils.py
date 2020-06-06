@@ -554,7 +554,11 @@ def config_value(key, app=None, default=None):
     :param default: An optional default value if the value is not set
     """
     app = app or current_app
-    return get_config(app).get(key.upper(), default)
+    # protect against spelling mistakes
+    config = get_config(app)
+    if key.upper() not in config:
+        raise ValueError(f"Key {key} doesn't exist")
+    return config.get(key.upper(), default)
 
 
 def get_max_age(key, app=None):

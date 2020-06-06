@@ -302,12 +302,6 @@ These configuration keys are used globally across all features.
 
     Default: ``False``.
 
-.. py:data:: SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALIDATE
-
-    When ``True`` changing the user's password will also change the user's
-    ``fs_uniquifier`` (if it exists) such that existing authentication tokens
-    will be rendered invalid.  This restores pre 3.3.0 behavior.
-
 Core - Multi-factor
 -------------------
 These are used by the Two-Factor and Unified Signin features.
@@ -364,12 +358,13 @@ These are used by the Two-Factor and Unified Signin features.
 .. py:data:: SECURITY_FRESHNESS
 
     A timedelta used to protect endpoints that alter sensitive information.
-    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`.
-    Refer to :meth:`flask_security.auth_required` for details.
+    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`, and
+    :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`.
     Setting this to a negative number will disable any freshness checking and
     the endpoints :py:data:`SECURITY_VERIFY_URL`, :py:data:`SECURITY_US_VERIFY_URL`
     and :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL` won't be registered.
     Setting this to 0 results in undefined behavior.
+    Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
 
     Default: timedelta(hours=24)
 
@@ -379,8 +374,8 @@ These are used by the Two-Factor and Unified Signin features.
 
     A timedelta that provides a grace period when altering sensitive
     information.
-    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`.
-    Refer to :meth:`flask_security.auth_required` for details.
+    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`, and
+    :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`.
     N.B. To avoid strange behavior, be sure to set the grace period less than
     the freshness period.
     Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
