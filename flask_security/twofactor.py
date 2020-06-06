@@ -43,7 +43,6 @@ def tf_clean_session():
             "tf_state",
             "tf_user_id",
             "tf_primary_method",
-            "tf_confirmed",
             "tf_remember_login",
             "tf_totp_secret",
         ]:

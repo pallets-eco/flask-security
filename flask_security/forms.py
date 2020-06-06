@@ -572,23 +572,6 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
         return True
 
 
-class TwoFactorVerifyPasswordForm(Form, PasswordFormMixin):
-    """The verify password form"""
-
-    submit = SubmitField(get_form_field_label("verify_password"))
-
-    def validate(self):
-        if not super().validate():
-            return False
-
-        self.user = current_user
-        if not self.user.verify_and_update_password(self.password.data):
-            self.password.errors.append(get_message("INVALID_PASSWORD")[0])
-            return False
-
-        return True
-
-
 class TwoFactorRescueForm(Form):
     """The Two-factor Rescue validation form """
 

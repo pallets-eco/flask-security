@@ -8,6 +8,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from datetime import timedelta
+import re
 from unittest.mock import Mock
 
 import pytest
@@ -72,7 +74,6 @@ def tf_in_session(session):
             "tf_state",
             "tf_primary_method",
             "tf_user_id",
-            "tf_confirmed",
             "tf_remember_login",
             "tf_totp_secret",
         ]
@@ -189,32 +190,7 @@ def test_two_factor_flag(app, client):
     # Upon completion, session cookie shouldnt have any two factor stuff in it.
     assert not tf_in_session(get_session(response))
 
-    # try confirming password with a wrong one
-    response = client.post("/tf-confirm", data=dict(password=""), follow_redirects=True)
-    assert b"Password not provided" in response.data
-
-    # try confirming password with a wrong one + json
-    data = dict(password="wrong_password")
-    response = client.post(
-        "/tf-confirm",
-        json=data,
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-
-    assert response.json["meta"]["code"] == 400
-
-    # Test change two_factor password confirmation view to mail
-    password = "password"
-    response = client.post(
-        "/tf-confirm", data=dict(password=password), follow_redirects=True
-    )
-
-    assert b"You successfully confirmed password" in response.data
-    message = b"Two-factor authentication adds an extra layer of security"
-    assert message in response.data
-
-    # change method (from sms to mail)
+    # Test change two_factor view to from sms to mail
     setup_data = dict(setup="email")
     testMail = MockMail()
     app.extensions["mail"] = testMail
@@ -233,14 +209,6 @@ def test_two_factor_flag(app, client):
     assert b"You successfully changed your two-factor method" in response.data
 
     # Test change two_factor password confirmation view to google authenticator
-    password = "password"
-    response = client.post(
-        "/tf-confirm", data=dict(password=password), follow_redirects=True
-    )
-    assert b"You successfully confirmed password" in response.data
-    message = b"Two-factor authentication adds an extra layer of security"
-    assert message in response.data
-
     # Setup authenticator
     setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
@@ -427,11 +395,6 @@ def test_no_opt_out(app, client):
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
 
-    response = client.post(
-        "/tf-confirm", data=dict(password="password"), follow_redirects=True
-    )
-    assert b"You successfully confirmed password" in response.data
-
     response = client.get("/tf-setup", follow_redirects=True)
     assert b"Disable two factor" not in response.data
 
@@ -498,18 +461,8 @@ def test_opt_in(app, client):
     assert signalled_identity[0] == 4
     del signalled_identity[:]
 
-    # opt-in for SMS 2FA - but we haven't re-verified password
+    # opt-in for SMS 2FA
     sms_sender = SmsSenderFactory.createSender("test")
-    data = dict(setup="sms", phone="+442083661177")
-    response = client.post("/tf-setup", data=data, follow_redirects=True)
-    message = b"You currently do not have permissions to access this page"
-    assert message in response.data
-
-    # Confirm password - then opt-in
-    password = "password"
-    response = client.post(
-        "/tf-confirm", data=dict(password=password), follow_redirects=True
-    )
     data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"To Which Phone Number Should We Send Code To" in response.data
@@ -545,13 +498,6 @@ def test_opt_in(app, client):
     del signalled_identity[:]
 
     # Now opt back out.
-    # as before must reconfirm password first
-    response = client.get("/tf-setup", data=data, follow_redirects=True)
-    message = b"You currently do not have permissions to access this page"
-    assert message in response.data
-
-    password = "password"
-    client.post("/tf-confirm", data=dict(password=password), follow_redirects=True)
     data = dict(setup="disable")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"You successfully disabled two factor authorization." in response.data
@@ -724,12 +670,7 @@ def test_totp_secret_generation(app, client):
     assert signalled_identity[0] == 4
     del signalled_identity[:]
 
-    # Confirm password
     sms_sender = SmsSenderFactory.createSender("test")
-    password = "password"
-    response = client.post(
-        "/tf-confirm", data=dict(password=password), follow_redirects=True
-    )
     # Select sms method but do not send a phone number just yet (regenerates secret)
     data = dict(setup="sms")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
@@ -761,12 +702,6 @@ def test_totp_secret_generation(app, client):
         assert generated_secret == user.tf_totp_secret
 
     # Finally opt back out and check that tf_totp_secret is None
-    response = client.get("/tf-setup", data=data, follow_redirects=True)
-    message = b"You currently do not have permissions to access this page"
-    assert message in response.data
-
-    password = "password"
-    client.post("/tf-confirm", data=dict(password=password), follow_redirects=True)
     data = dict(setup="disable")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"You successfully disabled two factor authorization." in response.data
@@ -963,3 +898,77 @@ def test_replace_send_code(app, get_message):
         response = client.post("/tf-rescue", json=rescue_data, headers=headers)
         assert response.status_code == 500
         assert response.json["response"]["errors"]["help_setup"][0] == "Failed Again"
+
+
+@pytest.mark.settings(freshness=timedelta(minutes=0))
+def test_verify(app, client, get_message):
+    # Test setup when re-authenticate required
+    authenticate(client)
+    response = client.get("tf-setup", follow_redirects=False)
+    verify_url = response.location
+    assert (
+        verify_url == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Ftf-setup"
+    )
+    logout(client)
+
+    # Now try again - follow redirects to get to verify form
+    # This call should require re-verify
+    authenticate(client)
+    response = client.get("tf-setup", follow_redirects=True)
+    form_response = response.data.decode("utf-8")
+    assert get_message("REAUTHENTICATION_REQUIRED") in response.data
+    matcher = re.match(
+        r'.*form action="([^"]*)".*', form_response, re.IGNORECASE | re.DOTALL
+    )
+    verify_password_url = matcher.group(1)
+
+    # Send wrong password
+    response = client.post(
+        verify_password_url, data=dict(password="iforgot"), follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert get_message("INVALID_PASSWORD") in response.data
+
+    # Verify with correct password
+    with capture_flashes() as flashes:
+        response = client.post(
+            verify_password_url, data=dict(password="password"), follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert response.location == "http://localhost/tf-setup"
+    assert get_message("REAUTHENTICATION_SUCCESSFUL") == flashes[0]["message"].encode(
+        "utf-8"
+    )
+
+
+def test_verify_json(app, client, get_message):
+    # Test setup when re-authenticate required
+    # N.B. with freshness=0 we never set a grace period and should never be able to
+    # get to /tf-setup
+    authenticate(client)
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    app.config["SECURITY_FRESHNESS"] = timedelta(minutes=0)
+    response = client.get("tf-setup", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+
+    response = client.post("verify", json=dict(password="notmine"), headers=headers)
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["password"][0].encode(
+        "utf-8"
+    ) == get_message("INVALID_PASSWORD")
+
+    response = client.post("verify", json=dict(password="password"), headers=headers)
+    assert response.status_code == 200
+
+    app.config["SECURITY_FRESHNESS"] = timedelta(minutes=60)
+    response = client.get("tf-setup", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(freshness=timedelta(minutes=-1))
+def test_setup_nofresh(app, client, get_message):
+    authenticate(client)
+    response = client.get("tf-setup", follow_redirects=False)
+    assert response.status_code == 200

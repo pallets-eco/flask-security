@@ -77,7 +77,7 @@ def create_app():
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
-    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=5)
+    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=0.5)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
 
     # Turn on all features (except passwordless since that removes normal login)

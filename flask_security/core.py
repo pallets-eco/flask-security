@@ -42,7 +42,6 @@ from .forms import (
     SendConfirmationForm,
     TwoFactorVerifyCodeForm,
     TwoFactorSetupForm,
-    TwoFactorVerifyPasswordForm,
     TwoFactorRescueForm,
     VerifyForm,
 )
@@ -141,7 +140,6 @@ _default_config = {
     "TWO_FACTOR_TOKEN_VALIDATION_URL": "/tf-validate",
     "TWO_FACTOR_QRCODE_URL": "/tf-qrcode",
     "TWO_FACTOR_RESCUE_URL": "/tf-rescue",
-    "TWO_FACTOR_CONFIRM_URL": "/tf-confirm",
     "LOGOUT_METHODS": ["GET", "POST"],
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
@@ -167,7 +165,6 @@ _default_config = {
     "VERIFY_TEMPLATE": "security/verify.html",
     "TWO_FACTOR_VERIFY_CODE_TEMPLATE": "security/two_factor_verify_code.html",
     "TWO_FACTOR_SETUP_TEMPLATE": "security/two_factor_setup.html",
-    "TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE": "security/two_factor_verify_password.html",
     "CONFIRMABLE": False,
     "REGISTERABLE": False,
     "RECOVERABLE": False,
@@ -381,14 +378,6 @@ _default_messages = {
         _("You successfully changed your two-factor method."),
         "success",
     ),
-    "TWO_FACTOR_PASSWORD_CONFIRMATION_DONE": (
-        _("You successfully confirmed password"),
-        "success",
-    ),
-    "TWO_FACTOR_PASSWORD_CONFIRMATION_NEEDED": (
-        _("Password confirmation is needed in order to access page"),
-        "error",
-    ),
     "TWO_FACTOR_PERMISSION_DENIED": (
         _("You currently do not have permissions to access this page"),
         "error",
@@ -420,7 +409,6 @@ _default_forms = {
     "passwordless_login_form": PasswordlessLoginForm,
     "two_factor_verify_code_form": TwoFactorVerifyCodeForm,
     "two_factor_setup_form": TwoFactorSetupForm,
-    "two_factor_verify_password_form": TwoFactorVerifyPasswordForm,
     "two_factor_rescue_form": TwoFactorRescueForm,
     "us_signin_form": UnifiedSigninForm,
     "us_setup_form": UnifiedSigninSetupForm,
@@ -915,9 +903,6 @@ class _SecurityState:
     def mail_context_processor(self, fn):
         self._add_ctx_processor("mail", fn)
 
-    def tf_verify_password_context_processor(self, fn):
-        self._add_ctx_processor("tf_verify_password", fn)
-
     def tf_setup_context_processor(self, fn):
         self._add_ctx_processor("tf_setup", fn)
 
@@ -983,7 +968,6 @@ class Security:
     :param two_factor_setup_form: set form for the 2FA setup view
     :param two_factor_verify_code_form: set form the the 2FA verify code view
     :param two_factor_rescue_form: set form for the 2FA rescue view
-    :param two_factor_verify_password_form: set form for the 2FA verify password view
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
     :param us_setup_validate_form: set form for the unified sign in setup validate view
@@ -1018,6 +1002,7 @@ class Security:
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
+        two_factor_verify_password_form removed.
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
