@@ -22,7 +22,6 @@ following is a list of view templates:
 * `security/send_confirmation.html`
 * `security/send_login.html`
 * `security/verify.html`
-* `security/two_factor_verify_password.html`
 * `security/two_factor_setup.html`
 * `security/two_factor_verify_code.html`
 * `security/us_signin.html`
@@ -71,7 +70,6 @@ The following is a list of all the available context processor decorators:
 * ``mail_context_processor``: Whenever an email will be sent
 * ``tf_setup_context_processor``: Two factor setup view
 * ``tf_token_validation_context_processor``: Two factor token validation view
-* ``tf_verify_password_context_processor``: Two factor password re-verify view
 * ``us_signin_context_processor``: Unified sign in view
 * ``us_setup_context_processor``: Unified sign in setup view
 
@@ -118,7 +116,6 @@ The following is a list of all the available form overrides:
 * ``passwordless_login_form``: Passwordless login form
 * ``two_factor_verify_code_form``: Two-factor verify code form
 * ``two_factor_setup_form``: Two-factor setup form
-* ``two_factor_verify_password_form``: Two-factor verify password form
 * ``two_factor_rescue_form``: Two-factor help user form
 * ``us_signin_form``: Unified sign in form
 * ``us_setup_form``: Unified sign in setup form

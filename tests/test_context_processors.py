@@ -119,7 +119,6 @@ def test_passwordless_login_context_processor(app, client):
 @pytest.mark.settings(
     two_factor_required=True,
     login_user_template="custom_security/login_user.html",
-    two_factor_verify_password_template="custom_security/tfc.html",
     two_factor_setup_template="custom_security/tf_setup.html",
     two_factor_verify_code_template="custom_security/tf_verify.html",
 )
@@ -128,16 +127,6 @@ def test_two_factor_context_processors(client, app):
     @app.security.context_processor
     def default_ctx_processor():
         return {"global": "global"}
-
-    @app.security.tf_verify_password_context_processor
-    def send_two_factor_confirm():
-        return {"foo": "bar"}
-
-    tf_authenticate(app, client)
-    response = client.get("/tf-confirm")
-    assert b"global" in response.data
-    assert b"bar" in response.data
-    logout(client)
 
     @app.security.tf_setup_context_processor
     def send_two_factor_setup():

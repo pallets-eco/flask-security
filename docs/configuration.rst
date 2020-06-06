@@ -848,12 +848,6 @@ Configuration related to the two-factor authentication feature.
     Specifies the path to the template for the setup page for the two factor authentication process.
 
     Default: ``security/two_factor_setup.html``.
-.. py:data:: SECURITY_TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE
-
-    Specifies the path to the template for the change method page for the two
-    factor authentication process.
-
-    Default: ``security/two_factor_verify_password.html``.
 
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_URL
 
@@ -875,11 +869,6 @@ Configuration related to the two-factor authentication feature.
     Specifies the two factor rescue URL.
 
     Default: ``"/tf-rescue"``.
-.. py:data:: SECURITY_TWO_FACTOR_CONFIRM_URL
-
-    Specifies the two factor password confirmation URL.
-
-    Default: ``"/tf-confirm"``.
 
 Unified Signin
 --------------
@@ -1102,7 +1091,6 @@ A list of all URLs and Views:
 * ``SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL``
 * ``SECURITY_TWO_FACTOR_QRCODE_URL``
 * ``SECURITY_TWO_FACTOR_RESCUE_URL``
-* ``SECURITY_TWO_FACTOR_CONFIRM_URL``
 * ``SECURITY_POST_LOGIN_VIEW``
 * ``SECURITY_POST_LOGOUT_VIEW``
 * ``SECURITY_CONFIRM_ERROR_VIEW``
@@ -1137,7 +1125,6 @@ A list of all templates:
 * ``SECURITY_SEND_LOGIN_TEMPLATE``
 * ``SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE``
 * ``SECURITY_TWO_FACTOR_SETUP_TEMPLATE``
-* ``SECURITY_TWO_FACTOR_VERIFY_PASSWORD_TEMPLATE``
 * :py:data:`SECURITY_US_SIGNIN_TEMPLATE`
 * :py:data:`SECURITY_US_SETUP_TEMPLATE`
 * :py:data:`SECURITY_US_VERIFY_TEMPLATE`
@@ -1194,8 +1181,6 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN``
 * ``SECURITY_MSG_TWO_FACTOR_LOGIN_SUCCESSFUL``
 * ``SECURITY_MSG_TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL``
-* ``SECURITY_MSG_TWO_FACTOR_PASSWORD_CONFIRMATION_DONE``
-* ``SECURITY_MSG_TWO_FACTOR_PASSWORD_CONFIRMATION_NEEDED``
 * ``SECURITY_MSG_TWO_FACTOR_PERMISSION_DENIED``
 * ``SECURITY_MSG_TWO_FACTOR_METHOD_NOT_AVAILABLE``
 * ``SECURITY_MSG_TWO_FACTOR_DISABLED``

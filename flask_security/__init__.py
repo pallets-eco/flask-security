@@ -46,7 +46,6 @@ from .forms import (
     TwoFactorRescueForm,
     TwoFactorSetupForm,
     TwoFactorVerifyCodeForm,
-    TwoFactorVerifyPasswordForm,
     VerifyForm,
 )
 from .mail_util import MailUtil

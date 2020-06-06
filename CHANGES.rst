@@ -16,15 +16,24 @@ Features
 ++++++++
 - Removal of python 2.7 and <3.6 support
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
-- (:pr:`xxx`) Remove dependence on Flask-Mail and refactor.
+- (:pr:`328`) Remove dependence on Flask-Mail and refactor.
+- (:pr:`xxx`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
-- (:pr:`xxx`) Remove dependence on Flask-Mail and refactor. The ``send_mail_task`` and
+- (:pr:`328`) Remove dependence on Flask-Mail and refactor. The ``send_mail_task`` and
   ``send_mail`` methods have been removed and replaced with a new :class:`.MailUtil` class.
   If your application didn't use either of the deprecated methods, then the only change required
   is to add Flask-Mail to your package requirements (since Flask-Security no longer lists it).
   Please see the :ref:`emails_topic` for updated examples.
+
+- (:pr:`xxx`) Convert two-factor setup flow to use the freshness feature rather than
+  its own verify password endpoint. This COMPLETELY removes the ``/tf-confirm`` endpoint
+  and associated form: ``two_factor_verify_password_form``. Now, when /tf-setup is invoked,
+  the :meth:`flask_security.check_and_update_authn_fresh` is invoked, and if the current session isn't 'fresh'
+  the caller will be redirected to a verify endpoint (either :py:data:`SECURITY_VERIFY_URL` or
+  :py:data:`SECURITY_US_VERIFY_URL`). The simplest change would be to call ``/verify`` everywhere
+  the application used to call ``/tf-confirm``.
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
