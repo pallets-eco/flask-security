@@ -1055,7 +1055,8 @@ def create_blueprint(app, state, import_name, json_encoder=None):
     else:
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(login)
 
-    bp.route(state.verify_url, methods=["GET", "POST"], endpoint="verify")(verify)
+    if config_value("FRESHNESS", app=app).total_seconds() >= 0:
+        bp.route(state.verify_url, methods=["GET", "POST"], endpoint="verify")(verify)
 
     if state.unified_signin:
         bp.route(state.us_signin_url, methods=["GET", "POST"], endpoint="us_signin")(

@@ -17,7 +17,9 @@ Features
 - Removal of python 2.7 and <3.6 support
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
 - (:pr:`328`) Remove dependence on Flask-Mail and refactor.
-- (:pr:`xxx`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
+- (:pr:`335`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
+- (:pr:`xxx`) Remove `SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)`. In addition to
+  not making sense - the documentation has always been incorrect.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -27,7 +29,7 @@ Backwards Compatibility Concerns
   is to add Flask-Mail to your package requirements (since Flask-Security no longer lists it).
   Please see the :ref:`emails_topic` for updated examples.
 
-- (:pr:`xxx`) Convert two-factor setup flow to use the freshness feature rather than
+- (:pr:`335`) Convert two-factor setup flow to use the freshness feature rather than
   its own verify password endpoint. This COMPLETELY removes the ``/tf-confirm`` endpoint
   and associated form: ``two_factor_verify_password_form``. Now, when /tf-setup is invoked,
   the :meth:`flask_security.check_and_update_authn_fresh` is invoked, and if the current session isn't 'fresh'

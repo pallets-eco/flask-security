@@ -14,10 +14,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_reset_password_requests,
-    json_authenticate,
-    json_logout,
     logout,
-    verify_token,
 )
 
 from flask_security.core import UserMixin
@@ -456,41 +453,6 @@ def test_spa_get_bad_token(app, client, get_message):
         msg = get_message("INVALID_RESET_PASSWORD_TOKEN")
         assert msg == qparams["error"].encode("utf-8")
     assert len(flashes) == 0
-
-
-@pytest.mark.settings(backwards_compat_auth_token_invalid=True)
-def test_bc_password(app, client_nc):
-    # Test behavior of BACKWARDS_COMPAT_AUTH_TOKEN_INVALID
-    response = json_authenticate(client_nc, email="joe@lp.com")
-    token = response.json["response"]["user"]["authentication_token"]
-    verify_token(client_nc, token)
-    json_logout(client_nc, token)
-
-    with capture_reset_password_requests() as requests:
-        response = client_nc.post(
-            "/reset",
-            json=dict(email="joe@lp.com"),
-            headers={"Content-Type": "application/json"},
-        )
-        assert response.status_code == 200
-
-    reset_token = requests[0]["token"]
-
-    data = dict(password="awesome sunset", password_confirm="awesome sunset")
-    response = client_nc.post(
-        "/reset/" + reset_token + "?include_auth_token=1",
-        json=data,
-        headers={"Content-Type": "application/json"},
-    )
-    assert response.status_code == 200
-    assert "authentication_token" in response.json["response"]["user"]
-
-    # changing password should have rendered existing auth tokens invalid
-    verify_token(client_nc, token, status=401)
-
-    # but new auth token should work
-    token = response.json["response"]["user"]["authentication_token"]
-    verify_token(client_nc, token)
 
 
 @pytest.mark.settings(password_complexity_checker="zxcvbn")

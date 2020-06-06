@@ -15,7 +15,7 @@ from flask import Flask
 
 from flask_security.core import UserMixin
 from flask_security.signals import password_changed
-from tests.test_utils import authenticate, json_authenticate, verify_token
+from tests.test_utils import authenticate, json_authenticate
 
 pytestmark = pytest.mark.changeable()
 
@@ -202,34 +202,6 @@ def test_token_change(app, client_nc):
     )
     assert response.status_code == 200
     assert "authentication_token" in response.json["response"]["user"]
-
-
-@pytest.mark.settings(backwards_compat_auth_token_invalid=True)
-def test_bc_password(app, client_nc):
-    # Test behavior of BACKWARDS_COMPAT_AUTH_TOKEN_INVALID
-    response = json_authenticate(client_nc)
-    token = response.json["response"]["user"]["authentication_token"]
-    verify_token(client_nc, token)
-
-    data = dict(
-        password="password",
-        new_password="new strong password",
-        new_password_confirm="new strong password",
-    )
-    response = client_nc.post(
-        "/change?include_auth_token=1",
-        json=data,
-        headers={"Content-Type": "application/json", "Authentication-Token": token},
-    )
-    assert response.status_code == 200
-    assert "authentication_token" in response.json["response"]["user"]
-
-    # changing password should have rendered existing auth tokens invalid
-    verify_token(client_nc, token, status=401)
-
-    # but new auth token should work
-    token = response.json["response"]["user"]["authentication_token"]
-    verify_token(client_nc, token)
 
 
 @pytest.mark.settings(password_complexity_checker="zxcvbn")
