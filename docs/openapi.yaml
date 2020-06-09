@@ -1003,14 +1003,13 @@ components:
       properties:
         user:
           type: object
-          required: [id]
           description: >
-            By default just 'id' is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
+            By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
           properties:
-            id:
-              type: integer
-              example: 42
-              description: Unique user id (primary key)
+            email:
+              type: string
+              example: me@me.com
+              description: Email address of the user (you must implement get_security_payload to add this.
             authentication_token:
               type: string
               description: >

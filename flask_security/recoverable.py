@@ -70,7 +70,7 @@ def generate_reset_password_token(user):
     :param user: The user to work with
     """
     password_hash = hash_data(user.password) if user.password else None
-    data = [str(user.id), password_hash]
+    data = [str(user.fs_uniquifier), password_hash]
     return _security.reset_serializer.dumps(data)
 
 

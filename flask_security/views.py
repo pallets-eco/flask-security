@@ -685,7 +685,7 @@ def two_factor_setup():
             tf_clean_session()
             return _tf_illegal_state(form, _security.login_url)
 
-        user = _datastore.get_user(session["tf_user_id"])
+        user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
         if not user:
             tf_clean_session()
             return _tf_illegal_state(form, _security.login_url)
@@ -820,7 +820,7 @@ def two_factor_token_validation():
             tf_clean_session()
             return _tf_illegal_state(form, _security.login_url)
 
-        user = _datastore.get_user(session["tf_user_id"])
+        user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
         form.user = user
         if not user:
             tf_clean_session()
@@ -912,7 +912,7 @@ def two_factor_rescue():
         tf_clean_session()
         return _tf_illegal_state(form, _security.login_url)
 
-    user = _datastore.get_user(session["tf_user_id"])
+    user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
     form.user = user
     if not user:
         tf_clean_session()
@@ -969,7 +969,7 @@ def two_factor_qrcode():
     else:
         if "tf_user_id" not in session:
             abort(404)
-        user = _datastore.get_user(session["tf_user_id"])
+        user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
         if not user:
             # Seems like we should be careful here if user_id is gone.
             tf_clean_session()

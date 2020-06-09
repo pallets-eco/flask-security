@@ -82,12 +82,6 @@ user's UserModel. If that field is changed (via :meth:`.UserDatastore.set_uniqui
 then any existing authentication tokens will no longer be valid. Changing
 the user's password will not affect tokens.
 
-Note that prior to release 3.3.0 or if the UserModel doesn't contain the ``fs_uniquifier``
-attribute the authentication tokens are generated using the user's password.
-Thus if the user changes his or her password their existing authentication token
-will become invalid. A new token will need to be retrieved using the user's new
-password. Verifying tokens created in this way is very slow.
-
 Two-factor Authentication (alpha)
 ----------------------------------------
 Two-factor authentication is enabled by generating time-based one time passwords

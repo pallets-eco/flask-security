@@ -112,10 +112,6 @@ def test_get_user(app, datastore):
     )
 
     with app.app_context():
-        user_id = datastore.find_user(email="matt@lp.com").id
-
-        user = datastore.get_user(user_id)
-        assert user is not None
 
         user = datastore.get_user("matt@lp.com")
         assert user is not None
@@ -136,17 +132,17 @@ def test_find_user(app, datastore):
     init_app_with_options(app, datastore)
 
     with app.app_context():
-        user_id = datastore.find_user(email="gene@lp.com").id
+        user_id = datastore.find_user(email="gene@lp.com").fs_uniquifier
 
         current_nqueries = get_num_queries(datastore)
-        assert user_id == datastore.find_user(security_number=889900).id
+        assert user_id == datastore.find_user(security_number=889900).fs_uniquifier
         end_nqueries = get_num_queries(datastore)
         if current_nqueries is not None:
             if is_sqlalchemy(datastore):
                 # This should have done just 1 query across all attrs.
                 assert end_nqueries == (current_nqueries + 1)
 
-        assert user_id == datastore.find_user(username="gene").id
+        assert user_id == datastore.find_user(username="gene").fs_uniquifier
 
 
 def test_find_role(app, datastore):

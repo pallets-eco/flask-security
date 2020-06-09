@@ -605,12 +605,12 @@ def test_login_info(client):
     json_authenticate(client)
     response = client.get("/login", headers={"Content-Type": "application/json"})
     assert response.status_code == 200
-    assert response.json["response"]["user"]["id"] == "1"
+    assert response.json["response"]["user"]["email"] == "matt@lp.com"
     assert "last_update" in response.json["response"]["user"]
 
     response = client.get("/login", headers={"Accept": "application/json"})
     assert response.status_code == 200
-    assert response.json["response"]["user"]["id"] == "1"
+    assert response.json["response"]["user"]["email"] == "matt@lp.com"
     assert "last_update" in response.json["response"]["user"]
 
 

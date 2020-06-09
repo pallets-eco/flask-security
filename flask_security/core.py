@@ -67,14 +67,12 @@ from .utils import (
     get_config,
     get_identity_attributes,
     get_message,
-    hash_data,
     localize_callback,
     set_request_attr,
     uia_email_mapper,
     uia_phone_mapper,
     url_for_security,
     verify_and_update_password,
-    verify_hash,
 )
 from .views import create_blueprint, default_render_json
 
@@ -428,11 +426,7 @@ def _user_loader(user_id):
     This assumes that if the app has fs_uniquifier, it is non-nullable as we specify
     so we use that and only that.
     """
-    if hasattr(_datastore.user_model, "fs_uniquifier"):
-        selector = dict(fs_uniquifier=str(user_id))
-    else:
-        selector = dict(id=user_id)
-    user = _security.datastore.find_user(**selector)
+    user = _security.datastore.find_user(fs_uniquifier=str(user_id))
     if user and user.active:
         set_request_attr("fs_authn_via", "session")
         return user
@@ -462,7 +456,7 @@ def _request_loader(request):
         data = _security.remember_token_serializer.loads(
             token, max_age=_security.token_max_age
         )
-        user = _security.datastore.find_user(id=data[0])
+        user = _security.datastore.find_user(fs_uniquifier=data[0])
         if not user.active:
             user = None
     except Exception:
@@ -477,13 +471,13 @@ def _request_loader(request):
 
 def _identity_loader():
     if not isinstance(current_user._get_current_object(), AnonymousUserMixin):
-        identity = Identity(current_user.id)
+        identity = Identity(current_user.fs_uniquifier)
         return identity
 
 
 def _on_identity_loaded(sender, identity):
-    if hasattr(current_user, "id"):
-        identity.provides.add(UserNeed(current_user.id))
+    if hasattr(current_user, "fs_uniquifier"):
+        identity.provides.add(UserNeed(current_user.fs_uniquifier))
 
     for role in getattr(current_user, "roles", []):
         identity.provides.add(RoleNeed(role.name))
@@ -680,22 +674,12 @@ class UserMixin(BaseUserMixin):
     """Mixin for `User` model definitions"""
 
     def get_id(self):
-        """Returns the user identification attribute.
-
-        This will be `fs_uniquifier` if that is available, else base class id
-        (which is via Flask-Login and is user.id).
+        """Returns the user identification attribute. 'Alternative-token' for
+        Flask-Login.
 
         .. versionadded:: 3.4.0
         """
-        if hasattr(self, "fs_uniquifier") and self.fs_uniquifier is not None:
-            # Use fs_uniquifier as alternative_id if available and not None
-            alternative_id = str(self.fs_uniquifier)
-            if len(alternative_id) > 0:
-                # Return only if alternative_id is a valid value
-                return alternative_id
-
-        # Use upstream value if alternative_id is unavailable
-        return BaseUserMixin.get_id(self)
+        return str(self.fs_uniquifier)
 
     @property
     def is_active(self):
@@ -707,9 +691,7 @@ class UserMixin(BaseUserMixin):
 
         This data MUST be securely signed using the ``remember_token_serializer``
         """
-        data = [str(self.id), hash_data(self.password)]
-        if hasattr(self, "fs_uniquifier"):
-            data.append(self.fs_uniquifier)
+        data = [str(self.fs_uniquifier)]
         return _security.remember_token_serializer.dumps(data)
 
     def verify_auth_token(self, data):
@@ -722,17 +704,7 @@ class UserMixin(BaseUserMixin):
 
         .. versionadded:: 3.3.0
         """
-        if len(data) > 2 and hasattr(self, "fs_uniquifier"):
-            # has uniquifier - use that
-            if data[2] == self.fs_uniquifier:
-                return True
-            # Don't even try old way - if they have defined a uniquifier
-            # we want that to be able to invalidate tokens if changed.
-            return False
-        # Fall back to old and very expensive check
-        if verify_hash(data[1], self.password):
-            return True
-        return False
+        return data[0] == self.fs_uniquifier
 
     def has_role(self, role):
         """Returns `True` if the user identifies with the specified role.
@@ -760,7 +732,7 @@ class UserMixin(BaseUserMixin):
 
     def get_security_payload(self):
         """Serialize user object as response payload."""
-        return {"id": str(self.id)}
+        return {}
 
     def get_redirect_qparams(self, existing=None):
         """Return user info that will be added to redirect query params.

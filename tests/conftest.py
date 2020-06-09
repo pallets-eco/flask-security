@@ -218,6 +218,14 @@ def mongoengine_datastore(request, app, tmpdir, realdburl):
 
 def mongoengine_setup(request, app, tmpdir, realdburl):
     from flask_mongoengine import MongoEngine
+    from mongoengine.fields import (
+        BooleanField,
+        DateTimeField,
+        IntField,
+        ListField,
+        ReferenceField,
+        StringField,
+    )
 
     db_name = "flask_security_test_%s" % str(time.time()).replace(".", "_")
     app.config["MONGODB_SETTINGS"] = {
@@ -230,28 +238,29 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
     db = MongoEngine(app)
 
     class Role(db.Document, RoleMixin):
-        name = db.StringField(required=True, unique=True, max_length=80)
-        description = db.StringField(max_length=255)
+        name = StringField(required=True, unique=True, max_length=80)
+        description = StringField(max_length=255)
         meta = {"db_alias": db_name}
 
     class User(db.Document, UserMixin):
-        email = db.StringField(unique=True, max_length=255)
-        username = db.StringField(unique=True, max_length=255)
-        password = db.StringField(required=False, max_length=255)
-        security_number = db.IntField(unique=True)
-        last_login_at = db.DateTimeField()
-        current_login_at = db.DateTimeField()
-        tf_primary_method = db.StringField(max_length=255)
-        tf_totp_secret = db.StringField(max_length=255)
-        tf_phone_number = db.StringField(max_length=255)
-        us_totp_secrets = db.StringField()
-        us_phone_number = db.StringField(max_length=255)
-        last_login_ip = db.StringField(max_length=100)
-        current_login_ip = db.StringField(max_length=100)
-        login_count = db.IntField()
-        active = db.BooleanField(default=True)
-        confirmed_at = db.DateTimeField()
-        roles = db.ListField(db.ReferenceField(Role), default=[])
+        email = StringField(unique=True, max_length=255)
+        fs_uniquifier = StringField(unique=True, max_length=64, required=True)
+        username = StringField(unique=True, required=False, sparse=True, max_length=255)
+        password = StringField(required=False, max_length=255)
+        security_number = IntField(unique=True, required=False, sparse=True)
+        last_login_at = DateTimeField()
+        current_login_at = DateTimeField()
+        tf_primary_method = StringField(max_length=255)
+        tf_totp_secret = StringField(max_length=255)
+        tf_phone_number = StringField(max_length=255)
+        us_totp_secrets = StringField()
+        us_phone_number = StringField(max_length=255)
+        last_login_ip = StringField(max_length=100)
+        current_login_ip = StringField(max_length=100)
+        login_count = IntField()
+        active = BooleanField(default=True)
+        confirmed_at = DateTimeField()
+        roles = ListField(ReferenceField(Role), default=[])
         meta = {"db_alias": db_name}
 
     def tear_down():
@@ -294,7 +303,7 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
         def get_security_payload(self):
             # Make sure we still properly hook up to flask JSONEncoder
-            return {"id": str(self.id), "last_update": self.update_datetime}
+            return {"email": str(self.email), "last_update": self.update_datetime}
 
     with app.app_context():
         db.create_all()
@@ -318,7 +327,17 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
     from sqlalchemy.ext.declarative import declarative_base
-    from sqlalchemy import Boolean, DateTime, Column, Integer, String, Text, ForeignKey
+    from sqlalchemy.sql import func
+    from sqlalchemy import (
+        Boolean,
+        DateTime,
+        Column,
+        Integer,
+        String,
+        Text,
+        ForeignKey,
+        UnicodeText,
+    )
 
     f, path = tempfile.mkstemp(
         prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)
@@ -336,18 +355,26 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
     class RolesUsers(Base):
         __tablename__ = "roles_users"
         id = Column(Integer(), primary_key=True)
-        user_id = Column("user_id", Integer(), ForeignKey("user.id"))
-        role_id = Column("role_id", Integer(), ForeignKey("role.id"))
+        user_id = Column("user_id", Integer(), ForeignKey("user.myuserid"))
+        role_id = Column("role_id", Integer(), ForeignKey("role.myroleid"))
 
     class Role(Base, RoleMixin):
         __tablename__ = "role"
-        id = Column(Integer(), primary_key=True)
+        myroleid = Column(Integer(), primary_key=True)
         name = Column(String(80), unique=True)
         description = Column(String(255))
+        permissions = Column(UnicodeText, nullable=True)
+        update_datetime = Column(
+            DateTime,
+            nullable=False,
+            server_default=func.now(),
+            onupdate=datetime.utcnow,
+        )
 
     class User(Base, UserMixin):
         __tablename__ = "user"
-        id = Column(Integer, primary_key=True)
+        myuserid = Column(Integer, primary_key=True)
+        fs_uniquifier = Column(String(64), unique=True, nullable=False)
         email = Column(String(255), unique=True)
         username = Column(String(255))
         password = Column(String(255))
@@ -367,6 +394,16 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         roles = relationship(
             "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
         )
+        update_datetime = Column(
+            DateTime,
+            nullable=False,
+            server_default=func.now(),
+            onupdate=datetime.utcnow,
+        )
+
+        def get_security_payload(self):
+            # Make sure we still properly hook up to flask JSONEncoder
+            return {"email": str(self.email), "last_update": self.update_datetime}
 
     with app.app_context():
         Base.metadata.create_all(bind=engine)
@@ -426,8 +463,9 @@ def peewee_setup(request, app, tmpdir, realdburl):
         description = TextField(null=True)
 
     class User(db.Model, UserMixin):
-        email = TextField()
-        username = TextField()
+        email = TextField(unique=True, null=False)
+        fs_uniquifier = TextField(unique=True, null=False)
+        username = TextField(unique=True)
         security_number = IntegerField(null=True)
         password = TextField(null=True)
         last_login_at = DateTimeField(null=True)
@@ -491,6 +529,7 @@ def pony_setup(request, app, tmpdir, realdburl):
 
     class User(db.Entity):
         email = Required(str)
+        fs_uniquifier = Required(str, nullable=False)
         username = Optional(str)
         security_number = Optional(int)
         password = Optional(str, nullable=True)
@@ -595,6 +634,19 @@ def client_nc(request, sqlalchemy_app):
     app = sqlalchemy_app()
     populate_data(app)
     return app.test_client(use_cookies=False)
+
+
+@pytest.fixture(params=["c1", "c2", "c3"])
+def clients(request, app, tmpdir, realdburl):
+    if request.param == "c1":
+        ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
+    elif request.param == "c2":
+        ds = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
+    elif request.param == "c3":
+        ds = mongoengine_setup(request, app, tmpdir, realdburl)
+    app.security = Security(app, datastore=ds)
+    populate_data(app)
+    return app.test_client()
 
 
 @pytest.yield_fixture()

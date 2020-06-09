@@ -147,7 +147,7 @@ def tf_login(user, remember=None, primary_authn_via=None):
     # until complete 2FA.
     tf_clean_session()
 
-    session["tf_user_id"] = user.id
+    session["tf_user_id"] = user.fs_uniquifier
     if "remember":
         session["tf_remember_login"] = remember
 

@@ -234,7 +234,7 @@ class UserDatastore:
         return False
 
     def set_uniquifier(self, user, uniquifier=None):
-        """ Set user's authentication token uniquifier.
+        """ Set user's Flask-Security identity key.
         This will immediately render outstanding auth tokens,
         session cookies and remember cookies invalid.
 
@@ -246,8 +246,6 @@ class UserDatastore:
 
         .. versionadded:: 3.3.0
         """
-        if not hasattr(user, "fs_uniquifier"):
-            return
         if not uniquifier:
             uniquifier = uuid.uuid4().hex
         user.fs_uniquifier = uniquifier
@@ -331,12 +329,12 @@ class UserDatastore:
             * remove all unified signin TOTP secrets so those can't be used
             * remove all two-factor secrets so those can't be used
 
-        Note that if using unified sign in and allow 'email' as a way to receive a code
+        Note that if using unified sign in and allow 'email' as a way to receive a code;
         if the email is compromised - login is still possible. To handle this - it
         is better to deactivate the user.
 
         Note - this method isn't used directly by Flask-Security - it is provided
-        as a helper for an applications administrative needs.
+        as a helper for an application's administrative needs.
 
         Remember to call commit on DB if needed.
 
