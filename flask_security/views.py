@@ -741,7 +741,7 @@ def two_factor_setup():
             msg = user.tf_send_security_token(
                 method=pm,
                 totp_secret=session["tf_totp_secret"],
-                phone_number=user.tf_phone_number,
+                phone_number=getattr(user, "tf_phone_number", None),
             )
             if msg:
                 # send code didn't work
@@ -928,7 +928,7 @@ def two_factor_rescue():
             msg = form.user.tf_send_security_token(
                 method="email",
                 totp_secret=form.user.tf_totp_secret,
-                phone_number=form.user.tf_phone_number,
+                phone_number=getattr(form.user, "tf_phone_number", None),
             )
             if msg:
                 rproblem = ""
