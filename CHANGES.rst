@@ -95,6 +95,8 @@ It should all be backwards compatible.
 Other changes with possible backwards compatibility issues:
 
 - ``/tf-setup`` never did any phone number validation. Now it does.
+- ``two_factor_setup.html`` template - the chosen_method check was changed to ``email``.
+  If you have your own custom template - be sure make that change.
 
 Version 3.3.3
 -------------

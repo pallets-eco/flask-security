@@ -170,7 +170,7 @@ def tf_login(user, remember=None, primary_authn_via=None):
         msg = user.tf_send_security_token(
             method=user.tf_primary_method,
             totp_secret=user.tf_totp_secret,
-            phone_number=user.tf_phone_number,
+            phone_number=getattr(user, "tf_phone_number", None),
         )
         if msg:
             # send code didn't work
