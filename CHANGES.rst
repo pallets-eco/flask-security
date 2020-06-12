@@ -18,7 +18,7 @@ Features
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
 - (:pr:`328`) Remove dependence on Flask-Mail and refactor.
 - (:pr:`335`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
-- (:pr:`xxx`) Remove `SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)`. In addition to
+- (:pr:`336`) Remove `SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)`. In addition to
   not making sense - the documentation has always been incorrect.
 
 Backwards Compatibility Concerns
@@ -38,6 +38,19 @@ Backwards Compatibility Concerns
   the application used to call ``/tf-confirm``.
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
+
+Version 3.4.3
+-------------
+
+Released June 12, 2020
+
+Minor fixes for a regression and a couple other minor changes
+
+Fixed
++++++
+
+- (:issue:`340`) Fix regression where tf_phone_number was required, even if SMS wasn't configured.
+- (:pr:`342`) Pick up some small documentation fixes from 4.0.0.
 
 Version 3.4.2
 -------------
@@ -120,6 +133,8 @@ It should all be backwards compatible.
 Other changes with possible backwards compatibility issues:
 
 - ``/tf-setup`` never did any phone number validation. Now it does.
+- ``two_factor_setup.html`` template - the chosen_method check was changed to ``email``.
+  If you have your own custom template - be sure make that change.
 
 Version 3.3.3
 -------------

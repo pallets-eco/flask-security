@@ -348,7 +348,7 @@ def _send_code_helper(form):
     msg = user.us_send_security_token(
         method,
         totp_secret=totp_secrets[method],
-        phone_number=user.us_phone_number,
+        phone_number=getattr(user, "us_phone_number", None),
         send_magic_link=True,
     )
     code_sent = True
