@@ -962,3 +962,78 @@ def test_replace_send_code(app, get_message):
         response = client.post("/tf-rescue", json=rescue_data, headers=headers)
         assert response.status_code == 500
         assert response.json["response"]["errors"]["help_setup"][0] == "Failed Again"
+
+
+@pytest.mark.settings(two_factor_enabled_methods=["email"])
+def test_no_sms(app, get_message):
+    # Make sure that don't require tf_phone_number if SMS isn't an option.
+    from sqlalchemy import (
+        Boolean,
+        Column,
+        Integer,
+        String,
+    )
+    from sqlalchemy.orm import relationship, backref
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security, UserMixin, hash_password
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    db = SQLAlchemy(app)
+
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, UserMixin):
+        id = Column(Integer, primary_key=True)
+        email = Column(String(255), unique=True, nullable=False)
+        password = Column(String(255), nullable=False)
+        active = Column(Boolean(), nullable=False)
+
+        # Faster token checking
+        fs_uniquifier = Column(String(64), unique=True, nullable=False)
+
+        # 2FA
+        tf_primary_method = Column(String(64), nullable=True)
+        tf_totp_secret = Column(String(255), nullable=True)
+
+        roles = relationship(
+            "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
+        )
+
+    with app.app_context():
+        db.create_all()
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        client = app.test_client()
+
+        ds.create_user(
+            email="trp@lp.com", password=hash_password("password"),
+        )
+        ds.commit()
+
+        data = dict(email="trp@lp.com", password="password")
+        client.post("/login", data=data, follow_redirects=True)
+        client.post(
+            "/tf-confirm", data=dict(password="password"), follow_redirects=True
+        )
+
+        testMail = TestMail()
+        app.extensions["mail"] = testMail
+        response = client.post(
+            "/tf-setup", data=dict(setup="email"), follow_redirects=True
+        )
+        msg = b"To complete logging in, please enter the code sent to your mail"
+        assert msg in response.data
+
+        code = testMail.msg.body.split()[-1]
+        # sumbit right token and show appropriate response
+        response = client.post(
+            "/tf-validate", data=dict(code=code), follow_redirects=True
+        )
+        assert b"You successfully changed your two-factor method" in response.data
