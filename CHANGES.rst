@@ -14,10 +14,23 @@ Release Target 2020
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
+Version 3.4.3
+-------------
+
+Released June 12, 2020
+
+Minor fixes for a regression and a couple other minor changes
+
+Fixed
++++++
+
+- (:issue:`340`) Fix regression where tf_phone_number was required, even if SMS wasn't configured.
+- (:pr:`xx`) Pick up some small documentation fixes from 4.0.0.
+
 Version 3.4.2
 -------------
 
-Released May x, 2020
+Released May 2, 2020
 
 Only change is to move repo to the Flask-Middleware github organization.
 

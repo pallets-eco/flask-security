@@ -388,12 +388,15 @@ These are used by the Two-Factor and Unified Signin features.
 .. py:data:: SECURITY_FRESHNESS
 
     A timedelta used to protect endpoints that alter sensitive information.
-    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`.
+    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`, and
+    :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`.
     Refer to :meth:`flask_security.auth_required` for details.
     Setting this to a negative number will disable any freshness checking and
     the endpoints :py:data:`SECURITY_VERIFY_URL`, :py:data:`SECURITY_US_VERIFY_URL`
     and :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL` won't be registered.
     Setting this to 0 results in undefined behavior.
+
+    Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
 
     Default: timedelta(hours=24)
 
@@ -403,7 +406,8 @@ These are used by the Two-Factor and Unified Signin features.
 
     A timedelta that provides a grace period when altering sensitive
     information.
-    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`.
+    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`, and
+    :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`.
     Refer to :meth:`flask_security.auth_required` for details.
     N.B. To avoid strange behavior, be sure to set the grace period less than
     the freshness period.
@@ -543,14 +547,20 @@ Login/Logout
 
     Specifies the path to the template for the user login page.
 
-    Default:``security/login_user.html``.
+    Default: ``"security/login_user.html"``.
 
 .. py:data:: SECURITY_VERIFY_URL
 
     Specifies the re-authenticate URL. If :py:data:`SECURITY_FRESHNESS` evaluates to < 0; this
     endpoint won't be registered.
 
-    Default: ``"/verify"``
+    Default: ``"/verify"``.
+
+.. py:data:: SECURITY_VERIFY_TEMPLATE
+
+    Specifies the path to the template for the verify password page.
+
+    Default: ``"security/verify.html"``.
 
 .. py:data:: SECURITY_POST_VERIFY_URL
 
@@ -657,7 +667,7 @@ Confirmable
     Specifies if a user may login before confirming their email when
     the value of ``SECURITY_CONFIRMABLE`` is set to ``True``.
 
-    Default:``False``.
+    Default: ``False``.
 
 Changeable
 ----------
@@ -1004,6 +1014,8 @@ Unified Signin
 
 .. py:data:: SECURITY_US_EMAIL_SUBJECT
 
+    Sets the email subject when sending the verification code via email.
+
     Default: ``_("Verification Code")``
 
 .. py:data:: SECURITY_US_SETUP_WITHIN
@@ -1109,6 +1121,7 @@ A list of all URLs and Views:
 
 * ``SECURITY_LOGIN_URL``
 * ``SECURITY_LOGOUT_URL``
+* :py:data:`SECURITY_VERIFY_URL`
 * ``SECURITY_REGISTER_URL``
 * ``SECURITY_RESET_URL``
 * ``SECURITY_CHANGE_URL``
@@ -1144,6 +1157,7 @@ A list of all templates:
 
 * ``SECURITY_FORGOT_PASSWORD_TEMPLATE``
 * ``SECURITY_LOGIN_USER_TEMPLATE``
+* :py:data:`SECURITY_VERIFY_TEMPLATE`
 * ``SECURITY_REGISTER_USER_TEMPLATE``
 * ``SECURITY_RESET_PASSWORD_TEMPLATE``
 * ``SECURITY_CHANGE_PASSWORD_TEMPLATE``
