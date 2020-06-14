@@ -33,6 +33,7 @@ tests_require = [
     "pydocstyle>=1.0.0",
     "pymysql>=0.9.3",
     "pyqrcode>=1.2",
+    "pytest==4.6.11",
     "pytest-black>=0.3.8",
     "pytest-cache>=1.0",
     "pytest-cov>=2.5.1",

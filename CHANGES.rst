@@ -17,7 +17,7 @@ Release Target 2020
 Version 3.4.3
 -------------
 
-Released June 12, 2020
+Released June 14, 2020
 
 Minor fixes for a regression and a couple other minor changes
 
@@ -25,7 +25,7 @@ Fixed
 +++++
 
 - (:issue:`340`) Fix regression where tf_phone_number was required, even if SMS wasn't configured.
-- (:pr:`xx`) Pick up some small documentation fixes from 4.0.0.
+- (:pr:`342`) Pick up some small documentation fixes from 4.0.0.
 
 Version 3.4.2
 -------------
