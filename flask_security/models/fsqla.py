@@ -77,7 +77,7 @@ class FsUserMixin(UserMixin):
     password = Column(String(255), nullable=False)
     active = Column(Boolean(), nullable=False)
 
-    # Faster token checking
+    # Flask-Security user identifier
     fs_uniquifier = Column(String(64), unique=True, nullable=False)
 
     # confirmable

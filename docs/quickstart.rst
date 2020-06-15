@@ -120,7 +120,7 @@ SQLAlchemy Application
 
 The following code sample illustrates how to get started as quickly as
 possible using `SQLAlchemy in a declarative way
-<http://flask.pocoo.org/docs/1.0/patterns/sqlalchemy/#declarative>`_:
+<https://flask.palletsprojects.com/en/1.1.x/patterns/sqlalchemy/#declarative>`_:
 
 We are gonna split the application at least in three files: app.py, database.py
 and models.py. You can also do the models a folder and spread your tables there.
@@ -210,15 +210,15 @@ and models.py. You can also do the models a folder and spread your tables there.
         __tablename__ = 'user'
         id = Column(Integer, primary_key=True)
         email = Column(String(255), unique=True)
-        username = Column(String(255))
-        password = Column(String(255))
+        username = Column(String(255), unique=True, nullable=True)
+        password = Column(String(255), nullable=False)
         last_login_at = Column(DateTime())
         current_login_at = Column(DateTime())
         last_login_ip = Column(String(100))
         current_login_ip = Column(String(100))
         login_count = Column(Integer)
         active = Column(Boolean())
-        fs_uniquifier = Column(String(255))
+        fs_uniquifier = Column(String(255), unique=True, nullable=False)
         confirmed_at = Column(DateTime())
         roles = relationship('Role', secondary='roles_users',
                              backref=backref('users', lazy='dynamic'))
@@ -277,7 +277,7 @@ possible using MongoEngine:
         email = db.StringField(max_length=255)
         password = db.StringField(max_length=255)
         active = db.BooleanField(default=True)
-        fs_uniquifier = db.StringField(max_length=255)
+        fs_uniquifier = db.StringField(max_length=64, unique=True)
         confirmed_at = db.DateTimeField()
         roles = db.ListField(db.ReferenceField(Role), default=[])
 
@@ -355,7 +355,7 @@ possible using Peewee:
         email = TextField()
         password = TextField()
         active = BooleanField(default=True)
-        fs_uniquifier = TextField()
+        fs_uniquifier = TextField(null=False)
         confirmed_at = DateTimeField(null=True)
 
     class UserRoles(db.Model):

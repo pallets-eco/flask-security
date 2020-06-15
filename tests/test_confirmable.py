@@ -26,7 +26,7 @@ pytestmark = pytest.mark.confirmable()
 
 
 @pytest.mark.registerable()
-def test_confirmable_flag(app, client, sqlalchemy_datastore, get_message):
+def test_confirmable_flag(app, clients, get_message):
     recorded_confirms = []
     recorded_instructions_sent = []
 
@@ -48,19 +48,19 @@ def test_confirmable_flag(app, client, sqlalchemy_datastore, get_message):
 
     with capture_registrations() as registrations:
         data = dict(email=email, password="awesome sunset", next="")
-        response = client.post("/register", data=data)
+        response = clients.post("/register", data=data)
 
     assert response.status_code == 302
 
-    response = authenticate(client, email=email, password="awesome sunset")
+    response = authenticate(clients, email=email, password="awesome sunset")
     assert get_message("CONFIRMATION_REQUIRED") in response.data
 
     # Test invalid token
-    response = client.get("/confirm/bogus", follow_redirects=True)
+    response = clients.get("/confirm/bogus", follow_redirects=True)
     assert get_message("INVALID_CONFIRMATION_TOKEN") in response.data
 
     # Test JSON
-    response = client.post(
+    response = clients.post(
         "/confirm",
         json=dict(email="matt@lp.com"),
         headers={"Content-Type": "application/json"},
@@ -71,22 +71,22 @@ def test_confirmable_flag(app, client, sqlalchemy_datastore, get_message):
     assert len(recorded_instructions_sent) == 1
 
     # Test ask for instructions with invalid email
-    response = client.post("/confirm", data=dict(email="bogus@bogus.com"))
+    response = clients.post("/confirm", data=dict(email="bogus@bogus.com"))
     assert get_message("USER_DOES_NOT_EXIST") in response.data
 
     # Test resend instructions
-    response = client.post("/confirm", data=dict(email=email))
+    response = clients.post("/confirm", data=dict(email=email))
     assert get_message("CONFIRMATION_REQUEST", email=email) in response.data
     assert len(recorded_instructions_sent) == 2
 
     # Test confirm
     token = registrations[0]["confirm_token"]
-    response = client.get("/confirm/" + token, follow_redirects=True)
+    response = clients.get("/confirm/" + token, follow_redirects=True)
     assert get_message("EMAIL_CONFIRMED") in response.data
     assert len(recorded_confirms) == 1
 
     # Test already confirmed
-    response = client.get("/confirm/" + token, follow_redirects=True)
+    response = clients.get("/confirm/" + token, follow_redirects=True)
     assert get_message("ALREADY_CONFIRMED") in response.data
     assert len(recorded_instructions_sent) == 2
 
@@ -95,32 +95,32 @@ def test_confirmable_flag(app, client, sqlalchemy_datastore, get_message):
     with app.app_context():
         user = registrations[0]["user"]
         expired_token = generate_confirmation_token(user)
-    response = client.get("/confirm/" + expired_token, follow_redirects=True)
+    response = clients.get("/confirm/" + expired_token, follow_redirects=True)
     assert get_message("ALREADY_CONFIRMED") in response.data
     assert len(recorded_instructions_sent) == 2
 
     # Test already confirmed when asking for confirmation instructions
-    logout(client)
+    logout(clients)
 
-    response = client.get("/confirm")
+    response = clients.get("/confirm")
     assert response.status_code == 200
 
-    response = client.post("/confirm", data=dict(email=email))
+    response = clients.post("/confirm", data=dict(email=email))
     assert get_message("ALREADY_CONFIRMED") in response.data
 
-    # Test user was deleted before confirmation
+    # Test if user was deleted before confirmation
     with capture_registrations() as registrations:
-        data = dict(email="mary@lp.com", password="awesome sunset", next="")
-        client.post("/register", data=data)
+        data = dict(email="mary27@lp.com", password="awesome sunset", next="")
+        clients.post("/register", data=data)
 
     user = registrations[0]["user"]
     token = registrations[0]["confirm_token"]
 
     with app.app_context():
-        sqlalchemy_datastore.delete(user)
-        sqlalchemy_datastore.commit()
+        app.security.datastore.delete(user)
+        app.security.datastore.commit()
 
-    response = client.get("/confirm/" + token, follow_redirects=True)
+    response = clients.get("/confirm/" + token, follow_redirects=True)
     assert get_message("INVALID_CONFIRMATION_TOKEN") in response.data
 
 
@@ -183,7 +183,7 @@ def test_no_auth_token(client_nc):
     )
     assert response.status_code == 200
     user = response.json["response"]["user"]
-    assert len(user) == 2 and all(k in user for k in ["id", "last_update"])
+    assert len(user) == 2 and all(k in user for k in ["email", "last_update"])
 
 
 @pytest.mark.registerable()
@@ -200,7 +200,7 @@ def test_auth_token_unconfirmed(client_nc):
     assert response.status_code == 200
     user = response.json["response"]["user"]
     assert len(user) == 3 and all(
-        k in user for k in ["id", "last_update", "authentication_token"]
+        k in user for k in ["email", "last_update", "authentication_token"]
     )
 
 

@@ -430,8 +430,9 @@ def test_evil_validate(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in test_utils.py
-    assert signalled_identity[0] == 4
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert signalled_identity[0] == user.fs_uniquifier
     del signalled_identity[:]
 
     # try to validate
@@ -457,8 +458,9 @@ def test_opt_in(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in test_utils.py
-    assert signalled_identity[0] == 4
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert signalled_identity[0] == user.fs_uniquifier
     del signalled_identity[:]
 
     # opt-in for SMS 2FA
@@ -494,7 +496,9 @@ def test_opt_in(app, client):
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
     # Verify now logged in
-    assert signalled_identity[0] == 4
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert signalled_identity[0] == user.fs_uniquifier
     del signalled_identity[:]
 
     # Now opt back out.
@@ -511,8 +515,9 @@ def test_opt_in(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in test_utils.py
-    assert signalled_identity[0] == 4
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert signalled_identity[0] == user.fs_uniquifier
 
 
 @pytest.mark.recoverable()
@@ -666,8 +671,9 @@ def test_totp_secret_generation(app, client):
     response = authenticate(client, "jill@lp.com")
     session = get_session(response)
     assert "tf_state" not in session
-    # Jill is 4th user to be added in test_utils.py
-    assert signalled_identity[0] == 4
+    with app.app_context():
+        user = app.security.datastore.find_user(email="jill@lp.com")
+        assert signalled_identity[0] == user.fs_uniquifier
     del signalled_identity[:]
 
     sms_sender = SmsSenderFactory.createSender("test")

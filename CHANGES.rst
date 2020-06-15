@@ -19,7 +19,9 @@ Features
 - (:pr:`328`) Remove dependence on Flask-Mail and refactor.
 - (:pr:`335`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
 - (:pr:`336`) Remove `SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)`. In addition to
-  not making sense - the documentation has always been incorrect.
+  not making sense - the documentation has never been correct.
+- (:pr:`xxx`) Require ``fs_uniquifier`` in the UserModel and stop using/referencing the UserModel
+  primary key.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -36,6 +38,14 @@ Backwards Compatibility Concerns
   the caller will be redirected to a verify endpoint (either :py:data:`SECURITY_VERIFY_URL` or
   :py:data:`SECURITY_US_VERIFY_URL`). The simplest change would be to call ``/verify`` everywhere
   the application used to call ``/tf-confirm``.
+
+- (:pr:`xxx`) Require ``fs_uniquifier``. In 3.3 the ``fs_uniqifier`` was added in the UserModel to 'fix'
+  the slow authentication token issue. In 3.4 the ``fs_uniquifier`` was used to implement Flask-Login's
+  `Alternative Token` feature - thus decoupling the primary key (id) from any security context.
+  All along, there have been a few issues with applications not wanting to use the name 'id' in their
+  model, or wanting a different type for their primary key. With this change, Flask-Security no longer
+  interprets or uses the UserModel primary key - just the ``fs_uniquifier`` field. See the changes section for 3.3
+  for information on how to do the schema and data upgrades required to add this field.
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 

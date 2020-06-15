@@ -18,11 +18,11 @@ pytestmark = pytest.mark.registerable()
 
 
 @pytest.mark.settings(post_register_view="/post_register")
-def test_registerable_flag(client, app, get_message):
+def test_registerable_flag(clients, app, get_message):
     recorded = []
 
     # Test the register view
-    response = client.get("/register")
+    response = clients.get("/register")
     assert b"<h1>Register</h1>" in response.data
 
     # Test registering is successful, sends email, and fires signal
@@ -43,37 +43,37 @@ def test_registerable_flag(client, app, get_message):
         next="",
     )
     with app.mail.record_messages() as outbox:
-        response = client.post("/register", data=data, follow_redirects=True)
+        response = clients.post("/register", data=data, follow_redirects=True)
 
     assert len(recorded) == 1
     assert len(outbox) == 1
     assert b"Post Register" in response.data
 
-    logout(client)
+    logout(clients)
 
     # Test user can login after registering
-    response = authenticate(client, email="dude@lp.com", password="battery staple")
+    response = authenticate(clients, email="dude@lp.com", password="battery staple")
     assert response.status_code == 302
 
-    logout(client)
+    logout(clients)
 
     # Test registering with an existing email
     data = dict(
         email="dude@lp.com", password="password", password_confirm="password", next=""
     )
-    response = client.post("/register", data=data, follow_redirects=True)
+    response = clients.post("/register", data=data, follow_redirects=True)
     assert get_message("EMAIL_ALREADY_ASSOCIATED", email="dude@lp.com") in response.data
 
     # Test registering with an existing email but case insensitive
     data = dict(
         email="Dude@lp.com", password="password", password_confirm="password", next=""
     )
-    response = client.post("/register", data=data, follow_redirects=True)
+    response = clients.post("/register", data=data, follow_redirects=True)
     assert get_message("EMAIL_ALREADY_ASSOCIATED", email="Dude@lp.com") in response.data
 
     # Test registering with JSON
     data = dict(email="dude2@lp.com", password="horse battery")
-    response = client.post(
+    response = clients.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
 
@@ -82,17 +82,17 @@ def test_registerable_flag(client, app, get_message):
     assert len(response.json["response"]) == 2
     assert all(k in response.json["response"] for k in ["csrf_token", "user"])
 
-    logout(client)
+    logout(clients)
 
     # Test registering with invalid JSON
     data = dict(email="bogus", password="password")
-    response = client.post(
+    response = clients.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["content-type"] == "application/json"
     assert response.json["meta"]["code"] == 400
 
-    logout(client)
+    logout(clients)
 
     # Test ?next param
     data = dict(
@@ -102,7 +102,7 @@ def test_registerable_flag(client, app, get_message):
         next="",
     )
 
-    response = client.post("/register?next=/page1", data=data, follow_redirects=True)
+    response = clients.post("/register?next=/page1", data=data, follow_redirects=True)
     assert b"Page 1" in response.data
 
 

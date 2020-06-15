@@ -19,12 +19,15 @@ The provided models are versioned since they represent actual DB models, and any
 changes require a schema migration (and perhaps a data migration). Applications
 must specifically import the version they want (and handle any required migration).
 
-At the bare minimum
-your `User` and `Role` model should include the following fields:
+Your `User` model needs a Primary Key - Flask-Security doesn't actually reference
+this - so it can be any name or type your application needs. It should be used in the
+foreign relationship between `User` and `Role`.
+
+At the bare minimum your `User` and `Role` model should include the following fields:
 
 **User**
 
-* ``id`` (primary key - integer, string, or uuid)
+* primary key
 * ``email`` (for most features - unique, non-nullable)
 * ``password`` (non-nullable)
 * ``active`` (boolean, non-nullable)
@@ -33,7 +36,7 @@ your `User` and `Role` model should include the following fields:
 
 **Role**
 
-* ``id`` (primary key - integer)
+* primary key
 * ``name`` (unique, non-nullable)
 * ``description`` (string)
 
@@ -122,7 +125,6 @@ serializable object:
         # Custom User Payload
         def get_security_payload(self):
             return {
-                'id': self.id,
                 'name': self.name,
                 'email': self.email
             }

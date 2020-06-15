@@ -131,7 +131,9 @@ def login_user(user, remember=None, authn_via=None):
     session["fs_cc"] = "set"  # CSRF cookie
     session["fs_paa"] = time.time()  # Primary authentication at - timestamp
 
-    identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+    identity_changed.send(
+        current_app._get_current_object(), identity=Identity(user.fs_uniquifier)
+    )
 
     user_authenticated.send(
         current_app._get_current_object(), user=user, authn_via=authn_via
@@ -639,7 +641,7 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
         invalid = True
 
     if data:
-        user = _datastore.find_user(id=data[0])
+        user = _datastore.find_user(fs_uniquifier=data[0])
 
     expired = expired and (user is not None)
 

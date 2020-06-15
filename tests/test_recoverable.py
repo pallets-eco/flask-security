@@ -24,7 +24,7 @@ from flask_security.signals import password_reset, reset_password_instructions_s
 pytestmark = pytest.mark.recoverable()
 
 
-def test_recoverable_flag(app, client, get_message):
+def test_recoverable_flag(app, clients, get_message):
     recorded_resets = []
     recorded_instructions_sent = []
 
@@ -40,13 +40,13 @@ def test_recoverable_flag(app, client, get_message):
         recorded_instructions_sent.append(user)
 
     # Test the reset view
-    response = client.get("/reset")
+    response = clients.get("/reset")
     assert b"<h1>Send password reset instructions</h1>" in response.data
 
     # Test submitting email to reset password creates a token and sends email
     with capture_reset_password_requests() as requests:
         with app.mail.record_messages() as outbox:
-            response = client.post(
+            response = clients.post(
                 "/reset", data=dict(email="joe@lp.com"), follow_redirects=True
             )
 
@@ -57,18 +57,18 @@ def test_recoverable_flag(app, client, get_message):
     token = requests[0]["token"]
 
     # Test view for reset token
-    response = client.get("/reset/" + token)
+    response = clients.get("/reset/" + token)
     assert b"<h1>Reset password</h1>" in response.data
 
     # Test submitting a new password but leave out confirm
-    response = client.post(
+    response = clients.post(
         "/reset/" + token, data={"password": "newpassword"}, follow_redirects=True
     )
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data
     assert len(recorded_resets) == 0
 
     # Test submitting a new password
-    response = client.post(
+    response = clients.post(
         "/reset/" + token,
         data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
         follow_redirects=True,
@@ -77,26 +77,26 @@ def test_recoverable_flag(app, client, get_message):
     assert get_message("PASSWORD_RESET") in response.data
     assert len(recorded_resets) == 1
 
-    logout(client)
+    logout(clients)
 
     # Test logging in with the new password
     response = authenticate(
-        client, "joe@lp.com", "awesome sunset", follow_redirects=True
+        clients, "joe@lp.com", "awesome sunset", follow_redirects=True
     )
     assert b"Welcome joe@lp.com" in response.data
 
-    logout(client)
+    logout(clients)
 
     # Test invalid email
-    response = client.post(
+    response = clients.post(
         "/reset", data=dict(email="bogus@lp.com"), follow_redirects=True
     )
     assert get_message("USER_DOES_NOT_EXIST") in response.data
 
-    logout(client)
+    logout(clients)
 
     # Test invalid token
-    response = client.post(
+    response = clients.post(
         "/reset/bogus",
         data={"password": "awesome sunset", "password_confirm": "awesome sunset"},
         follow_redirects=True,
@@ -109,7 +109,7 @@ def test_recoverable_flag(app, client, get_message):
         "BZEw_Q.lQyo3npdPZtcJ_sNHVHP103syjM"
         "&url_id=fbb89a8328e58c181ea7d064c2987874bc54a23d"
     )
-    response = client.post(
+    response = clients.post(
         "/reset/" + token,
         data={"password": "newpassword", "password_confirm": "newpassword"},
         follow_redirects=True,
@@ -176,7 +176,7 @@ def test_recoverable_json(app, client, get_message):
         )
         assert all(
             k in response.json["response"]["user"]
-            for k in ["id", "authentication_token"]
+            for k in ["email", "authentication_token"]
         )
         assert len(recorded_resets) == 1
 
@@ -191,7 +191,7 @@ def test_recoverable_json(app, client, get_message):
         )
         assert all(
             k in response.json["response"]["user"]
-            for k in ["id", "authentication_token"]
+            for k in ["email", "authentication_token"]
         )
 
         logout(client)
