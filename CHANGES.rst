@@ -8,6 +8,8 @@ Version 4.0.0
 
 Release Target Summer 2020
 
+**PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
+
 - Removal of python 2.7 and <3.6 support
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
 - Other possible breaking changes tracked `here`_
@@ -20,8 +22,9 @@ Features
 - (:pr:`335`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
 - (:pr:`336`) Remove `SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)`. In addition to
   not making sense - the documentation has never been correct.
-- (:pr:`xxx`) Require ``fs_uniquifier`` in the UserModel and stop using/referencing the UserModel
+- (:pr:`339`) Require ``fs_uniquifier`` in the UserModel and stop using/referencing the UserModel
   primary key.
+- (:pr:`xxx`) Change ``USER_IDENTITY_ATTRIBUTES`` configuration variable semantics.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -39,13 +42,27 @@ Backwards Compatibility Concerns
   :py:data:`SECURITY_US_VERIFY_URL`). The simplest change would be to call ``/verify`` everywhere
   the application used to call ``/tf-confirm``.
 
-- (:pr:`xxx`) Require ``fs_uniquifier``. In 3.3 the ``fs_uniqifier`` was added in the UserModel to 'fix'
+- (:pr:`339`) Require ``fs_uniquifier``. In 3.3 the ``fs_uniqifier`` was added in the UserModel to 'fix'
   the slow authentication token issue. In 3.4 the ``fs_uniquifier`` was used to implement Flask-Login's
   `Alternative Token` feature - thus decoupling the primary key (id) from any security context.
   All along, there have been a few issues with applications not wanting to use the name 'id' in their
   model, or wanting a different type for their primary key. With this change, Flask-Security no longer
   interprets or uses the UserModel primary key - just the ``fs_uniquifier`` field. See the changes section for 3.3
   for information on how to do the schema and data upgrades required to add this field.
+
+- (:pr:`xxx`) :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` has changed syntax and semantics. It now contains
+  the combined information from the old USER_IDENTITY_ATTRIBUTES and the newly introduced in 3.4 :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
+  This enabled changing the underlying way we validate credentials in the login form and unified sign in form.
+  In prior releases we simply tried to look up the form value as the PK of the UserModel - this often failed and then
+  looped through the other ``USER_IDENTITY_ATTRIBUTES``. This had a history of issues, including many applications not
+  wanting to have a standard PK for the user model. Now, using the mapping configuration, the UserModel attribute/column the input
+  corresponds to is determined, then the UserModel is queried specifically for that *attribute:value* pair.
+
+  This affects Registration as well - in prior releases, the default RegisterForm had a field called ``email``. However
+  the code called UserModel.get_user() with the value of this field, which would proceed to query ALL configured USER_IDENTITY_ATTRIBUTES.
+  Some applications used this fact to effectively change what the application user needed to log in - however mostly it generated
+  extreme confusion with developers. While it is easy to extend the RegistrationForm and template to add additional attributes,
+  ``email`` is required (a regression from 3.4)
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 

@@ -30,13 +30,13 @@ Flask application. They include:
 Many of these features are made possible by integrating various Flask extensions
 and libraries. They include:
 
-1. `Flask-Login <https://flask-login.readthedocs.org/en/latest/>`_
-2. `Flask-Mail <https://pypi.org/project/Flask-Mail/>`_
-3. `Flask-Principal <https://pypi.org/project/Flask-Principal/>`_
-4. `Flask-WTF <https://pypi.org/project/Flask-WTF/>`_
-5. `itsdangerous <https://pypi.org/project/itsdangerous/>`_
-6. `passlib <https://pypi.org/project/passlib/>`_
-7. `PyQRCode <https://pypi.org/project/PyQRCode/>`_
+* `Flask-Login <https://flask-login.readthedocs.org/en/latest/>`_
+* `Flask-Mail <https://pypi.org/project/Flask-Mail/>`_
+* `Flask-Principal <https://pypi.org/project/Flask-Principal/>`_
+* `Flask-WTF <https://pypi.org/project/Flask-WTF/>`_
+* `itsdangerous <https://pypi.org/project/itsdangerous/>`_
+* `passlib <https://pypi.org/project/passlib/>`_
+* `PyQRCode <https://pypi.org/project/PyQRCode/>`_
 
 Additionally, it assumes you'll be using a common library for your database
 connections and model definitions. Flask-Security supports the following Flask

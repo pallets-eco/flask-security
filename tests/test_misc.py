@@ -235,17 +235,6 @@ def test_logout_methods_none(app, sqlalchemy_datastore):
     assert response.status_code == 404
 
 
-def test_addition_identity_attributes(app, sqlalchemy_datastore):
-    init_app_with_options(
-        app,
-        sqlalchemy_datastore,
-        **{"SECURITY_USER_IDENTITY_ATTRIBUTES": ("email", "username")}
-    )
-    client = app.test_client()
-    response = authenticate(client, email="matt", follow_redirects=True)
-    assert b"Welcome matt@lp.com" in response.data
-
-
 def test_passwordless_and_two_factor_configuration_mismatch(app, sqlalchemy_datastore):
     with pytest.raises(ValueError):
         init_app_with_options(

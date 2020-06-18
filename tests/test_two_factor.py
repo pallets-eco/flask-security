@@ -18,6 +18,7 @@ from flask_security import (
     SQLAlchemyUserDatastore,
     SmsSenderFactory,
     reset_password_instructions_sent,
+    uia_email_mapper,
 )
 from tests.test_utils import (
     SmsBadSender,
@@ -724,8 +725,6 @@ def test_totp_secret_generation(app, client):
 @pytest.mark.settings(two_factor_enabled_methods=["authenticator"])
 def test_just_authenticator(app, client):
     authenticate(client, email="jill@lp.com")
-    password = "password"
-    client.post("/tf-confirm", data=dict(password=password), follow_redirects=True)
 
     response = client.get("/tf-setup", follow_redirects=True)
     assert b"Set up using SMS" not in response.data
@@ -739,12 +738,16 @@ def test_just_authenticator(app, client):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("username", "email"))
+@pytest.mark.settings(
+    USER_IDENTITY_ATTRIBUTES=[
+        {"username": {"mapper": lambda x: "@" not in x}},
+        {"email": {"mapper": uia_email_mapper}},
+    ]
+)
 def test_qrcode_identity(app, client):
     # Setup authenticator
     authenticate(client, email="jill@lp.com")
 
-    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
     setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
     assert b"Open your authenticator app on your device" in response.data
@@ -761,12 +764,17 @@ def test_qrcode_identity(app, client):
     assert b"svg" in qrcode_page_response.data
 
 
-@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("security_number", "email"))
+@pytest.mark.settings(
+    USER_IDENTITY_ATTRIBUTES=[
+        {"security_number": {"mapper": lambda x: x.isdigit()}},
+        {"email": {"mapper": uia_email_mapper}},
+    ]
+)
 def test_qrcode_identity_num(app, client):
-    # Setup authenticator
+    # Test that QRcode has 'security_number' as the 'username' since it is listed
+    # first.
     authenticate(client, email="jill@lp.com")
 
-    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
     setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
     assert b"Open your authenticator app on your device" in response.data
@@ -783,11 +791,15 @@ def test_qrcode_identity_num(app, client):
     assert b"svg" in qrcode_page_response.data
 
 
-@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("email", "username"))
+@pytest.mark.settings(
+    USER_IDENTITY_ATTRIBUTES=[
+        {"email": {"mapper": uia_email_mapper}},
+        {"username": {"mapper": lambda x: x}},
+    ]
+)
 def test_email_salutation(app, client):
 
     authenticate(client, email="jill@lp.com")
-    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
 
     test_mail = MockMail()
     app.extensions["mail"] = test_mail
@@ -800,11 +812,15 @@ def test_email_salutation(app, client):
     assert "jill@lp.com" in test_mail.msg.html
 
 
-@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("username", "email"))
+@pytest.mark.settings(
+    USER_IDENTITY_ATTRIBUTES=[
+        {"username": {"mapper": lambda x: "@" not in x}},
+        {"email": {"mapper": uia_email_mapper}},
+    ]
+)
 def test_username_salutation(app, client):
 
     authenticate(client, email="jill@lp.com")
-    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
 
     test_mail = MockMail()
     app.extensions["mail"] = test_mail
@@ -842,7 +858,6 @@ def test_bad_sender(app, client, get_message):
 
     # Now test setup
     tf_authenticate(app, client)
-    client.post("/tf-confirm", data=dict(password="password"), follow_redirects=True)
     data = dict(setup="sms", phone="+442083661188")
     response = client.post("tf-setup", data=data)
     assert get_message("FAILED_TO_SEND_CODE") in response.data
@@ -1035,9 +1050,6 @@ def test_no_sms(app, get_message):
 
         data = dict(email="trp@lp.com", password="password")
         client.post("/login", data=data, follow_redirects=True)
-        client.post(
-            "/tf-confirm", data=dict(password="password"), follow_redirects=True
-        )
 
         test_mail = MockMail()
         app.extensions["mail"] = test_mail

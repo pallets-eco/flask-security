@@ -237,36 +237,19 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_USER_IDENTITY_ATTRIBUTES
 
-    Specifies which attributes of the user object can be used for login.
+    Specifies which attributes of the user object can be used for credential validation.
 
-    Default: ``['email']``.
-
-    .. danger::
-        Make sure that any attributes listed here are marked Unique in your UserDataStore
-        model.
-
-.. py:data:: SECURITY_USER_IDENTITY_MAPPINGS
-
-    Defines the order and matching that will be applied when validating the
-    unified sign in form. This form has a single ``identity`` field
-    that is parsed using the information below - the FIRST match will then be
-    used to look up the user in the DB.
-
-    Default::
-
-        [
-            {"email": uia_email_mapper},
-            {"us_phone_number": uia_phone_mapper},
-        ],
-
-    Be aware that ONLY those attributes listed in :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`
-    will be considered - regardless of the setting of this variable.
+    Defines the order and matching that will be applied when validating login
+    credentials (either via standard login form or the unified sign in form).
+    The identity field in the form will be matched in order using this configuration
+    - the FIRST match will then be used to look up the user in the DB.
 
     Mapping functions take a single argument - ``identity`` from the form
     and should return ``None`` if the ``identity`` argument isn't in a format
     suitable for the attribute. If the ``identity`` argument format matches, it
     should be returned, optionally having had some canonicalization performed.
-    The returned result will be used to look up the identity in the UserDataStore.
+    The returned result will be used to look up the identity in the UserDataStore
+    using the column name specified in the key.
 
     The provided :meth:`flask_security.uia_phone_mapper` for example performs
     phone number normalization using the ``phonenumbers`` package.
@@ -276,7 +259,43 @@ These configuration keys are used globally across all features.
         make sure you apply the exact same transformation in your form validator
         when setting the field.
 
+    .. danger::
+        Make sure that any attributes listed here are marked Unique in your UserDataStore
+        model.
+
+    .. danger::
+        Make sure your mapper methods guard against malicious user input. For example,
+        if you allow ``username`` as an identity method you could use `bleach`_::
+
+            def uia_username_mapper(identity):
+                # we allow pretty much anything - but we bleach it.
+                return bleach.clean(identity, strip=True)
+
+    Default::
+
+        [
+            {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
+        ]
+
+    If you enable :py:data:`SECURITY_UNIFIED_SIGNIN` and set ``sms`` as a :py:data:`SECURITY_US_ENABLED_METHODS`
+    the following would be necessary::
+
+        [
+            {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
+            {"us_phone_number": {"mapper": uia_phone_number}},
+        ]
+
+
+    .. versionchanged:: 4.0.0
+        Changed from list to list of dict.
+
+.. _bleach: https://pypi.org/project/bleach/
+
+.. py:data:: SECURITY_USER_IDENTITY_MAPPINGS
+
     .. versionadded:: 3.4.0
+    .. deprecated:: 4.0.0
+        Superseded by :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`
 
 .. py:data:: SECURITY_DEFAULT_REMEMBER_ME
 
@@ -951,6 +970,11 @@ Unified Signin
     Be aware that ``password`` only affects this ``SECURITY_US_SIGNIN_URL`` endpoint.
     Removing it from here won't stop users from using the ``SECURITY_LOGIN_URL`` endpoint.
 
+    If you select ``sms`` then make sure you add this to :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`::
+
+        {"us_phone_number": {"mapper": uia_phone_number}},
+
+
     Default: ``["password", "email", "authenticator", "sms"]`` - which are the only supported options.
 
 .. py:data:: SECURITY_US_MFA_REQUIRED
@@ -991,9 +1015,7 @@ Unified Signin
 
 Additional relevant configuration variables:
 
-    * :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` - Defines which user fields can be
-      used for identity.
-    * :py:data:`SECURITY_USER_IDENTITY_MAPPINGS` - Defines the order and methods for parsing identity.
+    * :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` - Defines the order and methods for parsing and validating identity.
     * :py:data:`SECURITY_DEFAULT_REMEMBER_ME`
     * :py:data:`SECURITY_SMS_SERVICE` - When SMS is enabled in :py:data:`SECURITY_US_ENABLED_METHODS`.
     * :py:data:`SECURITY_SMS_SERVICE_CONFIG`
@@ -1144,6 +1166,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_EMAIL_NOT_PROVIDED``
 * ``SECURITY_MSG_FAILED_TO_SEND_CODE``
 * ``SECURITY_MSG_FORGOT_PASSWORD``
+* ``SECURITY_IDENTITY_ALREADY_ASSOCIATED``
 * ``SECURITY_MSG_INVALID_CODE``
 * ``SECURITY_MSG_INVALID_CONFIRMATION_TOKEN``
 * ``SECURITY_MSG_INVALID_EMAIL_ADDRESS``

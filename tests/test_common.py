@@ -15,6 +15,8 @@ import pytest
 
 from flask import Blueprint
 
+from flask_security import uia_email_mapper
+
 from tests.test_utils import (
     authenticate,
     json_authenticate,
@@ -370,7 +372,12 @@ def test_http_auth(client):
     assert b"HTTP Authentication" in response.data
 
 
-@pytest.mark.settings(USER_IDENTITY_ATTRIBUTES=("email", "username"))
+@pytest.mark.settings(
+    USER_IDENTITY_ATTRIBUTES=[
+        {"email": {"mapper": uia_email_mapper}},
+        {"username": {"mapper": lambda x: x}},
+    ]
+)
 def test_http_auth_username(client):
     response = client.get(
         "/http",

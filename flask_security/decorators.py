@@ -24,6 +24,7 @@ from .utils import (
     FsPermNeed,
     config_value,
     do_flash,
+    find_user,
     get_message,
     get_url,
     check_and_update_authn_fresh,
@@ -158,7 +159,7 @@ def _check_http_auth():
     auth = request.authorization or BasicAuth(username=None, password=None)
     if not auth.username:
         return False
-    user = _security.datastore.get_user(auth.username)
+    user = find_user(auth.username)
 
     if user and user.verify_and_update_password(auth.password):
         _security.datastore.commit()

@@ -82,6 +82,8 @@ user's UserModel. If that field is changed (via :meth:`.UserDatastore.set_uniqui
 then any existing authentication tokens will no longer be valid. Changing
 the user's password will not affect tokens.
 
+.. _two-factor:
+
 Two-factor Authentication (alpha)
 ----------------------------------------
 Two-factor authentication is enabled by generating time-based one time passwords
@@ -126,7 +128,7 @@ many different servers as part of being delivered - and b) is available from any
 
 Using SMS or an authenticator app means you are providing "something you have" (the mobile device)
 and either "something you know" (passcode to unlock your device)
-or "something you are" (biometric passcode to unlock your device).
+or "something you are" (biometric quality to unlock your device).
 This effectively means that using a one-time code to sign in, is in fact already two-factor (if using
 SMS or authenticator app). Many large authentication providers already offer this - here is
 `Microsoft's`_ version.

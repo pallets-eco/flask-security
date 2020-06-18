@@ -39,7 +39,7 @@ tests_require = [
 ]
 
 extras_require = {
-    "docs": ["Pallets-Sphinx-Themes>=1.2.1", "Sphinx>=3.0.3", "sphinx-issues>=1.2.0"],
+    "docs": ["Pallets-Sphinx-Themes>=1.2.3", "Sphinx>=3.0.3", "sphinx-issues>=1.2.0"],
     "tests": tests_require,
 }
 
@@ -47,7 +47,7 @@ extras_require["all"] = []
 for reqs in extras_require.values():
     extras_require["all"].extend(reqs)
 
-setup_requires = ["Babel>=1.3", "pytest-runner>=5.2", "twine", "wheel"]
+setup_requires = ["Babel>=2.8.0", "pytest-runner>=5.2", "twine", "wheel"]
 
 install_requires = [
     "Flask>=1.1.1",

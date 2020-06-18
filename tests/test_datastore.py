@@ -49,8 +49,6 @@ def test_unimplemented_user_datastore_methods():
         datastore.find_user(None)
     with raises(NotImplementedError):
         datastore.find_role(None)
-    with raises(NotImplementedError):
-        datastore.get_user(None)
 
 
 def test_toggle_active():
@@ -91,41 +89,6 @@ def test_activate_returns_false_if_already_true():
     user = User()
     user.active = True
     assert not datastore.activate_user(user)
-
-
-def test_get_user(app, datastore):
-    # The order of identity attributes is important for testing.
-    # drivers like psycopg2 will abort the transaction if they throw an
-    # error and not continue on so we want to check that case of passing in
-    # a string for a numeric field and being able to move onto the next
-    # column.
-    init_app_with_options(
-        app,
-        datastore,
-        **{
-            "SECURITY_USER_IDENTITY_ATTRIBUTES": (
-                "email",
-                "security_number",
-                "username",
-            )
-        }
-    )
-
-    with app.app_context():
-
-        user = datastore.get_user("matt@lp.com")
-        assert user is not None
-
-        user = datastore.get_user("matt")
-        assert user is not None
-
-        # Regression check (make sure we don't match wildcards)
-        user = datastore.get_user("%lp.com")
-        assert user is None
-
-        # Verify that numeric non PK works
-        user = datastore.get_user(123456)
-        assert user is not None
 
 
 def test_find_user(app, datastore):
@@ -427,9 +390,10 @@ def test_uuid(app, request, tmpdir, realdburl):
             UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
         )
         email = Column(String(255), unique=True)
+        fs_uniquifier = Column(String(64), unique=True, nullable=False)
         first_name = Column(String(255), index=True)
         last_name = Column(String(255), index=True)
-        username = Column(String(255), unique=True)
+        username = Column(String(255), unique=True, nullable=True)
         password = Column(String(255))
         active = Column(Boolean())
         created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -464,41 +428,5 @@ def test_uuid(app, request, tmpdir, realdburl):
     app.security = Security(app, datastore=ds)
 
     with app.app_context():
-        user = ds.get_user("matt@lp.com")
+        user = ds.find_user(email="matt@lp.com")
         assert not user
-
-
-def test_user_loader(app, sqlalchemy_datastore):
-    # user_loader now tries first to match fs_uniquifier then match user.id
-    # While we know that fs_uniquifier is a string - we don't know what user.id is
-    # and we know that psycopg2 is really finicky about this.
-    from flask_security.core import _user_loader
-
-    init_app_with_options(app, sqlalchemy_datastore)
-    with app.test_request_context():
-        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
-
-        # normal case
-        user = _user_loader(jill.fs_uniquifier)
-        assert user.email == "jill@lp.com"
-
-        # send in an int - make sure it is cast to string for check against
-        # fs_uniquifier
-        user = _user_loader(1000)
-        assert not user
-        # with psycopg2 this will lock up DB but since we pass exceptions we can
-        # check this by trying some other DB operation
-        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
-        assert jill
-
-        # This works since DBs seem to try to cast to underlying type
-        user = _user_loader("10")
-        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
-        assert jill
-
-        # Since this doesn't match an existing fs_uniqifier, and user.id is an int
-        # this will make pyscopg2 angry. This test verifies that we don't in fact
-        # try to take a string and use it to lookup an int.
-        user = _user_loader("someunknown")
-        jill = sqlalchemy_datastore.find_user(email="jill@lp.com")
-        assert jill
