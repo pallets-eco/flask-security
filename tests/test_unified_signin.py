@@ -32,15 +32,23 @@ from flask_security import (
     SQLAlchemyUserDatastore,
     UserMixin,
     uia_email_mapper,
+    uia_phone_mapper,
     us_profile_changed,
     us_security_token_sent,
     user_authenticated,
 )
 
+from flask_security.utils import get_identity_attributes
+
 pytestmark = pytest.mark.unified_signin()
 
 SmsSenderFactory.senders["test"] = SmsTestSender
 SmsSenderFactory.senders["bad"] = SmsBadSender
+
+UIA_EMAIL_PHONE = [
+    {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
+    {"us_phone_number": {"mapper": uia_phone_mapper}},
+]
 
 
 @contextmanager
@@ -193,10 +201,7 @@ def test_simple_signin_json(app, client_nc, get_message):
         assert (
             jresponse["available_methods"] == app.config["SECURITY_US_ENABLED_METHODS"]
         )
-        assert (
-            jresponse["identity_attributes"]
-            == app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
-        )
+        assert jresponse["identity_attributes"] == get_identity_attributes(app=app)
         assert set(jresponse["code_methods"]) == {"email", "sms"}
 
         with capture_send_code_requests() as requests:
@@ -572,7 +577,7 @@ def test_setup_email(app, client, get_message):
 
 @pytest.mark.settings(
     us_enabled_methods=["email", "sms"],
-    user_identity_attributes=["email", "us_phone_number"],
+    user_identity_attributes=UIA_EMAIL_PHONE,
     freshness=timedelta(hours=-1),
 )
 def test_setup_json(app, client_nc, get_message):
@@ -646,8 +651,7 @@ def test_setup_json(app, client_nc, get_message):
 
 
 @pytest.mark.settings(
-    us_enabled_methods=["email", "sms"],
-    user_identity_attributes=["email", "us_phone_number"],
+    us_enabled_methods=["email", "sms"], user_identity_attributes=UIA_EMAIL_PHONE,
 )
 def test_setup_json_no_session(app, client_nc, get_message):
     # Test that with normal config freshness is required so must have session.
@@ -1052,8 +1056,10 @@ def test_can_add_password(app, client, get_message):
 
 @pytest.mark.settings(
     us_enabled_methods=["password"],
-    user_identity_attributes=["email", "username"],
-    user_identity_mappings=[{"email": uia_email_mapper}, {"username": lambda x: x}],
+    user_identity_attributes=[
+        {"email": {"mapper": uia_email_mapper}},
+        {"username": {"mapper": lambda x: x}},
+    ],
 )
 def test_regular_login(app, client, get_message):
     # If "password" in methods - then should be able to login with good-ol
@@ -1080,7 +1086,7 @@ def test_regular_login(app, client, get_message):
 
 
 @pytest.mark.settings(
-    us_enabled_methods=["sms"], user_identity_attributes=["email", "us_phone_number"]
+    us_enabled_methods=["sms"], user_identity_attributes=UIA_EMAIL_PHONE
 )
 def test_regular_login_disallowed(app, client, get_message):
     # If "password" not in methods - then should not be able to use password
@@ -1173,7 +1179,7 @@ def test_tf_link_spa(app, client, get_message):
 
 @pytest.mark.two_factor()
 @pytest.mark.settings(
-    two_factor_required=True, user_identity_attributes=["email", "us_phone_number"]
+    two_factor_required=True, user_identity_attributes=UIA_EMAIL_PHONE
 )
 def test_tf_not(app, client, get_message):
     # Test basic two-factor - when first factor doesn't require second (e.g. SMS)

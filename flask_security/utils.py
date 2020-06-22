@@ -15,6 +15,7 @@ from functools import partial
 import hashlib
 import hmac
 import time
+from typing import Dict, List
 import warnings
 from datetime import timedelta
 from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
@@ -679,21 +680,55 @@ def check_and_get_token_status(token, serializer, within=None):
     return expired, invalid, data
 
 
-def get_identity_attributes(app=None):
+def get_identity_attributes(app=None) -> List:
+    # Return list of keys of identity attributes
+    # Is it possible to not have any?
     app = app or current_app
-    attrs = app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
-    try:
-        attrs = [f.strip() for f in attrs.split(",")]
-    except AttributeError:
-        pass
-    return attrs
+    iattrs = app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
+    if iattrs:
+        return [[*f][0] for f in iattrs]
+    return []
+
+
+def get_identity_attribute(attr, app=None) -> Dict:
+    """ Given an user_identity_attribute, return the defining dict.
+    A bit annoying since USER_IDENTITY_ATTRIBUTES is a list of dict
+    where each dict has just one key.
+    """
+    app = app or current_app
+    iattrs = app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"]
+    if iattrs:
+        details = [
+            mapping[attr] for mapping in iattrs if list(mapping.keys())[0] == attr
+        ]
+        if details:
+            return details[0]
+    return {}
+
+
+def find_user(identity):
+    """
+    Validate identity - we go in order to figure out which user attribute the
+    request gave us. Note that we give up on the first 'match' even if that
+    doesn't yield a user. Why?
+    """
+    for mapping in config_value("USER_IDENTITY_ATTRIBUTES"):
+        attr = list(mapping.keys())[0]
+        details = mapping[attr]
+        idata = details["mapper"](identity)
+        if idata:
+            user = _datastore.find_user(
+                case_insensitive=details.get("case_insensitive", False), **{attr: idata}
+            )
+            return user
+    return None
 
 
 def uia_phone_mapper(identity):
     """ Used to match identity as a phone number. This is a simple proxy
     to :py:class:`PhoneUtil`
 
-    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
+    See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
 
     .. versionadded:: 3.4.0
     """
@@ -704,7 +739,7 @@ def uia_phone_mapper(identity):
 def uia_email_mapper(identity):
     """ Used to match identity as an email.
 
-    See :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
+    See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
 
     .. versionadded:: 3.4.0
     """

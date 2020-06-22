@@ -17,7 +17,13 @@ import os
 
 from flask import Flask
 from flask.json import JSONEncoder
-from flask_security import Security, SmsSenderFactory, SmsSenderBaseClass
+from flask_security import (
+    Security,
+    SmsSenderFactory,
+    SmsSenderBaseClass,
+    uia_phone_mapper,
+    uia_email_mapper,
+)
 from flask_wtf import CSRFProtect
 
 from models import db, user_datastore
@@ -69,7 +75,10 @@ def create_app():
     app.config["SECURITY_FLASH_MESSAGES"] = False
 
     # Allow signing in with a phone number or email
-    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = ["email", "us_phone_number"]
+    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
+        {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
+        {"us_phone_number": {"mapper": uia_phone_mapper}},
+    ]
     app.config["SECURITY_US_ENABLED_METHODS"] = ["password", "email", "sms"]
 
     app.config["SECURITY_TOTP_SECRETS"] = {

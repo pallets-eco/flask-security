@@ -39,7 +39,7 @@ from flask_security.signals import (
     reset_password_instructions_sent,
     user_registered,
 )
-from flask_security.utils import hash_password
+from flask_security.utils import hash_password, uia_email_mapper, uia_phone_mapper
 
 
 def _find_bool(v):
@@ -68,7 +68,10 @@ def create_app():
 
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = False
-    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = ["email", "us_phone_number"]
+    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
+        {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
+        {"us_phone_number": {"mapper": uia_phone_mapper}},
+    ]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["password"]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["authenticator", "password"]
 
@@ -132,7 +135,7 @@ def create_app():
         init_db()
         db_session.commit()
         test_acct = "test@test.com"
-        if not user_datastore.get_user(test_acct):
+        if not user_datastore.find_user(email=test_acct):
             add_user(user_datastore, test_acct, "password", ["admin"])
             print("Created User: {} with password {}".format(test_acct, "password"))
 
@@ -239,6 +242,7 @@ class Role(Base, RoleMixin):
 class User(Base, UserMixin):
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
+    fs_uniquifier = Column(String(64), unique=True, nullable=False)
     email = Column(String(255), unique=True)
     username = Column(String(255), unique=True, nullable=True)
     password = Column(String(255), nullable=False)

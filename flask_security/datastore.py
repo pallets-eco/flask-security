@@ -11,7 +11,7 @@
 import json
 import uuid
 
-from .utils import config_value, get_identity_attributes
+from .utils import config_value
 
 
 class Datastore:
@@ -146,23 +146,8 @@ class UserDatastore:
             # see if the role exists
             roles[i] = self.find_role(rn)
         kwargs["roles"] = roles
-        if hasattr(self.user_model, "fs_uniquifier"):
-            kwargs.setdefault("fs_uniquifier", uuid.uuid4().hex)
+        kwargs.setdefault("fs_uniquifier", uuid.uuid4().hex)
         return kwargs
-
-    def _is_numeric(self, value):
-        try:
-            int(value)
-        except (TypeError, ValueError):
-            return False
-        return True
-
-    def _is_uuid(self, value):
-        return isinstance(value, uuid.UUID)
-
-    def get_user(self, id_or_email):
-        """Returns a user matching the specified ID or email address."""
-        raise NotImplementedError
 
     def find_user(self, *args, **kwargs):
         """Returns a user matching the provided parameters."""
@@ -449,64 +434,28 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         SQLAlchemyDatastore.__init__(self, db)
         UserDatastore.__init__(self, user_model, role_model)
 
-    def get_user(self, identifier):
+    def find_user(self, case_insensitive=False, **kwargs):
         from sqlalchemy import func as alchemyFn
-        from sqlalchemy import inspect
-        from sqlalchemy.sql import sqltypes
-        from sqlalchemy.dialects.postgresql import UUID as PSQL_UUID
 
-        user_model_query = self.user_model.query
-        if config_value("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
-            from sqlalchemy.orm import joinedload
-
-            user_model_query = user_model_query.options(joinedload("roles"))
-
-        # To support both numeric, string, and UUID primary keys, and support
-        # calling this routine with either a numeric value or a string or a UUID
-        # we need to make sure the types basically match.
-        # psycopg2 for example will complain if we attempt to 'get' a
-        # numeric primary key with a string value.
-        # TODO: other datastores don't support this - they assume the only
-        # PK is user.id. That makes things easier but for backwards compat...
-        ins = inspect(self.user_model)
-        pk_type = ins.primary_key[0].type
-        pk_isnumeric = isinstance(pk_type, sqltypes.Integer)
-        pk_isuuid = isinstance(pk_type, PSQL_UUID)
-        # Are they the same or NOT numeric nor UUID
-        if (
-            (pk_isnumeric and self._is_numeric(identifier))
-            or (pk_isuuid and self._is_uuid(identifier))
-            or (not pk_isnumeric and not pk_isuuid)
-        ):
-            rv = self.user_model.query.get(identifier)
-            if rv is not None:
-                return rv
-
-        # Not PK - iterate through other attributes and look for 'identifier'
-        for attr in get_identity_attributes():
-            column = getattr(self.user_model, attr)
-            attr_isnumeric = isinstance(column.type, sqltypes.Integer)
-
-            query = None
-            if attr_isnumeric and self._is_numeric(identifier):
-                query = column == identifier
-            elif not attr_isnumeric and not self._is_numeric(identifier):
-                # Look for exact case-insensitive match - 'ilike' honors
-                # wild cards which isn't what we want.
-                query = alchemyFn.lower(column) == alchemyFn.lower(identifier)
-            if query is not None:
-                rv = user_model_query.filter(query).first()
-                if rv is not None:
-                    return rv
-
-    def find_user(self, **kwargs):
         query = self.user_model.query
         if config_value("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
 
             query = query.options(joinedload("roles"))
 
-        return query.filter_by(**kwargs).first()
+        if case_insensitive:
+            # While it is of course possible to pass in multiple keys to filter on
+            # that isn't the normal use case. If caller asks for case_insensitive
+            # AND gives multiple keys - throw an error.
+            if len(kwargs) > 1:
+                raise ValueError("Case insensitive option only supports single key")
+            attr, identifier = kwargs.popitem()
+            subquery = alchemyFn.lower(
+                getattr(self.user_model, attr)
+            ) == alchemyFn.lower(identifier)
+            return query.filter(subquery).first()
+        else:
+            return query.filter_by(**kwargs).first()
 
     def find_role(self, role):
         return self.role_model.query.filter_by(name=role).first()
@@ -542,36 +491,24 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         MongoEngineDatastore.__init__(self, db)
         UserDatastore.__init__(self, user_model, role_model)
 
-    def get_user(self, identifier):
-        from mongoengine import ValidationError
-
-        try:
-            return self.user_model.objects(id=identifier).first()
-        except (ValidationError, ValueError):
-            pass
-
-        is_numeric = self._is_numeric(identifier)
-
-        for attr in get_identity_attributes():
-            query_key = attr if is_numeric else "%s__iexact" % attr
-            query = {query_key: identifier}
-            try:
-                rv = self.user_model.objects(**query).first()
-                if rv is not None:
-                    return rv
-            except (ValidationError, ValueError):
-                # This can happen if identifier is a string but attribute is
-                # an int.
-                pass
-
-    def find_user(self, **kwargs):
+    def find_user(self, case_insensitive=False, **kwargs):
         from mongoengine.queryset.visitor import Q, QCombination
         from mongoengine.errors import ValidationError
 
-        queries = map(lambda i: Q(**{i[0]: i[1]}), kwargs.items())
-        query = QCombination(QCombination.AND, queries)
         try:
-            return self.user_model.objects(query).first()
+            if case_insensitive:
+                # While it is of course possible to pass in multiple keys to filter on
+                # that isn't the normal use case. If caller asks for case_insensitive
+                # AND gives multiple keys - throw an error.
+                if len(kwargs) > 1:
+                    raise ValueError("Case insensitive option only supports single key")
+                attr, identifier = kwargs.popitem()
+                query = {f"{attr}__iexact": identifier}
+                return self.user_model.objects(**query).first()
+            else:
+                queries = map(lambda i: Q(**{i[0]: i[1]}), kwargs.items())
+                query = QCombination(QCombination.AND, queries)
+                return self.user_model.objects(query).first()
         except ValidationError:  # pragma: no cover
             return None
 
@@ -593,32 +530,11 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         UserDatastore.__init__(self, user_model, role_model)
         self.UserRole = role_link
 
-    def get_user(self, identifier):
-        from peewee import fn as peeweeFn
-        from peewee import IntegerField
+    def find_user(self, case_insensitive=False, **kwargs):
+        # from peewee import fn as peeweeFn
+        # peeweeFn.Lower(column) == peeweeFn.Lower(identifier)
 
-        # For peewee we only (currently) support numeric primary keys.
-        if self._is_numeric(identifier):
-            try:
-                return self.user_model.get(self.user_model.id == identifier)
-            except (self.user_model.DoesNotExist, ValueError):
-                pass
-
-        for attr in get_identity_attributes():
-            # Read above (SQLAlchemy store) for why we are checking types.
-            column = getattr(self.user_model, attr)
-            attr_isnumeric = isinstance(column, IntegerField)
-            try:
-                if attr_isnumeric and self._is_numeric(identifier):
-                    return self.user_model.get(column == identifier)
-                elif not attr_isnumeric and not self._is_numeric(identifier):
-                    return self.user_model.get(
-                        peeweeFn.Lower(column) == peeweeFn.Lower(identifier)
-                    )
-            except (self.user_model.DoesNotExist, ValueError):
-                pass
-
-    def find_user(self, **kwargs):
+        # TODO - implement case_insensitive
         try:
             return self.user_model.filter(**kwargs).get()
         except self.user_model.DoesNotExist:
@@ -688,26 +604,8 @@ class PonyUserDatastore(PonyDatastore, UserDatastore):
         UserDatastore.__init__(self, user_model, role_model)
 
     @with_pony_session
-    def get_user(self, identifier):
-        from pony.orm.core import ObjectNotFound
-
-        try:
-            return self.user_model[identifier]
-        except (ObjectNotFound, ValueError):
-            pass
-
-        for attr in get_identity_attributes():
-            # this is a nightmare, tl;dr we need to get the thing that
-            # corresponds to email (usually)
-            try:
-                user = self.user_model.get(**{attr: identifier})
-                if user is not None:
-                    return user
-            except (TypeError, ValueError):
-                pass
-
-    @with_pony_session
-    def find_user(self, **kwargs):
+    def find_user(self, case_insensitive=False, **kwargs):
+        # TODO - implement case insensitive look ups.
         return self.user_model.get(**kwargs)
 
     @with_pony_session

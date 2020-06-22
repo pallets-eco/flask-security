@@ -65,12 +65,12 @@ from .utils import (
     default_want_json,
     default_password_validator,
     get_config,
+    get_identity_attribute,
     get_identity_attributes,
     get_message,
     localize_callback,
     set_request_attr,
     uia_email_mapper,
-    uia_phone_mapper,
     url_for_security,
     verify_and_update_password,
 )
@@ -206,10 +206,8 @@ _default_config = {
     "EMAIL_HTML": True,
     "EMAIL_SUBJECT_TWO_FACTOR": _("Two-factor Login"),
     "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-factor Rescue"),
-    "USER_IDENTITY_ATTRIBUTES": ["email"],
-    "USER_IDENTITY_MAPPINGS": [
-        {"email": uia_email_mapper},
-        {"us_phone_number": uia_phone_mapper},
+    "USER_IDENTITY_ATTRIBUTES": [
+        {"email": {"mapper": uia_email_mapper, "case_insensitive": True}}
     ],
     "PHONE_REGION_DEFAULT": "US",
     "FRESHNESS": timedelta(hours=24),
@@ -285,6 +283,13 @@ _default_messages = {
     "INVALID_CONFIRMATION_TOKEN": (_("Invalid confirmation token."), "error"),
     "EMAIL_ALREADY_ASSOCIATED": (
         _("%(email)s is already associated with an account."),
+        "error",
+    ),
+    "IDENTITY_ALREADY_ASSOCIATED": (
+        _(
+            "Identity attribute '%(attr)s' with value '%(value)s' is already"
+            " associated with an account."
+        ),
         "error",
     ),
     "PASSWORD_MISMATCH": (_("Password does not match"), "error"),
@@ -973,7 +978,7 @@ class Security:
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
-        two_factor_verify_password_form removed.
+        ``two_factor_verify_password_form`` removed.
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -1028,6 +1033,10 @@ class Security:
         identity_loaded.connect_via(app)(_on_identity_loaded)
 
         self._state = state = _get_state(app, datastore, **kwargs)
+        if hasattr(datastore, "user_model") and not hasattr(
+            datastore.user_model, "fs_uniquifier"
+        ):  # pragma: no cover
+            raise ValueError("User model must contain fs_uniquifier as of 4.0.0")
 
         if register_blueprint:
             bp = create_blueprint(
@@ -1126,12 +1135,33 @@ class Security:
             if not app.config.get(newc, None):
                 app.config[newc] = app.config.get(oldc, None)
 
+        # Check for pre-4.0 SECURITY_USER_IDENTITY_ATTRIBUTES format
+        for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):  # pragma: no cover
+            if not isinstance(uia, dict):
+                raise ValueError(
+                    "SECURITY_USER_IDENTITY_ATTRIBUTES changed semantics"
+                    " in 4.0 - please see release notes."
+                )
+            if len(list(uia.keys())) != 1:
+                raise ValueError(
+                    "Each element in SECURITY_USER_IDENTITY_ATTRIBUTES"
+                    " must have one and only one key."
+                )
+
         # Two factor configuration checks and setup
         multi_factor = False
         if cv("UNIFIED_SIGNIN", app=app):
             multi_factor = True
             if len(cv("US_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some US_ENABLED_METHODS")
+            if "sms" in cv(
+                "US_ENABLED_METHODS", app=app
+            ) and not get_identity_attribute("us_phone_number", app=app):
+                warnings.warn(
+                    "'sms' was enabled in SECURITY_US_ENABLED_METHODS;"
+                    " however 'us_phone_number' not configured in"
+                    " SECURITY_USER_IDENTITY_ATTRIBUTES"
+                )
         if cv("TWO_FACTOR", app=app):
             multi_factor = True
             if len(cv("TWO_FACTOR_ENABLED_METHODS", app=app)) < 1:

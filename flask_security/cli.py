@@ -5,7 +5,7 @@
     Command Line Interface for managing accounts and roles.
 
     :copyright: (c) 2016 by CERN.
-    :copyright: (c) 2019 by J. Christopher Wagner
+    :copyright: (c) 2019-2020 by J. Christopher Wagner
     :license: MIT, see LICENSE for more details.
 """
 
@@ -18,7 +18,12 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
 from .quart_compat import get_quart_status
 
-from .utils import hash_password
+from .utils import (
+    find_user,
+    get_identity_attributes,
+    get_identity_attribute,
+    hash_password,
+)
 
 if get_quart_status():  # pragma: no cover
     import quart.cli
@@ -71,15 +76,41 @@ def roles():
     """Role commands."""
 
 
-@users.command("create")
-@click.argument("identity")
+@users.command(
+    "create",
+    help="Create a new user with one or more identity attributes of the form:"
+    " attr:value. If attr isn't set 'email' is presumed.",
+)
+@click.argument(
+    "identities", nargs=-1,
+)
 @click.password_option()
 @click.option("-a", "--active", default=False, is_flag=True)
 @with_appcontext
 @commit
-def users_create(identity, password, active):
+def users_create(identities, password, active):
     """Create a user."""
-    kwargs = {attr: identity for attr in _security.user_identity_attributes}
+    kwargs = {}
+
+    identity_attributes = get_identity_attributes()
+    for identity in identities:
+        attr = "email"
+        if ":" in identity:
+            attr, identity = identity.split(":")
+        if attr not in identity_attributes:
+            raise click.UsageError(
+                f"Identity attribute '{attr}' must be part of"
+                f" SECURITY_USER_IDENTITY_ATTRIBUTES"
+            )
+
+        details = get_identity_attribute(attr)
+        idata = details["mapper"](identity)
+        if not idata:
+            raise click.UsageError(
+                f"Attr {attr} with value {identity} wasn't accepted by mapper"
+            )
+
+        kwargs[attr] = identity
     kwargs.update(**{"password": password})
 
     form = _security.confirm_register_form(MultiDict(kwargs), meta={"csrf": False})
@@ -120,7 +151,11 @@ def roles_create(**kwargs):
 @commit
 def roles_add(user, role):
     """Add user to role."""
-    user, role = _datastore._prepare_role_modify_args(user, role)
+    user_obj = find_user(user)
+    if user_obj is None:
+        raise click.UsageError("ERROR: User not found.")
+
+    user, role = _datastore._prepare_role_modify_args(user_obj, role)
     if user is None:
         raise click.UsageError("Cannot find user.")
     if role is None:
@@ -140,7 +175,11 @@ def roles_add(user, role):
 @commit
 def roles_remove(user, role):
     """Remove user from role."""
-    user, role = _datastore._prepare_role_modify_args(user, role)
+    user_obj = find_user(user)
+    if user_obj is None:
+        raise click.UsageError("ERROR: User not found.")
+
+    user, role = _datastore._prepare_role_modify_args(user_obj, role)
     if user is None:
         raise click.UsageError("Cannot find user.")
     if role is None:
@@ -159,7 +198,7 @@ def roles_remove(user, role):
 @commit
 def users_activate(user):
     """Activate a user."""
-    user_obj = _datastore.get_user(user)
+    user_obj = find_user(user)
     if user_obj is None:
         raise click.UsageError("ERROR: User not found.")
     if _datastore.activate_user(user_obj):
@@ -174,7 +213,7 @@ def users_activate(user):
 @commit
 def users_deactivate(user):
     """Deactivate a user."""
-    user_obj = _datastore.get_user(user)
+    user_obj = find_user(user)
     if user_obj is None:
         raise click.UsageError("ERROR: User not found.")
     if _datastore.deactivate_user(user_obj):

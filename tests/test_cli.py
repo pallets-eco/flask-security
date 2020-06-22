@@ -39,6 +39,18 @@ def test_cli_createuser(script_info):
     )
     assert result.exit_code == 0
 
+    # create user with email and username
+    result = runner.invoke(
+        users_create,
+        ["email1@example.org", "username:lookatme!", "--password", "battery staple"],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+
+    # try to activate using username
+    result = runner.invoke(users_activate, "lookatme!", obj=script_info)
+    assert result.exit_code == 0
+
 
 def test_cli_createrole(script_info):
     """Test create user CLI."""

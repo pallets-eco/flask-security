@@ -35,6 +35,8 @@ from .utils import (
     _datastore,
     config_value,
     do_flash,
+    find_user,
+    get_identity_attribute,
     get_message,
     hash_password,
     localize_callback,
@@ -140,13 +142,38 @@ def get_form_field_label(key):
 
 
 def unique_user_email(form, field):
-    if _datastore.get_user(field.data) is not None:
+    uia_email = get_identity_attribute("email")
+    if (
+        _datastore.find_user(
+            case_insensitive=uia_email.get("case_insensitive", False), email=field.data
+        )
+        is not None
+    ):
         msg = get_message("EMAIL_ALREADY_ASSOCIATED", email=field.data)[0]
         raise ValidationError(msg)
 
 
+def unique_identity_attribute(form, field):  # pragma no cover
+    # TODO - use this for registration?
+    for mapping in config_value("USER_IDENTITY_ATTRIBUTES"):
+        attr = list(mapping.keys())[0]
+        details = mapping[attr]
+        idata = details["mapper"](field.data)
+        if idata:
+            if _datastore.find_user(
+                case_insensitive=details.get("case_insensitive", False), **{attr: idata}
+            ):
+                msg = get_message(
+                    "IDENTITY_ALREADY_ASSOCIATED", attr=attr, value=idata
+                )[0]
+                raise ValidationError(msg)
+
+
 def valid_user_email(form, field):
-    form.user = _datastore.get_user(field.data)
+    uia_email = get_identity_attribute("email")
+    form.user = _datastore.find_user(
+        case_insensitive=uia_email.get("case_insensitive", False), email=field.data
+    )
     if form.user is None:
         raise ValidationError(get_message("USER_DOES_NOT_EXIST")[0])
 
@@ -321,7 +348,10 @@ class LoginForm(Form, NextFormMixin):
         if not super().validate():
             return False
 
-        self.user = _datastore.get_user(self.email.data)
+        # Historically, this used get_user() which would look at all
+        # USER_IDENTITY_ATTRIBUTES - even though the field name is 'email'
+        # We keep that behavior (for now) as we transition to find_user.
+        self.user = find_user(self.email.data)
 
         if self.user is None:
             self.email.errors.append(get_message("USER_DOES_NOT_EXIST")[0])

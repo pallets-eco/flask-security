@@ -15,7 +15,6 @@
     Finish up:
     - we should be able to add a phone number as part of setup even w/o any METHODS -
       i.e. to allow login with any identity (phone) and a password.
-    - add username as last IDENTITY_MAPPING and allow anything...?? or just in example?
 
     Consider/Questions:
     - Allow registering/confirming with just a phone number - this likely would require
@@ -51,6 +50,8 @@ from .utils import (
     check_and_get_token_status,
     config_value,
     do_flash,
+    find_user,
+    get_identity_attributes,
     get_post_login_redirect,
     get_post_verify_redirect,
     get_message,
@@ -112,29 +113,14 @@ def _us_common_validate(form):
     # Validate identity - we go in order to figure out which user attribute the
     # request gave us. Note that we give up on the first 'match' even if that
     # doesn't yield a user. Why?
-    for mapping in config_value("USER_IDENTITY_MAPPINGS"):
-        # What we want is an ordered dict - but those don't exist for py27 -
-        # so there is really just one element here.
-        for ua, mapper in mapping.items():
-            # Make sure we don't validate on a column that application
-            # hasn't specifically configured as a unique/identity column
-            # In other words - might have a phone number for 2FA or unified
-            # but don't want the user to be able to use that as primary identity
-            if ua in config_value("USER_IDENTITY_ATTRIBUTES"):
-                # Allow mapper to alter (coerce) to type DB requires
-                idata = mapper(form.identity.data)
-                if idata is not None:
-                    form.user = _datastore.find_user(**{ua: idata})
-                    if not form.user:
-                        form.identity.errors.append(
-                            get_message("US_SPECIFY_IDENTITY")[0]
-                        )
-                        return False
-                    if not form.user.is_active:
-                        form.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
-                        return False
-                    return True
-    return False
+    form.user = find_user(form.identity.data)
+    if not form.user:
+        form.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
+        return False
+    if not form.user.is_active:
+        form.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
+        return False
+    return True
 
 
 class _UnifiedPassCodeForm(Form):
@@ -404,7 +390,7 @@ def us_signin_send_code():
         payload = {
             "available_methods": config_value("US_ENABLED_METHODS"),
             "code_methods": code_methods,
-            "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
+            "identity_attributes": get_identity_attributes(),
         }
         return base_render_json(form, include_user=False, additional=payload)
 
@@ -550,7 +536,7 @@ def us_signin():
         payload = {
             "available_methods": config_value("US_ENABLED_METHODS"),
             "code_methods": code_methods,
-            "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
+            "identity_attributes": get_identity_attributes(),
         }
         return base_render_json(form, include_user=False, additional=payload)
 
@@ -784,7 +770,7 @@ def us_setup():
     # Or failure of POST
     if _security._want_json(request):
         payload = {
-            "identity_attributes": config_value("USER_IDENTITY_ATTRIBUTES"),
+            "identity_attributes": get_identity_attributes(),
             "available_methods": config_value("US_ENABLED_METHODS"),
             "active_methods": active_methods,
             "setup_methods": setup_methods,

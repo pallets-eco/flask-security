@@ -40,6 +40,7 @@ from flask_security import (
     roles_required,
     permissions_accepted,
     permissions_required,
+    uia_email_mapper,
 )
 
 from tests.test_utils import populate_data
@@ -376,7 +377,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         myuserid = Column(Integer, primary_key=True)
         fs_uniquifier = Column(String(64), unique=True, nullable=False)
         email = Column(String(255), unique=True)
-        username = Column(String(255))
+        username = Column(String(255), unique=True, nullable=True)
         password = Column(String(255))
         security_number = Column(Integer, unique=True)
         last_login_at = Column(DateTime())
@@ -465,7 +466,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
     class User(db.Model, UserMixin):
         email = TextField(unique=True, null=False)
         fs_uniquifier = TextField(unique=True, null=False)
-        username = TextField(unique=True)
+        username = TextField(unique=True, null=True)
         security_number = IntegerField(null=True)
         password = TextField(null=True)
         last_login_at = DateTimeField(null=True)
@@ -636,14 +637,17 @@ def client_nc(request, sqlalchemy_app):
     return app.test_client(use_cookies=False)
 
 
-@pytest.fixture(params=["c1", "c2", "c3"])
+@pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo"])
 def clients(request, app, tmpdir, realdburl):
-    if request.param == "c1":
+    if request.param == "cl-sqlalchemy":
         ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
     elif request.param == "c2":
         ds = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
-    elif request.param == "c3":
+    elif request.param == "cl-mongo":
         ds = mongoengine_setup(request, app, tmpdir, realdburl)
+    elif request.param == "cl-peewee":
+        # TODO - this doesn't work yet (multiple connects).
+        ds = peewee_setup(request, app, tmpdir, realdburl)
     app.security = Security(app, datastore=ds)
     populate_data(app)
     return app.test_client()
@@ -687,9 +691,12 @@ def script_info(app, datastore):
     from flask.cli import ScriptInfo
 
     def create_app(info):
-        app.config.update(
-            **{"SECURITY_USER_IDENTITY_ATTRIBUTES": ("email", "username")}
-        )
+        uia = [
+            {"email": {"mapper": uia_email_mapper}},
+            {"username": {"mapper": lambda x: x}},
+        ]
+
+        app.config.update(**{"SECURITY_USER_IDENTITY_ATTRIBUTES": uia})
         app.security = Security(app, datastore=datastore)
         return app
 
