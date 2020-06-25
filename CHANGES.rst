@@ -26,6 +26,12 @@ Features
   primary key.
 - (:pr:`xxx`) Change ``USER_IDENTITY_ATTRIBUTES`` configuration variable semantics.
 
+Fixed
++++++
+- (:issue:`347`) Fix peewee. Turns out - due to lack of unit tests - peewee hasn't worked since
+  'permissions' were added in 3.3. Furthermore, changes in 3.4 around get_id and alternative tokens also
+  didn't work since peewee defines its own `get_id`.
+
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 - (:pr:`328`) Remove dependence on Flask-Mail and refactor. The ``send_mail_task`` and

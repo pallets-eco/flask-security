@@ -155,12 +155,10 @@ def roles_add(user, role):
     if user_obj is None:
         raise click.UsageError("ERROR: User not found.")
 
-    user, role = _datastore._prepare_role_modify_args(user_obj, role)
-    if user is None:
-        raise click.UsageError("Cannot find user.")
+    role = _datastore._prepare_role_modify_args(role)
     if role is None:
         raise click.UsageError("Cannot find role.")
-    if _datastore.add_role_to_user(user, role):
+    if _datastore.add_role_to_user(user_obj, role):
         click.secho(
             f'Role "{role}" added to user "{user}" successfully.', fg="green",
         )
@@ -179,12 +177,10 @@ def roles_remove(user, role):
     if user_obj is None:
         raise click.UsageError("ERROR: User not found.")
 
-    user, role = _datastore._prepare_role_modify_args(user_obj, role)
-    if user is None:
-        raise click.UsageError("Cannot find user.")
+    role = _datastore._prepare_role_modify_args(role)
     if role is None:
         raise click.UsageError("Cannot find role.")
-    if _datastore.remove_role_from_user(user, role):
+    if _datastore.remove_role_from_user(user_obj, role):
         click.secho(
             f'Role "{role}" removed from user "{user}" successfully.', fg="green",
         )

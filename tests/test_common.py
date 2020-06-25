@@ -265,42 +265,42 @@ def test_unauthorized_access_with_referrer(client, get_message):
 
 
 @pytest.mark.settings(unauthorized_view="/unauthz")
-def test_roles_accepted(client):
+def test_roles_accepted(clients):
     # This specificaly tests that we can pass a URL for unauthorized_view.
     for user in ("matt@lp.com", "joe@lp.com"):
-        authenticate(client, user)
-        response = client.get("/admin_or_editor")
+        authenticate(clients, user)
+        response = clients.get("/admin_or_editor")
         assert b"Admin or Editor Page" in response.data
-        logout(client)
+        logout(clients)
 
-    authenticate(client, "jill@lp.com")
-    response = client.get("/admin_or_editor", follow_redirects=True)
+    authenticate(clients, "jill@lp.com")
+    response = clients.get("/admin_or_editor", follow_redirects=True)
     assert b"Unauthorized" in response.data
 
 
 @pytest.mark.settings(unauthorized_view="unauthz")
-def test_permissions_accepted(client):
+def test_permissions_accepted(clients):
     for user in ("matt@lp.com", "joe@lp.com"):
-        authenticate(client, user)
-        response = client.get("/admin_perm")
+        authenticate(clients, user)
+        response = clients.get("/admin_perm")
         assert b"Admin Page with full-write or super" in response.data
-        logout(client)
+        logout(clients)
 
-    authenticate(client, "jill@lp.com")
-    response = client.get("/admin_perm", follow_redirects=True)
+    authenticate(clients, "jill@lp.com")
+    response = clients.get("/admin_perm", follow_redirects=True)
     assert b"Unauthorized" in response.data
 
 
 @pytest.mark.settings(unauthorized_view="unauthz")
-def test_permissions_required(client):
+def test_permissions_required(clients):
     for user in ["matt@lp.com"]:
-        authenticate(client, user)
-        response = client.get("/admin_perm_required")
+        authenticate(clients, user)
+        response = clients.get("/admin_perm_required")
         assert b"Admin Page required" in response.data
-        logout(client)
+        logout(clients)
 
-    authenticate(client, "joe@lp.com")
-    response = client.get("/admin_perm_required", follow_redirects=True)
+    authenticate(clients, "joe@lp.com")
+    response = clients.get("/admin_perm_required", follow_redirects=True)
     assert b"Unauthorized" in response.data
 
 
@@ -311,15 +311,15 @@ def test_unauthenticated_role_required(client, get_message):
 
 
 @pytest.mark.settings(unauthorized_view="unauthz")
-def test_multiple_role_required(client):
+def test_multiple_role_required(clients):
     for user in ("matt@lp.com", "joe@lp.com"):
-        authenticate(client, user)
-        response = client.get("/admin_and_editor", follow_redirects=True)
+        authenticate(clients, user)
+        response = clients.get("/admin_and_editor", follow_redirects=True)
         assert b"Unauthorized" in response.data
-        client.get("/logout")
+        clients.get("/logout")
 
-    authenticate(client, "dave@lp.com")
-    response = client.get("/admin_and_editor", follow_redirects=True)
+    authenticate(clients, "dave@lp.com")
+    response = clients.get("/admin_and_editor", follow_redirects=True)
     assert b"Admin and Editor Page" in response.data
 
 
