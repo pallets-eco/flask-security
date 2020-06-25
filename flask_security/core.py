@@ -614,9 +614,8 @@ class RoleMixin:
         """
         Return set of permissions associated with role.
 
-        Either takes a comma separated string of permissions or
-        an interable of strings if permissions are in their own
-        table.
+        Supports permissions being a comma separated string, an iterable, or a set
+        based on how the underlying DB model was built.
 
         .. versionadded:: 3.3.0
         """
@@ -636,9 +635,10 @@ class RoleMixin:
 
         :param permissions: a set, list, or single string.
 
-        Caller must commit to DB.
-
         .. versionadded:: 3.3.0
+
+        .. deprecated:: 4.0.0
+            Use :meth:`.UserDatastore.add_permissions_to_role`
         """
         if hasattr(self, "permissions"):
             current_perms = self.get_permissions()
@@ -649,7 +649,7 @@ class RoleMixin:
             else:
                 perms = {permissions}
             self.permissions = ",".join(current_perms.union(perms))
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError("Role model doesn't have permissions")
 
     def remove_permissions(self, permissions):
@@ -658,9 +658,10 @@ class RoleMixin:
 
         :param permissions: a set, list, or single string.
 
-        Caller must commit to DB.
-
         .. versionadded:: 3.3.0
+
+        .. deprecated:: 4.0.0
+            Use :meth:`.UserDatastore.remove_permissions_from_role`
         """
         if hasattr(self, "permissions"):
             current_perms = self.get_permissions()
@@ -671,7 +672,7 @@ class RoleMixin:
             else:
                 perms = {permissions}
             self.permissions = ",".join(current_perms.difference(perms))
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError("Role model doesn't have permissions")
 
 
@@ -730,9 +731,8 @@ class UserMixin(BaseUserMixin):
 
         """
         for role in self.roles:
-            if hasattr(role, "permissions"):
-                if permission in role.get_permissions():
-                    return True
+            if permission in role.get_permissions():
+                return True
         return False
 
     def get_security_payload(self):

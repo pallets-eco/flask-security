@@ -241,6 +241,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
     class Role(db.Document, RoleMixin):
         name = StringField(required=True, unique=True, max_length=80)
         description = StringField(max_length=255)
+        permissions = StringField(max_length=255)
         meta = {"db_alias": db_name}
 
     class User(db.Document, UserMixin):
@@ -459,11 +460,12 @@ def peewee_setup(request, app, tmpdir, realdburl):
 
     db = FlaskDB(app)
 
-    class Role(db.Model, RoleMixin):
+    class Role(RoleMixin, db.Model):
         name = CharField(unique=True, max_length=80)
         description = TextField(null=True)
+        permissions = TextField(null=True)
 
-    class User(db.Model, UserMixin):
+    class User(UserMixin, db.Model):
         email = TextField(unique=True, null=False)
         fs_uniquifier = TextField(unique=True, null=False)
         username = TextField(unique=True, null=True)
@@ -490,6 +492,9 @@ def peewee_setup(request, app, tmpdir, realdburl):
         role = ForeignKeyField(Role, backref="users")
         name = property(lambda self: self.role.name)
         description = property(lambda self: self.role.description)
+
+        def get_permissions(self):
+            return self.role.get_permissions()
 
     with app.app_context():
         for Model in (Role, User, UserRoles):
@@ -637,7 +642,7 @@ def client_nc(request, sqlalchemy_app):
     return app.test_client(use_cookies=False)
 
 
-@pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo"])
+@pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo", "cl-peewee"])
 def clients(request, app, tmpdir, realdburl):
     if request.param == "cl-sqlalchemy":
         ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
@@ -646,10 +651,15 @@ def clients(request, app, tmpdir, realdburl):
     elif request.param == "cl-mongo":
         ds = mongoengine_setup(request, app, tmpdir, realdburl)
     elif request.param == "cl-peewee":
-        # TODO - this doesn't work yet (multiple connects).
         ds = peewee_setup(request, app, tmpdir, realdburl)
+    elif request.param == "cl-pony":
+        # Not working yet.
+        ds = pony_setup(request, app, tmpdir, realdburl)
     app.security = Security(app, datastore=ds)
     populate_data(app)
+    if request.param == "cl-peewee":
+        # peewee is insistent on a single connection?
+        ds.db.close_db(None)
     return app.test_client()
 
 

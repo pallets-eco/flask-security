@@ -131,12 +131,10 @@ class UserDatastore:
         self.user_model = user_model
         self.role_model = role_model
 
-    def _prepare_role_modify_args(self, user, role):
-        if isinstance(user, str):
-            user = self.find_user(email=user)
+    def _prepare_role_modify_args(self, role):
         if isinstance(role, str):
             role = self.find_role(role)
-        return user, role
+        return role
 
     def _prepare_create_user_args(self, **kwargs):
         kwargs.setdefault("active", True)
@@ -164,7 +162,7 @@ class UserDatastore:
         :param role: The role to add to the user. Can be a Role object or
             string role name
         """
-        user, role = self._prepare_role_modify_args(user, role)
+        role = self._prepare_role_modify_args(role)
         if role not in user.roles:
             user.roles.append(role)
             self.put(user)
@@ -179,12 +177,46 @@ class UserDatastore:
             string role name
         """
         rv = False
-        user, role = self._prepare_role_modify_args(user, role)
+        role = self._prepare_role_modify_args(role)
         if role in user.roles:
             rv = True
             user.roles.remove(role)
             self.put(user)
         return rv
+
+    def add_permissions_to_role(self, role, permissions):
+        """Add one or more permissions to role.
+
+        :param role: The role to modify. Can be a Role object or
+            string role name
+        :param permissions: a set, list, or single string.
+
+        Caller must commit to DB.
+
+        .. versionadded:: 4.0.0
+        """
+
+        role = self._prepare_role_modify_args(role)
+        role.add_permissions(permissions)
+        self.put(role)
+        return role.get_permissions()
+
+    def remove_permissions_from_role(self, role, permissions):
+        """Remove one or more permissions from a role.
+
+        :param role: The role to modify. Can be a Role object or
+            string role name
+        :param permissions: a set, list, or single string.
+
+        Caller must commit to DB.
+
+        .. versionadded:: 4.0.0
+        """
+
+        role = self._prepare_role_modify_args(role)
+        role.remove_permissions(permissions)
+        self.put(role)
+        return role.get_permissions()
 
     def toggle_active(self, user):
         """Toggles a user's active status. Always returns True."""
@@ -531,12 +563,22 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         self.UserRole = role_link
 
     def find_user(self, case_insensitive=False, **kwargs):
-        # from peewee import fn as peeweeFn
-        # peeweeFn.Lower(column) == peeweeFn.Lower(identifier)
+        from peewee import fn as peeweeFn
 
-        # TODO - implement case_insensitive
         try:
-            return self.user_model.filter(**kwargs).get()
+            if case_insensitive:
+                # While it is of course possible to pass in multiple keys to filter on
+                # that isn't the normal use case. If caller asks for case_insensitive
+                # AND gives multiple keys - throw an error.
+                if len(kwargs) > 1:
+                    raise ValueError("Case insensitive option only supports single key")
+                attr, identifier = kwargs.popitem()
+                return self.user_model.get(
+                    peeweeFn.lower(getattr(self.user_model, attr))
+                    == peeweeFn.lower(identifier)
+                )
+            else:
+                return self.user_model.filter(**kwargs).get()
         except self.user_model.DoesNotExist:
             return None
 
@@ -562,7 +604,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         :param user: The user to manipulate
         :param role: The role to add to the user
         """
-        user, role = self._prepare_role_modify_args(user, role)
+        role = self._prepare_role_modify_args(role)
         result = self.UserRole.select().where(
             self.UserRole.user == user.id, self.UserRole.role == role.id
         )
@@ -578,7 +620,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         :param user: The user to manipulate
         :param role: The role to remove from the user
         """
-        user, role = self._prepare_role_modify_args(user, role)
+        role = self._prepare_role_modify_args(role)
         result = self.UserRole.select().where(
             self.UserRole.user == user, self.UserRole.role == role
         )
@@ -605,7 +647,14 @@ class PonyUserDatastore(PonyDatastore, UserDatastore):
 
     @with_pony_session
     def find_user(self, case_insensitive=False, **kwargs):
-        # TODO - implement case insensitive look ups.
+        if case_insensitive:
+            # While it is of course possible to pass in multiple keys to filter on
+            # that isn't the normal use case. If caller asks for case_insensitive
+            # AND gives multiple keys - throw an error.
+            if len(kwargs) > 1:
+                raise ValueError("Case insensitive option only supports single key")
+            # TODO - implement case insensitive look ups.
+
         return self.user_model.get(**kwargs)
 
     @with_pony_session

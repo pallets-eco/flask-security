@@ -96,7 +96,7 @@ def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
         app.security.datastore.commit()
 
 
-def test_simple_signin(app, client, get_message):
+def test_simple_signin(app, clients, get_message):
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -105,23 +105,23 @@ def test_simple_signin(app, client, get_message):
 
     # Test missing choice
     data = dict(identity="matt@lp.com")
-    response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
+    response = clients.post("/us-signin/send-code", data=data, follow_redirects=True)
     assert get_message("US_METHOD_NOT_AVAILABLE") in response.data
 
     # Test login using invalid email
     data = dict(identity="nobody@lp.com", chosen_method="email")
-    response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
+    response = clients.post("/us-signin/send-code", data=data, follow_redirects=True)
     assert get_message("US_SPECIFY_IDENTITY") in response.data
 
     # test disabled account
     data = dict(identity="tiya@lp.com", chosen_method="email")
-    response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
+    response = clients.post("/us-signin/send-code", data=data, follow_redirects=True)
     assert b"Code has been sent" not in response.data
     assert get_message("DISABLED_ACCOUNT") in response.data
 
     with capture_send_code_requests() as requests:
         with app.mail.record_messages() as outbox:
-            response = client.post(
+            response = clients.post(
                 "/us-signin/send-code",
                 data=dict(identity="matt@lp.com", chosen_method="email"),
                 follow_redirects=True,
@@ -132,7 +132,7 @@ def test_simple_signin(app, client, get_message):
     assert len(outbox) == 1
 
     # try bad code
-    response = client.post(
+    response = clients.post(
         "/us-signin",
         data=dict(identity="matt@lp.com", passcode="blahblah"),
         follow_redirects=True,
@@ -140,27 +140,27 @@ def test_simple_signin(app, client, get_message):
     assert get_message("INVALID_PASSWORD_CODE") in response.data
 
     # Correct code
-    assert "remember_token" not in [c.name for c in client.cookie_jar]
-    assert "session" not in [c.name for c in client.cookie_jar]
-    response = client.post(
+    assert "remember_token" not in [c.name for c in clients.cookie_jar]
+    assert "session" not in [c.name for c in clients.cookie_jar]
+    response = clients.post(
         "/us-signin",
         data=dict(identity="matt@lp.com", passcode=requests[0]["token"]),
         follow_redirects=False,
     )
-    assert "remember_token" not in [c.name for c in client.cookie_jar]
+    assert "remember_token" not in [c.name for c in clients.cookie_jar]
     assert "email" in auths[0][1]
 
-    response = client.get("/profile", follow_redirects=False)
+    response = clients.get("/profile", follow_redirects=False)
     assert response.status_code == 200
 
-    logout(client)
-    response = client.get("/profile", follow_redirects=False)
+    logout(clients)
+    response = clients.get("/profile", follow_redirects=False)
     assert "/login?next=%2Fprofile" in response.location
 
     # login via SMS
     sms_sender = SmsSenderFactory.createSender("test")
     set_phone(app)
-    response = client.post(
+    response = clients.post(
         "/us-signin/send-code",
         data=dict(identity="matt@lp.com", chosen_method="sms"),
         follow_redirects=True,
@@ -169,20 +169,20 @@ def test_simple_signin(app, client, get_message):
     assert b"Sign In" in response.data
 
     code = sms_sender.messages[0].split()[-1].strip(".")
-    response = client.post(
+    response = clients.post(
         "/us-signin",
         data=dict(identity="matt@lp.com", passcode=code, remember=True),
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert "remember_token" in [c.name for c in client.cookie_jar]
+    assert "remember_token" in [c.name for c in clients.cookie_jar]
     assert "sms" in auths[1][1]
 
-    response = client.get("/profile", follow_redirects=False)
+    response = clients.get("/profile", follow_redirects=False)
     assert response.status_code == 200
 
-    logout(client)
-    assert "remember_token" not in [c.name for c in client.cookie_jar]
+    logout(clients)
+    assert "remember_token" not in [c.name for c in clients.cookie_jar]
 
 
 def test_simple_signin_json(app, client_nc, get_message):
