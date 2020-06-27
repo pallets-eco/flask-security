@@ -697,7 +697,8 @@ def datastore(request, app, tmpdir, realdburl):
 
 
 @pytest.fixture()
-def script_info(app, datastore):
+# def script_info(app, datastore): # Fix me when pony works
+def script_info(app, sqlalchemy_datastore):
     from flask.cli import ScriptInfo
 
     def create_app(info):
@@ -707,7 +708,7 @@ def script_info(app, datastore):
         ]
 
         app.config.update(**{"SECURITY_USER_IDENTITY_ATTRIBUTES": uia})
-        app.security = Security(app, datastore=datastore)
+        app.security = Security(app, datastore=sqlalchemy_datastore)
         return app
 
     return ScriptInfo(create_app=create_app)

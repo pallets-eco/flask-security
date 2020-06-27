@@ -21,11 +21,17 @@ _security = LocalProxy(lambda: current_app.extensions["security"])
 class MailUtil:
     """
     To provide your own implementation, pass in the class as ``mail_util_cls``
-    at init time. Your class will be instantiated once prior to the first
-    request being handled.
+    at init time.  Your class will be instantiated once as part of app initialization.
 
     .. versionadded:: 4.0.0
     """
+
+    def __init__(self, app):
+        """ Instantiate class.
+
+        :param app: The Flask application being initialized.
+        """
+        pass
 
     def send_mail(
         self, template, subject, recipient, sender, body, html, user, **kwargs

@@ -139,9 +139,11 @@ Utils
 
 .. autoclass:: flask_security.PhoneUtil
   :members:
+  :special-members: __init__
 
 .. autoclass:: flask_security.MailUtil
   :members:
+  :special-members: __init__
 
 .. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms
