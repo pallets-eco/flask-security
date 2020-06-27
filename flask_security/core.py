@@ -1107,13 +1107,8 @@ class Security:
                 # Add configured header to WTF_CSRF_HEADERS
                 current_app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))
 
-        @app.before_first_request
-        def _init_phone_util():
-            state._phone_util = state.phone_util_cls()
-
-        @app.before_first_request
-        def _init_mail_util():
-            state._mail_util = state.mail_util_cls()
+        state._phone_util = state.phone_util_cls(app)
+        state._mail_util = state.mail_util_cls(app)
 
         app.extensions["security"] = state
 

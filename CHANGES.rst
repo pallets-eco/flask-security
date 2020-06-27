@@ -24,7 +24,7 @@ Features
   not making sense - the documentation has never been correct.
 - (:pr:`339`) Require ``fs_uniquifier`` in the UserModel and stop using/referencing the UserModel
   primary key.
-- (:pr:`xxx`) Change ``USER_IDENTITY_ATTRIBUTES`` configuration variable semantics.
+- (:pr:`349`) Change ``USER_IDENTITY_ATTRIBUTES`` configuration variable semantics.
 
 Fixed
 +++++
@@ -56,7 +56,7 @@ Backwards Compatibility Concerns
   interprets or uses the UserModel primary key - just the ``fs_uniquifier`` field. See the changes section for 3.3
   for information on how to do the schema and data upgrades required to add this field.
 
-- (:pr:`xxx`) :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` has changed syntax and semantics. It now contains
+- (:pr:`349`) :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` has changed syntax and semantics. It now contains
   the combined information from the old USER_IDENTITY_ATTRIBUTES and the newly introduced in 3.4 :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
   This enabled changing the underlying way we validate credentials in the login form and unified sign in form.
   In prior releases we simply tried to look up the form value as the PK of the UserModel - this often failed and then
@@ -64,11 +64,9 @@ Backwards Compatibility Concerns
   wanting to have a standard PK for the user model. Now, using the mapping configuration, the UserModel attribute/column the input
   corresponds to is determined, then the UserModel is queried specifically for that *attribute:value* pair.
 
-  This affects Registration as well - in prior releases, the default RegisterForm had a field called ``email``. However
-  the code called UserModel.get_user() with the value of this field, which would proceed to query ALL configured USER_IDENTITY_ATTRIBUTES.
-  Some applications used this fact to effectively change what the application user needed to log in - however mostly it generated
-  extreme confusion with developers. While it is easy to extend the RegistrationForm and template to add additional attributes,
-  ``email`` is required (a regression from 3.4)
+- (:pr:`xxx`) The :class:`flask_security.PhoneUtil` is now initialized as part of Flask-Security initialization rather than
+  ``@app.before_first_request`` (since that broke the CLI). So it isn't called in an application context, the *app* being initialized is
+  passed as an argument to *__init__*.
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 

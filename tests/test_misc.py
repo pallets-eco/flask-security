@@ -62,6 +62,9 @@ from flask_security.utils import (
 @pytest.mark.recoverable()
 def test_my_mail_util(app, sqlalchemy_datastore):
     class MyMailUtil:
+        def __init__(self, app):
+            pass
+
         def send_mail(self, template, subject, recipient, sender, body, html, user):
             assert template == "reset_instructions"
             assert subject == app.config["SECURITY_EMAIL_SUBJECT_PASSWORD_RESET"]
@@ -666,6 +669,9 @@ def test_method_view(app, client):
 
 def test_phone_util_override(app):
     class MyPhoneUtil:
+        def __init__(self, app):
+            pass
+
         def validate_phone_number(self, input_data):
             return "call-me"
 

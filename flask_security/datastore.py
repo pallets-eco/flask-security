@@ -161,6 +161,7 @@ class UserDatastore:
         :param user: The user to manipulate. Can be an User object or email
         :param role: The role to add to the user. Can be a Role object or
             string role name
+        :return: True is role was added, False if role already existed.
         """
         role = self._prepare_role_modify_args(role)
         if role not in user.roles:
@@ -175,6 +176,8 @@ class UserDatastore:
         :param user: The user to manipulate. Can be an User object or email
         :param role: The role to remove from the user. Can be a Role object or
             string role name
+        :return: True if role was removed, False if role doesn't exist or user didn't
+            have role.
         """
         rv = False
         role = self._prepare_role_modify_args(role)
@@ -190,16 +193,20 @@ class UserDatastore:
         :param role: The role to modify. Can be a Role object or
             string role name
         :param permissions: a set, list, or single string.
+        :return: True if permissions added, False if role doesn't exist.
 
         Caller must commit to DB.
 
         .. versionadded:: 4.0.0
         """
 
+        rv = False
         role = self._prepare_role_modify_args(role)
-        role.add_permissions(permissions)
-        self.put(role)
-        return role.get_permissions()
+        if role:
+            rv = True
+            role.add_permissions(permissions)
+            self.put(role)
+        return rv
 
     def remove_permissions_from_role(self, role, permissions):
         """Remove one or more permissions from a role.
@@ -207,16 +214,20 @@ class UserDatastore:
         :param role: The role to modify. Can be a Role object or
             string role name
         :param permissions: a set, list, or single string.
+        :return: True if permissions removed, False if role doesn't exist.
 
         Caller must commit to DB.
 
         .. versionadded:: 4.0.0
         """
 
+        rv = False
         role = self._prepare_role_modify_args(role)
-        role.remove_permissions(permissions)
-        self.put(role)
-        return role.get_permissions()
+        if role:
+            rv = True
+            role.remove_permissions(permissions)
+            self.put(role)
+        return rv
 
     def toggle_active(self, user):
         """Toggles a user's active status. Always returns True."""

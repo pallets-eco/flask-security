@@ -11,9 +11,12 @@ from flask_security.cli import (
     roles_add,
     roles_create,
     roles_remove,
+    roles_add_permissions,
+    roles_remove_permissions,
     users_activate,
     users_create,
     users_deactivate,
+    users_reset_access,
 )
 
 
@@ -50,6 +53,27 @@ def test_cli_createuser(script_info):
     # try to activate using username
     result = runner.invoke(users_activate, "lookatme!", obj=script_info)
     assert result.exit_code == 0
+
+
+def test_cli_createuser_extraargs(script_info):
+    # Test that passing attributes that aren't part of registration form
+    # are passed to create_user
+    runner = CliRunner()
+    result = runner.invoke(
+        users_create,
+        [
+            "email1@example.org",
+            "security_number:666",
+            "--password",
+            "battery staple",
+            "--active",
+        ],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+    result = runner.invoke(users_activate, ["email1@example.org"], obj=script_info)
+    assert result.exit_code == 0
+    assert "was already activated" in result.output
 
 
 def test_cli_createrole(script_info):
@@ -136,6 +160,44 @@ def test_cli_addremove_role(script_info):
     assert result.exit_code == 0
 
 
+def test_cli_addremove_permissions(script_info):
+    """Test add/remove permissions."""
+    runner = CliRunner()
+
+    result = runner.invoke(
+        roles_create, ["superusers", "-d", "Test description"], obj=script_info
+    )
+    assert result.exit_code == 0
+
+    # add permission to non-existent role
+    result = runner.invoke(
+        roles_add_permissions, ["whatrole", "read, write"], obj=script_info
+    )
+    assert "Cannot find role" in result.output
+
+    result = runner.invoke(
+        roles_add_permissions, ["superusers", "read, write"], obj=script_info
+    )
+    assert all(p in result.output for p in ["read", "write", "superusers"])
+
+    # remove permission to non-existent role
+    result = runner.invoke(
+        roles_remove_permissions, ["whatrole", "read, write"], obj=script_info
+    )
+    assert "Cannot find role" in result.output
+
+    result = runner.invoke(
+        roles_remove_permissions, ["superusers", "write"], obj=script_info
+    )
+    assert all(p in result.output for p in ["write", "superusers"])
+
+    result = runner.invoke(
+        roles_remove_permissions, ["superusers", "whatever, read"], obj=script_info
+    )
+    # remove permissions doesn't check if existing or not.
+    assert all(p in result.output for p in ["read", "superusers"])
+
+
 def test_cli_activate_deactivate(script_info):
     """Test create user CLI."""
     runner = CliRunner()
@@ -162,3 +224,20 @@ def test_cli_activate_deactivate(script_info):
     assert result.exit_code == 0
     result = runner.invoke(users_deactivate, ["a@example.org"], obj=script_info)
     assert result.exit_code == 0
+
+
+def test_cli_reset_user(script_info):
+    runner = CliRunner()
+    result = runner.invoke(
+        users_create,
+        ["email1@example.org", "username:lookatme!", "--password", "battery staple"],
+        obj=script_info,
+    )
+
+    result = runner.invoke(users_reset_access, ["lookatme!"], obj=script_info)
+    assert result.exit_code == 0
+    result = runner.invoke(users_reset_access, ["lookatme!"], obj=script_info)
+    assert result.exit_code == 0
+
+    result = runner.invoke(users_reset_access, ["whoami"], obj=script_info)
+    assert "User not found" in result.output

@@ -68,7 +68,10 @@ def commit(fn):
 
 @click.group()
 def users():
-    """User commands."""
+    """User commands.
+
+    For commands that require a USER - pass in any identity attribute.
+    """
 
 
 @click.group()
@@ -78,39 +81,39 @@ def roles():
 
 @users.command(
     "create",
-    help="Create a new user with one or more identity attributes of the form:"
-    " attr:value. If attr isn't set 'email' is presumed.",
+    help="Create a new user with one or more attributes using the syntax:"
+    " attr:value. If attr isn't set 'email' is presumed."
+    " Values will be validated using the configured confirm_register_form;"
+    " however, any ADDITIONAL attribute:value pairs will be sent to"
+    " datastore.create_user",
 )
 @click.argument(
-    "identities", nargs=-1,
+    "attributes", nargs=-1,
 )
 @click.password_option()
 @click.option("-a", "--active", default=False, is_flag=True)
 @with_appcontext
 @commit
-def users_create(identities, password, active):
+def users_create(attributes, password, active):
     """Create a user."""
     kwargs = {}
 
     identity_attributes = get_identity_attributes()
-    for identity in identities:
+    for attrarg in attributes:
+        # If given identity is an identity_attribute - do a bit of pre-validating
+        # to provide nicer errors.
         attr = "email"
-        if ":" in identity:
-            attr, identity = identity.split(":")
-        if attr not in identity_attributes:
-            raise click.UsageError(
-                f"Identity attribute '{attr}' must be part of"
-                f" SECURITY_USER_IDENTITY_ATTRIBUTES"
-            )
+        if ":" in attrarg:
+            attr, attrarg = attrarg.split(":")
+        if attr in identity_attributes:
+            details = get_identity_attribute(attr)
+            idata = details["mapper"](attrarg)
+            if not idata:
+                raise click.UsageError(
+                    f"Attr {attr} with value {attrarg} wasn't accepted by mapper"
+                )
 
-        details = get_identity_attribute(attr)
-        idata = details["mapper"](identity)
-        if not idata:
-            raise click.UsageError(
-                f"Attr {attr} with value {identity} wasn't accepted by mapper"
-            )
-
-        kwargs[attr] = identity
+        kwargs[attr] = attrarg
     kwargs.update(**{"password": password})
 
     form = _security.confirm_register_form(MultiDict(kwargs), meta={"csrf": False})
@@ -129,13 +132,13 @@ def users_create(identities, password, active):
 @roles.command("create")
 @click.argument("name")
 @click.option("-d", "--description", default=None)
-@click.option("-p", "--permissions")
+@click.option("-p", "--permissions", help="A comma separated list")
 @with_appcontext
 @commit
 def roles_create(**kwargs):
     """Create a role."""
 
-    # For some reaosn Click puts arguments in kwargs - even if they weren't specified.
+    # For some reason Click puts arguments in kwargs - even if they weren't specified.
     if "permissions" in kwargs and not kwargs["permissions"]:
         del kwargs["permissions"]
     if "permissions" in kwargs and not hasattr(_datastore.role_model, "permissions"):
@@ -153,14 +156,14 @@ def roles_add(user, role):
     """Add user to role."""
     user_obj = find_user(user)
     if user_obj is None:
-        raise click.UsageError("ERROR: User not found.")
+        raise click.UsageError("User not found.")
 
     role = _datastore._prepare_role_modify_args(role)
     if role is None:
         raise click.UsageError("Cannot find role.")
     if _datastore.add_role_to_user(user_obj, role):
         click.secho(
-            f'Role "{role}" added to user "{user}" successfully.', fg="green",
+            f'Role "{role.name}" added to user "{user}" successfully.', fg="green",
         )
     else:
         raise click.UsageError("Cannot add role to user.")
@@ -175,17 +178,64 @@ def roles_remove(user, role):
     """Remove user from role."""
     user_obj = find_user(user)
     if user_obj is None:
-        raise click.UsageError("ERROR: User not found.")
+        raise click.UsageError("User not found.")
 
     role = _datastore._prepare_role_modify_args(role)
     if role is None:
         raise click.UsageError("Cannot find role.")
     if _datastore.remove_role_from_user(user_obj, role):
         click.secho(
-            f'Role "{role}" removed from user "{user}" successfully.', fg="green",
+            f'Role "{role.name}" removed from user "{user}" successfully.', fg="green",
         )
     else:
         raise click.UsageError("Cannot remove role from user.")
+
+
+@roles.command("add_permissions")
+@click.argument("role")
+@click.argument("permissions")
+@with_appcontext
+@commit
+def roles_add_permissions(role, permissions):
+    """Add permissions to role.
+
+    Role is an existing role name.
+    Permissions are a comma separated list.
+    """
+    role = _datastore._prepare_role_modify_args(role)
+    if role is None:
+        raise click.UsageError("Cannot find role.")
+    if _datastore.add_permissions_to_role(role, permissions):
+        click.secho(
+            f'Permission(s) "{permissions}" added to role "{role.name}" successfully.',
+            fg="green",
+        )
+    else:  # pragma: no cover
+        raise click.UsageError("Cannot add permission(s) to role.")
+
+
+@roles.command("remove_permissions")
+@click.argument("role")
+@click.argument("permissions")
+@with_appcontext
+@commit
+def roles_remove_permissions(role, permissions):
+    """Remove permissions from role.
+
+    Role is an existing role name.
+    Permissions are a comma separated list.
+    """
+    role = _datastore._prepare_role_modify_args(role)
+    if role is None:
+        raise click.UsageError("Cannot find role.")
+    if _datastore.remove_permissions_from_role(role, permissions):
+        click.secho(
+            f'Permission(s) "{permissions}" removed from role'
+            f' "{role.name}" successfully.',
+            fg="green",
+        )
+    else:  # pragma: no cover
+        raise click.UsageError("Cannot remove permission(s) from role.")
 
 
 @users.command("activate")
@@ -196,7 +246,7 @@ def users_activate(user):
     """Activate a user."""
     user_obj = find_user(user)
     if user_obj is None:
-        raise click.UsageError("ERROR: User not found.")
+        raise click.UsageError("User not found.")
     if _datastore.activate_user(user_obj):
         click.secho(f'User "{user}" has been activated.', fg="green")
     else:
@@ -211,8 +261,28 @@ def users_deactivate(user):
     """Deactivate a user."""
     user_obj = find_user(user)
     if user_obj is None:
-        raise click.UsageError("ERROR: User not found.")
+        raise click.UsageError("User not found.")
     if _datastore.deactivate_user(user_obj):
         click.secho(f'User "{user}" has been deactivated.', fg="green")
     else:
         click.secho(f'User "{user}" was already deactivated.', fg="yellow")
+
+
+@users.command(
+    "reset_access",
+    help="Reset all authentication credentials for user."
+    " This includes session, auth token, two-factor"
+    " and unified sign in secrets. ",
+)
+@click.argument("user")
+@with_appcontext
+@commit
+def users_reset_access(user):
+    """ Reset all authentication tokens etc."""
+    user_obj = find_user(user)
+    if user_obj is None:
+        raise click.UsageError("User not found.")
+    _datastore.reset_user_access(user_obj)
+    click.secho(
+        f'User "{user}" authentication credentials have been reset.', fg="green"
+    )
