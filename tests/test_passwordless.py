@@ -162,8 +162,7 @@ def test_spa_get_bad_token(app, client, get_message):
         assert "localhost:8081" == split.netloc
         assert "/login-error" == split.path
         qparams = dict(parse_qsl(split.query))
-        assert len(qparams) == 2
-        assert all(k in qparams for k in ["email", "error"])
+        assert all(k in qparams for k in ["email", "error", "identity"])
 
         msg = get_message("LOGIN_EXPIRED", within="1 milliseconds", email="matt@lp.com")
         assert msg == qparams["error"].encode("utf-8")

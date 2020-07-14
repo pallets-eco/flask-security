@@ -153,8 +153,16 @@ def unique_user_email(form, field):
         raise ValidationError(msg)
 
 
-def unique_identity_attribute(form, field):  # pragma no cover
-    # TODO - use this for registration?
+def unique_identity_attribute(form, field):
+    """A validator that checks the field data against all configured
+    SECURITY_USER_IDENTITY_ATTRIBUTES.
+    This can be used as part of registration.
+
+    :param form:
+    :param field:
+    :return: Nothing; if field data corresponds to an existing User, ValidationError
+        is raised.
+    """
     for mapping in config_value("USER_IDENTITY_ATTRIBUTES"):
         attr = list(mapping.keys())[0]
         details = mapping[attr]

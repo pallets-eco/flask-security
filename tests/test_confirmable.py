@@ -360,8 +360,8 @@ def test_spa_get_bad_token(app, client, get_message):
         assert "localhost:8081" == split.netloc
         assert "/confirm-error" == split.path
         qparams = dict(parse_qsl(split.query))
-        assert len(qparams) == 2
-        assert all(k in qparams for k in ["email", "error"])
+        assert all(k in qparams for k in ["email", "error", "identity"])
+        assert qparams["identity"] == "dude@lp.com"
 
         msg = get_message(
             "CONFIRMATION_EXPIRED", within="1 milliseconds", email="dude@lp.com"
@@ -434,3 +434,52 @@ def test_two_factor_json(app, client, get_message):
     assert response.status_code == 200
     assert response.json["response"]["tf_required"]
     assert response.json["response"]["tf_state"] == "setup_from_login"
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(user_identity_attributes=[{"username": {"mapper": lambda x: x}}],)
+def test_email_not_identity(app, sqlalchemy_datastore, get_message):
+    # Test that can register/confirm with email even if it isn't an IDENTITY_ATTRIBUTE
+    from flask_security import ConfirmRegisterForm, Security, unique_identity_attribute
+    from wtforms import StringField, validators
+
+    class MyRegisterForm(ConfirmRegisterForm):
+        username = StringField(
+            "Username",
+            validators=[validators.data_required(), unique_identity_attribute],
+        )
+
+    app.config["SECURITY_CONFIRM_REGISTER_FORM"] = MyRegisterForm
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+
+    client = app.test_client()
+
+    with capture_registrations() as registrations:
+        data = dict(email="mary2@lp.com", username="mary", password="awesome sunset")
+        response = client.post("/register", data=data, follow_redirects=True)
+        assert b"mary2@lp.com" in response.data
+
+    token = registrations[0]["confirm_token"]
+    response = client.get("/confirm/" + token, headers={"Accept": "application/json"})
+    assert response.status_code == 302
+    assert response.location == "http://localhost/"
+
+    logout(client)
+
+    # check that username must be unique
+    data = dict(email="mary4@lp.com", username="mary", password="awesome sunset")
+    response = client.post(
+        "/register", data=data, headers={"Accept": "application/json"}
+    )
+    assert response.status_code == 400
+    assert "is already associated" in response.json["response"]["errors"]["username"][0]
+
+    # log in with username - this uses the age-old hack that although the form's
+    # input label says "email" - it in fact will accept any identity attribute.
+    response = client.post(
+        "/login",
+        data=dict(email="mary", password="awesome sunset"),
+        follow_redirects=True,
+    )
+    assert b"<p>Welcome mary</p>" in response.data

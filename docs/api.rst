@@ -128,6 +128,8 @@ Utils
 
 .. autofunction:: flask_security.transform_url
 
+.. autofunction:: flask_security.unique_identity_attribute
+
 .. autofunction:: flask_security.us_send_security_token
 
 .. autofunction:: flask_security.tf_send_security_token

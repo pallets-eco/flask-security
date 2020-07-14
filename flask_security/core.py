@@ -746,10 +746,15 @@ class UserMixin(BaseUserMixin):
         :return: A dict whose keys will be query params and values will be query values.
 
         .. versionadded:: 3.2.0
+
+        .. versionchanged:: 4.0.0
+            Add 'identity' using UserMixin.calc_username() - email is optional.
         """
         if not existing:
             existing = {}
-        existing.update({"email": self.email})
+        if hasattr(self, "email"):
+            existing.update({"email": self.email})
+        existing.update({"identity": self.calc_username()})
         return existing
 
     def verify_and_update_password(self, password):
