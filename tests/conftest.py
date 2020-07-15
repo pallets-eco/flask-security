@@ -218,6 +218,7 @@ def mongoengine_datastore(request, app, tmpdir, realdburl):
 
 
 def mongoengine_setup(request, app, tmpdir, realdburl):
+    pytest.importorskip("flask_mongoengine")
     from flask_mongoengine import MongoEngine
     from mongoengine.fields import (
         BooleanField,
@@ -282,6 +283,7 @@ def sqlalchemy_datastore(request, app, tmpdir, realdburl):
 
 
 def sqlalchemy_setup(request, app, tmpdir, realdburl):
+    pytest.importorskip("flask_sqlalchemy")
     from flask_sqlalchemy import SQLAlchemy
     from flask_security.models import fsqla_v2 as fsqla
 
@@ -326,6 +328,7 @@ def sqlalchemy_session_datastore(request, app, tmpdir, realdburl):
 
 
 def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
+    pytest.importorskip("sqlalchemy")
     from sqlalchemy import create_engine
     from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
     from sqlalchemy.ext.declarative import declarative_base
@@ -426,6 +429,7 @@ def peewee_datastore(request, app, tmpdir, realdburl):
 
 
 def peewee_setup(request, app, tmpdir, realdburl):
+    pytest.importorskip("peewee")
     from peewee import (
         TextField,
         DateTimeField,
@@ -522,6 +526,7 @@ def pony_datastore(request, app, tmpdir, realdburl):
 
 def pony_setup(request, app, tmpdir, realdburl):
 
+    pytest.importorskip("pony")
     from pony.orm import Database, Optional, Required, Set
     from pony.orm.core import SetInstance
 
