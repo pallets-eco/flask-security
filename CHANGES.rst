@@ -17,7 +17,7 @@ Release Target Summer 2020
 Features
 ++++++++
 - Removal of python 2.7 and <3.6 support
-- Removal of token caching feature (a relatively new feature that has some systemic issues)
+- Removal of token caching feature (a relatively new feature that had some systemic issues)
 - (:pr:`328`) Remove dependence on Flask-Mail and refactor.
 - (:pr:`335`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
 - (:pr:`336`) Remove `SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)`. In addition to
@@ -25,6 +25,10 @@ Features
 - (:pr:`339`) Require ``fs_uniquifier`` in the UserModel and stop using/referencing the UserModel
   primary key.
 - (:pr:`349`) Change ``USER_IDENTITY_ATTRIBUTES`` configuration variable semantics.
+- Remove (all?) requirements around having an 'email' column in the UserModel. API change -
+  JSON SPA redirects used to always include a query param 'email=xx'. While that is still sent
+  (if and only if) the UserModel contains an 'email' columns, a new query param 'identity' is returned
+  which returns the value of UserModel.calc_username().
 
 Fixed
 +++++
@@ -54,17 +58,19 @@ Backwards Compatibility Concerns
   All along, there have been a few issues with applications not wanting to use the name 'id' in their
   model, or wanting a different type for their primary key. With this change, Flask-Security no longer
   interprets or uses the UserModel primary key - just the ``fs_uniquifier`` field. See the changes section for 3.3
-  for information on how to do the schema and data upgrades required to add this field.
+  for information on how to do the schema and data upgrades required to add this field. There is also an API change -
+  the JSON response (via UserModel.get_security_payload()) returned the ``user.id`` field. With this change
+  the default is an empty directory - override ``get_security_payload()`` to return any portion of the UserModel you need.
 
 - (:pr:`349`) :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` has changed syntax and semantics. It now contains
-  the combined information from the old USER_IDENTITY_ATTRIBUTES and the newly introduced in 3.4 :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
+  the combined information from the old ``SECURITY_USER_IDENTITY_ATTRIBUTES`` and the newly introduced in 3.4 :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
   This enabled changing the underlying way we validate credentials in the login form and unified sign in form.
   In prior releases we simply tried to look up the form value as the PK of the UserModel - this often failed and then
-  looped through the other ``USER_IDENTITY_ATTRIBUTES``. This had a history of issues, including many applications not
+  looped through the other ``SECURITY_USER_IDENTITY_ATTRIBUTES``. This had a history of issues, including many applications not
   wanting to have a standard PK for the user model. Now, using the mapping configuration, the UserModel attribute/column the input
   corresponds to is determined, then the UserModel is queried specifically for that *attribute:value* pair.
 
-- (:pr:`xxx`) The :class:`flask_security.PhoneUtil` is now initialized as part of Flask-Security initialization rather than
+- (:pr:`354`) The :class:`flask_security.PhoneUtil` is now initialized as part of Flask-Security initialization rather than
   ``@app.before_first_request`` (since that broke the CLI). So it isn't called in an application context, the *app* being initialized is
   passed as an argument to *__init__*.
 

@@ -47,6 +47,7 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorVerifyCodeForm,
     VerifyForm,
+    unique_identity_attribute,
 )
 from .mail_util import MailUtil
 from .phone_util import PhoneUtil

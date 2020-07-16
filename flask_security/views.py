@@ -592,7 +592,7 @@ def reset_password(token):
             return tf_login(user, primary_authn_via="reset")
         login_user(user, authn_via=["reset"])
         if _security._want_json(request):
-            login_form = _security.login_form(MultiDict({"email": user.email}))
+            login_form = _security.login_form()
             login_form.user = user
             return base_render_json(login_form, include_auth_token=True)
         else:

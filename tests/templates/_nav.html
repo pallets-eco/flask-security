@@ -1,5 +1,5 @@
 {%- if current_user.is_authenticated -%}
-  <p>{{ _fsdomain('Welcome') }} {{ current_user.email }}</p>
+  <p>{{ _fsdomain('Welcome') }} {{ current_user.calc_username() }}</p>
 {%- endif %}
 <ul>
   <li><a href="{{ url_for('index') }}">Index</a></li>

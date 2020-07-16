@@ -165,9 +165,9 @@ paths:
           headers:
             Location:
               description: |
-                On spa-success: SECURITY_POST_LOGIN_VIEW?email={email}
+                On spa-success: SECURITY_POST_LOGIN_VIEW?identity={identity}&email={email}
 
-                On spa-error-expired: SECURITY_LOGIN_ERROR_VIEW?error={msg}&email={email}
+                On spa-error-expired: SECURITY_LOGIN_ERROR_VIEW?error={msg}&identity={identity}&email={email}
 
                 On spa-error-invalid-token: SECURITY_LOGIN_ERROR_VIEW?error={msg}
 
@@ -402,9 +402,9 @@ paths:
           headers:
             Location:
               description: |
-                On spa-success: SECURITY_RESET_VIEW?token={token}&email={email}
+                On spa-success: SECURITY_RESET_VIEW?token={token}&identity={identity}&email={email}
 
-                On spa-error-expired: SECURITY_RESET_ERROR_VIEW?error={msg}&email={email}
+                On spa-error-expired: SECURITY_RESET_ERROR_VIEW?error={msg}&identity={identity}&email={email}
 
                 On spa-error-invalid-token: SECURITY_RESET_ERROR_VIEW?error={msg}
 
@@ -413,9 +413,9 @@ paths:
                 type: string
               examples:
                 spa-success:
-                  value: SECURITY_RESET_VIEW?token={token}&email={email}
+                  value: SECURITY_RESET_VIEW?token={token}&identity={identity}&email={email}
                 spa-error-expired:
-                  value: SECURITY_RESET_ERROR_VIEW?error={msg}&email={email}
+                  value: SECURITY_RESET_ERROR_VIEW?error={msg}&identity={identity}&email={email}
                 spa-error-invalid-token:
                   value: SECURITY_RESET_ERROR_VIEW?error={msg}
                 default-error:
@@ -531,9 +531,9 @@ paths:
           headers:
             Location:
               description: |
-                On spa-success: SECURITY_POST_CONFIRM_VIEW?email={email}&{level}={msg}
+                On spa-success: SECURITY_POST_CONFIRM_VIEW?identity={identity}&email={email}&{level}={msg}
 
-                On spa-error-expired: SECURITY_CONFIRM_ERROR_VIEW?error={msg}&email={email}
+                On spa-error-expired: SECURITY_CONFIRM_ERROR_VIEW?error={msg}&identity={identity}&email={email}
 
                 On spa-error-invalid-token: SECURITY_CONFIRM_ERROR_VIEW?error={msg}
 
@@ -942,7 +942,7 @@ paths:
           headers:
             Location:
               description: |
-                On spa-success: SECURITY_POST_LOGIN_VIEW?email={email}
+                On spa-success: SECURITY_POST_LOGIN_VIEW?identity={identity}&email={email}
 
                 On spa-error-expired: SECURITY_LOGIN_ERROR_VIEW?error={msg}
 
@@ -1006,10 +1006,6 @@ components:
           description: >
             By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
           properties:
-            email:
-              type: string
-              example: me@me.com
-              description: Email address of the user (you must implement get_security_payload to add this.
             authentication_token:
               type: string
               description: >
