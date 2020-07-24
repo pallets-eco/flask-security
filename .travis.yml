@@ -80,6 +80,7 @@ branches:
   only:
     - master
     - /^\d+(\.\d+)*(rc\d+)*$/
+    - /^\d+(\.\d+)*\.x$/
 
 deploy:
   provider: pypi
