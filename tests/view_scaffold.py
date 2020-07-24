@@ -29,6 +29,7 @@ import flask_babelex
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
+    auth_required,
     current_user,
     login_required,
     SQLAlchemySessionUserDatastore,
@@ -172,6 +173,11 @@ def create_app():
             "{{ _fsdomain('Welcome') }} {{email}} !",
             email=current_user.email,
         )
+
+    @app.route("/basicauth")
+    @auth_required("basic")
+    def basic():
+        return render_template_string("Basic auth success")
 
     return app
 
