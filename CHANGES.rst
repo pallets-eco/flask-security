@@ -17,7 +17,7 @@ Release Target 2020
 Version 3.4.4
 --------------
 
-Released July xx, 2020
+Released July yy, 2020
 
 Bug/regression fixes.
 
