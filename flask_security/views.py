@@ -142,21 +142,20 @@ def login():
     """
 
     if current_user.is_authenticated and request.method == "POST":
-        # Just redirect current_user to POST_LOGIN_VIEW (or next).
+        # Just redirect current_user to POST_LOGIN_VIEW.
         # While its tempting to try to logout the current user and login the
         # new requested user - that simply doesn't work with CSRF.
 
-        # While this is close to anonymous_user_required - it differs in that
-        # it uses get_post_login_redirect which correctly handles 'next'.
-        # TODO: consider changing anonymous_user_required to also call
-        # get_post_login_redirect - not sure why it never has?
+        # This does NOT use get_post_login_redirect() so that it doesn't look at
+        # 'next' - which can cause infinite redirect loops
+        # (see test_common::test_authenticated_loop)
         if _security._want_json(request):
             payload = json_error_response(
                 errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
             )
             return _security._render_json(payload, 400, None, None)
         else:
-            return redirect(get_post_login_redirect())
+            return redirect(get_url(_security.post_login_view))
 
     form_class = _security.login_form
 
@@ -191,9 +190,7 @@ def login():
         return base_render_json(form, include_auth_token=True)
 
     if current_user.is_authenticated:
-        # Basically a no-op if authenticated - just perform the same
-        # post-login redirect as if user just logged in.
-        return redirect(get_post_login_redirect())
+        return redirect(get_url(_security.post_login_view))
     else:
         return _security.render_template(
             config_value("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")

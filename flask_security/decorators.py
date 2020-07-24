@@ -63,21 +63,29 @@ def _get_unauthorized_response(text=None, headers=None):  # pragma: no cover
 def default_unauthn_handler(mechanisms, headers=None):
     """ Default callback for failures to authenticate
 
-    If caller wants JSON - return 401
+    If caller wants JSON - return 401.
+    If caller wants BasicAuth - return 401 (the WWW-Authenticate header is set).
     Otherwise - assume caller is html and redirect if possible to a login view.
     We let Flask-Login handle this.
 
     """
+    headers = headers or {}
     msg = get_message("UNAUTHENTICATED")[0]
 
     if config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
-        # Ignore headers since today, the only thing in there might be WWW-Authenticate
-        # and we never want to send that in a JSON response (browsers will intercept
-        # that and pop up their own login form).
+        # Remove WWW-Authenticate from headers for JSON responses since
+        # browsers will intercept that and pop up their own login form.
+        headers.pop("WWW-Authenticate", None)
         payload = json_error_response(errors=msg)
-        return _security._render_json(payload, 401, None, None)
+        return _security._render_json(payload, 401, headers, None)
+
+    # Basic-Auth is often used to provide a browser based login form and then the
+    # browser will always add the BasicAuth credentials. For that to work we need to
+    # return 401 and not redirect to our login view.
+    if "WWW-Authenticate" in headers:
+        return Response(msg, 401, headers)
     return _security.login_manager.unauthorized()
 
 
@@ -212,6 +220,9 @@ def http_auth_required(realm):
 
     :param realm: optional realm name
 
+    If authentication fails, then a 401 with the 'WWW-Authenticate' header set will be
+    returned.
+
     Once authenticated, if so configured, CSRF protection will be tested.
     """
 
@@ -269,7 +280,7 @@ def auth_required(*auth_methods, **kwargs):
             return 'Dashboard'
 
     :param auth_methods: Specified mechanisms (token, basic, session). If not specified
-        then all current available mechanisms will be tried.
+        then all current available mechanisms (except "basic") will be tried.
     :kwparam within: Add 'freshness' check to authentication. Is either an int
         specifying # of minutes, or a callable that returns a timedelta. For timedeltas,
         timedelta.total_seconds() is used for the calculations:
@@ -297,6 +308,11 @@ def auth_required(*auth_methods, **kwargs):
     On authentication failure `.Security.unauthorized_callback` (deprecated)
     or :meth:`.Security.unauthn_handler` will be called.
 
+    .. note::
+        If "basic" is specified in addition to other methods, then if authentication
+        fails, a 401 with the "WWW-Authenticate" header will be returned - rather than
+        being redirected to the login view.
+
     .. versionchanged:: 3.3.0
        If ``auth_methods`` isn't specified, then all will be tried. Authentication
        mechanisms will always be tried in order of ``token``, ``session``, ``basic``
@@ -304,6 +320,9 @@ def auth_required(*auth_methods, **kwargs):
 
     .. versionchanged:: 3.4.0
         Added ``within`` and ``grace`` parameters to enforce a freshness check.
+
+    .. versionchanged:: 3.4.4
+        If ``auth_methods`` isn't specified try all mechanisms EXCEPT ``basic``.
 
     """
 
@@ -314,7 +333,7 @@ def auth_required(*auth_methods, **kwargs):
     }
     mechanisms_order = ["token", "session", "basic"]
     if not auth_methods:
-        auth_methods = {"basic", "session", "token"}
+        auth_methods = {"session", "token"}
     else:
         auth_methods = [am for am in auth_methods]
 

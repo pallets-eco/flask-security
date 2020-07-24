@@ -98,9 +98,9 @@ def test_get_already_authenticated(client):
 def test_get_already_authenticated_next(client):
     response = authenticate(client, follow_redirects=True)
     assert b"Welcome matt@lp.com" in response.data
-    # This should override post_login_view
+    # This should NOT override post_login_view due to potential redirect loops.
     response = client.get("/login?next=/page1", follow_redirects=True)
-    assert b"Page 1" in response.data
+    assert b"Post Login" in response.data
 
 
 @pytest.mark.settings(post_login_view="/post_login")
@@ -110,8 +110,9 @@ def test_post_already_authenticated(client):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
     assert b"Post Login" in response.data
+    # This should NOT override post_login_view due to potential redirect loops.
     response = client.post("/login?next=/page1", data=data, follow_redirects=True)
-    assert b"Page 1" in response.data
+    assert b"Post Login" in response.data
 
 
 def test_login_form(client):
@@ -365,6 +366,15 @@ def test_token_auth_via_header_invalid_token(client):
 
 
 def test_http_auth(client):
+    # browsers expect 401 response with WWW-Authenticate header - which will prompt
+    # them to pop up a login form.
+    response = client.get("/http", headers={})
+    assert response.status_code == 401
+    assert b"You are not authenticated" in response.data
+    assert "WWW-Authenticate" in response.headers
+    assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
+
+    # Now provide correct credentials
     response = client.get(
         "/http",
         headers={
@@ -505,8 +515,10 @@ def test_multi_auth_basic(client):
     assert b"Basic" in response.data
 
     response = client.get("/multi_auth")
-    # Default unauthn is to redirect
-    assert response.status_code == 302
+    # Default unauthn with basic is to return 401 with WWW-Authenticate Header
+    # so that browser pops up a username/password dialog
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
 
 
 @pytest.mark.settings(backwards_compat_unauthn=True)
@@ -523,7 +535,6 @@ def test_multi_auth_basic_invalid(client):
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
     response = client.get("/multi_auth")
-    print(response.headers)
     assert response.status_code == 401
 
 
@@ -538,6 +549,20 @@ def test_multi_auth_session(client):
     authenticate(client)
     response = client.get("/multi_auth")
     assert b"Session" in response.data
+
+
+def test_authenticated_loop(client):
+    # If user is already authenticated say via session, and then hits an endpoint
+    # protected with @auth_token_required() - then they will be redirected to the login
+    # page which will simply note the current user is already logged in and redirect
+    # to POST_LOGIN_VIEW. Between 3.3.0 and 3.4.4 - this redirect would honor the 'next'
+    # parameter - thus redirecting back to the endpoint that caused the redirect in the
+    # first place - thus an infinite loop.
+    authenticate(client)
+
+    response = client.get("/token", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Home Page" in response.data
 
 
 def test_user_deleted_during_session_reverts_to_anonymous_user(app, client):

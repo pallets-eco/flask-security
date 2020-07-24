@@ -14,6 +14,35 @@ Release Target 2020
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
+Version 3.4.4
+--------------
+
+Released July xx, 2020
+
+Bug/regression fixes.
+
+Fixed
++++++
+
+- (:issue:`359`) Basic Auth broken. When the unauthenticated handler was changed to provide a more
+  uniform/consistent response - it broke using Basic Auth from a browser, since it always redirected rather than
+  returning 401. Now, if the response headers contain  ``WWW-Authenticate``
+  (which is set if ``basic`` @auth_required method is used), a 401 is returned. See below
+  for backwards compatibility concerns.
+
+- (:pr:`xx`) As part of figuring out issue 359 - a redirect loop was found. In release 3.3.0 code was put
+  in to redirect to :py:data:`SECURITY_POST_LOGIN_VIEW` when GET or POST was called and the caller was already authenticated. The
+  method used would honor the request ``next`` query parameter. This could cause redirect loops. The pre-3.3.0 behavior
+  of redirecting to :py:data:`SECURITY_POST_LOGIN_VIEW` and ignoring the ``next`` parameter has been restored.
+
+Compatibility Concerns
+++++++++++++++++++++++
+
+In 3.3.0, `.Security.auth_required` was changed to add a default argument if none was given. The default
+include all current methods - ``session``, ``token``, and ``basic``. However ``basic`` really isn't like the others
+and requires that we send back a ``WWW-Authenticate`` header if authentication fails (and return a 401 and not redirect).
+``basic`` has been removed from the default set and must once again be explicitly requested.
+
 Version 3.4.3
 -------------
 
