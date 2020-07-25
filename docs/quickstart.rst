@@ -273,6 +273,7 @@ possible using MongoEngine:
     class Role(db.Document, RoleMixin):
         name = db.StringField(max_length=80, unique=True)
         description = db.StringField(max_length=255)
+        permissions = db.StringField(max_length=255)
 
     class User(db.Document, UserMixin):
         email = db.StringField(max_length=255)
@@ -348,15 +349,18 @@ possible using Peewee:
     # Create database connection object
     db = FlaskDB(app)
 
-    class Role(db.Model, RoleMixin):
+    class Role(RoleMixin, db.Model):
         name = CharField(unique=True)
         description = TextField(null=True)
+        permissions = TextField(null=True)
 
-    class User(db.Model, UserMixin):
+    # N.B. order is important since db.Model also contains a get_id() -
+    # we need the one from UserMixin.
+    class User(UserMixin, db.Model):
         email = TextField()
         password = TextField()
         active = BooleanField(default=True)
-        fs_uniquifier = TextField()
+        fs_uniquifier = TextField(unique=True, null=False)
         confirmed_at = DateTimeField(null=True)
 
     class UserRoles(db.Model):
@@ -367,6 +371,9 @@ possible using Peewee:
         role = ForeignKeyField(Role, related_name='users')
         name = property(lambda self: self.role.name)
         description = property(lambda self: self.role.description)
+
+        def get_permissions(self):
+            return self.role.get_permissions()
 
     # Setup Flask-Security
     user_datastore = PeeweeUserDatastore(db, User, Role, UserRoles)

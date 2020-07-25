@@ -30,15 +30,18 @@ Fixed
   (which is set if ``basic`` @auth_required method is used), a 401 is returned. See below
   for backwards compatibility concerns.
 
-- (:pr:`xx`) As part of figuring out issue 359 - a redirect loop was found. In release 3.3.0 code was put
+- (:pr:`362`) As part of figuring out issue 359 - a redirect loop was found. In release 3.3.0 code was put
   in to redirect to :py:data:`SECURITY_POST_LOGIN_VIEW` when GET or POST was called and the caller was already authenticated. The
   method used would honor the request ``next`` query parameter. This could cause redirect loops. The pre-3.3.0 behavior
   of redirecting to :py:data:`SECURITY_POST_LOGIN_VIEW` and ignoring the ``next`` parameter has been restored.
 
+- (:issue:`347`) Fix peewee. Turns out - due to lack of unit tests - peewee hasn't worked since 'permissions' were added in 3.3.
+  Furthermore, changes in 3.4 around get_id and alternative tokens also didn't work since peewee defines its own get_id.
+
 Compatibility Concerns
 ++++++++++++++++++++++
 
-In 3.3.0, `.Security.auth_required` was changed to add a default argument if none was given. The default
+In 3.3.0, :func:`.auth_required` was changed to add a default argument if none was given. The default
 include all current methods - ``session``, ``token``, and ``basic``. However ``basic`` really isn't like the others
 and requires that we send back a ``WWW-Authenticate`` header if authentication fails (and return a 401 and not redirect).
 ``basic`` has been removed from the default set and must once again be explicitly requested.

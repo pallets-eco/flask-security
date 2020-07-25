@@ -235,6 +235,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
     class Role(db.Document, RoleMixin):
         name = db.StringField(required=True, unique=True, max_length=80)
         description = db.StringField(max_length=255)
+        permissions = db.StringField(max_length=255)
         meta = {"db_alias": db_name}
 
     class User(db.Document, UserMixin):
@@ -347,6 +348,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         id = Column(Integer(), primary_key=True)
         name = Column(String(80), unique=True)
         description = Column(String(255))
+        permissions = Column(String(255))
 
     class User(Base, UserMixin):
         __tablename__ = "user"
@@ -424,12 +426,14 @@ def peewee_setup(request, app, tmpdir, realdburl):
 
     db = FlaskDB(app)
 
-    class Role(db.Model, RoleMixin):
+    class Role(RoleMixin, db.Model):
         name = CharField(unique=True, max_length=80)
         description = TextField(null=True)
+        permissions = TextField(null=True)
 
-    class User(db.Model, UserMixin):
+    class User(UserMixin, db.Model):
         email = TextField()
+        fs_uniquifier = TextField(unique=True, null=False)
         username = TextField()
         security_number = IntegerField(null=True)
         password = TextField(null=True)
@@ -454,6 +458,9 @@ def peewee_setup(request, app, tmpdir, realdburl):
         role = ForeignKeyField(Role, backref="users")
         name = property(lambda self: self.role.name)
         description = property(lambda self: self.role.description)
+
+        def get_permissions(self):
+            return self.role.get_permissions()
 
     with app.app_context():
         for Model in (Role, User, UserRoles):
@@ -598,6 +605,27 @@ def client_nc(request, sqlalchemy_app):
     app = sqlalchemy_app()
     populate_data(app)
     return app.test_client(use_cookies=False)
+
+
+@pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo", "cl-peewee"])
+def clients(request, app, tmpdir, realdburl):
+    if request.param == "cl-sqlalchemy":
+        ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
+    elif request.param == "c2":
+        ds = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
+    elif request.param == "cl-mongo":
+        ds = mongoengine_setup(request, app, tmpdir, realdburl)
+    elif request.param == "cl-peewee":
+        ds = peewee_setup(request, app, tmpdir, realdburl)
+    elif request.param == "cl-pony":
+        # Not working yet.
+        ds = pony_setup(request, app, tmpdir, realdburl)
+    app.security = Security(app, datastore=ds)
+    populate_data(app)
+    if request.param == "cl-peewee":
+        # peewee is insistent on a single connection?
+        ds.db.close_db(None)
+    return app.test_client()
 
 
 @pytest.yield_fixture()
