@@ -202,6 +202,48 @@ class UserDatastore(object):
             self.put(user)
         return rv
 
+    def add_permissions_to_role(self, role, permissions):
+        """Add one or more permissions to role.
+
+        :param role: The role to modify. Can be a Role object or
+            string role name
+        :param permissions: a set, list, or single string.
+        :return: True if permissions added, False if role doesn't exist.
+
+        Caller must commit to DB.
+
+        .. versionadded:: 3.4.4
+        """
+
+        rv = False
+        user, role = self._prepare_role_modify_args(None, role)
+        if role:
+            rv = True
+            role.add_permissions(permissions)
+            self.put(role)
+        return rv
+
+    def remove_permissions_from_role(self, role, permissions):
+        """Remove one or more permissions from a role.
+
+        :param role: The role to modify. Can be a Role object or
+            string role name
+        :param permissions: a set, list, or single string.
+        :return: True if permissions removed, False if role doesn't exist.
+
+        Caller must commit to DB.
+
+        .. versionadded:: 3.4.4
+        """
+
+        rv = False
+        user, role = self._prepare_role_modify_args(None, role)
+        if role:
+            rv = True
+            role.remove_permissions(permissions)
+            self.put(role)
+        return rv
+
     def toggle_active(self, user):
         """Toggles a user's active status. Always returns True."""
         user.active = not user.active

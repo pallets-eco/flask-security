@@ -258,6 +258,7 @@ def test_create_user_with_roles_and_permissions(app, datastore):
         user = datastore.find_user(email="dude@lp.com")
         assert user.has_role("test1") is True
         assert user.has_permission("read") is True
+        assert user.has_permission("write") is False
 
 
 def test_permissions_strings(app, datastore):
@@ -305,20 +306,22 @@ def test_modify_permissions(app, datastore):
 
         t1 = ds.find_role("test1")
         assert perms == t1.get_permissions()
-        orig_update_time = t1.update_datetime
-        assert t1.update_datetime <= datetime.datetime.utcnow()
+        if hasattr(t1, "update_datetime"):
+            orig_update_time = t1.update_datetime
+            assert t1.update_datetime <= datetime.datetime.utcnow()
 
-        t1.add_permissions("execute")
+        ds.add_permissions_to_role(t1, "execute")
         ds.commit()
 
         t1 = ds.find_role("test1")
         assert perms.union({"execute"}) == t1.get_permissions()
 
-        t1.remove_permissions("read")
+        ds.remove_permissions_from_role(t1, "read")
         ds.commit()
         t1 = ds.find_role("test1")
         assert {"write", "execute"} == t1.get_permissions()
-        assert t1.update_datetime > orig_update_time
+        if hasattr(t1, "update_datetime"):
+            assert t1.update_datetime > orig_update_time
 
 
 def test_get_permissions(app, datastore):
@@ -350,13 +353,13 @@ def test_modify_permissions_multi(app, datastore):
         assert {"read", "write"} == t1.get_permissions()
 
         # send in a list
-        t1.add_permissions(["execute", "whatever"])
+        ds.add_permissions_to_role(t1, ["execute", "whatever"])
         ds.commit()
 
         t1 = ds.find_role("test1")
         assert {"read", "write", "execute", "whatever"} == t1.get_permissions()
 
-        t1.remove_permissions(["read", "whatever"])
+        ds.remove_permissions_from_role(t1, ["read", "whatever"])
         ds.commit()
         assert {"write", "execute"} == t1.get_permissions()
 
@@ -366,13 +369,13 @@ def test_modify_permissions_multi(app, datastore):
         ds.commit()
 
         t2 = ds.find_role("test2")
-        t2.add_permissions({"execute", "whatever"})
+        ds.add_permissions_to_role(t2, {"execute", "whatever"})
         ds.commit()
 
         t2 = ds.find_role("test2")
         assert {"read", "write", "execute", "whatever"} == t2.get_permissions()
 
-        t2.remove_permissions({"read", "whatever"})
+        ds.remove_permissions_from_role(t2, {"read", "whatever"})
         ds.commit()
         assert {"write", "execute"} == t2.get_permissions()
 

@@ -678,6 +678,9 @@ class RoleMixin(object):
         Caller must commit to DB.
 
         .. versionadded:: 3.3.0
+
+        .. deprecated:: 3.4.4
+            Use :meth:`.UserDatastore.remove_permissions_from_role`
         """
         if hasattr(self, "permissions"):
             current_perms = self.get_permissions()
@@ -688,7 +691,7 @@ class RoleMixin(object):
             else:
                 perms = {permissions}
             self.permissions = ",".join(current_perms.union(perms))
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError("Role model doesn't have permissions")
 
     def remove_permissions(self, permissions):
@@ -700,6 +703,9 @@ class RoleMixin(object):
         Caller must commit to DB.
 
         .. versionadded:: 3.3.0
+
+        .. deprecated:: 3.4.4
+            Use :meth:`.UserDatastore.remove_permissions_from_role`
         """
         if hasattr(self, "permissions"):
             current_perms = self.get_permissions()
@@ -710,7 +716,7 @@ class RoleMixin(object):
             else:
                 perms = {permissions}
             self.permissions = ",".join(current_perms.difference(perms))
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError("Role model doesn't have permissions")
 
 
@@ -791,9 +797,8 @@ class UserMixin(BaseUserMixin):
 
         """
         for role in self.roles:
-            if hasattr(role, "permissions"):
-                if permission in role.get_permissions():
-                    return True
+            if permission in role.get_permissions():
+                return True
         return False
 
     def get_security_payload(self):
