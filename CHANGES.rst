@@ -17,7 +17,7 @@ Release Target 2020
 Version 3.4.4
 --------------
 
-Released July yy, 2020
+Released July 26, 2020
 
 Bug/regression fixes.
 
@@ -37,6 +37,8 @@ Fixed
 
 - (:issue:`347`) Fix peewee. Turns out - due to lack of unit tests - peewee hasn't worked since 'permissions' were added in 3.3.
   Furthermore, changes in 3.4 around get_id and alternative tokens also didn't work since peewee defines its own get_id.
+
+- (:pr:`xx`) Backport the reset_access CLI command from 4.0 - this is really useful for administrators.
 
 Compatibility Concerns
 ++++++++++++++++++++++
@@ -173,7 +175,8 @@ log out the current user, and log in the new user. This was problematic since
 this couldn't possibly work with CSRF.
 The old behavior has been restored, with the subtle change that older Flask-Security
 releases did not look at "next" in the form or request for the redirect,
-and now, all redirects from the login view will honor "next".
+and now, all redirects from the login view will honor "next" (N.B. see 3.4.4 - the
+handling of "next" has been removed due to redirect loops).
 
 Version 3.3.1
 -------------

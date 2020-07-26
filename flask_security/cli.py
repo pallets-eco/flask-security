@@ -121,7 +121,7 @@ def roles_create(**kwargs):
 @with_appcontext
 @commit
 def roles_add(user, role):
-    """Add user to role."""
+    """Add role to user."""
     user, role = _datastore._prepare_role_modify_args(user, role)
     if user is None:
         raise click.UsageError("Cannot find user.")
@@ -129,7 +129,7 @@ def roles_add(user, role):
         raise click.UsageError("Cannot find role.")
     if _datastore.add_role_to_user(user, role):
         click.secho(
-            'Role "{0}" added to user "{1}" ' "successfully.".format(role, user),
+            'Role "{0}" added to user "{1}" ' "successfully.".format(role.name, user),
             fg="green",
         )
     else:
@@ -142,7 +142,7 @@ def roles_add(user, role):
 @with_appcontext
 @commit
 def roles_remove(user, role):
-    """Remove user from role."""
+    """Remove role from user."""
     user, role = _datastore._prepare_role_modify_args(user, role)
     if user is None:
         raise click.UsageError("Cannot find user.")
@@ -150,7 +150,8 @@ def roles_remove(user, role):
         raise click.UsageError("Cannot find role.")
     if _datastore.remove_role_from_user(user, role):
         click.secho(
-            'Role "{0}" removed from user "{1}" ' "successfully.".format(role, user),
+            'Role "{0}" removed from user "{1}" '
+            "successfully.".format(role.name, user),
             fg="green",
         )
     else:
@@ -165,7 +166,7 @@ def users_activate(user):
     """Activate a user."""
     user_obj = _datastore.get_user(user)
     if user_obj is None:
-        raise click.UsageError("ERROR: User not found.")
+        raise click.UsageError("User not found.")
     if _datastore.activate_user(user_obj):
         click.secho('User "{0}" has been activated.'.format(user), fg="green")
     else:
@@ -180,8 +181,29 @@ def users_deactivate(user):
     """Deactivate a user."""
     user_obj = _datastore.get_user(user)
     if user_obj is None:
-        raise click.UsageError("ERROR: User not found.")
+        raise click.UsageError("User not found.")
     if _datastore.deactivate_user(user_obj):
         click.secho('User "{0}" has been deactivated.'.format(user), fg="green")
     else:
         click.secho('User "{0}" was already deactivated.'.format(user), fg="yellow")
+
+
+@users.command(
+    "reset_access",
+    help="Reset all authentication credentials for user."
+    " This includes session, auth token, two-factor"
+    " and unified sign in secrets. ",
+)
+@click.argument("user")
+@with_appcontext
+@commit
+def users_reset_access(user):
+    """ Reset all authentication tokens etc."""
+    user_obj = _datastore.get_user(user)
+    if user_obj is None:
+        raise click.UsageError("User not found.")
+    _datastore.reset_user_access(user_obj)
+    click.secho(
+        'User "{user}" authentication credentials have been reset.'.format(user=user),
+        fg="green",
+    )
