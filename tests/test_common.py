@@ -71,6 +71,40 @@ def test_authenticate_with_invalid_malformed_next(client, get_message):
     assert get_message("INVALID_REDIRECT") in response.data
 
 
+def test_authenticate_with_subdomain_next(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_SUBDOMAIN"] = "auth"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://subdomain.lp.com", data=data)
+    assert response.status_code == 302
+
+
+def test_authenticate_with_invalid_subdomain_next(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_SUBDOMAIN"] = "auth"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://subdomain.lp.net", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+
+
+def test_authenticate_with_subdomain_next_invalid_config(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_SUBDOMAIN"] = None
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://subdomain.lp.com", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+
+
+def test_authenticate_with_subdomain_next_invalid_flask_config(
+    app, client, get_message
+):
+    app.config["SERVER_NAME"] = None
+    app.config["SECURITY_SUBDOMAIN"] = "auth"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://subdomain.lp.com", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+
+
 def test_authenticate_case_insensitive_email(app, client):
     response = authenticate(client, "MATT@lp.com", follow_redirects=True)
     assert b"Welcome matt@lp.com" in response.data
