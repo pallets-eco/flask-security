@@ -467,25 +467,24 @@ def url_for_security(endpoint, **values):
     return url_for(endpoint, **values)
 
 
-def validate_url_is_subdomain(url):
-    if url is None or url.strip() == "":
-        return False
-    url_split = urlsplit(url)
-    base_domain = current_app.config.get("SERVER_NAME")
-    if base_domain and url_split.netloc.endswith(f".{base_domain}"):
-        return True
-    return False
-
-
 def validate_redirect_url(url):
     if url is None or url.strip() == "":
         return False
     url_next = urlsplit(url)
     url_base = urlsplit(request.host_url)
     if (url_next.netloc or url_next.scheme) and url_next.netloc != url_base.netloc:
-        # Require that both the SECURITY_SUBDOMAIN config option is set as well as
-        # Flask's SERVER_NAME setting to explictly enable subdomain redirects
-        return bool(config_value("SUBDOMAIN")) and validate_url_is_subdomain(url)
+        base_domain = current_app.config.get("SERVER_NAME")
+        if (
+            config_value("REDIRECT_ALLOW_SUBDOMAINS")
+            and base_domain
+            and (
+                url_next.netloc == base_domain
+                or url_next.netloc.endswith(f".{base_domain}")
+            )
+        ):
+            return True
+        else:
+            return False
     return True
 
 

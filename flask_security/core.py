@@ -153,6 +153,7 @@ _default_config = {
     "LOGIN_ERROR_VIEW": None,
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
+    "REDIRECT_ALLOW_SUBDOMAINS": False,
     "FORGOT_PASSWORD_TEMPLATE": "security/forgot_password.html",
     "LOGIN_USER_TEMPLATE": "security/login_user.html",
     "REGISTER_USER_TEMPLATE": "security/register_user.html",

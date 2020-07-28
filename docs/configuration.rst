@@ -27,9 +27,8 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_SUBDOMAIN
 
-    Specifies the subdomain for the Flask-Security blueprint. If set together with
-    Flask's ``SERVER_NAME`` configuration, will also allow post-login redirects
-    on subdomains of the base domain.
+    Specifies the subdomain for the Flask-Security blueprint. If your authenticated
+    content is on a different subdomain, also enable ``SECURITY_REDIRECT_ALLOW_SUBDOMAINS``.
 
     Default: ``None``.
 .. py:data:: SECURITY_FLASH_MESSAGES
@@ -190,6 +189,17 @@ These configuration keys are used globally across all features.
     Default: ``None``.
 
     .. versionadded:: 3.3.0
+
+.. py:data:: SECURITY_REDIRECT_ALLOW_SUBDOMAINS
+
+    If ``True`` then subdomains (and the root domain) of the top-level host set
+    by Flask's ``SERVER_NAME`` configuration will be allowed as post-login redirect targets.
+    This is beneficial if you wish to place your authentiation on one subdomain and
+    authenticated content on another, for example ``auth.domain.tld`` and ``app.domain.tld``.
+
+    Default: ``False``.
+
+    .. versionadded:: 3.4.5
 
 .. py:data:: SECURITY_CSRF_PROTECT_MECHANISMS
 

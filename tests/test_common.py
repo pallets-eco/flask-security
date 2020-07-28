@@ -73,35 +73,33 @@ def test_authenticate_with_invalid_malformed_next(client, get_message):
 
 def test_authenticate_with_subdomain_next(app, client, get_message):
     app.config["SERVER_NAME"] = "lp.com"
-    app.config["SECURITY_SUBDOMAIN"] = "auth"
+    app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
     data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login?next=http://subdomain.lp.com", data=data)
+    response = client.post("/login?next=http://sub.lp.com", data=data)
+    assert response.status_code == 302
+
+
+def test_authenticate_with_root_domain_next(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_SUBDOMAIN"] = "auth"
+    app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://lp.com", data=data)
     assert response.status_code == 302
 
 
 def test_authenticate_with_invalid_subdomain_next(app, client, get_message):
     app.config["SERVER_NAME"] = "lp.com"
-    app.config["SECURITY_SUBDOMAIN"] = "auth"
+    app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
     data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login?next=http://subdomain.lp.net", data=data)
+    response = client.post("/login?next=http://sub.lp.net", data=data)
     assert get_message("INVALID_REDIRECT") in response.data
 
 
-def test_authenticate_with_subdomain_next_invalid_config(app, client, get_message):
+def test_authenticate_with_subdomain_next_default_config(app, client, get_message):
     app.config["SERVER_NAME"] = "lp.com"
-    app.config["SECURITY_SUBDOMAIN"] = None
     data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login?next=http://subdomain.lp.com", data=data)
-    assert get_message("INVALID_REDIRECT") in response.data
-
-
-def test_authenticate_with_subdomain_next_invalid_flask_config(
-    app, client, get_message
-):
-    app.config["SERVER_NAME"] = None
-    app.config["SECURITY_SUBDOMAIN"] = "auth"
-    data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login?next=http://subdomain.lp.com", data=data)
+    response = client.post("/login?next=http://sub.lp.com", data=data)
     assert get_message("INVALID_REDIRECT") in response.data
 
 
