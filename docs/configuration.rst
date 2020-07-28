@@ -27,7 +27,9 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_SUBDOMAIN
 
-    Specifies the subdomain for the Flask-Security blueprint.
+    Specifies the subdomain for the Flask-Security blueprint. If set together with
+    Flask's ``SERVER_NAME`` configuration, will also allow post-login redirects
+    on subdomains of the base domain.
 
     Default: ``None``.
 .. py:data:: SECURITY_FLASH_MESSAGES
