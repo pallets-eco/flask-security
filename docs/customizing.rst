@@ -304,17 +304,21 @@ its own JsonEncoder on its blueprint.
 For a very long read and discussion; look at `this`_. Out of the box, Flask-Security in
 tandem with Flask-Login, behave as follows:
 
-    * If authentication fails as the result of a `@login_required`, `@auth_required`,
-      `@http_auth_required`, or `@token_auth_required` then if the request 'wants' a JSON
+    * If authentication fails as the result of a `@login_required`, `@auth_required("session", "token")`,
+      or `@token_auth_required` then if the request 'wants' a JSON
       response, :meth:`.Security.render_json` is called with a 401 status code. If not
       then flask_login.LoginManager.unauthorized() is called. By default THAT will redirect to
       a login view.
 
+    * If authentication fails as the result of a `@http_auth_required` or `@auth_required("basic")`
+      then a 401 is returned along with the http header ``WWW-Authenticate`` set to
+      ``Basic realm="xxxx"``. The realm name is defined by :py:data:`SECURITY_DEFAULT_HTTP_AUTH_REALM`.
+
     * If authorization fails as the result of `@roles_required`, `@roles_accepted`,
       `@permissions_required`, or `@permissions_accepted`, then if the request 'wants' a JSON
       response, :meth:`.Security.render_json` is called with a 403 status code. If not,
-      then if *SECURITY_UNAUTHORIZED_VIEW* is defined, the response will redirected.
-      If *SECURITY_UNAUTHORIZED_VIEW* is not defined, then ``abort(403)`` is called.
+      then if :py:data:`SECURITY_UNAUTHORIZED_VIEW` is defined, the response will redirected.
+      If :py:data:`SECURITY_UNAUTHORIZED_VIEW` is not defined, then ``abort(403)`` is called.
 
 All this can be easily changed by registering any or all of :meth:`.Security.render_json`,
 :meth:`.Security.unauthn_handler` and :meth:`.Security.unauthz_handler`.

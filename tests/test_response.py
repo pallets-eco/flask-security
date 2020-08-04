@@ -50,11 +50,11 @@ def test_render_json_logout(app, client):
 def test_default_unauthn(app, client):
     """ Test default unauthn handler with and without json """
 
-    response = client.get("/multi_auth")
+    response = client.get("/profile")
     assert response.status_code == 302
-    assert response.headers["Location"] == "http://localhost/login?next=%2Fmulti_auth"
+    assert response.headers["Location"] == "http://localhost/login?next=%2Fprofile"
 
-    response = client.get("/multi_auth", headers={"Accept": "application/json"})
+    response = client.get("/profile", headers={"Accept": "application/json"})
     assert response.status_code == 401
     assert response.json["meta"]["code"] == 401
     # While "Basic" is acceptable, we never get a WWW-Authenticate header back since
@@ -66,11 +66,11 @@ def test_default_unauthn(app, client):
 def test_default_unauthn_bp(app, client):
     """ Test default unauthn handler with blueprint prefix and login url """
 
-    response = client.get("/multi_auth")
+    response = client.get("/profile")
     assert response.status_code == 302
     assert (
         response.headers["Location"]
-        == "http://localhost/myprefix/mylogin?next=%2Fmulti_auth"
+        == "http://localhost/myprefix/mylogin?next=%2Fprofile"
     )
 
 
