@@ -309,6 +309,19 @@ These configuration keys are used globally across all features.
     .. deprecated:: 4.0.0
         Superseded by :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`
 
+.. py:data:: SECURITY_API_ENABLED_METHODS
+
+    Various endpoints of Flask-Security require the caller to be authenticated.
+    This variable controls which of the methods - ``token``, ``session``, ``basic``
+    will be allowed. The default does NOT include ``basic`` since if ``basic``
+    is in the list, and if the user is NOT authenticated, then the standard/required
+    response of 401 with the ``WWW-Authenticate`` header is returned. This is
+    rarely what the client wants.
+
+    Default: ``["session", "token"]``.
+
+    .. versionadded:: 4.0.0
+
 .. py:data:: SECURITY_DEFAULT_REMEMBER_ME
 
     Specifies the default "remember me" value used when logging in a user.

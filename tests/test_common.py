@@ -219,6 +219,36 @@ def test_inactive_forbids_token(app, client_nc, get_message):
     assert response.status_code == 401
 
 
+def test_inactive_forbids_basic(app, client, get_message):
+    """ Make sure that basic auth doesn't work if user deactivated
+    """
+
+    # Should properly work.
+    response = client.get(
+        "/multi_auth",
+        headers={
+            "Authorization": "Basic %s"
+            % base64.b64encode(b"joe@lp.com:password").decode("utf-8")
+        },
+    )
+    assert b"Session, Token, Basic" in response.data
+
+    # deactivate joe
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="joe@lp.com")
+        app.security.datastore.deactivate_user(user)
+        app.security.datastore.commit()
+
+    response = client.get(
+        "/multi_auth",
+        headers={
+            "Authorization": "Basic %s"
+            % base64.b64encode(b"joe@lp.com:password").decode("utf-8")
+        },
+    )
+    assert b"You are not authenticated" in response.data
+
+
 def test_unset_password(client, get_message):
     response = authenticate(client, "jess@lp.com", "password")
     assert get_message("PASSWORD_NOT_SET") in response.data
@@ -472,7 +502,6 @@ def test_http_auth_no_authentication_json(client, get_message):
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
-    assert "WWW-Authenticate" not in response.headers
 
 
 @pytest.mark.settings(backwards_compat_unauthn=True)
@@ -491,9 +520,7 @@ def test_invalid_http_auth_invalid_username(client):
 
 @pytest.mark.settings(backwards_compat_unauthn=False)
 def test_invalid_http_auth_invalid_username_json(client, get_message):
-    # While Basic auth is allowed with JSON - we never expect a WWW-Authenticate
-    # header - since that is captured by most browsers and they pop up a
-    # login form.
+    # Even with JSON - Basic Auth required a WWW-Authenticate header response.
     response = client.get(
         "/http",
         headers={
@@ -507,7 +534,7 @@ def test_invalid_http_auth_invalid_username_json(client, get_message):
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
-    assert "WWW-Authenticate" not in response.headers
+    assert "WWW-Authenticate" in response.headers
 
 
 @pytest.mark.settings(backwards_compat_unauthn=True)

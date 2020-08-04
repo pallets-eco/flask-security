@@ -199,7 +199,7 @@ def login():
         )
 
 
-@auth_required()
+@auth_required(lambda: config_value("API_ENABLED_METHODS"))
 def verify():
     """View function which handles a authentication verification request.
     """
@@ -610,7 +610,7 @@ def reset_password(token):
     )
 
 
-@auth_required("basic", "token", "session")
+@auth_required(lambda: config_value("API_ENABLED_METHODS"))
 def change_password():
     """View function which handles a change password request."""
 

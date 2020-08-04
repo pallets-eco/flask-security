@@ -179,6 +179,11 @@ def create_app():
     def basic():
         return render_template_string("Basic auth success")
 
+    @app.route("/protected")
+    @auth_required()
+    def protected():
+        return render_template_string("Protected endpoint")
+
     return app
 
 

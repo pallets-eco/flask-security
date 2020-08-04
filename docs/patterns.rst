@@ -57,6 +57,16 @@ own code. Then use Flask's ``errorhandler`` to catch that exception and create t
             raise MyForbiddenException(msg='You can only update docs you own')
 
 
+A note about Basic Auth
++++++++++++++++++++++++
+Basic Auth is supported in Flask-Security, using the @http_auth_required() decorator. If a request for an endpoint
+protected with @http_auth_required is received, and the request doesn't contain the appropriate HTTP Headers, a 401 is returned
+along with the required WWW-Authenticate header. In this case there won't be a usable session cookie returned so all future requests
+will also require credentials to be sent. Effectively the caller is temporarily 'logged in' at the beginning of each request and 'logged out' again
+at the end of the request. Most (all?) browsers intercept this response and pop up a login dialog box and remember, for the site, the entered credentials.
+This effectively bypasses any of the normal Flask-Security login forms. By default, the Flask-Security endpoints that require the caller be
+authenticated do NOT support ``basic`` - however the :py:data:`SECURITY_API_ENABLED_METHODS` can be used to override this.
+
 Freshness
 ++++++++++
 A common pattern for browser-based sites is to use sessions to manage identity. This is usually
