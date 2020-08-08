@@ -76,9 +76,6 @@ def default_unauthn_handler(mechanisms, headers=None):
     if config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
-        # Remove WWW-Authenticate from headers for JSON responses since
-        # browsers will intercept that and pop up their own login form.
-        headers.pop("WWW-Authenticate", None)
         payload = json_error_response(errors=msg)
         return _security._render_json(payload, 401, headers, None)
 
@@ -168,6 +165,8 @@ def _check_http_auth():
     if not auth.username:
         return False
     user = find_user(auth.username)
+    if user and not user.active:
+        return False
 
     if user and user.verify_and_update_password(auth.password):
         _security.datastore.commit()
@@ -283,7 +282,9 @@ def auth_required(*auth_methods, **kwargs):
             return 'Dashboard'
 
     :param auth_methods: Specified mechanisms (token, basic, session). If not specified
-        then all current available mechanisms (except "basic") will be tried.
+        then all current available mechanisms (except "basic") will be tried. A callable
+        can also be passed (useful if you need app/request context). The callable
+        must return a list.
     :kwparam within: Add 'freshness' check to authentication. Is either an int
         specifying # of minutes, or a callable that returns a timedelta. For timedeltas,
         timedelta.total_seconds() is used for the calculations:
@@ -330,6 +331,9 @@ def auth_required(*auth_methods, **kwargs):
     .. versionchanged:: 3.4.4
         If ``auth_methods`` isn't specified try all mechanisms EXCEPT ``basic``.
 
+    .. versionchanged:: 4.0.0
+        auth_methods can be passed as a callable.
+
     """
 
     login_mechanisms = {
@@ -338,10 +342,7 @@ def auth_required(*auth_methods, **kwargs):
         "basic": lambda: _check_http_auth(),
     }
     mechanisms_order = ["token", "session", "basic"]
-    if not auth_methods:
-        auth_methods = {"session", "token"}
-    else:
-        auth_methods = [am for am in auth_methods]
+    auth_methods_arg = auth_methods
 
     def wrapper(fn):
         @wraps(fn)
@@ -359,6 +360,16 @@ def auth_required(*auth_methods, **kwargs):
                 grace = grace()
             else:
                 grace = datetime.timedelta(minutes=grace)
+
+            if not auth_methods_arg:
+                auth_methods = {"session", "token"}
+            else:
+                auth_methods = []
+                for am in auth_methods_arg:
+                    if callable(am):
+                        auth_methods.extend(am())
+                    else:
+                        auth_methods.append(am)
 
             h = {}
             if "basic" in auth_methods:

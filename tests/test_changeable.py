@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for more details.
 """
 
+import base64
 import sys
 
 import pytest
@@ -202,6 +203,32 @@ def test_token_change(app, client_nc):
     )
     assert response.status_code == 200
     assert "authentication_token" in response.json["response"]["user"]
+
+
+@pytest.mark.settings(api_enabled_methods=["basic"])
+def test_basic_change(app, client_nc, get_message):
+    # Verify can change password using basic auth
+    data = dict(
+        password="password",
+        new_password="new strong password",
+        new_password_confirm="new strong password",
+    )
+    response = client_nc.post("/change", data=data)
+    assert b"You are not authenticated" in response.data
+    assert "WWW-Authenticate" in response.headers
+
+    response = client_nc.post(
+        "/change",
+        data=data,
+        headers={
+            "Authorization": "Basic %s"
+            % base64.b64encode(b"matt@lp.com:password").decode("utf-8")
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    # No session so no flashing
+    assert b"Home Page" in response.data
 
 
 @pytest.mark.settings(password_complexity_checker="zxcvbn")

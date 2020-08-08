@@ -213,6 +213,7 @@ _default_config = {
     "PHONE_REGION_DEFAULT": "US",
     "FRESHNESS": timedelta(hours=24),
     "FRESHNESS_GRACE_PERIOD": timedelta(hours=1),
+    "API_ENABLED_METHODS": ["session", "token"],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
     "DATETIME_FACTORY": datetime.utcnow,

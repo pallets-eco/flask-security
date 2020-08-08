@@ -9,6 +9,7 @@
 
 """
 
+import base64
 from contextlib import contextmanager
 from datetime import timedelta
 from unittest.mock import Mock
@@ -663,6 +664,21 @@ def test_setup_json_no_session(app, client_nc, get_message):
     }
     response = client_nc.get("/us-setup", headers=headers)
     assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert "WWW-Authenticate" not in response.headers
+
+
+@pytest.mark.settings(api_enabled_methods=["basic"])
+def test_setup_basic(app, client, get_message):
+    # If using Basic Auth - always fresh so should be able to setup (not sure the
+    # use case but...)
+    headers = {
+        "Authorization": "Basic %s"
+        % base64.b64encode(b"matt@lp.com:password").decode("utf-8")
+    }
+    response = client.get("/us-setup", headers=headers)
+    assert response.status_code == 200
+    assert b"Setup Unified Sign In options" in response.data
 
 
 def test_setup_bad_token(app, client, get_message):

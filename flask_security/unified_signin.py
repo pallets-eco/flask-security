@@ -404,7 +404,7 @@ def us_signin_send_code():
     )
 
 
-@auth_required()
+@auth_required(lambda: config_value("API_ENABLED_METHODS"))
 def us_verify_send_code():
     """
     Send code during verify.
@@ -557,7 +557,7 @@ def us_signin():
     )
 
 
-@auth_required()
+@auth_required(lambda: config_value("API_ENABLED_METHODS"))
 def us_verify():
     """
     Re-authenticate to reset freshness time.
@@ -687,6 +687,7 @@ def us_verify_link():
 
 
 @auth_required(
+    lambda: config_value("API_ENABLED_METHODS"),
     within=lambda: config_value("FRESHNESS"),
     grace=lambda: config_value("FRESHNESS_GRACE_PERIOD"),
 )
@@ -790,7 +791,7 @@ def us_setup():
     )
 
 
-@auth_required()
+@auth_required(lambda: config_value("API_ENABLED_METHODS"))
 def us_setup_validate(token):
     """
     Validate new setup.
@@ -854,7 +855,7 @@ def us_setup_validate(token):
     return redirect(url_for_security("us_setup"))
 
 
-@auth_required()
+@auth_required(lambda: config_value("API_ENABLED_METHODS"))
 def us_qrcode(token):
 
     if "authenticator" not in config_value("US_ENABLED_METHODS"):
