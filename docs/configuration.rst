@@ -533,16 +533,16 @@ Login/Logout
 .. py:data:: SECURITY_POST_LOGIN_VIEW
 
     Specifies the default view to redirect to after a user logs in. This value can be set to a URL
-    or an endpoint name.
+    or an endpoint name. Defaults to the Flask config ``APPLICATION_ROOT`` value which itself defaults to ``"/"``.
 
-    Default: ``"/"``.
+    Default: ``APPLICATION_ROOT``.
 
 .. py:data:: SECURITY_POST_LOGOUT_VIEW
 
-    Specifies the default view to redirect to after a user logs out.
-    This value can be set to a URL or an endpoint name.
+    Specifies the default view to redirect to after a user logs out. This value can be set to a URL
+    or an endpoint name. Defaults to the Flask config ``APPLICATION_ROOT`` value which itself defaults to ``"/"``.
 
-    Default: ``"/"``.
+    Default: ``APPLICATION_ROOT``.
 
 
 .. py:data:: SECURITY_UNAUTHORIZED_VIEW
