@@ -1031,6 +1031,14 @@ class Security:
         if "mail_util_cls" not in kwargs:
             kwargs.setdefault("mail_util_cls", MailUtil)
 
+        # default post redirects to APPLICATION_ROOT, which itself defaults to "/"
+        app.config.setdefault(
+            "SECURITY_POST_LOGIN_VIEW", app.config.get("APPLICATION_ROOT", "/")
+        )
+        app.config.setdefault(
+            "SECURITY_POST_LOGOUT_VIEW", app.config.get("APPLICATION_ROOT", "/")
+        )
+
         for key, value in _default_config.items():
             app.config.setdefault("SECURITY_" + key, value)
 

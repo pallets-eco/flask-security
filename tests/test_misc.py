@@ -942,3 +942,41 @@ def test_authn_via(app, client, get_message):
     # This should work and not be redirected
     response = client.get("/myview", follow_redirects=False)
     assert response.status_code == 200
+
+
+def test_post_security_with_application_root(app, sqlalchemy_datastore):
+    init_app_with_options(app, sqlalchemy_datastore, **{"APPLICATION_ROOT": "/root"})
+    client = app.test_client()
+
+    response = client.post(
+        "/login", data=dict(email="matt@lp.com", password="password")
+    )
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/root"
+
+    response = client.get("/logout")
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/root"
+
+
+def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore):
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{
+            "APPLICATION_ROOT": "/root",
+            "SECURITY_POST_LOGIN_VIEW": "/post_login",
+            "SECURITY_POST_LOGOUT_VIEW": "/post_logout",
+        }
+    )
+    client = app.test_client()
+
+    response = client.post(
+        "/login", data=dict(email="matt@lp.com", password="password")
+    )
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/post_login"
+
+    response = client.get("/logout")
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/post_logout"

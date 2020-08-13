@@ -525,7 +525,7 @@ def find_redirect(key):
     rv = (
         get_url(session.pop(key.lower(), None))
         or get_url(current_app.config[key.upper()] or None)
-        or "/"
+        or current_app.config.get("APPLICATION_ROOT", "/")
     )
     return rv
 
