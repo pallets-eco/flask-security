@@ -95,7 +95,9 @@ directly to the model, so the model should look like::
 
 For ``login_form`` it's necessary to override ``validate`` method if you
 want to implement your own logic of authentication. Also ``login_form``
-needs to have ``user`` member set to User model object instance::
+needs to have ``user`` member set to User model object instance.
+Below there is a code example of overriding the LoginForm. Example doesn't deal though 
+with checking whether user is active or confirmed::
 
     from flask import current_app
     from flask_security.forms import LoginForm as BaseLoginForm
