@@ -424,7 +424,6 @@ def test_no_email_sender(app):
     security.init_app(app)
 
     with app.app_context():
-        app.try_trigger_before_first_request_functions()
         user = TestUser("matt@lp.com")
         with app.mail.record_messages() as outbox:
             send_mail("Test Default Sender", user.email, "welcome", user=user)
@@ -682,9 +681,6 @@ def test_phone_util_override(app):
     app.security.init_app(app, phone_util_cls=MyPhoneUtil)
 
     with app.app_context():
-        client = app.test_client()
-        # trigger @before first request
-        client.get("/login")
         assert uia_phone_mapper("55") == "very-canonical"
 
 

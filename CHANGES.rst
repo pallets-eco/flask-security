@@ -14,21 +14,22 @@ Release Target Summer 2020
 - Removal of token caching feature (a relatively new feature that has some systemic issues)
 - Other possible breaking changes tracked `here`_
 
-Features
-++++++++
+Features & Cleanup
++++++++++++++++++++
 - Removal of python 2.7 and <3.6 support
 - Removal of token caching feature (a relatively new feature that had some systemic issues)
 - (:pr:`328`) Remove dependence on Flask-Mail and refactor.
 - (:pr:`335`) Remove two-factor `/tf-confirm` endpoint and use generic `freshness` mechanism.
-- (:pr:`336`) Remove `SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)`. In addition to
+- (:pr:`336`) Remove ``SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN_INVALID(ATE)``. In addition to
   not making sense - the documentation has never been correct.
 - (:pr:`339`) Require ``fs_uniquifier`` in the UserModel and stop using/referencing the UserModel
   primary key.
-- (:pr:`349`) Change ``USER_IDENTITY_ATTRIBUTES`` configuration variable semantics.
+- (:pr:`349`) Change ``SECURITY_USER_IDENTITY_ATTRIBUTES`` configuration variable semantics.
 - Remove (all?) requirements around having an 'email' column in the UserModel. API change -
   JSON SPA redirects used to always include a query param 'email=xx'. While that is still sent
   (if and only if) the UserModel contains an 'email' columns, a new query param 'identity' is returned
   which returns the value of UserModel.calc_username().
+- (:pr:`xxx`) Improvements and documentation for two-factor authentication.
 
 Fixed
 +++++
@@ -79,7 +80,7 @@ Backwards Compatibility Concerns
 Version 3.4.4
 --------------
 
-Released July xx, 2020
+Released July 27, 2020
 
 Bug/regression fixes.
 
@@ -92,7 +93,7 @@ Fixed
   (which is set if ``basic`` @auth_required method is used), a 401 is returned. See below
   for backwards compatibility concerns.
 
-- (:pr:`xx`) As part of figuring out issue 359 - a redirect loop was found. In release 3.3.0 code was put
+- (:pr:`362`) As part of figuring out issue 359 - a redirect loop was found. In release 3.3.0 code was put
   in to redirect to :py:data:`SECURITY_POST_LOGIN_VIEW` when GET or POST was called and the caller was already authenticated. The
   method used would honor the request ``next`` query parameter. This could cause redirect loops. The pre-3.3.0 behavior
   of redirecting to :py:data:`SECURITY_POST_LOGIN_VIEW` and ignoring the ``next`` parameter has been restored.

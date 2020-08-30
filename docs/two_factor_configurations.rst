@@ -10,8 +10,6 @@ Authenticator app such as Google, Lastpass, or Authy.
 The following code sample illustrates how to get started as quickly as
 possible using SQLAlchemy and two-factor feature:
 
--  `Basic SQLAlchemy Application <#basic-sqlalchemy-application>`_
-
 Basic SQLAlchemy Two-Factor Application
 +++++++++++++++++++++++++++++++++++++++
 
@@ -118,3 +116,48 @@ possible using SQLAlchemy:
 
     if __name__ == '__main__':
         app.run()
+
+.. _2fa_theory_of_operation:
+
+Theory of Operation
++++++++++++++++++++++
+
+.. note::
+    The Two-factor feature requires that session cookies be received and sent as part of the API.
+    This is true regardless of if the application uses forms or JSON.
+
+The Two-factor (2FA) API has four paths:
+
+    - Normal login once everything set up
+    - Changing 2FA setup
+    - Initial login/registration when 2FA is required
+    - Rescue
+
+When using forms, the flow from one state to the next is handled by the forms themselves. When using JSON
+the application must of course explicitly access the appropriate endpoints. The descriptions below describe the JSON access pattern.
+
+Normal Login
+~~~~~~~~~~~~
+In the normal case, when the user has already setup their preferred 2FA method (e.g. email, SMS, authenticator app),
+then the flow starts with the authentication process using the ``/login`` or ``/us-signin`` endpoints, providing
+their identity and password. If 2FA is required, the response will indicate that. Then, the application must POST to the ``/tf-validate``
+with the correct code.
+
+Changing 2FA Setup
+~~~~~~~~~~~~~~~~~~~
+An authenticated user can change their 2FA configuration (primary_method, phone number, etc.). In order to prevent a user from being
+locked out, the new configuration must be validated before it is stored permanently. The user starts with a GET on ``/tf-setup``. This will return
+a list of configured 2FA methods the user can choose from, and the existing configuration. This must be followed with a POST on ``/tf-setup`` with the new primary
+method (and phone number is SMS). This will cause a code to be sent, and again use ``/tf-validate`` to confirm code. In order to setup an authenticator app
+(such as lastpass, authy, google authenticator), you can do a GET on ``/tf-qrcode`` to generate the required information. Once the code  has been successfully
+entered, the new configuration will be permanently stored.
+
+Initial login/registration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This is basically a combination of the above two - initial POST to ``/login`` will return indicating that 2FA is required. The user must then POST to ``/tf_setup`` to setup
+the desired 2FA method, and finally have the user enter the code and POST to ``/tf-validate``.
+
+Rescue
+~~~~~~
+Life happens - if the user doesn't have their mobile devices (SMS) or authenticator app, then they can request using ``/tf-rescue`` endpoint to have the code sent to their email.
+If they have lost access to their email, they can request an email be sent to the application administrators.
