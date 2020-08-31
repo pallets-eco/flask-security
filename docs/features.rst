@@ -84,8 +84,10 @@ the user's password will not affect tokens.
 
 .. _two-factor:
 
-Two-factor Authentication (alpha)
+Two-factor Authentication
 ----------------------------------------
+**This feature is in Beta - mostly due to it being brand new and little to no production soak time**
+
 Two-factor authentication is enabled by generating time-based one time passwords
 (Tokens). The tokens are generated using the users `totp secret`_, which is unique
 per user, and is generated both on first login, and when changing the two-factor
@@ -96,12 +98,7 @@ By default, tokens provided by the authenticator app are
 valid for 2 minutes, tokens sent by mail for up to 5 minute and tokens sent by
 sms for up to 2 minutes. The QR code used to supply the authenticator app with
 the secret is generated using the PyQRCode library.
-This feature is marked alpha meaning that backwards incompatible changes
-might occur during minor releases. While the feature is operational, it has these
-known limitations:
-
-    * Limited and incomplete JSON support
-    * Not enough documentation to use w/o looking at code
+Please read :ref:`2fa_theory_of_operation` for more details.
 
 .. _unified-sign-in:
 

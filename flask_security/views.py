@@ -711,8 +711,8 @@ def two_factor_setup():
         if pm == "disable":
             tf_disable(user)
             after_this_request(_commit)
-            do_flash(*get_message("TWO_FACTOR_DISABLED"))
             if not _security._want_json(request):
+                do_flash(*get_message("TWO_FACTOR_DISABLED"))
                 return redirect(get_url(_security.post_login_view))
             else:
                 return base_render_json(form)
@@ -724,6 +724,10 @@ def two_factor_setup():
 
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
+        json_response = {
+            "tf_state": "validating_profile",
+            "tf_primary_method": pm,
+        }
         new_phone = form.phone.data if len(form.phone.data) > 0 else None
         if new_phone:
             user.tf_phone_number = new_phone
@@ -758,18 +762,26 @@ def two_factor_setup():
                 chosen_method=pm,
                 **_ctx("tf_setup")
             )
+        return base_render_json(form, include_user=False, additional=json_response)
 
     # We get here on GET and POST with failed validation.
     # For things like phone number - we've already done one POST
     # that succeeded and now it failed - so retain the initial info
-    if _security._want_json(request):
-        return base_render_json(form, include_user=False)
-
-    code_form = _security.two_factor_verify_code_form()
     choices = config_value("TWO_FACTOR_ENABLED_METHODS")
     if not config_value("TWO_FACTOR_REQUIRED"):
         choices.append("disable")
 
+    if _security._want_json(request):
+        # Provide information application/UI might need to render their own form/input
+        json_response = {
+            "tf_required": config_value("TWO_FACTOR_REQUIRED"),
+            "tf_primary_method": getattr(user, "tf_primary_method", None),
+            "tf_phone_number": getattr(user, "tf_phone_number", None),
+            "tf_available_methods": choices,
+        }
+        return base_render_json(form, include_user=False, additional=json_response)
+
+    code_form = _security.two_factor_verify_code_form()
     return _security.render_template(
         config_value("TWO_FACTOR_SETUP_TEMPLATE"),
         two_factor_setup_form=form,
