@@ -29,7 +29,9 @@ Features & Cleanup
   JSON SPA redirects used to always include a query param 'email=xx'. While that is still sent
   (if and only if) the UserModel contains an 'email' columns, a new query param 'identity' is returned
   which returns the value of UserModel.calc_username().
-- (:pr:`xxx`) Improvements and documentation for two-factor authentication.
+- (:pr:`382`) Improvements and documentation for two-factor authentication.
+- (:issue:`381`) Support Flask-Babel 2.0 which has backported Domain support. Flask-Security now supports
+  Flask-Babel (>=2.00), Flask-BabelEx, as well as no translation support. Please see backwards compatibility notes below.
 
 Fixed
 +++++
@@ -75,6 +77,12 @@ Backwards Compatibility Concerns
   ``@app.before_first_request`` (since that broke the CLI). So it isn't called in an application context, the *app* being initialized is
   passed as an argument to *__init__*.
 
+- (:issue:`381`) When using Flask-Babel (>= 2.0) it is required that the application initialize Flask-Babel (e.g. Babel(app)).
+  Flask-BabelEx would self-initialize so it didn't matter. Flask-Security will throw a run time error upon first request if Flask-Babel
+  is installed, but not initialized. Also, Flask-Security no longer has a dependency on either Flask-Babel or Flask-BabelEx - if neither
+  are installed, it falls back to a dummy translation. Thus - if you application expects translations services, it must specify the appropriate
+  dependency.
+
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
 Version 3.4.4
@@ -101,7 +109,7 @@ Fixed
 Compatibility Concerns
 ++++++++++++++++++++++
 
-In 3.3.0, `.Security.auth_required` was changed to add a default argument if none was given. The default
+In 3.3.0, :meth:`flask_security.auth_required` was changed to add a default argument if none was given. The default
 include all current methods - ``session``, ``token``, and ``basic``. However ``basic`` really isn't like the others
 and requires that we send back a ``WWW-Authenticate`` header if authentication fails (and return a 401 and not redirect).
 ``basic`` has been removed from the default set and must once again be explicitly requested.

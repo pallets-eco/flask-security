@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for more details.
 """
 from contextlib import contextmanager
+import re
 
 from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
@@ -97,7 +98,12 @@ def check_xlation(app, locale):
     with app.test_request_context():
         domain = app.security.i18n_domain
         xlations = domain.get_translations()
-        return xlations and xlations._info.get("language", None) == locale
+        if not xlations:
+            return False
+        # Flask-Babel doesn't populate _info as Flask-BabelEx did - so look in first
+        # string which is catalog info.
+        matcher = re.search(r"Language:\s*(\w+)", xlations._catalog[""])
+        return matcher.group(1) == locale
 
 
 def create_roles(ds):

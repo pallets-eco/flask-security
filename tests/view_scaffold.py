@@ -25,7 +25,13 @@ import datetime
 import os
 
 from flask import Flask, flash, render_template_string, request, session
-import flask_babelex
+
+try:
+    import flask_babel
+
+    HAVE_BABEL = True
+except ImportError:
+    HAVE_BABEL = False
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -114,21 +120,22 @@ def create_app():
 
     # This is NOT ideal since it basically changes entire APP (which is fine for
     # this test - but not fine for general use).
-    babel = flask_babelex.Babel(app, default_domain=security.i18n_domain)
+    if HAVE_BABEL:
+        babel = flask_babel.Babel(app, default_domain=security.i18n_domain)
 
-    @babel.localeselector
-    def get_locale():
-        # For a given session - set lang based on first request.
-        # Honor explicit url request first
-        if "lang" not in session:
-            locale = request.args.get("lang", None)
-            if not locale:
-                locale = request.accept_languages.best
-            if not locale:
-                locale = "en"
-            if locale:
-                session["lang"] = locale
-        return session.get("lang", None).replace("-", "_")
+        @babel.localeselector
+        def get_locale():
+            # For a given session - set lang based on first request.
+            # Honor explicit url request first
+            if "lang" not in session:
+                locale = request.args.get("lang", None)
+                if not locale:
+                    locale = request.accept_languages.best
+                if not locale:
+                    locale = "en"
+                if locale:
+                    session["lang"] = locale
+            return session.get("lang", None).replace("-", "_")
 
     # Create a user to test with
     @app.before_first_request

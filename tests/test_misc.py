@@ -406,8 +406,9 @@ def test_form_required_local_message(app, sqlalchemy_datastore):
 
 @pytest.mark.babel(False)
 def test_without_babel(client):
-    response = client.get("/login")
-    assert b"Login" in response.data
+    # This isn't really 'without' babel - it is without initializing babel
+    with pytest.raises(ValueError):
+        client.get("/login")
 
 
 def test_no_email_sender(app):
@@ -424,6 +425,7 @@ def test_no_email_sender(app):
     security.init_app(app)
 
     with app.app_context():
+        app.try_trigger_before_first_request_functions()
         user = TestUser("matt@lp.com")
         with app.mail.record_messages() as outbox:
             send_mail("Test Default Sender", user.email, "welcome", user=user)

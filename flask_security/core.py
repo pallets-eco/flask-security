@@ -16,7 +16,6 @@ import warnings
 
 import pkg_resources
 from flask import _request_ctx_stack, current_app, render_template
-from flask_babelex import Domain
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
@@ -26,6 +25,7 @@ from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy
 
+from .babel import get_i18n_domain, have_babel
 from .decorators import (
     default_reauthn_handler,
     default_unauthn_handler,
@@ -540,12 +540,6 @@ def _get_pwd_context(app):
     return cc
 
 
-def _get_i18n_domain(app):
-    return Domain(
-        dirname=cv("I18N_DIRNAME", app=app), domain=cv("I18N_DOMAIN", app=app)
-    )
-
-
 def _get_hashing_context(app):
     schemes = cv("HASHING_SCHEMES", app=app)
     deprecated = cv("DEPRECATED_HASHING_SCHEMES", app=app)
@@ -569,7 +563,7 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             principal=_get_principal(app),
             pwd_context=_get_pwd_context(app),
             hashing_context=_get_hashing_context(app),
-            i18n_domain=_get_i18n_domain(app),
+            i18n_domain=get_i18n_domain(app),
             remember_token_serializer=_get_serializer(app, "remember"),
             login_serializer=_get_serializer(app, "login"),
             reset_serializer=_get_serializer(app, "reset"),
@@ -1062,8 +1056,7 @@ class Security:
 
         @app.before_first_request
         def _register_i18n():
-            # N.B. as of jinja 2.9 '_' is always registered
-            # http://jinja.pocoo.org/docs/2.10/extensions/#i18n-extension
+            # This is only not registered if Flask-Babel isn't installed...
             if "_" not in app.jinja_env.globals:
                 current_app.jinja_env.globals["_"] = state.i18n_domain.gettext
             # Register so other packages can reference our translations.
@@ -1121,6 +1114,15 @@ class Security:
                 current_app.after_request(csrf_cookie_handler)
                 # Add configured header to WTF_CSRF_HEADERS
                 current_app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))
+
+        @app.before_first_request
+        def check_babel():
+            # Verify that if Flask-Babel or Flask-BabelEx is installed
+            # it has been initialized
+            if have_babel() and "babel" not in app.extensions:
+                raise ValueError(
+                    "Flask-Babel or Flask-BabelEx is installed but not initialized"
+                )
 
         state._phone_util = state.phone_util_cls(app)
         state._mail_util = state.mail_util_cls(app)

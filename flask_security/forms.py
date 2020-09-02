@@ -15,7 +15,6 @@ import inspect
 from flask import Markup, current_app, request
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
-from speaklater import is_lazy_string, make_lazy_string
 from werkzeug.local import LocalProxy
 from wtforms import (
     BooleanField,
@@ -29,6 +28,7 @@ from wtforms import (
     validators,
 )
 
+from .babel import is_lazy_string, make_lazy_string
 from .confirmable import requires_confirmation
 from .utils import (
     _,
