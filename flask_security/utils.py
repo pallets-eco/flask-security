@@ -32,9 +32,9 @@ from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
 from wtforms import validators, ValidationError
 from itsdangerous import BadSignature, SignatureExpired
-from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
+
 from .quart_compat import best
 from .signals import user_authenticated
 
@@ -936,6 +936,8 @@ class FsJsonEncoder(JSONEncoder):
     """
 
     def default(self, obj):
+        from .babel import is_lazy_string
+
         if is_lazy_string(obj):
             return str(obj)
         else:

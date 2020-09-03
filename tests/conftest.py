@@ -19,7 +19,6 @@ from flask import Flask, Response, render_template
 from flask import jsonify
 from flask import request as flask_request
 from flask.json import JSONEncoder
-from flask_babelex import Babel
 from flask_mail import Mail
 
 from flask_security import (
@@ -44,6 +43,15 @@ from flask_security import (
 )
 
 from tests.test_utils import populate_data
+
+NO_BABEL = False
+try:
+    from flask_babel import Babel
+except ImportError:
+    try:
+        from flask_babelex import Babel
+    except ImportError:
+        NO_BABEL = True
 
 
 @pytest.fixture()
@@ -92,7 +100,7 @@ def app(request):
             app.config["SECURITY_" + key.upper()] = value
 
     mail = Mail(app)
-    if babel is None or babel.args[0]:
+    if not NO_BABEL and (babel is None or babel.args[0]):
         Babel(app)
     app.json_encoder = JSONEncoder
     app.mail = mail

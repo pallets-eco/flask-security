@@ -16,6 +16,7 @@ import datetime
 import os
 
 from flask import Flask
+from flask_babel import Babel
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -139,6 +140,7 @@ def create_app():
 
     # Initialize standard Flask extensions
     CaptureMail(app)
+    Babel(app)
     # Enable CSRF on all api endpoints.
     CSRFProtect(app)
     db.init_app(app)

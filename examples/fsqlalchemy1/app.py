@@ -18,6 +18,7 @@ import os
 from flask import Flask, abort, current_app, render_template_string
 from flask.json import JSONEncoder
 from flask_sqlalchemy import SQLAlchemy
+from flask_babel import Babel
 from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
@@ -81,6 +82,10 @@ class Blog(db.Model):
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 app.security = Security(app, user_datastore)
+
+# Setup Babel - not strictly necessary but since this virtualenv has Flask-Babel
+# we need to initialize it
+Babel(app)
 
 # Set this so unit tests can mock out.
 app.blog_cls = Blog
