@@ -128,6 +128,7 @@ The following is a list of all the available form overrides:
 Localization
 ------------
 All messages, form labels, and form strings are localizable. Flask-Security uses
+`Flask-Babel <https://pypi.org/project/Flask-Babel/>`_ or
 `Flask-BabelEx <https://pythonhosted.org/Flask-BabelEx/>`_ to manage its messages.
 All translations are tagged with a domain, as specified by the configuration variable
 ``SECURITY_I18N_DOMAIN`` (default: "security"). For messages and labels all this

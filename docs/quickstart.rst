@@ -4,6 +4,12 @@ Quick Start
 There are some complete (but simple) examples available in the *examples* directory of the
 `Flask-Security repo`_.
 
+.. note::
+    The below quickstarts are just that - they don't enable most of the features (such as registration, reset, etc.).
+    They basically create a single user, and you can login as that user... that's it.
+    As you add more features, additional packages (e.g. Flask-Mail, Flask-Babel, pyqrcode) might be required
+    and will need to be added to your requirements.txt (or equivalent) file.
+
 .. danger::
    The examples below place secrets in source files. Never do this for your application
    especially if your source code is placed in a public repo. How you pass in secrets
@@ -87,7 +93,8 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     @app.before_first_request
     def create_user():
         db.create_all()
-        user_datastore.create_user(email="test@me.com", password=hash_password("password"))
+        if not user_datastore.find_user(email="test@me.com"):
+            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
         db.session.commit()
 
     # Views
@@ -153,7 +160,8 @@ and models.py. You can also do the models a folder and spread your tables there.
     @app.before_first_request
     def create_user():
         init_db()
-        user_datastore.create_user(email="test@me.com", password=hash_password("password"))
+        if not user_datastore.find_user(email="test@me.com"):
+            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
         db_session.commit()
 
     # Views
@@ -289,7 +297,8 @@ possible using MongoEngine:
     # Create a user to test with
     @app.before_first_request
     def create_user():
-        user_datastore.create_user(email="admin@me.com", password=hash_password("password"))
+        if not user_datastore.find_user(email="test@me.com"):
+            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
 
     # Views
     @app.route("/")
@@ -384,7 +393,8 @@ possible using Peewee:
         for Model in (Role, User, UserRoles):
             Model.drop_table(fail_silently=True)
             Model.create_table(fail_silently=True)
-        user_datastore.create_user(email="test@me.com", password=hash_password("password"))
+        if not user_datastore.find_user(email="test@me.com"):
+            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
 
     # Views
     @app.route('/')
@@ -401,10 +411,10 @@ possible using Peewee:
 Mail Configuration
 ------------------
 
-Flask-Security integrates with Flask-Mail to handle all email
-communications between user and site, so it's important to configure
-Flask-Mail with your email server details so Flask-Security can talk
-with Flask-Mail correctly.
+Flask-Security integrates with an outgoing mail service via the ``mail_util_cls`` which
+is part of initial configuration. The default class :class:`flask_security.MailUtil` utilizes the
+`Flask-Mail <https://pypi.org/project/Flask-Mail/>`_ package. Be sure to add flask_mail to
+your requirements.txt.
 
 The following code illustrates a basic setup, which could be added to
 the basic application code in the previous section::
@@ -415,7 +425,8 @@ the basic application code in the previous section::
     # After 'Create app'
     app.config['MAIL_SERVER'] = 'smtp.example.com'
     app.config['MAIL_PORT'] = 465
-    app.config['MAIL_USE_SSL'] = True
+    app.config['MAIL_USE_SSL'] = False
+    app.config['MAIL_USE_TLS'] = True
     app.config['MAIL_USERNAME'] = 'username'
     app.config['MAIL_PASSWORD'] = 'password'
     mail = Mail(app)
