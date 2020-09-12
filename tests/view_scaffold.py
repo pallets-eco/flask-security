@@ -26,12 +26,20 @@ import os
 
 from flask import Flask, flash, render_template_string, request, session
 
+HAVE_BABEL = HAVE_BABELEX = False
 try:
     import flask_babel
 
     HAVE_BABEL = True
 except ImportError:
-    HAVE_BABEL = False
+    try:
+        import flask_babelex
+
+        HAVE_BABELEX = True
+    except ImportError:
+        pass
+
+
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -120,8 +128,13 @@ def create_app():
 
     # This is NOT ideal since it basically changes entire APP (which is fine for
     # this test - but not fine for general use).
+    babel = None
     if HAVE_BABEL:
         babel = flask_babel.Babel(app, default_domain=security.i18n_domain)
+    if HAVE_BABELEX:
+        babel = flask_babelex.Babel(app, default_domain=security.i18n_domain)
+
+    if babel:
 
         @babel.localeselector
         def get_locale():
