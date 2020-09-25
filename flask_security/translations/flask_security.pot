@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2020-09-06 07:48-0700\n"
+"POT-Creation-Date: 2020-09-24 11:54-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,7 +24,9 @@ msgstr ""
 
 #: flask_security/core.py:200
 #: flask_security/templates/security/email/two_factor_instructions.html:1
+#: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
+#: flask_security/templates/security/email/us_instructions.txt:1
 msgid "Welcome"
 msgstr ""
 
@@ -38,10 +40,12 @@ msgstr ""
 
 #: flask_security/core.py:203
 #: flask_security/templates/security/email/reset_notice.html:1
+#: flask_security/templates/security/email/reset_notice.txt:1
 msgid "Your password has been reset"
 msgstr ""
 
 #: flask_security/core.py:204
+#: flask_security/templates/security/email/change_notice.txt:1
 msgid "Your password has been changed"
 msgstr ""
 
@@ -556,7 +560,12 @@ msgstr ""
 msgid "click here to reset it"
 msgstr ""
 
+#: flask_security/templates/security/email/change_notice.txt:3
+msgid "If you did not change your password, click the link below to reset it."
+msgstr ""
+
 #: flask_security/templates/security/email/confirmation_instructions.html:1
+#: flask_security/templates/security/email/confirmation_instructions.txt:1
 msgid "Please confirm your email through the link below:"
 msgstr ""
 
@@ -566,12 +575,15 @@ msgid "Confirm my account"
 msgstr ""
 
 #: flask_security/templates/security/email/login_instructions.html:1
+#: flask_security/templates/security/email/login_instructions.txt:1
 #: flask_security/templates/security/email/welcome.html:1
+#: flask_security/templates/security/email/welcome.txt:1
 #, python-format
 msgid "Welcome %(email)s!"
 msgstr ""
 
 #: flask_security/templates/security/email/login_instructions.html:3
+#: flask_security/templates/security/email/login_instructions.txt:3
 msgid "You can log into your account through the link below:"
 msgstr ""
 
@@ -583,15 +595,22 @@ msgstr ""
 msgid "Click here to reset your password"
 msgstr ""
 
+#: flask_security/templates/security/email/reset_instructions.txt:1
+msgid "Click the link below to reset your password:"
+msgstr ""
+
 #: flask_security/templates/security/email/two_factor_instructions.html:3
+#: flask_security/templates/security/email/two_factor_instructions.txt:3
 msgid "You can log into your account using the following code:"
 msgstr ""
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
+#: flask_security/templates/security/email/two_factor_rescue.txt:1
 msgid "can not access mail account"
 msgstr ""
 
 #: flask_security/templates/security/email/us_instructions.html:3
+#: flask_security/templates/security/email/us_instructions.txt:3
 msgid "You can sign into your account using the following code:"
 msgstr ""
 
@@ -599,6 +618,11 @@ msgstr ""
 msgid "Or use the the link below:"
 msgstr ""
 
+#: flask_security/templates/security/email/us_instructions.txt:7
+msgid "Or use the link below:"
+msgstr ""
+
 #: flask_security/templates/security/email/welcome.html:4
+#: flask_security/templates/security/email/welcome.txt:4
 msgid "You can confirm your email through the link below:"
 msgstr ""

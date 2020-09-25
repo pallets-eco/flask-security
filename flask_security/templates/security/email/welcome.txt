@@ -1,7 +1,7 @@
-{{ _('Welcome %(email)s!', email=user.email) }}
+{{ _fsdomain('Welcome %(email)s!', email=user.email) }}
 
 {% if security.confirmable %}
-{{ _('You can confirm your email through the link below:') }}
+{{ _fsdomain('You can confirm your email through the link below:') }}
 
 {{ confirmation_link }}
 {% endif %}

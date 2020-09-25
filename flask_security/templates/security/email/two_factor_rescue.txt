@@ -1,1 +1,1 @@
-{{ user.email }} {{ _("can not access mail account") }}
+{{ user.email }} {{ _fsdomain("can not access mail account") }}

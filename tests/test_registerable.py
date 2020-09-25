@@ -7,12 +7,19 @@
 
 import pytest
 from flask import Flask
-from tests.test_utils import authenticate, logout
+import jinja2
+from tests.test_utils import authenticate, check_xlation, logout
 
 from flask_security import Security
 from flask_security.core import UserMixin
-from flask_security.forms import ConfirmRegisterForm, RegisterForm, StringField
+from flask_security.forms import (
+    ConfirmRegisterForm,
+    RegisterForm,
+    StringField,
+    _default_field_labels,
+)
 from flask_security.signals import user_registered
+from flask_security.utils import localize_callback
 
 pytestmark = pytest.mark.registerable()
 
@@ -104,6 +111,59 @@ def test_registerable_flag(clients, app, get_message):
 
     response = clients.post("/register?next=/page1", data=data, follow_redirects=True)
     assert b"Page 1" in response.data
+
+
+@pytest.mark.confirmable()
+def test_xlation(app, client, get_message_local):
+    # Test form and email translation
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    response = client.get("/register", follow_redirects=True)
+    with app.app_context():
+        # Check header
+        assert (
+            f'<h1>{localize_callback("Register")}</h1>'.encode("utf-8") in response.data
+        )
+        submit = localize_callback(_default_field_labels["register"])
+        assert f'value="{submit}"'.encode("utf-8") in response.data
+
+    with app.mail.record_messages() as outbox:
+        response = client.post(
+            "/register",
+            data={
+                "email": "me@fr.com",
+                "password": "new strong password",
+                "password_confirm": "new strong password",
+            },
+            follow_redirects=True,
+        )
+
+    with app.app_context():
+        assert (
+            get_message_local("CONFIRM_REGISTRATION", email="me@fr.com").encode("utf-8")
+            in response.data
+        )
+        assert b"Home Page" in response.data
+        assert len(outbox) == 1
+        assert (
+            localize_callback(app.config["SECURITY_EMAIL_SUBJECT_REGISTER"])
+            in outbox[0].subject
+        )
+        assert (
+            str(
+                jinja2.escape(
+                    localize_callback(
+                        "You can confirm your email through the link below:"
+                    )
+                )
+            )
+            in outbox[0].html
+        )
+        assert (
+            localize_callback("You can confirm your email through the link below:")
+            in outbox[0].body
+        )
 
 
 @pytest.mark.confirmable()

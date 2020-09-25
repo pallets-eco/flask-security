@@ -1,1 +1,1 @@
-{{ _('Your password has been reset') }}
+{{ _fsdomain('Your password has been reset') }}

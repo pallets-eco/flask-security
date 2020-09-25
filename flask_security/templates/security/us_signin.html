@@ -3,7 +3,7 @@
 
 {% block content %}
     {% include "security/_messages.html" %}
-    <h1>{{ _("Sign In") }}</h1>
+    <h1>{{ _fsdomain("Sign In") }}</h1>
       <form action="{{ url_for_security("us_signin") }}" method="POST"
           name="us_signin_form">
       {{ us_signin_form.hidden_tag() }}
@@ -12,7 +12,7 @@
       {{ render_field_with_errors(us_signin_form.remember) }}
       {{ render_field(us_signin_form.submit) }}
       {% if code_methods %}
-        <h4>{{  _("Request one-time code be sent") }}</h4>
+        <h4>{{  _fsdomain("Request one-time code be sent") }}</h4>
         {% for subfield in us_signin_form.chosen_method %}
           {% if subfield.data in code_methods %}
             {{ render_field_with_errors(subfield) }}
@@ -20,7 +20,7 @@
         {% endfor %}
         {{ render_field_errors(us_signin_form.chosen_method) }}
         {% if code_sent %}
-          <p>{{ _("Code has been sent") }}
+          <p>{{ _fsdomain("Code has been sent") }}
         {% endif %}
         {{ render_field(us_signin_form.submit_send_code, formaction=url_for_security('us_signin_send_code')) }}
       {% endif %}

@@ -620,6 +620,8 @@ def send_mail(subject, recipient, template, **context):
     if config_value("EMAIL_HTML"):
         html = _security.render_template("%s/%s.html" % ctx, **context)
 
+    subject = localize_callback(subject)
+
     sender = _security.email_sender
     if isinstance(sender, LocalProxy):
         sender = sender._get_current_object()

@@ -1,10 +1,10 @@
-{{ _("Welcome") }} {{ username }}!
+{{ _fsdomain("Welcome") }} {{ username }}!
 
-{{ _("You can sign into your account using the following code:") }} {{ token }}
+{{ _fsdomain("You can sign into your account using the following code:") }} {{ token }}
 
 {% if login_link %}
 
-    {{ _("Or use the link below:") }}
+    {{ _fsdomain("Or use the link below:") }}
 
     {{ login_link }}
 {% endif %}
