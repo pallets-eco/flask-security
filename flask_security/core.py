@@ -151,6 +151,7 @@ _default_config = {
     "RESET_ERROR_VIEW": None,
     "RESET_VIEW": None,
     "LOGIN_ERROR_VIEW": None,
+    "REQUIRES_CONFIRMATION_ERROR_VIEW": None,
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
     "REDIRECT_ALLOW_SUBDOMAINS": False,

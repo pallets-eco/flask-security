@@ -679,6 +679,13 @@ Confirmable
     the value of ``SECURITY_CONFIRMABLE`` is set to ``True``.
 
     Default: ``False``.
+.. py:data:: SECURITY_REQUIRES_CONFIRMATION_ERROR_VIEW
+
+    Specifies a redirect page if the users tries to login with an un-confirmed email address.
+    If an URL endpoint is specified, flashes an error messages and passes user email as an argument.
+    Default behavior is to reload the login form with an error message without redirecting to an other page.
+
+    Default: ``None``.
 
 Changeable
 ----------

@@ -194,6 +194,12 @@ def login():
     if current_user.is_authenticated:
         return redirect(get_url(_security.post_login_view))
     else:
+        if form.requires_confirmation and _security.requires_confirmation_error_view:
+            do_flash(*get_message("CONFIRMATION_REQUIRED"))
+            return redirect(get_url(
+                _security.requires_confirmation_error_view,
+                qparams={'email': form.email.data}
+            ))
         return _security.render_template(
             config_value("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
         )
