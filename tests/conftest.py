@@ -41,6 +41,7 @@ from flask_security import (
     permissions_required,
     uia_email_mapper,
 )
+from flask_security.utils import localize_callback
 
 from tests.test_utils import populate_data
 
@@ -688,6 +689,14 @@ def get_message(app):
     def fn(key, **kwargs):
         rv = app.config["SECURITY_MSG_" + key][0] % kwargs
         return rv.encode("utf-8")
+
+    return fn
+
+
+@pytest.fixture()
+def get_message_local(app):
+    def fn(key, **kwargs):
+        return localize_callback(app.config["SECURITY_MSG_" + key][0], **kwargs)
 
     return fn
 

@@ -26,12 +26,20 @@ import os
 
 from flask import Flask, flash, render_template_string, request, session
 
+HAVE_BABEL = HAVE_BABELEX = False
 try:
     import flask_babel
 
     HAVE_BABEL = True
 except ImportError:
-    HAVE_BABEL = False
+    try:
+        import flask_babelex
+
+        HAVE_BABELEX = True
+    except ImportError:
+        pass
+
+
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -66,7 +74,8 @@ class FlashMail:
 
 
 def create_app():
-    app = Flask(__name__)
+    # Use real templates - not test templates...
+    app = Flask(__name__, template_folder="../")
     app.config["DEBUG"] = True
     # SECRET_KEY generated using: secrets.token_urlsafe()
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
@@ -116,12 +125,15 @@ def create_app():
     app.json_encoder = JSONEncoder
     # Setup Flask-Security
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
-    security = Security(app, user_datastore)
+    Security(app, user_datastore)
 
-    # This is NOT ideal since it basically changes entire APP (which is fine for
-    # this test - but not fine for general use).
+    babel = None
     if HAVE_BABEL:
-        babel = flask_babel.Babel(app, default_domain=security.i18n_domain)
+        babel = flask_babel.Babel(app)
+    if HAVE_BABELEX:
+        babel = flask_babelex.Babel(app)
+
+    if babel:
 
         @babel.localeselector
         def get_locale():

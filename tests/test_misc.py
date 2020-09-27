@@ -491,6 +491,8 @@ def test_per_request_xlate(app, client):
 
     response = client.get("/login", headers=[("Accept-Language", "fr")])
     assert b'<label for="password">Mot de passe</label>' in response.data
+    # make sure template contents get xlated (not just form).
+    assert b"<h1>Connexion</h1>" in response.data
 
     data = dict(email="matt@lp.com", password="", remember="y")
     response = client.post("/login", data=data, headers=[("Accept-Language", "fr")])
@@ -510,6 +512,7 @@ def test_per_request_xlate(app, client):
     response = client.get("/change", follow_redirects=True)
     assert response.status_code == 200
     assert b"Nouveau mot de passe" in response.data
+    assert b"<h1>Changer de mot de passe</h1>" in response.data
 
     # try JSON
     response = client.post(

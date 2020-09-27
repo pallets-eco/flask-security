@@ -21,11 +21,13 @@ try:
     from flask_babel import Domain
 
     _domain_cls = Domain
+    _dir_keyword = "translation_directories"
 except ImportError:
     try:
         from flask_babelex import Domain
 
         _domain_cls = Domain
+        _dir_keyword = "dirname"
     except ImportError:
         # Fake up just enough
         class Domain:
@@ -71,10 +73,11 @@ if _domain_cls:
     wtforms_domain = _domain_cls(messages_path(), domain="wtforms")
 
     def get_i18n_domain(app):
-        return _domain_cls(
-            translation_directories=cv("I18N_DIRNAME", app=app),
-            domain=cv("I18N_DOMAIN", app=app),
-        )
+        kwargs = {
+            _dir_keyword: cv("I18N_DIRNAME", app=app),
+            "domain": cv("I18N_DOMAIN", app=app),
+        }
+        return _domain_cls(**kwargs)
 
     def have_babel():
         return True

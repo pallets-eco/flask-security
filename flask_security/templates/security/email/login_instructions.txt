@@ -1,5 +1,5 @@
-{{ _('Welcome %(email)s!', email=user.email) }}
+{{ _fsdomain('Welcome %(email)s!', email=user.email) }}
 
-{{ _('You can log into your account through the link below:') }}
+{{ _fsdomain('You can log into your account through the link below:') }}
 
 {{ login_link }}

@@ -1,3 +1,3 @@
-{{ _('Please confirm your email through the link below:') }}
+{{ _fsdomain('Please confirm your email through the link below:') }}
 
 {{ confirmation_link }}

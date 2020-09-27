@@ -134,7 +134,8 @@ All translations are tagged with a domain, as specified by the configuration var
 ``SECURITY_I18N_DOMAIN`` (default: "security"). For messages and labels all this
 works seamlessly.  For strings inside templates it is necessary to explicitly ask for
 the "security" domain, since your application itself might have its own domain.
-Flask-Security places the method ``_fsdomain`` in jinja2's global environment.
+Flask-Security places the method ``_fsdomain`` in jinja2's global environment and
+uses that in all templates.
 In order to reference a Flask-Security translation from ANY template (such as if you copied and
 modified an existing security template) just use that method::
 

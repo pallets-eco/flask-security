@@ -1,5 +1,5 @@
-{{ _('Your password has been changed') }}
+{{ _fsdomain('Your password has been changed') }}
 {% if security.recoverable %}
-{{ _('If you did not change your password, click the link below to reset it.') }}
+{{ _fsdomain('If you did not change your password, click the link below to reset it.') }}
 {{ url_for_security('forgot_password', _external=True) }}
 {% endif %}

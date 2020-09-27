@@ -30,14 +30,16 @@ Features & Cleanup
   (if and only if) the UserModel contains an 'email' columns, a new query param 'identity' is returned
   which returns the value of UserModel.calc_username().
 - (:pr:`382`) Improvements and documentation for two-factor authentication.
-- (:issue:`381`) Support Flask-Babel 2.0 which has backported Domain support. Flask-Security now supports
-  Flask-Babel (>=2.00), Flask-BabelEx, as well as no translation support. Please see backwards compatibility notes below.
 
 Fixed
 +++++
 - (:issue:`347`) Fix peewee. Turns out - due to lack of unit tests - peewee hasn't worked since
   'permissions' were added in 3.3. Furthermore, changes in 3.4 around get_id and alternative tokens also
-  didn't work since peewee defines its own `get_id`.
+  didn't work since peewee defines its own `get_id` method.
+- (:issue:`389`) Fixes for translations. First - email subjects were never being translated. Second converted
+  all templates to use _fsdomain(xx) rather than _(xx) so that they get translated regardless of the app's domain.
+- (:issue:`381`) Support Flask-Babel 2.0 which has backported Domain support. Flask-Security now supports
+  Flask-Babel (>=2.00), Flask-BabelEx, as well as no translation support. Please see backwards compatibility notes below.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -55,7 +57,7 @@ Backwards Compatibility Concerns
   :py:data:`SECURITY_US_VERIFY_URL`). The simplest change would be to call ``/verify`` everywhere
   the application used to call ``/tf-confirm``.
 
-- (:pr:`339`) Require ``fs_uniquifier``. In 3.3 the ``fs_uniqifier`` was added in the UserModel to 'fix'
+- (:pr:`339`) Require ``fs_uniquifier``. In 3.3 the ``fs_uniqifier`` was added in the UserModel to fix
   the slow authentication token issue. In 3.4 the ``fs_uniquifier`` was used to implement Flask-Login's
   `Alternative Token` feature - thus decoupling the primary key (id) from any security context.
   All along, there have been a few issues with applications not wanting to use the name 'id' in their
