@@ -489,6 +489,15 @@ def forgot_password():
     if _security._want_json(request):
         return base_render_json(form, include_user=False)
 
+    if form.requires_confirmation and _security.requires_confirmation_error_view:
+        do_flash(*get_message("CONFIRMATION_REQUIRED"))
+        return redirect(
+            get_url(
+                _security.requires_confirmation_error_view,
+                qparams={"email": form.email.data},
+            )
+        )
+
     return _security.render_template(
         config_value("FORGOT_PASSWORD_TEMPLATE"),
         forgot_password_form=form,
