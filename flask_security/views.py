@@ -199,7 +199,7 @@ def login():
             return redirect(
                 get_url(
                     _security.requires_confirmation_error_view,
-                    qparams={'email': form.email.data}
+                    qparams={'email': form.email.data},
                 )
             )
         return _security.render_template(
