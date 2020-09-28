@@ -1007,10 +1007,7 @@ def test_next(app, client, get_message):
 @pytest.mark.settings(requires_confirmation_error_view="/confirm")
 def test_requires_confirmation_error_redirect(app, client):
     data = dict(
-        email="jyl@lp.com",
-        password="password",
-        password_confirm="password",
-        next="",
+        email="jyl@lp.com", password="password", password_confirm="password", next=""
     )
     response = client.post("/register", data=data, follow_redirects=True)
 

@@ -124,7 +124,9 @@ def test_requires_confirmation_error_redirect(app, clients):
     data = dict(email="jyl@lp.com", password="awesome sunset")
     clients.post("/register", data=data)
 
-    response = clients.post("/reset", data=dict(email="jyl@lp.com"), follow_redirects=True)
+    response = clients.post(
+        "/reset", data=dict(email="jyl@lp.com"), follow_redirects=True
+    )
     assert b"send_confirmation_form" in response.data
     assert b"jyl@lp.com" in response.data
 
