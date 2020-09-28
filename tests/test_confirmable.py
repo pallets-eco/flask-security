@@ -127,6 +127,17 @@ def test_confirmable_flag(app, clients, get_message):
 
 
 @pytest.mark.registerable()
+@pytest.mark.settings(requires_confirmation_error_view="/confirm")
+def test_requires_confirmation_error_redirect(app, clients):
+    data = dict(email="jyl@lp.com", password="awesome sunset")
+    response = clients.post("/register", data=data)
+
+    response = authenticate(clients, **data, follow_redirects=True)
+    assert b"send_confirmation_form" in response.data
+    assert b"jyl@lp.com" in response.data
+
+
+@pytest.mark.registerable()
 @pytest.mark.settings(confirm_email_within="1 milliseconds")
 def test_expired_confirmation_token(client, get_message):
     with capture_registrations() as registrations:

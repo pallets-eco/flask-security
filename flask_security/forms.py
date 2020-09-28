@@ -296,13 +296,18 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
 
     submit = SubmitField(get_form_field_label("recover_password"))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.requires_confirmation = False
+
     def validate(self):
         if not super().validate():
             return False
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
-        if requires_confirmation(self.user):
+        self.requires_confirmation = requires_confirmation(self.user)
+        if self.requires_confirmation:
             self.email.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False
         return True
@@ -351,6 +356,7 @@ class LoginForm(Form, NextFormMixin):
                 )
             )
             self.password.description = html
+        self.requires_confirmation = False
 
     def validate(self):
         if not super().validate():
@@ -374,7 +380,8 @@ class LoginForm(Form, NextFormMixin):
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
-        if requires_confirmation(self.user):
+        self.requires_confirmation = requires_confirmation(self.user)
+        if self.requires_confirmation:
             self.email.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False
         if not self.user.is_active:

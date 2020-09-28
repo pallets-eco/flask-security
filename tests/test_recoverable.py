@@ -117,6 +117,20 @@ def test_recoverable_flag(app, clients, get_message):
     assert get_message("INVALID_RESET_PASSWORD_TOKEN") in response.data
 
 
+@pytest.mark.confirmable()
+@pytest.mark.registerable()
+@pytest.mark.settings(requires_confirmation_error_view="/confirm")
+def test_requires_confirmation_error_redirect(app, clients):
+    data = dict(email="jyl@lp.com", password="awesome sunset")
+    clients.post("/register", data=data)
+
+    response = clients.post(
+        "/reset", data=dict(email="jyl@lp.com"), follow_redirects=True
+    )
+    assert b"send_confirmation_form" in response.data
+    assert b"jyl@lp.com" in response.data
+
+
 @pytest.mark.settings()
 def test_recoverable_json(app, client, get_message):
     recorded_resets = []

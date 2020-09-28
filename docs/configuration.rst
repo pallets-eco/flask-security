@@ -679,6 +679,14 @@ Confirmable
     the value of ``SECURITY_CONFIRMABLE`` is set to ``True``.
 
     Default: ``False``.
+.. py:data:: SECURITY_REQUIRES_CONFIRMATION_ERROR_VIEW
+
+    Specifies a redirect page if the users tries to login, reset password or us-signin with an unconfirmed account.
+    If an URL endpoint is specified, flashes an error messages and passes user email as an argument.
+    For us-signin, no argument is specified: it simply flashes the error message and redirects.
+    Default behavior is to reload the form with an error message without redirecting to an other page.
+
+    Default: ``None``.
 
 Changeable
 ----------

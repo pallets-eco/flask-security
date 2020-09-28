@@ -224,6 +224,7 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.remember.default = config_value("DEFAULT_REMEMBER_ME")
+        self.requires_confirmation = False
 
     def validate(self):
         self.user = None
@@ -233,7 +234,8 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
         if self.submit.data:
             # This is login
             # Only check this once authenticated to not give away info
-            if requires_confirmation(self.user):
+            self.requires_confirmation = requires_confirmation(self.user)
+            if self.requires_confirmation:
                 self.identity.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
                 return False
         return True
@@ -394,6 +396,10 @@ def us_signin_send_code():
         }
         return base_render_json(form, include_user=False, additional=payload)
 
+    if form.requires_confirmation and _security.requires_confirmation_error_view:
+        do_flash(*get_message("CONFIRMATION_REQUIRED"))
+        return redirect(get_url(_security.requires_confirmation_error_view))
+
     return _security.render_template(
         config_value("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,
@@ -547,6 +553,11 @@ def us_signin():
 
     # On error - wipe code
     form.passcode.data = None
+
+    if form.requires_confirmation and _security.requires_confirmation_error_view:
+        do_flash(*get_message("CONFIRMATION_REQUIRED"))
+        return redirect(get_url(_security.requires_confirmation_error_view))
+
     return _security.render_template(
         config_value("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,

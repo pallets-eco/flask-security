@@ -1004,6 +1004,30 @@ def test_next(app, client, get_message):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
+@pytest.mark.settings(requires_confirmation_error_view="/confirm")
+def test_requires_confirmation_error_redirect(app, client):
+    data = dict(
+        email="jyl@lp.com", password="password", password_confirm="password", next=""
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+
+    with capture_send_code_requests() as requests:
+        response = client.post(
+            "/us-signin/send-code",
+            data=dict(identity="jyl@lp.com", chosen_method="email"),
+            follow_redirects=True,
+        )
+
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="jyl@lp.com", passcode=requests[0]["token"]),
+        follow_redirects=True,
+    )
+    assert b"send_confirmation_form" in response.data
+
+
+@pytest.mark.registerable()
+@pytest.mark.confirmable()
 def test_confirmable(app, client, get_message):
     # Verify can't log in if need confirmation.
     data = dict(
