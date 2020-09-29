@@ -83,7 +83,8 @@ def roles():
     "create",
     help="Create a new user with one or more attributes using the syntax:"
     " attr:value. If attr isn't set 'email' is presumed."
-    " Values will be validated using the configured confirm_register_form;"
+    " Identity attribute values will be validated using the configured"
+    " confirm_register_form;"
     " however, any ADDITIONAL attribute:value pairs will be sent to"
     " datastore.create_user",
 )
@@ -119,8 +120,14 @@ def users_create(attributes, password, active):
     form = _security.confirm_register_form(MultiDict(kwargs), meta={"csrf": False})
 
     if form.validate():
+        # We don't use the form to provide values so that this CLI can actually
+        # set any usermodel attribute. This means though that things like email
+        # normalization has to be done here (since normally that is part of validation)
         kwargs["password"] = hash_password(kwargs["password"])
         kwargs["active"] = active
+        # echo normalized email...
+        if "email" in kwargs:
+            kwargs["email"] = form.email.data
         _datastore.create_user(**kwargs)
         click.secho("User created successfully.", fg="green")
         kwargs["password"] = "****"

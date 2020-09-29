@@ -179,6 +179,8 @@ User Registration
 Flask-Security comes packaged with a basic user registration view. This view is
 very simple and new users need only supply an email address and their password.
 This view can be overridden if your registration process requires more fields.
+User email is validated and normalized using the
+`email_validator <https://pypi.org/project/email-validator/>`_ package.
 
 
 Login Tracking

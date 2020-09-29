@@ -27,6 +27,7 @@ from wtforms import (
     ValidationError,
     validators,
 )
+from wtforms.validators import StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
 from .confirmable import requires_confirmation
@@ -113,16 +114,31 @@ class Required(ValidatorMixin, validators.DataRequired):
     pass
 
 
-class Email(ValidatorMixin, validators.Email):
-    pass
-
-
 class Length(ValidatorMixin, validators.Length):
     pass
 
 
+class EmailValidation:
+    """ Simple interface to email_validator.
+    """
+
+    def __call__(self, form, field):
+        if field.data is None:  # pragma: no cover
+            raise ValidationError(get_message("EMAIL_NOT_PROVIDED")[0])
+
+        try:
+            field.data = _security._mail_util.validate(field.data)
+        except ValueError:
+            msg = get_message("INVALID_EMAIL_ADDRESS")[0]
+            # we stop further validators if email isn't valid.
+            # TODO: email_validator provides some really nice error messages - however
+            # they aren't localized. And there isn't an easy way to add multiple
+            # errors at once.
+            raise StopValidation(msg)
+
+
 email_required = Required(message="EMAIL_NOT_PROVIDED")
-email_validator = Email(message="INVALID_EMAIL_ADDRESS")
+email_validator = EmailValidation()
 password_required = Required(message="PASSWORD_NOT_PROVIDED")
 
 
@@ -143,13 +159,14 @@ def get_form_field_label(key):
 
 def unique_user_email(form, field):
     uia_email = get_identity_attribute("email")
+    norm_email = _security._mail_util.normalize(field.data)
     if (
         _datastore.find_user(
-            case_insensitive=uia_email.get("case_insensitive", False), email=field.data
+            case_insensitive=uia_email.get("case_insensitive", False), email=norm_email
         )
         is not None
     ):
-        msg = get_message("EMAIL_ALREADY_ASSOCIATED", email=field.data)[0]
+        msg = get_message("EMAIL_ALREADY_ASSOCIATED", email=norm_email)[0]
         raise ValidationError(msg)
 
 
@@ -157,6 +174,9 @@ def unique_identity_attribute(form, field):
     """A validator that checks the field data against all configured
     SECURITY_USER_IDENTITY_ATTRIBUTES.
     This can be used as part of registration.
+
+    Be aware that the "mapper" function likely also nornalizes the input in addition
+    to validating it.
 
     :param form:
     :param field:
@@ -178,9 +198,11 @@ def unique_identity_attribute(form, field):
 
 
 def valid_user_email(form, field):
+    # Verify email exists in DB - be sure to normalize first.
     uia_email = get_identity_attribute("email")
+    norm_email = _security._mail_util.normalize(field.data)
     form.user = _datastore.find_user(
-        case_insensitive=uia_email.get("case_insensitive", False), email=field.data
+        case_insensitive=uia_email.get("case_insensitive", False), email=norm_email
     )
     if form.user is None:
         raise ValidationError(get_message("USER_DOES_NOT_EXIST")[0])

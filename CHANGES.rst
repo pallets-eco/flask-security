@@ -30,6 +30,7 @@ Features & Cleanup
   (if and only if) the UserModel contains an 'email' columns, a new query param 'identity' is returned
   which returns the value of UserModel.calc_username().
 - (:pr:`382`) Improvements and documentation for two-factor authentication.
+- (:pr:`xxx`) Add support for email validation and normalization.
 
 Fixed
 +++++
@@ -76,7 +77,7 @@ Backwards Compatibility Concerns
   corresponds to is determined, then the UserModel is queried specifically for that *attribute:value* pair.
 
 - (:pr:`354`) The :class:`flask_security.PhoneUtil` is now initialized as part of Flask-Security initialization rather than
-  ``@app.before_first_request`` (since that broke the CLI). So it isn't called in an application context, the *app* being initialized is
+  ``@app.before_first_request`` (since that broke the CLI). Since it isn't called in an application context, the *app* being initialized is
   passed as an argument to *__init__*.
 
 - (:issue:`381`) When using Flask-Babel (>= 2.0) it is required that the application initialize Flask-Babel (e.g. Babel(app)).
@@ -84,6 +85,12 @@ Backwards Compatibility Concerns
   is installed, but not initialized. Also, Flask-Security no longer has a dependency on either Flask-Babel or Flask-BabelEx - if neither
   are installed, it falls back to a dummy translation. Thus - if you application expects translations services, it must specify the appropriate
   dependency.
+
+- (:pr:`xxx`) Email input is now normalized prior to being stored in the DB. Previously, it was validated, but the raw input
+  was stored. Normalization and validation rely on the `email_validator <https://pypi.org/project/email-validator/>`_ package.
+  The :class:`.MailUtil` class provides the interface for normalization and validation - allowing all this to be customized.
+  If you have unicode local or domain parts - existing users may have difficulties logging in. Administratively you need to
+  read each user record, normalize the email (see :class:`.MailUtil`), and write it back.
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 

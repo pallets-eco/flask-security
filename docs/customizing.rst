@@ -141,6 +141,11 @@ modified an existing security template) just use that method::
 
     {{ _fsdomain("Login") }}
 
+Be aware that Flask-Security will validate and normalize email input using the
+`email_validator <https://pypi.org/project/email-validator/>`_ package.
+The normalized form is stored in the DB.
+
+
 .. _emails_topic:
 
 Emails
@@ -228,7 +233,7 @@ us_instructions                 N/A                                US_EMAIL_SUBJ
 
 When sending an email, Flask-Security goes through the following steps:
 
-  #. Call the email context processor as described above
+  #. Calls the email context processor as described above
 
   #. Calls ``render_template`` (as configured at Flask-Security initialization time) with the
      context and template to produce a text and/or html version of the message
@@ -244,7 +249,8 @@ Emails with Celery
 Sometimes it makes sense to send emails via a task queue, such as `Celery`_.
 This is supported by providing your own implementation of the :class:`.MailUtil` class::
 
-    class MyMailUtil:
+    from flask_security import MailUtil
+    class MyMailUtil(MailUtil):
 
         def send_mail(self, template, subject, recipient, sender, body, html, user, **kwargs):
             send_flask_mail.delay(

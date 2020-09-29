@@ -396,10 +396,6 @@ def us_signin_send_code():
         }
         return base_render_json(form, include_user=False, additional=payload)
 
-    if form.requires_confirmation and _security.requires_confirmation_error_view:
-        do_flash(*get_message("CONFIRMATION_REQUIRED"))
-        return redirect(get_url(_security.requires_confirmation_error_view))
-
     return _security.render_template(
         config_value("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,

@@ -404,3 +404,54 @@ def test_nullable_username(app, sqlalchemy_datastore):
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 200
+
+
+def test_email_normalization(app, client):
+    # should be able to login either as LP.com or lp.com
+    data = dict(
+        email="\N{BLACK SCISSORS}@LP.com",
+        password="battery staple",
+        password_confirm="battery staple",
+    )
+
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Home Page" in response.data
+    logout(client)
+
+    # Test user can login after registering
+    response = authenticate(
+        client, email="\N{BLACK SCISSORS}@lp.com", password="battery staple"
+    )
+    assert response.status_code == 302
+
+    logout(client)
+    # Test user can login after registering using original non-canonical email
+    response = authenticate(
+        client, email="\N{BLACK SCISSORS}@LP.com", password="battery staple"
+    )
+    assert response.status_code == 302
+
+
+def test_email_normalization_options(app, client, get_message):
+    # verify can set options for email_validator
+    data = dict(
+        email="\N{BLACK SCISSORS}@LP.com",
+        password="battery staple",
+        password_confirm="battery staple",
+    )
+
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Home Page" in response.data
+    logout(client)
+
+    # turn off allowing 'local' part unicode.
+    app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"allow_smtputf8": False}
+    data = dict(
+        email="\N{WHITE SCISSORS}@LP.com",
+        password="battery staple",
+        password_confirm="battery staple",
+    )
+
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert response.status_code == 200
+    assert get_message("INVALID_EMAIL_ADDRESS") in response.data

@@ -161,6 +161,17 @@ These configuration keys are used globally across all features.
 
     Default: ``None``, meaning the token never expires.
 
+.. py:data:: SECURITY_EMAIL_VALIDATOR_ARGS
+
+    Email address are validated using the `email_validator`_ package. Its methods
+    have some configurable options - these can be set here and will be passed in.
+
+    Default: ``None``, meaning use the defaults from email_validator package.
+
+    .. versionadded:: 4.0.0
+
+.. _email_validator: https://pypi.org/project/email-validator/
+
 .. py:data:: SECURITY_DEFAULT_HTTP_AUTH_REALM
 
     Specifies the default authentication realm when using basic HTTP auth.
