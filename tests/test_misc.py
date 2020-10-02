@@ -61,11 +61,12 @@ from flask_security.utils import (
 
 @pytest.mark.recoverable()
 def test_my_mail_util(app, sqlalchemy_datastore):
-    class MyMailUtil:
-        def __init__(self, app):
-            pass
+    from flask_security import MailUtil
 
-        def send_mail(self, template, subject, recipient, sender, body, html, user):
+    class MyMailUtil(MailUtil):
+        def send_mail(
+            self, template, subject, recipient, sender, body, html, user, **kwargs
+        ):
             assert template == "reset_instructions"
             assert subject == app.config["SECURITY_EMAIL_SUBJECT_PASSWORD_RESET"]
             assert recipient == "matt@lp.com"

@@ -497,3 +497,11 @@ def test_reset_inactive(client, get_message):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 400
+
+
+def test_email_normalization(client, get_message):
+    response = client.post(
+        "/reset", data=dict(email="joe@LP.COM"), follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert get_message("PASSWORD_RESET_REQUEST", email="joe@lp.com") in response.data

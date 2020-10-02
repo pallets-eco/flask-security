@@ -9,7 +9,6 @@
 """
 
 import base64
-import sys
 
 import pytest
 from flask import Flask
@@ -356,7 +355,6 @@ def test_unicode_length(app, client, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
 def test_unicode_invalid_length(app, client, get_message):
     # From NIST and OWASP - each unicode code point should count as a character.
     authenticate(client)

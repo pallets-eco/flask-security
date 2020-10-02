@@ -76,6 +76,19 @@ def test_cli_createuser_extraargs(script_info):
     assert "was already activated" in result.output
 
 
+def test_cli_createuser_normalize(script_info):
+    """Test create user CLI that is properly normalizes email."""
+    runner = CliRunner()
+
+    result = runner.invoke(
+        users_create,
+        ["email@EXAMPLE.org", "--password", "battery staple"],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+    assert "email@example.org" in result.stdout
+
+
 def test_cli_createrole(script_info):
     """Test create user CLI."""
     runner = CliRunner()

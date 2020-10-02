@@ -94,6 +94,7 @@ _default_config = {
     "FLASH_MESSAGES": True,
     "I18N_DOMAIN": "flask_security",
     "I18N_DIRNAME": pkg_resources.resource_filename("flask_security", "translations"),
+    "EMAIL_VALIDATOR_ARGS": None,
     "PASSWORD_HASH": "bcrypt",
     "PASSWORD_SALT": None,
     "PASSWORD_SINGLE_HASH": {

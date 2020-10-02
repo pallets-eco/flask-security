@@ -30,7 +30,7 @@ from flask_login import current_user
 from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
 from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
-from wtforms import validators, ValidationError
+from wtforms import ValidationError
 from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
@@ -757,18 +757,10 @@ def uia_email_mapper(identity):
     .. versionadded:: 3.4.0
     """
 
-    # Fake up enough to invoke the WTforms email validator.
-    class FakeField:
-        pass
-
-    email_validator = validators.Email(message="nothing")
-    field = FakeField()
-    field.data = identity
     try:
-        email_validator(None, field)
-    except ValidationError:
+        return _security._mail_util.normalize(identity)
+    except ValueError:
         return None
-    return identity
 
 
 def use_double_hash(password_hash=None):
