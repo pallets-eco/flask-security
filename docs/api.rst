@@ -147,6 +147,10 @@ Utils
   :members:
   :special-members: __init__
 
+.. autoclass:: flask_security.PasswordUtil
+  :members:
+  :special-members: __init__
+
 .. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms
 

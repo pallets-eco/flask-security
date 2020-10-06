@@ -18,6 +18,7 @@ from flask_security.cli import (
     users_deactivate,
     users_reset_access,
 )
+from flask_security import verify_password
 
 
 def test_cli_createuser(script_info):
@@ -77,16 +78,23 @@ def test_cli_createuser_extraargs(script_info):
 
 
 def test_cli_createuser_normalize(script_info):
-    """Test create user CLI that is properly normalizes email."""
+    """Test create user CLI that is properly normalizes email and password."""
     runner = CliRunner()
 
     result = runner.invoke(
         users_create,
-        ["email@EXAMPLE.org", "--password", "battery staple"],
+        ["email@EXAMPLE.org", "--password", "battery staple\N{ROMAN NUMERAL ONE}"],
         obj=script_info,
     )
     assert result.exit_code == 0
     assert "email@example.org" in result.stdout
+
+    app = script_info.load_app()
+    with app.app_context():
+        user = app.security.datastore.find_user(email="email@example.org")
+        assert verify_password(
+            "battery staple\N{LATIN CAPITAL LETTER I}", user.password
+        )
 
 
 def test_cli_createrole(script_info):

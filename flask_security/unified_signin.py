@@ -169,6 +169,7 @@ class _UnifiedPassCodeForm(Form):
             ok = False
             for method in config_value("US_ENABLED_METHODS"):
                 if method == "password":
+                    passcode = _security._password_util.normalize(passcode)
                     if self.user.verify_and_update_password(passcode):
                         ok = True
                         break

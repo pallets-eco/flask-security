@@ -269,6 +269,45 @@ def test_simple_signin_json(app, client_nc, get_message):
     assert len(flashes) == 0
 
 
+@pytest.mark.changeable()
+def test_signin_pwd_json(app, client, get_message):
+    # Make sure us-signin accepts a normalized and original password.
+    authenticate(client)
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    data = dict(
+        password="password",
+        new_password="new strong password\N{ROMAN NUMERAL ONE}",
+        new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
+    )
+    response = client.post(
+        "/change", json=data, headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/us-signin",
+        json=dict(
+            identity="matt@lp.com", passcode="new strong password\N{ROMAN NUMERAL ONE}"
+        ),
+        headers=headers,
+        follow_redirects=False,
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/us-signin",
+        json=dict(
+            identity="matt@lp.com",
+            passcode="new strong password\N{LATIN CAPITAL LETTER I}",
+        ),
+        headers=headers,
+        follow_redirects=False,
+    )
+    assert response.status_code == 200
+
+
 def test_admin_setup_user_reset(app, client_nc, get_message):
     # Test that we can setup SMS using datastore admin method, and that
     # the datastore admin reset (reset_user_access) disables it.

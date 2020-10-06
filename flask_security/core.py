@@ -46,6 +46,7 @@ from .forms import (
     VerifyForm,
 )
 from .mail_util import MailUtil
+from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
 from .twofactor import tf_send_security_token
 from .unified_signin import (
@@ -63,7 +64,6 @@ from .utils import (
     FsPermNeed,
     csrf_cookie_handler,
     default_want_json,
-    default_password_validator,
     get_config,
     get_identity_attribute,
     get_identity_attributes,
@@ -127,6 +127,7 @@ _default_config = {
     "PASSWORD_COMPLEXITY_CHECKER": None,
     "PASSWORD_CHECK_BREACHED": False,
     "PASSWORD_BREACHED_COUNT": 1,
+    "PASSWORD_NORMALIZE_FORM": "NFKD",
     "DEPRECATED_PASSWORD_SCHEMES": ["auto"],
     "LOGIN_URL": "/login",
     "LOGOUT_URL": "/logout",
@@ -578,7 +579,6 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             _unauthn_handler=default_unauthn_handler,
             _reauthn_handler=default_reauthn_handler,
             _unauthz_handler=default_unauthz_handler,
-            _password_validator=default_password_validator,
         )
     )
 
@@ -923,9 +923,6 @@ class _SecurityState:
     def reauthn_handler(self, cb):
         self._reauthn_handler = cb
 
-    def password_validator(self, cb):
-        self._password_validator = cb
-
 
 class Security:
     """The :class:`Security` class initializes the Flask-Security extension.
@@ -960,6 +957,7 @@ class Security:
     :param phone_util_cls: Class to use for phone number utilities.
      Defaults to :class:`PhoneUtil`
     :param mail_util_cls: Class to use for sending emails. Defaults to :class:`MailUtil`
+    :param password_util_cls: Class to use for password normalization/validation.
 
     .. versionadded:: 3.4.0
         ``verify_form`` added as part of freshness/re-authentication
@@ -977,11 +975,14 @@ class Security:
          parsing implementations - see :py:class:`PhoneUtil`
 
     .. versionadded:: 4.0.0
-        ``mail_util_cls`` added to isolate mailing handling
+        ``mail_util_cls`` added to isolate mailing handling.
+        ``password_util_cls`` added to encapsulate password validation/normalization.
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
         ``two_factor_verify_password_form`` removed.
+        ``password_validator`` removed in favor of the new ``password_util_cls``.
+
     """
 
     def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
@@ -1026,6 +1027,8 @@ class Security:
             kwargs.setdefault("phone_util_cls", PhoneUtil)
         if "mail_util_cls" not in kwargs:
             kwargs.setdefault("mail_util_cls", MailUtil)
+        if "password_util_cls" not in kwargs:
+            kwargs.setdefault("password_util_cls", PasswordUtil)
 
         # default post redirects to APPLICATION_ROOT, which itself defaults to "/"
         app.config.setdefault(
@@ -1128,6 +1131,7 @@ class Security:
 
         state._phone_util = state.phone_util_cls(app)
         state._mail_util = state.mail_util_cls(app)
+        state._password_util = state.password_util_cls(app)
 
         app.extensions["security"] = state
 
@@ -1339,28 +1343,6 @@ class Security:
         .. versionadded:: 3.4.0
         """
         self._state._reauthn_handler = cb
-
-    def password_validator(self, cb):
-        """
-        Callback for validating a user password.
-        This is called on registration as well as change and reset password.
-        For registration, ``kwargs`` will be all the form input fields that are
-        attributes of the user model.
-        For reset/change, ``kwargs`` will be user=UserModel
-
-        :param cb: Callback function with signature (password, is_register, kwargs)
-
-            :password: desired new plain text password
-            :is_register: True if called as part of initial registration
-            :kwargs: user info
-
-        Returns: None if password passes all validations. A list of (localized) messages
-        if not.
-
-        .. versionadded:: 3.4.0
-            Refer to :ref:`pass_validation_topic` for more information.
-        """
-        self._state._password_validator = cb
 
     def __getattr__(self, name):
         return getattr(self._state, name, None)

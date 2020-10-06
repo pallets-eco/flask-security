@@ -102,11 +102,18 @@ is a useful place to start. Flask-Security has a default password validator that
 
 Be aware that ``zxcvbn`` is not actively being maintained, and has localization issues.
 
-The entire validator can be easily changed by supplying a :meth:`.Security.password_validator`.
-This enables application to e.g. use any piece of the UserModel (which is a parameter) as part of validation.
+In addition to validation, unicode passwords should be normalized as specified
+by NIST requirement: `5.1.1.2 Memorized Secret Verifiers`_. Normalization can
+be disabled by setting the :py:data:`SECURITY_PASSWORD_NORMALIZE_FORM` to ``None``.
+Validation and normalization is encapsulated in :class:`.PasswordUtil`.
+This can be overridden by passing your class at app initialization time.
+The :meth:`.PasswordUtil.validate` is passed additional kwargs to allow custom
+validators more flexibility.
 A custom validator can still call the underlying methods where appropriate:
 :func:`flask_security.password_length_validator`, :func:`flask_security.password_complexity_validator`,
 and :func:`flask_security.password_breached_validator`.
+
+.. _5.1.1.2 Memorized Secret Verifiers: https://pages.nist.gov/800-63-3/sp800-63b.html#sec5
 
 .. _csrftopic:
 

@@ -13,11 +13,8 @@
 
 import email_validator
 from flask import current_app
-from werkzeug.local import LocalProxy
 
 from .utils import config_value
-
-_security = LocalProxy(lambda: current_app.extensions["security"])
 
 
 class MailUtil:

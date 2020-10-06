@@ -541,8 +541,8 @@ def test_zxcvbn_xlate(app):
 
     with app.test_request_context():
         user = TestUser("jwag@notme.com")
-        result = app.security._password_validator("simple", False, user=user)
-        print(result)
+        pbad, pnorm = app.security._password_util.validate("simple", False, user=user)
+        print(pbad)
 """
 
 
@@ -568,7 +568,7 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10".encode(
             mock_urlopen.return_value.__enter__.return_value.read.return_value = (
                 pwned_response
             )
-            pbad = app.security._password_validator("flaskflask", False)
+            pbad, pnorm = app.security._password_util.validate("flaskflask", False)
             assert len(pbad) == 1
             assert app.config["SECURITY_MSG_PASSWORD_BREACHED"][0] in pbad[0]
 
@@ -599,7 +599,7 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10".encode(
             mock_urlopen.return_value.__enter__.return_value.read.return_value = (
                 pwned_response
             )
-            pbad = app.security._password_validator("flaskflask", True)
+            pbad, pnorm = app.security._password_util.validate("flaskflask", True)
             # Still weak password, just not pwned enough. Should fail complexity
             assert len(pbad) == 1
             assert "Repeats like" in pbad[0]
@@ -613,7 +613,7 @@ def test_breached_real(app):
     app.security = Security()
     app.security.init_app(app)
     with app.test_request_context():
-        pbad = app.security._password_validator("flaskflask", True)
+        pbad, pnorm = app.security._password_util.validate("flaskflask", True)
         assert len(pbad) == 1
         assert app.config["SECURITY_MSG_PASSWORD_BREACHED"][0] in pbad[0]
 
@@ -886,6 +886,36 @@ def test_verify_fresh_json(app, client, get_message):
     response = client.get("/fresh", headers=headers)
     assert response.status_code == 200
     assert response.json["title"] == "Fresh Only"
+
+
+@pytest.mark.changeable()
+def test_verify_pwd_json(app, client, get_message):
+    # Make sure verify accepts a normalized and original password.
+    authenticate(client)
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    data = dict(
+        password="password",
+        new_password="new strong password\N{ROMAN NUMERAL ONE}",
+        new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
+    )
+    response = client.post(
+        "/change", json=data, headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+
+    response = client.post(
+        "/verify",
+        json=dict(password="new strong password\N{ROMAN NUMERAL ONE}"),
+        headers=headers,
+    )
+    assert response.status_code == 200
+
+    response = client.post(
+        "/verify",
+        json=dict(password="new strong password\N{LATIN CAPITAL LETTER I}"),
+        headers=headers,
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.settings(verify_url="/auth/")

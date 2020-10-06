@@ -120,10 +120,10 @@ def users_create(attributes, password, active):
     form = _security.confirm_register_form(MultiDict(kwargs), meta={"csrf": False})
 
     if form.validate():
-        # We don't use the form to provide values so that this CLI can actually
-        # set any usermodel attribute. This means though that things like email
-        # normalization has to be done here (since normally that is part of validation)
-        kwargs["password"] = hash_password(kwargs["password"])
+        # We don't use the form directly to provide values so that this CLI can actually
+        # set any usermodel attribute. We do grab email and password from the form
+        # so that we get any normalization results.
+        kwargs["password"] = hash_password(form.password.data)
         kwargs["active"] = active
         # echo normalized email...
         if "email" in kwargs:
