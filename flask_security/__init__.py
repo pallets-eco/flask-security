@@ -50,6 +50,7 @@ from .forms import (
     unique_identity_attribute,
 )
 from .mail_util import MailUtil
+from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
 from .signals import (
     confirm_instructions_sent,

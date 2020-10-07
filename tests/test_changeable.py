@@ -16,9 +16,16 @@ import jinja2
 
 from flask_security.core import UserMixin
 from flask_security.forms import _default_field_labels
+from flask_security.password_util import PasswordUtil
 from flask_security.signals import password_changed
 from flask_security.utils import localize_callback
-from tests.test_utils import authenticate, check_xlation, json_authenticate
+from tests.test_utils import (
+    authenticate,
+    check_xlation,
+    init_app_with_options,
+    json_authenticate,
+    logout,
+)
 
 pytestmark = pytest.mark.changeable()
 
@@ -296,13 +303,18 @@ def test_easy_password(app, client):
     assert "Repeats like" in response.json["response"]["errors"]["new_password"][0]
 
 
-def test_my_validator(app, client):
-    @app.security.password_validator
-    def pwval(password, is_register, **kwargs):
-        user = kwargs["user"]
-        # This is setup in createusers for matt.
-        assert user.security_number == 123456
-        return ["Are you crazy?"]
+def test_my_validator(app, sqlalchemy_datastore):
+    class MyPwUtil(PasswordUtil):
+        def validate(self, password, is_register, **kwargs):
+            user = kwargs["user"]
+            # This is setup in createusers for matt.
+            assert user.security_number == 123456
+            return ["Are you crazy?"], password
+
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"password_util_cls": MyPwUtil}}
+    )
+    client = app.test_client()
 
     authenticate(client)
 
@@ -371,3 +383,103 @@ def test_unicode_invalid_length(app, client, get_message):
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400
     assert get_message("PASSWORD_INVALID_LENGTH", length=8) in response.data
+
+
+def test_pwd_normalize(app, client):
+    """ Verify that can log in with both original and normalized pwd """
+    authenticate(client)
+
+    data = dict(
+        password="password",
+        new_password="new strong password\N{ROMAN NUMERAL ONE}",
+        new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
+    )
+    response = client.post(
+        "/change", json=data, headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    # use original typed-in pwd
+    response = client.post(
+        "/login",
+        json=dict(
+            email="matt@lp.com", password="new strong password\N{ROMAN NUMERAL ONE}"
+        ),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    # try with normalized password
+    response = client.post(
+        "/login",
+        json=dict(
+            email="matt@lp.com",
+            password="new strong password\N{LATIN CAPITAL LETTER I}",
+        ),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+
+    # Verify can change password using original password
+    data = dict(
+        password="new strong password\N{ROMAN NUMERAL ONE}",
+        new_password="new strong password\N{ROMAN NUMERAL TWO}",
+        new_password_confirm="new strong password\N{ROMAN NUMERAL TWO}",
+    )
+    response = client.post(
+        "/change", json=data, headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(password_normalize_form=None)
+def test_pwd_no_normalize(app, client):
+    """ Verify that can log in with original but not normalized if have
+     disabled normalization
+     """
+    authenticate(client)
+
+    data = dict(
+        password="password",
+        new_password="new strong password\N{ROMAN NUMERAL ONE}",
+        new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
+    )
+    response = client.post(
+        "/change", json=data, headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    # try with normalized password - should fail
+    response = client.post(
+        "/login",
+        json=dict(
+            email="matt@lp.com",
+            password="new strong password\N{LATIN CAPITAL LETTER I}",
+        ),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400
+
+    # use original typed-in pwd
+    response = client.post(
+        "/login",
+        json=dict(
+            email="matt@lp.com", password="new strong password\N{ROMAN NUMERAL ONE}"
+        ),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+
+    # Verify can change password using original password
+    data = dict(
+        password="new strong password\N{ROMAN NUMERAL ONE}",
+        new_password="new strong password\N{ROMAN NUMERAL TWO}",
+        new_password_confirm="new strong password\N{ROMAN NUMERAL TWO}",
+    )
+    response = client.post(
+        "/change", json=data, headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200

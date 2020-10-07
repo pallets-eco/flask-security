@@ -143,6 +143,18 @@ These configuration keys are used globally across all features.
 
     .. versionadded:: 3.4.0
 
+.. py:data:: SECURITY_PASSWORD_NORMALIZE_FORM
+
+    Passwords are normalized prior to changing or comparing. This satisfies
+    the NIST requirement: `5.1.1.2 Memorized Secret Verifiers`_.
+    Normalization is performed using the Python unicodedata.normalize() method.
+
+    Default: "NFKD"
+
+    .. versionadded:: 4.0.0
+
+.. _5.1.1.2 Memorized Secret Verifiers: https://pages.nist.gov/800-63-3/sp800-63b.html#sec5
+
 .. py:data:: SECURITY_TOKEN_AUTHENTICATION_KEY
 
     Specifies the query string parameter to read when using token authentication.

@@ -331,11 +331,14 @@ class UserDatastore:
            be stored directly in the DB. Do NOT pass in a plaintext password!
            Best practice is to pass in ``hash_password(plaintext_password)``.
 
-           Furthermore, no validation is done on the password (e.g for minimum length).
-           Best practice is to call
-           ``app.security._password_validator(plaintext_password, True)``
-           and look for a ``None`` return meaning the password conforms to the
-           configured validations.
+           Furthermore, no validation nor normalization is done on the password
+           (e.g for minimum length).
+
+           Best practice is::
+            pbad, pnorm = app.security._password_util.validate(password, True)
+
+           Look for `pbad` being None. Pass the normalized password `pnorm` to this
+           method.
 
         The new user's ``active`` property will be set to ``True``
         unless explicitly set to ``False`` in `kwargs`.

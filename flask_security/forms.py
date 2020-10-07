@@ -399,6 +399,7 @@ class LoginForm(Form, NextFormMixin):
             # Reduce timing variation between existing and non-existing users
             hash_password(self.password.data)
             return False
+        self.password.data = _security._password_util.normalize(self.password.data)
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
@@ -423,6 +424,7 @@ class VerifyForm(Form, PasswordFormMixin):
             return False
 
         self.user = current_user
+        self.password.data = _security._password_util.normalize(self.password.data)
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
@@ -463,7 +465,9 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
                 if hasattr(_datastore.user_model, k):
                     rfields[k] = v
             del rfields["password"]
-            pbad = _security._password_validator(self.password.data, True, **rfields)
+            pbad, self.password.data = _security._password_util.validate(
+                self.password.data, True, **rfields
+            )
             if pbad:
                 self.password.errors.extend(pbad)
                 return False
@@ -508,7 +512,7 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
         if not super().validate():
             return False
 
-        pbad = _security._password_validator(
+        pbad, self.password.data = _security._password_util.validate(
             self.password.data, False, user=current_user
         )
         if pbad:
@@ -538,13 +542,14 @@ class ChangePasswordForm(Form, PasswordFormMixin):
         if not super().validate():
             return False
 
+        self.password.data = _security._password_util.normalize(self.password.data)
         if not current_user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
         if self.password.data == self.new_password.data:
             self.password.errors.append(get_message("PASSWORD_IS_THE_SAME")[0])
             return False
-        pbad = _security._password_validator(
+        pbad, self.new_password.data = _security._password_util.validate(
             self.new_password.data, False, user=current_user
         )
         if pbad:

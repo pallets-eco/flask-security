@@ -6,12 +6,10 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 4.0.0
 -------------
 
-Release Target Summer 2020
+Release Target Fall 2020
 
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
 
-- Removal of python 2.7 and <3.6 support
-- Removal of token caching feature (a relatively new feature that has some systemic issues)
 - Other possible breaking changes tracked `here`_
 
 Features & Cleanup
@@ -30,14 +28,15 @@ Features & Cleanup
   (if and only if) the UserModel contains an 'email' columns, a new query param 'identity' is returned
   which returns the value of UserModel.calc_username().
 - (:pr:`382`) Improvements and documentation for two-factor authentication.
-- (:pr:`xxx`) Add support for email validation and normalization.
+- (:pr:`394`) Add support for email validation and normalization.
+- (:issue:`231`) Normalize unicode passwords.
 
 Fixed
 +++++
 - (:issue:`347`) Fix peewee. Turns out - due to lack of unit tests - peewee hasn't worked since
   'permissions' were added in 3.3. Furthermore, changes in 3.4 around get_id and alternative tokens also
   didn't work since peewee defines its own `get_id` method.
-- (:issue:`389`) Fixes for translations. First - email subjects were never being translated. Second converted
+- (:issue:`389`) Fixes for translations. First - email subjects were never being translated. Second, converted
   all templates to use _fsdomain(xx) rather than _(xx) so that they get translated regardless of the app's domain.
 - (:issue:`381`) Support Flask-Babel 2.0 which has backported Domain support. Flask-Security now supports
   Flask-Babel (>=2.00), Flask-BabelEx, as well as no translation support. Please see backwards compatibility notes below.
@@ -86,11 +85,17 @@ Backwards Compatibility Concerns
   are installed, it falls back to a dummy translation. Thus - if you application expects translations services, it must specify the appropriate
   dependency.
 
-- (:pr:`xxx`) Email input is now normalized prior to being stored in the DB. Previously, it was validated, but the raw input
+- (:pr:`394`) Email input is now normalized prior to being stored in the DB. Previously, it was validated, but the raw input
   was stored. Normalization and validation rely on the `email_validator <https://pypi.org/project/email-validator/>`_ package.
   The :class:`.MailUtil` class provides the interface for normalization and validation - allowing all this to be customized.
   If you have unicode local or domain parts - existing users may have difficulties logging in. Administratively you need to
   read each user record, normalize the email (see :class:`.MailUtil`), and write it back.
+
+- (:issue:`381`) Passwords are now, by default, normalized using Python's unicodedata.normalize() method.
+  The :py:data:`SECURITY_PASSWORD_NORMALIZE_FORM` defaults to "NKFD". If your users have unicode passswords
+  they may have difficulty authenticating. You can turn off this normalization or have your users reset their passwords.
+  Password normalization and validation has been encapsulated in a new :class:`.PasswordUtil` class. This replaces
+  the method ``password_validator`` introduced in 3.4.0.
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 

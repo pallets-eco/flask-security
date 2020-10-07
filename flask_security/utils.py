@@ -266,6 +266,9 @@ def verify_password(password, password_hash):
     :param password: A plaintext password to verify
     :param password_hash: The expected hash value of the password
                           (usually from your database)
+
+    .. note::
+        Make sure that the password passed in has already been normalized.
     """
     if use_double_hash(password_hash):
         password = get_hmac(password)
@@ -1075,24 +1078,6 @@ def password_breached_validator(password):
             if pwn == "strict":
                 return [get_message("PASSWORD_BREACHED_SITE_ERROR")[0]]
     return None
-
-
-def default_password_validator(password, is_register, **kwargs):
-    """
-    Password validation.
-    Called in app/request context.
-
-    N.B. do not call this directly - use security._password_validator
-    """
-    notok = password_length_validator(password)
-    if notok:
-        return notok
-
-    notok = password_breached_validator(password)
-    if notok:
-        return notok
-
-    return password_complexity_validator(password, is_register, **kwargs)
 
 
 def pwned(password):
