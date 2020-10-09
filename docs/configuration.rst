@@ -28,7 +28,7 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_SUBDOMAIN
 
     Specifies the subdomain for the Flask-Security blueprint. If your authenticated
-    content is on a different subdomain, also enable ``SECURITY_REDIRECT_ALLOW_SUBDOMAINS``.
+    content is on a different subdomain, also enable :py:data:`SECURITY_REDIRECT_ALLOW_SUBDOMAINS`.
 
     Default: ``None``.
 .. py:data:: SECURITY_FLASH_MESSAGES
@@ -222,7 +222,7 @@ These configuration keys are used globally across all features.
 
     Default: ``False``.
 
-    .. versionadded:: 3.4.5
+    .. versionadded:: 4.0.0
 
 .. py:data:: SECURITY_CSRF_PROTECT_MECHANISMS
 

@@ -958,6 +958,7 @@ class Security:
      Defaults to :class:`PhoneUtil`
     :param mail_util_cls: Class to use for sending emails. Defaults to :class:`MailUtil`
     :param password_util_cls: Class to use for password normalization/validation.
+     Defaults to :class:`PasswordUtil`
 
     .. versionadded:: 3.4.0
         ``verify_form`` added as part of freshness/re-authentication

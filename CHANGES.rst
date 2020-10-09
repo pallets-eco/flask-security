@@ -10,7 +10,13 @@ Release Target Fall 2020
 
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
 
-- Other possible breaking changes tracked `here`_
+
+Version 4.0.0rc1
+----------------
+
+Released October 9, 2020
+
+This should be all the backwards incompatible changes.
 
 Features & Cleanup
 +++++++++++++++++++
@@ -26,10 +32,16 @@ Features & Cleanup
 - Remove (all?) requirements around having an 'email' column in the UserModel. API change -
   JSON SPA redirects used to always include a query param 'email=xx'. While that is still sent
   (if and only if) the UserModel contains an 'email' columns, a new query param 'identity' is returned
-  which returns the value of UserModel.calc_username().
+  which returns the value of :meth:`.UserMixin.calc_username()`.
 - (:pr:`382`) Improvements and documentation for two-factor authentication.
-- (:pr:`394`) Add support for email validation and normalization.
-- (:issue:`231`) Normalize unicode passwords.
+- (:pr:`394`) Add support for email validation and normalization (see :class:`.MailUtil`).
+- (:issue:`231`) Normalize unicode passwords (see :class:`.PasswordUtil`).
+- (:issue:`391`) Option to redirect to `/confirm` if user hits an endpoint that requires
+  confirmation. New option :py:data:`SECURITY_REQUIRES_CONFIRMATION_ERROR_VIEW` which if set and the user
+  hits the `/login`, `/reset`, or `/us-signin` endpoint, and they require confirmation the response will be a redirect. (SnaKyEyeS)
+- (:issue:`366`) Allow redirects on sub-domains. Please see :py:data:`SECURITY_REDIRECT_ALLOW_SUBDOMAINS`. (willcroft)
+- (:pr:`376`) Have POST redirects default to Flask's ``APPLICATION_ROOT``. Previously the default configuration was ``/``.
+  Now it first looks at Flask's `APPLICATION_ROOT` configuration and uses that (which also by default is ``/``. (tysonholub)
 
 Fixed
 +++++
@@ -40,6 +52,9 @@ Fixed
   all templates to use _fsdomain(xx) rather than _(xx) so that they get translated regardless of the app's domain.
 - (:issue:`381`) Support Flask-Babel 2.0 which has backported Domain support. Flask-Security now supports
   Flask-Babel (>=2.00), Flask-BabelEx, as well as no translation support. Please see backwards compatibility notes below.
+- (:pr:`352`) Fix issue with adding/deleting permissions - all mutating methods must be at the datastore layer so that
+  db.put() can be called. Added :meth:`.UserDatastore.add_permissions_to_role` and :meth:`.UserDatastore.remove_permissions_from_role`.
+  The methods :meth:`.RoleMixin.add_permissions` and :meth:`.RoleMixin.remove_permissions` have been deprecated.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -65,7 +80,7 @@ Backwards Compatibility Concerns
   interprets or uses the UserModel primary key - just the ``fs_uniquifier`` field. See the changes section for 3.3
   for information on how to do the schema and data upgrades required to add this field. There is also an API change -
   the JSON response (via UserModel.get_security_payload()) returned the ``user.id`` field. With this change
-  the default is an empty directory - override ``get_security_payload()`` to return any portion of the UserModel you need.
+  the default is an empty directory - override :meth:`.UserMixin.get_security_payload()` to return any portion of the UserModel you need.
 
 - (:pr:`349`) :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` has changed syntax and semantics. It now contains
   the combined information from the old ``SECURITY_USER_IDENTITY_ATTRIBUTES`` and the newly introduced in 3.4 :py:data:`SECURITY_USER_IDENTITY_MAPPINGS`.
@@ -73,7 +88,8 @@ Backwards Compatibility Concerns
   In prior releases we simply tried to look up the form value as the PK of the UserModel - this often failed and then
   looped through the other ``SECURITY_USER_IDENTITY_ATTRIBUTES``. This had a history of issues, including many applications not
   wanting to have a standard PK for the user model. Now, using the mapping configuration, the UserModel attribute/column the input
-  corresponds to is determined, then the UserModel is queried specifically for that *attribute:value* pair.
+  corresponds to is determined, then the UserModel is queried specifically for that *attribute:value* pair. If you application
+  didn't change the variable, no modifications are required.
 
 - (:pr:`354`) The :class:`flask_security.PhoneUtil` is now initialized as part of Flask-Security initialization rather than
   ``@app.before_first_request`` (since that broke the CLI). Since it isn't called in an application context, the *app* being initialized is
@@ -82,8 +98,8 @@ Backwards Compatibility Concerns
 - (:issue:`381`) When using Flask-Babel (>= 2.0) it is required that the application initialize Flask-Babel (e.g. Babel(app)).
   Flask-BabelEx would self-initialize so it didn't matter. Flask-Security will throw a run time error upon first request if Flask-Babel
   is installed, but not initialized. Also, Flask-Security no longer has a dependency on either Flask-Babel or Flask-BabelEx - if neither
-  are installed, it falls back to a dummy translation. Thus - if you application expects translations services, it must specify the appropriate
-  dependency.
+  are installed, it falls back to a dummy translation. *If your application expects translation services, it must specify the appropriate*
+  *dependency.*
 
 - (:pr:`394`) Email input is now normalized prior to being stored in the DB. Previously, it was validated, but the raw input
   was stored. Normalization and validation rely on the `email_validator <https://pypi.org/project/email-validator/>`_ package.
@@ -96,8 +112,6 @@ Backwards Compatibility Concerns
   they may have difficulty authenticating. You can turn off this normalization or have your users reset their passwords.
   Password normalization and validation has been encapsulated in a new :class:`.PasswordUtil` class. This replaces
   the method ``password_validator`` introduced in 3.4.0.
-
-.. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
 Version 3.4.4
 --------------
@@ -119,6 +133,10 @@ Fixed
   in to redirect to :py:data:`SECURITY_POST_LOGIN_VIEW` when GET or POST was called and the caller was already authenticated. The
   method used would honor the request ``next`` query parameter. This could cause redirect loops. The pre-3.3.0 behavior
   of redirecting to :py:data:`SECURITY_POST_LOGIN_VIEW` and ignoring the ``next`` parameter has been restored.
+
+- (:issue:`347`) Fix peewee. Turns out - due to lack of unit tests - peewee hasn't worked since
+  'permissions' were added in 3.3. Furthermore, changes in 3.4 around get_id and alternative tokens also
+  didn't work since peewee defines its own `get_id` method.
 
 Compatibility Concerns
 ++++++++++++++++++++++
