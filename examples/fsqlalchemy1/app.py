@@ -1,5 +1,5 @@
 """
-Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2019-2020 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 Very simple application.
@@ -60,22 +60,25 @@ app.json_encoder = JSONEncoder
 # Create database connection object
 db = SQLAlchemy(app)
 
-# Define models
-fsqla.FsModels.set_db_info(db)
+# Define models - for this example - we change the default table names
+fsqla.FsModels.set_db_info(db, user_table_name="myuser", role_table_name="myrole")
 
 
 class Role(db.Model, fsqla.FsRoleMixin):
+    __tablename__ = "myrole"
     pass
 
 
 class User(db.Model, fsqla.FsUserMixin):
+    __tablename__ = "myuser"
     blogs = db.relationship("Blog", backref="user", lazy="dynamic")
     pass
 
 
 class Blog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("myuser.id"), nullable=False)
+    title = db.Column(db.Text)
     text = db.Column(db.UnicodeText)
 
 
@@ -119,7 +122,9 @@ def create_users():
     )
 
     # create initial blog
-    blog = app.blog_cls(text="my first blog", user=real_user)
+    blog = app.blog_cls(
+        title="First Blog", text="my first blog is short", user=real_user
+    )
     db.session.add(blog)
     db.session.commit()
     print(f"First blog id {blog.id}")
@@ -161,9 +166,26 @@ def monitor():
 def update_blog(bid):
     # Yes caller has write permission - but do they OWN this blog?
     blog = current_app.blog_cls.query.get(bid)
+    if not blog:
+        abort(404)
     if current_user != blog.user:
         abort(403)
     return render_template_string("Yes, {{ current_user.email }} can update blog")
+
+
+@app.route("/myblogs", methods=["GET"])
+@auth_required()
+@permissions_accepted("user-read")
+def list_my_blogs():
+    blogs = current_user.blogs
+    blist = ""
+    cnt = 0
+    for blog in blogs:
+        blist += f" {blog.title}"
+        cnt += 1
+    if not blogs:
+        abort(404)
+    return render_template_string(f"Found {cnt} of yours with titles {blist}")
 
 
 if __name__ == "__main__":

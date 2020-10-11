@@ -1,9 +1,11 @@
 """
-Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2019-2020 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 
-Complete models for all features when using Flask-SqlAlchemy
+Complete models for all features when using Flask-SqlAlchemy.
+
+You can change the table names by passing them in to the set_db_info() method.
 
 BE AWARE: Once any version of this is shipped no changes can be made - instead
 a new version needs to be created.
@@ -36,18 +38,22 @@ class FsModels:
     roles_users = None
     db = None
     fs_model_version = 1
+    user_table_name = "user"
+    role_table_name = "role"
 
     @classmethod
-    def set_db_info(cls, appdb):
+    def set_db_info(cls, appdb, user_table_name="user", role_table_name="role"):
         """Initialize Model.
         This needs to be called after the DB object has been created
         (e.g. db = Sqlalchemy())
         """
         cls.db = appdb
+        cls.user_table_name = user_table_name
+        cls.role_table_name = role_table_name
         cls.roles_users = appdb.Table(
             "roles_users",
-            Column("user_id", Integer(), ForeignKey("user.id")),
-            Column("role_id", Integer(), ForeignKey("role.id")),
+            Column("user_id", Integer(), ForeignKey(f"{cls.user_table_name}.id")),
+            Column("role_id", Integer(), ForeignKey(f"{cls.role_table_name}.id")),
         )
 
 
@@ -96,6 +102,7 @@ class FsUserMixin(UserMixin):
 
     @declared_attr
     def roles(cls):
+        # The first arg is a class name, the backref is a column name
         return FsModels.db.relationship(
             "Role",
             secondary=FsModels.roles_users,
