@@ -62,7 +62,7 @@ def _get_unauthorized_response(text=None, headers=None):  # pragma: no cover
 
 
 def default_unauthn_handler(mechanisms, headers=None):
-    """ Default callback for failures to authenticate
+    """Default callback for failures to authenticate
 
     If caller wants JSON - return 401.
     If caller wants BasicAuth - return 401 (the WWW-Authenticate header is set).
@@ -88,7 +88,7 @@ def default_unauthn_handler(mechanisms, headers=None):
 
 
 def default_reauthn_handler(within, grace):
-    """ Default callback for 'freshness' related authn failures.
+    """Default callback for 'freshness' related authn failures.
 
     If caller wants JSON - return 401
     Otherwise - assume caller is html and redirect if possible to configured view.
@@ -179,7 +179,7 @@ def _check_http_auth():
 
 
 def handle_csrf(method):
-    """ Invoke CSRF protection based on authentication method.
+    """Invoke CSRF protection based on authentication method.
 
     Usually this is called as part of a decorator, but if that isn't
     appropriate, endpoint code can call this directly.

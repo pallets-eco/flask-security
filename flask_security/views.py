@@ -119,8 +119,7 @@ _datastore = LocalProxy(lambda: _security.datastore)
 
 
 def default_render_json(payload, code, headers, user):
-    """ Default JSON response handler.
-    """
+    """Default JSON response handler."""
     # Force Content-Type header to json.
     if headers is None:
         headers = dict()
@@ -209,8 +208,7 @@ def login():
 
 @auth_required(lambda: config_value("API_ENABLED_METHODS"))
 def verify():
-    """View function which handles a authentication verification request.
-    """
+    """View function which handles a authentication verification request."""
     form_class = _security.verify_form
 
     if request.is_json:
@@ -916,7 +914,7 @@ def two_factor_token_validation():
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def two_factor_rescue():
-    """ Function that handles a situation where user can't
+    """Function that handles a situation where user can't
     enter his two-factor validation code
 
     User must have already provided valid username/password.

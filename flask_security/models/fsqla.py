@@ -39,7 +39,7 @@ class FsModels:
 
     @classmethod
     def set_db_info(cls, appdb):
-        """ Initialize Model.
+        """Initialize Model.
         This needs to be called after the DB object has been created
         (e.g. db = Sqlalchemy())
         """
@@ -66,8 +66,7 @@ class FsRoleMixin(RoleMixin):
 
 
 class FsUserMixin(UserMixin):
-    """ User information
-    """
+    """User information"""
 
     # flask_security basic fields
     id = Column(Integer, primary_key=True)

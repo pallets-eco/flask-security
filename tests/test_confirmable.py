@@ -186,7 +186,7 @@ def test_login_when_unconfirmed(client, get_message):
 
 @pytest.mark.registerable()
 def test_no_auth_token(client_nc):
-    """ Make sure that register doesn't return Authentication Token
+    """Make sure that register doesn't return Authentication Token
     if user isn't confirmed.
     """
     response = client_nc.post(
@@ -202,7 +202,7 @@ def test_no_auth_token(client_nc):
 @pytest.mark.registerable()
 @pytest.mark.settings(login_without_confirmation=True)
 def test_auth_token_unconfirmed(client_nc):
-    """ Make sure that register returns Authentication Token
+    """Make sure that register returns Authentication Token
     if user isn't confirmed, but the 'login_without_confirmation' flag is set.
     """
     response = client_nc.post(
@@ -403,7 +403,7 @@ def test_spa_get_bad_token(app, client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.settings(two_factor_required=True)
 def test_two_factor(app, client):
-    """ If two-factor is enabled, the confirm shouldn't login, but start the
+    """If two-factor is enabled, the confirm shouldn't login, but start the
     2-factor setup.
     """
     with capture_registrations() as registrations:
@@ -448,7 +448,9 @@ def test_two_factor_json(app, client, get_message):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(user_identity_attributes=[{"username": {"mapper": lambda x: x}}],)
+@pytest.mark.settings(
+    user_identity_attributes=[{"username": {"mapper": lambda x: x}}],
+)
 def test_email_not_identity(app, sqlalchemy_datastore, get_message):
     # Test that can register/confirm with email even if it isn't an IDENTITY_ATTRIBUTE
     from flask_security import ConfirmRegisterForm, Security, unique_identity_attribute

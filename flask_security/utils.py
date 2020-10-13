@@ -59,7 +59,7 @@ def _(translate):
 
 
 def get_request_attr(name):
-    """ Retrieve a request local attribute.
+    """Retrieve a request local attribute.
 
     Currently public attributes are:
 
@@ -171,7 +171,7 @@ def logout_user():
 
 
 def check_and_update_authn_fresh(within, grace, method=None):
-    """ Check if user authenticated within specified time and update grace period.
+    """Check if user authenticated within specified time and update grace period.
 
     :param within: A timedelta specifying the maximum time in the past that the caller
                   authenticated that is still considered 'fresh'.
@@ -432,7 +432,7 @@ def slash_url_suffix(url, suffix):
 
 
 def transform_url(url, qparams=None, **kwargs):
-    """ Modify url
+    """Modify url
 
     :param url: url to transform (can be relative)
     :param qparams: additional query params to add to end of url
@@ -707,7 +707,7 @@ def get_identity_attributes(app=None) -> List:
 
 
 def get_identity_attribute(attr, app=None) -> Dict:
-    """ Given an user_identity_attribute, return the defining dict.
+    """Given an user_identity_attribute, return the defining dict.
     A bit annoying since USER_IDENTITY_ATTRIBUTES is a list of dict
     where each dict has just one key.
     """
@@ -741,7 +741,7 @@ def find_user(identity):
 
 
 def uia_phone_mapper(identity):
-    """ Used to match identity as a phone number. This is a simple proxy
+    """Used to match identity as a phone number. This is a simple proxy
     to :py:class:`PhoneUtil`
 
     See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
@@ -753,7 +753,7 @@ def uia_phone_mapper(identity):
 
 
 def uia_email_mapper(identity):
-    """ Used to match identity as an email.
+    """Used to match identity as an email.
 
     See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
 
@@ -781,7 +781,7 @@ def use_double_hash(password_hash=None):
 
 
 def csrf_cookie_handler(response):
-    """ Called at end of every request.
+    """Called at end of every request.
     Uses session to track state (set/clear)
 
     Ideally we just need to set this once - however by default
@@ -891,7 +891,7 @@ def base_render_json(
 
 
 def default_want_json(req):
-    """ Return True if response should be in json
+    """Return True if response should be in json
     N.B. do not call this directly - use security.want_json()
 
     :param req: Flask/Werkzeug Request
@@ -910,8 +910,7 @@ def default_want_json(req):
 
 
 def json_error_response(errors):
-    """ Helper to create an error response that adheres to the openapi spec.
-    """
+    """Helper to create an error response that adheres to the openapi spec."""
     if isinstance(errors, str):
         # When the errors is a string, use the response/error/message format
         response_json = dict(error=errors)
@@ -926,7 +925,7 @@ def json_error_response(errors):
 
 
 class FsJsonEncoder(JSONEncoder):
-    """  Flask-Security JSON encoder.
+    """Flask-Security JSON encoder.
     Extends Flask's JSONencoder to handle lazy-text.
 
     .. versionadded:: 3.3.0
@@ -947,7 +946,7 @@ class SmsSenderBaseClass(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def send_sms(self, from_number, to_number, msg):  # pragma: no cover
-        """ Abstract method for sending sms messages
+        """Abstract method for sending sms messages
 
         .. versionadded:: 3.2.0
         """
@@ -965,7 +964,7 @@ class SmsSenderFactory:
 
     @classmethod
     def createSender(cls, name, *args, **kwargs):
-        """ Initialize an SMS sender.
+        """Initialize an SMS sender.
 
         :param name: Name as registered in SmsSenderFactory:senders (e.g. 'Twilio')
 
@@ -993,7 +992,7 @@ except Exception:
 
 
 def password_length_validator(password):
-    """ Test password for length.
+    """Test password for length.
 
     :param password: Plain text password to check
 
@@ -1013,7 +1012,7 @@ def password_length_validator(password):
 
 
 def password_complexity_validator(password, is_register, **kwargs):
-    """ Test password for complexity.
+    """Test password for complexity.
 
     Currently just supports 'zxcvbn'.
 
@@ -1057,7 +1056,7 @@ def password_complexity_validator(password, is_register, **kwargs):
 
 
 def password_breached_validator(password):
-    """ Check if password on breached list.
+    """Check if password on breached list.
     Does nothing unless :py:data:`SECURITY_PASSWORD_CHECK_BREACHED` is set.
     If password is found on the breached list, return an error if the count is
     greater than or equal to :py:data:`SECURITY_PASSWORD_BREACHED_COUNT`.

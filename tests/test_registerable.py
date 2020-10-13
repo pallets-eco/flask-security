@@ -263,7 +263,7 @@ def test_disable_register_emails(client, app):
 @pytest.mark.two_factor()
 @pytest.mark.settings(two_factor_required=True)
 def test_two_factor(app, client):
-    """ If two-factor is enabled, the register shouldn't login, but start the
+    """If two-factor is enabled, the register shouldn't login, but start the
     2-factor setup.
     """
     data = dict(email="dude@lp.com", password="password", password_confirm="password")

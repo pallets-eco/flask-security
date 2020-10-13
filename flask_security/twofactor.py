@@ -97,7 +97,7 @@ def complete_two_factor_process(
     user, primary_method, totp_secret, is_changing, remember_login=None
 ):
     """clean session according to process (login or changing two-factor method)
-     and perform action accordingly
+    and perform action accordingly
     """
 
     _datastore.tf_set(user, primary_method, totp_secret=totp_secret)
@@ -132,7 +132,7 @@ def is_tf_setup(user):
 
 
 def tf_login(user, remember=None, primary_authn_via=None):
-    """ Helper for two-factor authentication login
+    """Helper for two-factor authentication login
 
     This is called only when login/password have already been validated.
     This can be from login, register, confirm, unified sign in, unified magic link.

@@ -3,8 +3,7 @@
 
 class WrapApp:
     def __init__(self, app, user_cls=None, role_cls=None, mocks=None):
-        """ Used to help create a app test fixture - with optionally passing in mocks
-        """
+        """Used to help create a app test fixture - with optionally passing in mocks"""
         self.app = app
         self.user_cls = user_cls
         self.role_cls = role_cls
@@ -13,8 +12,8 @@ class WrapApp:
 
 
 def set_current_user(app, user):
-    """ Set up so that when request is received,
-        the token will cause 'user' to be made the current_user
+    """Set up so that when request is received,
+    the token will cause 'user' to be made the current_user
     """
 
     def token_cb(request):

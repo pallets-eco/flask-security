@@ -69,7 +69,7 @@ def json_login(
     use_header=False,
     remember=None,
 ):
-    """ Return tuple (auth_token, csrf_token)
+    """Return tuple (auth_token, csrf_token)
     Note that since this is sent as JSON rather than form that csrfProtect
     won't find token value (since it looks in request.form).
     """
@@ -221,7 +221,7 @@ def test_reset(app, client):
 
 @pytest.mark.recoverable()
 def test_cp_reset(app, client):
-    """ Test that header based CSRF works for /reset when
+    """Test that header based CSRF works for /reset when
     using WTF_CSRF_CHECK_DEFAULT=False.
     """
     app.config["WTF_CSRF_ENABLED"] = True

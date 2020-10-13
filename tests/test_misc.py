@@ -413,8 +413,8 @@ def test_without_babel(client):
 
 
 def test_no_email_sender(app):
-    """ Verify that if SECURITY_EMAIL_SENDER is default
-        (which is a local proxy) that send_mail picks up MAIL_DEFAULT_SENDER.
+    """Verify that if SECURITY_EMAIL_SENDER is default
+    (which is a local proxy) that send_mail picks up MAIL_DEFAULT_SENDER.
     """
     app.config["MAIL_DEFAULT_SENDER"] = "test@testme.com"
 
@@ -899,7 +899,9 @@ def test_verify_pwd_json(app, client, get_message):
         new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
     )
     response = client.post(
-        "/change", json=data, headers={"Content-Type": "application/json"},
+        "/change",
+        json=data,
+        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
 

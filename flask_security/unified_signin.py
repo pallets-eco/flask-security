@@ -124,8 +124,7 @@ def _us_common_validate(form):
 
 
 class _UnifiedPassCodeForm(Form):
-    """ Common form for signin and verify/reauthenticate.
-    """
+    """Common form for signin and verify/reauthenticate."""
 
     user = None
     authn_via = None
@@ -213,13 +212,16 @@ class _UnifiedPassCodeForm(Form):
 
 
 class UnifiedSigninForm(_UnifiedPassCodeForm):
-    """ A unified login form
+    """A unified login form
     For either identity/password or request and enter code.
     """
 
     user = None
 
-    identity = StringField(get_form_field_label("identity"), validators=[Required()],)
+    identity = StringField(
+        get_form_field_label("identity"),
+        validators=[Required()],
+    )
     remember = BooleanField(get_form_field_label("remember_me"))
 
     def __init__(self, *args, **kwargs):
@@ -243,7 +245,7 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
 
 
 class UnifiedVerifyForm(_UnifiedPassCodeForm):
-    """ Verify authentication.
+    """Verify authentication.
     This is for freshness 'reauthentication' required.
     """
 
@@ -906,7 +908,7 @@ def us_qrcode(token):
 def us_send_security_token(
     user, method, totp_secret, phone_number, send_magic_link=False
 ):
-    """ Generate and send the security code.
+    """Generate and send the security code.
 
     :param user: The user to send the code to
     :param method: The method in which the code will be sent

@@ -28,7 +28,7 @@ class PhoneUtil:
     """
 
     def __init__(self, app):
-        """ Instantiate class.
+        """Instantiate class.
 
         :param app: The Flask application being initialized.
         """
@@ -49,7 +49,7 @@ class PhoneUtil:
         return get_message("PHONE_INVALID")[0]
 
     def get_canonical_form(self, input_data):
-        """ Validate and return a canonical form to be stored in DB
+        """Validate and return a canonical form to be stored in DB
         and compared against.
         Returns ``None`` if input isn't a valid phone number.
         """

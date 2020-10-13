@@ -175,7 +175,7 @@ def test_inactive_user(client, get_message):
 
 
 def test_inactive_forbids(app, client, get_message):
-    """ Make sure that existing session doesn't work after
+    """Make sure that existing session doesn't work after
     user marked inactive
     """
     response = authenticate(client, follow_redirects=True)
@@ -198,7 +198,7 @@ def test_inactive_forbids(app, client, get_message):
 
 @pytest.mark.settings(unauthorized_view=None)
 def test_inactive_forbids_token(app, client_nc, get_message):
-    """ Make sure that existing token doesn't work after
+    """Make sure that existing token doesn't work after
     user marked inactive
     """
     response = json_authenticate(client_nc)
@@ -220,8 +220,7 @@ def test_inactive_forbids_token(app, client_nc, get_message):
 
 
 def test_inactive_forbids_basic(app, client, get_message):
-    """ Make sure that basic auth doesn't work if user deactivated
-    """
+    """Make sure that basic auth doesn't work if user deactivated"""
 
     # Should properly work.
     response = client.get(

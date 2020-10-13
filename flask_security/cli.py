@@ -89,7 +89,8 @@ def roles():
     " datastore.create_user",
 )
 @click.argument(
-    "attributes", nargs=-1,
+    "attributes",
+    nargs=-1,
 )
 @click.password_option()
 @click.option("-a", "--active", default=False, is_flag=True)
@@ -170,7 +171,8 @@ def roles_add(user, role):
         raise click.UsageError("Cannot find role.")
     if _datastore.add_role_to_user(user_obj, role):
         click.secho(
-            f'Role "{role.name}" added to user "{user}" successfully.', fg="green",
+            f'Role "{role.name}" added to user "{user}" successfully.',
+            fg="green",
         )
     else:
         raise click.UsageError("Cannot add role to user.")
@@ -192,7 +194,8 @@ def roles_remove(user, role):
         raise click.UsageError("Cannot find role.")
     if _datastore.remove_role_from_user(user_obj, role):
         click.secho(
-            f'Role "{role.name}" removed from user "{user}" successfully.', fg="green",
+            f'Role "{role.name}" removed from user "{user}" successfully.',
+            fg="green",
         )
     else:
         raise click.UsageError("Cannot remove role from user.")
