@@ -280,7 +280,9 @@ def test_signin_pwd_json(app, client, get_message):
         new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
     )
     response = client.post(
-        "/change", json=data, headers={"Content-Type": "application/json"},
+        "/change",
+        json=data,
+        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
     logout(client)
@@ -691,7 +693,8 @@ def test_setup_json(app, client_nc, get_message):
 
 
 @pytest.mark.settings(
-    us_enabled_methods=["email", "sms"], user_identity_attributes=UIA_EMAIL_PHONE,
+    us_enabled_methods=["email", "sms"],
+    user_identity_attributes=UIA_EMAIL_PHONE,
 )
 def test_setup_json_no_session(app, client_nc, get_message):
     # Test that with normal config freshness is required so must have session.
@@ -840,7 +843,9 @@ def test_verify_json(app, client, get_message):
     }
 
     response = client.post(
-        "us-verify/send-code", json=dict(chosen_method="orb"), headers=headers,
+        "us-verify/send-code",
+        json=dict(chosen_method="orb"),
+        headers=headers,
     )
     assert response.status_code == 400
 
@@ -848,7 +853,9 @@ def test_verify_json(app, client, get_message):
     sms_sender = SmsSenderFactory.createSender("test")
     set_phone(app)
     response = client.post(
-        "us-verify/send-code", json=dict(chosen_method="sms"), headers=headers,
+        "us-verify/send-code",
+        json=dict(chosen_method="sms"),
+        headers=headers,
     )
     assert response.status_code == 200
 

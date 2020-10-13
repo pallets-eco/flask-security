@@ -37,7 +37,7 @@ SmsSenderFactory.senders["bad"] = SmsBadSender
 
 
 def tf_authenticate(app, client, validate=True):
-    """ Login/Authenticate using two factor.
+    """Login/Authenticate using two factor.
     This is the equivalent of utils:authenticate
     """
     prev_sms = app.config["SECURITY_SMS_SERVICE"]
@@ -418,7 +418,11 @@ def test_rescue_json(app, client):
 
     # it's an error if not logged in.
     rescue_data_json = dict(help_setup="lost_device")
-    response = client.post("/tf-rescue", json=rescue_data_json, headers=headers,)
+    response = client.post(
+        "/tf-rescue",
+        json=rescue_data_json,
+        headers=headers,
+    )
     assert response.status_code == 400
 
     # check when two_factor_rescue function should appear
@@ -1037,7 +1041,9 @@ def test_verify(app, client, get_message):
 
     # Send wrong password
     response = client.post(
-        verify_password_url, data=dict(password="iforgot"), follow_redirects=True,
+        verify_password_url,
+        data=dict(password="iforgot"),
+        follow_redirects=True,
     )
     assert response.status_code == 200
     assert get_message("INVALID_PASSWORD") in response.data
@@ -1045,7 +1051,9 @@ def test_verify(app, client, get_message):
     # Verify with correct password
     with capture_flashes() as flashes:
         response = client.post(
-            verify_password_url, data=dict(password="password"), follow_redirects=False,
+            verify_password_url,
+            data=dict(password="password"),
+            follow_redirects=False,
         )
         assert response.status_code == 302
         assert response.location == "http://localhost/tf-setup"
@@ -1136,7 +1144,8 @@ def test_no_sms(app, get_message):
         client = app.test_client()
 
         ds.create_user(
-            email="trp@lp.com", password=hash_password("password"),
+            email="trp@lp.com",
+            password=hash_password("password"),
         )
         ds.commit()
 

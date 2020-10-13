@@ -75,7 +75,7 @@ def json_logout(client, token, endpoint=None):
 
 
 def get_session(response):
-    """ Return session cookie contents.
+    """Return session cookie contents.
     This a base64 encoded json.
     Returns a dict
     """
@@ -175,7 +175,7 @@ def init_app_with_options(app, datastore, **options):
 
 
 def get_num_queries(datastore):
-    """ Return # of queries executed during test.
+    """Return # of queries executed during test.
     return None if datastore doesn't support this.
     """
     if is_sqlalchemy(datastore):
@@ -231,8 +231,7 @@ def capture_passwordless_login_requests():
 
 @contextmanager
 def capture_registrations():
-    """Testing utility for capturing registrations.
-    """
+    """Testing utility for capturing registrations."""
     registrations = []
 
     def _on(app, **data):

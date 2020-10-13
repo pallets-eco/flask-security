@@ -262,7 +262,7 @@ class UserDatastore:
         return False
 
     def set_uniquifier(self, user, uniquifier=None):
-        """ Set user's Flask-Security identity key.
+        """Set user's Flask-Security identity key.
         This will immediately render outstanding auth tokens,
         session cookies and remember cookies invalid.
 
@@ -382,7 +382,7 @@ class UserDatastore:
             self.tf_reset(user)
 
     def tf_set(self, user, primary_method, totp_secret=None, phone=None):
-        """ Set two-factor info into user record.
+        """Set two-factor info into user record.
         This carefully only changes things if different.
 
         If totp_secret isn't provided - existing one won't be changed.
@@ -410,7 +410,7 @@ class UserDatastore:
             self.put(user)
 
     def tf_reset(self, user):
-        """ Disable two-factor auth for user
+        """Disable two-factor auth for user
 
         .. versionadded: 3.4.1
         """
@@ -420,7 +420,7 @@ class UserDatastore:
         self.put(user)
 
     def us_get_totp_secrets(self, user):
-        """ Return totp secrets.
+        """Return totp secrets.
         These are json encoded in the DB.
 
         Returns a dict with methods as keys and secrets as values.
@@ -432,7 +432,7 @@ class UserDatastore:
         return json.loads(user.us_totp_secrets)
 
     def us_put_totp_secrets(self, user, secrets):
-        """ Save secrets. Assume to be a dict (or None)
+        """Save secrets. Assume to be a dict (or None)
         with keys as methods, and values as (encrypted) secrets.
 
         .. versionadded:: 3.4.0
@@ -441,7 +441,7 @@ class UserDatastore:
         self.put(user)
 
     def us_set(self, user, method, totp_secret=None, phone=None):
-        """ Set unified sign in info into user record.
+        """Set unified sign in info into user record.
 
         If totp_secret isn't provided - existing one won't be changed.
         If phone isn't provided, the existing phone number won't be changed.
@@ -463,7 +463,7 @@ class UserDatastore:
             self.put(user)
 
     def us_reset(self, user):
-        """ Disable unified sign in for user.
+        """Disable unified sign in for user.
         Be aware that if "email" is an allowed way to receive codes, they
         will still work (as totp secrets are generated on the fly).
         This will disable authenticator app and SMS.
@@ -518,8 +518,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
 
     def __init__(self, session, user_model, role_model):
         class PretendFlaskSQLAlchemyDb:
-            """ This is a pretend db object, so we can just pass in a session.
-            """
+            """This is a pretend db object, so we can just pass in a session."""
 
             def __init__(self, session):
                 self.session = session

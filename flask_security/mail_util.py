@@ -31,7 +31,7 @@ class MailUtil:
     """
 
     def __init__(self, app):
-        """ Instantiate class.
+        """Instantiate class.
 
         :param app: The Flask application being initialized.
         """

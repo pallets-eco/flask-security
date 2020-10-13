@@ -119,8 +119,7 @@ class Length(ValidatorMixin, validators.Length):
 
 
 class EmailValidation:
-    """ Simple interface to email_validator.
-    """
+    """Simple interface to email_validator."""
 
     def __call__(self, form, field):
         if field.data is None:  # pragma: no cover
@@ -143,14 +142,14 @@ password_required = Required(message="PASSWORD_NOT_PROVIDED")
 
 
 def _local_xlate(text):
-    """ LazyStrings need to be evaluated in the context of a request
+    """LazyStrings need to be evaluated in the context of a request
     where _security.i18_domain is available.
     """
     return localize_callback(text)
 
 
 def get_form_field_label(key):
-    """ This is called during import since form fields are declared as part of
+    """This is called during import since form fields are declared as part of
     class. Thus can't call 'localize_callback' until we need to actually
     translate/render form.
     """
@@ -432,7 +431,7 @@ class VerifyForm(Form, PasswordFormMixin):
 
 
 class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
-    """ This form is used for registering when 'confirmable' is set.
+    """This form is used for registering when 'confirmable' is set.
     The only difference between this and the other RegisterForm is that
     this one doesn't require re-typing in the password...
     """

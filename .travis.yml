@@ -61,6 +61,7 @@ script:
     set -e;
     if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
      # Just run once - seems to have issues running on multiple environements.
+     pre-commit autoupdate
      pre-commit run --all-files --show-diff-on-failure
      # Test against a real DB (postgres)
      python setup.py test --addopts --realdburl=postgres://postgres@localhost/;

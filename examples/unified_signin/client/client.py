@@ -57,7 +57,8 @@ def register(server_url, session, email, password):
     # Use the backdoor to grab confirmation email and confirm.
 
     resp = session.post(
-        f"{server_url}/register", json={"email": email, "password": password},
+        f"{server_url}/register",
+        json={"email": email, "password": password},
     )
     check_error(resp)
 
@@ -142,7 +143,8 @@ def sms_signin(server_url, session, username, phone):
     jbody = resp.json()
     code = jbody["sms"].split()[-1].strip(".")
     resp = session.post(
-        f"{server_url}/us-signin", json={"identity": username, "passcode": code},
+        f"{server_url}/us-signin",
+        json={"identity": username, "passcode": code},
     )
     check_error(resp)
 
@@ -161,7 +163,10 @@ def runit():
 
         # New user - register and confirm
         register(
-            server_url, session, username, mypassword,
+            server_url,
+            session,
+            username,
+            mypassword,
         )
         # verify confirmed and logged in
         resp = session.get(f"{server_url}/api/health")

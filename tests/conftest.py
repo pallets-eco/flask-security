@@ -498,7 +498,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
         confirmed_at = DateTimeField(null=True)
 
     class UserRoles(db.Model):
-        """ Peewee does not have built-in many-to-many support, so we have to
+        """Peewee does not have built-in many-to-many support, so we have to
         create this mapping class to link users to roles."""
 
         user = ForeignKeyField(User, backref="roles")

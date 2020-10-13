@@ -12,7 +12,7 @@ from passlib.totp import TOTP, TokenError
 
 
 class Totp:
-    """ Encapsulate usage of Passlib TOTP functionality.
+    """Encapsulate usage of Passlib TOTP functionality.
 
     Flask-Security doesn't implement any replay-attack protection out of the box
     as suggested by:
@@ -26,7 +26,7 @@ class Totp:
     """
 
     def __init__(self, secrets, issuer):
-        """ Initialize a totp factory.
+        """Initialize a totp factory.
         secrets are used to encrypt the per-user totp_secret on disk.
         """
         # This should be a dict with at least one entry
@@ -41,7 +41,7 @@ class Totp:
         return self._totp.from_source(totp_secret).generate().token
 
     def generate_totp_secret(self):
-        """ Create new user-unique totp_secret.
+        """Create new user-unique totp_secret.
 
         We return an encrypted json string so that when sent in a cookie or
         sent to DB - it is encrypted.
@@ -50,7 +50,7 @@ class Totp:
         return self._totp.new().to_json(encrypt=True)
 
     def verify_totp(self, token, totp_secret, user, window=0):
-        """ Verifies token for specific user.
+        """Verifies token for specific user.
 
         :param token: token to be check against user's secret
         :param totp_secret: the unique shared secret of the user
@@ -79,7 +79,7 @@ class Totp:
             return False
 
     def get_totp_uri(self, username, totp_secret):
-        """ Generate provisioning url for use with the qrcode
+        """Generate provisioning url for use with the qrcode
                 scanner built into the app
 
         :param username: username/email of the current user
@@ -89,7 +89,7 @@ class Totp:
         return tp.to_uri(username)
 
     def get_last_counter(self, user):
-        """ Implement this to fetch stored last_counter from cache.
+        """Implement this to fetch stored last_counter from cache.
 
         :param user: User model
         :return: last_counter as stored in set_last_counter()
@@ -97,7 +97,7 @@ class Totp:
         return None
 
     def set_last_counter(self, user, tmatch):
-        """ Implement this to cache last_counter.
+        """Implement this to cache last_counter.
 
         :param user: User model
         :param tmatch: a TotpMatch as returned from totp.verify()

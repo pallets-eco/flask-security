@@ -32,8 +32,7 @@ class FsRoleMixin(FsRoleMixinV1):
 
 
 class FsUserMixin(FsUserMixinV1):
-    """ User information
-    """
+    """User information"""
 
     # Make username unique but not required.
     username = Column(String(255), unique=True, nullable=True)

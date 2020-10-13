@@ -395,7 +395,9 @@ def test_pwd_normalize(app, client):
         new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
     )
     response = client.post(
-        "/change", json=data, headers={"Content-Type": "application/json"},
+        "/change",
+        json=data,
+        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
     logout(client)
@@ -429,16 +431,18 @@ def test_pwd_normalize(app, client):
         new_password_confirm="new strong password\N{ROMAN NUMERAL TWO}",
     )
     response = client.post(
-        "/change", json=data, headers={"Content-Type": "application/json"},
+        "/change",
+        json=data,
+        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
 
 
 @pytest.mark.settings(password_normalize_form=None)
 def test_pwd_no_normalize(app, client):
-    """ Verify that can log in with original but not normalized if have
-     disabled normalization
-     """
+    """Verify that can log in with original but not normalized if have
+    disabled normalization
+    """
     authenticate(client)
 
     data = dict(
@@ -447,7 +451,9 @@ def test_pwd_no_normalize(app, client):
         new_password_confirm="new strong password\N{ROMAN NUMERAL ONE}",
     )
     response = client.post(
-        "/change", json=data, headers={"Content-Type": "application/json"},
+        "/change",
+        json=data,
+        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
     logout(client)
@@ -480,6 +486,8 @@ def test_pwd_no_normalize(app, client):
         new_password_confirm="new strong password\N{ROMAN NUMERAL TWO}",
     )
     response = client.post(
-        "/change", json=data, headers={"Content-Type": "application/json"},
+        "/change",
+        json=data,
+        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200

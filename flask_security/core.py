@@ -425,7 +425,7 @@ _default_forms = {
 
 
 def _user_loader(user_id):
-    """ Try to load based on fs_uniquifier (alternative_id) if available.
+    """Try to load based on fs_uniquifier (alternative_id) if available.
 
     Note that we don't try, and fall back to the other - primarily because some DBs
     and drivers (psycopg2) really really hate getting mismatched types during queries.
@@ -773,7 +773,7 @@ class UserMixin(BaseUserMixin):
         return verify_and_update_password(password, self)
 
     def calc_username(self):
-        """ Come up with the best 'username' based on how the app
+        """Come up with the best 'username' based on how the app
         is configured (via :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`).
         Returns the first non-null match (and converts to string).
         In theory this should NEVER be the empty string unless the user
@@ -789,7 +789,7 @@ class UserMixin(BaseUserMixin):
         return str(cusername) if cusername is not None else ""
 
     def us_send_security_token(self, method, **kwargs):
-        """ Generate and send the security code for unified sign in.
+        """Generate and send the security code for unified sign in.
 
         :param method: The method in which the code will be sent
         :param kwargs: Opaque parameters that are subject to change at any time
@@ -807,7 +807,7 @@ class UserMixin(BaseUserMixin):
         return None
 
     def tf_send_security_token(self, method, **kwargs):
-        """ Generate and send the security code for two-factor.
+        """Generate and send the security code for two-factor.
 
         :param method: The method in which the code will be sent
         :param kwargs: Opaque parameters that are subject to change at any time
@@ -1227,7 +1227,7 @@ class Security:
         return render_template(*args, **kwargs)
 
     def render_json(self, cb):
-        """ Callback to render response payload as JSON.
+        """Callback to render response payload as JSON.
 
         :param cb: Callback function with
          signature (payload, code, headers=None, user=None)
@@ -1261,7 +1261,7 @@ class Security:
         self._state._render_json = cb
 
     def want_json(self, fn):
-        """ Function that returns True if response should be JSON (based on the request)
+        """Function that returns True if response should be JSON (based on the request)
 
         :param fn: Function with the following signature (request)
 
