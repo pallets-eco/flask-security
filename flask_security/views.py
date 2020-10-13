@@ -30,6 +30,7 @@
     authenticated (via session?) as well as unauthenticated access.
 """
 
+from functools import partial
 import time
 
 from flask import (
@@ -72,9 +73,12 @@ from .recoverable import (
 from .registerable import register_user
 from .twofactor import (
     complete_two_factor_process,
+    is_tf_setup,
     tf_clean_session,
     tf_disable,
     tf_login,
+    tf_set_validity_token_cookie,
+    tf_verify_validility_token,
 )
 from .utils import (
     base_render_json,
@@ -171,13 +175,21 @@ def login():
 
     if form.validate_on_submit():
         remember_me = form.remember.data if "remember" in form else None
-        if config_value("TWO_FACTOR") and (
-            config_value("TWO_FACTOR_REQUIRED")
-            or (form.user.tf_totp_secret and form.user.tf_primary_method)
-        ):
-            return tf_login(
-                form.user, remember=remember_me, primary_authn_via="password"
+        if config_value("TWO_FACTOR"):
+            tf_validity_token = request.cookies.get("tf_validity", default=None)
+            tf_validity_token_is_valid = tf_verify_validility_token(
+                tf_validity_token, form.user.fs_uniquifier
             )
+
+        if config_value("TWO_FACTOR"):
+            if config_value("TWO_FACTOR_REQUIRED") or (is_tf_setup(form.user)):
+                if config_value("TWO_FACTOR_ALWAYS_VALIDATE") or (
+                    not tf_validity_token_is_valid
+                ):
+
+                    return tf_login(
+                        form.user, remember=remember_me, primary_authn_via="password"
+                    )
 
         login_user(form.user, remember=remember_me, authn_via=["password"])
         after_this_request(_commit)
@@ -297,7 +309,7 @@ def register():
     return _security.render_template(
         config_value("REGISTER_USER_TEMPLATE"),
         register_user_form=form,
-        **_ctx("register")
+        **_ctx("register"),
     )
 
 
@@ -389,7 +401,7 @@ def send_confirmation():
     return _security.render_template(
         config_value("SEND_CONFIRMATION_TEMPLATE"),
         send_confirmation_form=form,
-        **_ctx("send_confirmation")
+        **_ctx("send_confirmation"),
     )
 
 
@@ -499,7 +511,7 @@ def forgot_password():
     return _security.render_template(
         config_value("FORGOT_PASSWORD_TEMPLATE"),
         forgot_password_form=form,
-        **_ctx("forgot_password")
+        **_ctx("forgot_password"),
     )
 
 
@@ -567,7 +579,7 @@ def reset_password(token):
             config_value("RESET_PASSWORD_TEMPLATE"),
             reset_password_form=form,
             reset_password_token=token,
-            **_ctx("reset_password")
+            **_ctx("reset_password"),
         )
 
     # This is the POST case.
@@ -621,7 +633,7 @@ def reset_password(token):
         config_value("RESET_PASSWORD_TEMPLATE"),
         reset_password_form=form,
         reset_password_token=token,
-        **_ctx("reset_password")
+        **_ctx("reset_password"),
     )
 
 
@@ -653,7 +665,7 @@ def change_password():
     return _security.render_template(
         config_value("CHANGE_PASSWORD_TEMPLATE"),
         change_password_form=form,
-        **_ctx("change_password")
+        **_ctx("change_password"),
     )
 
 
@@ -775,7 +787,7 @@ def two_factor_setup():
                 two_factor_verify_code_form=code_form,
                 choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
                 chosen_method=pm,
-                **_ctx("tf_setup")
+                **_ctx("tf_setup"),
             )
         return base_render_json(form, include_user=False, additional=json_response)
 
@@ -804,7 +816,7 @@ def two_factor_setup():
         choices=choices,
         chosen_method=form.setup.data,
         two_factor_required=config_value("TWO_FACTOR_REQUIRED"),
-        **_ctx("tf_setup")
+        **_ctx("tf_setup"),
     )
 
 
@@ -874,12 +886,23 @@ def two_factor_token_validation():
     form.tf_totp_secret = totp_secret
     if form.validate_on_submit():
         # Success - log in user and clear all session variables
+        remember = session.pop("tf_remember_login", None)
         completion_message = complete_two_factor_process(
-            form.user, pm, totp_secret, changing, session.pop("tf_remember_login", None)
+            form.user, pm, totp_secret, changing, remember
         )
+
         after_this_request(_commit)
+        after_this_request(
+            partial(
+                tf_set_validity_token_cookie,
+                fs_uniquifier=form.user.fs_uniquifier,
+                remember=remember,
+            )
+        )
+
         if not _security._want_json(request):
             do_flash(*get_message(completion_message))
+
             return redirect(get_post_login_redirect())
 
     # GET or not successful POST
@@ -895,7 +918,7 @@ def two_factor_token_validation():
             two_factor_setup_form=setup_form,
             two_factor_verify_code_form=form,
             choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
-            **_ctx("tf_setup")
+            **_ctx("tf_setup"),
         )
 
     # if we were trying to validate an existing method
@@ -907,7 +930,7 @@ def two_factor_token_validation():
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
             problem=None,
-            **_ctx("tf_token_validation")
+            **_ctx("tf_token_validation"),
         )
 
 
@@ -982,7 +1005,7 @@ def two_factor_rescue():
         two_factor_rescue_form=form,
         rescue_mail=config_value("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
-        **_ctx("tf_token_validation")
+        **_ctx("tf_token_validation"),
     )
 
 

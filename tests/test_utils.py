@@ -22,6 +22,7 @@ from flask_security.signals import (
     login_instructions_sent,
     reset_password_instructions_sent,
     user_registered,
+    tf_validation_token_set,
 )
 from flask_security.utils import hash_password
 
@@ -279,3 +280,18 @@ def capture_flashes():
         yield flashes
     finally:
         message_flashed.disconnect(_on)
+
+
+@contextmanager
+def capture_set_tf_validity_requests():
+    requests = []
+
+    def _on(app, **data):
+        requests.append(data)
+
+    tf_validation_token_set.connect(_on)
+
+    try:
+        yield requests
+    finally:
+        tf_validation_token_set.disconnect(_on)

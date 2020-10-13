@@ -249,6 +249,13 @@ sends the following signals.
 
     .. versionadded:: 3.3.0
 
+.. data:: tf_validation_token_set
+
+    Sent went the two factor validation cookie is set.  In addition to the app
+    (which is the sender) it is passed `user.fs_uniquifier` and `token` arguments.
+
+    .. versionadded:: TBD
+
 .. data:: us_security_token_sent
 
     Sent when a unified sign in access code is sent. In addition to the app

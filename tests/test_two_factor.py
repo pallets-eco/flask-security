@@ -25,6 +25,7 @@ from tests.test_utils import (
     SmsTestSender,
     authenticate,
     capture_flashes,
+    capture_set_tf_validity_requests,
     get_session,
     logout,
 )
@@ -36,17 +37,18 @@ SmsSenderFactory.senders["test"] = SmsTestSender
 SmsSenderFactory.senders["bad"] = SmsBadSender
 
 
-def tf_authenticate(app, client, validate=True):
+def tf_authenticate(app, client, validate=True, remember=False):
     """Login/Authenticate using two factor.
     This is the equivalent of utils:authenticate
     """
     prev_sms = app.config["SECURITY_SMS_SERVICE"]
     app.config["SECURITY_SMS_SERVICE"] = "test"
     sms_sender = SmsSenderFactory.createSender("test")
-    json_data = dict(email="gal@lp.com", password="password")
+    json_data = dict(email="gal@lp.com", password="password", remember=remember)
     response = client.post(
         "/login", json=json_data, headers={"Content-Type": "application/json"}
     )
+
     assert b'"code": 200' in response.data
     app.config["SECURITY_SMS_SERVICE"] = prev_sms
 
@@ -55,6 +57,7 @@ def tf_authenticate(app, client, validate=True):
         response = client.post(
             "/tf-validate", data=dict(code=code), follow_redirects=True
         )
+
         assert response.status_code == 200
 
 
@@ -69,6 +72,56 @@ def tf_in_session(session):
             "tf_totp_secret",
         ]
     )
+
+
+@pytest.mark.settings(two_factor_always_validate=False)
+def test_always_validate(app, client):
+    with capture_set_tf_validity_requests() as requests:
+        tf_authenticate(app, client, remember=True)
+
+    cookie = next(
+        (cookie for cookie in client.cookie_jar if cookie.name == "tf_validity"), None
+    )
+    assert cookie is not None
+
+    tf_token = requests[0]["token"]
+    assert cookie.value == tf_token
+
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Welcome gal@lp.com" in response.data
+    assert response.status_code == 200
+
+    logout(client)
+
+    data = dict(email="gal2@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Please enter your authentication code" in response.data
+
+
+@pytest.mark.settings(two_factor_always_validate=False)
+def test_do_not_remember_tf_validity(app, client):
+    tf_authenticate(app, client)
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Please enter your authentication code" in response.data
+
+
+@pytest.mark.settings(
+    two_factor_always_validate=False, two_factor_login_validity="0 days"
+)
+def test_tf_expired_cookie(app, client):
+    tf_authenticate(app, client)
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+
+    assert b"Please enter your authentication code" in response.data
 
 
 @pytest.mark.settings(two_factor_required=True)

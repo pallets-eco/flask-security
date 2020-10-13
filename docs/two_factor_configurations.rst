@@ -65,6 +65,10 @@ possible using SQLAlchemy:
     app.config['SECURITY_TWO_FACTOR'] = True
     app.config['SECURITY_TWO_FACTOR_RESCUE_MAIL'] = 'put_your_mail@gmail.com'
 
+    app.config['SECURITY_TWO_FACTOR_ALWAYS_VALIDATE']=False
+    app.config['SECURITY_TWO_FACTOR_LOGIN_VALIDITY']='1 week'
+    app.config['SECURITY_TWO_FACTOR_VALIDITY_SALT']='230129812443702341504339573704856364139'
+
     # Generate a good totp secret using: passlib.totp.generate_secret()
     app.config['SECURITY_TOTP_SECRETS'] = {"1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"}
     app.config['SECURITY_TOTP_ISSUER'] = 'put_your_app_name'
@@ -161,3 +165,11 @@ Rescue
 ~~~~~~
 Life happens - if the user doesn't have their mobile devices (SMS) or authenticator app, then they can request using ``/tf-rescue`` endpoint to have the code sent to their email.
 If they have lost access to their email, they can request an email be sent to the application administrators.
+
+Validity
+~~~~~~~~
+Sometimes it can be preferrable to enter the 2FA code once a day/week/month, especially if a user logs in and out of a website multiple times.  This allows the
+security of a two factor authentication but with a slightly better user experience.  This can be achevied by setting ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` to ``False``,
+and clicking the 'Remember' button on the login form. Once the two factor code is validated, a cookie is set to allow skipping the validation step.  The cookie is named
+``tf_validity`` and contains the signed token containing the user's ``fs_uniquifier``.  The cookie and token are both set to expire after the time delta given in
+``SECURITY_TWO_FACTOR_LOGIN_VALIDITY``.  Note that setting ``SECURITY_TWO_FACTOR_LOGIN_VALIDITY`` to 0 is equivalent to ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` being ``True``.
