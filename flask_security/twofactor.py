@@ -194,12 +194,12 @@ def tf_login(user, remember=None, primary_authn_via=None):
     return base_render_json(form, include_user=False, additional=json_response)
 
 
-def generate_tf_validity_token(tf_user_id):
+def generate_tf_validity_token(fs_uniqifier):
     """Generates a unique token for the specified user.
 
-    :param user: The user the token belongs to
+    :param fs_uniqifier: The fs_uniqifier of a user to whom the token belongs to
     """
-    return _security.tf_validity_serializer.dumps(tf_user_id)
+    return _security.tf_validity_serializer.dumps(fs_uniqifier)
 
 
 def tf_validity_token_status(token):
@@ -216,18 +216,18 @@ def tf_validity_token_status(token):
     )
 
 
-def tf_verify_validility_token(token, form_user_uniquifier):
+def tf_verify_validility_token(token, fs_uniquifier):
     """Returns the status of the Two-Factor Validity token
 
     :param token: The Two-Factor Validity token
-    :param form_user_uniquifier: The ``fs_uniquifier`` of the submitting user.
+    :param fs_uniquifier: The ``fs_uniquifier`` of the submitting user.
     """
     if token is None:
         return False
 
     expired, invalid, uniquifier = tf_validity_token_status(token)
 
-    if expired or invalid or (form_user_uniquifier != uniquifier):
+    if expired or invalid or (fs_uniquifier != uniquifier):
 
         return False
 
@@ -239,16 +239,26 @@ def tf_set_validity_token_cookie(response, fs_uniquifier=None, remember=False):
     configured and the user selects remember me
 
     :param response: The response with which to set the set_cookie
-    :param tf_user_id: The ``fs_uniquifier`` of a user that has succcessfully
+    :param fs_uniquifier: The ``fs_uniquifier`` of a user that has succcessfully
                         authenticated and validated with Two-Factor
                         authentication.
     :param remember: Flag specifying if the tf_validity cookie should be set.
     """
     if not config_value("TWO_FACTOR_ALWAYS_VALIDATE") and remember:
         token = generate_tf_validity_token(fs_uniquifier)
+        samesite = config_value("TWO_FACTOR_VALIDITY_COOKIE_SAMESITE")
+        secure = config_value("TWO_FACTOR_VALIDITY_COOKIE_SECURE")
+        httponly = config_value("TWO_FACTOR_VALIDITY_COOKIE_HTTPONLY")
 
         max_age = int(get_within_delta("TWO_FACTOR_LOGIN_VALIDITY").total_seconds())
-        response.set_cookie("tf_validity", token, max_age=max_age)
+        response.set_cookie(
+            "tf_validity",
+            token,
+            max_age=max_age,
+            secure=secure,
+            httponly=httponly,
+            samesite=samesite,
+        )
         tf_validation_token_set.send(
             app._get_current_object(), fs_uniquifier=fs_uniquifier, token=token
         )

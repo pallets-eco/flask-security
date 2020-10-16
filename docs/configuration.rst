@@ -956,6 +956,24 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``30 Days``.
 
+.. py:data:: TWO_FACTOR_VALIDITY_COOKIE_HTTPONLY
+
+    Specifies the if the two factor validity cookie should be available to Javascript.
+
+    Default: ``False``.
+
+.. py:data:: TWO_FACTOR_VALIDITY_COOKIE_SECURE
+
+    Specifies the if the two factor validity cookie should be sent over HTTPS only.
+
+    Default: ``False``.
+
+.. py:data:: TWO_FACTOR_VALIDITY_COOKIE_SAMESITE
+
+    Specifies the SameSite Attribute of the two factor validity cookie. Can be set to "Lax" or "Strict"
+
+    Default: ``None``.
+
 
 Unified Signin
 --------------

@@ -73,6 +73,7 @@ from .recoverable import (
 from .registerable import register_user
 from .twofactor import (
     complete_two_factor_process,
+    generate_tf_validity_token,
     is_tf_setup,
     tf_clean_session,
     tf_disable,
@@ -176,12 +177,18 @@ def login():
     if form.validate_on_submit():
         remember_me = form.remember.data if "remember" in form else None
         if config_value("TWO_FACTOR"):
-            tf_validity_token = request.cookies.get("tf_validity", default=None)
+            if request.is_json and request.content_length:
+                if "tf_validity_token" in request.get_json().keys():
+                    tf_validity_token = request.get_json()["tf_validity_token"]
+                else:
+                    tf_validity_token = None
+            else:
+                tf_validity_token = request.cookies.get("tf_validity", default=None)
+
             tf_validity_token_is_valid = tf_verify_validility_token(
                 tf_validity_token, form.user.fs_uniquifier
             )
 
-        if config_value("TWO_FACTOR"):
             if config_value("TWO_FACTOR_REQUIRED") or (is_tf_setup(form.user)):
                 if config_value("TWO_FACTOR_ALWAYS_VALIDATE") or (
                     not tf_validity_token_is_valid
@@ -892,19 +899,25 @@ def two_factor_token_validation():
         )
 
         after_this_request(_commit)
-        after_this_request(
-            partial(
-                tf_set_validity_token_cookie,
-                fs_uniquifier=form.user.fs_uniquifier,
-                remember=remember,
-            )
-        )
 
         if not _security._want_json(request):
+            after_this_request(
+                partial(
+                    tf_set_validity_token_cookie,
+                    fs_uniquifier=form.user.fs_uniquifier,
+                    remember=remember,
+                )
+            )
             do_flash(*get_message(completion_message))
 
             return redirect(get_post_login_redirect())
 
+        if (
+            not config_value("TWO_FACTOR_ALWAYS_VALIDATE") and remember
+        ) and _security._want_json(request):
+            token = generate_tf_validity_token(form.user.fs_uniquifier)
+            json_response = {"tf_validity_token": token}
+            return base_render_json(form, additional=json_response)
     # GET or not successful POST
     if _security._want_json(request):
         return base_render_json(form)
