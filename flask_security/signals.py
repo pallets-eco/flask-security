@@ -35,8 +35,6 @@ tf_profile_changed = signals.signal("tf-profile-changed")
 
 tf_security_token_sent = signals.signal("tf-security-token-sent")
 
-tf_validation_token_set = signals.signal("tf-validation-token-set")
-
 tf_disabled = signals.signal("tf-disabled")
 
 us_security_token_sent = signals.signal("us-security-token-sent")

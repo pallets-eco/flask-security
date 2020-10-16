@@ -25,7 +25,6 @@ from tests.test_utils import (
     SmsTestSender,
     authenticate,
     capture_flashes,
-    capture_set_tf_validity_requests,
     get_session,
     logout,
 )
@@ -85,15 +84,11 @@ def tf_in_session(session):
 
 @pytest.mark.settings(two_factor_always_validate=False)
 def test_always_validate(app, client):
-    with capture_set_tf_validity_requests() as requests:
-        tf_authenticate(app, client, remember=True)
+    tf_authenticate(app, client, remember=True)
     cookie = next(
         (cookie for cookie in client.cookie_jar if cookie.name == "tf_validity"), None
     )
     assert cookie is not None
-
-    tf_token = requests[0]["token"]
-    assert cookie.value == tf_token
 
     logout(client)
 

@@ -178,10 +178,7 @@ def login():
         remember_me = form.remember.data if "remember" in form else None
         if config_value("TWO_FACTOR"):
             if request.is_json and request.content_length:
-                if "tf_validity_token" in request.get_json().keys():
-                    tf_validity_token = request.get_json()["tf_validity_token"]
-                else:
-                    tf_validity_token = None
+                tf_validity_token = request.get_json().get("tf_validity_token", None)
             else:
                 tf_validity_token = request.cookies.get("tf_validity", default=None)
 

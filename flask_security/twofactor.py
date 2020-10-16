@@ -29,7 +29,6 @@ from .signals import (
     tf_disabled,
     tf_security_token_sent,
     tf_profile_changed,
-    tf_validation_token_set,
 )
 
 # Convenient references
@@ -258,9 +257,6 @@ def tf_set_validity_token_cookie(response, fs_uniquifier=None, remember=False):
             secure=secure,
             httponly=httponly,
             samesite=samesite,
-        )
-        tf_validation_token_set.send(
-            app._get_current_object(), fs_uniquifier=fs_uniquifier, token=token
         )
 
     return response
