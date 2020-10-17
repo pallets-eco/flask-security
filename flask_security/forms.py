@@ -27,6 +27,7 @@ from wtforms import (
     ValidationError,
     validators,
 )
+from wtforms.fields.html5 import EmailField
 from wtforms.validators import StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
@@ -215,21 +216,21 @@ class Form(BaseForm):
 
 
 class EmailFormMixin:
-    email = StringField(
+    email = EmailField(
         get_form_field_label("email"), validators=[email_required, email_validator]
     )
 
 
 class UserEmailFormMixin:
     user = None
-    email = StringField(
+    email = EmailField(
         get_form_field_label("email"),
         validators=[email_required, email_validator, valid_user_email],
     )
 
 
 class UniqueEmailFormMixin:
-    email = StringField(
+    email = EmailField(
         get_form_field_label("email"),
         validators=[email_required, email_validator, unique_user_email],
     )
@@ -354,7 +355,7 @@ class PasswordlessLoginForm(Form, UserEmailFormMixin):
 class LoginForm(Form, NextFormMixin):
     """The default login form"""
 
-    email = StringField(get_form_field_label("email"), validators=[email_required])
+    email = EmailField(get_form_field_label("email"), validators=[email_required])
     password = PasswordField(
         get_form_field_label("password"), validators=[password_required]
     )
