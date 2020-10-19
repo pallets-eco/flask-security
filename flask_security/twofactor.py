@@ -245,18 +245,10 @@ def tf_set_validity_token_cookie(response, fs_uniquifier=None, remember=False):
     """
     if not config_value("TWO_FACTOR_ALWAYS_VALIDATE") and remember:
         token = generate_tf_validity_token(fs_uniquifier)
-        samesite = config_value("TWO_FACTOR_VALIDITY_COOKIE_SAMESITE")
-        secure = config_value("TWO_FACTOR_VALIDITY_COOKIE_SECURE")
-        httponly = config_value("TWO_FACTOR_VALIDITY_COOKIE_HTTPONLY")
-
+        cookie_kwargs = config_value("TWO_FACTOR_VALIDITY_COOKIE")
         max_age = int(get_within_delta("TWO_FACTOR_LOGIN_VALIDITY").total_seconds())
         response.set_cookie(
-            "tf_validity",
-            token,
-            max_age=max_age,
-            secure=secure,
-            httponly=httponly,
-            samesite=samesite,
+            "tf_validity", value=token, max_age=max_age, **cookie_kwargs
         )
 
     return response

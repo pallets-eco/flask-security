@@ -956,23 +956,13 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``30 Days``.
 
-.. py:data:: TWO_FACTOR_VALIDITY_COOKIE_HTTPONLY
 
-    Specifies the if the two factor validity cookie should be available to Javascript.
+.. py:data:: TWO_FACTOR_VALIDITY_COOKIE
 
-    Default: ``False``.
+    A dictionary containing the parameters of the two factor validity cookie.
+    The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
-.. py:data:: TWO_FACTOR_VALIDITY_COOKIE_SECURE
-
-    Specifies the if the two factor validity cookie should be sent over HTTPS only.
-
-    Default: ``False``.
-
-.. py:data:: TWO_FACTOR_VALIDITY_COOKIE_SAMESITE
-
-    Specifies the SameSite Attribute of the two factor validity cookie. Can be set to "Lax" or "Strict"
-
-    Default: ``None``.
+    Default: ``{'httponly': False, 'secure': False, 'samesite': None}``.
 
 
 Unified Signin
