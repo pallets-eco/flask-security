@@ -962,7 +962,7 @@ Configuration related to the two-factor authentication feature.
     A dictionary containing the parameters of the two factor validity cookie.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
-    Default: ``{'httponly': False, 'secure': False, 'samesite': None}``.
+    Default: ``{'httponly': True, 'secure': False, 'samesite': None}``.
 
 
 Unified Signin

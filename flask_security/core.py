@@ -186,7 +186,7 @@ _default_config = {
     "TWO_FACTOR_LOGIN_VALIDITY": "30 days",
     "TWO_FACTOR_VALIDITY_SALT": "tf-validity-salt",
     "TWO_FACTOR_VALIDITY_COOKIE": {
-        "httponly": False,
+        "httponly": True,
         "secure": False,
         "samesite": None,
     },
