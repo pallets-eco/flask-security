@@ -36,26 +36,37 @@ SmsSenderFactory.senders["test"] = SmsTestSender
 SmsSenderFactory.senders["bad"] = SmsBadSender
 
 
-def tf_authenticate(app, client, validate=True):
+def tf_authenticate(app, client, json=False, validate=True, remember=False):
     """Login/Authenticate using two factor.
     This is the equivalent of utils:authenticate
     """
     prev_sms = app.config["SECURITY_SMS_SERVICE"]
     app.config["SECURITY_SMS_SERVICE"] = "test"
     sms_sender = SmsSenderFactory.createSender("test")
-    json_data = dict(email="gal@lp.com", password="password")
+    json_data = dict(email="gal@lp.com", password="password", remember=remember)
     response = client.post(
         "/login", json=json_data, headers={"Content-Type": "application/json"}
     )
+
     assert b'"code": 200' in response.data
     app.config["SECURITY_SMS_SERVICE"] = prev_sms
 
     if validate:
         code = sms_sender.messages[0].split()[-1]
-        response = client.post(
-            "/tf-validate", data=dict(code=code), follow_redirects=True
-        )
-        assert response.status_code == 200
+        if json:
+            response = client.post(
+                "/tf-validate",
+                json=dict(code=code),
+                headers={"Content-Type": "application/json"},
+            )
+            assert b'"code": 200' in response.data
+            return response.json["response"].get("tf_validity_token", None)
+        else:
+            response = client.post(
+                "/tf-validate", data=dict(code=code), follow_redirects=True
+            )
+
+            assert response.status_code == 200
 
 
 def tf_in_session(session):
@@ -69,6 +80,183 @@ def tf_in_session(session):
             "tf_totp_secret",
         ]
     )
+
+
+@pytest.mark.settings(two_factor_always_validate=False)
+def test_always_validate(app, client):
+    tf_authenticate(app, client, remember=True)
+    cookie = next(
+        (cookie for cookie in client.cookie_jar if cookie.name == "tf_validity"), None
+    )
+    assert cookie is not None
+
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Welcome gal@lp.com" in response.data
+    assert response.status_code == 200
+
+    logout(client)
+    data = dict(email="gal2@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Please enter your authentication code" in response.data
+
+    # make sure the cookie doesn't affect the JSON request
+    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    # Test JSON
+    token = tf_authenticate(app, client, json=True, remember=True)
+    logout(client)
+    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    response = client.post(
+        "/login",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    # verify logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+    logout(client)
+
+    data["email"] = "gal2@lp.com"
+    response = client.post(
+        "/login",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_primary_method"] == "authenticator"
+
+
+@pytest.mark.settings(two_factor_always_validate=False)
+def test_do_not_remember_tf_validity(app, client):
+    tf_authenticate(app, client)
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Please enter your authentication code" in response.data
+
+    # Test JSON
+    token = tf_authenticate(app, client, json=True)
+    logout(client)
+    assert token is None
+
+    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    response = client.post(
+        "/login",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_primary_method"] == "sms"
+
+
+@pytest.mark.settings(
+    two_factor_always_validate=False, two_factor_login_validity="-1 minutes"
+)
+def test_tf_expired_cookie(app, client):
+    tf_authenticate(app, client, remember=True)
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+
+    assert b"Please enter your authentication code" in response.data
+
+    # Test JSON
+    token = tf_authenticate(app, client, json=True, remember=True)
+    logout(client)
+    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    response = client.post(
+        "/login",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_primary_method"] == "sms"
+
+
+@pytest.mark.settings(two_factor_always_validate=False)
+def test_change_uniquifier_invalidates_cookie(app, client):
+    tf_authenticate(app, client, remember=True)
+    logout(client)
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gal@lp.com")
+        app.security.datastore.set_uniquifier(user)
+        app.security.datastore.commit()
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+
+    assert b"Please enter your authentication code" in response.data
+
+    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    # Test JSON
+    token = tf_authenticate(app, client, json=True, remember=True)
+    logout(client)
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gal@lp.com")
+        app.security.datastore.set_uniquifier(user)
+        app.security.datastore.commit()
+    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    response = client.post(
+        "/login",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_primary_method"] == "sms"
+
+
+@pytest.mark.settings(two_factor_always_validate=False, two_factor_required=True)
+def test_tf_reset_invalidates_cookie(app, client):
+    tf_authenticate(app, client, remember=True)
+    logout(client)
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gal@lp.com")
+        app.security.datastore.reset_user_access(user)
+        app.security.datastore.commit()
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+
+    assert b"Two-factor authentication adds an extra layer of security" in response.data
+
+    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    # Test JSON
+    token = tf_authenticate(app, client, json=True, remember=True, validate=False)
+    logout(client)
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gal@lp.com")
+        app.security.datastore.reset_user_access(user)
+        app.security.datastore.commit()
+    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    response = client.post(
+        "/login",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "setup_from_login"
 
 
 @pytest.mark.settings(two_factor_required=True)

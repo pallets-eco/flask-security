@@ -42,7 +42,11 @@ from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import Form, Required, get_form_field_label
 from .quart_compat import get_quart_status
 from .signals import us_profile_changed, us_security_token_sent
-from .twofactor import is_tf_setup, tf_login
+from .twofactor import (
+    is_tf_setup,
+    tf_login,
+    tf_verify_validility_token,
+)
 from .utils import (
     _,
     SmsSenderFactory,
@@ -514,18 +518,32 @@ def us_signin():
     form.submit.data = True
 
     if form.validate_on_submit():
+
         # Require multi-factor is it is enabled, and the method
         # we authenticated with requires it and either user has requested MFA or it is
         # required.
         remember_me = form.remember.data if "remember" in form else None
-        if (
-            config_value("TWO_FACTOR")
-            and form.authn_via in config_value("US_MFA_REQUIRED")
-            and (config_value("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user))
+        if config_value("TWO_FACTOR") and form.authn_via in config_value(
+            "US_MFA_REQUIRED"
         ):
-            return tf_login(
-                form.user, remember=remember_me, primary_authn_via=form.authn_via
+            if request.is_json and request.content_length:
+                tf_validity_token = request.get_json().get("tf_validity_token", None)
+            else:
+                tf_validity_token = request.cookies.get("tf_validity", default=None)
+
+            tf_validity_token_is_valid = tf_verify_validility_token(
+                tf_validity_token, form.user.fs_uniquifier
             )
+            if config_value("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
+                if config_value("TWO_FACTOR_ALWAYS_VALIDATE") or (
+                    not tf_validity_token_is_valid
+                ):
+
+                    return tf_login(
+                        form.user,
+                        remember=remember_me,
+                        primary_authn_via=form.authn_via,
+                    )
 
         after_this_request(_commit)
         login_user(form.user, remember=remember_me, authn_via=[form.authn_via])

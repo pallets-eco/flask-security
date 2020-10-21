@@ -56,7 +56,7 @@ paths:
         - name: next
           in: query
           description: >
-              URL to redirect to on successful login. Ignored for json request.
+            URL to redirect to on successful login. Ignored for json request.
           schema:
             type: string
         - $ref: "#/components/parameters/include_auth_token"
@@ -229,7 +229,7 @@ paths:
         - name: next
           in: query
           description: >
-              URL to redirect to on successful registration. Ignored for json request.
+            URL to redirect to on successful registration. Ignored for json request.
           schema:
             type: string
 
@@ -285,7 +285,7 @@ paths:
           in: header
           schema:
             $ref: "#/components/headers/X-CSRF-Token"
-        - $ref: '#/components/parameters/include_auth_token'
+        - $ref: "#/components/parameters/include_auth_token"
       requestBody:
         required: true
         content:
@@ -410,7 +410,7 @@ paths:
     post:
       summary: Reset password
       parameters:
-        - $ref: '#/components/parameters/include_auth_token'
+        - $ref: "#/components/parameters/include_auth_token"
       requestBody:
         required: true
         content:
@@ -557,7 +557,7 @@ paths:
     post:
       summary: Unified Sign In.
       parameters:
-        - $ref: '#/components/parameters/include_auth_token'
+        - $ref: "#/components/parameters/include_auth_token"
       requestBody:
         required: true
         content:
@@ -638,7 +638,7 @@ paths:
           content:
             application/json:
               schema:
-                  description: Code successfully sent
+                description: Code successfully sent
             text/html:
               schema:
                 description: Validation error, code send error, or code successfully sent
@@ -683,7 +683,7 @@ paths:
     post:
       summary: Unified sign in re-authentication
       parameters:
-        - $ref: '#/components/parameters/include_auth_token'
+        - $ref: "#/components/parameters/include_auth_token"
       requestBody:
         required: true
         content:
@@ -758,7 +758,7 @@ paths:
           content:
             application/json:
               schema:
-                  description: Code successfully sent
+                description: Code successfully sent
             text/html:
               schema:
                 description: Validation error, code send error, or code successfully sent
@@ -1079,10 +1079,11 @@ paths:
                 allOf:
                   - description: >
                       The code was correct, the caller is now signed in.
-                  - $ref: "#/components/schemas/DefaultJsonResponse"
+                  - $ref: "#/components/schemas/TfValidateJsonResponse"
             text/html:
               schema:
-                description: Unsuccessfully processed code. As above, which form is
+                description:
+                  Unsuccessfully processed code. As above, which form is
                   rendered depends on the state of the user's two factor configuration.
                 type: string
         302:
@@ -1137,7 +1138,7 @@ paths:
                 help-setup:
                   description: Either 'lost_device' or 'no_mail_access'.
                   type: string
-                  example: 'lost_device'
+                  example: "lost_device"
           application/x-www-form-urlencoded:
             schema:
               type: object
@@ -1145,7 +1146,7 @@ paths:
                 help_setup:
                   description: Either 'lost_device' or 'no_mail_access'.
                   type: string
-                  example: 'lost_device'
+                  example: "lost_device"
       responses:
         200:
           description: >
@@ -1155,7 +1156,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DefaultJsonResponseNoUser'
+                $ref: "#/components/schemas/DefaultJsonResponseNoUser"
             text/html:
               schema:
                 description: Invalid form values or verification code sent successfully and should be entered into the form.
@@ -1186,6 +1187,9 @@ components:
           type: boolean
           description: >
             If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
+        tf_validity_token:
+          type: string
+          description: Code verifying the user has successfully verfied 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
     LoginJsonResponse:
       type: object
       description: >
@@ -1360,6 +1364,9 @@ components:
           description: password or code
         remember_me:
           type: boolean
+        tf_validity_token:
+          type: string
+          description: Code verifying the user has successfully verfied 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
     UsSigninJsonResponse:
       type: object
       description: >
@@ -1513,6 +1520,19 @@ components:
               type: string
               description: Current method being congfigured.
               example: sms
+    TfValidateJsonResponse:
+      type: object
+      properties:
+        user:
+          type: object
+          description: >
+            By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
+        csrf_token:
+          type: string
+          description: Session CSRF token
+        tf_validity_token:
+          type: string
+          description: A timed token that verifies that the user has successfully completed 2FA. Only sent if SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False and remember_me (from /login POST) is True
 
   headers:
     X-CSRF-Token:

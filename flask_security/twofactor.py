@@ -15,8 +15,10 @@ from werkzeug.local import LocalProxy
 from .utils import (
     SmsSenderFactory,
     base_render_json,
+    check_and_get_token_status,
     config_value,
     do_flash,
+    get_within_delta,
     login_user,
     json_error_response,
     send_mail,
@@ -189,3 +191,64 @@ def tf_login(user, remember=None, primary_authn_via=None):
     form.user = user
 
     return base_render_json(form, include_user=False, additional=json_response)
+
+
+def generate_tf_validity_token(fs_uniqifier):
+    """Generates a unique token for the specified user.
+
+    :param fs_uniqifier: The fs_uniqifier of a user to whom the token belongs to
+    """
+    return _security.tf_validity_serializer.dumps(fs_uniqifier)
+
+
+def tf_validity_token_status(token):
+    """Returns the expired status, invalid status, and user of a
+    Two-Factor Validity token.
+    For example::
+
+        expired, invalid, user = tf_validity_token_status('...')
+
+    :param token: The Two-Factor Validity token
+    """
+    return check_and_get_token_status(
+        token, "tf_validity", get_within_delta("TWO_FACTOR_LOGIN_VALIDITY")
+    )
+
+
+def tf_verify_validility_token(token, fs_uniquifier):
+    """Returns the status of the Two-Factor Validity token
+
+    :param token: The Two-Factor Validity token
+    :param fs_uniquifier: The ``fs_uniquifier`` of the submitting user.
+    """
+    if token is None:
+        return False
+
+    expired, invalid, uniquifier = tf_validity_token_status(token)
+
+    if expired or invalid or (fs_uniquifier != uniquifier):
+
+        return False
+
+    return True
+
+
+def tf_set_validity_token_cookie(response, fs_uniquifier=None, remember=False):
+    """Sets the Two-Factor validity token for a specific user given that is
+    configured and the user selects remember me
+
+    :param response: The response with which to set the set_cookie
+    :param fs_uniquifier: The ``fs_uniquifier`` of a user that has succcessfully
+                        authenticated and validated with Two-Factor
+                        authentication.
+    :param remember: Flag specifying if the tf_validity cookie should be set.
+    """
+    if not config_value("TWO_FACTOR_ALWAYS_VALIDATE") and remember:
+        token = generate_tf_validity_token(fs_uniquifier)
+        cookie_kwargs = config_value("TWO_FACTOR_VALIDITY_COOKIE")
+        max_age = int(get_within_delta("TWO_FACTOR_LOGIN_VALIDITY").total_seconds())
+        response.set_cookie(
+            "tf_validity", value=token, max_age=max_age, **cookie_kwargs
+        )
+
+    return response
