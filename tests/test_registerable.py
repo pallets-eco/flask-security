@@ -6,6 +6,7 @@
 """
 
 import pytest
+import re
 from flask import Flask
 import jinja2
 from tests.test_utils import authenticate, check_xlation, logout
@@ -31,6 +32,7 @@ def test_registerable_flag(clients, app, get_message):
     # Test the register view
     response = clients.get("/register")
     assert b"<h1>Register</h1>" in response.data
+    assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
 
     # Test registering is successful, sends email, and fires signal
     @user_registered.connect_via(app)

@@ -10,6 +10,7 @@
 
 import base64
 import json
+import re
 from http.cookiejar import Cookie
 import pytest
 
@@ -147,6 +148,7 @@ def test_post_already_authenticated(client):
 def test_login_form(client):
     response = client.post("/login", data={"email": "matt@lp.com"})
     assert b"matt@lp.com" in response.data
+    assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
 
 
 def test_unprovided_username(client, get_message):
