@@ -88,6 +88,39 @@ def us_authenticate(client, identity="matt@lp.com"):
     return response.json["response"]["user"]["authentication_token"]
 
 
+def us_tf_authenticate(app, client, json=False, validate=True, remember=False):
+    """Login/Authenticate using two factor and unified signin
+    This is the equivalent of utils:authenticate
+    """
+    prev_sms = app.config["SECURITY_SMS_SERVICE"]
+    app.config["SECURITY_SMS_SERVICE"] = "test"
+    sms_sender = SmsSenderFactory.createSender("test")
+    json_data = dict(identity="gal@lp.com", passcode="password", remember=remember)
+    response = client.post(
+        "/us-signin", json=json_data, headers={"Content-Type": "application/json"}
+    )
+
+    assert b'"code": 200' in response.data
+    app.config["SECURITY_SMS_SERVICE"] = prev_sms
+
+    if validate:
+        code = sms_sender.messages[0].split()[-1]
+        if json:
+            response = client.post(
+                "/tf-validate",
+                json=dict(code=code),
+                headers={"Content-Type": "application/json"},
+            )
+            assert b'"code": 200' in response.data
+            return response.json["response"].get("tf_validity_token", None)
+        else:
+            response = client.post(
+                "/tf-validate", data=dict(code=code), follow_redirects=True
+            )
+
+            assert response.status_code == 200
+
+
 def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
     # A quick way to 'setup' SMS
     with app.test_request_context("/"):
@@ -1516,3 +1549,62 @@ def test_totp_generation(app, client, get_message):
         user = app.security.datastore.find_user(email="dave@lp.com")
         ts = app.security.datastore.us_get_totp_secrets(user)
         assert totp_secret == ts["authenticator"]
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    two_factor_required=True,
+    user_identity_attributes=UIA_EMAIL_PHONE,
+    two_factor_always_validate=False,
+)
+def test_us_tf_validity(app, client, get_message):
+    us_tf_authenticate(app, client, remember=True)
+    logout(client)
+    data = dict(identity="gal@lp.com", passcode="password")
+    response = client.post(
+        "/us-signin", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert b'"code": 200' in response.data
+    cookie = next(
+        (cookie for cookie in client.cookie_jar if cookie.name == "tf_validity"), None
+    )
+    assert cookie is not None
+
+    logout(client)
+
+    data = dict(identity="gal2@lp.com", passcode="password")
+    response = client.post("/us-signin", data=data, follow_redirects=True)
+    assert b"Please enter your authentication code" in response.data
+
+    # clear the cookie to make sure it's not picking it up with json.
+    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+
+    token = us_tf_authenticate(app, client, remember=True, json=True)
+    logout(client)
+    data = dict(identity="gal@lp.com", passcode="password", tf_validity_token=token)
+    response = client.post(
+        "/us-signin",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    # verify logged in
+    response = client.get("/profile", follow_redirects=False)
+
+    assert response.status_code == 200
+    assert b"Welcome gal@lp.com" in response.data
+
+    logout(client)
+
+    data["identity"] = "gal2@lp.com"
+    response = client.post(
+        "/us-signin",
+        json=data,
+        follow_redirects=True,
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_primary_method"] == "authenticator"
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"

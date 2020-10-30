@@ -485,6 +485,11 @@ Core - rarely need changing
     Remember tokens are used instead of user ID's as it is more secure.
 
     Default: ``"remember-salt"``.
+.. py:data:: SECURITY_TWO_FACTOR_VALIDITY_SALT
+
+    Specifies the salt value when generating two factor validity tokens.
+
+    Default: ``"tf-validity-salt"``.
 .. py:data:: SECURITY_US_SETUP_SALT
 
     Default: ``"us-setup-salt"``
@@ -939,6 +944,26 @@ Configuration related to the two-factor authentication feature.
     Specifies the two factor rescue URL.
 
     Default: ``"/tf-rescue"``.
+
+.. py:data:: SECURITY_TWO_FACTOR_ALWAYS_VALIDATE
+
+    Specifies whether the application should require a two factor code upon every login.
+
+    Default: ``True``.
+.. py:data:: SECURITY_TWO_FACTOR_LOGIN_VALIDITY
+
+    Specifies the expiration of the two factor validity cookie and verification of the token.
+
+    Default: ``30 Days``.
+
+
+.. py:data:: TWO_FACTOR_VALIDITY_COOKIE
+
+    A dictionary containing the parameters of the two factor validity cookie.
+    The complete set of parameters is described in Flask's `set_cookie`_ documentation.
+
+    Default: ``{'httponly': True, 'secure': False, 'samesite': None}``.
+
 
 Unified Signin
 --------------

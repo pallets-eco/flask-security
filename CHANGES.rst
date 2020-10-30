@@ -55,6 +55,7 @@ Fixed
 - (:pr:`352`) Fix issue with adding/deleting permissions - all mutating methods must be at the datastore layer so that
   db.put() can be called. Added :meth:`.UserDatastore.add_permissions_to_role` and :meth:`.UserDatastore.remove_permissions_from_role`.
   The methods :meth:`.RoleMixin.add_permissions` and :meth:`.RoleMixin.remove_permissions` have been deprecated.
+- (:issue:`395`) Provide ability to change table names for User and Role tables in the fsqla model.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
