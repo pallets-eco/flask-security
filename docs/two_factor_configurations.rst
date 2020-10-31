@@ -38,6 +38,7 @@ possible using SQLAlchemy:
 
     # At top of file
     from flask_mail import Mail
+    from passlib.totp import TOTP
 
 
     # Convenient references
@@ -95,7 +96,13 @@ possible using SQLAlchemy:
                                 backref=db.backref('users', lazy='dynamic'))
         tf_phone_number = db.Column(db.String(64))
         tf_primary_method = db.Column(db.String(140))
-        tf_totp_secret = db.Column(db.String(255))
+        tf_totp_secret = db.Column(db.String(255), default=generate_otp)
+        
+        @staticmethod
+        def generate_otp():
+            """ generate the otp key """
+            totp = TOTP.new()
+            return totp.to_json()
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
