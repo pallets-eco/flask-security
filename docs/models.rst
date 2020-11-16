@@ -124,7 +124,8 @@ serializable object:
 
         # Custom User Payload
         def get_security_payload(self):
-            return {
-                'name': self.name,
-                'email': self.email
-            }
+            rv = super().get_security_payload()
+            # :meth:`User.calc_username`
+            rv["username"] = self.calc_username()
+            rv["confirmation_needed"] = self.confirmed_at is None
+            return rv
