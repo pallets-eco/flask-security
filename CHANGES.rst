@@ -42,6 +42,8 @@ Features & Cleanup
 - (:issue:`366`) Allow redirects on sub-domains. Please see :py:data:`SECURITY_REDIRECT_ALLOW_SUBDOMAINS`. (willcroft)
 - (:pr:`376`) Have POST redirects default to Flask's ``APPLICATION_ROOT``. Previously the default configuration was ``/``.
   Now it first looks at Flask's `APPLICATION_ROOT` configuration and uses that (which also by default is ``/``. (tysonholub)
+- (:pr:`401`) Add 2FA Validity Window so an application can configure how often the second factor has to be entered. (baurt)
+- (:pr:`403`) Add HTML5 Email input types to email fields. This has some backwards compatibility concerns outlined below. (drola)
 
 Fixed
 +++++
@@ -109,10 +111,17 @@ Backwards Compatibility Concerns
   read each user record, normalize the email (see :class:`.MailUtil`), and write it back.
 
 - (:issue:`381`) Passwords are now, by default, normalized using Python's unicodedata.normalize() method.
-  The :py:data:`SECURITY_PASSWORD_NORMALIZE_FORM` defaults to "NKFD". If your users have unicode passswords
+  The :py:data:`SECURITY_PASSWORD_NORMALIZE_FORM` defaults to "NKFD". This brings Flask-Security
+  in line with the NIST recommendations outlined in `Memorized Secret Verifiers <https://pages.nist.gov/800-63-3/sp800-63b.html#sec5>`_
+  If your users have unicode passwords
   they may have difficulty authenticating. You can turn off this normalization or have your users reset their passwords.
   Password normalization and validation has been encapsulated in a new :class:`.PasswordUtil` class. This replaces
   the method ``password_validator`` introduced in 3.4.0.
+
+- (:pr:`403`) By default all forms that have an email as input now use the wtforms html5 ``EmailField``. For most applications this will
+  make the user experience slightly nicer - especially for mobile devices. Some applications use the email form field for other
+  identity attributes (such as username). If your application does this you will probably need to subclass ``LoginForm`` and change
+  the email type back to StringField.
 
 Version 3.4.4
 --------------
