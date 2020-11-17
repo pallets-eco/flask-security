@@ -34,6 +34,7 @@ from flask_security import Security
 from flask_security.forms import (
     ChangePasswordForm,
     ConfirmRegisterForm,
+    EmailField,
     ForgotPasswordForm,
     LoginForm,
     PasswordField,
@@ -94,13 +95,13 @@ def test_register_blueprint_flag(app, sqlalchemy_datastore):
 @pytest.mark.changeable()
 def test_basic_custom_forms(app, sqlalchemy_datastore):
     class MyLoginForm(LoginForm):
-        email = StringField("My Login Email Address Field")
+        email = EmailField("My Login Email Address Field")
 
     class MyRegisterForm(RegisterForm):
-        email = StringField("My Register Email Address Field")
+        email = EmailField("My Register Email Address Field")
 
     class MyForgotPasswordForm(ForgotPasswordForm):
-        email = StringField(
+        email = EmailField(
             "My Forgot Email Address Field",
             validators=[email_required, email_validator, valid_user_email],
         )
@@ -153,10 +154,10 @@ def test_confirmable_custom_form(app, sqlalchemy_datastore):
     app.config["SECURITY_CONFIRMABLE"] = True
 
     class MyRegisterForm(ConfirmRegisterForm):
-        email = StringField("My Register Email Address Field")
+        email = EmailField("My Register Email Address Field")
 
     class MySendConfirmationForm(SendConfirmationForm):
-        email = StringField("My Send Confirmation Email Address Field")
+        email = EmailField("My Send Confirmation Email Address Field")
 
     app.security = Security(
         app,
@@ -178,7 +179,7 @@ def test_passwordless_custom_form(app, sqlalchemy_datastore):
     app.config["SECURITY_PASSWORDLESS"] = True
 
     class MyPasswordlessLoginForm(PasswordlessLoginForm):
-        email = StringField("My Passwordless Email Address Field")
+        email = EmailField("My Passwordless Email Address Field")
 
     app.security = Security(
         app,
@@ -551,15 +552,13 @@ def test_zxcvbn_xlate(app):
 def test_breached(app):
 
     # partial response from: https://api.pwnedpasswords.com/range/07003
-    pwned_response = "AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
+    pwned_response = b"AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
 AFD8AA47E6FD782ADDC11D89744769F7354:2\r\n\
 B04334E179537C975D0B3C72DA2E5B68E44:15\r\n\
 B118F58C2373FDF97ACF93BD3339684D1EB:2\r\n\
 B1ED5D27429EDF77EFD84F4EA9BDA5013FB:4\r\n\
 B25C03CFBE4CBF19E0F4889711C9A488E5D:2\r\n\
-B3902FD808DCA504AAAD30F3C14BD3ACE7C:10".encode(
-        "utf-8"
-    )
+B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
 
     app.security = Security()
     app.security.init_app(app)
@@ -582,15 +581,13 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10".encode(
 def test_breached_cnt(app):
 
     # partial response from: https://api.pwnedpasswords.com/range/07003
-    pwned_response = "AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
+    pwned_response = b"AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
 AFD8AA47E6FD782ADDC11D89744769F7354:2\r\n\
 B04334E179537C975D0B3C72DA2E5B68E44:15\r\n\
 B118F58C2373FDF97ACF93BD3339684D1EB:2\r\n\
 B1ED5D27429EDF77EFD84F4EA9BDA5013FB:4\r\n\
 B25C03CFBE4CBF19E0F4889711C9A488E5D:2\r\n\
-B3902FD808DCA504AAAD30F3C14BD3ACE7C:10".encode(
-        "utf-8"
-    )
+B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
 
     app.security = Security()
     app.security.init_app(app)

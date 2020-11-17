@@ -5,6 +5,7 @@
     Recoverable functionality tests
 """
 
+import re
 import time
 from urllib.parse import parse_qsl, urlsplit
 
@@ -42,6 +43,7 @@ def test_recoverable_flag(app, clients, get_message):
     # Test the reset view
     response = clients.get("/reset")
     assert b"<h1>Send password reset instructions</h1>" in response.data
+    assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
 
     # Test submitting email to reset password creates a token and sends email
     with capture_reset_password_requests() as requests:
