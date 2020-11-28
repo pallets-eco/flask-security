@@ -577,7 +577,7 @@ def _get_pwd_context(app):
 
 def _get_i18n_domain(app):
     return Domain(
-        dirname=cv("I18N_DIRNAME", app=app), domain=cv("I18N_DOMAIN", app=app)
+        cv("I18N_DIRNAME", app=app), domain=cv("I18N_DOMAIN", app=app)
     )
 
 

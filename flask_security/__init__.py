@@ -101,4 +101,4 @@ from .utils import (
     verify_and_update_password,
 )
 
-__version__ = "3.5.0"
+__version__ = "3.5.1"

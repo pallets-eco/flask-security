@@ -24,6 +24,7 @@ from datetime import timedelta
 from flask import _request_ctx_stack, current_app, flash, g, request, session, url_for
 from flask.json import JSONEncoder
 from flask.signals import message_flashed
+from flask_babel import LazyString
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
 from flask_login import current_user
@@ -33,7 +34,6 @@ from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
 from wtforms import validators, ValidationError
 from itsdangerous import BadSignature, SignatureExpired
-from speaklater import is_lazy_string
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
 from .quart_compat import best
@@ -894,7 +894,7 @@ class FsJsonEncoder(JSONEncoder):
     """
 
     def default(self, obj):
-        if is_lazy_string(obj):
+        if isinstance(obj, LazyString):
             return str(obj)
         else:
             return JSONEncoder.default(self, obj)

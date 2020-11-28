@@ -14,9 +14,9 @@
 import inspect
 
 from flask import Markup, current_app, request
+from flask_babel import LazyString
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
-from speaklater import is_lazy_string, make_lazy_string
 from werkzeug.local import LocalProxy
 from wtforms import (
     BooleanField,
@@ -93,12 +93,12 @@ class ValidatorMixin(object):
 
     def __call__(self, form, field):
         if self._original_message and (
-            not is_lazy_string(self.message) and not self.message
+            not isinstance(self.message, LazyString) and not self.message
         ):
             # Creat on first usage within app context.
             cv = config_value("MSG_" + self._original_message)
             if cv:
-                self.message = make_lazy_string(_local_xlate, cv[0])
+                self.message = LazyString(_local_xlate, cv[0])
             else:
                 self.message = self._original_message
         return super(ValidatorMixin, self).__call__(form, field)
@@ -137,7 +137,7 @@ def get_form_field_label(key):
     class. Thus can't call 'localize_callback' until we need to actually
     translate/render form.
     """
-    return make_lazy_string(_local_xlate, _default_field_labels.get(key, ""))
+    return LazyString(_local_xlate, _default_field_labels.get(key, ""))
 
 
 def unique_user_email(form, field):
