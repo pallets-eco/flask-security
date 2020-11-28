@@ -33,11 +33,11 @@ msgstr "Witamy"
 
 #: flask_security/core.py:212
 msgid "Please confirm your email"
-msgstr "Prosimmy o potwierdzenie Twojego adresu e-mail"
+msgstr "Prosimy o potwierdzenie Twojego adresu e-mail"
 
 #: flask_security/core.py:213
 msgid "Login instructions"
-msgstr "Intstrukcje logowania"
+msgstr "Instrukcje logowania"
 
 #: flask_security/core.py:214
 #: flask_security/templates/security/email/reset_notice.html:1
@@ -68,7 +68,7 @@ msgstr "Kod weryfikacyjny"
 
 #: flask_security/core.py:280
 msgid "Input not appropriate for requested API"
-msgstr "Niepoprawne dane dla żądanego API"
+msgstr "Nieprawidłowe dane dla żądanego API"
 
 #: flask_security/core.py:281
 msgid "You do not have permission to view this resource."
@@ -101,7 +101,7 @@ msgstr "Twój adres e-mail już został potwierdzony."
 
 #: flask_security/core.py:296
 msgid "Invalid confirmation token."
-msgstr "Niepoprawny token potwierdzenia."
+msgstr "Nieprawidłowy token potwierdzania adresu e-mail."
 
 #: flask_security/core.py:298
 #, python-format
@@ -266,11 +266,11 @@ msgstr "Pomyślnie zmieniłeś hasło."
 
 #: flask_security/core.py:382
 msgid "Please log in to access this page."
-msgstr "Prosimy o zalogowanie w celu odwiedzenia tej strony."
+msgstr "Prosimy o zalogowanie się, aby móc odwiedzić tę stronę."
 
 #: flask_security/core.py:383
 msgid "Please reauthenticate to access this page."
-msgstr "Prosimy o ponowne zalogowanie się w celu odwiedzenia tej strony."
+msgstr "Prosimy o ponowne zalogowanie się, aby móc odwiedzić tę stronę."
 
 #: flask_security/core.py:384
 msgid "Reauthentication successful"
@@ -363,7 +363,7 @@ msgstr "Zarejestruj"
 
 #: flask_security/forms.py:59
 msgid "Resend Confirmation Instructions"
-msgstr "Ponownie wyślij instrukcje potwierdzenia adresu e-mail"
+msgstr "Ponownie wyślij instrukcje potwierdzania adresu e-mail"
 
 #: flask_security/forms.py:60
 msgid "Recover Password"
@@ -407,7 +407,7 @@ msgstr "Kod uwierzytelniania"
 
 #: flask_security/forms.py:70
 msgid "Submit"
-msgstr "Zatwierdź"
+msgstr "Wyślij"
 
 #: flask_security/forms.py:71
 msgid "Submit Code"
@@ -489,7 +489,7 @@ msgstr "Resetuj hasło"
 
 #: flask_security/templates/security/send_confirmation.html:6
 msgid "Resend confirmation instructions"
-msgstr "Ponownie wyślij instrukcje potwierdzenia rejestracji"
+msgstr "Ponownie wyślij instrukcje potwierdzania rejestracji"
 
 #: flask_security/templates/security/two_factor_setup.html:6
 msgid "Two-factor authentication adds an extra layer of security to your account"
@@ -638,7 +638,7 @@ msgstr "Możesz logować się na swoje konto używając poniższego kodu:"
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
 msgid "can not access mail account"
-msgstr "nie mam dostępu do konta mailowego"
+msgstr "brak dostępu do konta mailowego"
 
 #: flask_security/templates/security/email/us_instructions.html:3
 #: flask_security/templates/security/email/us_instructions.txt:3
