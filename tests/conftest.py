@@ -64,6 +64,8 @@ def app(request):
     app.config["TESTING"] = True
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = False
+    # Our test emails/domain isn't necessarily valid
+    app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
     app.config["SECURITY_TWO_FACTOR_SECRET"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
