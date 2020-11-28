@@ -18,7 +18,7 @@ import sys
 
 import pkg_resources
 from flask import _request_ctx_stack, current_app, render_template
-from flask_babelex import Domain
+from flask_babel import Domain
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user

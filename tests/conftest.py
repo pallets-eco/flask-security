@@ -24,7 +24,7 @@ from flask import Flask, Response, render_template
 from flask import jsonify
 from flask import request as flask_request
 from flask.json import JSONEncoder
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_mail import Mail
 from utils import populate_data
 

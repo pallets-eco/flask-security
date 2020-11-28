@@ -25,7 +25,7 @@ import datetime
 import os
 
 from flask import Flask, flash, render_template_string, request, session
-import flask_babelex
+import flask_babel
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -111,7 +111,7 @@ def create_app():
 
     # This is NOT ideal since it basically changes entire APP (which is fine for
     # this test - but not fine for general use).
-    babel = flask_babelex.Babel(app, default_domain=security.i18n_domain)
+    babel = flask_babel.Babel(app, default_domain=security.i18n_domain)
 
     @babel.localeselector
     def get_locale():

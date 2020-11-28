@@ -6,7 +6,7 @@
     I18N support for Flask-Security.
 """
 
-from flask_babelex import Domain
+from flask_babel import Domain
 from wtforms.i18n import messages_path
 
 wtforms_domain = Domain(messages_path(), domain="wtforms")
