@@ -24,8 +24,8 @@ addons:
       - aspell-es
       - aspell-fr
       - aspell-nl
-      - aspell-pt
       - aspell-pl
+      - aspell-pt
       - aspell-ru
 
 jobs:
