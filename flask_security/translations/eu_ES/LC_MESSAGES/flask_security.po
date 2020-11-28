@@ -1,17 +1,17 @@
-# Spanish (Spain) translations for Flask-Security.
-# Copyright (C) 2017 DINSIC
+# Basque (Spain) translations for Flask-Security.
+# Copyright (C) 2020
 # This file is distributed under the same license as the Flask-Security
 # project.
-# Mauko Quiroga <mauko.quiroga@data.gouv.fr>, 2017.
+# Martin Mozos <martinmozos@gmail.com>, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 2.0.1\n"
-"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"Project-Id-Version: Flask-Security 4.0.0\n"
+"Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2020-10-06 17:56-0700\n"
-"PO-Revision-Date: 2017-08-25 17:21+0200\n"
+"PO-Revision-Date: 2020-11-28 13:41+0100\n"
 "Last-Translator: Martin Mozos <martinmozos@gmail.com>\n"
-"Language: es_ES\n"
+"Language: eu_ES\n"
 "Language-Team: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: flask_security/core.py:202
 msgid "Login Required"
-msgstr "Inicio de sesión necesario"
+msgstr "Saioa hasi behar da"
 
 #: flask_security/core.py:203
 #: flask_security/templates/security/email/two_factor_instructions.html:1
@@ -29,84 +29,80 @@ msgstr "Inicio de sesión necesario"
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
 msgid "Welcome"
-msgstr "Bienvenido"
+msgstr "Ongi etorri"
 
 #: flask_security/core.py:204
 msgid "Please confirm your email"
-msgstr "Por favor, confirma tu correo electrónico"
+msgstr "Mesedez berretsi zure posta elektronikoa"
 
 #: flask_security/core.py:205
 msgid "Login instructions"
-msgstr "Instrucciones para iniciar sesión"
+msgstr "Saioa hasteko argibideak"
 
 #: flask_security/core.py:206
 #: flask_security/templates/security/email/reset_notice.html:1
 #: flask_security/templates/security/email/reset_notice.txt:1
 msgid "Your password has been reset"
-msgstr "Tu contraseña ha sido restablecida"
+msgstr "Zure pasahitza berrezarri da"
 
 #: flask_security/core.py:207
 #: flask_security/templates/security/email/change_notice.txt:1
 msgid "Your password has been changed"
-msgstr "Tu contraseña ha sido cambiada"
+msgstr "Zure pasahitza aldatu da"
 
 #: flask_security/core.py:208
 msgid "Password reset instructions"
-msgstr "Instrucciones de recuperación de contraseña"
+msgstr "Pasahitza berreskuratzeko argibideak"
 
 #: flask_security/core.py:211
 msgid "Two-factor Login"
-msgstr "Inicio de sesión de dos factores"
+msgstr "Bi faktoreko saioa hastea"
 
 #: flask_security/core.py:212
 msgid "Two-factor Rescue"
-msgstr "Recuperación de sesión de dos factores"
+msgstr "Bi faktoreko saioa berreskuratzea"
 
 #: flask_security/core.py:257
 msgid "Verification Code"
-msgstr "Código de verificación"
+msgstr "Egiaztapen kodea"
 
 #: flask_security/core.py:272
 msgid "Input not appropriate for requested API"
-msgstr "Entrada no apropiada para la API solicitada"
+msgstr "Sarrera ez da egokia eskatutako APIarentzat"
 
 #: flask_security/core.py:273
 msgid "You do not have permission to view this resource."
-msgstr "No tienes permiso para consultar este recurso."
+msgstr "Ez duzu baliabide hau kontsultatzeko baimenik."
 
 #: flask_security/core.py:275
 msgid "You are not authenticated. Please supply the correct credentials."
-msgstr ""
-"No estás autenticado. Por favor, proporciona las credenciales "
-"correctas."
+msgstr "Ez zaude autentifikatuta. Mesedez, eman egiaztagiri zuzenak."
 
 #: flask_security/core.py:279
 msgid "You must re-authenticate to access this endpoint"
-msgstr "Debes volver a autenticarte para acceder a este recurso"
+msgstr "Baliabide honetara sartzeko berriro autentifikatu behar duzu"
 
 #: flask_security/core.py:283
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
-msgstr ""
-"Gracias. Un correo con instrucciones sobre cómo confirmar tu cuenta ha "
-"sido enviado a %(email)s."
+msgstr "Eskerrik asko. Baieztapen argibideak% (email) s helbidera bidali dira."
 
 #: flask_security/core.py:286
 msgid "Thank you. Your email has been confirmed."
-msgstr "Gracias. Tu correo electrónico ha sido confirmado."
+msgstr "Eskerrik asko. Zure posta elektronikoa berretsi da."
 
 #: flask_security/core.py:287
 msgid "Your email has already been confirmed."
-msgstr "Tu correo electrónico ya ha sido confirmado."
+msgstr "Zure posta elektronikoa dagoeneko baieztatuta dago."
 
 #: flask_security/core.py:288
 msgid "Invalid confirmation token."
-msgstr "Autentificador de confirmación inválido."
+msgstr "Berrespen token baliogabea."
 
 #: flask_security/core.py:290
 #, python-format
 msgid "%(email)s is already associated with an account."
-msgstr "%(email)s ya está asociado a una cuenta."
+msgstr "%(email)s dagoeneko kontu batekin lotuta dago."
 
 #: flask_security/core.py:294
 #, python-format
@@ -114,27 +110,25 @@ msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
 "associated with an account."
 msgstr ""
-"El atributo de identidad '%(attr)s' con el valor '%(value)s' ya "
-"está asociado con una cuenta."
+"'%(attr)s' identitate atributua '%(value)s' balioarekin dagoeneko kontu "
+"batekin lotuta dago"
 
 #: flask_security/core.py:300
 msgid "Password does not match"
-msgstr "La contraseña no coincide"
+msgstr "Pasahitza ez dator bat"
 
 #: flask_security/core.py:301
 msgid "Passwords do not match"
-msgstr "Las contraseñas no coinciden"
+msgstr "Pasahitzak ez datoz bat"
 
 #: flask_security/core.py:302
 msgid "Redirections outside the domain are forbidden"
-msgstr "Las redirecciones a sitios web externos están prohibidas"
+msgstr "Domeinutik kanpoko birbideratzeak debekatuta daude"
 
 #: flask_security/core.py:304
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
-msgstr ""
-"Las instrucciones para restablecer tu contraseña han sido enviadas a "
-"%(email)s."
+msgstr "Pasahitza berrezartzeko argibideak %(email)s helbidera bidali dira."
 
 #: flask_security/core.py:308
 #, python-format
@@ -142,21 +136,21 @@ msgid ""
 "You did not reset your password within %(within)s. New instructions have "
 "been sent to %(email)s."
 msgstr ""
-"No restableciste tu contraseña antes de %(within)s. Nuevas instrucciones "
-"han sido enviadas a %(email)s."
+"Ez duzu zure pasahitza berrezarri %(within)s barruan. Argibide berriak "
+"bidali dira %(email)s-era."
 
 #: flask_security/core.py:314
 msgid "Invalid reset password token."
-msgstr "Autentificador de restablecimiento de contraseña inválido."
+msgstr "Pasahitza berrezartzeko token baliogabea."
 
 #: flask_security/core.py:315
 msgid "Email requires confirmation."
-msgstr "El correo electrónico requiere confirmación."
+msgstr "Mezu elektronikoak berrespena behar du."
 
 #: flask_security/core.py:317
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
-msgstr "Las instrucciones de confirmación se han enviado a %(email)s."
+msgstr "Baieztapen argibideak %(email)s helbidera bidali dira."
 
 #: flask_security/core.py:321
 #, python-format
@@ -164,9 +158,8 @@ msgid ""
 "You did not confirm your email within %(within)s. New instructions to "
 "confirm your email have been sent to %(email)s."
 msgstr ""
-"No confirmaste tu correo electrónico antes de %(within)s. Nuevas "
-"instrucciones para confirmar tu correo electrónico han sido enviadas a "
-"%(email)s."
+"Ez duzu zure posta elektronikoa berretsi %(within)s barruan. Zure posta "
+"elektronikoa berresteko argibide berriak %(email)s helbidera bidali dira."
 
 #: flask_security/core.py:329
 #, python-format
@@ -174,345 +167,339 @@ msgid ""
 "You did not login within %(within)s. New instructions to login have been "
 "sent to %(email)s."
 msgstr ""
-"No iniciaste sesión antes de %(within)s. Nuevas instrucciones para "
-"iniciar sesión han sido enviadas a %(email)s."
+"Ez duzu saioa hasi %(within)s barruan. Saioa hasteko argibide berriak "
+"%(email)s helbidera bidali dira."
 
 #: flask_security/core.py:336
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
-msgstr "Instrucciones para iniciar sesión han sido enviadas a %(email)s."
+msgstr "Saioa hasteko argibideak %(email)s helbidera bidali dira."
 
 #: flask_security/core.py:339
 msgid "Invalid login token."
-msgstr "Autenticador de inicio de sesión inválido."
+msgstr "Saioa hasteko token baliogabea."
 
 #: flask_security/core.py:340
 msgid "Account is disabled."
-msgstr "Cuenta deshabilitada."
+msgstr "Kontua desgaituta dago."
 
 #: flask_security/core.py:341
 msgid "Email not provided"
-msgstr "Correo electrónico no indicado"
+msgstr "Helbide elektronikoa beharrezkoa da"
 
 #: flask_security/core.py:342
 msgid "Invalid email address"
-msgstr "Dirección de correo electrónico inválida"
+msgstr "Helbide elektroniko baliogabea"
 
 #: flask_security/core.py:343
 msgid "Invalid code"
-msgstr "Código no válido"
+msgstr "Kode baliogabea"
 
 #: flask_security/core.py:344
 msgid "Password not provided"
-msgstr "Contraseña no indicada"
+msgstr "Pasahitza beharrezkoa da"
 
 #: flask_security/core.py:345
 msgid "No password is set for this user"
-msgstr "Ninguna contraseña ha sido definida para este·a usuario·a"
+msgstr "Ez da pasahitzik ezarri erabiltzaile honentzat"
 
 #: flask_security/core.py:347
 #, python-format
 msgid "Password must be at least %(length)s characters"
-msgstr "La contraseña debe contar al menos con %(length)s caracteres"
+msgstr "Pasahitzak gutxienez %(length)s karaktere izan behar ditu"
 
 #: flask_security/core.py:350
 msgid "Password not complex enough"
-msgstr "La contraseña no es lo suficientemente compleja"
+msgstr "Pasahitza ez da nahikoa konplexua"
 
 #: flask_security/core.py:351
 msgid "Password on breached list"
-msgstr "Contraseña en lista infringida"
+msgstr "Pasahitza urratutako zerrendan"
 
 #: flask_security/core.py:353
 msgid "Failed to contact breached passwords site"
-msgstr "No se pudo contactar con el sitio de contraseñas infringidas"
+msgstr "Ezin izan da urratutako pasahitzen iturburuarekin harremanetan jarri"
 
 #: flask_security/core.py:356
 msgid "Phone number not valid e.g. missing country code"
-msgstr ""
-"El número de teléfono no es válido, p. ej. falta el código de país"
+msgstr "Telefono zenbakiak ez du balio, baliteke herrialde kodea faltatzea"
 
 #: flask_security/core.py:357
 msgid "Specified user does not exist"
-msgstr "Usuario·a especificado·a no existe"
+msgstr "Zehaztutako erabiltzea ez da existitzen"
 
 #: flask_security/core.py:358
 msgid "Invalid password"
-msgstr "Contraseña inválida"
+msgstr "Pasahitz okerra"
 
 #: flask_security/core.py:359
 msgid "Password or code submitted is not valid"
-msgstr "La contraseña o el código facilitado no es válido"
+msgstr "Zehaztutako pasahitzak edo kodeak ez du balio"
 
 #: flask_security/core.py:360
 msgid "You have successfully logged in."
-msgstr "Has iniciado sesión con éxito."
+msgstr "Behar bezala hasi duzu saioa."
 
 #: flask_security/core.py:361
 msgid "Forgot password?"
-msgstr "¿Has olvidado tu contraseña?"
+msgstr "Pasahitza ahaztua?"
 
 #: flask_security/core.py:363
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
-msgstr ""
-"Has restablecido tu contraseña con éxito y has iniciado sesión "
-"automáticamente."
+msgstr "Pasahitza berrezarri duzunez automatikoki hasi duzu saioa."
 
 #: flask_security/core.py:370
 msgid "Your new password must be different than your previous password."
-msgstr "Tu nueva contraseña debe ser diferente de la antigua."
+msgstr "Zure pasahitz berriak zure aurreko pasahitzaren ezberdin behar du izan."
 
 #: flask_security/core.py:373
 msgid "You successfully changed your password."
-msgstr "Has cambiado tu contraseña con éxito."
+msgstr "Pasahitza behar bezala aldatu duzu."
 
 #: flask_security/core.py:374
 msgid "Please log in to access this page."
-msgstr "Debes iniciar sesión para poder acceder a esta página."
+msgstr "Hasi saioa orri honetara sartzeko."
 
 #: flask_security/core.py:375
 msgid "Please reauthenticate to access this page."
-msgstr "Deber iniciar sesión nuevamente para poder acceder a esta página."
+msgstr "Mesedez, berriro autentifikatu orri honetara sartzeko."
 
 #: flask_security/core.py:376
 msgid "Reauthentication successful"
-msgstr "Reautenticación exitosa"
+msgstr "Berautentifikatzea osatu da"
 
 #: flask_security/core.py:378
 msgid "You can only access this endpoint when not logged in."
-msgstr "Solo puedes acceder a este recurso si no estás conectado."
+msgstr "Saioa amaitzen ez duzunean soilik sar zaitezke baliabide honetara"
 
 #: flask_security/core.py:381
 msgid "Failed to send code. Please try again later"
-msgstr ""
-"No se pudo enviar el código. Por favor, inténtelo de nuevo más tarde"
+msgstr "Ezin izan da kodea bidali. Saiatu berriro geroago"
 
 #: flask_security/core.py:382
 msgid "Invalid Token"
-msgstr "Token no válido"
+msgstr "Token baliogabea"
 
 #: flask_security/core.py:383
 msgid "Your token has been confirmed"
-msgstr "Tu token ha sido confirmado"
+msgstr "Zure token baieztatu da"
 
 #: flask_security/core.py:385
 msgid "You successfully changed your two-factor method."
-msgstr "Cambiaste con éxito tu método de dos factores."
+msgstr "Bi faktoretako metodoa ondo aldatu duzu."
 
 #: flask_security/core.py:389
 msgid "You currently do not have permissions to access this page"
-msgstr "Actualmente no tienes permisos para acceder a esta página"
+msgstr "Une honetan ez duzu baimenik orrialde honetara sartzeko"
 
 #: flask_security/core.py:392
 msgid "Marked method is not valid"
-msgstr "El método marcado no es válido"
+msgstr "Markatutako metodoak ez du balio"
 
 #: flask_security/core.py:394
 msgid "You successfully disabled two factor authorization."
-msgstr "Has deshabilitado con éxito la autorización de dos factores."
+msgstr "Bi faktoreren baimena behar bezala desgaitu duzu."
 
 #: flask_security/core.py:397
 msgid "Requested method is not valid"
-msgstr "El método solicitado no es válido"
+msgstr "Eskatutako metodoak ez du balio"
 
 #: flask_security/core.py:399
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
-msgstr ""
-"La configuración debe completarse en %(within)s. Empiece de nuevo."
+msgstr "Konfigurazioa %(within)s barruan osatu behar da. Mesedez, berriro hasi."
 
 #: flask_security/core.py:402
 msgid "Unified sign in setup successful"
-msgstr "El inicio de sesión unificado se configuró correctamente"
+msgstr "Bateratutako saio hasierarako konfigurazioa ongi egin da"
 
 #: flask_security/core.py:403
 msgid "You must specify a valid identity to sign in"
-msgstr "Debes especificar una identidad válida para iniciar sesión"
+msgstr "Saioa hasteko identitate baliagarria zehaztu behar duzu"
 
 #: flask_security/core.py:404
 #, python-format
 msgid "Use this code to sign in: %(code)s."
-msgstr "Utiliza este código para iniciar sesión: %(code)s."
+msgstr "Erabili kode hau saioa hasteko: %(code)s."
 
 #: flask_security/forms.py:52
 msgid "Email Address"
-msgstr "Correo electrónico"
+msgstr "Posta elektronikoa"
 
 #: flask_security/forms.py:53
 msgid "Password"
-msgstr "Contraseña"
+msgstr "Pasahitza"
 
 #: flask_security/forms.py:54
 msgid "Remember Me"
-msgstr "Recordarme"
+msgstr "Gogorarazi"
 
 #: flask_security/forms.py:55 flask_security/templates/security/_menu.html:5
 #: flask_security/templates/security/login_user.html:6
 #: flask_security/templates/security/send_login.html:6
 msgid "Login"
-msgstr "Iniciar sesión"
+msgstr "Hasi saioa"
 
 #: flask_security/forms.py:56
 #: flask_security/templates/security/email/us_instructions.html:8
 #: flask_security/templates/security/us_signin.html:6
 msgid "Sign In"
-msgstr "Iniciar sesión"
+msgstr "Hasi saioa"
 
 #: flask_security/forms.py:57 flask_security/templates/security/_menu.html:11
 #: flask_security/templates/security/register_user.html:6
 msgid "Register"
-msgstr "Registrarse"
+msgstr "Izena eman"
 
 #: flask_security/forms.py:58
 msgid "Resend Confirmation Instructions"
-msgstr "Reenviar instrucciones de confirmación"
+msgstr "Bidali berrespen argibideak"
 
 #: flask_security/forms.py:59
 msgid "Recover Password"
-msgstr "Recuperar contraseña"
+msgstr "Pasahitza berreskuratu"
 
 #: flask_security/forms.py:60
 msgid "Reset Password"
-msgstr "Restablecer contraseña"
+msgstr "Pasahitza berrezarri"
 
 #: flask_security/forms.py:61
 msgid "Retype Password"
-msgstr "Escribir contraseña nuevamente"
+msgstr "Idatzi berriro pasahitza"
 
 #: flask_security/forms.py:62
 msgid "New Password"
-msgstr "Nueva contraseña"
+msgstr "Pasahitz berria"
 
 #: flask_security/forms.py:63
 msgid "Change Password"
-msgstr "Cambiar la contraseña"
+msgstr "Aldatu pasahitza"
 
 #: flask_security/forms.py:64
 msgid "Send Login Link"
-msgstr "Enviar enlace para iniciar sesión"
+msgstr "Bidali saioa hasteko esteka"
 
 #: flask_security/forms.py:65
 msgid "Verify Password"
-msgstr "Verificar contraseña"
+msgstr "Pasahitza ziurtatu"
 
 #: flask_security/forms.py:66
 msgid "Change Method"
-msgstr "Método de cambio"
+msgstr "Aldatzeko metodoa"
 
 #: flask_security/forms.py:67
 msgid "Phone Number"
-msgstr "Número de teléfono"
+msgstr "Telefono zenbakia"
 
 #: flask_security/forms.py:68
 msgid "Authentication Code"
-msgstr "Código de autenticación"
+msgstr "Autentifikazio kodea"
 
 #: flask_security/forms.py:69
 msgid "Submit"
-msgstr "Enviar"
+msgstr "Bidali"
 
 #: flask_security/forms.py:70
 msgid "Submit Code"
-msgstr "Enviar código"
+msgstr "Bidali kodea"
 
 #: flask_security/forms.py:71
 msgid "Error(s)"
-msgstr "Error(es)"
+msgstr "Errorea(k)"
 
 #: flask_security/forms.py:72
 msgid "Identity"
-msgstr "Identidad"
+msgstr "Identitatea"
 
 #: flask_security/forms.py:73
 msgid "Send Code"
-msgstr "Enviar código"
+msgstr "Bidali kodea"
 
 #: flask_security/forms.py:74
 msgid "Passcode"
-msgstr "Código de acceso"
+msgstr "Pasakodea"
 
 #: flask_security/unified_signin.py:135
 msgid "Code or Password"
-msgstr "Código o contraseña"
+msgstr "Kodea edo pasahitza"
 
 #: flask_security/unified_signin.py:140 flask_security/unified_signin.py:263
 msgid "Available Methods"
-msgstr "Métodos disponibles"
+msgstr "Eskuragarri dauden metodoak"
 
 #: flask_security/unified_signin.py:141
 msgid "Via email"
-msgstr "Vía correo electrónico"
+msgstr "Posta elektronikoaren bidez"
 
 #: flask_security/unified_signin.py:141
 msgid "Via SMS"
-msgstr "Vía SMS"
+msgstr "SMS bidez"
 
 #: flask_security/unified_signin.py:265
 msgid "Set up using email"
-msgstr "Configuración mediante correo electrónico"
+msgstr "Konfiguratu posta elektronikoa erabiliz"
 
 #: flask_security/unified_signin.py:268
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
-"Configurar usando una aplicación de autenticación (por ejemplo, "
-"google, lastpass, authy)"
+"Konfiguratu autentifikatzaile aplikazio bat erabiliz (google, lastpass "
+"edo authy adibidez)"
 
 #: flask_security/unified_signin.py:270
 msgid "Set up using SMS"
-msgstr "Configurar usando SMS"
+msgstr "Konfiguratu SMS bidez"
 
 #: flask_security/templates/security/_menu.html:2
 msgid "Menu"
-msgstr "Menú"
+msgstr "Menua"
 
 #: flask_security/templates/security/_menu.html:8
 msgid "Unified Sign In"
-msgstr "Inicio de sesión unificado"
+msgstr "Saio hasiera bateratua"
 
 #: flask_security/templates/security/_menu.html:14
 msgid "Forgot password"
-msgstr "Olvidé mi contraseña"
+msgstr "Pasahitza ahaztua"
 
 #: flask_security/templates/security/_menu.html:17
 msgid "Confirm account"
-msgstr "Confirmar cuenta"
+msgstr "Berretsi kontua"
 
 #: flask_security/templates/security/change_password.html:6
 msgid "Change password"
-msgstr "Cambiar la contraseña"
+msgstr "Aldatu pasahitza"
 
 #: flask_security/templates/security/forgot_password.html:6
 msgid "Send password reset instructions"
-msgstr "Enviar instrucciones para restablecer la contraseña"
+msgstr "Bidali pasahitza berrezartzeko argibideak"
 
 #: flask_security/templates/security/reset_password.html:6
 msgid "Reset password"
-msgstr "Restablecer contraseña"
+msgstr "Pasahitza berrezarri"
 
 #: flask_security/templates/security/send_confirmation.html:6
 msgid "Resend confirmation instructions"
-msgstr "Reenviar instrucciones de confirmación"
+msgstr "Bidali berrespen argibideak"
 
 #: flask_security/templates/security/two_factor_setup.html:6
 msgid "Two-factor authentication adds an extra layer of security to your account"
 msgstr ""
-"La autenticación de dos factores agrega una capa adicional de seguridad "
-"a tu cuenta"
+"Bi faktoreko autentifikazioak segurtasun geruza gehigarri bat esleitzen "
+"dio zure kontuari"
 
 #: flask_security/templates/security/two_factor_setup.html:7
 msgid ""
 "In addition to your username and password, you'll need to use a code that"
 " we will send you"
 msgstr ""
-"Además de tu nombre de usuario y contraseña, deberás utilizar un código que "
-"te enviaremos"
+"Zure erabiltzaile izenaz eta pasahitzaz gain, bidaliko dizugun kodea "
+"erabili beharko duzu"
 
 #: flask_security/templates/security/two_factor_setup.html:18
 msgid "To complete logging in, please enter the code sent to your mail"
-msgstr "Para completar el inicio de sesión, ingresa el código enviado a "
-"tu correo"
+msgstr "Saioa hasten bukatzeko, idatzi zure posta elektronikora bidalitako kodea"
 
 #: flask_security/templates/security/two_factor_setup.html:21
 #: flask_security/templates/security/us_setup.html:28
@@ -520,95 +507,89 @@ msgid ""
 "Open your authenticator app on your device and scan the following qrcode "
 "to start receiving codes:"
 msgstr ""
-"Abre tu aplicación de autenticación en tu dispositivo y escanea el "
-"siguiente código qr para comenzar a recibir códigos:"
+"Kodeak jasotzen hasteko ireki autentifikazio aplikazioa zure gailuan eta "
+"eskaneatu qrcode hau"
 
 #: flask_security/templates/security/two_factor_setup.html:22
 msgid "Two factor authentication code"
-msgstr "Código de autenticación de dos factores"
+msgstr "Bi faktoretako autentifikazio kodea"
 
 #: flask_security/templates/security/two_factor_setup.html:25
 msgid "To Which Phone Number Should We Send Code To?"
-msgstr "¿A qué número de teléfono debemos enviar el código?"
+msgstr "Zein telefono zenbakiri bidali beharko genioke kodea?"
 
 #: flask_security/templates/security/two_factor_verify_code.html:6
 msgid "Two-factor Authentication"
-msgstr "Autenticación de dos factores"
+msgstr "Bi faktoretako autentifikazioa"
 
 #: flask_security/templates/security/two_factor_verify_code.html:7
 msgid "Please enter your authentication code"
-msgstr "Ingrese su código de autenticación"
+msgstr "Mesedez, sartu autentifikazio kodea"
 
 #: flask_security/templates/security/two_factor_verify_code.html:18
 msgid "The code for authentication was sent to your email address"
-msgstr ""
-"El código de autenticación se envió a tu dirección de correo "
-"electrónico."
+msgstr "Autentifikaziorako kodea zure helbide elektronikora bidali da"
 
 #: flask_security/templates/security/two_factor_verify_code.html:21
 msgid "A mail was sent to us in order to reset your application account"
-msgstr ""
-"Se nos envió un correo electrónico para restablecer tu cuenta de "
-"aplicación"
+msgstr "Zure eskaera kontua berrezartzeko mezu elektroniko bat bidali ziguten"
 
 #: flask_security/templates/security/us_setup.html:6
 msgid "Setup Unified Sign In options"
-msgstr "Configurar opciones de inicio de sesión unificado"
+msgstr "Konfiguratu saioa hasteko aukera bateratuak"
 
 #: flask_security/templates/security/us_setup.html:29
 msgid "Passwordless QRCode"
-msgstr "Código QR sin contraseña"
+msgstr "Pasahitzik gabeko QRCode"
 
 #: flask_security/templates/security/us_setup.html:32
 #: flask_security/templates/security/us_signin.html:23
 #: flask_security/templates/security/us_verify.html:21
 msgid "Code has been sent"
-msgstr "Se envió el código"
+msgstr "Kodea bidali da"
 
 #: flask_security/templates/security/us_setup.html:36
 msgid "No methods have been enabled - nothing to setup"
-msgstr "No se han habilitado métodos, no hay nada que configurar"
+msgstr "Ez da metodorik gaitu, ez dago ezer konfiguratzeko"
 
 #: flask_security/templates/security/us_signin.html:15
 #: flask_security/templates/security/us_verify.html:13
 msgid "Request one-time code be sent"
-msgstr "Solicitar que se envíe un código de un solo uso"
+msgstr "Eskatu erabilera-bakarreko kodea bidaltzeko"
 
 #: flask_security/templates/security/us_verify.html:6
 msgid "Please re-authenticate"
-msgstr "Por favor, vuelva a autenticarse"
+msgstr "Mesedez, berriro autentifikatu"
 
 #: flask_security/templates/security/verify.html:6
 msgid "Please Enter Your Password"
-msgstr "Por favor, introduzca su contraseña"
+msgstr "Mesedez, sartu zure pasahitza"
 
 #: flask_security/templates/security/email/change_notice.html:1
 msgid "Your password has been changed."
-msgstr "Tu contraseña ha sido cambiada."
+msgstr "Zure pasahitza aldatu da."
 
 #: flask_security/templates/security/email/change_notice.html:3
 msgid "If you did not change your password,"
-msgstr "Si no has cambiado tu contraseña,"
+msgstr "Pasahitza aldatu ez baduzu,"
 
 #: flask_security/templates/security/email/change_notice.html:3
 msgid "click here to reset it"
-msgstr "haz clic aquí para restablecerla"
+msgstr "egin klik hemen berrezartzeko"
 
 #: flask_security/templates/security/email/change_notice.txt:3
 msgid "If you did not change your password, click the link below to reset it."
-msgstr ""
-"Si no cambiaste la contraseña, haz clic en el enlace de abajo para "
-"restablecerla."
+msgstr "Pasahitza aldatu ez baduzu, egin klik beheko estekan berrezartzeko."
 
 #: flask_security/templates/security/email/confirmation_instructions.html:1
 #: flask_security/templates/security/email/confirmation_instructions.txt:1
 msgid "Please confirm your email through the link below:"
-msgstr "Confirma tu correo electrónico haciendo clic aquí:"
+msgstr "Mesedez, berretsi zure posta elektronikoa beheko estekaren bidez:"
 
 #: flask_security/templates/security/email/confirmation_instructions.html:3
 #: flask_security/templates/security/email/welcome.html:6
 msgid "Confirm my account"
-msgstr "Confirmar mi cuenta"
+msgstr "Berretsi nire kontua"
 
 #: flask_security/templates/security/email/login_instructions.html:1
 #: flask_security/templates/security/email/login_instructions.txt:1
@@ -616,52 +597,50 @@ msgstr "Confirmar mi cuenta"
 #: flask_security/templates/security/email/welcome.txt:1
 #, python-format
 msgid "Welcome %(email)s!"
-msgstr "¡Bienvenido %(email)s!"
+msgstr "Ongi etorri %(email)s!"
 
 #: flask_security/templates/security/email/login_instructions.html:3
 #: flask_security/templates/security/email/login_instructions.txt:3
 msgid "You can log into your account through the link below:"
-msgstr "Inicia sesión haciendo clic aquí:"
+msgstr "Beheko estekaren bidez saioa has zenezake:"
 
 #: flask_security/templates/security/email/login_instructions.html:5
 msgid "Login now"
-msgstr "Iniciar sesión ahora"
+msgstr "Hasi saioa orain"
 
 #: flask_security/templates/security/email/reset_instructions.html:1
 msgid "Click here to reset your password"
-msgstr "Haz clic aquí para restablecer la contraseña"
+msgstr "Egin klik hemen zure pasahitza berrezartzeko"
 
 #: flask_security/templates/security/email/reset_instructions.txt:1
 msgid "Click the link below to reset your password:"
-msgstr "Haz clic en el enlace de abajo para restablecer la contraseña:"
+msgstr "Egin klik beheko estekan zure pasahitza berrezartzeko:"
 
 #: flask_security/templates/security/email/two_factor_instructions.html:3
 #: flask_security/templates/security/email/two_factor_instructions.txt:3
 msgid "You can log into your account using the following code:"
-msgstr ""
-"Puedes iniciar sesión en tu cuenta utilizando el siguiente código:"
+msgstr "Zure kontuan saioa has dezakezu kode hau erabiliz:"
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
 msgid "can not access mail account"
-msgstr "no puede acceder a la cuenta de correo"
+msgstr "ezin da posta kontura sartu"
 
 #: flask_security/templates/security/email/us_instructions.html:3
 #: flask_security/templates/security/email/us_instructions.txt:3
 msgid "You can sign into your account using the following code:"
-msgstr ""
-"Puedes iniciar sesión en tu cuenta utilizando el siguiente código:"
+msgstr "Zure kontuan saioa has dezakezu kode hau erabiliz:"
 
 #: flask_security/templates/security/email/us_instructions.html:6
 msgid "Or use the the link below:"
-msgstr "O utilizar el siguiente enlace:"
+msgstr "Edo erabili beheko esteka:"
 
 #: flask_security/templates/security/email/us_instructions.txt:7
 msgid "Or use the link below:"
-msgstr "O utilizar el siguiente enlace:"
+msgstr "Edo erabili beheko esteka:"
 
 #: flask_security/templates/security/email/welcome.html:4
 #: flask_security/templates/security/email/welcome.txt:4
 msgid "You can confirm your email through the link below:"
-msgstr "Confirma tu correo electrónico haciendo clic aquí:"
+msgstr "Zure posta elektronikoa beheko estekaren bidez baiezta dezakezu:"
 
