@@ -14,6 +14,13 @@ Release Target 2020
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
+Version 3.5.0
+--------------
+
+Released November 28, 2020
+
+Swap Flask-BabelEx (deprecated) for Flask-Babel
+
 Version 3.4.4
 --------------
 
