@@ -24,6 +24,7 @@ addons:
       - aspell-es
       - aspell-fr
       - aspell-nl
+      - aspell-pl
       - aspell-pt
       - aspell-ru
 
