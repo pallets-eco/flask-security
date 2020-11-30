@@ -85,7 +85,7 @@ msgstr "Baliabide honetara sartzeko berriro autentifikatu behar duzu"
 #: flask_security/core.py:283
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
-msgstr "Eskerrik asko. Baieztapen argibideak% (email) s helbidera bidali dira."
+msgstr "Eskerrik asko. Baieztapen argibideak %(email)s helbidera bidali dira."
 
 #: flask_security/core.py:286
 msgid "Thank you. Your email has been confirmed."
