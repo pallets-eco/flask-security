@@ -610,7 +610,7 @@ msgstr "Ձեր գաղտնաբառը վերականգնելու համար սեղ
 #: flask_security/templates/security/email/two_factor_instructions.html:3
 #: flask_security/templates/security/email/two_factor_instructions.txt:3
 msgid "You can log into your account using the following code:"
-msgstr "Դուք կարող եք մտնել Ձեր օգտահաշիվ՝ օգտագործելով հետևյալ ծածկագիրը"
+msgstr "Դուք կարող եք մտնել Ձեր օգտահաշիվ՝ օգտագործելով հետևյալ ծածկագիրը."
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
