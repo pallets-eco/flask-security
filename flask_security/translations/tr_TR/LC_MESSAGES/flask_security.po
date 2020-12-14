@@ -640,4 +640,3 @@ msgstr "E-posta adresinizi aşağıdaki linkten onaylayabilirsiniz:"
 
 #~ msgid "Password confirmation is needed in order to access page"
 #~ msgstr ""
-

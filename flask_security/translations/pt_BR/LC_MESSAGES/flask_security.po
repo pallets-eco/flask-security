@@ -642,4 +642,3 @@ msgstr "Você pode confirmar seu email através do link abaixo:"
 
 #~ msgid "Password confirmation is needed in order to access page"
 #~ msgstr ""
-

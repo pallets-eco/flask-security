@@ -657,4 +657,3 @@ msgstr "U kan uw e-mailadres bevestigen via de onderstaande link:"
 
 #~ msgid "Password confirmation is needed in order to access page"
 #~ msgstr "Wachtwoord bevestiging is nodig voor we deze pagina kunnen laten zien"
-

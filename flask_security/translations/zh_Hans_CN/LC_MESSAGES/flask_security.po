@@ -636,4 +636,3 @@ msgstr "你可以通过下面链接激活你的邮箱："
 
 #~ msgid "Password confirmation is needed in order to access page"
 #~ msgstr ""
-

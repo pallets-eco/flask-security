@@ -647,4 +647,3 @@ msgstr ""
 
 #~ msgid "Password confirmation is needed in order to access page"
 #~ msgstr ""
-
