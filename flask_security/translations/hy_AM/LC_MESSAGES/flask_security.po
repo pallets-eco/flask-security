@@ -499,7 +499,7 @@ msgid ""
 "to start receiving codes:"
 msgstr ""
 "Բացեք ձեր վավերականացման ծրագիրը ձեր սարքում և սկանավորեք հետևյալ QRcode-ը "
-"ծածկագրեր ստանալու համար:
+"ծածկագրեր ստանալու համար:"
 
 #: flask_security/templates/security/two_factor_setup.html:22
 msgid "Two factor authentication code"
