@@ -645,4 +645,3 @@ msgstr "Confirmeu el vostre correu electrònic fent clic a continuació:"
 
 #~ msgid "Password confirmation is needed in order to access page"
 #~ msgstr ""
-
