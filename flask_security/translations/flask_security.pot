@@ -626,4 +626,3 @@ msgstr ""
 #: flask_security/templates/security/email/welcome.txt:4
 msgid "You can confirm your email through the link below:"
 msgstr ""
-
