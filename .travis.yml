@@ -22,6 +22,7 @@ addons:
       - aspell-da
       - aspell-de
       - aspell-es
+      - aspell-eu
       - aspell-fr
       - aspell-nl
       - aspell-pl
