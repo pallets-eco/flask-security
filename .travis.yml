@@ -1,9 +1,9 @@
 notifications:
   email: false
 
-language: python
+language: python3
 
-dist: bionic
+dist: focal
 
 python:
   - "3.6"
@@ -61,13 +61,13 @@ script:
   - python setup.py test
   - >
     set -e;
-    if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
+    if [[ $TRAVIS_PYTHON_VERSION == 3.8 && $REQUIREMENTS == "release" ]]; then
      # Just run once - seems to have issues running on multiple environements.
      pre-commit autoupdate
      pre-commit run --all-files --show-diff-on-failure
      # Test against a real DB (postgres)
-     python setup.py test --addopts --realdburl=postgres://postgres@localhost/;
-     python setup.py build_sphinx compile_catalog;
+     python3.8 setup.py test --addopts --realdburl=postgres://postgres@localhost/;
+     python3.8 setup.py build_sphinx compile_catalog;
      echo "Running msgcheck";
      msgcheck -pwW flask_security/translations/*/LC_MESSAGES/flask_security.po;
      # run it again with spelling - but dont die on errors
@@ -78,7 +78,7 @@ script:
 after_script:
   - >
   - set -e;
-    if [[ $TRAVIS_PYTHON_VERSION == 3.7 && $REQUIREMENTS == "release" ]]; then
+    if [[ $TRAVIS_PYTHON_VERSION == 3.8 && $REQUIREMENTS == "release" ]]; then
      coveralls;
     fi
 
@@ -97,5 +97,5 @@ deploy:
   on:
     repo: Flask-Middleware/flask-security
     tags: true
-    python: "3.7"
+    python: "3.8"
     condition: $REQUIREMENTS = release
