@@ -289,26 +289,26 @@ def test_two_factor_flag(app, client):
     # Test login using invalid email
     data = dict(email="nobody@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
-    assert b"Specified user does not exist" in response.data
+    assert b"invalid username or password" in response.data.lower()
     response = client.post(
         "/login",
         json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
-    assert b"Specified user does not exist" in response.data
+    assert b"invalid username or password" in response.data.lower()
 
     # Test login using valid email and invalid password
     data = dict(email="gal@lp.com", password="wrong_pass")
     response = client.post("/login", data=data, follow_redirects=True)
-    assert b"Invalid password" in response.data
+    assert b"invalid username or password" in response.data.lower()
     response = client.post(
         "/login",
         json=data,
         headers={"Content-Type": "application/json"},
         follow_redirects=True,
     )
-    assert b"Invalid password" in response.data
+    assert b"invalid username or password" in response.data.lower()
 
     # Test two-factor authentication first login
     data = dict(email="matt@lp.com", password="password")

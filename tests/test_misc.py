@@ -1011,3 +1011,11 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
     response = client.get("/logout")
     assert response.status_code == 302
     assert response.headers["Location"] == "http://localhost/post_logout"
+
+
+def test_default_error_messages_do_not_disclose_why_auth_failed(client, get_message):
+    assert (
+        get_message("USER_DOES_NOT_EXIST")
+        == get_message("INVALID_PASSWORD")
+        == get_message("DISABLED_ACCOUNT")
+    ), "OWASP guidelines specify that these messages should all be the same"
