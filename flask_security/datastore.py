@@ -326,6 +326,10 @@ class UserDatastore:
             No normalization is done on email - it is assumed the caller has already
             done that.
 
+        .. note::
+            The roles kwparam is modified as part of the call - it will, if necessary
+            be converted from names to role instances.
+
         .. danger::
            Be aware that whatever `password` is passed in will
            be stored directly in the DB. Do NOT pass in a plaintext password!
