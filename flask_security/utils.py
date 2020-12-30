@@ -858,6 +858,11 @@ def base_render_json(
     additional=None,
     error_status_code=400,
 ):
+    """
+    This method is called by all views that return JSON responses.
+    This fills in the response and then calls :meth:`.Security.render_json`
+    which can be overridden by the app.
+    """
     has_errors = len(form.errors) > 0
 
     user = form.user if hasattr(form, "user") else None
@@ -873,7 +878,7 @@ def base_render_json(
                 payload["user"] = user.get_security_payload()
 
             if include_auth_token:
-                # view wants to return auth_token - check behavior config
+                # view willing to return auth_token - check behavior config
                 if (
                     config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
                     or "include_auth_token" in request.args
