@@ -233,6 +233,43 @@ def test_recoverable_json(app, client, get_message):
     assert len(flashes) == 0
 
 
+def test_recover_invalidates_session(app, client):
+    # Make sure that if we reset our password - prior sessions are invalidated.
+
+    other_client = app.test_client()
+    authenticate(other_client)
+    response = other_client.get("/profile", follow_redirects=True)
+    assert b"Profile Page" in response.data
+
+    # use normal client to reset password
+    with capture_reset_password_requests() as requests:
+        response = client.post(
+            "/reset",
+            json=dict(email="matt@lp.com"),
+            headers={"Content-Type": "application/json"},
+        )
+        assert response.headers["Content-Type"] == "application/json"
+
+    assert response.status_code == 200
+    token = requests[0]["token"]
+
+    # Test submitting a new password
+    response = client.post(
+        "/reset/" + token + "?include_auth_token",
+        json=dict(password="awesome sunset", password_confirm="awesome sunset"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert all(
+        k in response.json["response"]["user"]
+        for k in ["email", "authentication_token"]
+    )
+
+    # try to access protected endpoint with old session - shouldn't work
+    response = other_client.get("/profile")
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/login?next=%2Fprofile"
+
+
 def test_login_form_description(sqlalchemy_app):
     app = sqlalchemy_app()
     with app.test_request_context("/login"):

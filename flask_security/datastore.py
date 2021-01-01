@@ -145,6 +145,9 @@ class UserDatastore:
             roles[i] = self.find_role(rn)
         kwargs["roles"] = roles
         kwargs.setdefault("fs_uniquifier", uuid.uuid4().hex)
+        if hasattr(self.user_model, "fs_token_uniquifier"):
+            kwargs.setdefault("fs_token_uniquifier", uuid.uuid4().hex)
+
         return kwargs
 
     def find_user(self, *args, **kwargs):
@@ -269,15 +272,30 @@ class UserDatastore:
         :param user: User to modify
         :param uniquifier: Unique value - if none then uuid.uuid4().hex is used
 
-        This method is a no-op if the user model doesn't contain the attribute
-        ``fs_uniquifier``
-
         .. versionadded:: 3.3.0
         """
         if not uniquifier:
             uniquifier = uuid.uuid4().hex
         user.fs_uniquifier = uniquifier
         self.put(user)
+
+    def set_token_uniquifier(self, user, uniquifier=None):
+        """Set user's auth token identity key.
+        This will immediately render outstanding auth tokens invalid.
+
+        :param user: User to modify
+        :param uniquifier: Unique value - if none then uuid.uuid4().hex is used
+
+        This method is a no-op if the user model doesn't contain the attribute
+        ``fs_token_uniquifier``
+
+        .. versionadded:: 4.0.0
+        """
+        if not uniquifier:
+            uniquifier = uuid.uuid4().hex
+        if hasattr(user, "fs_token_uniquifier"):
+            user.fs_token_uniquifier = uniquifier
+            self.put(user)
 
     def create_role(self, **kwargs):
         """
@@ -365,6 +383,7 @@ class UserDatastore:
 
             * reset fs_uniquifier - which causes session cookie, remember cookie, auth
               tokens to be unusable
+            * reset fs_token_uniquifier (if present) - cause auth tokens to be unusable
             * remove all unified signin TOTP secrets so those can't be used
             * remove all two-factor secrets so those can't be used
 
@@ -380,6 +399,7 @@ class UserDatastore:
         .. versionadded:: 3.4.1
         """
         self.set_uniquifier(user)
+        self.set_token_uniquifier(user)
         if hasattr(user, "us_totp_secrets"):
             self.us_reset(user)
         if hasattr(user, "tf_primary_method"):

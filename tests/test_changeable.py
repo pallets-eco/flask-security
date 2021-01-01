@@ -17,11 +17,13 @@ import jinja2
 from flask_security.core import UserMixin
 from flask_security.forms import _default_field_labels
 from flask_security.password_util import PasswordUtil
-from flask_security.signals import password_changed
+from flask_security.signals import password_changed, user_authenticated
 from flask_security.utils import localize_callback
 from tests.test_utils import (
     authenticate,
     check_xlation,
+    get_session,
+    hash_password,
     init_app_with_options,
     json_authenticate,
     logout,
@@ -148,6 +150,159 @@ def test_changeable_flag(app, client, get_message):
     assert response.json["response"]["errors"]["new_password"] == [
         "Password not provided"
     ]
+
+
+def test_change_invalidates_session(app, client):
+    # Make sure that if we change our password - prior sessions are invalidated.
+
+    # changing password effectively re-logs in user - verify the signal
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    def authned(myapp, user, **extra_args):
+        auths.append((user.email, extra_args["authn_via"]))
+
+    # No remember cookie since that also be reset and auto-login.
+    data = dict(email="matt@lp.com", password="password", remember="")
+    response = client.post("/login", data=data)
+    sess = get_session(response)
+    cur_user_id = sess.get("_user_id", sess.get("user_id"))
+
+    response = client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "new strong password",
+            "new_password_confirm": "new strong password",
+        },
+        follow_redirects=True,
+    )
+    # First auth was the initial login above - second should be from /change
+    assert auths[1][0] == "matt@lp.com"
+    assert "change" in auths[1][1]
+
+    # Should have received a new session cookie - so should still be logged in
+    response = client.get("/profile", follow_redirects=True)
+    assert b"Profile Page" in response.data
+
+    # Now use old session - shouldn't work.
+    with client.session_transaction() as oldsess:
+        oldsess["_user_id"] = cur_user_id
+        oldsess["user_id"] = cur_user_id
+
+    # try to access protected endpoint - shouldn't work
+    response = client.get("/profile")
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/login?next=%2Fprofile"
+
+
+def test_change_updates_remember(app, client):
+    # Test that on change password - remember cookie updated
+    authenticate(client)
+
+    response = client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "new strong password",
+            "new_password_confirm": "new strong password",
+        },
+        follow_redirects=True,
+    )
+
+    # Should have received a new session cookie - so should still be logged in
+    response = client.get("/profile", follow_redirects=True)
+    assert b"Profile Page" in response.data
+
+    assert "remember_token" in [c.name for c in client.cookie_jar]
+    client.cookie_jar.clear_session_cookies()
+    response = client.get("/profile", follow_redirects=True)
+    assert b"Profile Page" in response.data
+
+
+def test_change_invalidates_auth_token(app, client):
+    # if change password, by default that should invalidate auth tokens
+    response = json_authenticate(client)
+    token = response.json["response"]["user"]["authentication_token"]
+    headers = {"Authentication-Token": token}
+    # make sure can access restricted page
+    response = client.get("/token", headers=headers)
+    assert b"Token Authentication" in response.data
+
+    response = client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "new strong password",
+            "new_password_confirm": "new strong password",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+
+    # authtoken should now be invalid
+    response = client.get("/token", headers=headers)
+    assert response.status_code == 302
+    assert response.headers["Location"] == "http://localhost/login?next=%2Ftoken"
+
+
+def test_auth_uniquifier(app):
+    # If add fs_token_uniquifier to user model - change password shouldn't invalidate
+    # auth tokens.
+    from sqlalchemy import Column, String
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security, SQLAlchemyUserDatastore
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    db = SQLAlchemy(app)
+
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        fs_token_uniquifier = Column(String(64), unique=True, nullable=False)
+
+    with app.app_context():
+        db.create_all()
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        ds.create_user(
+            email="matt@lp.com",
+            password=hash_password("password"),
+        )
+        ds.commit()
+
+        client = app.test_client()
+
+        # standard login with auth token
+        response = json_authenticate(client)
+        token = response.json["response"]["user"]["authentication_token"]
+        headers = {"Authentication-Token": token}
+        # make sure can access restricted page
+        response = client.get("/token", headers=headers)
+        assert b"Token Authentication" in response.data
+
+        # change password
+        response = client.post(
+            "/change",
+            data={
+                "password": "password",
+                "new_password": "new strong password",
+                "new_password_confirm": "new strong password",
+            },
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+
+        # authtoken should still be valid
+        response = client.get("/token", headers=headers)
+        assert response.status_code == 200
 
 
 def test_xlation(app, client, get_message_local):

@@ -98,6 +98,13 @@ will require the following additional field:
 
 * ``us_phone_number`` (string)
 
+Separate Identity Domains
+~~~~~~~~~~~~~~~~~~~~~~~~~
+If you want authentication tokens to not be invalidated when the user changes their
+password add the following to your `User` model:
+
+* ``fs_token_uniquifier`` (unique, non-nullable)
+
 Permissions
 ^^^^^^^^^^^
 If you want to protect endpoints with permissions, and assign permissions to roles

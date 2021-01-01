@@ -11,11 +11,11 @@ Session Based Authentication
 Session based authentication is fulfilled entirely by the `Flask-Login`_
 extension. Flask-Security handles the configuration of Flask-Login automatically
 based on a few of its own configuration values and uses Flask-Login's
-`alternative token`_ feature for remembering users when their session has
-expired. Flask-Security uses ``fs_uniquifier`` from its Token Authentication
-Feature (see below) to implement Flask-Login's `alternative token`_. `Flask-WTF`_
+`alternative token`_ feature to associate the value of ``fs_uniquifier`` with the user.
+(This enables easily invalidating all existing sessions for a given user without
+having to change their user id). `Flask-WTF`_
 integrates with the session as well to provide out of the box CSRF support.
-Flask-Security extends that to support requiring CSRF for requests that are
+Flask-Security extends that to support configurations that would require CSRF for requests that are
 authenticated via session cookies, but not for requests authenticated using tokens.
 
 
@@ -69,18 +69,24 @@ in the system. This means that the username must be equal to their email address
 Token Authentication
 --------------------
 
-Token based authentication is enabled by retrieving the user auth token by
-performing an HTTP POST with a query param of ``include_auth_token`` with the authentication details
-as JSON data against the
-authentication endpoint. A successful call to this endpoint will return the
-user's ID and their authentication token. This token can be used in subsequent
-requests to protected resources. The auth token is supplied in the request
+Token based authentication can be used by retrieving the user auth token from an
+authentication endpoint (e.g. ``/login``, ``/us-signin``).
+Perform an HTTP POST with a query param of ``include_auth_token`` and the authentication details
+as JSON data.
+A successful call will return the authentication token. This token can be used in subsequent
+requests to protected resources. The auth token should be supplied in the request
 through an HTTP header or query string parameter. By default the HTTP header
 name is `Authentication-Token` and the default query string parameter name is
-`auth_token`. Authentication tokens are generated using a uniquifier field in the
-user's UserModel. If that field is changed (via :meth:`.UserDatastore.set_uniquifier`)
-then any existing authentication tokens will no longer be valid. Changing
-the user's password will not affect tokens.
+`auth_token`.
+
+Authentication tokens are generated using a uniquifier field in the
+user's UserModel. By default that field is ``fs_uniquifier``. This means that
+if that field is changed (via :meth:`.UserDatastore.set_uniquifier`)
+then any existing authentication tokens will no longer be valid. This value is changed
+whenever a user changes their password. If this is not the desired behavior then you can add an additional
+attribute to the UserModel: ``fs_token_uniquifier`` and that will be used instead, thus
+isolating password changes from authentication tokens. That attribute can be changed via
+:meth:`.UserDatastore.set_token_uniquifier`
 
 .. _two-factor:
 
@@ -166,11 +172,14 @@ of time.
 Password Reset/Recovery
 -----------------------
 
-Password reset and recovery is available for when a user forgets his or her
+Password reset and recovery is available for when a user forgets their
 password. Flask-Security sends an email to the user with a link to a view which
 they can reset their password. Once the password is reset they are automatically
-logged in and can use the new password from then on. Password reset links  can
+logged in and can use the new password from then on. Password reset links can
 be configured to expire after a specified amount of time.
+
+As with password change - this will update the the user's ``fs_uniquifier`` attribute
+which will invalidate all existing sessions AND (by default) all authentication tokens.
 
 
 User Registration
@@ -181,6 +190,20 @@ very simple and new users need only supply an email address and their password.
 This view can be overridden if your registration process requires more fields.
 User email is validated and normalized using the
 `email_validator <https://pypi.org/project/email-validator/>`_ package.
+
+Password Change
+---------------
+Flask-Security comes packaged with a basic change user password view. Unlike password
+recovery, this endpoint is used when the user is already authenticated. The result
+of a successful password change is not only a new password, but a new value for ``fs_uniquifier``.
+This has the effect is immediately invalidating all existing sessions. The change request
+itself effectively re-logs in the user so a new session is created. Note that since the user
+is effectively re-logged in, the same signals are sent as when the user normally authenticates.
+
+*NOTE* The ``fs_uniquifier`` by default, controls both sessions and authenticated tokens.
+Thus changing the password also invalidates all authentication tokens. This may not be desirable
+behavior, so if the UserModel contains an attribute ``fs_token_uniquifier``, then that will be used
+when generating authentication tokens and so won't be affected by password changes.
 
 
 Login Tracking

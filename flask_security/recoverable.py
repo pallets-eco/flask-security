@@ -5,6 +5,7 @@
     Flask-Security recoverable module
 
     :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -85,6 +86,11 @@ def reset_password_token_status(token):
     expired, invalid, user, data = get_token_status(
         token, "reset", "RESET_PASSWORD", return_data=True
     )
+    # This check looks to see if the password has been changed since the reset token
+    # was created. As of #338 - we reset the fs_uniquifier on each password change
+    # so the token would have been marked invalid above.
+    # This made sure that the token couldn't be used twice.
+    # TODO - look at removing this entire check.
     if not invalid and user:
         if user.password:
             if not verify_hash(data[1], user.password):
@@ -100,6 +106,8 @@ def update_password(user, password):
     :param password: The unhashed new password
     """
     user.password = hash_password(password)
+    # Change uniquifier - this will cause ALL sessions to be invalidated.
+    _datastore.set_uniquifier(user)
     _datastore.put(user)
     send_password_reset_notice(user)
     password_reset.send(app._get_current_object(), user=user)
