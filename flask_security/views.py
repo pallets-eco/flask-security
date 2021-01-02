@@ -198,13 +198,14 @@ def login():
         login_user(form.user, remember=remember_me, authn_via=["password"])
         after_this_request(_commit)
 
-        if not _security._want_json(request):
-            return redirect(get_post_login_redirect())
+        if _security._want_json(request):
+            return base_render_json(form, include_auth_token=True)
+        return redirect(get_post_login_redirect())
 
     if _security._want_json(request):
         if current_user.is_authenticated:
             form.user = current_user
-        return base_render_json(form, include_auth_token=True)
+        return base_render_json(form)
 
     if current_user.is_authenticated:
         return redirect(get_url(_security.post_login_view))
@@ -655,16 +656,18 @@ def change_password():
     if form.validate_on_submit():
         after_this_request(_commit)
         change_user_password(current_user._get_current_object(), form.new_password.data)
-        if not _security._want_json(request):
-            do_flash(*get_message("PASSWORD_CHANGE"))
-            return redirect(
-                get_url(_security.post_change_view)
-                or get_url(_security.post_login_view)
-            )
+        if _security._want_json(request):
+            form.user = current_user
+            return base_render_json(form, include_auth_token=True)
+
+        do_flash(*get_message("PASSWORD_CHANGE"))
+        return redirect(
+            get_url(_security.post_change_view) or get_url(_security.post_login_view)
+        )
 
     if _security._want_json(request):
         form.user = current_user
-        return base_render_json(form, include_auth_token=True)
+        return base_render_json(form)
 
     return _security.render_template(
         config_value("CHANGE_PASSWORD_TEMPLATE"),
