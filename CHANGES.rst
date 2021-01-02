@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 4.0.0
 -------------
 
-Release Target Fall 2020
+Release Target Really Early 2021
 
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
 
@@ -58,6 +58,9 @@ Fixed
   db.put() can be called. Added :meth:`.UserDatastore.add_permissions_to_role` and :meth:`.UserDatastore.remove_permissions_from_role`.
   The methods :meth:`.RoleMixin.add_permissions` and :meth:`.RoleMixin.remove_permissions` have been deprecated.
 - (:issue:`395`) Provide ability to change table names for User and Role tables in the fsqla model.
+- (:issue:`338`) All sessions are invalidated when a user changes or resets their password. This is accomplished by
+  changing the user's `fs_uniquifier`. The user is automatically re-logged in (and a new session
+  created) after a successful change operation.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -122,6 +125,11 @@ Backwards Compatibility Concerns
   make the user experience slightly nicer - especially for mobile devices. Some applications use the email form field for other
   identity attributes (such as username). If your application does this you will probably need to subclass ``LoginForm`` and change
   the email type back to StringField.
+
+- (:issue:`338`) By default, both passwords and authentication tokens use the same attribute ``fs_uniquifier`` to
+  uniquely identify the user. This means that if the user changes or resets their password, all authentication tokens
+  also become invalid. This could be viewed as a feature or a bug. If this behavior isn't desired, add another
+  uniquifier: ``fs_token_uniquifier`` to your UserModel and that will be used to generate authentication tokens.
 
 Version 3.4.4
 --------------

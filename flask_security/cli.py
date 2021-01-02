@@ -281,7 +281,7 @@ def users_deactivate(user):
 @users.command(
     "reset_access",
     help="Reset all authentication credentials for user."
-    " This includes session, auth token, two-factor"
+    " This includes sessions, authentication tokens, two-factor"
     " and unified sign in secrets. ",
 )
 @click.argument("user")

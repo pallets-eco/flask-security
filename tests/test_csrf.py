@@ -424,7 +424,7 @@ def test_csrf_cookie(app, client):
 @pytest.mark.settings(CSRF_COOKIE={"key": "X-XSRF-Token"})
 @pytest.mark.changeable()
 def test_cp_with_token_cookie(app, client):
-    # Make sure can use returned CSRF-Token cookie in Header.
+    # Make sure can use returned CSRF-Token cookie in Header when changing password.
     app.config["WTF_CSRF_ENABLED"] = True
     CSRFProtect(app)
 
@@ -445,8 +445,7 @@ def test_cp_with_token_cookie(app, client):
             headers={"X-XSRF-Token": csrf_token},
         )
         assert response.status_code == 200
-    # 2 successes since the utils:csrf_cookie_handler will check
-    assert mp.success == 2 and mp.failure == 0
+    assert mp.success == 1 and mp.failure == 0
     json_logout(client)
     assert "X-XSRF-Token" not in [c.name for c in client.cookie_jar]
 
@@ -525,6 +524,15 @@ def test_cp_with_token_cookie_refresh(app, client):
         csrf_cookie = [c for c in client.cookie_jar if c.name == "X-XSRF-Token"][0]
         assert csrf_cookie
     assert mp.success == 1 and mp.failure == 0
+
+    # delete cookie again, do a 'GET' - the REFRESH_COOKIE_ON_EACH_REQUEST should
+    # send us a new one
+    client.delete_cookie(csrf_cookie.domain, csrf_cookie.name)
+    response = client.get("/change")
+    assert response.status_code == 200
+    csrf_cookie = [c for c in client.cookie_jar if c.name == "X-XSRF-Token"][0]
+    assert csrf_cookie
+
     json_logout(client)
     assert "X-XSRF-Token" not in [c.name for c in client.cookie_jar]
 

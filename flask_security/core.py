@@ -474,7 +474,10 @@ def _request_loader(request):
         data = _security.remember_token_serializer.loads(
             token, max_age=_security.token_max_age
         )
-        user = _security.datastore.find_user(fs_uniquifier=data[0])
+        if hasattr(_security.datastore.user_model, "fs_token_uniquifier"):
+            user = _security.datastore.find_user(fs_token_uniquifier=data[0])
+        else:
+            user = _security.datastore.find_user(fs_uniquifier=data[0])
         if not user.active:
             user = None
     except Exception:
@@ -702,9 +705,19 @@ class UserMixin(BaseUserMixin):
     def get_auth_token(self):
         """Constructs the user's authentication token.
 
+        We optionally use a separate uniquifier so that changing password doesn't
+        invalidate auth tokens.
+
         This data MUST be securely signed using the ``remember_token_serializer``
+
+        .. versionchanged:: 4.0.0
+            If user model has fs_token_uniquifier - use that
         """
-        data = [str(self.fs_uniquifier)]
+
+        if hasattr(self, "fs_token_uniquifier"):
+            data = [str(self.fs_token_uniquifier)]
+        else:
+            data = [str(self.fs_uniquifier)]
         return _security.remember_token_serializer.dumps(data)
 
     def verify_auth_token(self, data):
@@ -716,7 +729,14 @@ class UserMixin(BaseUserMixin):
         :param data: the data as formulated by :meth:`get_auth_token`
 
         .. versionadded:: 3.3.0
+
+        .. versionchanged:: 4.0.0
+            If user model has fs_token_uniquifier - use that
         """
+
+        if hasattr(self, "fs_token_uniquifier"):
+            return data[0] == self.fs_token_uniquifier
+
         return data[0] == self.fs_uniquifier
 
     def has_role(self, role):

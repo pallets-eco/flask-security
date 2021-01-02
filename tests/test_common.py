@@ -22,6 +22,7 @@ from tests.test_utils import (
     authenticate,
     json_authenticate,
     get_num_queries,
+    hash_password,
     logout,
     populate_data,
     verify_token,
@@ -728,27 +729,6 @@ def test_anon_required_json(client, get_message):
     )
 
 
-@pytest.mark.settings(security_hashing_schemes=["sha256_crypt"])
-@pytest.mark.skip
-def test_auth_token_speed(app, client_nc):
-    # To run with old algorithm you have to comment out fs_uniquifier check in UserMixin
-    import timeit
-
-    response = json_authenticate(client_nc)
-    token = response.json["response"]["user"]["authentication_token"]
-
-    def time_get():
-        rp = client_nc.get(
-            "/login",
-            data={},
-            headers={"Content-Type": "application/json", "Authentication-Token": token},
-        )
-        assert rp.status_code == 200
-
-    t = timeit.timeit(time_get, number=50)
-    print("Time for 50 iterations: ", t)
-
-
 def test_change_uniquifier(app, client_nc):
     # make sure that existing token no longer works once we change the uniquifier
 
@@ -768,6 +748,57 @@ def test_change_uniquifier(app, client_nc):
     response = json_authenticate(client_nc)
     token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
+
+
+def test_change_token_uniquifier(app):
+    # make sure that existing token no longer works once we change the token uniquifier
+    from sqlalchemy import Column, String
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security, SQLAlchemyUserDatastore
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    db = SQLAlchemy(app)
+
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        fs_token_uniquifier = Column(String(64), unique=True, nullable=False)
+
+    with app.app_context():
+        db.create_all()
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        ds.create_user(
+            email="matt@lp.com",
+            password=hash_password("password"),
+        )
+        ds.commit()
+
+        client_nc = app.test_client(use_cookies=False)
+
+        response = json_authenticate(client_nc)
+        token = response.json["response"]["user"]["authentication_token"]
+        verify_token(client_nc, token)
+
+        # now change uniquifier
+        with app.test_request_context("/"):
+            user = app.security.datastore.find_user(email="matt@lp.com")
+            app.security.datastore.reset_user_access(user)
+            app.security.datastore.commit()
+
+        verify_token(client_nc, token, status=401)
+
+        # get new token and verify it works
+        response = json_authenticate(client_nc)
+        token = response.json["response"]["user"]["authentication_token"]
+        verify_token(client_nc, token)
 
 
 def test_token_query(in_app_context):
