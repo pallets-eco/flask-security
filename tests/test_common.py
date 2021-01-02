@@ -749,3 +749,26 @@ def test_session_query(in_app_context):
     assert response.status_code == 200
     end_nqueries = get_num_queries(app.security.datastore)
     assert current_nqueries is None or end_nqueries == (current_nqueries + 2)
+
+
+@pytest.mark.changeable()
+def test_no_get_auth_token(app, client):
+    # Test that GETs don't return an auth token. This is a security issue since
+    # GETs aren't protected with CSRF
+    authenticate(client)
+    response = client.get(
+        "/login?include_auth_token", headers={"Content-Type": "application/json"}
+    )
+    assert "authentication_token" not in response.json["response"]["user"]
+
+    data = dict(
+        password="password",
+        new_password="new strong password",
+        new_password_confirm="new strong password",
+    )
+    response = client.get(
+        "/change?include_auth_token",
+        json=data,
+        headers={"Content-Type": "application/json"},
+    )
+    assert "authentication_token" not in response.json["response"]["user"]
