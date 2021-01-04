@@ -4,7 +4,7 @@
 
     Unified signin tests
 
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -12,7 +12,7 @@
 import base64
 from contextlib import contextmanager
 from datetime import timedelta
-from unittest.mock import Mock
+from passlib.totp import TOTP
 import re
 import time
 from urllib.parse import parse_qsl, urlsplit
@@ -985,7 +985,7 @@ def test_invalid_method_setup(app, client, get_message):
 
 def test_setup_new_totp(app, client, get_message):
     # us-setup should generate a new totp secret for each setup
-    # Verify  existing cods no longer work
+    # Verify existing codes no longer work
     us_authenticate(client)
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -998,6 +998,7 @@ def test_setup_new_totp(app, client, get_message):
         headers=headers,
     )
     assert response.status_code == 200
+    assert "authr_key" not in response.json["response"]
     code = sms_sender.messages[0].split()[-1].strip(".")
 
     # Now start setup again - it should generate a new totp - so the previous 'code'
@@ -1027,31 +1028,34 @@ def test_setup_new_totp(app, client, get_message):
 
 
 def test_qrcode(app, client, get_message):
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    # Test forms based authenticator setup - can't really parse QRcode - but can use
+    # the key sent as part of the response.
     us_authenticate(client, identity="gal@lp.com")
-    response = client.post(
-        "us-setup", json=dict(chosen_method="authenticator"), headers=headers
-    )
+    response = client.post("us-setup", data=dict(chosen_method="authenticator"))
     assert response.status_code == 200
-    state = response.json["response"]["state"]
+    # verify png QRcode is present
+    assert b"data:image/svg+xml;base64," in response.data
 
-    # Now request code. We can't test the qrcode easily - but we can get the totp_secret
-    # that goes into the qrcode and make sure that works
-    mtf = Mock(wraps=app.security._totp_factory)
-    app.security.totp_factory(mtf)
-    qrcode_page_response = client.get("/us-qrcode/" + state, follow_redirects=True)
-    assert mtf.get_totp_uri.call_count == 1
-    (username, totp_secret), _ = mtf.get_totp_uri.call_args
-    assert username == "gal@lp.com"
-    assert b"svg" in qrcode_page_response.data
+    # parse out key
+    rd = response.data.decode("utf-8")
+    matcher = re.match(r".*((?:\S{4}-){7}\S{4}).*", rd, re.DOTALL)
+    totp_secret = matcher.group(1)
 
     # Generate token from passed totp_secret and confirm setup
-    code = app.security._totp_factory.generate_totp_password(totp_secret)
-    response = client.post(
-        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    totp = TOTP(totp_secret)
+    code = totp.generate().token
+
+    # get verify link e.g. /us-setup/{state}
+    matcher = re.match(
+        r'.*<form action="([^\s]*)".*',
+        response.data.decode("utf-8"),
+        re.IGNORECASE | re.DOTALL,
     )
+    verify_url = matcher.group(1)
+
+    response = client.post(verify_url, data=dict(passcode=code), follow_redirects=True)
     assert response.status_code == 200
-    assert response.json["response"]["chosen_method"] == "authenticator"
+    assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
 
 def test_next(app, client, get_message):
@@ -1446,7 +1450,9 @@ def test_passwd_and_authenticator(app, client, get_message):
     response = client.post("us-setup", data=dict(chosen_method="authenticator"))
     assert response.status_code == 200
     assert b"Code has been sent" not in response.data
-    assert b"Open your authenticator app" in response.data
+    assert b"Open an authenticator app" in response.data
+    # verify png QRcode is present
+    assert b"data:image/svg+xml;base64," in response.data
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.get("us-setup", headers=headers)
@@ -1473,18 +1479,17 @@ def test_totp_generation(app, client, get_message):
         "us-setup", json=dict(chosen_method="authenticator"), headers=headers
     )
     assert response.status_code == 200
+    assert response.json["response"]["authr_issuer"] == "service_name"
+    assert response.json["response"]["authr_username"] == "dave@lp.com"
+    assert "authr_key" in response.json["response"]
+
     state = response.json["response"]["state"]
 
-    # Now request code. We can't test the qrcode easily - but we can get the totp_secret
-    # that goes into the qrcode and make sure that works
-    mtf = Mock(wraps=app.security._totp_factory)
-    app.security.totp_factory(mtf)
-    client.get("/us-qrcode/" + state, follow_redirects=True)
-    assert mtf.get_totp_uri.call_count == 1
-    (username, totp_secret), _ = mtf.get_totp_uri.call_args
-
     # Generate token from passed totp_secret and confirm setup
-    code = app.security._totp_factory.generate_totp_password(totp_secret)
+    totp_key = response.json["response"]["authr_key"]
+    totp = TOTP(totp_key)
+    code = totp.generate().token
+
     response = client.post(
         "/us-setup/" + state, json=dict(passcode=code), headers=headers
     )
@@ -1495,37 +1500,10 @@ def test_totp_generation(app, client, get_message):
     with app.app_context():
         user = app.security.datastore.find_user(email="dave@lp.com")
         ts = app.security.datastore.us_get_totp_secrets(user)
-        assert totp_secret == ts["authenticator"]
-
-    # Ok - setup again, this time don't verify and
-    # make sure totp_secret in DB doesn't change
-    response = client.post(
-        "us-setup", json=dict(chosen_method="authenticator"), headers=headers
-    )
-    assert response.status_code == 200
-    state = response.json["response"]["state"]
-
-    # Now request code. We can't test the qrcode easily - but we can get the totp_secret
-    # that goes into the qrcode and make sure that works
-    mtf = Mock(wraps=app.security._totp_factory)
-    app.security.totp_factory(mtf)
-    client.get("/us-qrcode/" + state, follow_redirects=True)
-    assert mtf.get_totp_uri.call_count == 1
-    (username, new_totp_secret), _ = mtf.get_totp_uri.call_args
-    # Should generate a new totp secret for each setup
-    assert totp_secret != new_totp_secret
-
-    # validate with wrong code
-    response = client.post(
-        "/us-setup/" + state, json=dict(passcode=123345), headers=headers
-    )
-    assert response.status_code == 400
-
-    # Make sure totp_secret in DB didn't change
-    with app.app_context():
-        user = app.security.datastore.find_user(email="dave@lp.com")
-        ts = app.security.datastore.us_get_totp_secrets(user)
-        assert totp_secret == ts["authenticator"]
+        assert (
+            app.security._totp_factory.get_totp_pretty_key(ts["authenticator"])
+            == totp_key
+        )
 
     # Now setup SMS and verify that authenticator totp hasn't changed
     sms_sender = SmsSenderFactory.createSender("test")
@@ -1548,7 +1526,33 @@ def test_totp_generation(app, client, get_message):
     with app.app_context():
         user = app.security.datastore.find_user(email="dave@lp.com")
         ts = app.security.datastore.us_get_totp_secrets(user)
-        assert totp_secret == ts["authenticator"]
+        assert (
+            app.security._totp_factory.get_totp_pretty_key(ts["authenticator"])
+            == totp_key
+        )
+
+    # Ok - setup again - but send invalid code - check totp in DB didn't change.
+    response = client.post(
+        "us-setup", json=dict(chosen_method="authenticator"), headers=headers
+    )
+    assert response.status_code == 200
+    state = response.json["response"]["state"]
+    totp_key = response.json["response"]["authr_key"]
+
+    # validate with wrong code
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=123345), headers=headers
+    )
+    assert response.status_code == 400
+
+    # Make sure totp_secret in DB didn't change
+    with app.app_context():
+        user = app.security.datastore.find_user(email="dave@lp.com")
+        ts = app.security.datastore.us_get_totp_secrets(user)
+        assert (
+            app.security._totp_factory.get_totp_pretty_key(ts["authenticator"])
+            != totp_key
+        )
 
 
 @pytest.mark.two_factor()

@@ -1,5 +1,35 @@
+{#
+  This template receives the following pieces of context in addition to the form:
+  On GET:
+    available_methods: Value of SECURITY_US_ENABLED_METHODS
+    active_methods: Which methods user has already set up
+    setup_methods: Which methods require a setup (e.g. password doesn't require any setup)
+
+  On successful POST:
+    available_methods: Value of SECURITY_US_ENABLED_METHODS
+    active_methods: Which methods user has already set up
+    setup_methods: Which methods require a setup (e.g. password doesn't require any setup)
+    chosen_method: which identity method was chosen (e.g. sms, authenticator)
+    code_sent: Was a code sent?
+    state: a signed state token used to validate the code.
+
+    If chosen method is 'authenticator' then additionally:
+    authr_qrcode: the image source for the qrcode
+    authr_key: same key as in qrcode - for possible manual entry
+    authr_username: same username as in qrcode
+    authr_issuer: same issuer as in qrcode
+#}
+
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
+
+{% block styles %}
+    {{ super() }}
+    <style type="text/css">
+        .center { text-align: center }
+        .important { font-size: larger; font-weight: bold }
+    </style>
+{% endblock %}
 
 {% block content %}
     {% include "security/_messages.html" %}
@@ -24,19 +54,31 @@
         {% if "sms" in available_methods %}
           {{ render_field_with_errors(us_setup_form.phone) }}
         {% endif %}
-        {% if chosen_method == "authenticator" %}
-          <p>{{ _fsdomain("Open your authenticator app on your device and scan the following qrcode to start receiving codes:") }}</p>
-          <p><img alt="{{ _fsdomain("Passwordless QRCode") }}" id="qrcode" src="{{ url_for_security("us_qrcode", token=state) }}"></p>
-        {% endif %}
         {% if code_sent %}
-          <p>{{ _fsdomain("Code has been sent") }}
+          <div class="important">{{ _fsdomain("Code has been sent") }}</div>
         {% endif %}
         {{ render_field(us_setup_form.submit) }}
+
+        {% if chosen_method == "authenticator" %}
+          <hr>
+          <div class="center">
+            <div>
+              {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving passcodes:") }}
+            </div>
+            <div>
+              <img alt="{{ _fsdomain("Passwordless QRCode") }}" id="qrcode" src="{{ authr_qrcode }}">
+            </div>
+            <div>
+              {{ authr_key }}
+            </div>
+          </div>
+        {% endif %}
       {% else %}
         <h3>{{  _fsdomain("No methods have been enabled - nothing to setup") }}</h3>
       {% endif %}
     </form>
-    {%  if state %}
+    {% if state %}
+      <hr>
       <form action="{{ url_for_security("us_setup_validate", token=state) }}" method="POST"
           name="us_setup_validate_form">
         {{ us_setup_validate_form.hidden_tag() }}

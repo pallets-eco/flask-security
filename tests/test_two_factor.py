@@ -4,14 +4,14 @@
 
     two_factor tests
 
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 from datetime import timedelta
 import re
-from unittest.mock import Mock
 
+from passlib.totp import TOTP
 import pytest
 from flask_principal import identity_changed
 from flask_security import (
@@ -386,26 +386,22 @@ def test_two_factor_flag(app, client):
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed your two-factor method" in response.data
 
-    # Test change two_factor password confirmation view to google authenticator
+    # Test change two_factor password confirmation view to authenticator
     # Setup authenticator
     setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open your authenticator app on your device" in response.data
+    assert b"Open an authenticator app on your device" in response.data
+    # verify png QRcode is present
+    assert b"data:image/svg+xml;base64," in response.data
 
-    # Now request code. We can't test the qrcode easily - but we can get the totp_secret
-    # that goes into the qrcode and make sure that works
-    mtf = Mock(wraps=app.security._totp_factory)
-    app.security.totp_factory(mtf)
-    qrcode_page_response = client.get(
-        "/tf-qrcode", data=setup_data, follow_redirects=True
-    )
-    assert mtf.get_totp_uri.call_count == 1
-    (username, totp_secret), _ = mtf.get_totp_uri.call_args
-    assert username == "gal@lp.com"
-    assert b"svg" in qrcode_page_response.data
+    # parse out key
+    rd = response.data.decode("utf-8")
+    matcher = re.match(r".*((?:\S{4}-){7}\S{4}).*", rd, re.DOTALL)
+    totp_secret = matcher.group(1)
 
     # Generate token from passed totp_secret and confirm setup
-    code = app.security._totp_factory.generate_totp_password(totp_secret)
+    totp = TOTP(totp_secret)
+    code = totp.generate().token
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed your two-factor method" in response.data
 
@@ -422,7 +418,7 @@ def test_two_factor_flag(app, client):
     )
 
     # Generate token from passed totp_secret
-    code = app.security._totp_factory.generate_totp_password(totp_secret)
+    code = totp.generate().token
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
 
@@ -444,20 +440,14 @@ def test_two_factor_flag(app, client):
     message = b"Two-factor authentication adds an extra layer of security"
     assert message in response.data
 
-    # check availability of qrcode page when this option is not picked
-    qrcode_page_response = client.get("/two_factor_qrcode/", follow_redirects=False)
-    assert qrcode_page_response.status_code == 404
+    # check availability of qrcode when this option is not picked
+    assert b"data:image/png;base64," not in response.data
 
     # check availability of qrcode page when this option is picked
     setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open your authenticator app on your device" in response.data
-
-    qrcode_page_response = client.get(
-        "/tf-qrcode", data=setup_data, follow_redirects=True
-    )
-    print(qrcode_page_response)
-    assert b"svg" in qrcode_page_response.data
+    assert b"Open an authenticator app on your device" in response.data
+    assert b"data:image/svg+xml;base64," in response.data
 
     # check appearence of setup page when sms picked and phone number entered
     sms_sender = SmsSenderFactory.createSender("test")
@@ -510,11 +500,13 @@ def test_setup_bad_phone(app, client):
     assert sms_sender.get_count() == 0
 
     # Now setup good phone
-    client.post(
+    response = client.post(
         "/tf-setup", data=dict(setup="sms", phone="650-555-1212"), follow_redirects=True
     )
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
+    # shouldn't get authenticator stuff when setting up SMS
+    assert b"data:image/png;base64," not in response.data
 
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
@@ -1030,24 +1022,17 @@ def test_just_authenticator(app, client):
         {"email": {"mapper": uia_email_mapper}},
     ]
 )
-def test_qrcode_identity(app, client):
+def test_authr_identity(app, client):
     # Setup authenticator
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
     authenticate(client, email="jill@lp.com")
 
     setup_data = dict(setup="authenticator")
-    response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open your authenticator app on your device" in response.data
-
-    # Now request code. Verify that we get 'username' not email.
-    mtf = Mock(wraps=app.security._totp_factory)
-    app.security.totp_factory(mtf)
-    qrcode_page_response = client.get(
-        "/tf-qrcode", data=setup_data, follow_redirects=True
-    )
-    assert mtf.get_totp_uri.call_count == 1
-    (username, totp_secret), _ = mtf.get_totp_uri.call_args
-    assert username == "jill"
-    assert b"svg" in qrcode_page_response.data
+    response = client.post("/tf-setup", json=setup_data, headers=headers)
+    assert response.json["response"]["tf_authr_issuer"] == "service_name"
+    assert response.json["response"]["tf_authr_username"] == "jill"
+    assert response.json["response"]["tf_state"] == "validating_profile"
+    assert "tf_authr_key" in response.json["response"]
 
 
 @pytest.mark.settings(
@@ -1056,25 +1041,16 @@ def test_qrcode_identity(app, client):
         {"email": {"mapper": uia_email_mapper}},
     ]
 )
-def test_qrcode_identity_num(app, client):
-    # Test that QRcode has 'security_number' as the 'username' since it is listed
-    # first.
+def test_authr_identity_num(app, client):
+    # Test that response to setup has 'security_number' as the 'username'
+    # since it is listed first.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
     authenticate(client, email="jill@lp.com")
 
     setup_data = dict(setup="authenticator")
-    response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open your authenticator app on your device" in response.data
-
-    # Now request code. Verify that we get 'security_number' not email.
-    mtf = Mock(wraps=app.security._totp_factory)
-    app.security.totp_factory(mtf)
-    qrcode_page_response = client.get(
-        "/tf-qrcode", data=setup_data, follow_redirects=True
-    )
-    assert mtf.get_totp_uri.call_count == 1
-    (username, totp_secret), _ = mtf.get_totp_uri.call_args
-    assert username == "456789"
-    assert b"svg" in qrcode_page_response.data
+    response = client.post("/tf-setup", json=setup_data, headers=headers)
+    assert response.json["response"]["tf_authr_username"] == "456789"
+    assert "tf_authr_key" in response.json["response"]
 
 
 @pytest.mark.settings(

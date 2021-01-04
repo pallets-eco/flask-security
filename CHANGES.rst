@@ -11,12 +11,6 @@ Release Target Really Early 2021
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
 
 
-Version 4.0.0rc1
-----------------
-
-Released October 9, 2020
-
-This should be all the backwards incompatible changes.
 
 Features & Cleanup
 +++++++++++++++++++
@@ -61,6 +55,10 @@ Fixed
 - (:issue:`338`) All sessions are invalidated when a user changes or resets their password. This is accomplished by
   changing the user's `fs_uniquifier`. The user is automatically re-logged in (and a new session
   created) after a successful change operation.
+- (:issue:`418`) Two-factor (and to a lesser extent unified sign in) QRcode fetching wasn't protected via CSRF. The
+  fix makes things secure and simpler (always good) however read below for compatibility concerns. In addition, the elements that make up the QRcode (key, username, issuer) area also made available to the form
+  and returned as part of the JSON return value - this allows for manual or other ways to initialize the authenticator
+  app.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -78,7 +76,7 @@ Backwards Compatibility Concerns
   :py:data:`SECURITY_US_VERIFY_URL`). The simplest change would be to call ``/verify`` everywhere
   the application used to call ``/tf-confirm``.
 
-- (:pr:`339`) Require ``fs_uniquifier``. In 3.3 the ``fs_uniqifier`` was added in the UserModel to fix
+- (:pr:`339`) Require ``fs_uniquifier``. In 3.3 the ``fs_uniquifier`` was added in the UserModel to fix
   the slow authentication token issue. In 3.4 the ``fs_uniquifier`` was used to implement Flask-Login's
   `Alternative Token` feature - thus decoupling the primary key (id) from any security context.
   All along, there have been a few issues with applications not wanting to use the name 'id' in their
@@ -130,6 +128,12 @@ Backwards Compatibility Concerns
   uniquely identify the user. This means that if the user changes or resets their password, all authentication tokens
   also become invalid. This could be viewed as a feature or a bug. If this behavior isn't desired, add another
   uniquifier: ``fs_token_uniquifier`` to your UserModel and that will be used to generate authentication tokens.
+
+- (:issue:`418`) Fix CSRF vulnerability w.r.t. getting QRcodes. Both two-factor and unified-signup had a separate
+  GET endpoint to fetch the QRcode when setting up an authenticator app. GETS don't have any CSRF protection. Both
+  of those endpoints have been completely removed, and the QRcode is embedded in a successful POST of the setup form.
+  The changes to the templates are minimal and of course if you didn't override the template - there is no
+  compatibility concern.
 
 Version 3.4.4
 --------------
@@ -330,7 +334,7 @@ Please see below for details.**
 - (:issue:`156`) Token authentication is slow. Please see below for details on how to enable a new, fast implementation.
 - (:issue:`130`) Enable applications to provide their own :meth:`.render_json` method so that they can create
   unified API responses.
-- (:issue:`121`) Unauthorization callback not quite right. Split into 2 different callbacks - one for
+- (:issue:`121`) Unauthorized callback not quite right. Split into 2 different callbacks - one for
   unauthorized and one for unauthenticated. Made default unauthenticated handler use Flask-Login's unauthenticated
   method to make everything uniform. Extensive documentation added. `.Security.unauthorized_callback` has been deprecated.
 - (:pr:`120`) Add complete User and Role model mixins that support all features. Modify tests and Quickstart documentation
@@ -482,7 +486,7 @@ These should all be backwards compatible.
 
 Possible compatibility issues:
 
-- #487 - prior to this, render_template() was overiddable for views, but not
+- #487 - prior to this, render_template() was overridable for views, but not
   emails. If anyone actually relied on this behavior, this has changed.
 - #703 - get factory pattern working again. There was a very complex dance between
   Security() instantiation and init_app regarding kwargs. This has been rationalized (hopefully).
@@ -491,7 +495,7 @@ Possible compatibility issues:
     Got exception during processing: <class 'sqlalchemy.exc.InvalidRequestError'> -
     'User.roles' does not support object population - eager loading cannot be applied.
 
-  This is likely solveable by removing ``lazy='dynamic'`` from your Role definition.
+  This is likely solvable by removing ``lazy='dynamic'`` from your Role definition.
 
 
 Performance improvements:
@@ -564,7 +568,7 @@ Released May 29th 2017
   and expiration causes confirmation email to resend. (see #556)
 - Added support for I18N.
 - Added options `SECURITY_EMAIL_PLAINTEXT` and `SECURITY_EMAIL_HTML`
-  for sending respecively plaintext and HTML version of email.
+  for sending respectively plaintext and HTML version of email.
 - Fixed validation when missing login information.
 - Fixed condition for token extraction from JSON body.
 - Better support for universal bdist wheel.
@@ -590,7 +594,7 @@ Released May 29th 2017
 - Fixed failure of init_app to set self.datastore.
 - Changed to new style flask imports.
 - Added proper error code when returning JSON response.
-- Changed obsolette Required validator from WTForms to DataRequired. Bumped Flask-WTF to 0.13.
+- Changed obsolete Required validator from WTForms to DataRequired. Bumped Flask-WTF to 0.13.
 - Fixed missing `SECURITY_SUBDOMAIN` in config docs.
 - Added cascade delete in PeeweeDatastore.
 - Added notes to docs about `SECURITY_USER_IDENTITY_ATTRIBUTES`.
@@ -627,7 +631,7 @@ Version 1.7.4
 Released October 13th 2014
 
 - Fixed a bug related to changing existing passwords from plaintext to hashed
-- Fixed a bug in form validation that did not enforce case insensivitiy
+- Fixed a bug in form validation that did not enforce case insensitivity
 - Fixed a bug with validating redirects
 
 
@@ -669,7 +673,7 @@ Released January 10th 2014
 - Python 3.3 support!
 - Dependency updates
 - Fixed a bug when `SECURITY_LOGIN_WITHOUT_CONFIRMATION = True` did not allow users to log in
-- Added `SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL` configuraiton option to optionally send password reset notice emails
+- Added `SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL` configuration option to optionally send password reset notice emails
 - Add documentation for `@security.send_mail_task`
 - Move to `request.get_json` as `request.json` is now deprecated in Flask
 - Fixed a bug when using AJAX to change a user's password
@@ -825,7 +829,7 @@ Version 1.5.0
 Released October 11th 2012
 
 - Major release. Upgrading from previous versions will require a bit of work to
-  accomodate API changes. See documentation for a list of new features and for
+  accommodate API changes. See documentation for a list of new features and for
   help on how to upgrade.
 
 Version 1.2.3
