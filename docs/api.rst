@@ -137,7 +137,7 @@ Utils
 .. autoclass:: flask_security.FsJsonEncoder
 
 .. autoclass:: flask_security.Totp
-  :members: get_last_counter, set_last_counter
+  :members: get_last_counter, set_last_counter, generate_qrcode
 
 .. autoclass:: flask_security.PhoneUtil
   :members:

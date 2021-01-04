@@ -938,27 +938,6 @@ paths:
                 On form-success and two-factor: SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL or SECURITY_TWO_FACTOR_SETUP_URL
               schema:
                 type: string
-  /us-qrcode/{token}:
-    parameters:
-      - name: token
-        description: Token returned from /us-setup
-        in: path
-        required: true
-        schema:
-          type: string
-    get:
-      summary: Display a QRCode for setting up an authenticator app.
-      responses:
-        200:
-          description: Display QRCode.
-          content:
-            image/svg+xml:
-              schema:
-                description: QRCode
-        400:
-          description: Token invalid or expired.
-        404:
-          description: authenticator not configured.
 
   /tf-setup:
     get:
@@ -1100,20 +1079,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
 
-  /tf-qrcode:
-    get:
-      summary: Display a QRCode for setting up an authenticator app.
-      responses:
-        200:
-          description: Display QRCode.
-          content:
-            image/svg+xml:
-              schema:
-                description: QRCode
-        400:
-          description: Token invalid or expired.
-        404:
-          description: authenticator not configured.
   /tf-rescue:
     get:
       summary: Help user that has lost authenticator or SMS device.
@@ -1450,6 +1415,18 @@ components:
             chosen_method:
               type: string
               description: The chosen_method as passed into API.
+            phone:
+              type: string
+              description: The canonicalized phone number if setting up SMS
+            authr_key:
+              type: string
+              description: TOTP key for setting up authenticator (if chosen_method == 'authenticator')
+            authr_issuer:
+              type: string
+              description: Issuer as configured with TOTP_ISSUER (same as used in QRcode) (if chosen_method == 'authenticator')
+            authr_username:
+              type: string
+              description: Username (same as used in QRcode) (if chosen_method == 'authenticator')
             state:
               type: string
               description: Opaque blob that must be pass to /us-setup/<state>. This is a signed, timed token.
@@ -1520,6 +1497,15 @@ components:
               type: string
               description: Current method being congfigured.
               example: sms
+            tf_authr_key:
+              type: string
+              description: TOTP key for setting up authenticator (if tf_primary_method == 'authenticator')
+            tf_authr_issuer:
+              type: string
+              description: Issuer as configured with TOTP_ISSUER (same as used in QRcode) (if tf_primary_method == 'authenticator')
+            tf_authr_username:
+              type: string
+              description: Username (same as used in QRcode) (if tf_primary_method == 'authenticator')
     TfValidateJsonResponse:
       type: object
       properties:

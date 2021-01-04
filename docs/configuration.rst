@@ -934,11 +934,7 @@ Configuration related to the two-factor authentication feature.
     Specifies the two factor token validation URL.
 
     Default: ``"/tf-validate"``.
-.. py:data:: SECURITY_TWO_FACTOR_QRCODE_URL
 
-    Specifies the two factor request QrCode URL.
-
-    Default: ``/tf-qrcode``.
 .. py:data:: SECURITY_TWO_FACTOR_RESCUE_URL
 
     Specifies the two factor rescue URL.
@@ -1002,12 +998,6 @@ Unified Signin
     via email. It is mostly just accessed via a ``GET`` from an email reader.
 
     Default: ``"/us-verify-link"``
-
-.. py:data:: SECURITY_US_QRCODE_URL
-
-    Used to generate and return a QRcode that can be used to intialize an authenticator app.
-
-    Default: ``"/us-qrcode"``
 
 .. py:data:: SECURITY_US_VERIFY_URL
 
@@ -1187,7 +1177,6 @@ A list of all URLs and Views:
 * ``SECURITY_CONFIRM_URL``
 * ``SECURITY_TWO_FACTOR_SETUP_URL``
 * ``SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL``
-* ``SECURITY_TWO_FACTOR_QRCODE_URL``
 * ``SECURITY_TWO_FACTOR_RESCUE_URL``
 * ``SECURITY_POST_LOGIN_VIEW``
 * ``SECURITY_POST_LOGOUT_VIEW``
@@ -1201,7 +1190,6 @@ A list of all URLs and Views:
 * ``SECURITY_RESET_ERROR_VIEW``
 * ``SECURITY_LOGIN_ERROR_VIEW``
 * :py:data:`SECURITY_US_SIGNIN_URL`
-* :py:data:`SECURITY_US_QRCODE_URL`
 * :py:data:`SECURITY_US_SETUP_URL`
 * :py:data:`SECURITY_US_SIGNIN_SEND_CODE_URL`
 * :py:data:`SECURITY_US_VERIFY_LINK_URL`

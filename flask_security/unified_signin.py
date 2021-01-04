@@ -31,7 +31,7 @@
 import time
 
 from flask import current_app as app
-from flask import abort, after_this_request, request, session
+from flask import after_this_request, request, session
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
@@ -748,17 +748,20 @@ def us_setup():
         # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
         # to send it to the user.
         # Only check phone number if SMS (see form validate)
+        phone_number = (
+            _security._phone_util.get_canonical_form(form.phone.data)
+            if method == "sms"
+            else None
+        )
         state = {
             "totp_secret": totp,
             "chosen_method": method,
-            "phone_number": _security._phone_util.get_canonical_form(form.phone.data)
-            if method == "sms"
-            else None,
+            "phone_number": phone_number,
         }
         msg = current_user.us_send_security_token(
             method=method,
-            totp_secret=state["totp_secret"],
-            phone_number=state["phone_number"],
+            totp_secret=totp,
+            phone_number=phone_number,
         )
         if msg:
             # sending didn't work.
@@ -778,10 +781,31 @@ def us_setup():
             )
 
         state_token = _security.us_setup_serializer.dumps(state)
+        json_response = dict(
+            chosen_method=form.chosen_method.data,
+            phone=phone_number,
+            state=state_token,
+        )
+        qrcode_values = dict()
+        if form.chosen_method.data == "authenticator":
+            authr_setup_values = _security._totp_factory.fetch_setup_values(
+                totp, current_user
+            )
+
+            # Add all the values used in qrcode to json response
+            json_response["authr_key"] = authr_setup_values["key"]
+            json_response["authr_username"] = authr_setup_values["username"]
+            json_response["authr_issuer"] = authr_setup_values["issuer"]
+
+            qrcode_values = dict(
+                authr_qrcode=authr_setup_values["image"],
+                authr_key=authr_setup_values["key"],
+                authr_username=authr_setup_values["username"],
+                authr_issuer=authr_setup_values["issuer"],
+            )
 
         if _security._want_json(request):
-            payload = {"state": state_token, "chosen_method": form.chosen_method.data}
-            return base_render_json(form, include_user=False, additional=payload)
+            return base_render_json(form, include_user=False, additional=json_response)
         return _security.render_template(
             config_value("US_SETUP_TEMPLATE"),
             available_methods=config_value("US_ENABLED_METHODS"),
@@ -791,6 +815,7 @@ def us_setup():
             chosen_method=form.chosen_method.data,
             us_setup_form=form,
             us_setup_validate_form=_security.us_setup_validate_form(),
+            **qrcode_values,
             state=state_token,
             **_security._run_ctx_processor("us_setup")
         )
@@ -881,46 +906,6 @@ def us_setup_validate(token):
     m, c = get_message("INVALID_PASSWORD_CODE")
     do_flash(m, c)
     return redirect(url_for_security("us_setup"))
-
-
-@auth_required(lambda: config_value("API_ENABLED_METHODS"))
-def us_qrcode(token):
-
-    if "authenticator" not in config_value("US_ENABLED_METHODS"):
-        return abort(404)
-    expired, invalid, state = check_and_get_token_status(
-        token, "us_setup", get_within_delta("US_SETUP_WITHIN")
-    )
-    if expired or invalid:
-        return abort(400)
-
-    try:
-        import pyqrcode
-
-        # By convention, the URI should have the username that the user
-        # logs in with.
-        username = current_user.calc_username()
-        url = pyqrcode.create(
-            _security._totp_factory.get_totp_uri(
-                username if username else "Unknown", state["totp_secret"]
-            )
-        )
-    except ImportError:  # pragma: no cover
-        raise
-    from io import BytesIO
-
-    stream = BytesIO()
-    url.svg(stream, scale=3)
-    return (
-        stream.getvalue(),
-        200,
-        {
-            "Content-Type": "image/svg+xml",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        },
-    )
 
 
 def us_send_security_token(

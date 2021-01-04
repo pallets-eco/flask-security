@@ -4,9 +4,11 @@
 
     Flask-Security TOTP (Timed-One-Time-Passwords) module
 
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+import base64
+import io
 
 from passlib.totp import TOTP, TokenError
 
@@ -87,6 +89,61 @@ class Totp:
         """
         tp = self._totp.from_source(totp_secret)
         return tp.to_uri(username)
+
+    def get_totp_pretty_key(self, totp_secret):
+        """Generate pretty key for manual input
+
+        :param totp_secret: a unique shared secret of the user
+
+        .. versionadded:: 4.0.0
+        """
+        tp = self._totp.from_source(totp_secret)
+        return tp.pretty_key()
+
+    def fetch_setup_values(self, totp, user):
+        """Generate various values user needs to setup authenticator app.
+            Returns dict with keys:
+                'key': totp key
+                'image': image as string (useful for <img src=xx>)
+                'username: qrcode best practice
+                'issuer': qrcode best practice
+
+        .. versionadded:: 4.0.0
+        """
+
+        r = dict()
+
+        # By convention, the URI should have the username that the user
+        # logs in with.
+        username = user.calc_username() or "Unknown"
+        r["username"] = username
+        r["key"] = self.get_totp_pretty_key(totp)
+        r["issuer"] = self._totp.issuer
+        r["image"] = self.generate_qrcode(username, totp)
+        return r
+
+    def generate_qrcode(self, username, totp):
+        """Generate QRcode
+         Using username, totp, generate the actual QRcode image.
+         This method can be overridden to fine-tune how the image is created -
+         such as size, color etc.
+
+         It must return a string suitable for use in an <img src=xx> tag.
+
+        .. versionadded:: 4.0.0
+        """
+        try:
+            import pyqrcode
+
+            code = pyqrcode.create(self.get_totp_uri(username, totp))
+            with io.BytesIO() as virtual_file:
+                code.svg(file=virtual_file, scale=3)
+                image_as_str = base64.b64encode(virtual_file.getvalue()).decode("ascii")
+
+            return f"data:image/svg+xml;base64,{image_as_str}"
+        except ImportError:  # pragma: no cover
+            # This should have been checked at app init.
+            raise
 
     def get_last_counter(self, user):
         """Implement this to fetch stored last_counter from cache.

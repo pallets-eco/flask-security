@@ -35,7 +35,6 @@ import time
 
 from flask import (
     Blueprint,
-    abort,
     after_this_request,
     current_app,
     jsonify,
@@ -58,7 +57,6 @@ from .quart_compat import get_quart_status
 from .unified_signin import (
     us_signin,
     us_signin_send_code,
-    us_qrcode,
     us_setup,
     us_setup_validate,
     us_verify,
@@ -786,6 +784,23 @@ def two_factor_setup():
                     return base_render_json(
                         form, include_user=False, error_status_code=500
                     )
+
+        qrcode_values = dict()
+        if pm == "authenticator":
+            authr_setup_values = _security._totp_factory.fetch_setup_values(
+                session["tf_totp_secret"], user
+            )
+            # Add all the values used in qrcode to json response
+            json_response["tf_authr_key"] = authr_setup_values["key"]
+            json_response["tf_authr_username"] = authr_setup_values["username"]
+            json_response["tf_authr_issuer"] = authr_setup_values["issuer"]
+
+            qrcode_values = dict(
+                authr_qrcode=authr_setup_values["image"],
+                authr_key=authr_setup_values["key"],
+                authr_username=authr_setup_values["username"],
+                authr_issuer=authr_setup_values["issuer"],
+            )
         code_form = _security.two_factor_verify_code_form()
         if not _security._want_json(request):
             return _security.render_template(
@@ -794,6 +809,7 @@ def two_factor_setup():
                 two_factor_verify_code_form=code_form,
                 choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
                 chosen_method=pm,
+                **qrcode_values,
                 **_ctx("tf_setup"),
             )
         return base_render_json(form, include_user=False, additional=json_response)
@@ -1022,60 +1038,6 @@ def two_factor_rescue():
     )
 
 
-@unauth_csrf(fall_through=True)
-def two_factor_qrcode():
-    if current_user.is_authenticated:
-        user = current_user
-    else:
-        if "tf_user_id" not in session:
-            abort(404)
-        user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
-        if not user:
-            # Seems like we should be careful here if user_id is gone.
-            tf_clean_session()
-            abort(404)
-
-    if "authenticator" not in config_value("TWO_FACTOR_ENABLED_METHODS"):
-        return abort(404)
-    if (
-        "tf_primary_method" not in session
-        or session["tf_primary_method"] != "authenticator"
-    ):
-        return abort(404)
-
-    totp = user.tf_totp_secret
-    if "tf_totp_secret" in session:
-        totp = session["tf_totp_secret"]
-    try:
-        import pyqrcode
-
-        # By convention, the URI should have the username that the user
-        # logs in with.
-        username = user.calc_username()
-        url = pyqrcode.create(
-            _security._totp_factory.get_totp_uri(
-                username if username else "Unknown", totp
-            )
-        )
-    except ImportError:  # pragma: no cover
-        # For TWO_FACTOR - this should have been checked at app init.
-        raise
-    from io import BytesIO
-
-    stream = BytesIO()
-    url.svg(stream, scale=3)
-    return (
-        stream.getvalue(),
-        200,
-        {
-            "Content-Type": "image/svg+xml",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        },
-    )
-
-
 def _tf_illegal_state(form, redirect_to):
     m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
     if not _security._want_json(request):
@@ -1150,14 +1112,9 @@ def create_blueprint(app, state, import_name, json_encoder=None):
         bp.route(state.us_verify_link_url, methods=["GET"], endpoint="us_verify_link")(
             us_verify_link
         )
-        bp.route(
-            state.us_qrcode_url + slash_url_suffix(state.us_setup_url, "<token>"),
-            endpoint="us_qrcode",
-        )(us_qrcode)
 
     if state.two_factor:
         tf_token_validation = "two_factor_token_validation"
-        tf_qrcode = "two_factor_qrcode"
         bp.route(
             state.two_factor_setup_url,
             methods=["GET", "POST"],
@@ -1168,7 +1125,6 @@ def create_blueprint(app, state, import_name, json_encoder=None):
             methods=["GET", "POST"],
             endpoint=tf_token_validation,
         )(two_factor_token_validation)
-        bp.route(state.two_factor_qrcode_url, endpoint=tf_qrcode)(two_factor_qrcode)
         bp.route(
             state.two_factor_rescue_url,
             methods=["GET", "POST"],
