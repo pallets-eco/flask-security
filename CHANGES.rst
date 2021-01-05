@@ -59,6 +59,8 @@ Fixed
   fix makes things secure and simpler (always good) however read below for compatibility concerns. In addition, the elements that make up the QRcode (key, username, issuer) area also made available to the form
   and returned as part of the JSON return value - this allows for manual or other ways to initialize the authenticator
   app.
+- (:issue:`421`) GET on /login and /change could return the callers authentication_token. This is a security
+  concern since GETs don't have CSRF protection. This bug was introduced in 3.3.0.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -134,6 +136,9 @@ Backwards Compatibility Concerns
   of those endpoints have been completely removed, and the QRcode is embedded in a successful POST of the setup form.
   The changes to the templates are minimal and of course if you didn't override the template - there is no
   compatibility concern.
+
+- (:issue:`421`) Fix CSRF vulnerability on /login and /change that could return the callers authentication token.
+  Now, callers can only get the authentication token on successful POST calls.
 
 Version 3.4.4
 --------------
