@@ -14,6 +14,37 @@ Release Target 2020
 
 .. _here: https://github.com/Flask-Middleware/flask-security/issues/85
 
+Version 3.4.5
+--------------
+
+Release January x, 2021
+
+Security Vulnerability Fix.
+
+Two CSRF vulnerabilities were reported: `qrcode`_ and `login`_. This release
+fixes the more severe of the 2 - the /login vulnerability. The QRcode issue
+has a much smaller risk profile since a) it is only for two-factor authentication
+using an authenticator app b) the qrcode is only available during the time
+the user is first setting up their authentication app and c) there isn't
+an obvious backward compatible fix.
+This issue has been fixed in 4.0.
+
+.. _qrcode: https://github.com/Flask-Middleware/flask-security/issues/418
+.. _login: https://github.com/Flask-Middleware/flask-security/issues/421
+
+Fixed
++++++
+
+- (:issue:`421`) GET on /login and /change could return the callers authentication_token. This is a security
+  concern since GETs don't have CSRF protection. This bug was introduced in 3.3.0.
+
+Backwards Compatibility Concerns
+++++++++++++++++++++++++++++++++
+
+- (:issue:`421`) Fix CSRF vulnerability on /login and /change that could return the callers authentication token.
+  Now, callers can only get the authentication token on successful POST calls.
+
+
 Version 3.4.4
 --------------
 

@@ -10,7 +10,7 @@ info:
 
     By default, all POST requests require a CSRF token. This is handled automatically
     if you render the form from your Flask application. If you send JSON, then you must include a request header (configured via __SECURITY_CSRF_HEADER__).
-    Please read the online documentation to find out details on how CSRF can be confifgured.
+    Please read the online documentation to find out details on how CSRF can be configured.
 
     _Be aware that the current renderer is great! but has some limitations._
     In particular
@@ -29,8 +29,6 @@ paths:
   /login:
     get:
       summary: Retrieve login form and/or user information
-      parameters:
-        - $ref: "#/components/parameters/include_auth_token"
       responses:
         200:
           description: >

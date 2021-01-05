@@ -13,7 +13,7 @@ with io.open("flask_security/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 tests_require = [
-    "Flask-Mongoengine>=0.9.5",
+    "Flask-Mongoengine~=0.9.5",
     "peewee>=3.11.2",
     "Flask-SQLAlchemy>=2.3",
     "argon2_cffi>=19.1.0",
@@ -24,8 +24,8 @@ tests_require = [
     "cryptography>=2.3.1",
     "isort>=4.2.2",
     "mock>=1.3.0",
-    "mongoengine>=0.15.3",
-    "mongomock>=3.14.0",
+    "mongoengine~=0.19.1",
+    "mongomock~=3.19.0",
     "msgcheck>=2.9",
     "pony>=0.7.11",
     "phonenumberslite>=8.11.1",
