@@ -25,9 +25,8 @@ Two CSRF vulnerabilities were reported: `qrcode`_ and `login`_. This release
 fixes the more severe of the 2 - the /login vulnerability. The QRcode issue
 has a much smaller risk profile since a) it is only for two-factor authentication
 using an authenticator app b) the qrcode is only available during the time
-the user is first setting up their authentication app and c) there isn't
-an obvious backward compatible fix.
-This issue has been fixed in 4.0.
+the user is first setting up their authentication app.
+The QRcode issue has been fixed in 4.0.
 
 .. _qrcode: https://github.com/Flask-Middleware/flask-security/issues/418
 .. _login: https://github.com/Flask-Middleware/flask-security/issues/421
