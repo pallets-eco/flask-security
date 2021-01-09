@@ -9,47 +9,6 @@ with open("README.rst", encoding="utf8") as f:
 with open("flask_security/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
-tests_require = [
-    "Flask-Babel>=2.0.0",
-    "Flask-Mail>=0.9.1",
-    "Flask-Mongoengine>=0.9.5",
-    "peewee>=3.11.2",
-    "Flask-SQLAlchemy>=2.4.4",
-    "argon2_cffi>=19.1.0",
-    "bcrypt>=3.1.5",
-    "check-manifest>=0.25",
-    "coverage>=4.5.4",
-    "cryptography>=2.3.1",
-    "mongoengine>=0.18.0",
-    "mongomock>=3.19.0",
-    "msgcheck>=2.9",
-    "pony>=0.7.11;python_version<'3.9'",
-    "phonenumberslite>=8.11.1",
-    "pre-commit>=2.4.0",
-    "psycopg2>=2.8.4",
-    "pydocstyle>=5.0.0",
-    "pymysql>=0.9.3",
-    "pyqrcode>=1.2",
-    "pytest-cache>=1.0",
-    "pytest-cov>=2.5.1",
-    "pytest>=5.4.0",
-    "sqlalchemy>=1.3.6",
-    "sqlalchemy-utils>=0.34.1",
-    "werkzeug>=0.15.5",
-    "zxcvbn~=4.4.28",
-]
-
-extras_require = {
-    "docs": ["Pallets-Sphinx-Themes>=1.2.3", "Sphinx>=3.0.3", "sphinx-issues>=1.2.0"],
-    "tests": tests_require,
-}
-
-extras_require["all"] = []
-for reqs in extras_require.values():
-    extras_require["all"].extend(reqs)
-
-setup_requires = ["Babel>=2.8.0", "pytest-runner>=5.2", "twine", "wheel"]
-
 install_requires = [
     "Flask>=1.1.1",
     "Flask-Login>=0.4.1",
@@ -83,10 +42,7 @@ setup(
     include_package_data=True,
     platforms="any",
     python_requires=">=3.6",
-    extras_require=extras_require,
     install_requires=install_requires,
-    setup_requires=setup_requires,
-    tests_require=tests_require,
     classifiers=[
         "Environment :: Web Environment",
         "Framework :: Flask",

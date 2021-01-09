@@ -679,7 +679,7 @@ def clients(request, app, tmpdir, realdburl):
     return app.test_client()
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def in_app_context(request, sqlalchemy_app):
     app = sqlalchemy_app()
     with app.app_context():

@@ -22,7 +22,7 @@ try:
 
     _domain_cls = Domain
     _dir_keyword = "translation_directories"
-except ImportError:
+except ImportError:  # pragma: no cover
     try:
         from flask_babelex import Domain
 
