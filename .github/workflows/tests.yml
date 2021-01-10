@@ -48,9 +48,11 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
-          key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('setup.py') }}|${{ hashFiles('tox.ini') }}
-      - run: pip install tox
-      - run: tox -e ${{ matrix.tox }}
+          key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('setup.py') }}|${{ hashFiles('tox.ini') }}|${{ hashFiles('requirements/*.txt') }}
+      - name: run tests
+        run: |
+          pip install tox
+          tox -e ${{ matrix.tox }}
 
   other:
       runs-on: ubuntu-latest
@@ -64,7 +66,13 @@ jobs:
             python-version: "3.8"
         - name: update pip
           run: |
-            pip install -U wheel setuptools
+            pip install -U wheel setuptools coverage
             python -m pip install -U pip
-        - run: pip install tox
-        - run: tox -e style -e docs -e coverage
+        - name: Style, docs, coverage
+          run: |
+            pip install tox
+            tox -e style -e docs -e coverage
+        - name: Upload coverage to Codecov
+          uses: codecov/codecov-action@v1
+          with:
+            fail_ci_if_error: false

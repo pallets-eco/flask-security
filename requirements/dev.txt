@@ -1,4 +1,6 @@
 -r docs.txt
 -r tests.txt
+psycopg2
+pymysql
 pre-commit
 tox

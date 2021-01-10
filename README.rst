@@ -1,11 +1,12 @@
 Flask-Security
 ===================
 
-.. image:: https://travis-ci.org/Flask-Middleware/flask-security.svg?branch=master
-    :target: https://travis-ci.org/Flask-Middleware/flask-security
+.. image:: https://github.com/Flask-Middleware/flask-security/workflows/tests/badge.svg?branch=master&event=push
+    :target: https://github.com/Flask-Middleware/flask-security
 
-.. image:: https://coveralls.io/repos/github/Flask-Middleware/flask-security/badge.svg?branch=master
-    :target: https://coveralls.io/github/Flask-Middleware/flask-security?branch=master
+.. image:: https://codecov.io/gh/Flask-Middleware/flask-security/branch/master/graph/badge.svg?token=U02MUQJ7BM
+    :target: https://codecov.io/gh/Flask-Middleware/flask-security
+    :alt: Coverage!
 
 .. image:: https://img.shields.io/github/tag/Flask-Middleware/flask-security.svg
     :target: https://github.com/Flask-Middleware/flask-security/releases

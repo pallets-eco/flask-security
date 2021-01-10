@@ -14,9 +14,7 @@ mongomock
 msgcheck
 pony>=0.7.11;python_version<'3.9'
 phonenumberslite
-psycopg2
 pydocstyle
-pymysql
 pyqrcode
 pytest-cache
 pytest-cov
