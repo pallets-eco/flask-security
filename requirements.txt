@@ -1,3 +1,0 @@
-# Trick for ReadTheDocs to install all requirements:
-
--e .[all]

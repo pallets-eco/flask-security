@@ -1,36 +1,78 @@
-# This is a basic workflow to help you get started with Actions
 
-name: CI
 
-# Controls when the action will run. 
+name: tests
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - "[0-9]+.[0-9]+.x"
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - "[0-9]+.[0-9]+.x"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {python: '3.6', tox: 'py36-release'}
+          - {python: '3.6', tox: 'py36-low'}
+          - {python: '3.7', tox: 'py37-release'}
+          - {python: '3.7', tox: 'py37-low'}
+          - {python: '3.8', tox: 'py38-release'}
+          - {python: '3.8', tox: 'py38-low'}
+          - {python: '3.9', tox: 'py39-release'}
+          - {python: '3.9', tox: 'py39-low'}
+          - {python: 'pypy3', tox: 'pypy3-release'}
+          - {python: 'pypy3', tox: 'pypy3-low'}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: update pip
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          pip install -U wheel setuptools
+          python -m pip install -U pip
+      - name: get pip cache dir
+        id: pip-cache
+        run: echo "::set-output name=dir::$(pip cache dir)"
+      - name: cache pip
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('setup.py') }}|${{ hashFiles('tox.ini') }}|${{ hashFiles('requirements/*.txt') }}
+      - name: run tests
+        run: |
+          pip install tox
+          tox -e ${{ matrix.tox }}
+
+  other:
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: false
+
+      steps:
+        - uses: actions/checkout@v2
+        - uses: actions/setup-python@v2
+          with:
+            python-version: "3.8"
+        - name: update pip
+          run: |
+            pip install -U wheel setuptools coverage
+            python -m pip install -U pip
+        - name: Style, docs, coverage
+          run: |
+            pip install tox
+            tox -e style -e docs -e coverage
+        - name: Upload coverage to Codecov
+          uses: codecov/codecov-action@v1
+          with:
+            fail_ci_if_error: false

@@ -8,19 +8,13 @@ include babel.ini
 include pytest.ini
 include tox.ini
 include requirements.txt
-recursive-include docs *.html
-recursive-include docs *.inc
-recursive-include docs *.png
-recursive-include docs *.py
-recursive-include docs *.rst
-recursive-include docs *.txt
-recursive-include docs Makefile
-recursive-include flask_security/templates *.*
-recursive-include flask_security/translations *.po *.pot *.mo
-recursive-include tests *.py
-recursive-include tests *.html
+include requirements/*.txt
+graft docs
+graft flask_security/templates
+graft flask_security/translations
+graft tests
 exclude .coverage tests/.coverage
-recursive-exclude docs/_build *
-global-exclude *.pyc .DS_Store
+prune docs/_build
 prune scripts
 prune examples
+global-exclude *.pyc .DS_Store
