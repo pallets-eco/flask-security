@@ -61,7 +61,7 @@ these steps:
 
   #. Install the requirements::
 
-        $ pip install -e .[tests]
+        $ pip install -r requirements/tests.txt
 
   #. Install pre-commit hooks::
 
@@ -75,9 +75,15 @@ these steps:
 
   #. When done, verify unit tests, syntax etc. all pass::
 
-        $ python setup.py test
+        $ pytest tests
         $ pre-commit run --all-files
         $ python setup.py build_sphinx compile_catalog
+
+  #. Use tox::
+
+        $ tox  # run everything CI does
+        $ tox -e py38-low  # make sure works with older dependencies
+        $ tox -e style  # run pre-commit/style checks
 
   #. When the tests are successful, commit your changes
      and push your branch to GitHub::
@@ -142,9 +148,9 @@ postgres). It is easy to run the unit tests against a real DB instance. First
 of course install the DB locally then::
 
   # For postgres
-  python setup.py test --realdburl postgres://<user>@localhost/
+  pytest --realdburl postgres://<user>@localhost/
   # For mysql
-  python setup.py test --realdburl "mysql+pymysql://root:<password>@localhost/"
+  pytest --realdburl "mysql+pymysql://root:<password>@localhost/"
 
 Views
 +++++

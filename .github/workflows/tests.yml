@@ -53,6 +53,7 @@ jobs:
         run: |
           pip install tox
           tox -e ${{ matrix.tox }}
+        if: 0
 
   other:
       runs-on: ubuntu-latest
@@ -76,3 +77,43 @@ jobs:
           uses: codecov/codecov-action@v1
           with:
             fail_ci_if_error: false
+  realdb:
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: false
+
+      services:
+        postgres:
+          image: postgres:latest
+          env:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: testpw
+            POSTGRES_DB: testdb
+          ports:
+            - 5432:5432
+          options: >-
+            --health-cmd pg_isready
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 5
+      steps:
+        - uses: actions/checkout@v2
+        - uses: actions/setup-python@v2
+          with:
+            python-version: "3.8"
+        - name: update pip
+          run: |
+            pip install -U wheel setuptools
+            python -m pip install -U pip
+        - name: get pip cache dir
+          id: pip-cache
+          run: echo "::set-output name=dir::$(pip cache dir)"
+        - name: cache pip
+          uses: actions/cache@v1
+          with:
+            path: ${{ steps.pip-cache.outputs.dir }}
+            key: pip|${{ runner.os }}|${{ hashFiles('setup.py') }}|${{ hashFiles('tox.ini') }}|${{ hashFiles('requirements/*.txt') }}
+        - name: Postgres
+          run: |
+            pip install tox
+            tox -e realpostgres -- --realdburl='postgres://postgres:testpw@localhost:5432/testdb'
