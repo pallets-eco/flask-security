@@ -462,8 +462,9 @@ def peewee_setup(request, app, tmpdir, realdburl):
             "name": pieces.path[1:],
             "engine": engine_mapper[pieces.scheme.split("+")[0]],
             "user": pieces.username,
-            "passwd": pieces.password,
+            "password": pieces.password,
             "host": pieces.hostname,
+            "port": pieces.port,
         }
     else:
         f, path = tempfile.mkstemp(
@@ -580,6 +581,7 @@ def pony_setup(request, app, tmpdir, realdburl):
             user=pieces.username,
             password=pieces.password,
             host=pieces.hostname,
+            port=pieces.port,
             database=pieces.path[1:],
         )
     else:

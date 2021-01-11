@@ -53,7 +53,6 @@ jobs:
         run: |
           pip install tox
           tox -e ${{ matrix.tox }}
-        if: 0
 
   other:
       runs-on: ubuntu-latest
@@ -67,11 +66,11 @@ jobs:
             python-version: "3.8"
         - name: update pip
           run: |
-            pip install -U wheel setuptools coverage
+            pip install -U wheel setuptools
             python -m pip install -U pip
         - name: Style, docs, coverage
           run: |
-            pip install tox
+            pip install tox coverage
             tox -e style -e docs -e coverage
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v1
