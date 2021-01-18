@@ -67,6 +67,7 @@ from .utils import (
     send_mail,
     suppress_form_csrf,
     url_for_security,
+    view_commit,
 )
 
 # Convenient references
@@ -76,17 +77,9 @@ _datastore = LocalProxy(lambda: _security.datastore)
 if get_quart_status():  # pragma: no cover
     from quart import redirect
 
-    async def _commit(response=None):
-        _datastore.commit()
-        return response
-
 
 else:
     from flask import redirect
-
-    def _commit(response=None):
-        _datastore.commit()
-        return response
 
 
 def _compute_code_methods():
@@ -336,7 +329,7 @@ def _send_code_helper(form):
     # mechanisms of course don't work. We rely on the fact that the user went
     # through the 'confirmation' process to validate the email.
     if method == "email" and method not in totp_secrets:
-        after_this_request(_commit)
+        after_this_request(view_commit)
         totp_secrets[method] = _security._totp_factory.generate_totp_secret()
         _datastore.us_put_totp_secrets(user, totp_secrets)
 
@@ -545,7 +538,7 @@ def us_signin():
                         primary_authn_via=form.authn_via,
                     )
 
-        after_this_request(_commit)
+        after_this_request(view_commit)
         login_user(form.user, remember=remember_me, authn_via=[form.authn_via])
 
         if _security._want_json(request):
@@ -699,7 +692,7 @@ def us_verify_link():
         return tf_login(user, primary_authn_via="email")
 
     login_user(user, authn_via=["email"])
-    after_this_request(_commit)
+    after_this_request(view_commit)
     if _security.redirect_behavior == "spa":
         # We do NOT send the authentication token here since the only way to
         # send it would be via a query param and that isn't secure. (logging and
@@ -877,7 +870,7 @@ def us_setup_validate(token):
     form.user = current_user
 
     if form.validate_on_submit():
-        after_this_request(_commit)
+        after_this_request(view_commit)
         method = state["chosen_method"]
         phone = state["phone_number"] if method == "sms" else None
         _datastore.us_set(current_user, method, state["totp_secret"], phone)

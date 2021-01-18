@@ -22,7 +22,16 @@ from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
 import urllib.request
 import urllib.error
 
-from flask import _request_ctx_stack, current_app, flash, g, request, session, url_for
+from flask import (
+    _request_ctx_stack,
+    after_this_request,
+    current_app,
+    flash,
+    g,
+    request,
+    session,
+    url_for,
+)
 from flask.json import JSONEncoder
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
@@ -35,7 +44,7 @@ from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
 
-from .quart_compat import best
+from .quart_compat import best, get_quart_status
 from .signals import user_authenticated
 
 # Convenient references
@@ -76,6 +85,24 @@ def get_request_attr(name):
 
 def set_request_attr(name, value):
     return setattr(_request_ctx_stack.top, name, value)
+
+
+"""
+Most view functions that modify the DB will call ``after_this_request(view_commit)``
+Quart compatibility needs an async version
+"""
+if get_quart_status():  # pragma: no cover
+
+    async def view_commit(response=None):
+        _datastore.commit()
+        return response
+
+
+else:
+
+    def view_commit(response=None):
+        _datastore.commit()
+        return response
 
 
 def find_csrf_field_name():
@@ -883,7 +910,15 @@ def base_render_json(
                     config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
                     or "include_auth_token" in request.args
                 ):
-                    token = user.get_auth_token()
+                    try:
+                        token = user.get_auth_token()
+                    except ValueError:
+                        # application has fs_token_uniquifier attribute but it
+                        # hasn't been initialized. Since we are in a request context
+                        # we can do that here.
+                        _datastore.set_token_uniquifier(user)
+                        after_this_request(view_commit)
+                        token = user.get_auth_token()
                     payload["user"]["authentication_token"] = token
 
         # Return csrf_token on each JSON response - just as every form

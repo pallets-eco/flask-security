@@ -8,7 +8,6 @@
     :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
-from abc import abstractmethod
 import json
 import uuid
 
@@ -131,14 +130,6 @@ class UserDatastore:
     def __init__(self, user_model, role_model):
         self.user_model = user_model
         self.role_model = role_model
-
-    @abstractmethod
-    def put(self, user):
-        pass
-
-    @abstractmethod
-    def delete(self, user):
-        pass
 
     def _prepare_role_modify_args(self, role):
         if isinstance(role, str):

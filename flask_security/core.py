@@ -635,7 +635,7 @@ class RoleMixin:
 
         .. versionadded:: 3.3.0
 
-        .. deprecated:: 4.0.0
+        .. deprecated:: 3.4.4
             Use :meth:`.UserDatastore.add_permissions_to_role`
         """
         if hasattr(self, "permissions"):
@@ -658,7 +658,7 @@ class RoleMixin:
 
         .. versionadded:: 3.3.0
 
-        .. deprecated:: 4.0.0
+        .. deprecated:: 3.4.4
             Use :meth:`.UserDatastore.remove_permissions_from_role`
         """
         if hasattr(self, "permissions"):
@@ -693,16 +693,21 @@ class UserMixin(BaseUserMixin):
     def get_auth_token(self):
         """Constructs the user's authentication token.
 
+        :raises ValueError: If fs_token_uniquifier is part of model but not set.
+
         We optionally use a separate uniquifier so that changing password doesn't
         invalidate auth tokens.
 
         This data MUST be securely signed using the ``remember_token_serializer``
 
         .. versionchanged:: 4.0.0
-            If user model has fs_token_uniquifier - use that
+            If user model has fs_token_uniquifier - use that and raise ValueError
+            if not set.
         """
 
         if hasattr(self, "fs_token_uniquifier"):
+            if not self.fs_token_uniquifier:
+                raise ValueError()
             data = [str(self.fs_token_uniquifier)]
         else:
             data = [str(self.fs_uniquifier)]

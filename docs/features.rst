@@ -86,7 +86,9 @@ then any existing authentication tokens will no longer be valid. This value is c
 whenever a user changes their password. If this is not the desired behavior then you can add an additional
 attribute to the UserModel: ``fs_token_uniquifier`` and that will be used instead, thus
 isolating password changes from authentication tokens. That attribute can be changed via
-:meth:`.UserDatastore.set_token_uniquifier`
+:meth:`.UserDatastore.set_token_uniquifier`. This attribute should have ``unique=True``.
+Unlike ``fs_uniquifier``, it can be set to ``nullable`` - it will automatically be generated
+at first use if null.
 
 .. _two-factor:
 

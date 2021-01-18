@@ -801,6 +801,50 @@ def test_change_token_uniquifier(app):
         verify_token(client_nc, token)
 
 
+def test_null_token_uniquifier(app):
+    # If existing record has a null fs_token_uniquifier, should be set on first use.
+    from sqlalchemy import Column, String
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security, SQLAlchemyUserDatastore
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    db = SQLAlchemy(app)
+
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        fs_token_uniquifier = Column(String(64), unique=True, nullable=True)
+
+    with app.app_context():
+        db.create_all()
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        ds.create_user(
+            email="matt@lp.com",
+            password=hash_password("password"),
+        )
+        ds.commit()
+
+        # manually null out fs_token_uniquifier
+        user = ds.find_user(email="matt@lp.com")
+        user.fs_token_uniquifier = None
+        ds.put(user)
+        ds.commit()
+
+        client_nc = app.test_client(use_cookies=False)
+
+        response = json_authenticate(client_nc)
+        token = response.json["response"]["user"]["authentication_token"]
+        verify_token(client_nc, token)
+
+
 def test_token_query(in_app_context):
     # Verify that when authenticating with auth token (and not session)
     # that there is just one DB query to get user.
