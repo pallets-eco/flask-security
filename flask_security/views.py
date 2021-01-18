@@ -98,22 +98,13 @@ from .utils import (
     slash_url_suffix,
     suppress_form_csrf,
     url_for_security,
+    view_commit,
 )
 
 if get_quart_status():  # pragma: no cover
     from quart import make_response, redirect
-
-    async def _commit(response=None):
-        _datastore.commit()
-        return response
-
-
 else:
     from flask import make_response, redirect
-
-    def _commit(response=None):
-        _datastore.commit()
-        return response
 
 
 # Convenient references
@@ -194,7 +185,7 @@ def login():
                     )
 
         login_user(form.user, remember=remember_me, authn_via=["password"])
-        after_this_request(_commit)
+        after_this_request(view_commit)
 
         if _security._want_json(request):
             return base_render_json(form, include_auth_token=True)
@@ -233,7 +224,7 @@ def verify():
 
     if form.validate_on_submit():
         # form may have called verify_and_update_password()
-        after_this_request(_commit)
+        after_this_request(view_commit)
 
         # verified - so set freshness time.
         session["fs_paa"] = time.time()
@@ -297,7 +288,7 @@ def register():
         if not _security.confirmable or _security.login_without_confirmation:
             if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
                 return tf_login(user, primary_authn_via="register")
-            after_this_request(_commit)
+            after_this_request(view_commit)
             login_user(user, authn_via=["register"])
             did_login = True
 
@@ -371,7 +362,7 @@ def token_login(token):
         return redirect(url_for_security("login"))
 
     login_user(user, authn_via=["token"])
-    after_this_request(_commit)
+    after_this_request(view_commit)
     if _security.redirect_behavior == "spa":
         return redirect(
             get_url(_security.post_login_view, qparams=user.get_redirect_qparams())
@@ -451,7 +442,7 @@ def confirm_email(token):
         )
 
     confirm_user(user)
-    after_this_request(_commit)
+    after_this_request(view_commit)
 
     if user != current_user:
         logout_user()
@@ -610,7 +601,7 @@ def reset_password(token):
             return redirect(url_for_security("forgot_password"))
 
     if form.validate_on_submit():
-        after_this_request(_commit)
+        after_this_request(view_commit)
         update_password(user, form.password.data)
         if config_value("TWO_FACTOR") and (
             config_value("TWO_FACTOR_REQUIRED")
@@ -652,7 +643,7 @@ def change_password():
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        after_this_request(_commit)
+        after_this_request(view_commit)
         change_user_password(current_user._get_current_object(), form.new_password.data)
         if _security._want_json(request):
             form.user = current_user
@@ -742,7 +733,7 @@ def two_factor_setup():
         pm = form.setup.data
         if pm == "disable":
             tf_disable(user)
-            after_this_request(_commit)
+            after_this_request(view_commit)
             if not _security._want_json(request):
                 do_flash(*get_message("TWO_FACTOR_DISABLED"))
                 return redirect(get_url(_security.post_login_view))
@@ -764,7 +755,7 @@ def two_factor_setup():
         if new_phone:
             user.tf_phone_number = new_phone
             _datastore.put(user)
-            after_this_request(_commit)
+            after_this_request(view_commit)
 
         # This form is sort of bizarre - for SMS and authenticator
         # you select, then get more info, and submit again.
@@ -914,7 +905,7 @@ def two_factor_token_validation():
             form.user, pm, totp_secret, changing, remember
         )
 
-        after_this_request(_commit)
+        after_this_request(view_commit)
 
         if not _security._want_json(request):
             after_this_request(

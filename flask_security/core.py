@@ -431,17 +431,7 @@ _default_forms = {
 
 
 def _user_loader(user_id):
-    """Try to load based on fs_uniquifier (alternative_id) if available.
-
-    Note that we don't try, and fall back to the other - primarily because some DBs
-    and drivers (psycopg2) really really hate getting mismatched types during queries.
-    They hate it enough that they abort the 'transaction' and refuse to do anything
-    in the future until the transaction is rolled-back. But we don't really control
-    that and there doesn't seem to be any way to catch the actual offensive query -
-    just next time and forever, things fail.
-    This assumes that if the app has fs_uniquifier, it is non-nullable as we specify
-    so we use that and only that.
-    """
+    """Load based on fs_uniquifier (alternative_id)."""
     user = _security.datastore.find_user(fs_uniquifier=str(user_id))
     if user and user.active:
         set_request_attr("fs_authn_via", "session")
@@ -645,7 +635,7 @@ class RoleMixin:
 
         .. versionadded:: 3.3.0
 
-        .. deprecated:: 4.0.0
+        .. deprecated:: 3.4.4
             Use :meth:`.UserDatastore.add_permissions_to_role`
         """
         if hasattr(self, "permissions"):
@@ -668,7 +658,7 @@ class RoleMixin:
 
         .. versionadded:: 3.3.0
 
-        .. deprecated:: 4.0.0
+        .. deprecated:: 3.4.4
             Use :meth:`.UserDatastore.remove_permissions_from_role`
         """
         if hasattr(self, "permissions"):
@@ -703,16 +693,21 @@ class UserMixin(BaseUserMixin):
     def get_auth_token(self):
         """Constructs the user's authentication token.
 
+        :raises ValueError: If fs_token_uniquifier is part of model but not set.
+
         We optionally use a separate uniquifier so that changing password doesn't
         invalidate auth tokens.
 
         This data MUST be securely signed using the ``remember_token_serializer``
 
         .. versionchanged:: 4.0.0
-            If user model has fs_token_uniquifier - use that
+            If user model has fs_token_uniquifier - use that and raise ValueError
+            if not set.
         """
 
         if hasattr(self, "fs_token_uniquifier"):
+            if not self.fs_token_uniquifier:
+                raise ValueError()
             data = [str(self.fs_token_uniquifier)]
         else:
             data = [str(self.fs_uniquifier)]
