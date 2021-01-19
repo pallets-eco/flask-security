@@ -10,7 +10,10 @@ Release Target Really Early 2021
 
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
 
+Version 4.0.0rc2
+----------------
 
+Released January 18, 2021
 
 Features & Cleanup
 +++++++++++++++++++
@@ -38,12 +41,13 @@ Features & Cleanup
   Now it first looks at Flask's `APPLICATION_ROOT` configuration and uses that (which also by default is ``/``. (tysonholub)
 - (:pr:`401`) Add 2FA Validity Window so an application can configure how often the second factor has to be entered. (baurt)
 - (:pr:`403`) Add HTML5 Email input types to email fields. This has some backwards compatibility concerns outlined below. (drola)
+- (:pr:`413`) Add hy_AM translations. (rudolfamirjanyan)
+- (:pr:`410`) Add Basque and fix Spanish translations. (mmozos)
+- (:pr:`408`) Polish translations. (kamil559)
+- (:pr:`390`) Update ru_RU translations. (TitaniumHocker)
 
 Fixed
 +++++
-- (:issue:`347`) Fix peewee. Turns out - due to lack of unit tests - peewee hasn't worked since
-  'permissions' were added in 3.3. Furthermore, changes in 3.4 around get_id and alternative tokens also
-  didn't work since peewee defines its own `get_id` method.
 - (:issue:`389`) Fixes for translations. First - email subjects were never being translated. Second, converted
   all templates to use _fsdomain(xx) rather than _(xx) so that they get translated regardless of the app's domain.
 - (:issue:`381`) Support Flask-Babel 2.0 which has backported Domain support. Flask-Security now supports
@@ -56,10 +60,10 @@ Fixed
   changing the user's `fs_uniquifier`. The user is automatically re-logged in (and a new session
   created) after a successful change operation.
 - (:issue:`418`) Two-factor (and to a lesser extent unified sign in) QRcode fetching wasn't protected via CSRF. The
-  fix makes things secure and simpler (always good) however read below for compatibility concerns. In addition, the elements that make up the QRcode (key, username, issuer) area also made available to the form
+  fix makes things secure and simpler (always good); however read below for compatibility concerns. In addition, the elements that make up the QRcode (key, username, issuer) area also made available to the form
   and returned as part of the JSON return value - this allows for manual or other ways to initialize the authenticator
   app.
-- (:issue:`421`) GET on /login and /change could return the callers authentication_token. This is a security
+- (:issue:`421`) GET on `/login` and `/change` could return the callers authentication_token. This is a security
   concern since GETs don't have CSRF protection. This bug was introduced in 3.3.0.
 
 Backwards Compatibility Concerns
@@ -137,7 +141,36 @@ Backwards Compatibility Concerns
   The changes to the templates are minimal and of course if you didn't override the template - there is no
   compatibility concern.
 
-- (:issue:`421`) Fix CSRF vulnerability on /login and /change that could return the callers authentication token.
+- (:issue:`421`) Fix CSRF vulnerability on `/login` and `/change` that could return the callers authentication token.
+  Now, callers can only get the authentication token on successful POST calls.
+
+Version 3.4.5
+--------------
+
+Released January 8, 2021
+
+Security Vulnerability Fix.
+
+Two CSRF vulnerabilities were reported: `qrcode`_ and `login`_. This release
+fixes the more severe of the 2 - the `/login` vulnerability. The QRcode issue
+has a much smaller risk profile since a) it is only for two-factor authentication
+using an authenticator app b) the qrcode is only available during the time
+the user is first setting up their authentication app.
+The QRcode issue has been fixed in 4.0.
+
+.. _qrcode: https://github.com/Flask-Middleware/flask-security/issues/418
+.. _login: https://github.com/Flask-Middleware/flask-security/issues/421
+
+Fixed
++++++
+
+- (:issue:`421`) GET on `/login` and `/change` could return the callers authentication_token. This is a security
+  concern since GETs don't have CSRF protection. This bug was introduced in 3.3.0.
+
+Backwards Compatibility Concerns
+++++++++++++++++++++++++++++++++
+
+- (:issue:`421`) Fix CSRF vulnerability on `/login` and `/change` that could return the callers authentication token.
   Now, callers can only get the authentication token on successful POST calls.
 
 Version 3.4.4
