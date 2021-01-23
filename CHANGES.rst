@@ -10,6 +10,14 @@ Release Target Really Early 2021
 
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
 
+Start Here
++++++++++++
+- Your UserModel must contain ``fs_uniquifier``
+- Either uninstall Flask-BabelEx (if you don't need translations) or add either Flask-Babel or Flask-BabelEx to your
+  dependencies AND be sure to initialize it in your app.
+- Add Flask-Mail to your dependencies
+- If you have unicode emails or passwords read change notes below.
+
 Version 4.0.0rc2
 ----------------
 
@@ -69,7 +77,9 @@ Fixed
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 - (:pr:`328`) Remove dependence on Flask-Mail and refactor. The ``send_mail_task`` and
-  ``send_mail`` methods have been removed and replaced with a new :class:`.MailUtil` class.
+  ``send_mail`` methods as part of Flask-Security initialization
+  have been removed and replaced with a new :class:`.MailUtil` class.
+  The utility method :func:`.send_mail` can still be used.
   If your application didn't use either of the deprecated methods, then the only change required
   is to add Flask-Mail to your package requirements (since Flask-Security no longer lists it).
   Please see the :ref:`emails_topic` for updated examples.
@@ -107,9 +117,10 @@ Backwards Compatibility Concerns
 
 - (:issue:`381`) When using Flask-Babel (>= 2.0) it is required that the application initialize Flask-Babel (e.g. Babel(app)).
   Flask-BabelEx would self-initialize so it didn't matter. Flask-Security will throw a run time error upon first request if Flask-Babel
+  OR FLask-BabelEx
   is installed, but not initialized. Also, Flask-Security no longer has a dependency on either Flask-Babel or Flask-BabelEx - if neither
   are installed, it falls back to a dummy translation. *If your application expects translation services, it must specify the appropriate*
-  *dependency.*
+  *dependency AND initialize it.*
 
 - (:pr:`394`) Email input is now normalized prior to being stored in the DB. Previously, it was validated, but the raw input
   was stored. Normalization and validation rely on the `email_validator <https://pypi.org/project/email-validator/>`_ package.
