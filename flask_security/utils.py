@@ -637,6 +637,9 @@ def send_mail(subject, recipient, template, **context):
     :param recipient: Email recipient
     :param template: The name of the email template
     :param context: The context to render the template with
+
+    This formats the email and passes off to :class:`.MailUtil` to actuall send the
+    message.
     """
 
     context.setdefault("security", _security)
