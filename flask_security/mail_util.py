@@ -21,8 +21,8 @@ class MailUtil:
     """
     Utility class providing methods for validating, normalizing and sending emails.
 
-    This default class uses the email_validator class to handle validation and
-    normalization, the the flask_mail package to send emails.
+    This default class uses the email_validator package to handle validation and
+    normalization, and the flask_mail package to send emails.
 
     To provide your own implementation, pass in the class as ``mail_util_cls``
     at init time.  Your class will be instantiated once as part of app initialization.

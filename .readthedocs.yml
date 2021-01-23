@@ -16,6 +16,8 @@ formats: all
 python:
   version: 3.8
   install:
-    - requirements: requirements/docs.txt
+    # Order might be important since requests needs idna <3 but our dependencies
+    # install idna 3.1
     - method: pip
       path: .
+    - requirements: requirements/docs.txt

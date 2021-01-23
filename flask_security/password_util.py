@@ -57,7 +57,7 @@ class PasswordUtil:
         current user data model.
 
         The password is first normalized then validated.
-        Return value is a tuple (msgs, normalized_password)
+        Return value is a tuple ([msgs], normalized_password)
         """
 
         cf = config_value("PASSWORD_NORMALIZE_FORM")

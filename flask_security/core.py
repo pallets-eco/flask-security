@@ -679,7 +679,7 @@ class UserMixin(BaseUserMixin):
 
     def get_id(self):
         """Returns the user identification attribute. 'Alternative-token' for
-        Flask-Login.
+        Flask-Login. This is always ``fs_uniquifier``.
 
         .. versionadded:: 3.4.0
         """
@@ -693,16 +693,16 @@ class UserMixin(BaseUserMixin):
     def get_auth_token(self):
         """Constructs the user's authentication token.
 
-        :raises ValueError: If fs_token_uniquifier is part of model but not set.
+        :raises ValueError: If ``fs_token_uniquifier`` is part of model but not set.
 
-        We optionally use a separate uniquifier so that changing password doesn't
+        Optionally use a separate uniquifier so that changing password doesn't
         invalidate auth tokens.
 
         This data MUST be securely signed using the ``remember_token_serializer``
 
         .. versionchanged:: 4.0.0
-            If user model has fs_token_uniquifier - use that and raise ValueError
-            if not set.
+            If user model has ``fs_token_uniquifier`` - use that (raise ValueError
+            if not set). Otherwise fallback to using ``fs_uniqifier``.
         """
 
         if hasattr(self, "fs_token_uniquifier"):
@@ -724,7 +724,8 @@ class UserMixin(BaseUserMixin):
         .. versionadded:: 3.3.0
 
         .. versionchanged:: 4.0.0
-            If user model has fs_token_uniquifier - use that
+            If user model has ``fs_token_uniquifier`` - use that otherwise
+            use ``fs_uniquifier``.
         """
 
         if hasattr(self, "fs_token_uniquifier"):
@@ -756,7 +757,10 @@ class UserMixin(BaseUserMixin):
         return False
 
     def get_security_payload(self):
-        """Serialize user object as response payload."""
+        """Serialize user object as response payload.
+        Override this to return any/all of the user object in JSON responses.
+        Return a dict.
+        """
         return {}
 
     def get_redirect_qparams(self, existing=None):
