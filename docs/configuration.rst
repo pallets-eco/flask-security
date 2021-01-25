@@ -944,6 +944,9 @@ Configuration related to the two-factor authentication feature.
 .. py:data:: SECURITY_TWO_FACTOR_ALWAYS_VALIDATE
 
     Specifies whether the application should require a two factor code upon every login.
+    If set to ``False`` then the 2 values below are used to determine when
+    a code is required. Note that this is cookie based - so a new browser
+    session will always require a fresh two-factor code.
 
     Default: ``True``.
 .. py:data:: SECURITY_TWO_FACTOR_LOGIN_VALIDITY
@@ -953,7 +956,7 @@ Configuration related to the two-factor authentication feature.
     Default: ``30 Days``.
 
 
-.. py:data:: TWO_FACTOR_VALIDITY_COOKIE
+.. py:data:: SECURITY_TWO_FACTOR_VALIDITY_COOKIE
 
     A dictionary containing the parameters of the two factor validity cookie.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
@@ -1224,6 +1227,7 @@ element is the message and the second element is the error level.
 The default messages and error levels can be found in ``core.py``.
 
 * ``SECURITY_MSG_ALREADY_CONFIRMED``
+* ``SECURITY_MSG_API_ERROR``
 * ``SECURITY_MSG_ANONYMOUS_USER_REQUIRED``
 * ``SECURITY_MSG_CONFIRMATION_EXPIRED``
 * ``SECURITY_MSG_CONFIRMATION_REQUEST``
@@ -1235,7 +1239,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_EMAIL_NOT_PROVIDED``
 * ``SECURITY_MSG_FAILED_TO_SEND_CODE``
 * ``SECURITY_MSG_FORGOT_PASSWORD``
-* ``SECURITY_IDENTITY_ALREADY_ASSOCIATED``
+* ``SECURITY_MSG_IDENTITY_ALREADY_ASSOCIATED``
 * ``SECURITY_MSG_INVALID_CODE``
 * ``SECURITY_MSG_INVALID_CONFIRMATION_TOKEN``
 * ``SECURITY_MSG_INVALID_EMAIL_ADDRESS``
