@@ -19,7 +19,7 @@ install_requires = [
     "passlib>=1.7.2",
 ]
 
-packages = find_packages()
+packages = find_packages(exclude=["tests"])
 
 setup(
     name="Flask-Security-Too",
