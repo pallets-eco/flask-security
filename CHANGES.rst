@@ -6,16 +6,16 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 4.0.0
 -------------
 
-Release Target Really Early 2021
+Released January 26, 2021
 
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE TO EVEN START YOUR APPLICATION WITH 4.0**
 
 Start Here
 +++++++++++
 - Your UserModel must contain ``fs_uniquifier``
-- Either uninstall Flask-BabelEx (if you don't need translations) or add either Flask-Babel or Flask-BabelEx to your
+- Either uninstall Flask-BabelEx (if you don't need translations) or add either Flask-Babel (>=2.0) or Flask-BabelEx to your
   dependencies AND be sure to initialize it in your app.
-- Add Flask-Mail to your dependencies
+- Add Flask-Mail to your dependencies.
 - If you have unicode emails or passwords read change notes below.
 
 Version 4.0.0rc2
