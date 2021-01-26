@@ -17,6 +17,7 @@ install_requires = [
     "email-validator>=1.1.1",
     "itsdangerous>=1.1.0",
     "passlib>=1.7.2",
+    "blinker",
 ]
 
 packages = find_packages()
