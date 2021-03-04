@@ -210,9 +210,9 @@ msgid "No password is set for this user"
 msgstr "Ninguna contraseña ha sido definida para este·a usuario·a"
 
 #: flask_security/core.py:353
-#, fuzzy, python-format
+#, python-format
 msgid "Password must be at least %(length)s characters"
-msgstr "La contraseña debe contar al menos con %(length)s caracteres"
+msgstr "La contraseña debe tener al menos %(length)s caracteres"
 
 #: flask_security/core.py:356
 msgid "Password not complex enough"
@@ -452,7 +452,7 @@ msgstr "Configuración mediante correo electrónico"
 #: flask_security/unified_signin.py:267
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
-"Configurar usando una aplicación de autenticación (por ejemplo, google, "
+"Configurar usando una aplicación de autenticación (p.ej. google, "
 "lastpass, authy)"
 
 #: flask_security/unified_signin.py:269
@@ -514,6 +514,9 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
 msgstr ""
+"Abra una aplicación de autenticación en su dispositivo y escanee el siguiente "
+"código QR (o ingrese el código a continuación manualmente) para comenzar a "
+"recibir códigos:"
 
 #: flask_security/templates/security/two_factor_setup.html:52
 msgid "Two factor authentication code"
@@ -556,6 +559,9 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving passcodes:"
 msgstr ""
+"Abra una aplicación de autenticación en su dispositivo y escanee el siguiente "
+"código QR (o ingrese el código a continuación manualmente) para comenzar a "
+"recibir códigos de acceso:"
 
 #: flask_security/templates/security/us_setup.html:69
 msgid "Passwordless QRCode"
@@ -658,13 +664,3 @@ msgstr "O utilizar el siguiente enlace:"
 #: flask_security/templates/security/email/welcome.txt:4
 msgid "You can confirm your email through the link below:"
 msgstr "Confirma tu correo electrónico haciendo clic aquí:"
-
-#~ msgid ""
-#~ "Open your authenticator app on your "
-#~ "device and scan the following qrcode "
-#~ "to start receiving codes:"
-#~ msgstr ""
-#~ "Abre tu aplicación de autenticación en"
-#~ " tu dispositivo y escanea el "
-#~ "siguiente código qr para comenzar a "
-#~ "recibir códigos:"
