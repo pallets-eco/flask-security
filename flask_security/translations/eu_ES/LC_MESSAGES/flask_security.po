@@ -507,6 +507,8 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
 msgstr ""
+"Ireki autentifikazio aplikazio bat zure gailuan eta eskaneatu QR kode hau "
+"(edo idatzi beheko kodea eskuz) kodeak jasotzen hasteko:"
 
 #: flask_security/templates/security/two_factor_setup.html:52
 msgid "Two factor authentication code"
@@ -547,10 +549,12 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving passcodes:"
 msgstr ""
+"Ireki autentifikazio aplikazio bat zure gailuan eta eskaneatu QR kode hau "
+"(edo idatzi beheko kodea eskuz) pasakodeak jasotzen hasteko:"
 
 #: flask_security/templates/security/us_setup.html:69
 msgid "Passwordless QRCode"
-msgstr "Pasahitzik gabeko QRCode"
+msgstr "Pasahitzik gabeko QR kodea"
 
 #: flask_security/templates/security/us_setup.html:77
 msgid "No methods have been enabled - nothing to setup"
@@ -647,12 +651,3 @@ msgstr "Edo erabili beheko esteka:"
 #: flask_security/templates/security/email/welcome.txt:4
 msgid "You can confirm your email through the link below:"
 msgstr "Zure posta elektronikoa beheko estekaren bidez baiezta dezakezu:"
-
-#~ msgid ""
-#~ "Open your authenticator app on your "
-#~ "device and scan the following qrcode "
-#~ "to start receiving codes:"
-#~ msgstr ""
-#~ "Kodeak jasotzen hasteko ireki autentifikazio"
-#~ " aplikazioa zure gailuan eta eskaneatu "
-#~ "qrcode hau"
