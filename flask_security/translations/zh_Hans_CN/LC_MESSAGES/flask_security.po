@@ -201,7 +201,7 @@ msgstr "此账户未设置密码"
 #: flask_security/core.py:353
 #, python-format
 msgid "Password must be at least %(length)s characters"
-msgstr "密码至少包含%(length)个字符"
+msgstr "密码至少包含%(length)s个字符"
 
 #: flask_security/core.py:356
 msgid "Password not complex enough"
@@ -291,7 +291,7 @@ msgstr "你现在还没有权限访问这个页面"
 
 #: flask_security/core.py:398
 msgid "Marked method is not valid"
-msgstr "标记的方法无效"
+msgstr "选择的方法无效"
 
 #: flask_security/core.py:400
 msgid "You successfully disabled two factor authorization."
@@ -304,7 +304,7 @@ msgstr "非法的请求方法"
 #: flask_security/core.py:405
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
-msgstr "必须再%(within)秒内完成设置。请重新开始。"
+msgstr "必须在%(within)s内完成设置。请重新开始。"
 
 #: flask_security/core.py:408
 msgid "Unified sign in setup successful"
