@@ -17,6 +17,7 @@ import pytest
 from flask import Blueprint
 
 from flask_security import uia_email_mapper
+from flask_security.utils import hash_data
 
 from tests.test_utils import (
     authenticate,
@@ -748,6 +749,33 @@ def test_change_uniquifier(app, client_nc):
     response = json_authenticate(client_nc)
     token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
+
+
+def test_verifying_token_from_version_3x(app, client_nc):
+    """
+    Check token generated with flask security 3.x, which has different form
+    than token from version 4.0.0, can be verified
+    """
+
+    def get_auth_token_version_3x(app, user):
+        """
+        Copy of algorithm that generated user token in version 3.x
+        """
+        data = [str(user.id), hash_data(user.password)]
+        if hasattr(user, "fs_uniquifier"):
+            data.append(user.fs_uniquifier)
+        return app.security.remember_token_serializer.dumps(data)
+
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+
+        token = get_auth_token_version_3x(app, user)
+
+        data = app.security.remember_token_serializer.loads(
+            token, max_age=app.security.token_max_age
+        )
+
+        assert user.verify_auth_token(data) is True
 
 
 def test_change_token_uniquifier(app):
