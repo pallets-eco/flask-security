@@ -728,10 +728,17 @@ class UserMixin(BaseUserMixin):
             use ``fs_uniquifier``.
         """
 
-        if hasattr(self, "fs_token_uniquifier"):
-            return data[0] == self.fs_token_uniquifier
+        # Version 3.x generated tokens that map to data with 3 elements, and fs_uniquifier was on last element.
+        # Version 4.0.0 generates tokens that map to data with only 1 element, which maps to fs_uniquifier.
+        # Thus correct index should be that of the last element of data.
+        # Here we compute uniquifier_index so that we can pick up correct index for matching
+        # fs_uniquifier in version 4.0.0 even if token was created with version 3.x
+        uniquifier_index = len(data) - 1
 
-        return data[0] == self.fs_uniquifier
+        if hasattr(self, "fs_token_uniquifier"):
+            return data[uniquifier_index] == self.fs_token_uniquifier
+
+        return data[uniquifier_index] == self.fs_uniquifier
 
     def has_role(self, role):
         """Returns `True` if the user identifies with the specified role.
