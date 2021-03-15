@@ -256,7 +256,7 @@ This is supported by providing your own implementation of the :class:`.MailUtil`
             send_flask_mail.delay(
                 subject=subject,
                 sender=sender,
-                recipients=recipients,
+                recipients=[recipient],
                 body=body,
                 html=html,
             )
@@ -275,7 +275,9 @@ Then register your class as part of Flask-Security initialization::
 
     @celery.task
     def send_flask_mail(**kwargs):
-        mail.send(Message(**kwargs))
+        # If you use Flask_Mail - it needs an app context
+        with app.app_context():
+            mail.send(Message(**kwargs))
 
     def create_app(config):
         """Initialize Flask instance."""

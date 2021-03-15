@@ -340,9 +340,17 @@ class UserDatastore:
         :kwparam roles: list of roles to be added to user.
             Can be Role objects or strings
 
+        Any other element of the User data model may be supplied as well.
+
         .. note::
             No normalization is done on email - it is assumed the caller has already
             done that.
+
+            Best practice is::
+
+                try:
+                    enorm = app.security._mail_util.validate(email)
+                except ValueError:
 
         .. note::
             The roles kwparam is modified as part of the call - it will, if necessary
@@ -357,13 +365,14 @@ class UserDatastore:
            (e.g for minimum length).
 
            Best practice is::
+
             pbad, pnorm = app.security._password_util.validate(password, True)
 
            Look for `pbad` being None. Pass the normalized password `pnorm` to this
            method.
 
         The new user's ``active`` property will be set to ``True``
-        unless explicitly set to ``False`` in `kwargs`.
+        unless explicitly set to ``False`` in `kwargs` (e.g. active = False)
         """
         kwargs = self._prepare_create_user_args(**kwargs)
         user = self.user_model(**kwargs)

@@ -9,6 +9,12 @@ There are some complete (but simple) examples available in the *examples* direct
     They basically create a single user, and you can login as that user... that's it.
     As you add more features, additional packages (e.g. Flask-Mail, Flask-Babel, pyqrcode) might be required
     and will need to be added to your requirements.txt (or equivalent) file.
+    Flask-Security does some configuration validation and will output error messages to the console
+    for some missing packages.
+
+.. note::
+    The default ``SECURITY_PASSWORD_HASH`` is "bcrypt" - so be sure to install bcrypt.
+    If you opt for a different hash e.g. "argon2" you will need to install a different package.
 
 .. danger::
    The examples below place secrets in source files. Never do this for your application
@@ -36,7 +42,7 @@ SQLAlchemy Install requirements
 ::
 
      $ mkvirtualenv <your-app-name>
-     $ pip install flask-security-too flask-sqlalchemy
+     $ pip install flask-security-too flask-sqlalchemy bcrypt
 
 
 SQLAlchemy Application
@@ -117,7 +123,7 @@ SQLAlchemy Install requirements
 ::
 
      $ mkvirtualenv <your-app-name>
-     $ pip install flask-security-too sqlalchemy
+     $ pip install flask-security-too sqlalchemy bcrypt
 
 Also, you can use the extension `Flask-SQLAlchemy-Session documentation
 <http://flask-sqlalchemy-session.readthedocs.io/en/latest/>`_.
@@ -242,7 +248,7 @@ MongoEngine Install requirements
 ::
 
     $ mkvirtualenv <your-app-name>
-    $ pip install flask-security-too flask-mongoengine
+    $ pip install flask-security-too flask-mongoengine bcrypt
 
 MongoEngine Application
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -321,7 +327,7 @@ Peewee Install requirements
 ::
 
     $ mkvirtualenv <your-app-name>
-    $ pip install flask-security-too peewee
+    $ pip install flask-security-too peewee bcrypt
 
 Peewee Application
 ~~~~~~~~~~~~~~~~~~
@@ -468,5 +474,15 @@ in 2 ways:
 
 Look in the `Flask-Security repo`_ *examples* directory for actual code that implements the
 first approach.
+
+You also might want to set the following configurations in your conftest.py:
+
+.. code-block:: python
+
+    app.config["WTF_CSRF_ENABLED"] = False
+    # Our test emails/domain isn't necessarily valid
+    app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
+    # Make this plaintext for most tests - reduces unit test time by 50%
+    app.config["SECURITY_PASSWORD_HASH"] = "plaintext"
 
 .. _Flask-Security repo: https://github.com/Flask-Middleware/flask-security

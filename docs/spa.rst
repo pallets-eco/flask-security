@@ -15,7 +15,9 @@ For the purposes of this application note - this implies:
       via a templating language.
 
     * The user interface interacts with the backend Flask application via JSON requests
-      and responses - not forms.
+      and responses - not forms. The external (json/form) API is described `here`_
+
+.. _here: _static/openapi_view.html
 
     * SPAs are still browser based - so they have the same security vulnerabilities as
       traditional html/form-based applications.
