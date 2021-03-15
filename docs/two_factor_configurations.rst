@@ -8,7 +8,9 @@ secondary authentication method using either via email, sms message, or an
 Authenticator app such as Google, Lastpass, or Authy.
 
 The following code sample illustrates how to get started as quickly as
-possible using SQLAlchemy and two-factor feature:
+possible using SQLAlchemy and two-factor feature. In this example both
+email and an authenticator app is supported as a second factor. See below
+for information about SMS.
 
 Basic SQLAlchemy Two-Factor Application
 +++++++++++++++++++++++++++++++++++++++
@@ -19,7 +21,7 @@ SQLAlchemy Install requirements
 ::
 
      $ mkvirtualenv <your-app-name>
-     $ pip install flask-security-too flask-sqlalchemy cryptography pyqrcode
+     $ pip install flask-security-too flask-sqlalchemy flask-mail bcrypt cryptography pyqrcode
 
 
 Two-factor Application
@@ -33,21 +35,8 @@ possible using SQLAlchemy:
     from flask import Flask, current_app, render_template
     from flask_sqlalchemy import SQLAlchemy
     from flask_security import Security, SQLAlchemyUserDatastore, \
-        UserMixin, RoleMixin, login_required
-
-
-    # At top of file
+        UserMixin, RoleMixin, auth_required
     from flask_mail import Mail
-
-
-    # Convenient references
-    from werkzeug.datastructures import MultiDict
-    from werkzeug.local import LocalProxy
-
-
-    _security = LocalProxy(lambda: current_app.extensions['security'])
-
-    _datastore = LocalProxy(lambda: _security.datastore)
 
     # Create app
     app = Flask(__name__)
@@ -63,14 +52,14 @@ possible using SQLAlchemy:
     app.config['SECURITY_TWO_FACTOR_ENABLED_METHODS'] = ['email',
       'authenticator']  # 'sms' also valid but requires an sms provider
     app.config['SECURITY_TWO_FACTOR'] = True
-    app.config['SECURITY_TWO_FACTOR_RESCUE_MAIL'] = 'put_your_mail@gmail.com'
+    app.config['SECURITY_TWO_FACTOR_RESCUE_MAIL'] = "put_your_mail@gmail.com"
 
-    app.config['SECURITY_TWO_FACTOR_ALWAYS_VALIDATE']=False
-    app.config['SECURITY_TWO_FACTOR_LOGIN_VALIDITY']='1 week'
+    app.config['SECURITY_TWO_FACTOR_ALWAYS_VALIDATE'] = False
+    app.config['SECURITY_TWO_FACTOR_LOGIN_VALIDITY'] = "1 week"
 
     # Generate a good totp secret using: passlib.totp.generate_secret()
     app.config['SECURITY_TOTP_SECRETS'] = {"1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"}
-    app.config['SECURITY_TOTP_ISSUER'] = 'put_your_app_name'
+    app.config['SECURITY_TOTP_ISSUER'] = "put_your_app_name"
 
     # Create database connection object
     db = SQLAlchemy(app)
@@ -88,14 +77,16 @@ possible using SQLAlchemy:
     class User(db.Model, UserMixin):
         id = db.Column(db.Integer, primary_key=True)
         email = db.Column(db.String(255), unique=True)
+        # Make username unique but not required.
+        username = Column(String(255), unique=True, nullable=True)
         password = db.Column(db.String(255))
         active = db.Column(db.Boolean())
         confirmed_at = db.Column(db.DateTime())
         roles = db.relationship('Role', secondary=roles_users,
                                 backref=db.backref('users', lazy='dynamic'))
-        tf_phone_number = db.Column(db.String(64))
-        tf_primary_method = db.Column(db.String(140))
-        tf_totp_secret = db.Column(db.String(255))
+        tf_phone_number = db.Column(db.String(128), nullable=True)
+        tf_primary_method = db.Column(db.String(64), nullable=True)
+        tf_totp_secret = db.Column(db.String(255), nullable=True)
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -107,18 +98,41 @@ possible using SQLAlchemy:
     @app.before_first_request
     def create_user():
         db.create_all()
-        user_datastore.create_user(email='gal@lp.com', password='password', username='gal',
-                               tf_totp_secret=None, tf_primary_method=None)
+        if not user_datastore.find_user(email='gal@lp.com'):
+            user_datastore.create_user(email='gal@lp.com', password='password', username='gal')
         db.session.commit()
 
     # Views
     @app.route('/')
-    @login_required
+    @auth_required
     def home():
         return render_template('index.html')
 
     if __name__ == '__main__':
         app.run()
+
+Adding SMS
+++++++++++
+
+Using SMS as a second factor requires access to an SMS service provider such as "Twilio".
+Flask-Security supports Twilio out of the box.
+For other sms service providers you will need to subclass :class:`.SmsSenderBaseClass` and register it:
+
+    .. code-block:: python
+
+        SmsSenderFactory.senders[<service-name>] = <service-class>
+
+You need to install additional packages::
+
+    pip install phonenumberslite twilio
+
+And set additional configuration variables::
+
+    app.config["SECURITY_TWO_FACTOR_ENABLED_METHODS"] = ['email',
+      'authenticator', 'sms']
+    app.config["SECURITY_SMS_SERVICE"] = "Twilio"
+    app.config["SECURITY_SMS_SERVICE_CONFIG" =
+      {'ACCOUNT_SID': <from twilio>, 'AUTH_TOKEN': <from twilio>, 'PHONE_NUMBER': <from twilio>}
 
 .. _2fa_theory_of_operation:
 
@@ -127,7 +141,7 @@ Theory of Operation
 
 .. note::
     The Two-factor feature requires that session cookies be received and sent as part of the API.
-    This is true regardless of if the application uses forms or JSON.
+    This is true regardless of whether the application uses forms or JSON.
 
 The Two-factor (2FA) API has four paths:
 
@@ -168,9 +182,9 @@ Life happens - if the user doesn't have their mobile devices (SMS) or authentica
 If they have lost access to their email, they can request an email be sent to the application administrators.
 
 Validity
-~~~~~~~~
-Sometimes it can be preferrable to enter the 2FA code once a day/week/month, especially if a user logs in and out of a website multiple times.  This allows the
-security of a two factor authentication but with a slightly better user experience.  This can be achevied by setting ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` to ``False``,
+++++++++
+Sometimes it can be preferable to enter the 2FA code once a day/week/month, especially if a user logs in and out of a website multiple times.  This allows the
+security of a two factor authentication but with a slightly better user experience.  This can be achieved by setting ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` to ``False``,
 and clicking the 'Remember' button on the login form. Once the two factor code is validated, a cookie is set to allow skipping the validation step.  The cookie is named
 ``tf_validity`` and contains the signed token containing the user's ``fs_uniquifier``.  The cookie and token are both set to expire after the time delta given in
 ``SECURITY_TWO_FACTOR_LOGIN_VALIDITY``.  Note that setting ``SECURITY_TWO_FACTOR_LOGIN_VALIDITY`` to 0 is equivalent to ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` being ``True``.

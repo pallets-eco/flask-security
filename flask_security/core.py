@@ -728,10 +728,13 @@ class UserMixin(BaseUserMixin):
             use ``fs_uniquifier``.
         """
 
-        # Version 3.x generated tokens that map to data with 3 elements, and fs_uniquifier was on last element.
-        # Version 4.0.0 generates tokens that map to data with only 1 element, which maps to fs_uniquifier.
-        # Here we compute uniquifier_index so that we can pick up correct index for matching
-        # fs_uniquifier in version 4.0.0 even if token was created with version 3.x
+        # Version 3.x generated tokens that map to data with 3 elements,
+        # and fs_uniquifier was on last element.
+        # Version 4.0.0 generates tokens that map to data with only 1 element,
+        # which maps to fs_uniquifier.
+        # Here we compute uniquifier_index so that we can pick up correct index for
+        # matching fs_uniquifier in version 4.0.0 even if token was created with
+        # version 3.x
         uniquifier_index = 0 if len(data) == 1 else 2
 
         if hasattr(self, "fs_token_uniquifier"):
@@ -1219,8 +1222,18 @@ class Security:
                 raise ValueError("Must configure some TWO_FACTOR_ENABLED_METHODS")
 
         if multi_factor:
-            self._check_modules("pyqrcode", "TWO_FACTOR or UNIFIED_SIGNIN")
+            # cryptography is used to encrypt TOTP secrets
             self._check_modules("cryptography", "TWO_FACTOR or UNIFIED_SIGNIN")
+
+            need_qrcode = (
+                cv("UNIFIED_SIGNIN", app=app)
+                and "authenticator" in cv("US_ENABLED_METHODS", app=app)
+            ) or (
+                cv("TWO_FACTOR", app=app)
+                and "authenticator" in cv("TWO_FACTOR_ENABLED_METHODS", app=app)
+            )
+            if need_qrcode:
+                self._check_modules("pyqrcode", "TWO_FACTOR or UNIFIED_SIGNIN")
 
             need_sms = (
                 cv("UNIFIED_SIGNIN", app=app)

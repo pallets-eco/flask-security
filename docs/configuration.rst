@@ -177,6 +177,9 @@ These configuration keys are used globally across all features.
 
     Email address are validated using the `email_validator`_ package. Its methods
     have some configurable options - these can be set here and will be passed in.
+    For example setting this to: ``{"check_deliverability": False}`` is useful
+    when unit testing if the emails are fake.
+
 
     Default: ``None``, meaning use the defaults from email_validator package.
 
@@ -375,7 +378,7 @@ These are used by the Two-Factor and Unified Signin features.
 
 .. py:data:: SECURITY_TOTP_SECRETS
 
-    Secret used to encrypt totp_password both into DB and in session cookie.
+    Secret used to encrypt the totp_password both into DB and into the session cookie.
     Best practice is to set this to:
 
     .. code-block:: python
@@ -398,7 +401,13 @@ These are used by the Two-Factor and Unified Signin features.
 
 .. py:data:: SECURITY_SMS_SERVICE
 
-    Specifies the name of the sms service provider.
+    Specifies the name of the sms service provider. Out of the box
+    "Twilio" is supported. For other sms service providers you will need
+    to subclass :class:`.SmsSenderBaseClass` and register it:
+
+    .. code-block:: python
+
+        SmsSenderFactory.senders[<service-name>] = <service-class>
 
     Default: ``Dummy`` which does nothing.
 
@@ -407,8 +416,9 @@ These are used by the Two-Factor and Unified Signin features.
 .. py:data:: SECURITY_SMS_SERVICE_CONFIG
 
     Specifies a dictionary of basic configurations needed for use of a sms service.
+    For "Twilio" the following keys are required (fill in from your Twilio dashboard):
 
-    Default: ``{'ACCOUNT_ID': NONE, 'AUTH_TOKEN':NONE, 'PHONE_NUMBER': NONE}``
+    Default: ``{'ACCOUNT_SID': NONE, 'AUTH_TOKEN': NONE, 'PHONE_NUMBER': NONE}``
 
     .. versionadded:: 3.4.0
 
@@ -885,17 +895,17 @@ Configuration related to the two-factor authentication feature.
 
     Specifies the number of seconds access token is valid.
 
-    Default: ``2 minutes``.
+    Default: ``120``.
 .. py:data:: SECURITY_TWO_FACTOR_MAIL_VALIDITY
 
     Specifies the number of seconds access token is valid.
 
-    Default: ``5 minutes``.
+    Default: ``300``.
 .. py:data:: SECURITY_TWO_FACTOR_SMS_VALIDITY
 
     Specifies the number of seconds access token is valid.
 
-    Default: ``2 minutes``.
+    Default: ``120``.
 .. py:data:: SECURITY_TWO_FACTOR_RESCUE_MAIL
 
     Specifies the email address users send mail to when they can't complete the
