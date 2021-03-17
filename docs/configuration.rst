@@ -320,7 +320,7 @@ These configuration keys are used globally across all features.
 
         [
             {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
-            {"us_phone_number": {"mapper": uia_phone_number}},
+            {"us_phone_number": {"mapper": uia_phone_mapper}},
         ]
 
 
@@ -1056,7 +1056,7 @@ Unified Signin
 
     If you select ``sms`` then make sure you add this to :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`::
 
-        {"us_phone_number": {"mapper": uia_phone_number}},
+        {"us_phone_number": {"mapper": uia_phone_mapper}},
 
 
     Default: ``["password", "email", "authenticator", "sms"]`` - which are the only supported options.
