@@ -457,3 +457,28 @@ def test_email_normalization_options(app, client, get_message):
     response = client.post("/register", data=data, follow_redirects=True)
     assert response.status_code == 200
     assert get_message("INVALID_EMAIL_ADDRESS") in response.data
+
+
+def test_form_error(app, client, get_message):
+    # A few form validations use ValidatorMixin which provides a lazy string
+    # Since CLI doesn't render_template it was seeing those lazy strings.
+    # This test basically just illustrates all this.
+    from babel.support import LazyProxy
+
+    with app.test_request_context("/register"):
+        # this is usually done @before_first_request
+        app.jinja_env.globals["_fsdomain"] = app.security.i18n_domain.gettext
+        rform = ConfirmRegisterForm()
+
+        rform.validate()
+        assert isinstance(rform.errors["email"][0], LazyProxy)
+        assert str(rform.errors["email"][0]).encode("utf-8") == get_message(
+            "EMAIL_NOT_PROVIDED"
+        )
+
+        # make sure rendered template has converted LocalProxy strings.
+        rendered = app.security.render_template(
+            app.config["SECURITY_REGISTER_USER_TEMPLATE"],
+            register_user_form=rform,
+        )
+        assert get_message("EMAIL_NOT_PROVIDED") in rendered.encode("utf-8")

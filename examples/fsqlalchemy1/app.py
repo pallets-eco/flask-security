@@ -7,8 +7,8 @@ Uses built-in models.
 Shows using roles and permissions to protect endpoints.
 
 You can run the flask cli against this as well (once you have first created a
-real DB):
-SQLALCHEMY_DATABASE_URI="sqlite:////var/tmp/test.db" \
+real DB) (from top level directory):
+PYTHONPATH=. SQLALCHEMY_DATABASE_URI="sqlite:////var/tmp/test.db" \
  FLASK_APP=examples/fsqlalchemy1/app.py \
  flask users create -a test@me.com
 """
@@ -43,6 +43,9 @@ app.config["SECURITY_PASSWORD_SALT"] = "146585145368132386173505678016728509634"
 
 # Take password complexity seriously
 app.config["SECURITY_PASSWORD_COMPLEXITY_CHECKER"] = "zxcvbn"
+
+# Allow registration of new users without confirmation
+app.config["SECURITY_REGISTERABLE"] = True
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "SQLALCHEMY_DATABASE_URI", "sqlite://"
@@ -86,7 +89,7 @@ class Blog(db.Model):
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 app.security = Security(app, user_datastore)
 
-# Setup Babel - not strictly necessary but since this virtualenv has Flask-Babel
+# Setup Babel - not strictly necessary but since our virtualenv has Flask-Babel
 # we need to initialize it
 Babel(app)
 
@@ -100,26 +103,35 @@ def create_users():
     if current_app.testing:
         return
     db.create_all()
-    user_datastore.create_role(
+    user_datastore.find_or_create_role(
         name="admin",
         permissions={"admin-read", "admin-write", "user-read", "user-write"},
     )
-    user_datastore.create_role(name="monitor", permissions={"admin-read", "user-read"})
-    user_datastore.create_role(name="user", permissions={"user-read", "user-write"})
-    user_datastore.create_role(name="reader", permissions={"user-read"})
+    user_datastore.find_or_create_role(
+        name="monitor", permissions={"admin-read", "user-read"}
+    )
+    user_datastore.find_or_create_role(
+        name="user", permissions={"user-read", "user-write"}
+    )
+    user_datastore.find_or_create_role(name="reader", permissions={"user-read"})
 
-    user_datastore.create_user(
-        email="admin@me.com", password=hash_password("password"), roles=["admin"]
-    )
-    user_datastore.create_user(
-        email="ops@me.com", password=hash_password("password"), roles=["monitor"]
-    )
-    real_user = user_datastore.create_user(
-        email="user@me.com", password=hash_password("password"), roles=["user"]
-    )
-    user_datastore.create_user(
-        email="reader@me.com", password=hash_password("password"), roles=["reader"]
-    )
+    if not user_datastore.find_user(email="admin@me.com"):
+        user_datastore.create_user(
+            email="admin@me.com", password=hash_password("password"), roles=["admin"]
+        )
+    if not user_datastore.find_user(email="ops@me.com"):
+        user_datastore.create_user(
+            email="ops@me.com", password=hash_password("password"), roles=["monitor"]
+        )
+    real_user = user_datastore.find_user(email="user@me.com")
+    if not real_user:
+        real_user = user_datastore.create_user(
+            email="user@me.com", password=hash_password("password"), roles=["user"]
+        )
+    if not user_datastore.find_user(email="reader@me.com"):
+        user_datastore.create_user(
+            email="reader@me.com", password=hash_password("password"), roles=["reader"]
+        )
 
     # create initial blog
     blog = app.blog_cls(
