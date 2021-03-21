@@ -175,7 +175,7 @@ def unique_identity_attribute(form, field):
     SECURITY_USER_IDENTITY_ATTRIBUTES.
     This can be used as part of registration.
 
-    Be aware that the "mapper" function likely also nornalizes the input in addition
+    Be aware that the "mapper" function likely also normalizes the input in addition
     to validating it.
 
     :param form:

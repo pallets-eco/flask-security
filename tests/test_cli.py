@@ -97,6 +97,27 @@ def test_cli_createuser_normalize(script_info):
         )
 
 
+def test_cli_createuser_errors(script_info):
+    # check that errors are stringified
+    runner = CliRunner()
+    result = runner.invoke(
+        users_create, ["--password", "battery staple"], obj=script_info
+    )
+    assert result.exit_code == 2
+    assert "Email not provided" in result.output
+
+
+def test_cli_locale(script_info):
+    app = script_info.load_app()
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    runner = CliRunner()
+    result = runner.invoke(
+        users_create, ["--password", "battery staple"], obj=script_info
+    )
+    assert result.exit_code == 2
+    assert "Merci d'indiquer une adresse email" in result.output
+
+
 def test_cli_createrole(script_info):
     """Test create user CLI."""
     runner = CliRunner()

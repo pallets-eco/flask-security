@@ -66,6 +66,15 @@ def commit(fn):
     return wrapper
 
 
+def fix_errors(form_errors):
+    # Form errors might have lazy text which normally would be processed by
+    # render_template
+    errors = {}
+    for k, v in form_errors.items():
+        errors[k] = [str(e) for e in v]
+    return errors
+
+
 @click.group()
 def users():
     """User commands.
@@ -134,7 +143,7 @@ def users_create(attributes, password, active):
         kwargs["password"] = "****"
         click.echo(kwargs)
     else:
-        raise click.UsageError("Error creating user. %s" % form.errors)
+        raise click.UsageError("Error creating user. %s" % fix_errors(form.errors))
 
 
 @roles.command("create")
