@@ -492,6 +492,9 @@ add code like this to your migrations::update method::
     # finally - set nullable to false
     op.alter_column('user', 'fs_uniquifier', nullable=False)
 
+    # for MySQL the previous line has to be replaced with...
+    # op.alter_column('user', 'fs_uniquifier', existing_type=sa.String(length=64), nullable=False)
+
 
 Version 3.2.0
 -------------
