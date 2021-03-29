@@ -727,7 +727,7 @@ def datastore(request, app, tmpdir, realdburl):
 def script_info(app, sqlalchemy_datastore):
     from flask.cli import ScriptInfo
 
-    def create_app(info):
+    def create_app():
         uia = [
             {"email": {"mapper": uia_email_mapper}},
             {"username": {"mapper": lambda x: x}},
