@@ -3,6 +3,33 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.0.1
+-------------
+
+Released TBD
+
+Features
+++++++++
+
+Fixes
++++++
+- (:issue:`461`) 4.0 doesn't accept 3.4 authentication tokens. (kuba-lilz)
+- (:issue:`460`) 2-fa error: Failed to send code - improved documentation and debuggability.
+- (:issue:`454`) 2-fa error: TypeError - fixed documentation.
+- (:issue:`443`) Calling create user without any arguments - fixed underlying cause
+  of translating form errors in the CLI.
+- (:issue:`442`) Email validation confusion - added documentation.
+- (:pr:`470`) Add note about updating DB using MySQL. (jugmac00)
+- (:pr:`468`) Fix documentation - uia_phone_number should be uia_phone_mapper. (dvrg)
+- (:pr:`457`) Improve chinese translations. (zxjlm)
+- (:pr:`453`) Improve basque and spanish translations. (mmozos)
+- (:pr:`448`) Add Afrikaans translations. (lonelyvikingmichael)
+- (:pr:`467`) Add Blinker as explicit dependency, improve/fix celery usage docs,
+  dont require pyqrcode unless authenticator configured, improve SMS configuration
+  variables documentation.
+
+
+
 Version 4.0.0
 -------------
 
