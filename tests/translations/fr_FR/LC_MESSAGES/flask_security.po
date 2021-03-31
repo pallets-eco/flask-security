@@ -1,0 +1,5 @@
+msgid ""
+msgstr ""
+
+msgid "Password no-worky"
+msgstr "Passe - no-worky"

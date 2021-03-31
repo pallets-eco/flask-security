@@ -44,6 +44,8 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_I18N_DIRNAME
 
     Specifies the directory containing the ``MO`` files used for translations.
+    When using flask-babel this can also be a list of directory names - this
+    enables application to override a subset of messages if desired.
 
     Default: ``[PATH_LIB]/flask_security/translations``.
 

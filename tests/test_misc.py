@@ -13,6 +13,8 @@ from datetime import timedelta
 import hashlib
 from unittest import mock
 import re
+import os.path
+import pkg_resources
 import sys
 import time
 
@@ -445,6 +447,27 @@ def test_xlation(app, client):
     assert response.status_code == 302
     response = authenticate(client, follow_redirects=True)
     assert b"Bienvenue matt@lp.com" in response.data
+
+
+def test_myxlation(app, sqlalchemy_datastore, pytestconfig):
+    # Test changing a single MSG and having an additional translation dir
+
+    i18n_dirname = [
+        pkg_resources.resource_filename("flask_security", "translations"),
+        os.path.join(pytestconfig.rootdir, "tests/translations"),
+    ]
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"SECURITY_I18N_DIRNAME": i18n_dirname}
+    )
+
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    app.config["SECURITY_MSG_INVALID_PASSWORD"] = ("Password no-worky", "error")
+
+    client = app.test_client()
+    response = client.post("/login", data=dict(email="matt@lp.com", password="forgot"))
+    assert b"Passe - no-worky" in response.data
 
 
 def test_form_labels(app):

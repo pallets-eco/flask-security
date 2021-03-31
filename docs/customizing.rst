@@ -131,9 +131,9 @@ All messages, form labels, and form strings are localizable. Flask-Security uses
 `Flask-Babel <https://pypi.org/project/Flask-Babel/>`_ or
 `Flask-BabelEx <https://pythonhosted.org/Flask-BabelEx/>`_ to manage its messages.
 All translations are tagged with a domain, as specified by the configuration variable
-``SECURITY_I18N_DOMAIN`` (default: "security"). For messages and labels all this
+``SECURITY_I18N_DOMAIN`` (default: "flask_security"). For messages and labels all this
 works seamlessly.  For strings inside templates it is necessary to explicitly ask for
-the "security" domain, since your application itself might have its own domain.
+the "flask_security" domain, since your application itself might have its own domain.
 Flask-Security places the method ``_fsdomain`` in jinja2's global environment and
 uses that in all templates.
 In order to reference a Flask-Security translation from ANY template (such as if you copied and
@@ -145,6 +145,40 @@ Be aware that Flask-Security will validate and normalize email input using the
 `email_validator <https://pypi.org/project/email-validator/>`_ package.
 The normalized form is stored in the DB.
 
+Overriding Messages
+++++++++++++++++++++
+
+It is possible to change one or more messages (either the original default english
+and/or a specific translation). Adding the following to your app::
+
+    app.config["SECURITY_MSG_INVALID_PASSWORD"] = ("Password no-worky", "error")
+
+Will change the default message in english.
+
+.. tip::
+    The string messages themselves are a 'key' into the translation .po/.mo files.
+    Do not pass in gettext('string') or lazy_gettext('string).
+
+If you need translations then you
+need to create your own ``translations`` directory and add the appropriate .po files
+and compile them. Finally, add your translations directory path to the configuration.
+In this example, create a file ``flask_security.po`` under a directory:
+``translations/fr_FR/LC_MESSAGES`` (for french) with the following contents::
+
+    msgid ""
+    msgstr ""
+
+    msgid "Password no-worky"
+    msgstr "Passe - no-worky"
+
+
+Then compile it with::
+
+    pybabel compile -d translations/ -i translations/fr_FR/LC_MESSAGES/flask_security.po -l fr_FR
+
+Finally add your translations directory to your configuration::
+
+    app.config["SECURITY_I18N_DIRNAME"] = [pkg_resources.resource_filename("flask_security", "translations"), "translations"]
 
 .. _emails_topic:
 
@@ -199,37 +233,29 @@ to ``False`` will bypass sending of the email (they all default to ``True``).
 In most cases, in addition to an email being sent, a :ref:`Signal <signals_topic>` is sent.
 The table below summarizes all this:
 
-=============================   ================================   ====================================== ====================== ===============================
-**Template Name**               **Gate Config**                    **Subject Config**                     **Context Vars**       **Signal Sent**
------------------------------   --------------------------------   -------------------------------------- ---------------------- -------------------------------
-confirmation_instructions       N/A                                EMAIL_SUBJECT_CONFIRM                  - user                 confirm_instructions_sent
-                                                                                                          - confirmation_link
+=============================   ================================   =============================================     ====================== ===============================
+**Template Name**               **Gate Config**                    **Subject Config**                                **Context Vars**       **Signal Sent**
+-----------------------------   --------------------------------   ---------------------------------------------     ---------------------- -------------------------------
+welcome                         SECURITY_SEND_REGISTER_EMAIL       SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_registered
+                                                                                                                     - confirmation_link
+confirmation_instructions       N/A                                SECURITY_EMAIL_SUBJECT_CONFIRM                    - user                 confirm_instructions_sent
+                                                                                                                     - confirmation_link
+login_instructions              N/A                                SECURITY_EMAIL_SUBJECT_PASSWORDLESS               - user                 login_instructions_sent
+                                                                                                                     - login_link
+reset_instructions              SEND_PASSWORD_RESET_EMAIL          SECURITY_EMAIL_SUBJECT_PASSWORD_RESET             - user                 reset_password_instructions_sent
+                                                                                                                     - reset_link
+reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL   SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE            - user                 password_reset
 
-login_instructions              N/A                                EMAIL_SUBJECT_PASSWORDLESS             - user                 login_instructions_sent
-                                                                                                          - login_link
-
-
-reset_instructions              SEND_PASSWORD_RESET_EMAIL          EMAIL_SUBJECT_PASSWORD_RESET           - user                 reset_password_instructions_sent
-                                                                                                          - reset_link
-
-
-reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL   EMAIL_SUBJECT_PASSWORD_NOTICE          - user                 password_reset
-
-change_notice                   SEND_PASSWORD_CHANGE_EMAIL         EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE   - user                 password_changed
-
-welcome
-
-two_factor_instructions         N/A                                EMAIL_SUBJECT_TWO_FACTOR               - user                 tf_security_token_sent
-                                                                                                          - token
-                                                                                                          - username
-
-two_factor_rescue               N/A                                EMAIL_SUBJECT_TWO_FACTOR_RESCUE        - user                 N/A
-
-us_instructions                 N/A                                US_EMAIL_SUBJECT                       - user                 us_security_token_sent
-                                                                                                          - token
-                                                                                                          - login_link
-                                                                                                          - username
-=============================   ================================   ====================================== ====================== ===============================
+change_notice                   SEND_PASSWORD_CHANGE_EMAIL         SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE     - user                 password_changed
+two_factor_instructions         N/A                                SECURITY_EMAIL_SUBJECT_TWO_FACTOR                 - user                 tf_security_token_sent
+                                                                                                                     - token
+                                                                                                                     - username
+two_factor_rescue               N/A                                SECURITY_EMAIL_SUBJECT_TWO_FACTOR_RESCUE          - user                 N/A
+us_instructions                 N/A                                SECURITY_US_EMAIL_SUBJECT                         - user                 us_security_token_sent
+                                                                                                                     - token
+                                                                                                                     - login_link
+                                                                                                                     - username
+=============================   ================================   =============================================     ====================== ===============================
 
 When sending an email, Flask-Security goes through the following steps:
 
@@ -242,6 +268,9 @@ When sending an email, Flask-Security goes through the following steps:
 
 The default implementation of ``MailUtil.send_mail`` uses Flask-Mail to create and send the message.
 By providing your own implementation, you can use any available python email handling package.
+
+Email subjects are by default localized - see above section on Localization to learn how
+to customize them.
 
 Emails with Celery
 ++++++++++++++++++
