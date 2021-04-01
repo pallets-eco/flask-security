@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 4.0.1
 -------------
 
-Released TBD
+Released April 2, 2021
 
 Features
 ++++++++
@@ -19,6 +19,8 @@ Fixes
 - (:issue:`443`) Calling create user without any arguments - fixed underlying cause
   of translating form errors in the CLI.
 - (:issue:`442`) Email validation confusion - added documentation.
+- (:issue:`450`) Add documentation on how to override specific error messages.
+- (:pr:`439`) Don't install global-scope tests. (mgorny)
 - (:pr:`470`) Add note about updating DB using MySQL. (jugmac00)
 - (:pr:`468`) Fix documentation - uia_phone_number should be uia_phone_mapper. (dvrg)
 - (:pr:`457`) Improve chinese translations. (zxjlm)
