@@ -1,14 +1,14 @@
-# Afrikaans (South Africa) translations for PROJECT.
+# Afrikaans (South Africa) translations for Flask-Security-Too.
 # Copyright (C) 2021 Lonely Viking
-# This file is distributed under the same license as the PROJECT project.
+# This file is distributed under the same license as the Flask-Security-Too
+# project.
 # Michael Bosch <michael@lonelyviking.com>, 2021.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security-Too 4.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-01-22 14:48-0800\n"
+"POT-Creation-Date: 2021-03-31 21:47-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Michael Bosch <michael@lonelyviking.com>\n"
 "Language: af_ZA\n"
@@ -28,7 +28,6 @@ msgstr "Intekening Benodig"
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "Welkom"
 
@@ -137,8 +136,8 @@ msgid ""
 "You did not reset your password within %(within)s. New instructions have "
 "been sent to %(email)s."
 msgstr ""
-"Jy het nie jou wagwoord terug gestel binne %(within)s nie. Nuwe instruksies is "
-"gestuur na %(email)s."
+"Jy het nie jou wagwoord terug gestel binne %(within)s nie. Nuwe "
+"instruksies is gestuur na %(email)s."
 
 #: flask_security/core.py:320
 msgid "Invalid reset password token."
@@ -159,8 +158,8 @@ msgid ""
 "You did not confirm your email within %(within)s. New instructions to "
 "confirm your email have been sent to %(email)s."
 msgstr ""
-"Jy het nie jou e-pos adres bevestig binne %(within)s nie. Nuwe instruksies om "
-"jou e-pos adres te bevestig is gestuur na %(email)s."
+"Jy het nie jou e-pos adres bevestig binne %(within)s nie. Nuwe "
+"instruksies om jou e-pos adres te bevestig is gestuur na %(email)s."
 
 #: flask_security/core.py:335
 #, python-format
@@ -168,8 +167,8 @@ msgid ""
 "You did not login within %(within)s. New instructions to login have been "
 "sent to %(email)s."
 msgstr ""
-"Jy het nie ingeteken binne %(within)s nie. Nuwe instruksies om in te teken is "
-"gestuur na %(email)s."
+"Jy het nie ingeteken binne %(within)s nie. Nuwe instruksies om in te "
+"teken is gestuur na %(email)s."
 
 #: flask_security/core.py:342
 #, python-format
@@ -325,7 +324,7 @@ msgstr "Jy moet 'n valiede identiteit spesifiseer om in te teken"
 #: flask_security/core.py:410
 #, python-format
 msgid "Use this code to sign in: %(code)s."
-msgstr "Gebruik hierdie kode om in te teken: %(kode)s."
+msgstr "Gebruik hierdie kode om in te teken: %(code)s."
 
 #: flask_security/forms.py:53
 msgid "Email Address"
@@ -493,12 +492,14 @@ msgid ""
 "In addition to your username and password, you'll need to use a code that"
 " we will send you"
 msgstr ""
-"Gesamentlik met jou verbruikersnaam en wagwoord moet jy 'n kode gebruik"
-" wat ons vir jou sal stuur"
+"Gesamentlik met jou verbruikersnaam en wagwoord moet jy 'n kode gebruik "
+"wat ons vir jou sal stuur"
 
 #: flask_security/templates/security/two_factor_setup.html:43
 msgid "To complete logging in, please enter the code sent to your mail"
-msgstr "Om intekening af te handel, sleutel asseblief die kode in wat na jou e-pos adres gestuur is"
+msgstr ""
+"Om intekening af te handel, sleutel asseblief die kode in wat na jou "
+"e-pos adres gestuur is"
 
 #: flask_security/templates/security/two_factor_setup.html:49
 msgid ""
@@ -581,7 +582,9 @@ msgstr "klik hier om dit te herstel"
 
 #: flask_security/templates/security/email/change_notice.txt:3
 msgid "If you did not change your password, click the link below to reset it."
-msgstr "As jy nie jou wagwoord verander het nie, klik die skakel hieronder om dit te herstel."
+msgstr ""
+"As jy nie jou wagwoord verander het nie, klik die skakel hieronder om dit"
+" te herstel."
 
 #: flask_security/templates/security/email/confirmation_instructions.html:1
 #: flask_security/templates/security/email/confirmation_instructions.txt:1

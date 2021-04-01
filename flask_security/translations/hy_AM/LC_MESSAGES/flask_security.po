@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2021-01-22 14:48-0800\n"
+"POT-Creation-Date: 2021-03-31 21:47-0700\n"
 "PO-Revision-Date: 2020-12-01 11:47+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hy_AM\n"
@@ -28,7 +28,6 @@ msgstr "Անհրաժեշտ է մուտք գործել"
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "Բարի գալուստ"
 

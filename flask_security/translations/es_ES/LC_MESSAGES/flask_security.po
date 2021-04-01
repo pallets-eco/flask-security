@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-01-22 14:48-0800\n"
+"POT-Creation-Date: 2021-03-31 21:47-0700\n"
 "PO-Revision-Date: 2017-08-25 17:21+0200\n"
 "Last-Translator: Martin Mozos <martinmozos@gmail.com>\n"
 "Language: es_ES\n"
@@ -28,7 +28,6 @@ msgstr "Inicio de sesión necesario"
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "Bienvenido"
 
@@ -514,9 +513,9 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
 msgstr ""
-"Abra una aplicación de autenticación en su dispositivo y escanee el siguiente "
-"código QR (o ingrese el código a continuación manualmente) para comenzar a "
-"recibir códigos:"
+"Abra una aplicación de autenticación en su dispositivo y escanee el "
+"siguiente código QR (o ingrese el código a continuación manualmente) para"
+" comenzar a recibir códigos:"
 
 #: flask_security/templates/security/two_factor_setup.html:52
 msgid "Two factor authentication code"
@@ -559,9 +558,9 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving passcodes:"
 msgstr ""
-"Abra una aplicación de autenticación en su dispositivo y escanee el siguiente "
-"código QR (o ingrese el código a continuación manualmente) para comenzar a "
-"recibir códigos de acceso:"
+"Abra una aplicación de autenticación en su dispositivo y escanee el "
+"siguiente código QR (o ingrese el código a continuación manualmente) para"
+" comenzar a recibir códigos de acceso:"
 
 #: flask_security/templates/security/us_setup.html:69
 msgid "Passwordless QRCode"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 3.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-01-22 14:48-0800\n"
+"POT-Creation-Date: 2021-03-31 21:47-0700\n"
 "PO-Revision-Date: 2019-06-16 00:12+0200\n"
 "Last-Translator: Orestes Sanchez <miceno.atreides@gmail.com>\n"
 "Language: ca_ES\n"
@@ -28,7 +28,6 @@ msgstr "Per poder veure la pàgina sol·licitada és necessari iniciar la sessi�
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "Benvingut"
 

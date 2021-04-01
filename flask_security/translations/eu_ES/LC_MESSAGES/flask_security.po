@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2021-01-22 14:48-0800\n"
+"POT-Creation-Date: 2021-03-31 21:47-0700\n"
 "PO-Revision-Date: 2020-11-28 13:41+0100\n"
 "Last-Translator: Martin Mozos <martinmozos@gmail.com>\n"
 "Language: eu_ES\n"
@@ -28,7 +28,6 @@ msgstr "Saioa hasi behar da"
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "Ongi etorri"
 
@@ -507,8 +506,8 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
 msgstr ""
-"Ireki autentifikazio aplikazio bat zure gailuan eta eskaneatu QR kode hau "
-"(edo idatzi beheko kodea eskuz) kodeak jasotzen hasteko:"
+"Ireki autentifikazio aplikazio bat zure gailuan eta eskaneatu QR kode hau"
+" (edo idatzi beheko kodea eskuz) kodeak jasotzen hasteko:"
 
 #: flask_security/templates/security/two_factor_setup.html:52
 msgid "Two factor authentication code"
@@ -549,8 +548,8 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving passcodes:"
 msgstr ""
-"Ireki autentifikazio aplikazio bat zure gailuan eta eskaneatu QR kode hau "
-"(edo idatzi beheko kodea eskuz) pasakodeak jasotzen hasteko:"
+"Ireki autentifikazio aplikazio bat zure gailuan eta eskaneatu QR kode hau"
+" (edo idatzi beheko kodea eskuz) pasakodeak jasotzen hasteko:"
 
 #: flask_security/templates/security/us_setup.html:69
 msgid "Passwordless QRCode"

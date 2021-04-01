@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-01-22 14:48-0800\n"
+"POT-Creation-Date: 2021-03-31 21:47-0700\n"
 "PO-Revision-Date: 2017-09-25 09:14+0200\n"
 "Last-Translator: Erich Seifert <dev@erichseifert.de>\n"
 "Language: de_DE\n"
@@ -30,7 +30,6 @@ msgstr "Anmeldung erforderlich"
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "Willkommen"
 

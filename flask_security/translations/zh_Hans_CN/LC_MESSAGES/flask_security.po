@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-01-22 14:48-0800\n"
+"POT-Creation-Date: 2021-03-31 21:47-0700\n"
 "PO-Revision-Date: 2018-08-02 19:55+0800\n"
 "Last-Translator: SteinKuo <guoming054@gmail.com>\n"
 "Language: zh_CN\n"
@@ -28,7 +28,6 @@ msgstr "需要登录"
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:1
 #: flask_security/templates/security/email/us_instructions.txt:1
-#: tests/templates/_nav.html:2
 msgid "Welcome"
 msgstr "欢迎"
 
@@ -442,7 +441,7 @@ msgstr "设置一个认证的app（例如：google、lastpass、authy）"
 
 #: flask_security/unified_signin.py:269
 msgid "Set up using SMS"
-msgstr 使用SMS进行设置""
+msgstr "用SMS进行设置\""
 
 #: flask_security/templates/security/_menu.html:2
 msgid "Menu"
