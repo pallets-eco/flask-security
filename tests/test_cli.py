@@ -14,6 +14,7 @@ from flask_security.cli import (
     roles_add_permissions,
     roles_remove_permissions,
     users_activate,
+    users_change_password,
     users_create,
     users_deactivate,
     users_reset_access,
@@ -282,4 +283,56 @@ def test_cli_reset_user(script_info):
     assert result.exit_code == 0
 
     result = runner.invoke(users_reset_access, ["whoami"], obj=script_info)
+    assert "User not found" in result.output
+
+
+def test_cli_change_password(script_info):
+    runner = CliRunner()
+
+    runner.invoke(
+        users_create,
+        ["email1@example.org", "username:lookatme!", "--password", "battery staple"],
+        obj=script_info,
+    )
+    result = runner.invoke(
+        users_change_password,
+        ["email1@example.org", "--password", "battery_staple"],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+
+    # check too short a password
+    result = runner.invoke(
+        users_change_password,
+        ["email1@example.org", "--password", "hi"],
+        obj=script_info,
+    )
+    assert result.exit_code == 2
+    assert "Password must be at least" in result.output
+
+    # check that password is properly normalized
+    result = runner.invoke(
+        users_change_password,
+        ["email1@EXAMPLE.org", "--password", "battery staple\N{ROMAN NUMERAL ONE}"],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+
+    app = script_info.load_app()
+    with app.app_context():
+        user = app.security.datastore.find_user(email="email1@example.org")
+        assert verify_password(
+            "battery staple\N{LATIN CAPITAL LETTER I}", user.password
+        )
+
+    result = runner.invoke(users_change_password, ["--help"])
+    assert "IDENTITY" in result.output
+
+    # check unknown user
+    result = runner.invoke(
+        users_change_password,
+        ["wrong_email@example.org", "--password", "battery_staple"],
+        obj=script_info,
+    )
+    assert result.exit_code == 2
     assert "User not found" in result.output

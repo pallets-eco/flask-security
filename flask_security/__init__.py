@@ -11,7 +11,7 @@
 """
 
 # flake8: noqa: F401
-
+from .changeable import admin_change_password
 from .core import Security, RoleMixin, UserMixin, AnonymousUser, current_user
 from .datastore import (
     UserDatastore,
@@ -103,4 +103,4 @@ from .utils import (
     verify_and_update_password,
 )
 
-__version__ = "4.0.1"
+__version__ = "4.0.2"

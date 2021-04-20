@@ -5,7 +5,7 @@
     Command Line Interface for managing accounts and roles.
 
     :copyright: (c) 2016 by CERN.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner
+    :copyright: (c) 2019-2021 by J. Christopher Wagner
     :license: MIT, see LICENSE for more details.
 """
 
@@ -18,6 +18,7 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
 from .quart_compat import get_quart_status
 
+from .changeable import admin_change_password
 from .utils import (
     find_user,
     get_identity_attributes,
@@ -143,7 +144,7 @@ def users_create(attributes, password, active):
         kwargs["password"] = "****"
         click.echo(kwargs)
     else:
-        raise click.UsageError("Error creating user. %s" % fix_errors(form.errors))
+        raise click.UsageError(f"Error creating user. {fix_errors(form.errors)}")
 
 
 @roles.command("create")
@@ -170,7 +171,10 @@ def roles_create(**kwargs):
 @with_appcontext
 @commit
 def roles_add(user, role):
-    """Add user to role."""
+    """Add role to user.
+
+    USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
+    """
     user_obj = find_user(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
@@ -193,7 +197,10 @@ def roles_add(user, role):
 @with_appcontext
 @commit
 def roles_remove(user, role):
-    """Remove user from role."""
+    """Remove role from user.
+
+    USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
+    """
     user_obj = find_user(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
@@ -262,7 +269,10 @@ def roles_remove_permissions(role, permissions):
 @with_appcontext
 @commit
 def users_activate(user):
-    """Activate a user."""
+    """Activate a user.
+
+    USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
+    """
     user_obj = find_user(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
@@ -277,7 +287,10 @@ def users_activate(user):
 @with_appcontext
 @commit
 def users_deactivate(user):
-    """Deactivate a user."""
+    """Deactivate a user.
+
+    USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
+    """
     user_obj = find_user(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
@@ -287,17 +300,18 @@ def users_deactivate(user):
         click.secho(f'User "{user}" was already deactivated.', fg="yellow")
 
 
-@users.command(
-    "reset_access",
-    help="Reset all authentication credentials for user."
-    " This includes sessions, authentication tokens, two-factor"
-    " and unified sign in secrets. ",
-)
+@users.command("reset_access")
 @click.argument("user")
 @with_appcontext
 @commit
 def users_reset_access(user):
-    """ Reset all authentication tokens etc."""
+    """Reset all authentication credentials for user.
+    This includes sessions, authentication tokens, two-factor
+    and unified sign in secrets. The user's password is not affected.
+
+    USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
+
+    """
     user_obj = find_user(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
@@ -305,3 +319,32 @@ def users_reset_access(user):
     click.secho(
         f'User "{user}" authentication credentials have been reset.', fg="green"
     )
+
+
+@users.command("change_password")
+@click.argument("user")
+@click.password_option()
+@with_appcontext
+@commit
+def users_change_password(user, password):
+    """
+    Administratively change a user's password.
+    All the user's sessions will be immediately invalidated.
+    You will have to inform the user via an out of band mechanism
+    what the their new password is.
+
+    USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
+
+    """
+    user_obj = find_user(user)
+    if user_obj is None:
+        raise click.UsageError("User not found.")
+
+    kwargs = {"password": password, "password_confirm": password}
+    form = _security.reset_password_form(MultiDict(kwargs), meta={"csrf": False})
+
+    if form.validate():
+        # validation will normalize password
+        admin_change_password(user_obj, form.password.data, notify=False)
+    else:
+        raise click.UsageError(f"Error changing password. {fix_errors(form.errors)}")

@@ -4,7 +4,7 @@
 
     Changeable tests
 
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -12,7 +12,7 @@ import base64
 
 import pytest
 from flask import Flask
-import jinja2
+import markupsafe
 
 from flask_security.core import UserMixin
 from flask_security.forms import _default_field_labels
@@ -344,7 +344,7 @@ def test_xlation(app, client, get_message_local):
             in outbox[0].subject
         )
         assert (
-            str(jinja2.escape(localize_callback("Your password has been changed.")))
+            str(markupsafe.escape(localize_callback("Your password has been changed.")))
             in outbox[0].html
         )
         assert localize_callback("Your password has been changed") in outbox[0].body

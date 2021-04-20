@@ -5,7 +5,7 @@
     Flask-Security utils module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import abc
@@ -638,7 +638,7 @@ def send_mail(subject, recipient, template, **context):
     :param template: The name of the email template
     :param context: The context to render the template with
 
-    This formats the email and passes off to :class:`.MailUtil` to actuall send the
+    This formats the email and passes it off to :class:`.MailUtil` to actually send the
     message.
     """
 
@@ -668,9 +668,9 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
     """Get the status of a token.
 
     :param token: The token to check
-    :param serializer: The name of the seriailzer. Can be one of the
+    :param serializer: The name of the serializer. Can be one of the
                        following: ``confirm``, ``login``, ``reset``
-    :param max_age: The name of the max age config option. Can be on of
+    :param max_age: The name of the max age config option. Can be one of
                     the following: ``CONFIRM_EMAIL``, ``LOGIN``,
                     ``RESET_PASSWORD``
     """
@@ -704,6 +704,7 @@ def check_and_get_token_status(token, serializer, within=None):
     :param token: The token to check
     :param serializer: The name of the serializer. Can be one of the
                        following: ``confirm``, ``login``, ``reset``, ``us_setup``
+                       ``remember``, ``two_factor_validity``
     :param within: max age - passed as a timedelta
 
     :return: a tuple of (expired, invalid, data)
@@ -1103,6 +1104,7 @@ def password_breached_validator(password):
     Does nothing unless :py:data:`SECURITY_PASSWORD_CHECK_BREACHED` is set.
     If password is found on the breached list, return an error if the count is
     greater than or equal to :py:data:`SECURITY_PASSWORD_BREACHED_COUNT`.
+    Uses :meth:`pwned`.
 
     :param password: Plain text password to check
 
@@ -1128,7 +1130,8 @@ def pwned(password):
     https://haveibeenpwned.com/API/v3
 
     :return: Count of password in DB (0 means hasn't been compromised)
-     Can raise HTTPError
+
+    Can raise HTTPError
 
     .. versionadded:: 3.4.0
     """
@@ -1140,7 +1143,7 @@ def pwned(password):
     sha1 = hashlib.sha1(password.encode("utf8")).hexdigest()
 
     req = urllib.request.Request(
-        url="https://api.pwnedpasswords.com/range/{}".format(sha1[:5].upper()),
+        url=f"https://api.pwnedpasswords.com/range/{sha1[:5].upper()}",
         headers={"User-Agent": "Flask-Security (Python)"},
     )
     # Might raise HTTPError

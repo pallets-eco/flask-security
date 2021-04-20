@@ -104,6 +104,8 @@ Utils
 
 .. autofunction:: flask_security.hash_password
 
+.. autofunction:: flask_security.admin_change_password
+
 .. autofunction:: flask_security.uia_phone_mapper
 
 .. autofunction:: flask_security.uia_email_mapper
