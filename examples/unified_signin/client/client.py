@@ -1,5 +1,5 @@
 """
-Copyright 2020 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2020-2021 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 This relies on session/session cookie for continued authentication.
@@ -157,7 +157,7 @@ def runit():
     server_url = "http://localhost:5002"
 
     try:
-        username = "example{}@me.com".format(str(random.randint(0, 100000)))
+        username = f"example{str(random.randint(0, 100000))}@me.com"
         mypassword = "a good easy question"
         myphone = "+16505551212"
 

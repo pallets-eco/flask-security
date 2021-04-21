@@ -8,7 +8,7 @@
 import pytest
 import re
 from flask import Flask
-import jinja2
+import markupsafe
 from tests.test_utils import authenticate, check_xlation, logout
 
 from flask_security import Security
@@ -154,7 +154,7 @@ def test_xlation(app, client, get_message_local):
         )
         assert (
             str(
-                jinja2.escape(
+                markupsafe.escape(
                     localize_callback(
                         "You can confirm your email through the link below:"
                     )

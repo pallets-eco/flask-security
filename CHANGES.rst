@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.0.2
+-------------
+
+Released TBD
+
+Features
+++++++++
+- (:issue:`474`) Add public API and CLI command to change a user's password.
+
 Version 4.0.1
 -------------
 
