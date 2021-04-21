@@ -173,7 +173,7 @@ entered, the new configuration will be permanently stored.
 
 Initial login/registration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This is basically a combination of the above two - initial POST to ``/login`` will return indicating that 2FA is required. The user must then POST to ``/tf-setup`` to setup
+This is basically a combination of the above two - initial POST to ``/login`` will return indicating that 2FA is required. The user must then POST to ``/tf_setup`` to setup
 the desired 2FA method, and finally have the user enter the code and POST to ``/tf-validate``.
 
 Rescue
