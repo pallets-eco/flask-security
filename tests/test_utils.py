@@ -23,7 +23,7 @@ from flask_security.signals import (
     reset_password_instructions_sent,
     user_registered,
 )
-from flask_security.utils import hash_password
+from flask_security.utils import hash_data, hash_password
 
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.http import parse_cookie
@@ -279,3 +279,13 @@ def capture_flashes():
         yield flashes
     finally:
         message_flashed.disconnect(_on)
+
+
+def get_auth_token_version_3x(app, user):
+    """
+    Copy of algorithm that generated user token in version 3.x
+    """
+    data = [str(user.id), hash_data(user.password)]
+    if hasattr(user, "fs_uniquifier"):
+        data.append(user.fs_uniquifier)
+    return app.security.remember_token_serializer.dumps(data)
