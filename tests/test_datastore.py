@@ -288,7 +288,7 @@ def test_modify_permissions(app, datastore):
 
 
 def test_get_permissions(app, datastore):
-    """ Verify that role.permissions = None works. """
+    """Verify that role.permissions = None works."""
     ds = datastore
     if not hasattr(ds.role_model, "permissions"):
         return
@@ -368,7 +368,7 @@ def test_modify_permissions_unsupported(app, datastore):
 
 
 def test_uuid(app, request, tmpdir, realdburl):
-    """ Test that UUID extension of postgresql works as a primary id for users """
+    """Test that UUID extension of postgresql works as a primary id for users"""
     import uuid
     from flask_sqlalchemy import SQLAlchemy
     from sqlalchemy import Boolean, Column, DateTime, Integer, ForeignKey, String

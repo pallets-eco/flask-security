@@ -12,6 +12,10 @@ Features
 ++++++++
 - (:issue:`474`) Add public API and CLI command to change a user's password.
 
+Fixes
++++++
+- (:issue:`463`) 4.0 doesn't accept 3.4 authentication tokens. (kuba-lilz)
+
 Version 4.0.1
 -------------
 

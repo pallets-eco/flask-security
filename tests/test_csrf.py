@@ -23,7 +23,7 @@ REAL_VALIDATE_CSRF = None
 
 @contextmanager
 def mp_validate_csrf():
-    """ Make sure we are really calling CSRF validation and getting correct answer """
+    """Make sure we are really calling CSRF validation and getting correct answer"""
     orig_validate_csrf = flask_wtf.csrf.validate_csrf
     try:
         mp = MpValidateCsrf(orig_validate_csrf)
@@ -204,7 +204,7 @@ def test_login_csrf_unauth_double(app, client, get_message):
 
 @pytest.mark.recoverable()
 def test_reset(app, client):
-    """ Test that form-based CSRF works for /reset """
+    """Test that form-based CSRF works for /reset"""
     app.config["WTF_CSRF_ENABLED"] = True
 
     with mp_validate_csrf() as mp:

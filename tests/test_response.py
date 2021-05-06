@@ -48,7 +48,7 @@ def test_render_json_logout(app, client):
 
 
 def test_default_unauthn(app, client):
-    """ Test default unauthn handler with and without json """
+    """Test default unauthn handler with and without json"""
 
     response = client.get("/profile")
     assert response.status_code == 302
@@ -64,7 +64,7 @@ def test_default_unauthn(app, client):
 
 @pytest.mark.settings(login_url="/mylogin", url_prefix="/myprefix")
 def test_default_unauthn_bp(app, client):
-    """ Test default unauthn handler with blueprint prefix and login url """
+    """Test default unauthn handler with blueprint prefix and login url"""
 
     response = client.get("/profile")
     assert response.status_code == 302
@@ -75,7 +75,7 @@ def test_default_unauthn_bp(app, client):
 
 
 def test_default_unauthn_myjson(app, client):
-    """ Make sure render_json gets called for unauthn errors """
+    """Make sure render_json gets called for unauthn errors"""
 
     @app.security.render_json
     def my_json(payload, code, headers=None, user=None):
@@ -101,7 +101,7 @@ def test_my_unauthn_handler(app, client):
 
 
 def test_default_unauthz(app, client):
-    """ Test default unauthz handler with and without json """
+    """Test default unauthz handler with and without json"""
     authenticate(client, "joe@lp.com", "password")
 
     response = client.get("/admin")
@@ -114,7 +114,7 @@ def test_default_unauthz(app, client):
 
 
 def test_default_unauthz_myjson(app, client):
-    """ Make sure render_json gets called for unauthn errors """
+    """Make sure render_json gets called for unauthn errors"""
 
     @app.security.render_json
     def my_json(payload, code, headers=None, user=None):
@@ -147,7 +147,7 @@ def test_my_unauthz_handler(app, client):
 
 
 def test_my_unauthz_handler_exc(app, client):
-    """ Verify that can use exceptions in unauthz handler """
+    """Verify that can use exceptions in unauthz handler"""
 
     @app.security.unauthz_handler
     def my_unauthz(func, params):

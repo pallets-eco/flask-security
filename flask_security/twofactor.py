@@ -122,14 +122,14 @@ def complete_two_factor_process(
 
 
 def tf_disable(user):
-    """ Disable two factor for user """
+    """Disable two factor for user"""
     tf_clean_session()
     _datastore.tf_reset(user)
     tf_disabled.send(app._get_current_object(), user=user)
 
 
 def is_tf_setup(user):
-    """ Return True is user account is setup for 2FA. """
+    """Return True is user account is setup for 2FA."""
     return user.tf_totp_secret and user.tf_primary_method
 
 

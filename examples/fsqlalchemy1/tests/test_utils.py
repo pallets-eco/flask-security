@@ -25,7 +25,7 @@ def set_current_user(app, user):
 
 
 def create_fake_user(user_cls, email="unittest@me.com", userid=1, roles=None):
-    """ Create fake user optionally with roles """
+    """Create fake user optionally with roles"""
     user = user_cls()
     user.email = email
     user.id = userid

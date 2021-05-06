@@ -999,7 +999,7 @@ class SmsSenderBaseClass(metaclass=abc.ABCMeta):
 
 class DummySmsSender(SmsSenderBaseClass):
     def send_sms(self, from_number, to_number, msg):  # pragma: no cover
-        """ Do nothing. """
+        """Do nothing."""
         return
 
 
@@ -1026,7 +1026,7 @@ try:  # pragma: no cover
             self.auth_token = config_value("SMS_SERVICE_CONFIG")["AUTH_TOKEN"]
 
         def send_sms(self, from_number, to_number, msg):
-            """ Send message via twilio account. """
+            """Send message via twilio account."""
             client = Client(self.account_sid, self.auth_token)
             client.messages.create(to=to_number, from_=from_number, body=msg)
 

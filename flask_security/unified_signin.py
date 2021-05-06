@@ -256,7 +256,7 @@ class UnifiedVerifyForm(_UnifiedPassCodeForm):
 
 
 class UnifiedSigninSetupForm(Form):
-    """ Setup form """
+    """Setup form"""
 
     chosen_method = RadioField(
         _("Available Methods"),
@@ -292,7 +292,7 @@ class UnifiedSigninSetupForm(Form):
 
 
 class UnifiedSigninSetupValidateForm(Form):
-    """The unified sign in setup validation form """
+    """The unified sign in setup validation form"""
 
     # These 2 filled in by view
     user = None

@@ -45,7 +45,7 @@ except ImportError:  # pragma: no cover
                 return Domain.gettext(string, **variables)
 
             class Translations:
-                """ dummy Translations class for WTForms, no translation support """
+                """dummy Translations class for WTForms, no translation support"""
 
                 def gettext(self, string):
                     return string
