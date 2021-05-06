@@ -473,7 +473,9 @@ def _request_loader(request):
         uniquifier_index = 0 if len(data) == 1 else 2
 
         if hasattr(_security.datastore.user_model, "fs_token_uniquifier"):
-            user = _security.datastore.find_user(fs_token_uniquifier=data[uniquifier_index])
+            user = _security.datastore.find_user(
+                fs_token_uniquifier=data[uniquifier_index]
+            )
         else:
             user = _security.datastore.find_user(fs_uniquifier=data[uniquifier_index])
         if not user.active:

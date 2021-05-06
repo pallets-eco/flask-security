@@ -17,7 +17,6 @@ import pytest
 from flask import Blueprint
 
 from flask_security import uia_email_mapper
-from flask_security.utils import hash_data
 
 from tests.test_utils import (
     authenticate,
