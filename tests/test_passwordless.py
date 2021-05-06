@@ -144,7 +144,7 @@ def test_spa_get(app, client):
     login_error_view="/login-error",
 )
 def test_spa_get_bad_token(app, client, get_message):
-    """ Test expired and invalid token"""
+    """Test expired and invalid token"""
     with capture_flashes() as flashes:
         with capture_passwordless_login_requests() as requests:
             response = client.post(

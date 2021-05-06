@@ -711,7 +711,7 @@ def test_login_info(client):
 @pytest.mark.registerable()
 @pytest.mark.settings(post_login_view="/anon_required")
 def test_anon_required(client, get_message):
-    """ If logged in, should get 'anonymous_user_required' redirect """
+    """If logged in, should get 'anonymous_user_required' redirect"""
     response = authenticate(client, follow_redirects=False)
     response = client.get("/register")
     assert "location" in response.headers
@@ -721,7 +721,7 @@ def test_anon_required(client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.settings(post_login_view="/anon_required")
 def test_anon_required_json(client, get_message):
-    """ If logged in, should get 'anonymous_user_required' response """
+    """If logged in, should get 'anonymous_user_required' response"""
     authenticate(client, follow_redirects=False)
     response = client.get("/register", headers={"Accept": "application/json"})
     assert response.status_code == 400

@@ -220,7 +220,7 @@ def test_auth_token_unconfirmed(client_nc):
 @pytest.mark.registerable()
 @pytest.mark.settings(login_without_confirmation=True, auto_login_after_confirm=False)
 def test_confirmation_different_user_when_logged_in_no_auto(client, get_message):
-    """ Default - AUTO_LOGIN == false so shouldn't log in second user. """
+    """Default - AUTO_LOGIN == false so shouldn't log in second user."""
     e1 = "dude@lp.com"
     e2 = "lady@lp.com"
 
@@ -353,7 +353,7 @@ def test_spa_get(app, client):
     confirm_error_view="/confirm-error",
 )
 def test_spa_get_bad_token(app, client, get_message):
-    """ Test expired and invalid token"""
+    """Test expired and invalid token"""
     with capture_flashes() as flashes:
         with capture_registrations() as registrations:
             response = client.post(

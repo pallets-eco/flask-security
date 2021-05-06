@@ -124,7 +124,7 @@ These are placeholders - not current used
 
 
 class FsOauth2ClientMixin:
-    """ Oauth2 client """
+    """Oauth2 client"""
 
     id = Column(String(64), primary_key=True)
 
@@ -145,7 +145,7 @@ class FsOauth2ClientMixin:
 
 
 class FsTokenMixin:
-    """ (Bearer) Tokens that have been given out """
+    """(Bearer) Tokens that have been given out"""
 
     id = Column(Integer, primary_key=True)
 

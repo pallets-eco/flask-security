@@ -391,7 +391,7 @@ def test_form_required(app, sqlalchemy_datastore):
 
 
 def test_form_required_local_message(app, sqlalchemy_datastore):
-    """ Test having a local message (not xlatable and not part of MSG_ config."""
+    """Test having a local message (not xlatable and not part of MSG_ config."""
 
     class MyLoginForm(LoginForm):
         myfield = StringField("My Custom Field", validators=[Required(message="hi")])
@@ -628,7 +628,7 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
 @pytest.mark.skip
 @pytest.mark.settings(password_check_breached="strict")
 def test_breached_real(app):
-    """ Actually go out to internet.. """
+    """Actually go out to internet.."""
 
     app.security = Security()
     app.security.init_app(app)
@@ -639,7 +639,7 @@ def test_breached_real(app):
 
 
 def test_json_error_response_string():
-    """ Unit test for correct response when a string is given. """
+    """Unit test for correct response when a string is given."""
     error_msg = "This is an error!"
     response = json_error_response(errors=error_msg)
     assert "error" in response
@@ -648,7 +648,7 @@ def test_json_error_response_string():
 
 
 def test_json_error_response_dict():
-    """ Unit test for correct response when a dict is given. """
+    """Unit test for correct response when a dict is given."""
     error_msg = {
         "e-mail": "The e-mail address is already in the system.",
         "name": "The name is too long.",
@@ -660,7 +660,7 @@ def test_json_error_response_dict():
 
 
 def test_json_error_response_typeerror():
-    """ Unit test for checking for error raising. """
+    """Unit test for checking for error raising."""
     error_msg = ("tuple",)
     with pytest.raises(TypeError):
         json_error_response(errors=error_msg)
@@ -711,7 +711,7 @@ def test_phone_util_override(app):
 
 
 def test_authn_freshness(app, client, get_message):
-    """ Test freshness using default reauthn_handler """
+    """Test freshness using default reauthn_handler"""
 
     @auth_required(within=30, grace=0)
     def myview():
@@ -752,7 +752,7 @@ def test_authn_freshness(app, client, get_message):
 
 
 def test_authn_freshness_handler(app, client, get_message):
-    """ Test with our own handler """
+    """Test with our own handler"""
 
     @app.security.reauthn_handler
     def my_reauthn(within, grace, headers=None):
@@ -960,7 +960,7 @@ def test_verify_next(app, client, get_message):
 
 
 def test_direct_decorator(app, client, get_message):
-    """ Test/show calling the auth_required decorator directly """
+    """Test/show calling the auth_required decorator directly"""
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     def myview():
@@ -983,7 +983,7 @@ def test_direct_decorator(app, client, get_message):
 
 
 def test_authn_via(app, client, get_message):
-    """ Test that we get correct fs_authn_via set in request """
+    """Test that we get correct fs_authn_via set in request"""
 
     @auth_required(within=30, grace=0)
     def myview():

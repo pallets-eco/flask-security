@@ -541,7 +541,7 @@ def test_unicode_invalid_length(app, client, get_message):
 
 
 def test_pwd_normalize(app, client):
-    """ Verify that can log in with both original and normalized pwd """
+    """Verify that can log in with both original and normalized pwd"""
     authenticate(client)
 
     data = dict(

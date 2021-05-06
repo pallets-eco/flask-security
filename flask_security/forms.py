@@ -645,7 +645,7 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
 
 
 class TwoFactorRescueForm(Form):
-    """The Two-factor Rescue validation form """
+    """The Two-factor Rescue validation form"""
 
     help_setup = RadioField(
         "Trouble Accessing Your Account?",

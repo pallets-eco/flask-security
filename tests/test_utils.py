@@ -94,7 +94,7 @@ def get_session(response):
 
 
 def check_xlation(app, locale):
-    """ Return True if locale is loaded """
+    """Return True if locale is loaded"""
     with app.test_request_context():
         domain = app.security.i18n_domain
         xlations = domain.get_translations()
