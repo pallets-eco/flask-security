@@ -462,10 +462,22 @@ def _request_loader(request):
         data = _security.remember_token_serializer.loads(
             token, max_age=_security.token_max_age
         )
+
+        # Version 3.x generated tokens that map to data with 3 elements,
+        # and fs_uniquifier was on last element.
+        # Version 4.0.0 generates tokens that map to data with only 1 element,
+        # which maps to fs_uniquifier.
+        # Here we compute uniquifier_index so that we can pick up correct index for
+        # matching fs_uniquifier in version 4.0.0 even if token was created with
+        # version 3.x
+        uniquifier_index = 0 if len(data) == 1 else 2
+
         if hasattr(_security.datastore.user_model, "fs_token_uniquifier"):
-            user = _security.datastore.find_user(fs_token_uniquifier=data[0])
+            user = _security.datastore.find_user(
+                fs_token_uniquifier=data[uniquifier_index]
+            )
         else:
-            user = _security.datastore.find_user(fs_uniquifier=data[0])
+            user = _security.datastore.find_user(fs_uniquifier=data[uniquifier_index])
         if not user.active:
             user = None
     except Exception:
