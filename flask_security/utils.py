@@ -690,10 +690,11 @@ def send_mail(subject, recipient, template, **context):
     if isinstance(sender, LocalProxy):
         sender = sender._get_current_object()
 
-    if not (isinstance(sender, tuple) and len(sender) == 2):
-        sender = str(sender)
-    else:
+    # In Flask-Mail, sender can be a two element tuple -- (name, address)
+    if isinstance(sender, tuple) and len(sender) == 2:
         sender = (str(sender[0]), str(sender[1]))
+    else:
+        sender = str(sender)
 
     _security._mail_util.send_mail(
         template, subject, recipient, sender, body, html, context.get("user", None)
