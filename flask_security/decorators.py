@@ -504,7 +504,7 @@ def roles_accepted(*roles):
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
-            perm = Permission(*[RoleNeed(role) for role in roles])
+            perm = Permission(*(RoleNeed(role) for role in roles))
             if perm.can():
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:
@@ -578,7 +578,7 @@ def permissions_accepted(*fsperms):
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
-            perm = Permission(*[FsPermNeed(fsperm) for fsperm in fsperms])
+            perm = Permission(*(FsPermNeed(fsperm) for fsperm in fsperms))
             if perm.can():
                 return fn(*args, **kwargs)
             if _security._unauthorized_callback:

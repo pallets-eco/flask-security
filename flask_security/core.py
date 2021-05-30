@@ -7,11 +7,12 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
     :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 from datetime import datetime, timedelta
+import re
 import warnings
 
 import pkg_resources
@@ -156,6 +157,8 @@ _default_config = {
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
     "REDIRECT_ALLOW_SUBDOMAINS": False,
+    "REDIRECT_VALIDATE_MODE": None,
+    "REDIRECT_VALIDATE_RE": r"^/{4,}|\\{3,}|[\s\000-\037][/\\]{2,}",
     "FORGOT_PASSWORD_TEMPLATE": "security/forgot_password.html",
     "LOGIN_USER_TEMPLATE": "security/login_user.html",
     "REGISTER_USER_TEMPLATE": "security/register_user.html",
@@ -593,6 +596,8 @@ def _get_state(app, datastore, anonymous_user=None, **kwargs):
             _unauthz_handler=default_unauthz_handler,
         )
     )
+    if "redirect_validate_re" in kwargs:
+        kwargs["_redirect_validate_re"] = re.compile(kwargs["redirect_validate_re"])
 
     if "login_manager" not in kwargs:
         kwargs["login_manager"] = _get_login_manager(app, anonymous_user)

@@ -498,6 +498,34 @@ def url_for_security(endpoint, **values):
 
 
 def validate_redirect_url(url):
+    """Validate that the URL for redirect is relative.
+    Allowing an absolute redirect is a security issue - a so-called open-redirect.
+    Note that by default Werkzeug will always take this URL and make it relative
+    when setting the Location header - but that behavior can be overridden.
+
+    The complexity here is that urlsplit() does pretty well, but browsers even today
+    May 2021 are very lenient in what they accept as URLs - for example:
+        next=\\\\github.com
+        next=%5C%5C%5Cgithub.com
+        next=/////github.com
+        next=%20\\\\github.com
+        next=%20///github.com
+        next=%20//github.com
+        next=%19////github.com - i.e. browser will strip control chars
+        next=%E2%80%8A///github.com - doesn't redirect! That is a unicode thin space.
+
+    All will result in a null netloc and scheme from urlsplit - however many browsers
+    will gladly strip off uninteresting characters and convert backslashes to forward
+    slashes - and the cases above will actually cause a redirect to github.com
+    Sigh.
+
+    Some articles claim that a relative url has to start with a '/' - but that isn't
+    strictly true. From: https://datatracker.ietf.org/doc/html/rfc3986#section-5
+    a relative path can start with a "//", "/", a non-colon, or be empty. So it seems
+    that all the above URLs are valid.
+    By the time we get the URL, it has been unencoded - so we can't really determine
+    if it is 'valid' since it appears that '/'s can appear in the URL if escaped.
+    """
     if url is None or url.strip() == "":
         return False
     url_next = urlsplit(url)
@@ -515,6 +543,9 @@ def validate_redirect_url(url):
             return True
         else:
             return False
+    if config_value("REDIRECT_VALIDATE_MODE") == "regex":
+        matcher = _security._redirect_validate_re.match(url)
+        return matcher is None
     return True
 
 
