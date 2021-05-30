@@ -690,8 +690,13 @@ def send_mail(subject, recipient, template, **context):
     if isinstance(sender, LocalProxy):
         sender = sender._get_current_object()
 
+    if not (isinstance(sender, tuple) and len(sender) == 2):
+        sender = str(sender)
+    else:
+        sender = (str(sender[0]), str(sender[1]))
+
     _security._mail_util.send_mail(
-        template, subject, recipient, str(sender), body, html, context.get("user", None)
+        template, subject, recipient, sender, body, html, context.get("user", None)
     )
 
 
