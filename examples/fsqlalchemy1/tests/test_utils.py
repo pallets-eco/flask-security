@@ -41,5 +41,5 @@ def create_fake_user(user_cls, email="unittest@me.com", userid=1, roles=None):
 
 def create_fake_role(role_cls, name, permissions=None):
     if permissions:
-        permissions = ",".join([p.strip() for p in permissions.split(",")])
+        permissions = ",".join(p.strip() for p in permissions.split(","))
     return role_cls(name=name, permissions=permissions)

@@ -58,6 +58,7 @@ from flask_security.utils import (
     hash_data,
     send_mail,
     uia_phone_mapper,
+    validate_redirect_url,
     verify_hash,
 )
 
@@ -1034,3 +1035,19 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
     response = client.get("/logout")
     assert response.status_code == 302
     assert response.headers["Location"] == "http://localhost/post_logout"
+
+
+@pytest.mark.settings(redirect_validate_mode="regex")
+def test_validate_redirect(app, sqlalchemy_datastore):
+    """
+    Test various possible URLs that urlsplit() shows as relative but
+    many browsers will interpret as absolute - and this have a
+    open-redirect vulnerability. Note this vulnerability only
+    is viable if the application sets autocorrect_location_header = False
+    """
+    init_app_with_options(app, sqlalchemy_datastore)
+    with app.test_request_context("http://localhost:5001/login"):
+        assert not validate_redirect_url("\\\\\\github.com")
+        assert not validate_redirect_url(" //github.com")
+        assert not validate_redirect_url("\t//github.com")
+        assert not validate_redirect_url("//github.com")  # this is normal urlsplit
