@@ -434,8 +434,30 @@ def test_no_email_sender(app):
         user = TestUser("matt@lp.com")
         with app.mail.record_messages() as outbox:
             send_mail("Test Default Sender", user.email, "welcome", user=user)
-        assert 1 == len(outbox)
-        assert "test@testme.com" == outbox[0].sender
+            assert 1 == len(outbox)
+            assert "test@testme.com" == outbox[0].sender
+
+
+def test_sender_tuple(app):
+    """Verify that if sender is a (name, address) tuple,
+    in the received email sender is properly formatted as "name <address>"
+    """
+    app.config["MAIL_DEFAULT_SENDER"] = ("Test User", "test@testme.com")
+
+    class TestUser:
+        def __init__(self, email):
+            self.email = email
+
+    security = Security()
+    security.init_app(app)
+
+    with app.app_context():
+        app.try_trigger_before_first_request_functions()
+        user = TestUser("matt@lp.com")
+        with app.mail.record_messages() as outbox:
+            send_mail("Test Tuple Sender", user.email, "welcome", user=user)
+            assert 1 == len(outbox)
+            assert "Test User <test@testme.com>" == outbox[0].sender
 
 
 def test_xlation(app, client):
