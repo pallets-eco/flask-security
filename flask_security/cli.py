@@ -91,12 +91,12 @@ def roles():
 
 @users.command(
     "create",
-    help="Create a new user with one or more attributes using the syntax:"
+    short_help=("Create a new user with one or more attributes using the syntax:"
     " attr:value. If attr isn't set 'email' is presumed."
     " Identity attribute values will be validated using the configured"
     " confirm_register_form;"
     " however, any ADDITIONAL attribute:value pairs will be sent to"
-    " datastore.create_user",
+    " datastore.create_user"),
 )
 @click.argument(
     "attributes",
