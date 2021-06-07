@@ -192,21 +192,23 @@ def is_sqlalchemy(datastore):
 
 
 class SmsTestSender(SmsSenderBaseClass):
-    SmsSenderBaseClass.messages = []
-    SmsSenderBaseClass.count = 0
+    messages = []
+    count = 0
 
+    # This looks strange because we need class variables since test need to access a
+    # sender but the actual sender is instantiated low down in SMS code.
     def __init__(self):
         super().__init__()
-        SmsSenderBaseClass.count = 0
-        SmsSenderBaseClass.messages = []
+        SmsTestSender.count = 0
+        SmsTestSender.messages = []
 
     def send_sms(self, from_number, to_number, msg):
-        SmsSenderBaseClass.messages.append(msg)
-        SmsSenderBaseClass.count += 1
+        SmsTestSender.messages.append(msg)
+        SmsTestSender.count += 1
         return
 
     def get_count(self):
-        return SmsSenderBaseClass.count
+        return SmsTestSender.count
 
 
 class SmsBadSender(SmsSenderBaseClass):

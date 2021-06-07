@@ -13,6 +13,7 @@
 
 from datetime import datetime, timedelta
 import re
+import typing as t
 import warnings
 
 import pkg_resources
@@ -78,7 +79,10 @@ from .utils import (
 from .views import create_blueprint, default_render_json
 
 # Convenient references
-_security = LocalProxy(lambda: current_app.extensions["security"])
+# noinspection PyTypeChecker
+_security: "Security" = LocalProxy(  # type: ignore
+    lambda: current_app.extensions["security"]
+)
 _datastore = LocalProxy(lambda: _security.datastore)
 
 # List of authentication mechanisms supported.
@@ -86,7 +90,7 @@ AUTHN_MECHANISMS = ("basic", "session", "token")
 
 
 #: Default Flask-Security configuration
-_default_config = {
+_default_config: t.Dict[str, t.Any] = {
     "BLUEPRINT_NAME": "security",
     "CLI_ROLES_NAME": "roles",
     "CLI_USERS_NAME": "users",

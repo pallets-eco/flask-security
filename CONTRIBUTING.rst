@@ -148,7 +148,7 @@ postgres). It is easy to run the unit tests against a real DB instance. First
 of course install the DB locally then::
 
   # For postgres
-  pytest --realdburl postgres://<user>@localhost/
+  pytest --realdburl postgresql://<user>@localhost/
   # For mysql
   pytest --realdburl "mysql+pymysql://root:<password>@localhost/"
 

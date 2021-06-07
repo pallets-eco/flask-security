@@ -22,6 +22,7 @@ data and a mail sender that flashes what mail would be sent!
 """
 
 import datetime
+import typing as t
 import os
 
 from flask import Flask, flash, render_template_string, request, session
@@ -299,7 +300,7 @@ class User(Base, UserMixin):
     us_totp_secrets = Column(Text(), nullable=True)
     us_phone_number = Column(String(128), nullable=True)
 
-    roles = relationship(
+    roles: t.List = relationship(
         "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
     )
 

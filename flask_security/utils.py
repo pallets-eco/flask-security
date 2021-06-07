@@ -15,7 +15,7 @@ from functools import partial
 import hashlib
 import hmac
 import time
-from typing import Dict, List
+import typing as t
 import warnings
 from datetime import timedelta
 from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
@@ -47,8 +47,14 @@ from werkzeug.datastructures import MultiDict
 from .quart_compat import best, get_quart_status
 from .signals import user_authenticated
 
+if t.TYPE_CHECKING:  # pragma: no cover
+    from .core import Security
+
 # Convenient references
-_security = LocalProxy(lambda: current_app.extensions["security"])
+# noinspection PyTypeChecker
+_security: "Security" = LocalProxy(  # type: ignore
+    lambda: current_app.extensions["security"]
+)
 
 _datastore = LocalProxy(lambda: _security.datastore)
 
@@ -764,7 +770,7 @@ def check_and_get_token_status(token, serializer, within=None):
     return expired, invalid, data
 
 
-def get_identity_attributes(app=None) -> List:
+def get_identity_attributes(app=None) -> t.List[str]:
     # Return list of keys of identity attributes
     # Is it possible to not have any?
     app = app or current_app
@@ -774,7 +780,7 @@ def get_identity_attributes(app=None) -> List:
     return []
 
 
-def get_identity_attribute(attr, app=None) -> Dict:
+def get_identity_attribute(attr: str, app=None) -> t.Dict[str, t.Any]:
     """Given an user_identity_attribute, return the defining dict.
     A bit annoying since USER_IDENTITY_ATTRIBUTES is a list of dict
     where each dict has just one key.
@@ -1022,7 +1028,7 @@ class FsJsonEncoder(JSONEncoder):
 
 
 class SmsSenderBaseClass(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         pass
 
     @abc.abstractmethod
@@ -1041,7 +1047,7 @@ class DummySmsSender(SmsSenderBaseClass):
 
 
 class SmsSenderFactory:
-    senders = {"Dummy": DummySmsSender}
+    senders: t.Dict[str, t.Type[SmsSenderBaseClass]] = {"Dummy": DummySmsSender}
 
     @classmethod
     def createSender(cls, name, *args, **kwargs):
@@ -1059,6 +1065,7 @@ try:  # pragma: no cover
 
     class TwilioSmsSender(SmsSenderBaseClass):
         def __init__(self):
+            super().__init__()
             self.account_sid = config_value("SMS_SERVICE_CONFIG")["ACCOUNT_SID"]
             self.auth_token = config_value("SMS_SERVICE_CONFIG")["AUTH_TOKEN"]
 

@@ -115,4 +115,4 @@ jobs:
         - name: Postgres
           run: |
             pip install tox
-            tox -e realpostgres -- --realdburl='postgres://postgres:testpw@localhost:5432/testdb'
+            tox -e realpostgres -- --realdburl='postgresql://postgres:testpw@localhost:5432/testdb'

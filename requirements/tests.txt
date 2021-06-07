@@ -19,7 +19,7 @@ pyqrcode
 pytest-cache
 pytest-cov
 pytest
-sqlalchemy<1.4.0
+sqlalchemy
 sqlalchemy-utils
 werkzeug
 zxcvbn

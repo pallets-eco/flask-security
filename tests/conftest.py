@@ -453,7 +453,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
 
     if realdburl:
         engine_mapper = {
-            "postgres": "peewee.PostgresqlDatabase",
+            "postgresql": "peewee.PostgresqlDatabase",
             "mysql": "peewee.MySQLDatabase",
         }
         db_url, db_info = _setup_realdb(realdburl)
@@ -576,8 +576,10 @@ def pony_setup(request, app, tmpdir, realdburl):
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)
         pieces = urlsplit(db_url)
+        provider = pieces.scheme.split("+")[0]
+        provider = "postgres" if provider == "postgresql" else provider
         db.bind(
-            provider=pieces.scheme.split("+")[0],
+            provider=provider,
             user=pieces.username,
             password=pieces.password,
             host=pieces.hostname,
@@ -746,7 +748,7 @@ def pytest_addoption(parser):
         action="store",
         default=None,
         help="""Set url for using real database for testing.
-        For postgres: 'postgres://user:password@host/')""",
+        For postgres: 'postgresql://user:password@host/')""",
     )
 
 
@@ -758,7 +760,7 @@ def realdburl(request):
     compared to sqlite
     To use postgres you need to of course run a postgres instance on localhost
     then pass in an extra arg to pytest:
-    --realdburl postgres://<user>@localhost/
+    --realdburl postgresql://<user>@localhost/
     For mysql same - just download and add a root password.
     --realdburl "mysql+pymysql://root:<password>@localhost/"
     """
