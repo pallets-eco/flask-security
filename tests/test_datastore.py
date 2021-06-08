@@ -379,7 +379,7 @@ def test_uuid(app, request, tmpdir, realdburl):
     from tests.conftest import _setup_realdb, _teardown_realdb
 
     # UUID type only supported by postgres - not sqlite.
-    if not realdburl or "postgres" not in realdburl:
+    if not realdburl or "postgresql" not in realdburl:
         skip("This test only works on postgres")
     db_url, db_info = _setup_realdb(realdburl)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url

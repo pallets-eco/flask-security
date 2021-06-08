@@ -14,7 +14,10 @@ Features
 
 Fixes
 +++++
-- (:issue:`463`) 4.0 doesn't accept 3.4 authentication tokens. (kuba-lilz)
+- (:issue:`483`) 4.0 doesn't accept 3.4 authentication tokens. (kuba-lilz)
+- (:issue:`490`) Flask-Mail sender name can be a tuple. (hrishikeshrt)
+- (:issue:`486`) Possible open redirect vulnerability.
+- (:pr:`478`) Improve/update German translation. (sr-verde)
 
 Version 4.0.1
 -------------
