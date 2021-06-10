@@ -56,6 +56,7 @@ def register_user(registration_form):
         app._get_current_object(),
         user=user,
         confirm_token=token,
+        confirmation_token=token,
         form_data=registration_form.to_dict(only_user=False),
     )
 
@@ -66,6 +67,7 @@ def register_user(registration_form):
             "welcome",
             user=user,
             confirmation_link=confirmation_link,
+            confirmation_token=token,
         )
 
     return user

@@ -5,6 +5,7 @@
     Confirmable tests
 """
 
+import re
 import time
 from urllib.parse import parse_qsl, urlsplit
 
@@ -37,11 +38,12 @@ def test_confirmable_flag(app, clients, get_message):
         recorded_confirms.append(user)
 
     @confirm_instructions_sent.connect_via(app)
-    def on_instructions_sent(app, user, token):
+    def on_instructions_sent(app, **kwargs):
         assert isinstance(app, Flask)
-        assert isinstance(user, UserMixin)
-        assert isinstance(token, str)
-        recorded_instructions_sent.append(user)
+        assert isinstance(kwargs["user"], UserMixin)
+        assert isinstance(kwargs["token"], str)
+        assert isinstance(kwargs["confirmation_token"], str)
+        recorded_instructions_sent.append(kwargs["user"])
 
     # Test login before confirmation
     email = "dude@lp.com"
@@ -124,6 +126,50 @@ def test_confirmable_flag(app, clients, get_message):
 
     response = clients.get("/confirm/" + token, follow_redirects=True)
     assert get_message("INVALID_CONFIRMATION_TOKEN") in response.data
+
+
+@pytest.mark.registerable()
+def test_confirmation_template(app, client, get_message):
+    # Check contents of email template - this uses a test template
+    # in order to check all context vars since the default template
+    # doesn't have all of them.
+
+    recorded_tokens_sent = []
+
+    @confirm_instructions_sent.connect_via(app)
+    def on_instructions_sent(app, **kwargs):
+        recorded_tokens_sent.append(kwargs["confirmation_token"])
+
+    with capture_registrations() as registrations:
+        with app.mail.record_messages() as outbox:
+            data = dict(email="mary@lp.com", password="awesome sunset", next="")
+            # Register - this will use the welcome template
+            client.post("/register", data=data, follow_redirects=True)
+            # Explicitly ask for confirmation -
+            # this will use the confirmation_instructions template
+            client.post("/confirm", data=dict(email="mary@lp.com"))
+        assert len(outbox) == 2
+        # check registration email
+        matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+        # should be 4 - link, email, token, config item
+        assert matcher[1].split(":")[1] == "mary@lp.com"
+        assert matcher[2].split(":")[1] == registrations[0]["confirm_token"]
+        assert matcher[2].split(":")[1] == registrations[0]["confirmation_token"]
+        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+
+        # check confirmation email
+        matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
+        # should be 4 - link, email, token, config item
+        assert matcher[1].split(":")[1] == "mary@lp.com"
+        assert matcher[2].split(":")[1] == recorded_tokens_sent[0]
+        token = matcher[2].split(":")[1]
+        assert token == recorded_tokens_sent[0]
+        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+
+        # check link
+        _, link = matcher[0].split(":", 1)
+        response = client.get(link, follow_redirects=True)
+        assert get_message("EMAIL_CONFIRMED") in response.data
 
 
 @pytest.mark.registerable()

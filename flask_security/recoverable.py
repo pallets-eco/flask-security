@@ -44,10 +44,14 @@ def send_reset_password_instructions(user):
             "reset_instructions",
             user=user,
             reset_link=reset_link,
+            reset_token=token,
         )
 
     reset_password_instructions_sent.send(
-        app._get_current_object(), user=user, token=token
+        app._get_current_object(),
+        user=user,
+        token=token,
+        reset_token=token,
     )
 
 

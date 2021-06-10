@@ -6,6 +6,7 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
+    :copyright: (c) 2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -47,9 +48,12 @@ def send_confirmation_instructions(user):
         "confirmation_instructions",
         user=user,
         confirmation_link=confirmation_link,
+        confirmation_token=token,
     )
 
-    confirm_instructions_sent.send(app._get_current_object(), user=user, token=token)
+    confirm_instructions_sent.send(
+        app._get_current_object(), user=user, token=token, confirmation_token=token
+    )
 
 
 def generate_confirmation_token(user):

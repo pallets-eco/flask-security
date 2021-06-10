@@ -188,9 +188,9 @@ sends the following signals.
 .. data:: user_registered
 
    Sent when a user registers on the site. In addition to the app (which is the
-   sender), it is passed `user`, `confirm_token` and `form_data` arguments.
+   sender), it is passed `user`, `confirm_token` (deprecated), `confirmation_token` and `form_data` arguments.
    `form_data` is a dictionary representation of registration form's content
-   received with registration request.
+   received with the registration request.
 
 .. data:: user_confirmed
 
@@ -200,7 +200,7 @@ sends the following signals.
 .. data:: confirm_instructions_sent
 
    Sent when a user requests confirmation instructions. In addition to the app
-   (which is the sender), it is passed a `user` argument.
+   (which is the sender), it is passed a `user` and `confirmation_token` arguments.
 
 .. data:: login_instructions_sent
 
@@ -220,7 +220,7 @@ sends the following signals.
 .. data:: reset_password_instructions_sent
 
    Sent when a user requests a password reset. In addition to the app (which is
-   the sender), it is passed `user` and `token` arguments.
+   the sender), it is passed `user`, `token` (deprecated), and `reset_token` arguments.
 
 .. data:: tf_code_confirmed
 
@@ -254,7 +254,8 @@ sends the following signals.
 .. data:: us_security_token_sent
 
     Sent when a unified sign in access code is sent. In addition to the app
-    (which is the sender), it is passed `user`, `method`, `token`,
+    (which is the sender), it is passed `user`, `method`, `token` (deprecated),
+    `login_token`,
     `phone_number`, and `send_magic_link` arguments.
 
     .. versionadded:: 3.4.0

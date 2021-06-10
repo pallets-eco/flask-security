@@ -34,6 +34,7 @@ def send_login_instructions(user):
         "login_instructions",
         user=user,
         login_link=login_link,
+        login_token=token,
     )
 
     login_instructions_sent.send(
