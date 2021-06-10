@@ -106,8 +106,8 @@ def test_context_processors(client, app):
         client.post("/reset", data=dict(email="matt@lp.com"))
 
     email = outbox[0]
-    assert "global" in email.html
-    assert "bar-mail" in email.html
+    assert "global" in email.body
+    assert "bar-mail" in email.body
 
 
 @pytest.mark.passwordless()

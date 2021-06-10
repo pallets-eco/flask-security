@@ -34,11 +34,11 @@ def test_recoverable_flag(app, clients, get_message):
         recorded_resets.append(user)
 
     @reset_password_instructions_sent.connect_via(app)
-    def on_instructions_sent(app, user, token):
+    def on_instructions_sent(app, **kwargs):
         assert isinstance(app, Flask)
-        assert isinstance(user, UserMixin)
-        assert isinstance(token, str)
-        recorded_instructions_sent.append(user)
+        assert isinstance(kwargs["user"], UserMixin)
+        assert isinstance(kwargs["token"], str)
+        recorded_instructions_sent.append(kwargs["user"])
 
     # Test the reset view
     response = clients.get("/reset")
@@ -143,8 +143,8 @@ def test_recoverable_json(app, client, get_message):
         recorded_resets.append(user)
 
     @reset_password_instructions_sent.connect_via(app)
-    def on_instructions_sent(app, user, token):
-        recorded_instructions_sent.append(user)
+    def on_instructions_sent(app, **kwargs):
+        recorded_instructions_sent.append(kwargs["user"])
 
     with capture_flashes() as flashes:
         # Test reset password creates a token and sends email
@@ -231,6 +231,28 @@ def test_recoverable_json(app, client, get_message):
             "INVALID_RESET_PASSWORD_TOKEN"
         )
     assert len(flashes) == 0
+
+
+def test_recoverable_template(app, client, get_message):
+    # Check contents of email template - this uses a test template
+    # in order to check all context vars since the default template
+    # doesn't have all of them.
+    with capture_reset_password_requests() as resets:
+        with app.mail.record_messages() as outbox:
+            response = client.post(
+                "/reset", data=dict(email="joe@lp.com"), follow_redirects=True
+            )
+        assert len(outbox) == 1
+        matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+        # should be 4 - link, email, token, config item
+        assert matcher[1].split(":")[1] == "joe@lp.com"
+        assert matcher[2].split(":")[1] == resets[0]["reset_token"]
+        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+
+        # check link
+        link = matcher[0].split(":", 1)[1]
+        response = client.get(link, follow_redirects=True)
+        assert b"Reset Password" in response.data
 
 
 def test_recover_invalidates_session(app, client):

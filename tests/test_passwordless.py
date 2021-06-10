@@ -5,6 +5,7 @@
     Passwordless tests
 """
 
+import re
 import time
 from urllib.parse import parse_qsl, urlsplit
 
@@ -22,7 +23,7 @@ from flask_security.signals import login_instructions_sent
 pytestmark = pytest.mark.passwordless()
 
 
-def test_trackable_flag(app, client, get_message):
+def test_passwordless_flag(app, client, get_message):
     recorded = []
 
     @login_instructions_sent.connect_via(app)
@@ -39,7 +40,7 @@ def test_trackable_flag(app, client, get_message):
     assert get_message("DISABLED_ACCOUNT") in response.data
 
     # Test login with json and valid email
-    data = dict(email="matt@lp.com", password="password")
+    data = dict(email="matt@lp.com")
     response = client.post(
         "/login", json=data, headers={"Content-Type": "application/json"}
     )
@@ -47,7 +48,7 @@ def test_trackable_flag(app, client, get_message):
     assert len(recorded) == 1
 
     # Test login with json and invalid email
-    data = dict(email="nobody@lp.com", password="password")
+    data = dict(email="nobody@lp.com")
     response = client.post(
         "/login", json=data, headers={"Content-Type": "application/json"}
     )
@@ -86,6 +87,26 @@ def test_trackable_flag(app, client, get_message):
     # Test login request with invalid email
     response = client.post("/login", data=dict(email="bogus@bogus.com"))
     assert get_message("USER_DOES_NOT_EXIST") in response.data
+
+
+def test_passwordless_template(app, client, get_message):
+    # Check contents of email template - this uses a test template
+    # in order to check all context vars since the default template
+    # doesn't have all of them.
+    with capture_passwordless_login_requests() as requests:
+        with app.mail.record_messages() as outbox:
+            client.post("/login", data=dict(email="joe@lp.com"), follow_redirects=True)
+        assert len(outbox) == 1
+        matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+        # should be 4 - link, email, token, config item
+        assert matcher[1].split(":")[1] == "joe@lp.com"
+        assert matcher[2].split(":")[1] == requests[0]["login_token"]
+        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+
+        # check link
+        link = matcher[0].split(":", 1)[1]
+        response = client.get(link, follow_redirects=True)
+        assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
 
 
 @pytest.mark.settings(login_within="1 milliseconds")

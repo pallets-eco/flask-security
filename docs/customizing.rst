@@ -214,8 +214,11 @@ Overriding these templates is simple:
 2. Create a folder named ``email`` within the ``security`` folder
 3. Create a template with the same name for the template you wish to override
 
-Each template is passed a template context object that includes values for any
-links that are required in the email. If you require more values in the
+Each template is passed a template context object that includes values as described below.
+In addition, the ``security`` object is always passed - you can for example render
+any security configuration variable via ``security.lower_case_variable_name``
+and don't include the prefix ``security_`` (e.g. ``{{ security.confirm_url }``)}.
+If you require more values in the
 templates, you can specify an email context processor with the
 ``mail_context_processor`` decorator. For example::
 
@@ -238,12 +241,16 @@ The table below summarizes all this:
 -----------------------------   --------------------------------   ---------------------------------------------     ---------------------- -------------------------------
 welcome                         SECURITY_SEND_REGISTER_EMAIL       SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_registered
                                                                                                                      - confirmation_link
+                                                                                                                     - confirmation_token
 confirmation_instructions       N/A                                SECURITY_EMAIL_SUBJECT_CONFIRM                    - user                 confirm_instructions_sent
                                                                                                                      - confirmation_link
+                                                                                                                     - confirmation_token
 login_instructions              N/A                                SECURITY_EMAIL_SUBJECT_PASSWORDLESS               - user                 login_instructions_sent
                                                                                                                      - login_link
+                                                                                                                     - login_token
 reset_instructions              SEND_PASSWORD_RESET_EMAIL          SECURITY_EMAIL_SUBJECT_PASSWORD_RESET             - user                 reset_password_instructions_sent
                                                                                                                      - reset_link
+                                                                                                                     - reset_token
 reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL   SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE            - user                 password_reset
 
 change_notice                   SEND_PASSWORD_CHANGE_EMAIL         SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE     - user                 password_changed
@@ -252,7 +259,7 @@ two_factor_instructions         N/A                                SECURITY_EMAI
                                                                                                                      - username
 two_factor_rescue               N/A                                SECURITY_EMAIL_SUBJECT_TWO_FACTOR_RESCUE          - user                 N/A
 us_instructions                 N/A                                SECURITY_US_EMAIL_SUBJECT                         - user                 us_security_token_sent
-                                                                                                                     - token
+                                                                                                                     - login_token
                                                                                                                      - login_link
                                                                                                                      - username
 =============================   ================================   =============================================     ====================== ===============================

@@ -5,4 +5,10 @@
   user - the entire user model object
   security - the Flask-Security configuration
 #}
-<p><a href="{{ reset_link }}">{{ _fsdomain('Click here to reset your password') }}</a></p>
+{{ global }}
+{{ foo }}
+
+Link:{{ reset_link }}
+Email:{{ user.email }}
+Token:{{ reset_token }}
+ConfirmUrl:{{ security.confirm_url }}

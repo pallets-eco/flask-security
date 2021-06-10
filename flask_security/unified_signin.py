@@ -935,7 +935,8 @@ def us_send_security_token(
             "us_instructions",
             user=user,
             username=user.calc_username(),
-            token=token,
+            token=token,  # deprecated
+            login_token=token,
             login_link=login_link,
         )
     elif method == "sms":
@@ -955,6 +956,7 @@ def us_send_security_token(
         user=user,
         method=method,
         token=token,
+        login_token=token,
         phone_number=phone_number,
         send_magic_link=send_magic_link,
     )

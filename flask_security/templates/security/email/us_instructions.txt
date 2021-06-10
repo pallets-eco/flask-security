@@ -1,3 +1,11 @@
+{# This template receives the following context:
+  login_link - the link that should be fetched (GET) to reset
+  login_token - this token is part of reset link - but can be used to
+    construct arbitrary URLs for redirecting.
+  user - the entire user model object
+  username - username
+  security - the Flask-Security configuration
+#}
 {{ _fsdomain("Welcome") }} {{ username }}!
 
 {{ _fsdomain("You can sign into your account using the following code:") }} {{ token }}

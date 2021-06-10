@@ -36,14 +36,14 @@ def test_registerable_flag(clients, app, get_message):
 
     # Test registering is successful, sends email, and fires signal
     @user_registered.connect_via(app)
-    def on_user_registered(app, user, confirm_token, form_data):
+    def on_user_registered(app, **kwargs):
 
         assert isinstance(app, Flask)
-        assert isinstance(user, UserMixin)
-        assert confirm_token is None
-        assert len(form_data.keys()) > 0
+        assert isinstance(kwargs["user"], UserMixin)
+        assert kwargs["confirm_token"] is None
+        assert len(kwargs["form_data"].keys()) > 0
 
-        recorded.append(user)
+        recorded.append(kwargs["user"])
 
     data = dict(
         email="dude@lp.com",
@@ -163,8 +163,14 @@ def test_xlation(app, client, get_message_local):
             in outbox[0].html
         )
         assert (
-            localize_callback("You can confirm your email through the link below:")
-            in outbox[0].body
+            str(
+                markupsafe.escape(
+                    localize_callback(
+                        "You can confirm your email through the link below:"
+                    )
+                )
+            )
+            in outbox[0].html
         )
 
 
@@ -306,14 +312,15 @@ def test_form_data_is_passed_to_user_registered_signal(app, sqlalchemy_datastore
     recorded = []
 
     @user_registered.connect_via(app)
-    def on_user_registered(app, user, confirm_token, form_data):
+    def on_user_registered(app, **kwargs):
 
         assert isinstance(app, Flask)
-        assert isinstance(user, UserMixin)
-        assert confirm_token is None
-        assert form_data["additional_field"] == "additional_data"
+        assert isinstance(kwargs["user"], UserMixin)
+        assert kwargs["confirm_token"] is None
+        assert kwargs["confirmation_token"] is None
+        assert kwargs["form_data"]["additional_field"] == "additional_data"
 
-        recorded.append(user)
+        recorded.append(kwargs["user"])
 
     client = app.test_client()
 

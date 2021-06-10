@@ -343,6 +343,33 @@ def test_signin_pwd_json(app, client, get_message):
     assert response.status_code == 200
 
 
+def test_us_signin_template(app, client, get_message):
+    # Check contents of email template - this uses a test template
+    # in order to check all context vars since the default template
+    # doesn't have all of them.
+    with capture_send_code_requests() as requests:
+        with app.mail.record_messages() as outbox:
+            response = client.post(
+                "/us-signin/send-code",
+                data=dict(identity="matt@lp.com", chosen_method="email"),
+                follow_redirects=True,
+            )
+            assert len(outbox) == 1
+            matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+            # should be 5 - link, email, token, config item, username
+            assert matcher[1].split(":")[1] == "matt@lp.com"
+            token = matcher[2].split(":")[1]
+            assert token == requests[0]["token"]  # deprecated
+            assert token == requests[0]["login_token"]
+            assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+            assert matcher[4].split(":")[1] == "matt@lp.com"
+
+            # check link
+            link = matcher[0].split(":", 1)[1]
+            response = client.get(link, follow_redirects=True)
+            assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
+
+
 def test_admin_setup_user_reset(app, client_nc, get_message):
     # Test that we can setup SMS using datastore admin method, and that
     # the datastore admin reset (reset_user_access) disables it.
@@ -624,6 +651,7 @@ def test_setup(app, client, get_message):
 
 def test_setup_email(app, client, get_message):
     # setup with email - make sure magic link isn't sent and code is.
+    # N.B. this is using the test us_instructions template
     us_authenticate(client)
     with app.mail.record_messages() as outbox:
         response = client.post("us-setup", data=dict(chosen_method="email"))
@@ -638,13 +666,12 @@ def test_setup_email(app, client, get_message):
         verify_url = matcher.group(1)
 
     # verify no magic link
-    matcher = re.match(
-        r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
-    )
-    assert not matcher
-    # grab real code
-    matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
-    code = matcher.group(1)
+    matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+    # should be 4 - link, email, token, config item
+    assert matcher[0].split(":")[1] == "None"
+    assert matcher[1].split(":")[1] == "matt@lp.com"
+
+    code = matcher[2].split(":")[1]
     response = client.post(verify_url, data=dict(passcode=code), follow_redirects=True)
     assert response.status_code == 200
     assert get_message("US_SETUP_SUCCESSFUL") in response.data

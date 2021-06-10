@@ -5,6 +5,7 @@
   user - the entire user model object
   security - the Flask-Security configuration
 #}
-{{ _fsdomain('Please confirm your email through the link below:') }}
-
-{{ confirmation_link }}
+Link:{{ confirmation_link }}
+Email:{{ user.email }}
+Token:{{ confirmation_token }}
+ConfirmUrl:{{ security.confirm_url }}

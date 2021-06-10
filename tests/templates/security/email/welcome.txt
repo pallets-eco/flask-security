@@ -1,10 +1,11 @@
 {# This template receives the following context:
   confirmation_link - the link that should be fetched (GET) to confirm
+  user - the entire user model object
   confirmation_token - this token is part of confirmation link - but can be used to
     construct arbitrary URLs for redirecting.
-  user - the entire user model object
   security - the Flask-Security configuration
 #}
-{{ _fsdomain('Please confirm your email through the link below:') }}
-
-{{ confirmation_link }}
+Link:{{ confirmation_link }}
+Email:{{ user.email }}
+Token:{{ confirmation_token }}
+ConfirmUrl:{{ security.confirm_url }}
