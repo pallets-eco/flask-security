@@ -20,6 +20,8 @@ import time
 
 import pytest
 
+from wtforms.validators import DataRequired, Length
+
 from tests.test_utils import (
     authenticate,
     capture_flashes,
@@ -409,11 +411,11 @@ def test_form_required_local_message(app, sqlalchemy_datastore):
     assert b"myfield" in response.data
 
 
-@pytest.mark.babel(False)
-def test_without_babel(client):
-    # This isn't really 'without' babel - it is without initializing babel
-    with pytest.raises(ValueError):
-        client.get("/login")
+def test_without_babel(app, client):
+    # Test if babel modules exist but we don't init babel - things still work
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    response = client.get("/login")
+    assert response.status_code == 200
 
 
 def test_no_email_sender(app):
@@ -460,6 +462,7 @@ def test_sender_tuple(app):
             assert "Test User <test@testme.com>" == outbox[0].sender
 
 
+@pytest.mark.babel()
 def test_xlation(app, client):
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
@@ -472,8 +475,16 @@ def test_xlation(app, client):
     assert b"Bienvenue matt@lp.com" in response.data
 
 
+@pytest.mark.babel()
 def test_myxlation(app, sqlalchemy_datastore, pytestconfig):
     # Test changing a single MSG and having an additional translation dir
+    # Flask-BabelEx doesn't support lists of directories..
+    try:
+        import flask_babelex  # noqa: F401
+
+        pytest.skip("Flask-BabelEx doesn't support lists of translations")
+    except ImportError:
+        pass
 
     i18n_dirname = [
         pkg_resources.resource_filename("flask_security", "translations"),
@@ -493,6 +504,7 @@ def test_myxlation(app, sqlalchemy_datastore, pytestconfig):
     assert b"Passe - no-worky" in response.data
 
 
+@pytest.mark.babel()
 def test_form_labels(app):
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     app.security = Security()
@@ -519,7 +531,36 @@ def test_form_labels(app):
         assert str(form.submit.label.text) == "Changer le mot de passe"
 
 
+@pytest.mark.babel()
+def test_wtform_xlation(app, sqlalchemy_datastore):
+    # Make sure wtform xlations work
+    class MyLoginForm(LoginForm):
+        fixed_length = StringField(
+            "FixedLength", validators=[DataRequired(), Length(3, 3)]
+        )
+
+    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
+    app.security = Security()
+    app.security.init_app(app, datastore=sqlalchemy_datastore, login_form=MyLoginForm)
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    client = app.test_client()
+    response = client.get("/login")
+    assert b'<label for="password">Mot de passe</label>' in response.data
+    data = dict(
+        email="matt@lp.com", password="", remember="y", fixed_length="waytoolong"
+    )
+    response = client.post(
+        "/login", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["fixed_length"] == [
+        "Le doit contenir exactement 3 caractères."
+    ]
+
+
 @pytest.mark.changeable()
+@pytest.mark.babel()
 def test_per_request_xlate(app, client):
     from flask import request, session
 

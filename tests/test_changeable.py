@@ -305,6 +305,7 @@ def test_auth_uniquifier(app):
         assert response.status_code == 200
 
 
+@pytest.mark.babel()
 def test_xlation(app, client, get_message_local):
     # Test form and email translation
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
@@ -313,7 +314,7 @@ def test_xlation(app, client, get_message_local):
     authenticate(client)
 
     response = client.get("/change", follow_redirects=True)
-    with app.app_context():
+    with app.test_request_context():
         # Check header
         assert (
             f'<h1>{localize_callback("Change password")}</h1>'.encode("utf-8")
@@ -333,7 +334,7 @@ def test_xlation(app, client, get_message_local):
             follow_redirects=True,
         )
 
-    with app.app_context():
+    with app.test_request_context():
         assert get_message_local("PASSWORD_CHANGE").encode("utf-8") in response.data
         assert b"Home Page" in response.data
         assert len(outbox) == 1

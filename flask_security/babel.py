@@ -12,25 +12,37 @@
 
 # flake8: noqa: F811
 
-from wtforms.i18n import messages_path
-
+from flask import current_app
 from .utils import config_value as cv
 
+
+def has_babel_ext():
+    # Has the application initialized the appropriate babel extension....
+    return current_app and "babel" in current_app.extensions
+
+
 _domain_cls = None
+
+
 try:
     from flask_babel import Domain
+    import babel.support
 
     _domain_cls = Domain
     _dir_keyword = "translation_directories"
 except ImportError:  # pragma: no cover
     try:
         from flask_babelex import Domain
+        import babel.support
 
         _domain_cls = Domain
         _dir_keyword = "dirname"
     except ImportError:
         # Fake up just enough
-        class Domain:
+        class FsDomain:
+            def __init__(self, app):
+                pass
+
             @staticmethod
             def gettext(string, **variables):
                 return string % variables
@@ -40,25 +52,6 @@ except ImportError:  # pragma: no cover
                 variables.setdefault("num", num)
                 return (singular if num == 1 else plural) % variables
 
-            @staticmethod
-            def lazy_gettext(string, **variables):
-                return Domain.gettext(string, **variables)
-
-            class Translations:
-                """dummy Translations class for WTForms, no translation support"""
-
-                def gettext(self, string):
-                    return string
-
-                def ngettext(self, singular, plural, n):
-                    return singular if n == 1 else plural
-
-        def get_i18n_domain(app):
-            return Domain()
-
-        def have_babel():
-            return False
-
         def is_lazy_string(obj):
             return False
 
@@ -67,20 +60,27 @@ except ImportError:  # pragma: no cover
 
 
 if _domain_cls:
-    # Have either Flask-Babel or Flask-BabelEx
     from babel.support import LazyProxy
 
-    wtforms_domain = _domain_cls(messages_path(), domain="wtforms")
+    class FsDomain(_domain_cls):
+        def __init__(self, app):
+            super().__init__(
+                **{
+                    "domain": cv("I18N_DOMAIN", app=app),
+                    _dir_keyword: cv("I18N_DIRNAME", app=app),
+                }
+            )
 
-    def get_i18n_domain(app):
-        kwargs = {
-            _dir_keyword: cv("I18N_DIRNAME", app=app),
-            "domain": cv("I18N_DOMAIN", app=app),
-        }
-        return _domain_cls(**kwargs)
+        def gettext(self, string, **variables):
+            if not has_babel_ext():
+                return string % variables
+            return super().gettext(string, **variables)
 
-    def have_babel():
-        return True
+        def ngettext(self, singular, plural, num, **variables):  # pragma: no cover
+            if not has_babel_ext():
+                variables.setdefault("num", num)
+                return (singular if num == 1 else plural) % variables
+            return super().ngettext(singular, plural, num, **variables)
 
     def is_lazy_string(obj):
         """Checks if the given object is a lazy string."""
@@ -89,12 +89,3 @@ if _domain_cls:
     def make_lazy_string(__func, msg):
         """Creates a lazy string by invoking func with args."""
         return LazyProxy(__func, msg, enable_cache=False)
-
-    class Translations:
-        """Fixes WTForms translation support and uses wtforms translations."""
-
-        def gettext(self, string):
-            return wtforms_domain.gettext(string)
-
-        def ngettext(self, singular, plural, n):
-            return wtforms_domain.ngettext(singular, plural, n)

@@ -27,20 +27,6 @@ import os
 
 from flask import Flask, flash, render_template_string, request, session
 
-HAVE_BABEL = HAVE_BABELEX = False
-try:
-    import flask_babel
-
-    HAVE_BABEL = True
-except ImportError:
-    try:
-        import flask_babelex
-
-        HAVE_BABELEX = True
-    except ImportError:
-        pass
-
-
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -128,11 +114,17 @@ def create_app():
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
     Security(app, user_datastore)
 
-    babel = None
-    if HAVE_BABEL:
+    try:
+        import flask_babel
+
         babel = flask_babel.Babel(app)
-    if HAVE_BABELEX:
-        babel = flask_babelex.Babel(app)
+    except ImportError:
+        try:
+            import flask_babelex
+
+            babel = flask_babelex.Babel(app)
+        except ImportError:
+            babel = None
 
     if babel:
 
@@ -149,6 +141,10 @@ def create_app():
                 if locale:
                     session["lang"] = locale
             return session.get("lang", None).replace("-", "_")
+
+    @app.before_first_request
+    def clear_lang():
+        session.pop("lang", None)
 
     # Create a user to test with
     @app.before_first_request

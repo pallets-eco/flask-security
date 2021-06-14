@@ -116,13 +116,14 @@ def test_registerable_flag(clients, app, get_message):
 
 
 @pytest.mark.confirmable()
+@pytest.mark.babel()
 def test_xlation(app, client, get_message_local):
     # Test form and email translation
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
     response = client.get("/register", follow_redirects=True)
-    with app.app_context():
+    with app.test_request_context():
         # Check header
         assert (
             f'<h1>{localize_callback("Register")}</h1>'.encode("utf-8") in response.data
@@ -141,7 +142,7 @@ def test_xlation(app, client, get_message_local):
             follow_redirects=True,
         )
 
-    with app.app_context():
+    with app.test_request_context():
         assert (
             get_message_local("CONFIRM_REGISTRATION", email="me@fr.com").encode("utf-8")
             in response.data
@@ -151,16 +152,6 @@ def test_xlation(app, client, get_message_local):
         assert (
             localize_callback(app.config["SECURITY_EMAIL_SUBJECT_REGISTER"])
             in outbox[0].subject
-        )
-        assert (
-            str(
-                markupsafe.escape(
-                    localize_callback(
-                        "You can confirm your email through the link below:"
-                    )
-                )
-            )
-            in outbox[0].html
         )
         assert (
             str(
@@ -466,6 +457,7 @@ def test_email_normalization_options(app, client, get_message):
     assert get_message("INVALID_EMAIL_ADDRESS") in response.data
 
 
+@pytest.mark.babel()
 def test_form_error(app, client, get_message):
     # A few form validations use ValidatorMixin which provides a lazy string
     # Since CLI doesn't render_template it was seeing those lazy strings.

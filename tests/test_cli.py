@@ -6,6 +6,7 @@
 """
 
 from click.testing import CliRunner
+import pytest
 
 from flask_security.cli import (
     roles_add,
@@ -108,7 +109,15 @@ def test_cli_createuser_errors(script_info):
     assert "Email not provided" in result.output
 
 
+@pytest.mark.babel()
 def test_cli_locale(script_info):
+    # Flask_BabelEx required a request context - and click just has an app context.
+    try:
+        import flask_babelex  # noqa: F401
+
+        pytest.skip("Flask-BabelEx doesn't support app context")
+    except ImportError:
+        pass
     app = script_info.load_app()
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     runner = CliRunner()
