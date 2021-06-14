@@ -97,16 +97,19 @@ def app(request):
     else:
         marker_getter = request.keywords.get
     settings = marker_getter("settings")
-    babel = marker_getter("babel")
     if settings is not None:
         for key, value in settings.kwargs.items():
             app.config["SECURITY_" + key.upper()] = value
 
-    mail = Mail(app)
-    if not NO_BABEL and (babel is None or babel.args[0]):
-        Babel(app)
+    app.mail = Mail(app)
     app.json_encoder = JSONEncoder
-    app.mail = mail
+
+    # use babel marker to signify tests that need babel extension.
+    babel = marker_getter("babel")
+    if babel:
+        if NO_BABEL:
+            raise pytest.skip("Requires Babel")
+        Babel(app)
 
     @app.route("/")
     def index():

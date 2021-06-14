@@ -3,10 +3,13 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
-Version 4.0.2
+Version 4.1.0
 -------------
 
 Released TBD
+
+This release was bumped to 4.1.0 on the small chance that the change in the way
+babel packages are tried and used might break existing applications.
 
 Features
 ++++++++
@@ -18,6 +21,20 @@ Fixes
 - (:issue:`490`) Flask-Mail sender name can be a tuple. (hrishikeshrt)
 - (:issue:`486`) Possible open redirect vulnerability.
 - (:pr:`478`) Improve/update German translation. (sr-verde)
+- (:issue:`488`) Improve handling of Babel packages
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+In 4.0.0, with the addition of Flask-Babel support, Flask-Security enforced that
+if it could import either Flask-Babel or Flask-BabelEx, that those modules had
+been initialized as proper Flask extensions. Prior to 4.0.0, just Flask-BabelEx
+was supported - and that didn't require any explicit initialization. Flask-Babel
+DOES require explicit initialization. However for some applications that don't
+completely control their environment (such as system pre-installed versions of
+python) this caused applications that didn't even want translation services to
+fail on startup. With this release, Flask-Security still attempts to import
+one of the other package - however if those modules are NOT initialized,
+Flask-Security will simply ignore them and no translations will occur.
 
 Version 4.0.1
 -------------
