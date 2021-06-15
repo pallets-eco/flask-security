@@ -751,7 +751,8 @@ def two_factor_setup():
             "tf_state": "validating_profile",
             "tf_primary_method": pm,
         }
-        new_phone = form.phone.data if len(form.phone.data) > 0 else None
+        new_phone = form.phone.data if (form.phone.data and
+                                        len(form.phone.data) > 0) else None
         if new_phone:
             user.tf_phone_number = new_phone
             _datastore.put(user)
