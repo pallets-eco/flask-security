@@ -593,7 +593,7 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
             self.setup.errors = list()
             self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
             return False
-        if self.setup.data == "sms" and len(self.phone.data) > 0:
+        if self.setup.data == "sms" and self.phone.data and len(self.phone.data) > 0:
             # Somewhat bizarre - but this isn't required the first time around
             # when they select "sms". Then they get a field to fill out with
             # phone number, then Submit again.
