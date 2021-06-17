@@ -21,7 +21,7 @@ Flask application. They include:
 5. Token based authentication
 6. Token based account activation (optional)
 7. Token based password recovery / resetting (optional)
-8. Two-factor authentication (optional/alpha)
+8. Two-factor authentication (optional)
 9. Unified sign in (optional)
 10. User registration (optional)
 11. Login tracking (optional)
@@ -54,9 +54,10 @@ Getting Started
 .. toctree::
    :maxdepth: 2
 
+   installation
+   quickstart
    features
    configuration
-   quickstart
    models
 
 Customizing and Usage Patterns

@@ -5,7 +5,7 @@
     Flask-Security two_factor module
 
     :copyright: (c) 2016 by Gal Stainfeld, at Emedgene
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
 """
 
 from flask import current_app as app, redirect, request, session
@@ -150,7 +150,7 @@ def tf_login(user, remember=None, primary_authn_via=None):
     tf_clean_session()
 
     session["tf_user_id"] = user.fs_uniquifier
-    if "remember":
+    if remember:
         session["tf_remember_login"] = remember
 
     # Set info into form for JSON response

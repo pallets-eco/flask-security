@@ -6,7 +6,7 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -27,7 +27,12 @@ from wtforms import (
     ValidationError,
     validators,
 )
-from wtforms.fields.html5 import EmailField
+
+try:  # pragma: no cover
+    # Version 3+
+    from wtforms.fields import EmailField
+except ImportError:
+    from wtforms.fields.html5 import EmailField
 from wtforms.validators import StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
@@ -99,7 +104,7 @@ class ValidatorMixin:
             not is_lazy_string(self.message) and not self.message
         ):
             # Creat on first usage within app context.
-            cv = config_value("MSG_" + self._original_message)
+            cv = config_value("MSG_" + self._original_message, strict=False)
             if cv:
                 self.message = make_lazy_string(_local_xlate, cv[0])
             else:

@@ -396,8 +396,10 @@ def test_form_required(app, sqlalchemy_datastore):
 def test_form_required_local_message(app, sqlalchemy_datastore):
     """Test having a local message (not xlatable and not part of MSG_ config."""
 
+    msg = "hi! did you forget me?"
+
     class MyLoginForm(LoginForm):
-        myfield = StringField("My Custom Field", validators=[Required(message="hi")])
+        myfield = StringField("My Custom Field", validators=[Required(message=msg)])
 
     app.config["SECURITY_LOGIN_FORM"] = MyLoginForm
 
@@ -409,6 +411,10 @@ def test_form_required_local_message(app, sqlalchemy_datastore):
     response = client.post("/login", content_type="application/json")
     assert response.status_code == 400
     assert b"myfield" in response.data
+    assert msg.encode("utf-8") in response.data
+    # WTforms 2.x incorrectly catches ValueError and sets that as the form error.
+    # Our config_value routine raises ValueError for missing config items..
+    assert b"Key" not in response.data
 
 
 def test_without_babel(app, client):
@@ -554,9 +560,12 @@ def test_wtform_xlation(app, sqlalchemy_datastore):
         "/login", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["fixed_length"] == [
-        "Le doit contenir exactement 3 caractères."
-    ]
+    flerror = response.json["response"]["errors"]["fixed_length"][0]
+    # This is completely dependent on WTforms translations....
+    assert (
+        flerror == "Le doit contenir exactement 3 caractères."
+        or flerror == "Le champ doit contenir exactement 3 caractères."
+    )
 
 
 @pytest.mark.changeable()

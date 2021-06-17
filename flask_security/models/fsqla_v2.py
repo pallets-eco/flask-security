@@ -24,7 +24,6 @@ from .fsqla import FsRoleMixin as FsRoleMixinV1
 
 class FsModels(FsModelsV1):
     fs_model_version = 2
-    pass
 
 
 class FsRoleMixin(FsRoleMixinV1):

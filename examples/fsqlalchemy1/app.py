@@ -1,5 +1,5 @@
 """
-Copyright 2019-2020 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2019-2021 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 Very simple application.
@@ -69,13 +69,11 @@ fsqla.FsModels.set_db_info(db, user_table_name="myuser", role_table_name="myrole
 
 class Role(db.Model, fsqla.FsRoleMixin):
     __tablename__ = "myrole"
-    pass
 
 
 class User(db.Model, fsqla.FsUserMixin):
     __tablename__ = "myuser"
     blogs = db.relationship("Blog", backref="user", lazy="dynamic")
-    pass
 
 
 class Blog(db.Model):

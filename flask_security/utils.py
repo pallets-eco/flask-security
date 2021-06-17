@@ -17,7 +17,6 @@ import hmac
 import time
 import typing as t
 import warnings
-from datetime import timedelta
 from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
 import urllib.request
 import urllib.error
@@ -626,18 +625,19 @@ def get_message(key, **kwargs):
     return localize_callback(rv[0], **kwargs), rv[1]
 
 
-def config_value(key, app=None, default=None):
+def config_value(key, app=None, default=None, strict=True):
     """Get a Flask-Security configuration value.
 
     :param key: The configuration key without the prefix `SECURITY_`
     :param app: An optional specific application to inspect. Defaults to
                 Flask's `current_app`
     :param default: An optional default value if the value is not set
+    :param strict: if True, will raise ValueError if key doesn't exist
     """
     app = app or current_app
     # protect against spelling mistakes
     config = get_config(app)
-    if key.upper() not in config:
+    if strict and key.upper() not in config:
         raise ValueError(f"Key {key} doesn't exist")
     return config.get(key.upper(), default)
 
@@ -664,7 +664,7 @@ def get_within_delta(key, app=None):
     """
     txt = config_value(key, app=app)
     values = txt.split()
-    return timedelta(**{values[1]: int(values[0])})
+    return datetime.timedelta(**{values[1]: int(values[0])})
 
 
 def send_mail(subject, recipient, template, **context):
