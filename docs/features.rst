@@ -202,7 +202,7 @@ This has the effect is immediately invalidating all existing sessions. The chang
 itself effectively re-logs in the user so a new session is created. Note that since the user
 is effectively re-logged in, the same signals are sent as when the user normally authenticates.
 
-*NOTE* The ``fs_uniquifier`` by default, controls both sessions and authenticated tokens.
+*NOTE*: The ``fs_uniquifier`` by default, controls both sessions and authenticated tokens.
 Thus changing the password also invalidates all authentication tokens. This may not be desirable
 behavior, so if the UserModel contains an attribute ``fs_token_uniquifier``, then that will be used
 when generating authentication tokens and so won't be affected by password changes.

@@ -14,14 +14,14 @@ There are some complete (but simple) examples available in the *examples* direct
 
 .. note::
     The default ``SECURITY_PASSWORD_HASH`` is "bcrypt" - so be sure to install bcrypt.
-    If you opt for a different hash e.g. "argon2" you will need to install a different package.
-
+    If you opt for a different hash e.g. "argon2" you will need to install e.g. `argon_cffi`_.
 .. danger::
    The examples below place secrets in source files. Never do this for your application
    especially if your source code is placed in a public repo. How you pass in secrets
    securely will depend on your deployment model - however in most cases (e.g. docker, lambda)
    using environment variables will be the easiest.
 
+.. _argon_cffi: https://pypi.org/project/argon2-cffi/
 
 * :ref:`basic-sqlalchemy-application`
 * :ref:`basic-sqlalchemy-application-with-session`
@@ -41,8 +41,9 @@ SQLAlchemy Install requirements
 
 ::
 
-     $ mkvirtualenv <your-app-name>
-     $ pip install flask-security-too flask-sqlalchemy bcrypt
+     $ python3 -m venv mypyenv
+     $ . pymyenv/bin/activate
+     $ pip install flask-security-too[fsqla,common]
 
 
 SQLAlchemy Application
@@ -70,6 +71,7 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 
+    # Use an in-memory db
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
     # underlying engine. This option makes sure that DB connections from the
@@ -122,7 +124,7 @@ SQLAlchemy Install requirements
 
 ::
 
-     $ mkvirtualenv <your-app-name>
+     $ python3 -m venv /path/to/new/virtual/environment
      $ pip install flask-security-too sqlalchemy bcrypt
 
 Also, you can use the extension `Flask-SQLAlchemy-Session documentation
@@ -247,8 +249,9 @@ MongoEngine Install requirements
 
 ::
 
-    $ mkvirtualenv <your-app-name>
-    $ pip install flask-security-too flask-mongoengine bcrypt
+    $ python3 -m venv mypyenv
+    $ . pymyenv/bin/activate
+    $ pip install flask-security-too[common] flask-mongoengine
 
 MongoEngine Application
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -260,7 +263,7 @@ possible using MongoEngine:
 
     import os
 
-    from flask import Flask, render_template
+    from flask import Flask, render_template_string
     from flask_mongoengine import MongoEngine
     from flask_security import Security, MongoEngineUserDatastore, \
         UserMixin, RoleMixin, auth_required, hash_password
@@ -289,7 +292,7 @@ possible using MongoEngine:
         permissions = db.StringField(max_length=255)
 
     class User(db.Document, UserMixin):
-        email = db.StringField(max_length=255)
+        email = db.StringField(max_length=255, unique=True)
         password = db.StringField(max_length=255)
         active = db.BooleanField(default=True)
         fs_uniquifier = db.StringField(max_length=64, unique=True)
@@ -310,7 +313,7 @@ possible using MongoEngine:
     @app.route("/")
     @auth_required()
     def home():
-        return render_template('index.html')
+        return render_template_string("Hello {{ current_user.email }}")
 
     if __name__ == '__main__':
         app.run()
@@ -326,7 +329,7 @@ Peewee Install requirements
 
 ::
 
-    $ mkvirtualenv <your-app-name>
+    $ python3 -m venv /path/to/new/virtual/environment
     $ pip install flask-security-too peewee bcrypt
 
 Peewee Application

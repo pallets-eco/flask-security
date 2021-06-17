@@ -1,5 +1,7 @@
 -r docs.txt
 -r tests.txt
+wheel
+setuptools
 psycopg2
 pymysql
 pre-commit

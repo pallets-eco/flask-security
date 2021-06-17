@@ -10,7 +10,7 @@
 """
 
 
-from functools import wraps
+import functools
 
 import click
 from flask import current_app
@@ -28,7 +28,6 @@ from .utils import (
 
 if get_quart_status():  # pragma: no cover
     import quart.cli
-    import functools
 
     # quart cli doesn't provide the with_appcontext function
     def with_appcontext(f):
@@ -59,7 +58,7 @@ _datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
 def commit(fn):
     """Decorator to commit changes in datastore."""
 
-    @wraps(fn)
+    @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         fn(*args, **kwargs)
         _datastore.commit()
@@ -91,12 +90,14 @@ def roles():
 
 @users.command(
     "create",
-    help="Create a new user with one or more attributes using the syntax:"
-    " attr:value. If attr isn't set 'email' is presumed."
-    " Identity attribute values will be validated using the configured"
-    " confirm_register_form;"
-    " however, any ADDITIONAL attribute:value pairs will be sent to"
-    " datastore.create_user",
+    short_help=(
+        "Create a new user with one or more attributes using the syntax:"
+        " attr:value. If attr isn't set 'email' is presumed."
+        " Identity attribute values will be validated using the configured"
+        " confirm_register_form;"
+        " however, any ADDITIONAL attribute:value pairs will be sent to"
+        " datastore.create_user"
+    ),
 )
 @click.argument(
     "attributes",
