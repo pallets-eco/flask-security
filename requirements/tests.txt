@@ -1,7 +1,9 @@
 Flask-Babel
 Babel
+Flask-Login
 Flask-Mail
 Flask-Mongoengine
+Flask-Principal
 peewee
 Flask-SQLAlchemy
 argon2_cffi
@@ -12,6 +14,7 @@ cryptography
 mongoengine
 mongomock
 msgcheck
+passlib
 pony>=0.7.11;python_version<'3.9'
 phonenumberslite
 pydocstyle

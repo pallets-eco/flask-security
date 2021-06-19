@@ -288,13 +288,24 @@ These configuration keys are used globally across all features.
 
     Default: ``False``.
 
+.. py:data:: SECURITY_CSRF_COOKIE_NAME
+
+    The name for the CSRF cookie. This usually should be dictated by your
+    client-side code  - more information can be found at :ref:`csrftopic`
+
+    Default: ``None`` - meaning no cookie will be sent.
+
 .. py:data:: SECURITY_CSRF_COOKIE
 
     A dict that defines the parameters required to
-    set a CSRF cookie. At a minimum it requires a 'key'.
+    set a CSRF cookie.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
-    Default: ``{"key": None}`` which means no cookie will sent.
+    Default: ``{"samesite": "Strict", "httponly": False, "secure": False}``
+
+    .. versionchanged:: 4.1.0
+        The 'key' attribute was deprecated in favor of a separate configuration
+        variable ``SECURITY_CSRF_COOKIE_NAME``.
 
 .. py:data:: SECURITY_CSRF_HEADER
 

@@ -22,19 +22,25 @@ Fixes
 - (:issue:`486`) Possible open redirect vulnerability.
 - (:pr:`478`) Improve/update German translation. (sr-verde)
 - (:issue:`488`) Improve handling of Babel packages
+- (:pr:`496`) Documentation improvements, distribution extras, fix single message
+    override.
+- (:issue:`497`) Improve cookie handling and default samesite to Strict
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
-In 4.0.0, with the addition of Flask-Babel support, Flask-Security enforced that
-if it could import either Flask-Babel or Flask-BabelEx, that those modules had
-been initialized as proper Flask extensions. Prior to 4.0.0, just Flask-BabelEx
-was supported - and that didn't require any explicit initialization. Flask-Babel
-DOES require explicit initialization. However for some applications that don't
-completely control their environment (such as system pre-installed versions of
-python) this caused applications that didn't even want translation services to
-fail on startup. With this release, Flask-Security still attempts to import
-one of the other package - however if those modules are NOT initialized,
-Flask-Security will simply ignore them and no translations will occur.
+- (:pr:`488`) In 4.0.0, with the addition of Flask-Babel support, Flask-Security enforced that
+  if it could import either Flask-Babel or Flask-BabelEx, that those modules had
+  been initialized as proper Flask extensions. Prior to 4.0.0, just Flask-BabelEx
+  was supported - and that didn't require any explicit initialization. Flask-Babel
+  DOES require explicit initialization. However for some applications that don't
+  completely control their environment (such as system pre-installed versions of
+  python) this caused applications that didn't even want translation services to
+  fail on startup. With this release, Flask-Security still attempts to import
+  one of the other package - however if those modules are NOT initialized,
+  Flask-Security will simply ignore them and no translations will occur.
+- (:issue:`497`) The CSRF_COOKIE and TWO_FACTOR_VALIDITY cookie had their defaults
+  changed to set ``samesite=Strict``. This follows the Flask-Security directive of
+  making things more secure out-of-the-box.
 
 Version 4.0.1
 -------------

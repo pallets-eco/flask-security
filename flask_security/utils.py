@@ -47,6 +47,7 @@ from .quart_compat import best, get_quart_status
 from .signals import user_authenticated
 
 if t.TYPE_CHECKING:  # pragma: no cover
+    from flask import Response
     from .core import Security
 
 # Convenient references
@@ -854,7 +855,7 @@ def use_double_hash(password_hash=None):
     return not (single_hash is True or scheme in single_hash)
 
 
-def csrf_cookie_handler(response):
+def csrf_cookie_handler(response: "Response") -> "Response":
     """Called at end of every request.
     Uses session to track state (set/clear)
 
@@ -871,7 +872,8 @@ def csrf_cookie_handler(response):
     Other info on web suggests replacing on every POST and accepting up to 'age' ago.
     """
     csrf_cookie = config_value("CSRF_COOKIE")
-    if not csrf_cookie or not csrf_cookie["key"]:
+    csrf_cookie_name = config_value("CSRF_COOKIE_NAME")
+    if not csrf_cookie_name:
         return response
 
     op = session.get("fs_cc", None)
@@ -891,7 +893,7 @@ def csrf_cookie_handler(response):
 
     if op == "clear":
         response.delete_cookie(
-            csrf_cookie["key"],
+            csrf_cookie_name,
             path=csrf_cookie.get("path", "/"),
             domain=csrf_cookie.get("domain", None),
         )
@@ -909,7 +911,7 @@ def csrf_cookie_handler(response):
     elif config_value("CSRF_COOKIE_REFRESH_EACH_REQUEST"):
         send = True
     elif current_app.config["WTF_CSRF_TIME_LIMIT"]:
-        current_cookie = request.cookies.get(csrf_cookie["key"], None)
+        current_cookie = request.cookies.get(csrf_cookie_name, None)
         if current_cookie:
             # Lets make sure it isn't expired if app doesn't set TIME_LIMIT to None.
             try:
@@ -918,10 +920,7 @@ def csrf_cookie_handler(response):
                 send = True
 
     if send:
-        kwargs = {k: v for k, v in csrf_cookie.items()}
-        kwargs.pop("key")
-        kwargs["value"] = csrf.generate_csrf()
-        response.set_cookie(csrf_cookie["key"], **kwargs)
+        response.set_cookie(csrf_cookie_name, value=csrf.generate_csrf(), **csrf_cookie)
     return response
 
 

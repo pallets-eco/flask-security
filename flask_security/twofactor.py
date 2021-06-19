@@ -8,6 +8,8 @@
     :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
 """
 
+import typing as t
+
 from flask import current_app as app, redirect, request, session
 from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
@@ -30,6 +32,9 @@ from .signals import (
     tf_security_token_sent,
     tf_profile_changed,
 )
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask import Response
 
 # Convenient references
 _security = LocalProxy(lambda: app.extensions["security"])
@@ -233,12 +238,14 @@ def tf_verify_validility_token(token, fs_uniquifier):
     return True
 
 
-def tf_set_validity_token_cookie(response, fs_uniquifier=None, remember=False):
+def tf_set_validity_token_cookie(
+    response: "Response", fs_uniquifier=None, remember: bool = False
+) -> "Response":
     """Sets the Two-Factor validity token for a specific user given that is
     configured and the user selects remember me
 
     :param response: The response with which to set the set_cookie
-    :param fs_uniquifier: The ``fs_uniquifier`` of a user that has succcessfully
+    :param fs_uniquifier: The ``fs_uniquifier`` of a user that has successfully
                         authenticated and validated with Two-Factor
                         authentication.
     :param remember: Flag specifying if the tf_validity cookie should be set.
