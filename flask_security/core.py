@@ -194,7 +194,7 @@ _default_config: t.Dict[str, t.Any] = {
     "TWO_FACTOR_VALIDITY_COOKIE": {
         "httponly": True,
         "secure": False,
-        "samesite": None,
+        "samesite": "Strict",
     },
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "5 days",
@@ -272,7 +272,12 @@ _default_config: t.Dict[str, t.Any] = {
     "US_SIGNIN_REPLACES_LOGIN": False,
     "CSRF_PROTECT_MECHANISMS": AUTHN_MECHANISMS,
     "CSRF_IGNORE_UNAUTH_ENDPOINTS": False,
-    "CSRF_COOKIE": {"key": None},
+    "CSRF_COOKIE_NAME": None,
+    "CSRF_COOKIE": {
+        "samesite": "Strict",
+        "httponly": False,
+        "secure": False,
+    },
     "CSRF_HEADER": "X-XSRF-Token",
     "CSRF_COOKIE_REFRESH_EACH_REQUEST": False,
     "BACKWARDS_COMPAT_UNAUTHN": False,
@@ -1161,7 +1166,15 @@ class Security:
                 )
 
             csrf_cookie = cv("CSRF_COOKIE")
-            if csrf_cookie and csrf_cookie["key"] and not csrf:
+            # We used to have 'key' part of CSRF_COOKIE - and in csrf_cookie_handler
+            # we removed that prior to setting the cookie. That was a terrible UI
+            # decision since if the user sets the key - they likely will not set
+            # all the other important things like samesite, secure etc.
+            # Now CSRF_COOKIE_NAME is used for the name - we do the backwards compat
+            # magic here
+            if csrf_cookie and csrf_cookie.get("key", None):
+                current_app.config["SECURITY_CSRF_COOKIE_NAME"] = csrf_cookie.pop("key")
+            if cv("CSRF_COOKIE_NAME") and not csrf:
                 # Common use case is for cookie value to be used as contents for header
                 # which is only looked at when CsrfProtect is initialized.
                 # Yes, this is opinionated - they can always get CSRF token via:
@@ -1172,7 +1185,7 @@ class Security:
 
             if csrf:
                 csrf.exempt("flask_security.views.logout")
-            if csrf_cookie and csrf_cookie["key"]:
+            if cv("CSRF_COOKIE_NAME"):
                 current_app.after_request(csrf_cookie_handler)
                 # Add configured header to WTF_CSRF_HEADERS
                 current_app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))

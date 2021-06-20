@@ -216,7 +216,7 @@ in an HTTP header called ``X-XSRF-Token``. This means that if you use that packa
 any changes to your UI and just need the following configuration::
 
     # Have cookie sent
-    app.config["SECURITY_CSRF_COOKIE"] = {"key": "XSRF-TOKEN"}
+    app.config["SECURITY_CSRF_COOKIE_NAME"] = "XSRF-TOKEN"
 
     # Don't have csrf tokens expire (they are invalid after logout)
     app.config["WTF_CSRF_TIME_LIMIT"] = None

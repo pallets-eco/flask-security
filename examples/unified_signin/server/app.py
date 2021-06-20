@@ -100,7 +100,7 @@ def create_app():
     app.config["SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS"] = True
 
     # Send Cookie with csrf-token. This is the default for Axios and Angular.
-    app.config["SECURITY_CSRF_COOKIE"] = {"key": "XSRF-TOKEN"}
+    app.config["SECURITY_CSRF_COOKIE_NAME"] = "XSRF-TOKEN"
     app.config["WTF_CSRF_CHECK_DEFAULT"] = False
     app.config["WTF_CSRF_TIME_LIMIT"] = None
 
