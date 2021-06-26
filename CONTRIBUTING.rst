@@ -61,7 +61,7 @@ these steps:
 
   #. Install the requirements::
 
-        $ pip install -r requirements/tests.txt
+        $ pip install -r requirements/dev.txt
 
   #. Install pre-commit hooks::
 

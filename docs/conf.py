@@ -97,7 +97,22 @@ exclude_patterns = ["_build"]
 # modindex_common_prefix = []
 
 nitpicky = True
-nitpick_ignore = [("py:attr", "LoginManager.unauthorized"), ("py:class", "function")]
+nitpick_ignore = [
+    ("py:attr", "LoginManager.unauthorized"),
+    ("py:class", "flask_mongoengine.MongoEngine"),
+    ("py:class", "function"),
+]
+autodoc_typehints = "description"
+# autodoc_mock_imports = ["flask_sqlalchemy"]
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "werkzeug": ("https://werkzeug.palletsprojects.com/", None),
+    "itsdangerous": ("https://itsdangerous.palletsprojects.com/", None),
+    "sqlalchemy": ("https://docs.sqlalchemy.org/", None),
+    "wtforms": ("https://wtforms.readthedocs.io/", None),
+    "flask_sqlalchemy": ("https://flask-sqlalchemy.palletsprojects.com/", None),
+}
 
 # -- Options for HTML output ---------------------------------------------
 
@@ -262,7 +277,7 @@ epub_copyright = "2012-2020"
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/3": None}
+# intersphinx_mapping = {"https://docs.python.org/3": None}
 
 # -- Options for sphinx-issues ---------------------------------------------
 # Github repo

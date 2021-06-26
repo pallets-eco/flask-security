@@ -49,8 +49,12 @@ from .quart_compat import best, get_quart_status
 from .signals import user_authenticated
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask import Response
-    from .core import Security
+    from flask import Flask, Response
+    from passlib.context import CryptContext
+    from .core import Security, UserMixin
+    from .datastore import CanonicalUserDatastore, User
+
+SB = t.Union[str, bytes]
 
 # Convenient references
 # noinspection PyTypeChecker
@@ -58,11 +62,15 @@ _security: "Security" = LocalProxy(  # type: ignore
     lambda: current_app.extensions["security"]
 )
 
-_datastore = LocalProxy(lambda: _security.datastore)
+_datastore: "CanonicalUserDatastore" = LocalProxy(  # type:ignore
+    lambda: _security.datastore
+)
 
-_pwd_context = LocalProxy(lambda: _security.pwd_context)
+_pwd_context: "CryptContext" = LocalProxy(lambda: _security.pwd_context)  # type: ignore
 
-_hashing_context = LocalProxy(lambda: _security.hashing_context)
+_hashing_context: "CryptContext" = LocalProxy(  # type: ignore
+    lambda: _security.hashing_context
+)
 
 localize_callback = LocalProxy(lambda: _security.i18n_domain.gettext)
 
@@ -75,7 +83,7 @@ def _(translate):
     return translate
 
 
-def get_request_attr(name):
+def get_request_attr(name: str) -> t.Any:
     """Retrieve a request local attribute.
 
     Currently public attributes are:
@@ -126,7 +134,11 @@ def find_csrf_field_name():
     return None
 
 
-def login_user(user, remember=None, authn_via=None):
+def login_user(
+    user: t.Type["UserMixin"],
+    remember: t.Union[bool, None] = None,
+    authn_via: t.Optional[t.List[str]] = None,
+) -> bool:
     """Perform the login routine.
 
     If *SECURITY_TRACKABLE* is used, make sure you commit changes after this
@@ -134,11 +146,12 @@ def login_user(user, remember=None, authn_via=None):
 
     :param user: The user to login
     :param remember: Flag specifying if the remember cookie should be set.
-                     Defaults to ``False``
+                     If ``None`` use value of SECURITY_DEFAULT_REMEMBER_ME
     :param authn_via: A list of strings denoting which mechanism(s) the user
         authenticated with.
         These should be one or more of ["password", "sms", "authenticator", "email"] or
         other 'auto-login' mechanisms.
+    :return: True is user successfully logged in.
     """
 
     if remember is None:
@@ -168,16 +181,19 @@ def login_user(user, remember=None, authn_via=None):
     session["fs_paa"] = time.time()  # Primary authentication at - timestamp
 
     identity_changed.send(
-        current_app._get_current_object(), identity=Identity(user.fs_uniquifier)
+        current_app._get_current_object(),  # type: ignore
+        identity=Identity(user.fs_uniquifier),
     )
 
     user_authenticated.send(
-        current_app._get_current_object(), user=user, authn_via=authn_via
+        current_app._get_current_object(),  # type: ignore
+        user=user,
+        authn_via=authn_via,
     )
     return True
 
 
-def logout_user():
+def logout_user() -> None:
     """Logs out the current user.
 
     This will also clean up the remember me cookie if it exists.
@@ -200,12 +216,16 @@ def logout_user():
         g.pop(csrf_field_name, None)
     session["fs_cc"] = "clear"
     identity_changed.send(
-        current_app._get_current_object(), identity=AnonymousIdentity()
+        current_app._get_current_object(), identity=AnonymousIdentity()  # type: ignore
     )
     _logout_user()
 
 
-def check_and_update_authn_fresh(within, grace, method=None):
+def check_and_update_authn_fresh(
+    within: datetime.timedelta,
+    grace: datetime.timedelta,
+    method: t.Optional[str] = None,
+) -> bool:
     """Check if user authenticated within specified time and update grace period.
 
     :param within: A timedelta specifying the maximum time in the past that the caller
@@ -276,7 +296,7 @@ def check_and_update_authn_fresh(within, grace, method=None):
     return False
 
 
-def get_hmac(password):
+def get_hmac(password: SB) -> bytes:
     """Returns a Base64 encoded HMAC+SHA512 of the password signed with
     the salt specified by *SECURITY_PASSWORD_SALT*.
 
@@ -295,7 +315,7 @@ def get_hmac(password):
     return base64.b64encode(h.digest())
 
 
-def verify_password(password, password_hash):
+def verify_password(password: SB, password_hash: SB) -> bool:
     """Returns ``True`` if the password matches the supplied hash.
 
     :param password: A plaintext password to verify
@@ -311,7 +331,7 @@ def verify_password(password, password_hash):
     return _pwd_context.verify(password, password_hash)
 
 
-def verify_and_update_password(password, user):
+def verify_and_update_password(password: SB, user: "User") -> bool:
     """Returns ``True`` if the password is valid for the specified user.
 
     Additionally, the hashed password in the database is updated if the
@@ -358,7 +378,7 @@ def encrypt_password(password):  # pragma: no cover
     return hash_password(password)
 
 
-def hash_password(password):
+def hash_password(password: SB) -> t.Any:
     """Hash the specified plaintext password.
 
     Unless the hash algorithm (as specified by `SECURITY_PASSWORD_HASH`) is listed in
@@ -422,7 +442,7 @@ def suppress_form_csrf():
     return {}
 
 
-def do_flash(message, category=None):
+def do_flash(message: str, category: str) -> None:
     """Flash a message depending on if the `FLASH_MESSAGES` configuration
     value is set.
 
@@ -433,7 +453,9 @@ def do_flash(message, category=None):
         flash(message, category)
 
 
-def get_url(endpoint_or_url, qparams=None):
+def get_url(
+    endpoint_or_url: t.Optional[str], qparams: t.Optional[t.Dict[str, str]] = None
+) -> t.Optional[str]:
     """Returns a URL if a valid endpoint is found. Otherwise, returns the
     provided value.
 
@@ -441,6 +463,8 @@ def get_url(endpoint_or_url, qparams=None):
     :param qparams: additional query params to add to end of url
     :return: URL
     """
+    if not endpoint_or_url:
+        return endpoint_or_url
     try:
         return transform_url(url_for(endpoint_or_url), qparams)
     except Exception:
@@ -466,7 +490,9 @@ def slash_url_suffix(url, suffix):
     return url.endswith("/") and ("%s/" % suffix) or ("/%s" % suffix)
 
 
-def transform_url(url, qparams=None, **kwargs):
+def transform_url(
+    url: t.Optional[str], qparams: t.Optional[t.Dict[str, str]] = None, **kwargs: str
+) -> t.Optional[str]:
     """Modify url
 
     :param url: url to transform (can be relative)
@@ -490,7 +516,7 @@ def get_security_endpoint_name(endpoint):
     return f"{_security.blueprint_name}.{endpoint}"
 
 
-def url_for_security(endpoint, **values):
+def url_for_security(endpoint: str, **values: t.Union[str, bool]) -> str:
     """Return a URL for the security blueprint
 
     :param endpoint: the endpoint of the URL (name of the function)
@@ -505,7 +531,7 @@ def url_for_security(endpoint, **values):
     return url_for(endpoint, **values)
 
 
-def validate_redirect_url(url):
+def validate_redirect_url(url: str) -> bool:
     """Validate that the URL for redirect is relative.
     Allowing an absolute redirect is a security issue - a so-called open-redirect.
     Note that by default Werkzeug will always take this URL and make it relative
@@ -557,7 +583,7 @@ def validate_redirect_url(url):
     return True
 
 
-def get_post_action_redirect(config_key, declared=None):
+def get_post_action_redirect(config_key: str, declared: t.Optional[str] = None) -> str:
     urls = [
         get_url(request.args.get("next", None)),
         get_url(request.form.get("next", None)),
@@ -566,27 +592,28 @@ def get_post_action_redirect(config_key, declared=None):
     if declared:
         urls.insert(0, declared)
     for url in urls:
-        if validate_redirect_url(url):
+        if url and validate_redirect_url(url):
             return url
+    raise ValueError("No valid redirect URL found - configuration error")
 
 
-def get_post_login_redirect(declared=None):
+def get_post_login_redirect(declared: t.Optional[str] = None) -> str:
     return get_post_action_redirect("SECURITY_POST_LOGIN_VIEW", declared)
 
 
-def get_post_register_redirect(declared=None):
+def get_post_register_redirect(declared: t.Optional[str] = None) -> str:
     return get_post_action_redirect("SECURITY_POST_REGISTER_VIEW", declared)
 
 
-def get_post_logout_redirect(declared=None):
+def get_post_logout_redirect(declared: t.Optional[str] = None) -> str:
     return get_post_action_redirect("SECURITY_POST_LOGOUT_VIEW", declared)
 
 
-def get_post_verify_redirect(declared=None):
+def get_post_verify_redirect(declared: t.Optional[str] = None) -> str:
     return get_post_action_redirect("SECURITY_POST_VERIFY_VIEW", declared)
 
 
-def find_redirect(key):
+def find_redirect(key: str) -> t.Optional[str]:
     """Returns the URL to redirect to after a user logs in successfully.
 
     :param key: The session or application configuration key to search for
@@ -599,7 +626,7 @@ def find_redirect(key):
     return rv
 
 
-def propagate_next(url):
+def propagate_next(url: str) -> str:
     # return either URL or, if URL already has a ?next=xx, return that.
     url_next = urlsplit(url)
     qparams = parse_qs(url_next.query)
@@ -608,7 +635,7 @@ def propagate_next(url):
     return url
 
 
-def get_config(app):
+def get_config(app: "Flask") -> t.Dict[str, t.Any]:
     """Conveniently get the security configuration for the specified
     application without the annoying 'SECURITY_' prefix.
 
@@ -623,7 +650,7 @@ def get_config(app):
     return dict([strip_prefix(i) for i in items if i[0].startswith(prefix)])
 
 
-def get_message(key, **kwargs):
+def get_message(key: str, **kwargs: t.Any) -> t.Tuple[str, str]:
     rv = config_value("MSG_" + key)
     return localize_callback(rv[0], **kwargs), rv[1]
 
@@ -744,11 +771,13 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
         return expired, invalid, user
 
 
-def check_and_get_token_status(token, serializer, within=None):
+def check_and_get_token_status(
+    token: str, serializer_name: str, within: datetime.timedelta
+) -> t.Tuple[bool, bool, t.Any]:
     """Get the status of a token and return data.
 
     :param token: The token to check
-    :param serializer: The name of the serializer. Can be one of the
+    :param serializer_name: The name of the serializer. Can be one of the
                        following: ``confirm``, ``login``, ``reset``, ``us_setup``
                        ``remember``, ``two_factor_validity``
     :param within: max age - passed as a timedelta
@@ -757,7 +786,7 @@ def check_and_get_token_status(token, serializer, within=None):
 
     .. versionadded:: 3.4.0
     """
-    serializer = getattr(_security, serializer + "_serializer")
+    serializer = getattr(_security, serializer_name + "_serializer")
     max_age = within.total_seconds()
     data = None
     expired, invalid = False, False
@@ -773,7 +802,7 @@ def check_and_get_token_status(token, serializer, within=None):
     return expired, invalid, data
 
 
-def get_identity_attributes(app=None) -> t.List[str]:
+def get_identity_attributes(app: t.Optional["Flask"] = None) -> t.List[str]:
     # Return list of keys of identity attributes
     # Is it possible to not have any?
     app = app or current_app
@@ -783,7 +812,9 @@ def get_identity_attributes(app=None) -> t.List[str]:
     return []
 
 
-def get_identity_attribute(attr: str, app=None) -> t.Dict[str, t.Any]:
+def get_identity_attribute(
+    attr: str, app: t.Optional["Flask"] = None
+) -> t.Dict[str, t.Any]:
     """Given an user_identity_attribute, return the defining dict.
     A bit annoying since USER_IDENTITY_ATTRIBUTES is a list of dict
     where each dict has just one key.
@@ -817,7 +848,7 @@ def find_user(identity):
     return None
 
 
-def uia_phone_mapper(identity):
+def uia_phone_mapper(identity: str) -> t.Optional[str]:
     """Used to match identity as a phone number. This is a simple proxy
     to :py:class:`PhoneUtil`
 
@@ -829,8 +860,10 @@ def uia_phone_mapper(identity):
     return ph
 
 
-def uia_email_mapper(identity):
+def uia_email_mapper(identity: str) -> t.Optional[str]:
     """Used to match identity as an email.
+
+    :return: Normalized email or None if not valid email.
 
     See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
 
@@ -896,9 +929,9 @@ def csrf_cookie_handler(response: "Response") -> "Response":
     if op == "clear":
         # Alas delete_cookie only accepts some of the keywords set_cookie does
         # and Werkzeug didn't accept samesite, secure, httponly until 2.0
-        allowed = ("path", "domain", "secure", "httponly", "samesite")
+        allowed = ["path", "domain", "secure", "httponly", "samesite"]
         if parse_version(werkzeug_version) < parse_version("2.0.0"):  # pragma: no cover
-            allowed = ("path", "domain")
+            allowed = ["path", "domain"]
         args = {k: csrf_cookie.get(k) for k in allowed if k in csrf_cookie}
         response.delete_cookie(csrf_cookie_name, **args)
         session.pop("fs_cc")
@@ -1035,7 +1068,9 @@ class SmsSenderBaseClass(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def send_sms(self, from_number, to_number, msg):  # pragma: no cover
+    def send_sms(
+        self, from_number: str, to_number: str, msg: str
+    ) -> None:  # pragma: no cover
         """Abstract method for sending sms messages
 
         .. versionadded:: 3.2.0
@@ -1082,7 +1117,7 @@ except Exception:
     pass
 
 
-def password_length_validator(password):
+def password_length_validator(password: str) -> t.Optional[t.List[str]]:
     """Test password for length.
 
     :param password: Plain text password to check
@@ -1102,7 +1137,9 @@ def password_length_validator(password):
     return None
 
 
-def password_complexity_validator(password, is_register, **kwargs):
+def password_complexity_validator(
+    password: str, is_register: bool, **kwargs: t.Any
+) -> t.Optional[t.List[str]]:
     """Test password for complexity.
 
     Currently just supports 'zxcvbn'.
@@ -1123,7 +1160,7 @@ def password_complexity_validator(password, is_register, **kwargs):
     if config_value("PASSWORD_COMPLEXITY_CHECKER") == "zxcvbn":
         import zxcvbn
 
-        user_info = []
+        user_info: t.List[t.Any] = []
         if not is_register:
             for v in kwargs["user"].__dict__.values():
                 if v and isinstance(v, str):
@@ -1131,7 +1168,7 @@ def password_complexity_validator(password, is_register, **kwargs):
         else:
             # This is usually all register form values that are in the user_model
             if kwargs:
-                user_info = kwargs.values()
+                user_info = list(kwargs.values())
         results = zxcvbn.zxcvbn(password, user_inputs=user_info)
         if results["score"] > 2:
             # Good or Strong
@@ -1146,7 +1183,7 @@ def password_complexity_validator(password, is_register, **kwargs):
         return None
 
 
-def password_breached_validator(password):
+def password_breached_validator(password: str) -> t.Optional[t.List[str]]:
     """Check if password on breached list.
     Does nothing unless :py:data:`SECURITY_PASSWORD_CHECK_BREACHED` is set.
     If password is found on the breached list, return an error if the count is
@@ -1171,7 +1208,7 @@ def password_breached_validator(password):
     return None
 
 
-def pwned(password):
+def pwned(password: str) -> int:
     """
     Check password against pwnedpasswords API using k-Anonymity.
     https://haveibeenpwned.com/API/v3

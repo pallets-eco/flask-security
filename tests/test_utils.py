@@ -4,11 +4,12 @@
 
     Test utils
 
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 from contextlib import contextmanager
 import re
+import typing as t
 
 from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
@@ -192,7 +193,7 @@ def is_sqlalchemy(datastore):
 
 
 class SmsTestSender(SmsSenderBaseClass):
-    messages = []
+    messages: t.List[str] = []
     count = 0
 
     # This looks strange because we need class variables since test need to access a

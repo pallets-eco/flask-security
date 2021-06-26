@@ -78,6 +78,10 @@ from .utils import (
 )
 from .views import create_blueprint, default_render_json
 
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask import Flask
+    from .datastore import Role
+
 # Convenient references
 # noinspection PyTypeChecker
 _security: "Security" = LocalProxy(  # type: ignore
@@ -547,7 +551,7 @@ def _get_principal(app):
     return p
 
 
-def _get_pwd_context(app):
+def _get_pwd_context(app: "Flask") -> CryptContext:
     pw_hash = cv("PASSWORD_HASH", app=app)
     schemes = cv("PASSWORD_SCHEMES", app=app)
     deprecated = cv("DEPRECATED_PASSWORD_SCHEMES", app=app)
@@ -625,6 +629,12 @@ def _context_processor():
 class RoleMixin:
     """Mixin for `Role` model definitions"""
 
+    if t.TYPE_CHECKING:  # pragma: no cover
+
+        def __init__(self):
+            # Depends on how the user creates the DB data model
+            self.permissions: t.Union[str, set, list, None]
+
     def __eq__(self, other):
         return self.name == other or self.name == getattr(other, "name", None)
 
@@ -634,7 +644,7 @@ class RoleMixin:
     def __hash__(self):
         return hash(self.name)
 
-    def get_permissions(self):
+    def get_permissions(self) -> set:
         """
         Return set of permissions associated with role.
 
@@ -643,6 +653,11 @@ class RoleMixin:
 
         .. versionadded:: 3.3.0
         """
+
+        # This set, list stuff wasn't completely implemented - since add/remove
+        # permissions don't actually accept them. And they aren't really
+        # deprecated since UserDatastore still calls them - they just aren't
+        # public. And the unit tests don't really test this stuff. sigh.
         if hasattr(self, "permissions") and self.permissions:
             if isinstance(self.permissions, set):
                 return self.permissions
@@ -653,7 +668,7 @@ class RoleMixin:
                 return set(self.permissions.split(","))
         return set()
 
-    def add_permissions(self, permissions):
+    def add_permissions(self, permissions: t.Union[set, list, str]) -> None:
         """
         Add one or more permissions to role.
 
@@ -676,7 +691,7 @@ class RoleMixin:
         else:  # pragma: no cover
             raise NotImplementedError("Role model doesn't have permissions")
 
-    def remove_permissions(self, permissions):
+    def remove_permissions(self, permissions: t.Union[set, list, str]) -> None:
         """
         Remove one or more permissions from role.
 
@@ -703,7 +718,7 @@ class RoleMixin:
 class UserMixin(BaseUserMixin):
     """Mixin for `User` model definitions"""
 
-    def get_id(self):
+    def get_id(self) -> str:
         """Returns the user identification attribute. 'Alternative-token' for
         Flask-Login. This is always ``fs_uniquifier``.
 
@@ -712,11 +727,11 @@ class UserMixin(BaseUserMixin):
         return str(self.fs_uniquifier)
 
     @property
-    def is_active(self):
+    def is_active(self) -> bool:
         """Returns `True` if the user is active."""
         return self.active
 
-    def get_auth_token(self):
+    def get_auth_token(self) -> t.Union[str, bytes]:
         """Constructs the user's authentication token.
 
         :raises ValueError: If ``fs_token_uniquifier`` is part of model but not set.
@@ -739,7 +754,7 @@ class UserMixin(BaseUserMixin):
             data = [str(self.fs_uniquifier)]
         return _security.remember_token_serializer.dumps(data)
 
-    def verify_auth_token(self, data):
+    def verify_auth_token(self, data: t.Union[str, bytes]) -> bool:
         """
         Perform additional verification of contents of auth token.
         Prior to this being called the token has been validated (via signing)
@@ -768,7 +783,7 @@ class UserMixin(BaseUserMixin):
 
         return data[uniquifier_index] == self.fs_uniquifier
 
-    def has_role(self, role):
+    def has_role(self, role: t.Union[str, "Role"]) -> bool:
         """Returns `True` if the user identifies with the specified role.
 
         :param role: A role name or `Role` instance"""
@@ -777,7 +792,7 @@ class UserMixin(BaseUserMixin):
         else:
             return role in self.roles
 
-    def has_permission(self, permission):
+    def has_permission(self, permission: str) -> bool:
         """
         Returns `True` if user has this permission (via a role it has).
 
@@ -791,18 +806,24 @@ class UserMixin(BaseUserMixin):
                 return True
         return False
 
-    def get_security_payload(self):
+    def get_security_payload(self) -> t.Dict[str, t.Any]:
         """Serialize user object as response payload.
         Override this to return any/all of the user object in JSON responses.
         Return a dict.
         """
         return {}
 
-    def get_redirect_qparams(self, existing=None):
+    def get_redirect_qparams(
+        self, existing: t.Optional[t.Dict[str, t.Any]] = None
+    ) -> t.Dict[str, t.Any]:
         """Return user info that will be added to redirect query params.
 
         :param existing: A dict that will be updated.
         :return: A dict whose keys will be query params and values will be query values.
+
+        The returned dict will always have an 'identity' key/value.
+        If the User Model contains 'email', an 'email' key/value will added.
+        All keys provided in 'existing' will also be merged in.
 
         .. versionadded:: 3.2.0
 
@@ -816,7 +837,7 @@ class UserMixin(BaseUserMixin):
         existing.update({"identity": self.calc_username()})
         return existing
 
-    def verify_and_update_password(self, password):
+    def verify_and_update_password(self, password: str) -> bool:
         """Returns ``True`` if the password is valid for the specified user.
 
         Additionally, the hashed password in the database is updated if the
@@ -833,7 +854,7 @@ class UserMixin(BaseUserMixin):
         """
         return verify_and_update_password(password, self)
 
-    def calc_username(self):
+    def calc_username(self) -> str:
         """Come up with the best 'username' based on how the app
         is configured (via :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`).
         Returns the first non-null match (and converts to string).
@@ -849,7 +870,7 @@ class UserMixin(BaseUserMixin):
                 break
         return str(cusername) if cusername is not None else ""
 
-    def us_send_security_token(self, method, **kwargs):
+    def us_send_security_token(self, method: str, **kwargs: t.Any) -> t.Optional[str]:
         """Generate and send the security code for unified sign in.
 
         :param method: The method in which the code will be sent
@@ -867,7 +888,7 @@ class UserMixin(BaseUserMixin):
             return get_message("FAILED_TO_SEND_CODE")[0]
         return None
 
-    def tf_send_security_token(self, method, **kwargs):
+    def tf_send_security_token(self, method: str, **kwargs: t.Any) -> t.Optional[str]:
         """Generate and send the security code for two-factor.
 
         :param method: The method in which the code will be sent

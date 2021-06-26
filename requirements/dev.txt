@@ -1,8 +1,18 @@
 -r docs.txt
 -r tests.txt
+mypy
 wheel
-setuptools
 psycopg2
 pymysql
 pre-commit
 tox
+
+# for dev - might not install Flask-Security - list those dependencies here
+flask
+flask_wtf
+flask_login
+wtforms
+passlib
+blinker
+email-validator
+itsdangerous
