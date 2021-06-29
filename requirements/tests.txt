@@ -22,7 +22,7 @@ pyqrcode
 pytest-cache
 pytest-cov
 pytest
-sqlalchemy[mypy]
+sqlalchemy
 sqlalchemy-utils
 werkzeug
 zxcvbn
