@@ -1,14 +1,16 @@
+.. _models_topic:
+
 Models
 ======
 
 Flask-Security assumes you'll be using libraries such as SQLAlchemy,
-MongoEngine, Peewee or PonyORM to define a data model that includes a `User`
-and `Role` model. The fields on your models must follow a particular convention
+MongoEngine, Peewee or PonyORM to define a `User`
+and `Role` data model. The fields on your models must follow a particular convention
 depending on the functionality your app requires. Aside from this, you're free
 to add any additional fields to your model(s) if you want.
 
 As more features are added to Flask-Security, the list of required fields and tables grow.
-As you use these features, and therefore use these fields and tables, database migrations are required;
+As you use these features, and therefore require these fields and tables, database migrations are required;
 which are a bit of a pain. To make things easier - Flask-Security includes mixins that
 contain ALL the fields and tables required for all features. They also contain
 various `best practice` fields - such as update and create times. These mixins can

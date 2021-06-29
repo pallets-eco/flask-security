@@ -67,24 +67,45 @@ Datastores
     :members:
 
 .. autoclass:: flask_security.SQLAlchemyUserDatastore
-    :members:
-    :inherited-members:
+    :show-inheritance:
 
 .. autoclass:: flask_security.SQLAlchemySessionUserDatastore
-    :members:
-    :inherited-members:
+    :show-inheritance:
 
 .. autoclass:: flask_security.MongoEngineUserDatastore
-    :members:
-    :inherited-members:
+    :show-inheritance:
 
 .. autoclass:: flask_security.PeeweeUserDatastore
-    :members:
-    :inherited-members:
+    :show-inheritance:
 
 .. autoclass:: flask_security.PonyUserDatastore
-    :members:
-    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: flask_security.datastore.SQLAlchemyDatastore
+
+    Internal class implementing DataStore interface.
+
+.. autoclass:: flask_security.datastore.MongoEngineDatastore
+
+    Internal class implementing DataStore interface.
+
+.. autoclass:: flask_security.datastore.PeeweeDatastore
+
+    Internal class implementing DataStore interface.
+
+.. autoclass:: flask_security.datastore.PonyDatastore
+
+    Internal class implementing DataStore interface.
+
+.. class:: User
+
+    The User model. This must be provided by the application.
+    See :ref:`Models <models_topic>`.
+
+.. class:: Role
+
+    The Role model. This must be provided by the application.
+    See :ref:`Models <models_topic>`.
 
 Utils
 -----

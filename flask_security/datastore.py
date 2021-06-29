@@ -5,13 +5,20 @@
     This module contains an user datastore classes.
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+import datetime
 import json
+import typing as t
 import uuid
 
 from .utils import config_value
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    import flask_sqlalchemy
+    import flask_mongoengine
+    import sqlalchemy.orm.scoping
 
 
 class Datastore:
@@ -127,13 +134,15 @@ class UserDatastore:
         commit the transaction by calling datastore.commit().
     """
 
-    def __init__(self, user_model, role_model):
+    def __init__(self, user_model: t.Type["User"], role_model: t.Type["Role"]):
         self.user_model = user_model
         self.role_model = role_model
 
-    def _prepare_role_modify_args(self, role):
+    def _prepare_role_modify_args(
+        self, role: t.Union[str, "Role"]
+    ) -> t.Union["Role", None]:
         if isinstance(role, str):
-            role = self.find_role(role)
+            return self.find_role(role)
         return role
 
     def _prepare_create_user_args(self, **kwargs):
@@ -150,30 +159,34 @@ class UserDatastore:
 
         return kwargs
 
-    def find_user(self, *args, **kwargs):
+    def find_user(
+        self, case_insensitive: bool = False, **kwargs: t.Any
+    ) -> t.Union["User", None]:
         """Returns a user matching the provided parameters."""
         raise NotImplementedError
 
-    def find_role(self, *args, **kwargs):
+    def find_role(self, role: str) -> t.Union["Role", None]:
         """Returns a role matching the provided name."""
         raise NotImplementedError
 
-    def add_role_to_user(self, user, role):
+    def add_role_to_user(self, user: "User", role: t.Union["Role", str]) -> bool:
         """Adds a role to a user.
 
-        :param user: The user to manipulate. Can be an User object or email
+        :param user: The user to manipulate.
         :param role: The role to add to the user. Can be a Role object or
             string role name
         :return: True is role was added, False if role already existed.
         """
-        role = self._prepare_role_modify_args(role)
-        if role not in user.roles:
-            user.roles.append(role)
-            self.put(user)
+        role_obj = self._prepare_role_modify_args(role)
+        if not role_obj:
+            raise ValueError(f"Role: {role} doesn't exist")
+        if role_obj not in user.roles:
+            user.roles.append(role_obj)
+            self.put(user)  # type: ignore
             return True
         return False
 
-    def remove_role_from_user(self, user, role):
+    def remove_role_from_user(self, user: "User", role: t.Union["Role", str]) -> bool:
         """Removes a role from a user.
 
         :param user: The user to manipulate. Can be an User object or email
@@ -183,14 +196,16 @@ class UserDatastore:
             have role.
         """
         rv = False
-        role = self._prepare_role_modify_args(role)
-        if role in user.roles:
+        role_obj = self._prepare_role_modify_args(role)
+        if role_obj in user.roles:
             rv = True
-            user.roles.remove(role)
-            self.put(user)
+            user.roles.remove(role_obj)
+            self.put(user)  # type: ignore
         return rv
 
-    def add_permissions_to_role(self, role, permissions):
+    def add_permissions_to_role(
+        self, role: t.Union["Role", str], permissions: t.Union[set, list, str]
+    ) -> bool:
         """Add one or more permissions to role.
 
         :param role: The role to modify. Can be a Role object or
@@ -204,14 +219,16 @@ class UserDatastore:
         """
 
         rv = False
-        role = self._prepare_role_modify_args(role)
-        if role:
+        role_obj = self._prepare_role_modify_args(role)
+        if role_obj:
             rv = True
-            role.add_permissions(permissions)
-            self.put(role)
+            role_obj.add_permissions(permissions)
+            self.put(role_obj)  # type: ignore
         return rv
 
-    def remove_permissions_from_role(self, role, permissions):
+    def remove_permissions_from_role(
+        self, role: t.Union["Role", str], permissions: t.Union[set, list, str]
+    ) -> bool:
         """Remove one or more permissions from a role.
 
         :param role: The role to modify. Can be a Role object or
@@ -225,20 +242,20 @@ class UserDatastore:
         """
 
         rv = False
-        role = self._prepare_role_modify_args(role)
-        if role:
+        role_obj = self._prepare_role_modify_args(role)
+        if role_obj:
             rv = True
-            role.remove_permissions(permissions)
-            self.put(role)
+            role_obj.remove_permissions(permissions)
+            self.put(role_obj)  # type: ignore
         return rv
 
-    def toggle_active(self, user):
+    def toggle_active(self, user: "User") -> bool:
         """Toggles a user's active status. Always returns True."""
         user.active = not user.active
-        self.put(user)
+        self.put(user)  # type: ignore
         return True
 
-    def deactivate_user(self, user):
+    def deactivate_user(self, user: "User") -> bool:
         """Deactivates a specified user. Returns `True` if a change was made.
 
         This will immediately disallow access to all endpoints that require
@@ -249,22 +266,24 @@ class UserDatastore:
         """
         if user.active:
             user.active = False
-            self.put(user)
+            self.put(user)  # type: ignore
             return True
         return False
 
-    def activate_user(self, user):
+    def activate_user(self, user: "User") -> bool:
         """Activates a specified user. Returns `True` if a change was made.
 
         :param user: The user to activate
         """
         if not user.active:
             user.active = True
-            self.put(user)
+            self.put(user)  # type: ignore
             return True
         return False
 
-    def set_uniquifier(self, user, uniquifier=None):
+    def set_uniquifier(
+        self, user: "User", uniquifier: t.Union[str, None] = None
+    ) -> None:
         """Set user's Flask-Security identity key.
         This will immediately render outstanding auth tokens,
         session cookies and remember cookies invalid.
@@ -277,9 +296,11 @@ class UserDatastore:
         if not uniquifier:
             uniquifier = uuid.uuid4().hex
         user.fs_uniquifier = uniquifier
-        self.put(user)
+        self.put(user)  # type: ignore
 
-    def set_token_uniquifier(self, user, uniquifier=None):
+    def set_token_uniquifier(
+        self, user: "User", uniquifier: t.Union[str, None] = None
+    ) -> None:
         """Set user's auth token identity key.
         This will immediately render outstanding auth tokens invalid.
 
@@ -295,9 +316,9 @@ class UserDatastore:
             uniquifier = uuid.uuid4().hex
         if hasattr(user, "fs_token_uniquifier"):
             user.fs_token_uniquifier = uniquifier
-            self.put(user)
+            self.put(user)  # type: ignore
 
-    def create_role(self, **kwargs):
+    def create_role(self, **kwargs: t.Any) -> "Role":
         """
         Creates and returns a new role from the given parameters.
         Supported params (depending on RoleModel):
@@ -323,16 +344,15 @@ class UserDatastore:
             kwargs["permissions"] = perms
 
         role = self.role_model(**kwargs)
-        return self.put(role)
+        return self.put(role)  # type: ignore
 
-    def find_or_create_role(self, name, **kwargs):
+    def find_or_create_role(self, name: str, **kwargs: t.Any) -> "Role":
         """Returns a role matching the given name or creates it with any
         additionally provided parameters.
         """
-        kwargs["name"] = name
-        return self.find_role(name) or self.create_role(**kwargs)
+        return self.find_role(name) or self.create_role(name=name, **kwargs)
 
-    def create_user(self, **kwargs):
+    def create_user(self, **kwargs: t.Any) -> "User":
         """Creates and returns a new user from the given parameters.
 
         :kwparam email: required.
@@ -376,16 +396,16 @@ class UserDatastore:
         """
         kwargs = self._prepare_create_user_args(**kwargs)
         user = self.user_model(**kwargs)
-        return self.put(user)
+        return self.put(user)  # type: ignore
 
-    def delete_user(self, user):
+    def delete_user(self, user: "User") -> None:
         """Deletes the specified user.
 
         :param user: The user to delete
         """
-        self.delete(user)
+        self.delete(user)  # type: ignore
 
-    def reset_user_access(self, user):
+    def reset_user_access(self, user: "User") -> None:
         """
         Use this method to reset user authentication methods in the case of compromise.
         This will:
@@ -414,7 +434,13 @@ class UserDatastore:
         if hasattr(user, "tf_primary_method"):
             self.tf_reset(user)
 
-    def tf_set(self, user, primary_method, totp_secret=None, phone=None):
+    def tf_set(
+        self,
+        user: "User",
+        primary_method: str,
+        totp_secret: t.Optional[str] = None,
+        phone: t.Optional[str] = None,
+    ) -> None:
         """Set two-factor info into user record.
         This carefully only changes things if different.
 
@@ -440,9 +466,9 @@ class UserDatastore:
             user.tf_phone_number = phone
             changed = True
         if changed:
-            self.put(user)
+            self.put(user)  # type: ignore
 
-    def tf_reset(self, user):
+    def tf_reset(self, user: "User") -> None:
         """Disable two-factor auth for user
 
         .. versionadded: 3.4.1
@@ -450,9 +476,9 @@ class UserDatastore:
         user.tf_primary_method = None
         user.tf_totp_secret = None
         user.tf_phone_number = None
-        self.put(user)
+        self.put(user)  # type: ignore
 
-    def us_get_totp_secrets(self, user):
+    def us_get_totp_secrets(self, user: "User") -> t.Dict[str, str]:
         """Return totp secrets.
         These are json encoded in the DB.
 
@@ -464,16 +490,24 @@ class UserDatastore:
             return {}
         return json.loads(user.us_totp_secrets)
 
-    def us_put_totp_secrets(self, user, secrets):
+    def us_put_totp_secrets(
+        self, user: "User", secrets: t.Optional[t.Dict[str, str]]
+    ) -> None:
         """Save secrets. Assume to be a dict (or None)
         with keys as methods, and values as (encrypted) secrets.
 
         .. versionadded:: 3.4.0
         """
         user.us_totp_secrets = json.dumps(secrets) if secrets else None
-        self.put(user)
+        self.put(user)  # type: ignore
 
-    def us_set(self, user, method, totp_secret=None, phone=None):
+    def us_set(
+        self,
+        user: "User",
+        method: str,
+        totp_secret: t.Optional[str] = None,
+        phone: t.Optional[str] = None,
+    ) -> None:
         """Set unified sign in info into user record.
 
         If totp_secret isn't provided - existing one won't be changed.
@@ -493,9 +527,9 @@ class UserDatastore:
             self.us_put_totp_secrets(user, totp_secrets)
         if phone and user.us_phone_number != phone:
             user.us_phone_number = phone
-            self.put(user)
+            self.put(user)  # type: ignore
 
-    def us_reset(self, user):
+    def us_reset(self, user: "User") -> None:
         """Disable unified sign in for user.
         Be aware that if "email" is an allowed way to receive codes, they
         will still work (as totp secrets are generated on the fly).
@@ -505,19 +539,32 @@ class UserDatastore:
         """
         user.us_totp_secrets = None
         user.us_phone_number = None
-        self.put(user)
+        self.put(user)  # type: ignore
 
 
 class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
-    """A SQLAlchemy datastore implementation for Flask-Security that assumes the
-    use of the Flask-SQLAlchemy extension.
+    """A UserDatastore implementation that assumes the
+    use of
+    `Flask-SQLAlchemy <https://pypi.python.org/pypi/flask-sqlalchemy/>`_
+    for datastore transactions.
+
+    :param db:
+    :param user_model: See :ref:`Models <models_topic>`.
+    :param role_model: See :ref:`Models <models_topic>`.
     """
 
-    def __init__(self, db, user_model, role_model):
+    def __init__(
+        self,
+        db: "flask_sqlalchemy.SQLAlchemy",
+        user_model: t.Type["User"],
+        role_model: t.Type["Role"],
+    ):
         SQLAlchemyDatastore.__init__(self, db)
         UserDatastore.__init__(self, user_model, role_model)
 
-    def find_user(self, case_insensitive=False, **kwargs):
+    def find_user(
+        self, case_insensitive: bool = False, **kwargs: t.Any
+    ) -> t.Union["User", None]:
         from sqlalchemy import func as alchemyFn
 
         query = self.user_model.query
@@ -540,16 +587,26 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         else:
             return query.filter_by(**kwargs).first()
 
-    def find_role(self, role):
-        return self.role_model.query.filter_by(name=role).first()
+    def find_role(self, role: str) -> t.Union["Role", None]:
+        return self.role_model.query.filter_by(name=role).first()  # type: ignore
 
 
 class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastore):
-    """A SQLAlchemy datastore implementation for Flask-Security that assumes the
-    use of the flask_sqlalchemy_session extension.
+    """A UserDatastore implementation that directly uses
+    `SQLAlchemy's <https://docs.sqlalchemy.org/en/14/orm/session_basics.html>`_
+    session API.
+
+    :param session:
+    :param user_model: See :ref:`Models <models_topic>`.
+    :param role_model: See :ref:`Models <models_topic>`.
     """
 
-    def __init__(self, session, user_model, role_model):
+    def __init__(
+        self,
+        session: "sqlalchemy.orm.scoping.scoped_session",
+        user_model: t.Type["User"],
+        role_model: t.Type["Role"],
+    ):
         class PretendFlaskSQLAlchemyDb:
             """This is a pretend db object, so we can just pass in a session."""
 
@@ -565,11 +622,22 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
 
 
 class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
-    """A MongoEngine datastore implementation for Flask-Security that assumes
-    the use of the Flask-MongoEngine extension.
+    """A UserDatastore implementation that assumes the
+    use of
+    `Flask-MongoEngine <https://pypi.python.org/pypi/flask-mongoengine/>`_
+    for datastore transactions.
+
+    :param db:
+    :param user_model: See :ref:`Models <models_topic>`.
+    :param role_model: See :ref:`Models <models_topic>`.
     """
 
-    def __init__(self, db, user_model, role_model):
+    def __init__(
+        self,
+        db: "flask_mongoengine.MongoEngine",
+        user_model: t.Type["User"],
+        role_model: t.Type["Role"],
+    ):
         MongoEngineDatastore.__init__(self, db)
         UserDatastore.__init__(self, user_model, role_model)
 
@@ -599,15 +667,25 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
 
 
 class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
-    """A PeeweeD datastore implementation for Flask-Security that assumes the
-    use of Peewee Flask utils.
+    """A UserDatastore implementation that assumes the
+    use of
+    `Peewee Flask utils \
+       <https://docs.peewee-orm.com/en/latest/peewee/playhouse.html#flask-utils>`_
+    for datastore transactions.
 
-    :param user_model: A user model class definition
-    :param role_model: A role model class definition
-    :param role_link: A model implementing the many-to-many user-role relation
+    :param db:
+    :param user_model: See :ref:`Models <models_topic>`.
+    :param role_model: See :ref:`Models <models_topic>`.
+    :param role_link:
     """
 
     def __init__(self, db, user_model, role_model, role_link):
+        """
+        :param db:
+        :param user_model: A user model class definition
+        :param role_model: A role model class definition
+        :param role_link: A model implementing the many-to-many user-role relation
+        """
         PeeweeDatastore.__init__(self, db)
         UserDatastore.__init__(self, user_model, role_model)
         self.UserRole = role_link
@@ -685,10 +763,17 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
 
 
 class PonyUserDatastore(PonyDatastore, UserDatastore):
-    """A Pony ORM datastore implementation for Flask-Security.
+    """A UserDatastore implementation that assumes the
+    use of
+    `PonyORM <https://pypi.python.org/pypi/pony/>`_
+    for datastore transactions.
 
     Code primarily from https://github.com/ET-CS but taken over after
     being abandoned.
+
+    :param db:
+    :param user_model: See :ref:`Models <models_topic>`.
+    :param role_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(self, db, user_model, role_model):
@@ -722,3 +807,49 @@ class PonyUserDatastore(PonyDatastore, UserDatastore):
     @with_pony_session
     def create_role(self, **kwargs):
         return super().create_role(**kwargs)
+
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    # Normally - the application creates the Models and glues them together
+    # For typing we do that here since we don't know which DB interface they
+    # will pick.
+    from .core import UserMixin, RoleMixin
+
+    class CanonicalUserDatastore(Datastore, UserDatastore):
+        pass
+
+    class User(UserMixin):
+        id: int
+        email: str
+        username: t.Optional[str]
+        password: str
+        active: bool
+        fs_uniquifier: str
+        fs_token_uniquifier: str
+        confirmed_at: datetime.datetime
+        last_login_at: datetime.datetime
+        current_login_at: datetime.datetime
+        last_login_ip: str
+        current_login_ip: str
+        login_count: int
+        tf_primary_method: t.Optional[str]
+        tf_totp_secret: t.Optional[str]
+        tf_phone_number: t.Optional[str]
+        us_phone_number: t.Optional[str]
+        us_totp_secrets: t.Optional[t.Union[str, bytes]]
+        create_datetime: datetime.datetime
+        update_datetime: datetime.datetime
+        roles: t.List["Role"]
+
+        def __init__(self, **kwargs):
+            ...
+
+    class Role(RoleMixin):
+        id: int
+        name: str
+        description: t.Optional[str]
+        permissions: t.Optional[t.Union[str, set, list]]
+        update_datetime: datetime.datetime
+
+        def __init__(self, **kwargs):
+            ...

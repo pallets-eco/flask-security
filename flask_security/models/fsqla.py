@@ -1,5 +1,5 @@
 """
-Copyright 2019-2020 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2019-2021 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 
@@ -62,9 +62,9 @@ class FsRoleMixin(RoleMixin):
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255))
     # A comma separated list of strings
-    permissions = Column(UnicodeText, nullable=True)
+    permissions = Column(UnicodeText, nullable=True)  # type: ignore
     update_datetime = Column(
-        DateTime,
+        type_=DateTime,
         nullable=False,
         server_default=func.now(),
         onupdate=datetime.datetime.utcnow,
@@ -109,9 +109,9 @@ class FsUserMixin(UserMixin):
             backref=FsModels.db.backref("users", lazy="dynamic"),
         )
 
-    create_datetime = Column(DateTime, nullable=False, server_default=func.now())
+    create_datetime = Column(type_=DateTime, nullable=False, server_default=func.now())
     update_datetime = Column(
-        DateTime,
+        type_=DateTime,
         nullable=False,
         server_default=func.now(),
         onupdate=datetime.datetime.utcnow,
@@ -166,5 +166,5 @@ class FsTokenMixin:
     revoked = Column(Boolean(), nullable=False, default=False)
     access_token = Column(String(100), unique=True, nullable=False)
     refresh_token = Column(String(100), unique=True)
-    issued_at = Column(DateTime, nullable=False, server_default=func.now())
+    issued_at = Column(type_=DateTime, nullable=False, server_default=func.now())
     expires_at = Column(DateTime())
