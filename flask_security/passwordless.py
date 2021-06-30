@@ -5,19 +5,15 @@
     Flask-Security passwordless module
 
     :copyright: (c) 2012 by Matt Wright.
+    :copyright: (c) 2021 by Chris Wagner.
     :license: MIT, see LICENSE for more details.
 """
 
 from flask import current_app as app
-from werkzeug.local import LocalProxy
 
+from .proxies import _security
 from .signals import login_instructions_sent
 from .utils import config_value, get_token_status, send_mail, url_for_security
-
-# Convenient references
-_security = LocalProxy(lambda: app.extensions["security"])
-
-_datastore = LocalProxy(lambda: _security.datastore)
 
 
 def send_login_instructions(user):

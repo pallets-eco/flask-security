@@ -108,10 +108,12 @@ autodoc_typehints = "description"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "werkzeug": ("https://werkzeug.palletsprojects.com/", None),
+    "flask": ("https://flask.palletsprojects.com/", None),
     "itsdangerous": ("https://itsdangerous.palletsprojects.com/", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/", None),
     "wtforms": ("https://wtforms.readthedocs.io/", None),
     "flask_sqlalchemy": ("https://flask-sqlalchemy.palletsprojects.com/", None),
+    "passlib": ("https://passlib.readthedocs.io/en/stable", None),
 }
 
 # -- Options for HTML output ---------------------------------------------

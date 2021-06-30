@@ -829,8 +829,8 @@ if t.TYPE_CHECKING:  # pragma: no cover
         confirmed_at: datetime.datetime
         last_login_at: datetime.datetime
         current_login_at: datetime.datetime
-        last_login_ip: str
-        current_login_ip: str
+        last_login_ip: t.Optional[str]
+        current_login_ip: t.Optional[str]
         login_count: int
         tf_primary_method: t.Optional[str]
         tf_totp_secret: t.Optional[str]

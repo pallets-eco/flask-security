@@ -5,13 +5,13 @@
     Flask-Security recoverable module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 from flask import current_app as app
-from werkzeug.local import LocalProxy
 
+from .proxies import _security, _datastore
 from .signals import password_reset, reset_password_instructions_sent
 from .utils import (
     config_value,
@@ -22,11 +22,6 @@ from .utils import (
     url_for_security,
     verify_hash,
 )
-
-# Convenient references
-_security = LocalProxy(lambda: app.extensions["security"])
-
-_datastore = LocalProxy(lambda: _security.datastore)
 
 
 def send_reset_password_instructions(user):

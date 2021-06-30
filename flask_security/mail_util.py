@@ -4,17 +4,22 @@
 
     Utility class providing methods for validating, normalizing and sending emails.
 
-    :copyright: (c) 2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     While this default implementation uses FlaskMail - we want to make sure that
     FlaskMail isn't REQUIRED (if this implementation isn't used).
 """
+import typing as t
 
 import email_validator
 from flask import current_app
 
 from .utils import config_value
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    import flask
+    from .datastore import User
 
 
 class MailUtil:
@@ -30,7 +35,7 @@ class MailUtil:
     .. versionadded:: 4.0.0
     """
 
-    def __init__(self, app):
+    def __init__(self, app: "flask.Flask"):
         """Instantiate class.
 
         :param app: The Flask application being initialized.
@@ -38,8 +43,16 @@ class MailUtil:
         pass
 
     def send_mail(
-        self, template, subject, recipient, sender, body, html, user, **kwargs
-    ):
+        self,
+        template: str,
+        subject: str,
+        recipient: str,
+        sender: t.Union[str, tuple],
+        body: str,
+        html: str,
+        user: "User",
+        **kwargs: t.Any
+    ) -> None:
         """Send an email via the Flask-Mail extension.
 
         :param template: the Template name. The message has already been rendered
@@ -59,9 +72,9 @@ class MailUtil:
         msg.html = html
 
         mail = current_app.extensions.get("mail")
-        mail.send(msg)
+        mail.send(msg)  # type: ignore
 
-    def normalize(self, email):
+    def normalize(self, email: str) -> str:
         """
         Given an input email - return a normalized version.
         Must be called in app context and uses :py:data:`SECURITY_EMAIL_VALIDATOR_ARGS`
@@ -74,7 +87,7 @@ class MailUtil:
         valid = email_validator.validate_email(email, **validator_args)
         return valid.email
 
-    def validate(self, email):
+    def validate(self, email: str) -> str:
         """
         Validate the given email.
         If valid, the normalized version is returned.

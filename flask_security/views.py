@@ -36,14 +36,12 @@ import time
 from flask import (
     Blueprint,
     after_this_request,
-    current_app,
     jsonify,
     request,
     session,
 )
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
-from werkzeug.local import LocalProxy
 
 from .changeable import change_user_password
 from .confirmable import (
@@ -53,6 +51,7 @@ from .confirmable import (
 )
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .passwordless import login_token_status, send_login_instructions
+from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .unified_signin import (
     us_signin,
@@ -105,11 +104,6 @@ if get_quart_status():  # pragma: no cover
     from quart import make_response, redirect
 else:
     from flask import make_response, redirect
-
-
-# Convenient references
-_security = LocalProxy(lambda: current_app.extensions["security"])
-_datastore = LocalProxy(lambda: _security.datastore)
 
 
 def default_render_json(payload, code, headers, user):

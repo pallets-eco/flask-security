@@ -11,8 +11,8 @@
 """
 
 from flask import current_app as app
-from werkzeug.local import LocalProxy
 
+from .proxies import _security, _datastore
 from .signals import confirm_instructions_sent, user_confirmed
 from .utils import (
     config_value,
@@ -22,11 +22,6 @@ from .utils import (
     url_for_security,
     verify_hash,
 )
-
-# Convenient references
-_security = LocalProxy(lambda: app.extensions["security"])
-
-_datastore = LocalProxy(lambda: _security.datastore)
 
 
 def generate_confirmation_link(user):

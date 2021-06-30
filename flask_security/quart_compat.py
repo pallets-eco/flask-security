@@ -18,7 +18,7 @@ else:
     is_quart = False
 
 
-@property
+@property  # type: ignore
 def best(self):  # pragma: no cover
     options = sorted(
         self.options,
