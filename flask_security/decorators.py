@@ -5,13 +5,14 @@
     Flask-Security decorators module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 from collections import namedtuple
 import datetime
 from functools import wraps
+import typing as t
 
 from flask import Response, _request_ctx_stack, abort, current_app, g, redirect, request
 from flask_login import current_user, login_required  # noqa: F401
@@ -20,6 +21,7 @@ from flask_wtf.csrf import CSRFError
 from werkzeug.local import LocalProxy
 from werkzeug.routing import BuildError
 
+from .proxies import _security, DecoratedView
 from .utils import (
     FsPermNeed,
     config_value,
@@ -33,14 +35,12 @@ from .utils import (
 )
 
 # Convenient references
-_security = LocalProxy(lambda: current_app.extensions["security"])
-
 _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
 BasicAuth = namedtuple("BasicAuth", "username, password")
 
 # NOTE: this is here for backwards compatibility, it is deprecated and
-# to be removed in 4.0
+# could be removed any time!
 _default_unauthenticated_html = """
     <h1>Unauthorized</h1>
     <p>The server could not verify that you are authorized to access the URL
@@ -178,7 +178,7 @@ def _check_http_auth():
     return False
 
 
-def handle_csrf(method):
+def handle_csrf(method: t.Optional[str]) -> None:
     """Invoke CSRF protection based on authentication method.
 
     Usually this is called as part of a decorator, but if that isn't
@@ -210,12 +210,12 @@ def handle_csrf(method):
 
     if config_value("CSRF_PROTECT_MECHANISMS"):
         if method in config_value("CSRF_PROTECT_MECHANISMS"):
-            _csrf.protect()
+            _csrf.protect()  # type: ignore
         else:
             _request_ctx_stack.top.fs_ignore_csrf = True
 
 
-def http_auth_required(realm):
+def http_auth_required(realm: t.Any) -> DecoratedView:
     """Decorator that protects endpoints using Basic HTTP authentication.
 
     :param realm: optional realm name
@@ -247,7 +247,7 @@ def http_auth_required(realm):
     return decorator
 
 
-def auth_token_required(fn):
+def auth_token_required(fn: DecoratedView) -> DecoratedView:
     """Decorator that protects endpoints using token authentication. The token
     should be added to the request by the client by using a query string
     variable with a name equal to the configuration value of
@@ -268,10 +268,14 @@ def auth_token_required(fn):
         else:
             return _security._unauthn_handler(["token"])
 
-    return decorated
+    return t.cast(DecoratedView, decorated)
 
 
-def auth_required(*auth_methods, **kwargs):
+def auth_required(
+    *auth_methods: t.Union[str, t.Callable[[], t.List[str]], None],
+    within: t.Union[int, t.Callable[[], datetime.timedelta]] = -1,
+    grace: t.Optional[t.Union[int, t.Callable[[], datetime.timedelta]]] = None
+) -> DecoratedView:
     """
     Decorator that protects endpoints through multiple mechanisms
     Example::
@@ -285,7 +289,7 @@ def auth_required(*auth_methods, **kwargs):
         then all current available mechanisms (except "basic") will be tried. A callable
         can also be passed (useful if you need app/request context). The callable
         must return a list.
-    :kwparam within: Add 'freshness' check to authentication. Is either an int
+    :param within: Add 'freshness' check to authentication. Is either an int
         specifying # of minutes, or a callable that returns a timedelta. For timedeltas,
         timedelta.total_seconds() is used for the calculations:
 
@@ -297,7 +301,7 @@ def auth_required(*auth_methods, **kwargs):
 
         Note that Basic Auth, by definition, is always 'fresh' and will never result in
         a redirect/error.
-    :kwparam grace: Add a grace period for freshness checks. As above, either an int
+    :param grace: Add a grace period for freshness checks. As above, either an int
         or a callable returning a timedelta. If not specified then
         :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` is used. The grace period allows
         callers to complete the required operations w/o being prompted again.
@@ -342,18 +346,16 @@ def auth_required(*auth_methods, **kwargs):
         "basic": lambda: _check_http_auth(),
     }
     mechanisms_order = ["token", "session", "basic"]
-    auth_methods_arg = auth_methods
 
     def wrapper(fn):
         @wraps(fn)
-        def decorated_view(*args, **dkwargs):
-            # 2.7 doesn't support keyword args after *args....
-            within = kwargs.get("within", -1)
+        def decorated_view(
+            *args, auth_methods=auth_methods, within=within, grace=grace, **kwargs
+        ):
             if callable(within):
                 within = within()
             else:
                 within = datetime.timedelta(minutes=within)
-            grace = kwargs.get("grace", None)
             if grace is None:
                 grace = config_value("FRESHNESS_GRACE_PERIOD")
             elif callable(grace):
@@ -361,24 +363,24 @@ def auth_required(*auth_methods, **kwargs):
             else:
                 grace = datetime.timedelta(minutes=grace)
 
-            if not auth_methods_arg:
-                auth_methods = {"session", "token"}
+            if not auth_methods:
+                ams = {"session", "token"}
             else:
-                auth_methods = []
-                for am in auth_methods_arg:
+                ams = []
+                for am in auth_methods:
                     if callable(am):
-                        auth_methods.extend(am())
+                        ams.extend(am())
                     else:
-                        auth_methods.append(am)
+                        ams.append(am)
 
             h = {}
-            if "basic" in auth_methods:
+            if "basic" in ams:
                 r = _security.default_http_auth_realm
                 h["WWW-Authenticate"] = 'Basic realm="%s"' % r
             mechanisms = [
                 (method, login_mechanisms.get(method))
                 for method in mechanisms_order
-                if method in auth_methods
+                if method in ams
             ]
             for method, mechanism in mechanisms:
                 if mechanism and mechanism():
@@ -389,18 +391,20 @@ def auth_required(*auth_methods, **kwargs):
                         return _security._reauthn_handler(within, grace)
                     handle_csrf(method)
                     set_request_attr("fs_authn_via", method)
-                    return fn(*args, **dkwargs)
+                    return fn(*args, **kwargs)
             if _security._unauthorized_callback:
                 return _security._unauthorized_callback()
             else:
-                return _security._unauthn_handler(auth_methods, headers=h)
+                return _security._unauthn_handler(ams, headers=h)
 
         return decorated_view
 
     return wrapper
 
 
-def unauth_csrf(fall_through=False):
+def unauth_csrf(
+    fall_through: bool = False,
+) -> DecoratedView:
     """Decorator for endpoints that don't need authentication
     but do want CSRF checks (available via Header rather than just form).
     This is required when setting *WTF_CSRF_CHECK_DEFAULT* = **False** since in that
@@ -454,7 +458,7 @@ def unauth_csrf(fall_through=False):
     return wrapper
 
 
-def roles_required(*roles):
+def roles_required(*roles: str) -> DecoratedView:
     """Decorator which specifies that a user must have all the specified roles.
     Example::
 
@@ -486,7 +490,7 @@ def roles_required(*roles):
     return wrapper
 
 
-def roles_accepted(*roles):
+def roles_accepted(*roles: str) -> DecoratedView:
     """Decorator which specifies that a user must have at least one of the
     specified roles. Example::
 
@@ -517,7 +521,7 @@ def roles_accepted(*roles):
     return wrapper
 
 
-def permissions_required(*fsperms):
+def permissions_required(*fsperms: str) -> DecoratedView:
     """Decorator which specifies that a user must have all the specified permissions.
     Example::
 
@@ -556,7 +560,7 @@ def permissions_required(*fsperms):
     return wrapper
 
 
-def permissions_accepted(*fsperms):
+def permissions_accepted(*fsperms: str) -> DecoratedView:
     """Decorator which specifies that a user must have at least one of the
     specified permissions. Example::
 
@@ -591,7 +595,7 @@ def permissions_accepted(*fsperms):
     return wrapper
 
 
-def anonymous_user_required(f):
+def anonymous_user_required(f: DecoratedView) -> DecoratedView:
     """Decorator which requires that caller NOT be logged in.
     If a logged in user accesses an endpoint protected with this decorator
     they will be redirected to the *SECURITY_POST_LOGIN_VIEW*.
@@ -613,4 +617,4 @@ def anonymous_user_required(f):
                 return redirect(get_url(_security.post_login_view))
         return f(*args, **kwargs)
 
-    return wrapper
+    return t.cast(DecoratedView, wrapper)

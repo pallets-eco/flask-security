@@ -56,7 +56,7 @@ except ImportError:
 
 
 @pytest.fixture()
-def app(request):
+def app(request: pytest.FixtureRequest) -> "Flask":
     app = Flask(__name__)
     app.response_class = Response
     app.debug = True
@@ -101,7 +101,7 @@ def app(request):
         for key, value in settings.kwargs.items():
             app.config["SECURITY_" + key.upper()] = value
 
-    app.mail = Mail(app)
+    app.mail = Mail(app)  # type: ignore
     app.json_encoder = JSONEncoder
 
     # use babel marker to signify tests that need babel extension.
@@ -551,7 +551,7 @@ def pony_setup(request, app, tmpdir, realdburl):
     class Role(db.Entity):
         name = Required(str, unique=True)
         description = Optional(str, nullable=True)
-        users = Set(lambda: User)
+        users = Set(lambda: User)  # type: ignore
 
     class User(db.Entity):
         email = Required(str)

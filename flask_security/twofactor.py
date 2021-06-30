@@ -12,8 +12,8 @@ import typing as t
 
 from flask import current_app as app, redirect, request, session
 from werkzeug.datastructures import MultiDict
-from werkzeug.local import LocalProxy
 
+from .proxies import _security, _datastore
 from .utils import (
     SmsSenderFactory,
     base_render_json,
@@ -35,10 +35,6 @@ from .signals import (
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Response
-
-# Convenient references
-_security = LocalProxy(lambda: app.extensions["security"])
-_datastore = LocalProxy(lambda: _security.datastore)
 
 
 def tf_clean_session():
@@ -239,7 +235,7 @@ def tf_verify_validility_token(token, fs_uniquifier):
 
 
 def tf_set_validity_token_cookie(
-    response: "Response", fs_uniquifier=None, remember: bool = False
+    response: "Response", fs_uniquifier: t.Optional[str] = None, remember: bool = False
 ) -> "Response":
     """Sets the Two-Factor validity token for a specific user given that is
     configured and the user selects remember me

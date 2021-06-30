@@ -68,10 +68,14 @@ jobs:
           run: |
             pip install -U wheel setuptools
             python -m pip install -U pip
-        - name: Style, docs, coverage, nobabel
+        - name: Style, docs, mypy, nobabel
+          run: |
+            pip install tox
+            tox -e style -e docs -e nobabel -e mypy
+        - name: Coverage
           run: |
             pip install tox coverage
-            tox -e style -e docs -e coverage -e nobabel
+            tox -e coverage
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v1
           with:

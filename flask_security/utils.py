@@ -46,31 +46,15 @@ from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
 
 from .quart_compat import best, get_quart_status
+from .proxies import _security, _datastore, _pwd_context, _hashing_context
 from .signals import user_authenticated
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Flask, Response
-    from passlib.context import CryptContext
-    from .core import Security, UserMixin
-    from .datastore import CanonicalUserDatastore, User
+    from .datastore import User
 
 SB = t.Union[str, bytes]
 
-# Convenient references
-# noinspection PyTypeChecker
-_security: "Security" = LocalProxy(  # type: ignore
-    lambda: current_app.extensions["security"]
-)
-
-_datastore: "CanonicalUserDatastore" = LocalProxy(  # type:ignore
-    lambda: _security.datastore
-)
-
-_pwd_context: "CryptContext" = LocalProxy(lambda: _security.pwd_context)  # type: ignore
-
-_hashing_context: "CryptContext" = LocalProxy(  # type: ignore
-    lambda: _security.hashing_context
-)
 
 localize_callback = LocalProxy(lambda: _security.i18n_domain.gettext)
 
@@ -135,8 +119,8 @@ def find_csrf_field_name():
 
 
 def login_user(
-    user: t.Type["UserMixin"],
-    remember: t.Union[bool, None] = None,
+    user: "User",
+    remember: t.Optional[bool] = None,
     authn_via: t.Optional[t.List[str]] = None,
 ) -> bool:
     """Perform the login routine.

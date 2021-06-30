@@ -9,18 +9,17 @@
     :author: Eskil Heyn Olsen
     :license: MIT, see LICENSE for more details.
 """
+import typing as t
 
 from flask import current_app, request, session
 from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
-from werkzeug.local import LocalProxy
 
+from .proxies import _datastore
 from .signals import password_changed
 from .utils import config_value, hash_password, login_user, send_mail
 
-# Convenient references
-_security = LocalProxy(lambda: current_app.extensions["security"])
-
-_datastore = LocalProxy(lambda: _security.datastore)
+if t.TYPE_CHECKING:  # pragma: no cover
+    from .datastore import User
 
 
 def send_password_changed_notice(user):
@@ -33,7 +32,9 @@ def send_password_changed_notice(user):
         send_mail(subject, user.email, "change_notice", user=user)
 
 
-def change_user_password(user, password, notify=True, autologin=True):
+def change_user_password(
+    user: "User", password: str, notify: bool = True, autologin: bool = True
+) -> None:
     """Change the specified user's password
 
     :param user: The user object
@@ -58,10 +59,10 @@ def change_user_password(user, password, notify=True, autologin=True):
         login_user(user, remember=has_remember_cookie, authn_via=["change"])
     if notify:
         send_password_changed_notice(user)
-    password_changed.send(current_app._get_current_object(), user=user)
+    password_changed.send(current_app._get_current_object(), user=user)  # type: ignore
 
 
-def admin_change_password(user, new_passwd, notify=True):
+def admin_change_password(user: "User", new_passwd: str, notify: bool = True) -> None:
     """
     Administratively change a user's password.
     Note that this will immediately render the user's existing sessions (and possibly

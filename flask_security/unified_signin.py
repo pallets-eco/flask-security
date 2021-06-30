@@ -29,17 +29,18 @@
 """
 
 import time
+import typing as t
 
 from flask import current_app as app
 from flask import after_this_request, request, session
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
-from werkzeug.local import LocalProxy
 from wtforms import BooleanField, RadioField, StringField, SubmitField, validators
 
 from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import Form, Required, get_form_field_label
+from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import us_profile_changed, us_security_token_sent
 from .twofactor import (
@@ -70,14 +71,11 @@ from .utils import (
     view_commit,
 )
 
-# Convenient references
-_security = LocalProxy(lambda: app.extensions["security"])
-_datastore = LocalProxy(lambda: _security.datastore)
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask import Response
 
 if get_quart_status():  # pragma: no cover
     from quart import redirect
-
-
 else:
     from flask import redirect
 
@@ -470,7 +468,7 @@ def us_verify_send_code():
 
 
 @unauth_csrf(fall_through=True)
-def us_signin():
+def us_signin() -> "Response":
     """
     Unified sign in view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -520,7 +518,9 @@ def us_signin():
             "US_MFA_REQUIRED"
         ):
             if request.is_json and request.content_length:
-                tf_validity_token = request.get_json().get("tf_validity_token", None)
+                tf_validity_token = request.get_json().get(  # type: ignore
+                    "tf_validity_token", None
+                )
             else:
                 tf_validity_token = request.cookies.get("tf_validity", default=None)
 
@@ -712,7 +712,7 @@ def us_verify_link():
     within=lambda: config_value("FRESHNESS"),
     grace=lambda: config_value("FRESHNESS_GRACE_PERIOD"),
 )
-def us_setup():
+def us_setup() -> "Response":
     """
     Change unified sign in methods.
     We want to verify the new method - so don't store anything yet in DB

@@ -4,10 +4,11 @@
 
     Utility class providing methods for validating and normalizing passwords.
 
-    :copyright: (c) 2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
+import typing as t
 import unicodedata
 
 from .utils import (
@@ -16,6 +17,9 @@ from .utils import (
     password_breached_validator,
     password_complexity_validator,
 )
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    import flask
 
 
 class PasswordUtil:
@@ -28,14 +32,14 @@ class PasswordUtil:
     .. versionadded:: 4.0.0
     """
 
-    def __init__(self, app):
+    def __init__(self, app: "flask.Flask"):
         """Instantiate class.
 
         :param app: The Flask application being initialized.
         """
         pass
 
-    def normalize(self, password):
+    def normalize(self, password: str) -> str:
         """
         Given an input password - return a normalized version (using Python's
         unicodedata.normalize()).
@@ -47,7 +51,9 @@ class PasswordUtil:
             return unicodedata.normalize(cf, password)
         return password
 
-    def validate(self, password, is_register, **kwargs):
+    def validate(
+        self, password: str, is_register: bool, **kwargs: t.Any
+    ) -> t.Tuple[t.Optional[t.List], str]:
         """
         Password validation.
         Called in app/request context.

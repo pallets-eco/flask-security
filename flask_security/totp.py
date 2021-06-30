@@ -9,8 +9,12 @@
 """
 import base64
 import io
+import typing as t
 
-from passlib.totp import TOTP, TokenError
+from passlib.totp import TOTP, TokenError, TotpMatch
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    from .datastore import User
 
 
 class Totp:
@@ -27,7 +31,7 @@ class Totp:
 
     """
 
-    def __init__(self, secrets, issuer):
+    def __init__(self, secrets: t.Dict[t.Union[str, int], str], issuer: str):
         """Initialize a totp factory.
         secrets are used to encrypt the per-user totp_secret on disk.
         """
@@ -36,13 +40,13 @@ class Totp:
             raise ValueError("secrets needs to be a dict with at least one entry")
         self._totp = TOTP.using(issuer=issuer, secrets=secrets)
 
-    def generate_totp_password(self, totp_secret):
+    def generate_totp_password(self, totp_secret: str) -> str:
         """Get time-based one-time password on the basis of given secret and time
         :param totp_secret: the unique shared secret of the user
         """
         return self._totp.from_source(totp_secret).generate().token
 
-    def generate_totp_secret(self):
+    def generate_totp_secret(self) -> str:
         """Create new user-unique totp_secret.
 
         We return an encrypted json string so that when sent in a cookie or
@@ -51,7 +55,9 @@ class Totp:
         """
         return self._totp.new().to_json(encrypt=True)
 
-    def verify_totp(self, token, totp_secret, user, window=0):
+    def verify_totp(
+        self, token: str, totp_secret: str, user: "User", window: int = 0
+    ) -> bool:
         """Verifies token for specific user.
 
         :param token: token to be check against user's secret
@@ -80,7 +86,7 @@ class Totp:
         except TokenError:
             return False
 
-    def get_totp_uri(self, username, totp_secret):
+    def get_totp_uri(self, username: str, totp_secret: str) -> str:
         """Generate provisioning url for use with the qrcode
                 scanner built into the app
 
@@ -90,7 +96,7 @@ class Totp:
         tp = self._totp.from_source(totp_secret)
         return tp.to_uri(username)
 
-    def get_totp_pretty_key(self, totp_secret):
+    def get_totp_pretty_key(self, totp_secret: str) -> str:
         """Generate pretty key for manual input
 
         :param totp_secret: a unique shared secret of the user
@@ -100,7 +106,7 @@ class Totp:
         tp = self._totp.from_source(totp_secret)
         return tp.pretty_key()
 
-    def fetch_setup_values(self, totp, user):
+    def fetch_setup_values(self, totp: str, user: "User") -> t.Dict[str, str]:
         """Generate various values user needs to setup authenticator app.
             Returns dict with keys:
                 'key': totp key
@@ -122,7 +128,7 @@ class Totp:
         r["image"] = self.generate_qrcode(username, totp)
         return r
 
-    def generate_qrcode(self, username, totp):
+    def generate_qrcode(self, username: str, totp: str) -> str:
         """Generate QRcode
          Using username, totp, generate the actual QRcode image.
          This method can be overridden to fine-tune how the image is created -
@@ -145,7 +151,7 @@ class Totp:
             # This should have been checked at app init.
             raise
 
-    def get_last_counter(self, user):
+    def get_last_counter(self, user: "User") -> t.Optional[TotpMatch]:
         """Implement this to fetch stored last_counter from cache.
 
         :param user: User model
@@ -153,7 +159,7 @@ class Totp:
         """
         return None
 
-    def set_last_counter(self, user, tmatch):
+    def set_last_counter(self, user: "User", tmatch: TotpMatch) -> None:
         """Implement this to cache last_counter.
 
         :param user: User model

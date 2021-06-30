@@ -5,23 +5,18 @@
     Flask-Security registerable module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 import uuid
 
 from flask import current_app as app
-from werkzeug.local import LocalProxy
 
 from .confirmable import generate_confirmation_link
+from .proxies import _security, _datastore
 from .signals import user_registered
 from .utils import config_value, do_flash, get_message, hash_password, send_mail
-
-# Convenient references
-_security = LocalProxy(lambda: app.extensions["security"])
-
-_datastore = LocalProxy(lambda: _security.datastore)
 
 
 def register_user(registration_form):
