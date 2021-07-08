@@ -41,7 +41,7 @@ SQLAlchemy Install requirements
 
 ::
 
-     $ python3 -m venv mypyenv
+     $ python3 -m venv pymyenv
      $ . pymyenv/bin/activate
      $ pip install flask-security-too[fsqla,common]
 
@@ -124,7 +124,8 @@ SQLAlchemy Install requirements
 
 ::
 
-     $ python3 -m venv /path/to/new/virtual/environment
+     $ python3 -m venv pymyenv
+     $ . pymyenv/bin/activate
      $ pip install flask-security-too sqlalchemy bcrypt
 
 Also, you can use the extension `Flask-SQLAlchemy-Session documentation
@@ -249,7 +250,7 @@ MongoEngine Install requirements
 
 ::
 
-    $ python3 -m venv mypyenv
+    $ python3 -m venv pymyenv
     $ . pymyenv/bin/activate
     $ pip install flask-security-too[common] flask-mongoengine
 
@@ -329,7 +330,8 @@ Peewee Install requirements
 
 ::
 
-    $ python3 -m venv /path/to/new/virtual/environment
+    $ python3 -m venv pymyenv
+    $ . pymyenv/bin/activate
     $ pip install flask-security-too peewee bcrypt
 
 Peewee Application
