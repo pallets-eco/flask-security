@@ -11,6 +11,7 @@
 import os
 import tempfile
 import time
+import typing as t
 from datetime import datetime
 from urllib.parse import urlsplit
 
@@ -53,6 +54,9 @@ except ImportError:
         from flask_babelex import Babel
     except ImportError:
         NO_BABEL = True
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask.testing import FlaskClient
 
 
 @pytest.fixture()
@@ -605,9 +609,12 @@ def pony_setup(request, app, tmpdir, realdburl):
 
 
 @pytest.fixture()
-def sqlalchemy_app(app, sqlalchemy_datastore):
-    def create():
-        app.security = Security(app, datastore=sqlalchemy_datastore)
+def sqlalchemy_app(
+    app: "Flask", sqlalchemy_datastore: SQLAlchemyUserDatastore
+) -> t.Callable[[], "Flask"]:
+    def create() -> "Flask":
+        security = Security(app, datastore=sqlalchemy_datastore)
+        app.security = security  # type: ignore
         return app
 
     return create
@@ -650,7 +657,7 @@ def pony_app(app, pony_datastore):
 
 
 @pytest.fixture()
-def client(request, sqlalchemy_app):
+def client(request: pytest.FixtureRequest, sqlalchemy_app: t.Callable) -> "FlaskClient":
     app = sqlalchemy_app()
     populate_data(app)
     return app.test_client()
@@ -694,7 +701,7 @@ def in_app_context(request, sqlalchemy_app):
 
 
 @pytest.fixture()
-def get_message(app):
+def get_message(app: "Flask") -> t.Callable[..., bytes]:
     def fn(key, **kwargs):
         rv = app.config["SECURITY_MSG_" + key][0] % kwargs
         return rv.encode("utf-8")

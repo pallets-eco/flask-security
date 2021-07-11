@@ -53,7 +53,7 @@ from .utils import (
     SmsSenderFactory,
     base_render_json,
     check_and_get_token_status,
-    config_value,
+    config_value as cv,
     do_flash,
     find_user,
     get_identity_attributes,
@@ -72,7 +72,7 @@ from .utils import (
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask import Response
+    from flask.typing import ResponseValue
 
 if get_quart_status():  # pragma: no cover
     from quart import redirect
@@ -82,21 +82,21 @@ else:
 
 def _compute_code_methods():
     # Return list of methods that actually send codes
-    return list(set(config_value("US_ENABLED_METHODS")) - {"password", "authenticator"})
+    return list(set(cv("US_ENABLED_METHODS")) - {"password", "authenticator"})
 
 
 def _compute_setup_methods():
     # Return list of methods that require setup
-    return list(set(config_value("US_ENABLED_METHODS")) - {"password"})
+    return list(set(cv("US_ENABLED_METHODS")) - {"password"})
 
 
 def _compute_active_methods(user):
     # Compute methods already setup. The only oddity is that 'email'
     # can be 'auto-setup' - so include that.
-    active_methods = set(config_value("US_ENABLED_METHODS")) & set(
+    active_methods = set(cv("US_ENABLED_METHODS")) & set(
         _datastore.us_get_totp_secrets(user).keys()
     )
-    if "email" in config_value("US_ENABLED_METHODS"):
+    if "email" in cv("US_ENABLED_METHODS"):
         active_methods |= {"email"}
     return list(active_methods)
 
@@ -161,7 +161,7 @@ class _UnifiedPassCodeForm(Form):
             passcode = str(passcode)
 
             ok = False
-            for method in config_value("US_ENABLED_METHODS"):
+            for method in cv("US_ENABLED_METHODS"):
                 if method == "password":
                     passcode = _security._password_util.normalize(passcode)
                     if self.user.verify_and_update_password(passcode):
@@ -172,7 +172,7 @@ class _UnifiedPassCodeForm(Form):
                         token=passcode,
                         totp_secret=totp_secrets[method],
                         user=self.user,
-                        window=config_value("US_TOKEN_VALIDITY"),
+                        window=cv("US_TOKEN_VALIDITY"),
                     ):
                         ok = True
                         break
@@ -185,7 +185,7 @@ class _UnifiedPassCodeForm(Form):
         elif self.submit_send_code.data:
             # Send a code - chosen_method must be valid
             cm = self.chosen_method.data
-            if cm not in config_value("US_ENABLED_METHODS"):
+            if cm not in cv("US_ENABLED_METHODS"):
                 self.chosen_method.errors.append(
                     get_message("US_METHOD_NOT_AVAILABLE")[0]
                 )
@@ -221,7 +221,7 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.remember.default = config_value("DEFAULT_REMEMBER_ME")
+        self.remember.default = cv("DEFAULT_REMEMBER_ME")
         self.requires_confirmation = False
 
     def validate(self):
@@ -276,7 +276,7 @@ class UnifiedSigninSetupForm(Form):
     def validate(self):
         if not super().validate():
             return False
-        if self.chosen_method.data not in config_value("US_ENABLED_METHODS"):
+        if self.chosen_method.data not in cv("US_ENABLED_METHODS"):
             self.chosen_method.errors.append(get_message("US_METHOD_NOT_AVAILABLE")[0])
             return False
 
@@ -310,7 +310,7 @@ class UnifiedSigninSetupValidateForm(Form):
             token=self.passcode.data,
             totp_secret=self.totp_secret,
             user=self.user,
-            window=config_value("US_TOKEN_VALIDITY"),
+            window=cv("US_TOKEN_VALIDITY"),
         ):
             self.passcode.errors.append(get_message("INVALID_PASSWORD_CODE")[0])
             return False
@@ -375,9 +375,9 @@ def us_signin_send_code():
             )
 
         return _security.render_template(
-            config_value("US_SIGNIN_TEMPLATE"),
+            cv("US_SIGNIN_TEMPLATE"),
             us_signin_form=form,
-            available_methods=config_value("US_ENABLED_METHODS"),
+            available_methods=cv("US_ENABLED_METHODS"),
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             code_sent=code_sent,
@@ -388,23 +388,23 @@ def us_signin_send_code():
     # Here on GET or failed validation
     if _security._want_json(request):
         payload = {
-            "available_methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": cv("US_ENABLED_METHODS"),
             "code_methods": code_methods,
             "identity_attributes": get_identity_attributes(),
         }
         return base_render_json(form, include_user=False, additional=payload)
 
     return _security.render_template(
-        config_value("US_SIGNIN_TEMPLATE"),
+        cv("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,
-        available_methods=config_value("US_ENABLED_METHODS"),
+        available_methods=cv("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_loginmenu=True,
         **_security._run_ctx_processor("us_signin")
     )
 
 
-@auth_required(lambda: config_value("API_ENABLED_METHODS"))
+@auth_required(lambda: cv("API_ENABLED_METHODS"))
 def us_verify_send_code():
     """
     Send code during verify.
@@ -431,9 +431,9 @@ def us_verify_send_code():
             )
 
         return _security.render_template(
-            config_value("US_VERIFY_TEMPLATE"),
+            cv("US_VERIFY_TEMPLATE"),
             us_verify_form=form,
-            available_methods=config_value("US_ENABLED_METHODS"),
+            available_methods=cv("US_ENABLED_METHODS"),
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             code_sent=code_sent,
@@ -448,15 +448,15 @@ def us_verify_send_code():
     # Here on GET or failed validation
     if _security._want_json(request):
         payload = {
-            "available_methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": cv("US_ENABLED_METHODS"),
             "code_methods": code_methods,
         }
         return base_render_json(form, additional=payload)
 
     return _security.render_template(
-        config_value("US_VERIFY_TEMPLATE"),
+        cv("US_VERIFY_TEMPLATE"),
         us_verify_form=form,
-        available_methods=config_value("US_ENABLED_METHODS"),
+        available_methods=cv("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_login_menu=True,
         send_code_to=get_url(
@@ -468,7 +468,7 @@ def us_verify_send_code():
 
 
 @unauth_csrf(fall_through=True)
-def us_signin() -> "Response":
+def us_signin() -> "ResponseValue":
     """
     Unified sign in view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -514,9 +514,7 @@ def us_signin() -> "Response":
         # we authenticated with requires it and either user has requested MFA or it is
         # required.
         remember_me = form.remember.data if "remember" in form else None
-        if config_value("TWO_FACTOR") and form.authn_via in config_value(
-            "US_MFA_REQUIRED"
-        ):
+        if cv("TWO_FACTOR") and form.authn_via in cv("US_MFA_REQUIRED"):
             if request.is_json and request.content_length:
                 tf_validity_token = request.get_json().get(  # type: ignore
                     "tf_validity_token", None
@@ -527,10 +525,8 @@ def us_signin() -> "Response":
             tf_validity_token_is_valid = tf_verify_validility_token(
                 tf_validity_token, form.user.fs_uniquifier
             )
-            if config_value("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
-                if config_value("TWO_FACTOR_ALWAYS_VALIDATE") or (
-                    not tf_validity_token_is_valid
-                ):
+            if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
+                if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
 
                     return tf_login(
                         form.user,
@@ -550,7 +546,7 @@ def us_signin() -> "Response":
     code_methods = _compute_code_methods()
     if _security._want_json(request):
         payload = {
-            "available_methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": cv("US_ENABLED_METHODS"),
             "code_methods": code_methods,
             "identity_attributes": get_identity_attributes(),
         }
@@ -564,22 +560,22 @@ def us_signin() -> "Response":
     # On error - wipe code
     form.passcode.data = None
 
-    if form.requires_confirmation and _security.requires_confirmation_error_view:
+    if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
-        return redirect(get_url(_security.requires_confirmation_error_view))
+        return redirect(get_url(cv("REQUIRES_CONFIRMATION_ERROR_VIEW")))
 
     return _security.render_template(
-        config_value("US_SIGNIN_TEMPLATE"),
+        cv("US_SIGNIN_TEMPLATE"),
         us_signin_form=form,
-        available_methods=config_value("US_ENABLED_METHODS"),
+        available_methods=cv("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_login_menu=True,
         **_security._run_ctx_processor("us_signin")
     )
 
 
-@auth_required(lambda: config_value("API_ENABLED_METHODS"))
-def us_verify():
+@auth_required(lambda: cv("API_ENABLED_METHODS"))
+def us_verify() -> "ResponseValue":
     """
     Re-authenticate to reset freshness time.
     This is likely the result of a reauthn_handler redirect, which
@@ -612,7 +608,7 @@ def us_verify():
     # Here on GET or failed POST validate
     if _security._want_json(request):
         payload = {
-            "available_methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": cv("US_ENABLED_METHODS"),
             "code_methods": code_methods,
         }
         return base_render_json(form, additional=payload)
@@ -620,12 +616,12 @@ def us_verify():
     # On error - wipe code
     form.passcode.data = None
     return _security.render_template(
-        config_value("US_VERIFY_TEMPLATE"),
+        cv("US_VERIFY_TEMPLATE"),
         us_verify_form=form,
         code_methods=code_methods,
         skip_login_menu=True,
         send_code_to=get_url(
-            _security.us_verify_send_code_url,
+            cv("US_VERIFY_SEND_CODE_URL"),
             qparams={"next": propagate_next(request.url)},
         ),
         **_security._run_ctx_processor("us_verify")
@@ -633,40 +629,42 @@ def us_verify():
 
 
 @anonymous_user_required
-def us_verify_link():
+def us_verify_link() -> "ResponseValue":
     """
     Used to verify a magic email link. GET only
     """
-    if not all(v in request.args for v in ["email", "code"]):
+    email = request.args.get("email", None)
+    code = request.args.get("code", None)
+    if not email or not code:
         m, c = get_message("API_ERROR")
         if _security.redirect_behavior == "spa":
-            return redirect(get_url(_security.login_error_view, qparams={c: m}))
+            return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
-    user = _datastore.find_user(email=request.args.get("email"))
+    user = _datastore.find_user(email=email)
     if not user or not user.active:
         if not user:
             m, c = get_message("USER_DOES_NOT_EXIST")
         else:
             m, c = get_message("DISABLED_ACCOUNT")
         if _security.redirect_behavior == "spa":
-            return redirect(get_url(_security.login_error_view, qparams={c: m}))
+            return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
     totp_secrets = _datastore.us_get_totp_secrets(user)
     if "email" not in totp_secrets or not _security._totp_factory.verify_totp(
-        token=request.args.get("code"),
+        token=code,
         totp_secret=totp_secrets["email"],
         user=user,
-        window=config_value("US_TOKEN_VALIDITY"),
+        window=cv("US_TOKEN_VALIDITY"),
     ):
         m, c = get_message("INVALID_CODE")
         if _security.redirect_behavior == "spa":
             return redirect(
                 get_url(
-                    _security.login_error_view,
+                    cv("LOGIN_ERROR_VIEW"),
                     qparams=user.get_redirect_qparams({c: m}),
                 )
             )
@@ -674,9 +672,9 @@ def us_verify_link():
         return redirect(url_for_security("us_signin"))
 
     if (
-        config_value("TWO_FACTOR")
-        and "email" in config_value("US_MFA_REQUIRED")
-        and (config_value("TWO_FACTOR_REQUIRED") or is_tf_setup(user))
+        cv("TWO_FACTOR")
+        and "email" in cv("US_MFA_REQUIRED")
+        and (cv("TWO_FACTOR_REQUIRED") or is_tf_setup(user))
     ):
         # tf_login doesn't know anything about "spa" etc. In general two-factor
         # isn't quite ready for SPA. So we return an error via a redirect rather
@@ -685,7 +683,7 @@ def us_verify_link():
         if _security.redirect_behavior == "spa":
             return redirect(
                 get_url(
-                    _security.login_error_view,
+                    cv("LOGIN_ERROR_VIEW"),
                     qparams=user.get_redirect_qparams({"tf_required": 1}),
                 )
             )
@@ -700,7 +698,7 @@ def us_verify_link():
         # This means that this can only work if sessions are active which sort of
         # makes sense - otherwise you need to use /us-signin with a code.
         return redirect(
-            get_url(_security.post_login_view, qparams=user.get_redirect_qparams())
+            get_url(cv("POST_LOGIN_VIEW"), qparams=user.get_redirect_qparams())
         )
 
     do_flash(*get_message("PASSWORDLESS_LOGIN_SUCCESSFUL"))
@@ -708,11 +706,11 @@ def us_verify_link():
 
 
 @auth_required(
-    lambda: config_value("API_ENABLED_METHODS"),
-    within=lambda: config_value("FRESHNESS"),
-    grace=lambda: config_value("FRESHNESS_GRACE_PERIOD"),
+    lambda: cv("API_ENABLED_METHODS"),
+    within=lambda: cv("FRESHNESS"),
+    grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
 )
-def us_setup() -> "Response":
+def us_setup() -> "ResponseValue":
     """
     Change unified sign in methods.
     We want to verify the new method - so don't store anything yet in DB
@@ -765,8 +763,8 @@ def us_setup() -> "Response":
                     form, include_user=False, error_status_code=500 if msg else 400
                 )
             return _security.render_template(
-                config_value("US_SETUP_TEMPLATE"),
-                available_methods=config_value("US_ENABLED_METHODS"),
+                cv("US_SETUP_TEMPLATE"),
+                available_methods=cv("US_ENABLED_METHODS"),
                 active_methods=active_methods,
                 setup_methods=setup_methods,
                 us_setup_form=form,
@@ -800,8 +798,8 @@ def us_setup() -> "Response":
         if _security._want_json(request):
             return base_render_json(form, include_user=False, additional=json_response)
         return _security.render_template(
-            config_value("US_SETUP_TEMPLATE"),
-            available_methods=config_value("US_ENABLED_METHODS"),
+            cv("US_SETUP_TEMPLATE"),
+            available_methods=cv("US_ENABLED_METHODS"),
             active_methods=active_methods,
             setup_methods=setup_methods,
             code_sent=form.chosen_method.data in _compute_code_methods(),
@@ -818,7 +816,7 @@ def us_setup() -> "Response":
     if _security._want_json(request):
         payload = {
             "identity_attributes": get_identity_attributes(),
-            "available_methods": config_value("US_ENABLED_METHODS"),
+            "available_methods": cv("US_ENABLED_METHODS"),
             "active_methods": active_methods,
             "setup_methods": setup_methods,
             "phone": current_user.us_phone_number,
@@ -828,8 +826,8 @@ def us_setup() -> "Response":
     # Show user existing phone number
     form.phone.data = current_user.us_phone_number
     return _security.render_template(
-        config_value("US_SETUP_TEMPLATE"),
-        available_methods=config_value("US_ENABLED_METHODS"),
+        cv("US_SETUP_TEMPLATE"),
+        available_methods=cv("US_ENABLED_METHODS"),
         active_methods=active_methods,
         setup_methods=setup_methods,
         us_setup_form=form,
@@ -837,8 +835,8 @@ def us_setup() -> "Response":
     )
 
 
-@auth_required(lambda: config_value("API_ENABLED_METHODS"))
-def us_setup_validate(token):
+@auth_required(lambda: cv("API_ENABLED_METHODS"))
+def us_setup_validate(token: str) -> "ResponseValue":
     """
     Validate new setup.
     The token is the state variable which is signed and timed
@@ -858,7 +856,7 @@ def us_setup_validate(token):
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("US_SETUP_EXPIRED", within=config_value("US_SETUP_WITHIN"))
+        m, c = get_message("US_SETUP_EXPIRED", within=cv("US_SETUP_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
             payload = json_error_response(errors=m)
@@ -876,7 +874,7 @@ def us_setup_validate(token):
         _datastore.us_set(current_user, method, state["totp_secret"], phone)
 
         us_profile_changed.send(
-            app._get_current_object(), user=current_user, method=method
+            app._get_current_object(), user=current_user, method=method  # type: ignore
         )
         if _security._want_json(request):
             return base_render_json(
@@ -889,8 +887,7 @@ def us_setup_validate(token):
         else:
             do_flash(*get_message("US_SETUP_SUCCESSFUL"))
             return redirect(
-                get_url(_security.us_post_setup_view)
-                or get_url(_security.post_login_view)
+                get_url(cv("US_POST_SETUP_VIEW")) or get_url(cv("POST_LOGIN_VIEW"))
             )
 
     # Code not correct/outdated.
@@ -930,7 +927,7 @@ def us_send_security_token(
                 "us_verify_link", email=user.email, code=token, _external=True
             )
         send_mail(
-            config_value("US_EMAIL_SUBJECT"),
+            cv("US_EMAIL_SUBJECT"),
             user.email,
             "us_instructions",
             user=user,
@@ -941,9 +938,9 @@ def us_send_security_token(
         )
     elif method == "sms":
         m, c = get_message("USE_CODE", code=token)
-        from_number = config_value("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
+        from_number = cv("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
         to_number = phone_number
-        sms_sender = SmsSenderFactory.createSender(config_value("SMS_SERVICE"))
+        sms_sender = SmsSenderFactory.createSender(cv("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=m)
 
     elif method == "authenticator" or method == "password":

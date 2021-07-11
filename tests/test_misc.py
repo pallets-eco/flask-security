@@ -5,7 +5,7 @@
     Lots of tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -17,6 +17,7 @@ import os.path
 import pkg_resources
 import sys
 import time
+import typing as t
 
 import pytest
 
@@ -63,6 +64,10 @@ from flask_security.utils import (
     validate_redirect_url,
     verify_hash,
 )
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask import Flask
+    from flask.testing import FlaskClient
 
 
 @pytest.mark.recoverable()
@@ -424,7 +429,7 @@ def test_without_babel(app, client):
     assert response.status_code == 200
 
 
-def test_no_email_sender(app):
+def test_no_email_sender(app, sqlalchemy_datastore):
     """Verify that if SECURITY_EMAIL_SENDER is default
     (which is a local proxy) that send_mail picks up MAIL_DEFAULT_SENDER.
     """
@@ -435,7 +440,7 @@ def test_no_email_sender(app):
             self.email = email
 
     security = Security()
-    security.init_app(app)
+    security.init_app(app, sqlalchemy_datastore)
 
     with app.app_context():
         app.try_trigger_before_first_request_functions()
@@ -446,7 +451,7 @@ def test_no_email_sender(app):
             assert "test@testme.com" == outbox[0].sender
 
 
-def test_sender_tuple(app):
+def test_sender_tuple(app, sqlalchemy_datastore):
     """Verify that if sender is a (name, address) tuple,
     in the received email sender is properly formatted as "name <address>"
     """
@@ -457,7 +462,7 @@ def test_sender_tuple(app):
             self.email = email
 
     security = Security()
-    security.init_app(app)
+    security.init_app(app, sqlalchemy_datastore)
 
     with app.app_context():
         app.try_trigger_before_first_request_functions()
@@ -511,10 +516,10 @@ def test_myxlation(app, sqlalchemy_datastore, pytestconfig):
 
 
 @pytest.mark.babel()
-def test_form_labels(app):
+def test_form_labels(app, sqlalchemy_datastore):
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     app.security = Security()
-    app.security.init_app(app)
+    app.security.init_app(app, sqlalchemy_datastore)
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
     with app.test_request_context():
@@ -645,7 +650,7 @@ def test_zxcvbn_xlate(app):
 
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
 @pytest.mark.settings(password_check_breached="strict")
-def test_breached(app):
+def test_breached(app, sqlalchemy_datastore):
 
     # partial response from: https://api.pwnedpasswords.com/range/07003
     pwned_response = b"AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
@@ -657,7 +662,7 @@ B25C03CFBE4CBF19E0F4889711C9A488E5D:2\r\n\
 B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
 
     app.security = Security()
-    app.security.init_app(app)
+    app.security.init_app(app, sqlalchemy_datastore)
     with app.test_request_context():
         with mock.patch("urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.return_value.__enter__.return_value.read.return_value = (
@@ -674,7 +679,7 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
     password_breached_count=16,
     password_complexity_checker="zxcvbn",
 )
-def test_breached_cnt(app):
+def test_breached_cnt(app, sqlalchemy_datastore):
 
     # partial response from: https://api.pwnedpasswords.com/range/07003
     pwned_response = b"AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
@@ -686,7 +691,7 @@ B25C03CFBE4CBF19E0F4889711C9A488E5D:2\r\n\
 B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
 
     app.security = Security()
-    app.security.init_app(app)
+    app.security.init_app(app, sqlalchemy_datastore)
     with app.test_request_context():
         with mock.patch("urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.return_value.__enter__.return_value.read.return_value = (
@@ -700,11 +705,11 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
 
 @pytest.mark.skip
 @pytest.mark.settings(password_check_breached="strict")
-def test_breached_real(app):
+def test_breached_real(app, sqlalchemy_datastore):
     """Actually go out to internet.."""
 
     app.security = Security()
-    app.security.init_app(app)
+    app.security.init_app(app, sqlalchemy_datastore)
     with app.test_request_context():
         pbad, pnorm = app.security._password_util.validate("flaskflask", True)
         assert len(pbad) == 1
@@ -765,7 +770,7 @@ def test_method_view(app, client):
     assert b"Hi view" in response.data
 
 
-def test_phone_util_override(app):
+def test_phone_util_override(app, sqlalchemy_datastore):
     class MyPhoneUtil:
         def __init__(self, app):
             pass
@@ -777,13 +782,15 @@ def test_phone_util_override(app):
             return "very-canonical"
 
     app.security = Security()
-    app.security.init_app(app, phone_util_cls=MyPhoneUtil)
+    app.security.init_app(app, sqlalchemy_datastore, phone_util_cls=MyPhoneUtil)
 
     with app.app_context():
         assert uia_phone_mapper("55") == "very-canonical"
 
 
-def test_authn_freshness(app, client, get_message):
+def test_authn_freshness(
+    app: "Flask", client: "FlaskClient", get_message: t.Callable[..., bytes]
+) -> None:
     """Test freshness using default reauthn_handler"""
 
     @auth_required(within=30, grace=0)
@@ -819,9 +826,9 @@ def test_authn_freshness(app, client, get_message):
     # Test json error response
     response = client.get("/myspecialview", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
-        "REAUTHENTICATION_REQUIRED"
-    )
+    assert response.json and response.json["response"]["error"].encode(
+        "utf-8"
+    ) == get_message("REAUTHENTICATION_REQUIRED")
 
 
 def test_authn_freshness_handler(app, client, get_message):
@@ -1123,3 +1130,17 @@ def test_validate_redirect(app, sqlalchemy_datastore):
         assert not validate_redirect_url(" //github.com")
         assert not validate_redirect_url("\t//github.com")
         assert not validate_redirect_url("//github.com")  # this is normal urlsplit
+
+
+def test_kwargs():
+    import warnings
+
+    warnings.simplefilter("error")
+    with pytest.raises(DeprecationWarning):
+        Security(myownkwarg="hi")
+
+
+def test_nodatastore(app):
+    with pytest.raises(ValueError):
+        s = Security(app)
+        s.init_app(app)

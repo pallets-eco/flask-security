@@ -8,12 +8,11 @@ Version 4.1.0
 
 Released TBD
 
-This release was bumped to 4.1.0 on the small chance that the change in the way
-babel packages are tried and used might break existing applications.
-
 Features
 ++++++++
 - (:issue:`474`) Add public API and CLI command to change a user's password.
+- (:issue:`140`) Add type hints. Please note that many of the packages that flask-security
+  depends on aren't typed yet - so there are likely errors in some of the types.
 
 Fixes
 +++++
@@ -21,10 +20,10 @@ Fixes
 - (:issue:`490`) Flask-Mail sender name can be a tuple. (hrishikeshrt)
 - (:issue:`486`) Possible open redirect vulnerability.
 - (:pr:`478`) Improve/update German translation. (sr-verde)
-- (:issue:`488`) Improve handling of Babel packages
+- (:issue:`488`) Improve handling of Babel packages.
 - (:pr:`496`) Documentation improvements, distribution extras, fix single message
-    override.
-- (:issue:`497`) Improve cookie handling and default samesite to Strict
+  override.
+- (:issue:`497`) Improve cookie handling and default ``samesite`` to ``Strict``.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -39,8 +38,14 @@ Backwards Compatibility Concerns
   one of the other package - however if those modules are NOT initialized,
   Flask-Security will simply ignore them and no translations will occur.
 - (:issue:`497`) The CSRF_COOKIE and TWO_FACTOR_VALIDITY cookie had their defaults
-  changed to set ``samesite=Strict``. This follows the Flask-Security directive of
+  changed to set ``samesite=Strict``. This follows the Flask-Security goal of
   making things more secure out-of-the-box.
+- (:issue:`140`) Type hinting. For the most part this of course has no runtime effects.
+  However, this required a fairly major overhaul of how Flask-Security is initialized in
+  order to provide valid types for the many constructor attributes. There are no known
+  compatability concerns - however initialization used to convert all arguments into kwargs
+  then add those as attributes and merge with application constants. That no longer happens
+  and it is possible that some corner cases don't behave precisely as they did before.
 
 Version 4.0.1
 -------------

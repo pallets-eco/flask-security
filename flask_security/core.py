@@ -17,11 +17,13 @@ import typing as t
 import warnings
 
 import pkg_resources
-from flask import _request_ctx_stack, current_app, render_template
+from flask import _request_ctx_stack, current_app
+from flask.json import JSONEncoder
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
 from flask_principal import Identity, Principal, RoleNeed, UserNeed, identity_loaded
+from flask_wtf import FlaskForm
 from itsdangerous import URLSafeTimedSerializer
 from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
@@ -50,6 +52,7 @@ from .forms import (
 from .mail_util import MailUtil
 from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
+from .proxies import _security
 from .twofactor import tf_send_security_token
 from .unified_signin import (
     UnifiedSigninForm,
@@ -65,6 +68,7 @@ from .utils import (
     FsJsonEncoder,
     FsPermNeed,
     csrf_cookie_handler,
+    default_render_template,
     default_want_json,
     get_config,
     get_identity_attribute,
@@ -79,15 +83,12 @@ from .utils import (
 from .views import create_blueprint, default_render_json
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask import Flask
-    from .datastore import Role
+    import flask
+    from flask import Request
+    from flask.typing import ResponseValue
+    import flask_login.mixins
+    from .datastore import Role, User, UserDatastore
 
-# Convenient references
-# noinspection PyTypeChecker
-_security: "Security" = LocalProxy(  # type: ignore
-    lambda: current_app.extensions["security"]
-)
-_datastore = LocalProxy(lambda: _security.datastore)
 
 # List of authentication mechanisms supported.
 AUTHN_MECHANISMS = ("basic", "session", "token")
@@ -426,25 +427,6 @@ _default_messages = {
     "USE_CODE": (_("Use this code to sign in: %(code)s."), "info"),
 }
 
-_default_forms = {
-    "login_form": LoginForm,
-    "verify_form": VerifyForm,
-    "confirm_register_form": ConfirmRegisterForm,
-    "register_form": RegisterForm,
-    "forgot_password_form": ForgotPasswordForm,
-    "reset_password_form": ResetPasswordForm,
-    "change_password_form": ChangePasswordForm,
-    "send_confirmation_form": SendConfirmationForm,
-    "passwordless_login_form": PasswordlessLoginForm,
-    "two_factor_verify_code_form": TwoFactorVerifyCodeForm,
-    "two_factor_setup_form": TwoFactorSetupForm,
-    "two_factor_rescue_form": TwoFactorRescueForm,
-    "us_signin_form": UnifiedSigninForm,
-    "us_setup_form": UnifiedSigninSetupForm,
-    "us_setup_validate_form": UnifiedSigninSetupValidateForm,
-    "us_verify_form": UnifiedVerifyForm,
-}
-
 
 def _user_loader(user_id):
     """Load based on fs_uniquifier (alternative_id)."""
@@ -551,7 +533,7 @@ def _get_principal(app):
     return p
 
 
-def _get_pwd_context(app: "Flask") -> CryptContext:
+def _get_pwd_context(app: "flask.Flask") -> CryptContext:
     pw_hash = cv("PASSWORD_HASH", app=app)
     schemes = cv("PASSWORD_SCHEMES", app=app)
     deprecated = cv("DEPRECATED_PASSWORD_SCHEMES", app=app)
@@ -570,7 +552,7 @@ def _get_pwd_context(app: "Flask") -> CryptContext:
     return cc
 
 
-def _get_hashing_context(app):
+def _get_hashing_context(app: "flask.Flask") -> CryptContext:
     schemes = cv("HASHING_SCHEMES", app=app)
     deprecated = cv("DEPRECATED_HASHING_SCHEMES", app=app)
     return CryptContext(schemes=schemes, deprecated=deprecated)
@@ -580,46 +562,6 @@ def _get_serializer(app, name):
     secret_key = app.config.get("SECRET_KEY")
     salt = app.config.get("SECURITY_%s_SALT" % name.upper())
     return URLSafeTimedSerializer(secret_key=secret_key, salt=salt)
-
-
-def _get_state(app, datastore, anonymous_user=None, **kwargs):
-    for key, value in get_config(app).items():
-        kwargs[key.lower()] = value
-
-    kwargs.update(
-        dict(
-            app=app,
-            datastore=datastore,
-            principal=_get_principal(app),
-            pwd_context=_get_pwd_context(app),
-            hashing_context=_get_hashing_context(app),
-            i18n_domain=FsDomain(app),
-            remember_token_serializer=_get_serializer(app, "remember"),
-            login_serializer=_get_serializer(app, "login"),
-            reset_serializer=_get_serializer(app, "reset"),
-            confirm_serializer=_get_serializer(app, "confirm"),
-            us_setup_serializer=_get_serializer(app, "us_setup"),
-            tf_validity_serializer=_get_serializer(app, "two_factor_validity"),
-            _context_processors={},
-            _unauthorized_callback=None,
-            _render_json=default_render_json,
-            _want_json=default_want_json,
-            _unauthn_handler=default_unauthn_handler,
-            _reauthn_handler=default_reauthn_handler,
-            _unauthz_handler=default_unauthz_handler,
-        )
-    )
-    if "redirect_validate_re" in kwargs:
-        kwargs["_redirect_validate_re"] = re.compile(kwargs["redirect_validate_re"])
-
-    if "login_manager" not in kwargs:
-        kwargs["login_manager"] = _get_login_manager(app, anonymous_user)
-
-    for key, value in _default_forms.items():
-        if key not in kwargs or not kwargs[key]:
-            kwargs[key] = value
-
-    return _SecurityState(**kwargs)
 
 
 def _context_processor():
@@ -918,94 +860,6 @@ class AnonymousUser(AnonymousUserMixin):
         return False
 
 
-class _SecurityState:
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key.lower(), value)
-
-    def _add_ctx_processor(self, endpoint, fn):
-        group = self._context_processors.setdefault(endpoint, [])
-        fn not in group and group.append(fn)
-
-    def _run_ctx_processor(self, endpoint):
-        rv = {}
-        for g in [None, endpoint]:
-            for fn in self._context_processors.setdefault(g, []):
-                rv.update(fn())
-        return rv
-
-    def context_processor(self, fn):
-        self._add_ctx_processor(None, fn)
-
-    def forgot_password_context_processor(self, fn):
-        self._add_ctx_processor("forgot_password", fn)
-
-    def login_context_processor(self, fn):
-        self._add_ctx_processor("login", fn)
-
-    def register_context_processor(self, fn):
-        self._add_ctx_processor("register", fn)
-
-    def reset_password_context_processor(self, fn):
-        self._add_ctx_processor("reset_password", fn)
-
-    def change_password_context_processor(self, fn):
-        self._add_ctx_processor("change_password", fn)
-
-    def send_confirmation_context_processor(self, fn):
-        self._add_ctx_processor("send_confirmation", fn)
-
-    def send_login_context_processor(self, fn):
-        self._add_ctx_processor("send_login", fn)
-
-    def verify_context_processor(self, fn):
-        self._add_ctx_processor("verify", fn)
-
-    def mail_context_processor(self, fn):
-        self._add_ctx_processor("mail", fn)
-
-    def tf_setup_context_processor(self, fn):
-        self._add_ctx_processor("tf_setup", fn)
-
-    def tf_token_validation_context_processor(self, fn):
-        self._add_ctx_processor("tf_token_validation", fn)
-
-    def us_signin_context_processor(self, fn):
-        self._add_ctx_processor("us_signin", fn)
-
-    def us_setup_context_processor(self, fn):
-        self._add_ctx_processor("us_setup", fn)
-
-    def us_verify_context_processor(self, fn):
-        self._add_ctx_processor("us_verify", fn)
-
-    def unauthorized_handler(self, fn):
-        warnings.warn(
-            "'unauthorized_handler' has been replaced with"
-            " 'unauthz_handler' and 'unauthn_handler'",
-            DeprecationWarning,
-        )
-        self._unauthorized_callback = fn
-
-    def totp_factory(self, tf):
-        self._totp_factory = tf
-
-    def render_json(self, fn):
-        self._render_json = fn
-
-    def want_json(self, fn):
-        self._want_json = fn
-
-    def unauthz_handler(self, cb):
-        self._unauthz_handler = cb
-
-    def unauthn_handler(self, cb):
-        self._unauthn_handler = cb
-
-    def reauthn_handler(self, cb):
-        self._reauthn_handler = cb
-
-
 class Security:
     """The :class:`Security` class initializes the Flask-Security extension.
 
@@ -1031,16 +885,22 @@ class Security:
     :param us_setup_validate_form: set form for the unified sign in setup validate view
     :param us_verify_form: set form for re-authenticating due to freshness check
     :param anonymous_user: class to use for anonymous user
-    :param render_template: function to use to render templates. The default is Flask's
-     render_template() function.
+    :param login_manager: An subclass of LoginManager
     :param json_encoder_cls: Class to use as blueprint.json_encoder.
      Defaults to :class:`FsJsonEncoder`
-    :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
-    :param phone_util_cls: Class to use for phone number utilities.
-     Defaults to :class:`PhoneUtil`
     :param mail_util_cls: Class to use for sending emails. Defaults to :class:`MailUtil`
     :param password_util_cls: Class to use for password normalization/validation.
      Defaults to :class:`PasswordUtil`
+    :param phone_util_cls: Class to use for phone number utilities.
+     Defaults to :class:`PhoneUtil`
+    :param render_template: function to use to render templates. The default is Flask's
+     render_template() function.
+    :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
+
+    .. tip::
+        Be sure that all your configuration values have been set PRIOR to
+        instantiating this class. Some configuration values are set as attributes
+        on the instance and therefore won't track any changes.
 
     .. versionadded:: 3.4.0
         ``verify_form`` added as part of freshness/re-authentication
@@ -1068,50 +928,160 @@ class Security:
 
     """
 
-    def __init__(self, app=None, datastore=None, register_blueprint=True, **kwargs):
+    def __init__(
+        self,
+        app: t.Optional["flask.Flask"] = None,
+        datastore: t.Optional["UserDatastore"] = None,
+        register_blueprint: bool = True,
+        login_form: t.Type[FlaskForm] = LoginForm,
+        verify_form: t.Type[FlaskForm] = VerifyForm,
+        confirm_register_form: t.Type[FlaskForm] = ConfirmRegisterForm,
+        register_form: t.Type[FlaskForm] = RegisterForm,
+        forgot_password_form: t.Type[FlaskForm] = ForgotPasswordForm,
+        reset_password_form: t.Type[FlaskForm] = ResetPasswordForm,
+        change_password_form: t.Type[FlaskForm] = ChangePasswordForm,
+        send_confirmation_form: t.Type[FlaskForm] = SendConfirmationForm,
+        passwordless_login_form: t.Type[FlaskForm] = PasswordlessLoginForm,
+        two_factor_verify_code_form: t.Type[FlaskForm] = TwoFactorVerifyCodeForm,
+        two_factor_setup_form: t.Type[FlaskForm] = TwoFactorSetupForm,
+        two_factor_rescue_form: t.Type[FlaskForm] = TwoFactorRescueForm,
+        us_signin_form: t.Type[FlaskForm] = UnifiedSigninForm,
+        us_setup_form: t.Type[FlaskForm] = UnifiedSigninSetupForm,
+        us_setup_validate_form: t.Type[FlaskForm] = UnifiedSigninSetupValidateForm,
+        us_verify_form: t.Type[FlaskForm] = UnifiedVerifyForm,
+        anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
+        login_manager: t.Optional["flask_login.LoginManager"] = None,
+        json_encoder_cls: t.Type[JSONEncoder] = FsJsonEncoder,
+        mail_util_cls: t.Type["MailUtil"] = MailUtil,
+        password_util_cls: t.Type["PasswordUtil"] = PasswordUtil,
+        phone_util_cls: t.Type["PhoneUtil"] = PhoneUtil,
+        render_template: t.Callable[..., str] = default_render_template,
+        totp_cls: t.Type["Totp"] = Totp,
+        **kwargs: t.Any,
+    ):
 
+        # to be nice and hopefully avoid backwards compat issues - we still accept
+        # kwargs - but we don't do anything with them. If caller sends in some -
+        # output a deprecation warning
+        if len(kwargs) > 0:
+            warnings.warn(
+                "kwargs passed to the constructor are now ignored",
+                DeprecationWarning,
+            )
         self.app = app
         self._datastore = datastore
         self._register_blueprint = register_blueprint
-        self._kwargs = kwargs
+        self.login_form = login_form
+        self.verify_form = verify_form
+        self.confirm_register_form = confirm_register_form
+        self.register_form = register_form
+        self.forgot_password_form = forgot_password_form
+        self.reset_password_form = reset_password_form
+        self.change_password_form = change_password_form
+        self.send_confirmation_form = send_confirmation_form
+        self.passwordless_login_form = passwordless_login_form
+        self.two_factor_verify_code_form = two_factor_verify_code_form
+        self.two_factor_setup_form = two_factor_setup_form
+        self.two_factor_rescue_form = two_factor_rescue_form
+        self.us_signin_form = us_signin_form
+        self.us_setup_form = us_setup_form
+        self.us_setup_validate_form = us_setup_validate_form
+        self.us_verify_form = us_verify_form
+        self.anonymous_user = anonymous_user
+        self.json_encoder_cls = json_encoder_cls
+        self.login_manager = login_manager
+        self.mail_util_cls = mail_util_cls
+        self.password_util_cls = password_util_cls
+        self.phone_util_cls = phone_util_cls
+        self.render_template = render_template
+        self.totp_cls = totp_cls
 
-        self._state = None  # set by init_app
+        # Attributes not settable from init.
+        self._unauthn_handler: t.Callable[
+            [t.List[str], t.Optional[t.Dict[str, str]]], "ResponseValue"
+        ] = default_unauthn_handler
+        self._reauthn_handler: t.Callable[
+            [timedelta, timedelta], "ResponseValue"
+        ] = default_reauthn_handler
+        self._unauthz_handler: t.Callable[
+            [t.Callable[[t.Any], t.Any], t.Optional[t.List[str]]], "ResponseValue"
+        ] = default_unauthz_handler
+        self._unauthorized_callback: t.Optional[t.Callable[[], "ResponseValue"]] = None
+        self._render_json: t.Callable[
+            [t.Dict[str, t.Any], int, t.Optional[t.Dict[str, str]], t.Optional["User"]],
+            "ResponseValue",
+        ] = default_render_json
+        self._want_json: t.Callable[["Request"], bool] = default_want_json
+
+        # Type attributes that we don't initialize until init_app time.
+        self.remember_token_serializer: URLSafeTimedSerializer
+        self.login_serializer: URLSafeTimedSerializer
+        self.reset_serializer: URLSafeTimedSerializer
+        self.confirm_serializer: URLSafeTimedSerializer
+        self.us_setup_serializer: URLSafeTimedSerializer
+        self.tf_validity_serializer: URLSafeTimedSerializer
+        self.principal: Principal
+        self.pwd_context: CryptContext
+        self.hashing_context: CryptContext
+        self._context_processors: t.Dict[
+            str, t.List[t.Callable[[], t.Dict[str, t.Any]]]
+        ] = {}
+        self.i18n_domain: FsDomain
+        self.datastore: "UserDatastore"
+        self.register_blueprint: bool
+
+        self._mail_util: MailUtil
+        self._phone_util: PhoneUtil
+        self._password_util: PasswordUtil
+        self._redirect_validate_re: re.Pattern
+        self._totp_factory: "Totp"
+
+        # We add forms, config etc as attributes - which of course mypy knows
+        # nothing about. Add necessary attributes here to keep mypy happy
+        self.trackable: bool = False
+        self.confirmable: bool = False
+        self.registrable: bool = False
+        self.changeable: bool = False
+        self.recoverable: bool = False
+        self.two_factor: bool = False
+        self.unified_signin: bool = False
+        self.passwordless: bool = False
+
+        self.redirect_behavior: t.Optional[str] = None
+
         if app is not None and datastore is not None:
-            self._state = self.init_app(
-                app, datastore, register_blueprint=register_blueprint, **kwargs
-            )
+            self.init_app(app, datastore, register_blueprint=register_blueprint)
 
-    def init_app(self, app, datastore=None, register_blueprint=None, **kwargs):
+    def init_app(
+        self,
+        app: "flask.Flask",
+        datastore: t.Optional["UserDatastore"] = None,
+        register_blueprint: t.Optional[bool] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """Initializes the Flask-Security extension for the specified
         application and datastore implementation.
 
         :param app: The application.
         :param datastore: An instance of a user datastore.
         :param register_blueprint: to register the Security blueprint or not.
+        :param kwargs: Can be used to override/initialize any of the constructor
+            attributes.
+
+        If you create the Security instance with both an 'app' and 'datastore'
+        you shouldn't call this - it will be called as part of the constructor.
         """
         self.app = app
 
-        if datastore is None:
-            datastore = self._datastore
+        if datastore:
+            self._datastore = datastore
+        if not self._datastore:
+            raise ValueError("Datastore must be provided")
+        self.datastore = self._datastore
 
-        if register_blueprint is None:
-            register_blueprint = self._register_blueprint
-
-        for key, value in self._kwargs.items():
-            kwargs.setdefault(key, value)
-
-        if "render_template" not in kwargs:
-            kwargs.setdefault("render_template", self.render_template)
-        if "json_encoder_cls" not in kwargs:
-            kwargs.setdefault("json_encoder_cls", FsJsonEncoder)
-        if "totp_cls" not in kwargs:
-            kwargs.setdefault("totp_cls", Totp)
-        if "phone_util_cls" not in kwargs:
-            kwargs.setdefault("phone_util_cls", PhoneUtil)
-        if "mail_util_cls" not in kwargs:
-            kwargs.setdefault("mail_util_cls", MailUtil)
-        if "password_util_cls" not in kwargs:
-            kwargs.setdefault("password_util_cls", PasswordUtil)
+        if register_blueprint:
+            self._register_blueprint = register_blueprint
+        self.register_blueprint = self._register_blueprint
 
         # default post redirects to APPLICATION_ROOT, which itself defaults to "/"
         app.config.setdefault(
@@ -1127,28 +1097,69 @@ class Security:
         for key, value in _default_messages.items():
             app.config.setdefault("SECURITY_MSG_" + key, value)
 
+        # Override default forms
+        # BC - kwarg value here overrides init time
+        # BC - we allow forms to be set as config items
+        # Can't wait for assignment expressions.
+        form_names = [
+            "login_form",
+            "verify_form",
+            "confirm_register_form",
+            "register_form",
+            "forgot_password_form",
+            "reset_password_form",
+            "change_password_form",
+            "send_confirmation_form",
+            "passwordless_login_form",
+            "two_factor_verify_code_form",
+            "two_factor_setup_form",
+            "two_factor_rescue_form",
+            "us_signin_form",
+            "us_setup_form",
+            "us_setup_validate_form",
+            "us_verify_form",
+        ]
+        for form_name in form_names:
+            if kwargs.get(form_name, None):
+                setattr(self, form_name, kwargs.get(form_name))
+            elif app.config.get(f"SECURITY_{form_name.upper()}", None):
+                setattr(
+                    self, form_name, app.config.get(f"SECURITY_{form_name.upper()}")
+                )
+
+        # Allow kwargs to overwrite/init other constructor attributes
+        attr_names = [
+            "anonymous_user",
+            "json_encoder_cls",
+            "login_manager",
+            "mail_util_cls",
+            "password_util_cls",
+            "phone_util_cls",
+            "render_template",
+            "totp_cls",
+        ]
+        for attr in attr_names:
+            if kwargs.get(attr, None):
+                setattr(self, attr, kwargs.get(attr))
+
+        # set all config items as attributes (minus the SECURITY_ prefix)
+        for key, value in get_config(app).items():
+            setattr(self, key.lower(), value)
+
         identity_loaded.connect_via(app)(_on_identity_loaded)
 
-        self._state = state = _get_state(app, datastore, **kwargs)
-        if hasattr(datastore, "user_model") and not hasattr(
-            datastore.user_model, "fs_uniquifier"
+        if hasattr(self.datastore, "user_model") and not hasattr(
+            self.datastore.user_model, "fs_uniquifier"
         ):  # pragma: no cover
             raise ValueError("User model must contain fs_uniquifier as of 4.0.0")
-
-        if register_blueprint:
-            bp = create_blueprint(
-                app, state, __name__, json_encoder=kwargs["json_encoder_cls"]
-            )
-            app.register_blueprint(bp)
-            app.context_processor(_context_processor)
 
         @app.before_first_request
         def _register_i18n():
             # This is only not registered if Flask-Babel isn't installed...
             if "_" not in app.jinja_env.globals:
-                current_app.jinja_env.globals["_"] = state.i18n_domain.gettext
+                current_app.jinja_env.globals["_"] = self.i18n_domain.gettext
             # Register so other packages can reference our translations.
-            current_app.jinja_env.globals["_fsdomain"] = state.i18n_domain.gettext
+            current_app.jinja_env.globals["_fsdomain"] = self.i18n_domain.gettext
 
         @app.before_first_request
         def _csrf_init():
@@ -1211,19 +1222,45 @@ class Security:
                 # Add configured header to WTF_CSRF_HEADERS
                 current_app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER"))
 
-        state._phone_util = state.phone_util_cls(app)
-        state._mail_util = state.mail_util_cls(app)
-        state._password_util = state.password_util_cls(app)
+        self._phone_util = self.phone_util_cls(app)
+        self._mail_util = self.mail_util_cls(app)
+        self._password_util = self.password_util_cls(app)
+        rvre = cv("REDIRECT_VALIDATE_RE", app=app)
+        if rvre:
+            self._redirect_validate_re = re.compile(rvre)
 
-        app.extensions["security"] = state
+        if not self.login_manager:
+            self.login_manager = _get_login_manager(app, self.anonymous_user)
+
+        self.remember_token_serializer = _get_serializer(app, "remember")
+        self.login_serializer = _get_serializer(app, "login")
+        self.reset_serializer = _get_serializer(app, "reset")
+        self.confirm_serializer = _get_serializer(app, "confirm")
+        self.us_setup_serializer = _get_serializer(app, "us_setup")
+        self.tf_validity_serializer = _get_serializer(app, "two_factor_validity")
+        self.principal = _get_principal(app)
+        self.pwd_context = _get_pwd_context(app)
+        self.hashing_context = _get_hashing_context(app)
+        self.i18n_domain = FsDomain(app)
+
+        if self.register_blueprint:
+            bp = create_blueprint(
+                app, self, __name__, json_encoder=self.json_encoder_cls
+            )
+            app.register_blueprint(bp)
+            app.context_processor(_context_processor)
 
         if hasattr(app, "cli"):
             from .cli import users, roles
 
-            if state.cli_users_name:
-                app.cli.add_command(users, state.cli_users_name)
-            if state.cli_roles_name:
-                app.cli.add_command(roles, state.cli_roles_name)
+            # Waiting for 3.8 assignment expressions
+            un = cv("CLI_USERS_NAME", app, strict=True)
+            rn = cv("CLI_ROLES_NAME", app, strict=True)
+
+            if un:
+                app.cli.add_command(users, un)
+            if rn:
+                app.cli.add_command(roles, rn)
 
         # Migrate from TWO_FACTOR config to generic config.
         for newc, oldc in [
@@ -1292,18 +1329,19 @@ class Security:
                 sms_service = cv("SMS_SERVICE", app=app)
                 if sms_service == "Twilio":  # pragma: no cover
                     self._check_modules("twilio", "SMS")
-                if state.phone_util_cls == PhoneUtil:
+                if self.phone_util_cls == PhoneUtil:
                     self._check_modules("phonenumbers", "SMS")
 
             secrets = cv("TOTP_SECRETS", app=app)
             issuer = cv("TOTP_ISSUER", app=app)
             if not secrets or not issuer:
                 raise ValueError("Both TOTP_SECRETS and TOTP_ISSUER must be set")
-            state.totp_factory(state.totp_cls(secrets, issuer))
+            self._totp_factory = self.totp_cls(secrets, issuer)
 
         if cv("PASSWORD_COMPLEXITY_CHECKER", app=app) == "zxcvbn":
             self._check_modules("zxcvbn", "PASSWORD_COMPLEXITY_CHECKER")
-        return state
+
+        app.extensions["security"] = self
 
     def _check_modules(self, module, config_name):  # pragma: no cover
         from importlib.util import find_spec
@@ -1314,10 +1352,13 @@ class Security:
 
         return module_exists
 
-    def render_template(self, *args, **kwargs):
-        return render_template(*args, **kwargs)
-
-    def render_json(self, cb):
+    def render_json(
+        self,
+        cb: t.Callable[
+            [t.Dict[str, t.Any], int, t.Optional[t.Dict[str, str]], t.Optional["User"]],
+            "ResponseValue",
+        ],
+    ) -> None:
         """Callback to render response payload as JSON.
 
         :param cb: Callback function with
@@ -1349,9 +1390,9 @@ class Security:
 
         .. versionadded:: 3.3.0
         """
-        self._state._render_json = cb
+        self._render_json = cb
 
-    def want_json(self, fn):
+    def want_json(self, fn: t.Callable[["flask.Request"], bool]) -> None:
         """Function that returns True if response should be JSON (based on the request)
 
         :param fn: Function with the following signature (request)
@@ -1363,9 +1404,14 @@ class Security:
 
         .. versionadded:: 3.3.0
         """
-        self._state._want_json = fn
+        self._want_json = fn
 
-    def unauthz_handler(self, cb):
+    def unauthz_handler(
+        self,
+        cb: t.Callable[
+            [t.Callable[[t.Any], t.Any], t.Optional[t.List[str]]], "ResponseValue"
+        ],
+    ) -> None:
         """
         Callback for failed authorization.
         This is called by the :func:`roles_required`, :func:`roles_accepted`,
@@ -1386,9 +1432,12 @@ class Security:
 
         .. versionadded:: 3.3.0
         """
-        self._state._unauthz_handler = cb
+        self._unauthz_handler = cb
 
-    def unauthn_handler(self, cb):
+    def unauthn_handler(
+        self,
+        cb: t.Callable[[t.List[str], t.Optional[t.Dict[str, str]]], "ResponseValue"],
+    ) -> None:
         """
         Callback for failed authentication.
         This is called by :func:`auth_required`, :func:`auth_token_required`
@@ -1408,9 +1457,11 @@ class Security:
 
         .. versionadded:: 3.3.0
         """
-        self._state._unauthn_handler = cb
+        self._unauthn_handler = cb
 
-    def reauthn_handler(self, cb):
+    def reauthn_handler(
+        self, cb: t.Callable[[timedelta, timedelta], "ResponseValue"]
+    ) -> None:
         """
         Callback when endpoint required a fresh authentication.
         This is called by :func:`auth_required`.
@@ -1434,7 +1485,93 @@ class Security:
 
         .. versionadded:: 3.4.0
         """
-        self._state._reauthn_handler = cb
+        self._reauthn_handler = cb
 
-    def __getattr__(self, name):
-        return getattr(self._state, name, None)
+    def unauthorized_handler(self, cb: t.Callable[[], "ResponseValue"]) -> None:
+        warnings.warn(
+            "'unauthorized_handler' has been replaced with"
+            " 'unauthz_handler' and 'unauthn_handler'",
+            DeprecationWarning,
+        )
+        self._unauthorized_callback = cb
+
+    def _add_ctx_processor(
+        self, endpoint: str, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        group = self._context_processors.setdefault(endpoint, [])
+        if fn not in group:
+            group.append(fn)
+
+    def _run_ctx_processor(self, endpoint: str) -> t.Dict[str, t.Any]:
+        rv: t.Dict[str, t.Any] = {}
+        for g in ["global", endpoint]:
+            for fn in self._context_processors.setdefault(g, []):
+                rv.update(fn())
+        return rv
+
+    def context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+        self._add_ctx_processor("global", fn)
+
+    def forgot_password_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("forgot_password", fn)
+
+    def login_context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+        self._add_ctx_processor("login", fn)
+
+    def register_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("register", fn)
+
+    def reset_password_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("reset_password", fn)
+
+    def change_password_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("change_password", fn)
+
+    def send_confirmation_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("send_confirmation", fn)
+
+    def send_login_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("send_login", fn)
+
+    def verify_context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+        self._add_ctx_processor("verify", fn)
+
+    def mail_context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+        self._add_ctx_processor("mail", fn)
+
+    def tf_setup_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("tf_setup", fn)
+
+    def tf_token_validation_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("tf_token_validation", fn)
+
+    def us_signin_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("us_signin", fn)
+
+    def us_setup_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("us_setup", fn)
+
+    def us_verify_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("us_verify", fn)
