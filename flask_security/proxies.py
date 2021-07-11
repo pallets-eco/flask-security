@@ -11,7 +11,6 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from .datastore import CanonicalUserDatastore
 
 # Convenient references
-# noinspection PyTypeChecker
 _security: "Security" = LocalProxy(  # type: ignore
     lambda: current_app.extensions["security"]
 )

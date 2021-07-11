@@ -5,7 +5,7 @@
     Flask-Security views module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     CSRF is tricky. By default all our forms have CSRF protection built in via
@@ -26,12 +26,11 @@
     so app must set CSRF_IGNORE_UNAUTH_ENDPOINTS (or use CSRF/session cookie for logging
     in then once they have a token, no need for cookie).
 
-    TODO: two-factor routes such as tf_setup need work. They seem to support both
-    authenticated (via session?) as well as unauthenticated access.
 """
 
 from functools import partial
 import time
+import typing as t
 
 from flask import (
     Blueprint,
@@ -41,7 +40,7 @@ from flask import (
     session,
 )
 from flask_login import current_user
-from werkzeug.datastructures import MultiDict
+from werkzeug.datastructures import ImmutableMultiDict, MultiDict
 
 from .changeable import change_user_password
 from .confirmable import (
@@ -81,7 +80,7 @@ from .twofactor import (
 from .utils import (
     base_render_json,
     check_and_update_authn_fresh,
-    config_value,
+    config_value as cv,
     do_flash,
     get_message,
     get_post_login_redirect,
@@ -105,6 +104,9 @@ if get_quart_status():  # pragma: no cover
 else:
     from flask import make_response, redirect
 
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask.typing import ResponseValue
+
 
 def default_render_json(payload, code, headers, user):
     """Default JSON response handler."""
@@ -121,7 +123,7 @@ def _ctx(endpoint):
 
 
 @unauth_csrf(fall_through=True)
-def login():
+def login() -> "ResponseValue":
     """View function for login view
 
     Allow already authenticated users. For GET this is useful for
@@ -144,7 +146,7 @@ def login():
             )
             return _security._render_json(payload, 400, None, None)
         else:
-            return redirect(get_url(_security.post_login_view))
+            return redirect(get_url(cv("POST_LOGIN_VIEW")))
 
     form_class = _security.login_form
 
@@ -159,9 +161,11 @@ def login():
 
     if form.validate_on_submit():
         remember_me = form.remember.data if "remember" in form else None
-        if config_value("TWO_FACTOR"):
+        if cv("TWO_FACTOR"):
             if request.is_json and request.content_length:
-                tf_validity_token = request.get_json().get("tf_validity_token", None)
+                tf_validity_token = request.get_json().get(  # type: ignore
+                    "tf_validity_token", None
+                )
             else:
                 tf_validity_token = request.cookies.get("tf_validity", default=None)
 
@@ -169,10 +173,8 @@ def login():
                 tf_validity_token, form.user.fs_uniquifier
             )
 
-            if config_value("TWO_FACTOR_REQUIRED") or (is_tf_setup(form.user)):
-                if config_value("TWO_FACTOR_ALWAYS_VALIDATE") or (
-                    not tf_validity_token_is_valid
-                ):
+            if cv("TWO_FACTOR_REQUIRED") or (is_tf_setup(form.user)):
+                if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
 
                     return tf_login(
                         form.user, remember=remember_me, primary_authn_via="password"
@@ -191,22 +193,22 @@ def login():
         return base_render_json(form)
 
     if current_user.is_authenticated:
-        return redirect(get_url(_security.post_login_view))
+        return redirect(get_url(cv("POST_LOGIN_VIEW")))
     else:
-        if form.requires_confirmation and _security.requires_confirmation_error_view:
+        if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
             do_flash(*get_message("CONFIRMATION_REQUIRED"))
             return redirect(
                 get_url(
-                    _security.requires_confirmation_error_view,
+                    cv("REQUIRES_CONFIRMATION_ERROR_VIEW"),
                     qparams={"email": form.email.data},
                 )
             )
         return _security.render_template(
-            config_value("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
+            cv("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
         )
 
 
-@auth_required(lambda: config_value("API_ENABLED_METHODS"))
+@auth_required(lambda: cv("API_ENABLED_METHODS"))
 def verify():
     """View function which handles a authentication verification request."""
     form_class = _security.verify_form
@@ -233,7 +235,7 @@ def verify():
         return base_render_json(form)
 
     return _security.render_template(
-        config_value("VERIFY_TEMPLATE"), verify_form=form, **_ctx("verify")
+        cv("VERIFY_TEMPLATE"), verify_form=form, **_ctx("verify")
     )
 
 
@@ -252,7 +254,7 @@ def logout():
 
 
 @anonymous_user_required
-def register():
+def register() -> "ResponseValue":
     """View function which handles a registration request."""
 
     # For some unknown historic reason - if you don't require confirmation
@@ -265,7 +267,7 @@ def register():
         form_class = _security.register_form
 
     if request.is_json:
-        form_data = MultiDict(request.get_json())
+        form_data: ImmutableMultiDict = ImmutableMultiDict(request.get_json())
     else:
         form_data = request.form
 
@@ -279,8 +281,8 @@ def register():
         # an application that would want random email accounts. It has been like this
         # since the beginning. Note that we still enforce 2FA - however for unified
         # signin - we adhere to historic behavior.
-        if not _security.confirmable or _security.login_without_confirmation:
-            if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
+        if not _security.confirmable or cv("LOGIN_WITHOUT_CONFIRMATION"):
+            if cv("TWO_FACTOR") and cv("TWO_FACTOR_REQUIRED"):
                 return tf_login(user, primary_authn_via="register")
             after_this_request(view_commit)
             login_user(user, authn_via=["register"])
@@ -295,7 +297,7 @@ def register():
         return base_render_json(form)
 
     return _security.render_template(
-        config_value("REGISTER_USER_TEMPLATE"),
+        cv("REGISTER_USER_TEMPLATE"),
         register_user_form=form,
         **_ctx("register"),
     )
@@ -321,7 +323,7 @@ def send_login():
         return base_render_json(form)
 
     return _security.render_template(
-        config_value("SEND_LOGIN_TEMPLATE"), send_login_form=form, **_ctx("send_login")
+        cv("SEND_LOGIN_TEMPLATE"), send_login_form=form, **_ctx("send_login")
     )
 
 
@@ -387,7 +389,7 @@ def send_confirmation():
         return base_render_json(form)
 
     return _security.render_template(
-        config_value("SEND_CONFIRMATION_TEMPLATE"),
+        cv("SEND_CONFIRMATION_TEMPLATE"),
         send_confirmation_form=form,
         **_ctx("send_confirmation"),
     )
@@ -440,12 +442,12 @@ def confirm_email(token):
 
     if user != current_user:
         logout_user()
-        if config_value("AUTO_LOGIN_AFTER_CONFIRM"):
+        if cv("AUTO_LOGIN_AFTER_CONFIRM"):
             # N.B. this is a (small) security risk if email went to wrong place.
             # and you have the LOGIN_WITH_CONFIRMATION flag since in that case
             # you can be logged in and doing stuff - but another person could
             # get the email.
-            if config_value("TWO_FACTOR") and config_value("TWO_FACTOR_REQUIRED"):
+            if cv("TWO_FACTOR") and cv("TWO_FACTOR_REQUIRED"):
                 return tf_login(user, primary_authn_via="confirm")
             login_user(user, authn_via=["confirm"])
 
@@ -461,7 +463,7 @@ def confirm_email(token):
         get_url(_security.post_confirm_view)
         or get_url(
             _security.post_login_view
-            if config_value("AUTO_LOGIN_AFTER_CONFIRM")
+            if cv("AUTO_LOGIN_AFTER_CONFIRM")
             else _security.login_url
         )
     )
@@ -497,7 +499,7 @@ def forgot_password():
         )
 
     return _security.render_template(
-        config_value("FORGOT_PASSWORD_TEMPLATE"),
+        cv("FORGOT_PASSWORD_TEMPLATE"),
         forgot_password_form=form,
         **_ctx("forgot_password"),
     )
@@ -564,7 +566,7 @@ def reset_password(token):
             )
         # for forms - render the reset password form
         return _security.render_template(
-            config_value("RESET_PASSWORD_TEMPLATE"),
+            cv("RESET_PASSWORD_TEMPLATE"),
             reset_password_form=form,
             reset_password_token=token,
             **_ctx("reset_password"),
@@ -597,8 +599,8 @@ def reset_password(token):
     if form.validate_on_submit():
         after_this_request(view_commit)
         update_password(user, form.password.data)
-        if config_value("TWO_FACTOR") and (
-            config_value("TWO_FACTOR_REQUIRED")
+        if cv("TWO_FACTOR") and (
+            cv("TWO_FACTOR_REQUIRED")
             or (form.user.tf_totp_secret and form.user.tf_primary_method)
         ):
             return tf_login(user, primary_authn_via="reset")
@@ -618,14 +620,14 @@ def reset_password(token):
     if _security._want_json(request):
         return base_render_json(form)
     return _security.render_template(
-        config_value("RESET_PASSWORD_TEMPLATE"),
+        cv("RESET_PASSWORD_TEMPLATE"),
         reset_password_form=form,
         reset_password_token=token,
         **_ctx("reset_password"),
     )
 
 
-@auth_required(lambda: config_value("API_ENABLED_METHODS"))
+@auth_required(lambda: cv("API_ENABLED_METHODS"))
 def change_password():
     """View function which handles a change password request."""
 
@@ -653,7 +655,7 @@ def change_password():
         return base_render_json(form)
 
     return _security.render_template(
-        config_value("CHANGE_PASSWORD_TEMPLATE"),
+        cv("CHANGE_PASSWORD_TEMPLATE"),
         change_password_form=form,
         **_ctx("change_password"),
     )
@@ -707,12 +709,12 @@ def two_factor_setup():
     else:
         # Caller is changing their TFA profile. This requires a 'fresh' authentication
         if not check_and_update_authn_fresh(
-            config_value("FRESHNESS"),
-            config_value("FRESHNESS_GRACE_PERIOD"),
+            cv("FRESHNESS"),
+            cv("FRESHNESS_GRACE_PERIOD"),
             get_request_attr("fs_authn_via"),
         ):
             return _security._reauthn_handler(
-                config_value("FRESHNESS"), config_value("FRESHNESS_GRACE_PERIOD")
+                cv("FRESHNESS"), cv("FRESHNESS_GRACE_PERIOD")
             )
         user = current_user
 
@@ -791,10 +793,10 @@ def two_factor_setup():
         code_form = _security.two_factor_verify_code_form()
         if not _security._want_json(request):
             return _security.render_template(
-                config_value("TWO_FACTOR_SETUP_TEMPLATE"),
+                cv("TWO_FACTOR_SETUP_TEMPLATE"),
                 two_factor_setup_form=form,
                 two_factor_verify_code_form=code_form,
-                choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
+                choices=cv("TWO_FACTOR_ENABLED_METHODS"),
                 chosen_method=pm,
                 **qrcode_values,
                 **_ctx("tf_setup"),
@@ -804,14 +806,14 @@ def two_factor_setup():
     # We get here on GET and POST with failed validation.
     # For things like phone number - we've already done one POST
     # that succeeded and now it failed - so retain the initial info
-    choices = config_value("TWO_FACTOR_ENABLED_METHODS")
-    if not config_value("TWO_FACTOR_REQUIRED"):
+    choices = cv("TWO_FACTOR_ENABLED_METHODS")
+    if not cv("TWO_FACTOR_REQUIRED"):
         choices.append("disable")
 
     if _security._want_json(request):
         # Provide information application/UI might need to render their own form/input
         json_response = {
-            "tf_required": config_value("TWO_FACTOR_REQUIRED"),
+            "tf_required": cv("TWO_FACTOR_REQUIRED"),
             "tf_primary_method": getattr(user, "tf_primary_method", None),
             "tf_phone_number": getattr(user, "tf_phone_number", None),
             "tf_available_methods": choices,
@@ -820,12 +822,12 @@ def two_factor_setup():
 
     code_form = _security.two_factor_verify_code_form()
     return _security.render_template(
-        config_value("TWO_FACTOR_SETUP_TEMPLATE"),
+        cv("TWO_FACTOR_SETUP_TEMPLATE"),
         two_factor_setup_form=form,
         two_factor_verify_code_form=code_form,
         choices=choices,
         chosen_method=form.setup.data,
-        two_factor_required=config_value("TWO_FACTOR_REQUIRED"),
+        two_factor_required=cv("TWO_FACTOR_REQUIRED"),
         **_ctx("tf_setup"),
     )
 
@@ -915,9 +917,9 @@ def two_factor_token_validation():
 
             return redirect(get_post_login_redirect())
 
-        if (
-            not config_value("TWO_FACTOR_ALWAYS_VALIDATE") and remember
-        ) and _security._want_json(request):
+        if (not cv("TWO_FACTOR_ALWAYS_VALIDATE") and remember) and _security._want_json(
+            request
+        ):
             token = generate_tf_validity_token(form.user.fs_uniquifier)
             json_response = {"tf_validity_token": token}
             return base_render_json(form, additional=json_response)
@@ -930,10 +932,10 @@ def two_factor_token_validation():
         setup_form = _security.two_factor_setup_form()
 
         return _security.render_template(
-            config_value("TWO_FACTOR_SETUP_TEMPLATE"),
+            cv("TWO_FACTOR_SETUP_TEMPLATE"),
             two_factor_setup_form=setup_form,
             two_factor_verify_code_form=form,
-            choices=config_value("TWO_FACTOR_ENABLED_METHODS"),
+            choices=cv("TWO_FACTOR_ENABLED_METHODS"),
             **_ctx("tf_setup"),
         )
 
@@ -942,7 +944,7 @@ def two_factor_token_validation():
         rescue_form = _security.two_factor_rescue_form()
 
         return _security.render_template(
-            config_value("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
+            cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
             problem=None,
@@ -1003,8 +1005,8 @@ def two_factor_rescue():
         # send app provider a mail message regarding trouble
         elif problem == "no_mail_access":
             send_mail(
-                config_value("EMAIL_SUBJECT_TWO_FACTOR_RESCUE"),
-                config_value("TWO_FACTOR_RESCUE_MAIL"),
+                cv("EMAIL_SUBJECT_TWO_FACTOR_RESCUE"),
+                cv("TWO_FACTOR_RESCUE_MAIL"),
                 "two_factor_rescue",
                 user=form.user,
             )
@@ -1016,10 +1018,10 @@ def two_factor_rescue():
 
     code_form = _security.two_factor_verify_code_form()
     return _security.render_template(
-        config_value("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
+        cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
         two_factor_rescue_form=form,
-        rescue_mail=config_value("TWO_FACTOR_RESCUE_MAIL"),
+        rescue_mail=cv("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
         **_ctx("tf_token_validation"),
     )
@@ -1058,13 +1060,13 @@ def create_blueprint(app, state, import_name, json_encoder=None):
             state.login_url + slash_url_suffix(state.login_url, "<token>"),
             endpoint="token_login",
         )(token_login)
-    elif config_value("US_SIGNIN_REPLACES_LOGIN", app=app):
+    elif cv("US_SIGNIN_REPLACES_LOGIN", app=app):
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(us_signin)
 
     else:
         bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(login)
 
-    if config_value("FRESHNESS", app=app).total_seconds() >= 0:
+    if cv("FRESHNESS", app=app).total_seconds() >= 0:
         bp.route(state.verify_url, methods=["GET", "POST"], endpoint="verify")(verify)
 
     if state.unified_signin:
@@ -1086,7 +1088,7 @@ def create_blueprint(app, state, import_name, json_encoder=None):
         )(us_setup_validate)
 
         # Freshness verification
-        if config_value("FRESHNESS", app=app).total_seconds() >= 0:
+        if cv("FRESHNESS", app=app).total_seconds() >= 0:
             bp.route(
                 state.us_verify_url, methods=["GET", "POST"], endpoint="us_verify"
             )(us_verify)

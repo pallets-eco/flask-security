@@ -29,6 +29,7 @@ from flask import (
     flash,
     g,
     request,
+    render_template,
     session,
     url_for,
 )
@@ -149,7 +150,7 @@ def login_user(
 
         old_current_login, new_current_login = (
             user.current_login_at,
-            _security.datetime_factory(),
+            config_value("DATETIME_FACTORY")(),
         )
         old_current_ip, new_current_ip = user.current_login_ip, remote_addr
 
@@ -286,13 +287,13 @@ def get_hmac(password: SB) -> bytes:
 
     :param password: The password to sign
     """
-    salt = _security.password_salt
+    salt = config_value("PASSWORD_SALT")
 
     if salt is None:
         raise RuntimeError(
             "The configuration value `SECURITY_PASSWORD_SALT` must "
             "not be None when the value of `SECURITY_PASSWORD_HASH` is "
-            'set to "%s"' % _security.password_hash
+            'set to "%s"' % config_value("PASSWORD_HASH")
         )
 
     h = hmac.new(encode_string(salt), encode_string(password), hashlib.sha512)
@@ -385,7 +386,7 @@ def hash_password(password: SB) -> t.Any:
     return _pwd_context.hash(
         password,
         **config_value("PASSWORD_HASH_OPTIONS", default={}).get(
-            _security.password_hash, {}
+            config_value("PASSWORD_HASH"), {}
         ),
     )
 
@@ -456,9 +457,9 @@ def get_url(
         # For (mostly) testing - allow changing/adding the url - for example
         # add a different host:port for cases where the UI is running
         # separately.
-        if _security.redirect_host:
+        if config_value("REDIRECT_HOST"):
             url = transform_url(
-                endpoint_or_url, qparams, netloc=_security.redirect_host
+                endpoint_or_url, qparams, netloc=config_value("REDIRECT_HOST")
             )
         else:
             url = transform_url(endpoint_or_url, qparams)
@@ -649,11 +650,11 @@ def config_value(key, app=None, default=None, strict=True):
     :param strict: if True, will raise ValueError if key doesn't exist
     """
     app = app or current_app
+    key = f"SECURITY_{key.upper()}"
     # protect against spelling mistakes
-    config = get_config(app)
-    if strict and key.upper() not in config:
+    if strict and key not in app.config:
         raise ValueError(f"Key {key} doesn't exist")
-    return config.get(key.upper(), default)
+    return app.config.get(key, default)
 
 
 def get_max_age(key, app=None):
@@ -994,7 +995,7 @@ def base_render_json(
         if additional:
             payload.update(additional)
 
-    return _security._render_json(payload, code, headers=None, user=user)
+    return _security._render_json(payload, code, None, user)
 
 
 def default_want_json(req):
@@ -1045,6 +1046,10 @@ class FsJsonEncoder(JSONEncoder):
             return str(obj)
         else:
             return JSONEncoder.default(self, obj)
+
+
+def default_render_template(*args, **kwargs):
+    return render_template(*args, **kwargs)
 
 
 class SmsSenderBaseClass(metaclass=abc.ABCMeta):

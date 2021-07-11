@@ -273,8 +273,8 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
 
 def auth_required(
     *auth_methods: t.Union[str, t.Callable[[], t.List[str]], None],
-    within: t.Union[int, t.Callable[[], datetime.timedelta]] = -1,
-    grace: t.Optional[t.Union[int, t.Callable[[], datetime.timedelta]]] = None
+    within: t.Union[int, float, t.Callable[[], datetime.timedelta]] = -1,
+    grace: t.Optional[t.Union[int, float, t.Callable[[], datetime.timedelta]]] = None
 ) -> DecoratedView:
     """
     Decorator that protects endpoints through multiple mechanisms

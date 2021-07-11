@@ -100,6 +100,7 @@ nitpicky = True
 nitpick_ignore = [
     ("py:attr", "LoginManager.unauthorized"),
     ("py:class", "flask_mongoengine.MongoEngine"),
+    ("py:class", "ResponseValue"),
     ("py:class", "function"),
 ]
 autodoc_typehints = "description"
@@ -112,7 +113,9 @@ intersphinx_mapping = {
     "itsdangerous": ("https://itsdangerous.palletsprojects.com/", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/", None),
     "wtforms": ("https://wtforms.readthedocs.io/", None),
+    "flask_wtforms": ("https://flask-wtf.readthedocs.io", None),
     "flask_sqlalchemy": ("https://flask-sqlalchemy.palletsprojects.com/", None),
+    "flask_login": ("https://flask-login.readthedocs.io/en/latest/", None),
     "passlib": ("https://passlib.readthedocs.io/en/stable", None),
 }
 

@@ -7,6 +7,7 @@ pymysql
 pre-commit
 tox
 sqlalchemy[mypy]
+types-requests
 
 # for dev - might not install Flask-Security - list those dependencies here
 flask

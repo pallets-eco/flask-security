@@ -125,11 +125,9 @@ def test_xlation(app, client, get_message_local):
     response = client.get("/register", follow_redirects=True)
     with app.test_request_context():
         # Check header
-        assert (
-            f'<h1>{localize_callback("Register")}</h1>'.encode("utf-8") in response.data
-        )
+        assert f'<h1>{localize_callback("Register")}</h1>'.encode() in response.data
         submit = localize_callback(_default_field_labels["register"])
-        assert f'value="{submit}"'.encode("utf-8") in response.data
+        assert f'value="{submit}"'.encode() in response.data
 
     with app.mail.record_messages() as outbox:
         response = client.post(
