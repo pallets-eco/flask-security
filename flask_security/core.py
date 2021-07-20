@@ -61,6 +61,7 @@ from .unified_signin import (
     UnifiedVerifyForm,
     us_send_security_token,
 )
+from .username_util import UsernameUtil
 from .totp import Totp
 from .utils import _
 from .utils import config_value as cv
@@ -77,6 +78,7 @@ from .utils import (
     localize_callback,
     set_request_attr,
     uia_email_mapper,
+    uia_username_mapper,
     url_for_security,
     verify_and_update_password,
 )
@@ -288,6 +290,11 @@ _default_config: t.Dict[str, t.Any] = {
     "BACKWARDS_COMPAT_UNAUTHN": False,
     "BACKWARDS_COMPAT_AUTH_TOKEN": False,
     "JOIN_USER_ROLES": True,
+    "USERNAME_ENABLE": False,
+    "USERNAME_REQUIRED": False,
+    "USERNAME_MIN_LENGTH": 4,
+    "USERNAME_MAX_LENGTH": 32,
+    "USERNAME_NORMALIZE_FORM": "NFKD",
 }
 
 #: Default Flask-Security messages
@@ -425,6 +432,27 @@ _default_messages = {
     "US_SETUP_SUCCESSFUL": (_("Unified sign in setup successful"), "info"),
     "US_SPECIFY_IDENTITY": (_("You must specify a valid identity to sign in"), "error"),
     "USE_CODE": (_("Use this code to sign in: %(code)s."), "info"),
+    "USERNAME_INVALID_LENGTH": (
+        _(
+            "Username must be at least %(min)d characters and less than"
+            " %(max)d characters"
+        ),
+        "error",
+    ),
+    "USERNAME_ILLEGAL_CHARACTERS": (
+        _("Username contains illegal characters"),
+        "error",
+    ),
+    "USERNAME_DISALLOWED_CHARACTERS": (
+        _("Username can contain only letters and numbers"),
+        "error",
+    ),
+    "USERNAME_NOT_PROVIDED": (_("Username not provided"), "error"),
+    "USERNAME_NOT_ALLOWED": (_("Username not allowed"), "error"),
+    "USERNAME_ALREADY_ASSOCIATED": (
+        _("%(username)s is already associated with an account."),
+        "error",
+    ),
 }
 
 
@@ -896,6 +924,8 @@ class Security:
     :param render_template: function to use to render templates. The default is Flask's
      render_template() function.
     :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
+    :param username_util_cls: Class to use for normalizing and validating usernames.
+        Defaults to :class:`UsernameUtil`
 
     .. tip::
         Be sure that all your configuration values have been set PRIOR to
@@ -920,6 +950,9 @@ class Security:
     .. versionadded:: 4.0.0
         ``mail_util_cls`` added to isolate mailing handling.
         ``password_util_cls`` added to encapsulate password validation/normalization.
+
+    .. versionadded:: 4.1.0
+        ``username_util_cls`` added to encapsulate username handling.
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
@@ -957,6 +990,7 @@ class Security:
         phone_util_cls: t.Type["PhoneUtil"] = PhoneUtil,
         render_template: t.Callable[..., str] = default_render_template,
         totp_cls: t.Type["Totp"] = Totp,
+        username_util_cls: t.Type["UsernameUtil"] = UsernameUtil,
         **kwargs: t.Any,
     ):
 
@@ -995,6 +1029,7 @@ class Security:
         self.phone_util_cls = phone_util_cls
         self.render_template = render_template
         self.totp_cls = totp_cls
+        self.username_util_cls = username_util_cls
 
         # Attributes not settable from init.
         self._unauthn_handler: t.Callable[
@@ -1035,6 +1070,7 @@ class Security:
         self._password_util: PasswordUtil
         self._redirect_validate_re: re.Pattern
         self._totp_factory: "Totp"
+        self._username_util: UsernameUtil
 
         # We add forms, config etc as attributes - which of course mypy knows
         # nothing about. Add necessary attributes here to keep mypy happy
@@ -1153,6 +1189,19 @@ class Security:
         ):  # pragma: no cover
             raise ValueError("User model must contain fs_uniquifier as of 4.0.0")
 
+        # Check for pre-4.0 SECURITY_USER_IDENTITY_ATTRIBUTES format
+        for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):  # pragma: no cover
+            if not isinstance(uia, dict):
+                raise ValueError(
+                    "SECURITY_USER_IDENTITY_ATTRIBUTES changed semantics"
+                    " in 4.0 - please see release notes."
+                )
+            if len(list(uia.keys())) != 1:
+                raise ValueError(
+                    "Each element in SECURITY_USER_IDENTITY_ATTRIBUTES"
+                    " must have one and only one key."
+                )
+
         @app.before_first_request
         def _register_i18n():
             # This is only not registered if Flask-Babel isn't installed...
@@ -1225,6 +1274,7 @@ class Security:
         self._phone_util = self.phone_util_cls(app)
         self._mail_util = self.mail_util_cls(app)
         self._password_util = self.password_util_cls(app)
+        self._username_util = self.username_util_cls(app)
         rvre = cv("REDIRECT_VALIDATE_RE", app=app)
         if rvre:
             self._redirect_validate_re = re.compile(rvre)
@@ -1242,6 +1292,28 @@ class Security:
         self.pwd_context = _get_pwd_context(app)
         self.hashing_context = _get_hashing_context(app)
         self.i18n_domain = FsDomain(app)
+
+        if cv("USERNAME_ENABLE", app):
+            if hasattr(self.datastore, "user_model") and not hasattr(
+                self.datastore.user_model, "username"
+            ):  # pragma: no cover
+                raise ValueError(
+                    "User model must contain username if"
+                    " SECURITY_USERNAME_ENABLE is True"
+                )
+            # if not already listed in user identity attributes, add it at the end
+            uialist = []
+            for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):
+                uialist.append(list(uia.keys())[0])
+            if "username" not in uialist:
+                cv("USER_IDENTITY_ATTRIBUTES", app=app).append(
+                    {
+                        "username": {
+                            "mapper": uia_username_mapper,
+                            "case_insensitive": True,
+                        }
+                    }
+                )
 
         if self.register_blueprint:
             bp = create_blueprint(
@@ -1271,19 +1343,6 @@ class Security:
         ]:
             if not app.config.get(newc, None):
                 app.config[newc] = app.config.get(oldc, None)
-
-        # Check for pre-4.0 SECURITY_USER_IDENTITY_ATTRIBUTES format
-        for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):  # pragma: no cover
-            if not isinstance(uia, dict):
-                raise ValueError(
-                    "SECURITY_USER_IDENTITY_ATTRIBUTES changed semantics"
-                    " in 4.0 - please see release notes."
-                )
-            if len(list(uia.keys())) != 1:
-                raise ValueError(
-                    "Each element in SECURITY_USER_IDENTITY_ATTRIBUTES"
-                    " must have one and only one key."
-                )
 
         # Two factor configuration checks and setup
         multi_factor = False

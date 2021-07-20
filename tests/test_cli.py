@@ -48,13 +48,18 @@ def test_cli_createuser(script_info):
     # create user with email and username
     result = runner.invoke(
         users_create,
-        ["email1@example.org", "username:lookatme!", "--password", "battery staple"],
+        [
+            "email1@example.org",
+            "us_phone_number:5551212",
+            "--password",
+            "battery staple",
+        ],
         obj=script_info,
     )
     assert result.exit_code == 0
 
     # try to activate using username
-    result = runner.invoke(users_activate, "lookatme!", obj=script_info)
+    result = runner.invoke(users_activate, "5551212", obj=script_info)
     assert result.exit_code == 0
 
 
@@ -282,16 +287,21 @@ def test_cli_reset_user(script_info):
     runner = CliRunner()
     result = runner.invoke(
         users_create,
-        ["email1@example.org", "username:lookatme!", "--password", "battery staple"],
+        [
+            "email1@example.org",
+            "us_phone_number:5551212",
+            "--password",
+            "battery staple",
+        ],
         obj=script_info,
     )
 
-    result = runner.invoke(users_reset_access, ["lookatme!"], obj=script_info)
+    result = runner.invoke(users_reset_access, ["5551212"], obj=script_info)
     assert result.exit_code == 0
-    result = runner.invoke(users_reset_access, ["lookatme!"], obj=script_info)
+    result = runner.invoke(users_reset_access, ["5551212"], obj=script_info)
     assert result.exit_code == 0
 
-    result = runner.invoke(users_reset_access, ["whoami"], obj=script_info)
+    result = runner.invoke(users_reset_access, ["4441212"], obj=script_info)
     assert "User not found" in result.output
 
 
@@ -300,7 +310,7 @@ def test_cli_change_password(script_info):
 
     runner.invoke(
         users_create,
-        ["email1@example.org", "username:lookatme!", "--password", "battery staple"],
+        ["email1@example.org", "--password", "battery staple"],
         obj=script_info,
     )
     result = runner.invoke(

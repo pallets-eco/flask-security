@@ -1,4 +1,4 @@
-# :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -85,6 +85,7 @@ def create_app():
     }
     app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=0.5)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
+    app.config["SECURITY_USERNAME_ENABLE"] = True
 
     # Turn on all features (except passwordless since that removes normal login)
     for opt in [

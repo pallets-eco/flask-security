@@ -193,6 +193,11 @@ This view can be overridden if your registration process requires more fields.
 User email is validated and normalized using the
 `email_validator <https://pypi.org/project/email-validator/>`_ package.
 
+The :py:data:`SECURITY_USERNAME_ENABLE` configuration option is set to ``True`` will add
+support for the user to register a username in addition to an email. By default, the user will be
+able to authenticate with EITHER email or username - however that can be changed via the
+:py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
+
 Password Change
 ---------------
 Flask-Security comes packaged with a basic change user password view. Unlike password

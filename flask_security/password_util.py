@@ -66,12 +66,7 @@ class PasswordUtil:
         Return value is a tuple ([msgs], normalized_password)
         """
 
-        cf = config_value("PASSWORD_NORMALIZE_FORM")
-        if cf:
-            pnorm = unicodedata.normalize(cf, password)
-        else:
-            pnorm = password
-
+        pnorm = self.normalize(password)
         notok = password_length_validator(pnorm)
         if notok:
             return notok, pnorm

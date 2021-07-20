@@ -136,7 +136,7 @@ def login_user(
         authenticated with.
         These should be one or more of ["password", "sms", "authenticator", "email"] or
         other 'auto-login' mechanisms.
-    :return: True is user successfully logged in.
+    :return: True if user successfully logged in.
     """
 
     if remember is None:
@@ -859,6 +859,17 @@ def uia_email_mapper(identity: str) -> t.Optional[str]:
         return _security._mail_util.normalize(identity)
     except ValueError:
         return None
+
+
+def uia_username_mapper(identity: str) -> t.Optional[str]:
+    """Used to match identity as a username. This is a simple proxy
+    to :py:class:`UsernameUtil`
+
+    See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
+
+    .. versionadded:: 4.1.0
+    """
+    return _security._username_util.normalize(identity)
 
 
 def use_double_hash(password_hash=None):
