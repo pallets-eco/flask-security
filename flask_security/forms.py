@@ -40,7 +40,7 @@ from .confirmable import requires_confirmation
 from .utils import (
     _,
     _datastore,
-    config_value,
+    config_value as cv,
     do_flash,
     find_user,
     get_identity_attribute,
@@ -78,7 +78,17 @@ _default_field_labels = {
     "identity": _("Identity"),
     "sendcode": _("Send Code"),
     "passcode": _("Passcode"),
+    "username": _("Username"),
 }
+
+
+class NullableStringField(StringField):
+    # Note that current WTForms (2.2.1) has a bug where StringFields can never be
+    # None - it changes them to an empty string. DBs don't like that if you have
+    # your column be 'nullable' and 'unique'.
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = valuelist[0]
 
 
 class ValidatorMixin:
@@ -104,9 +114,9 @@ class ValidatorMixin:
             not is_lazy_string(self.message) and not self.message
         ):
             # Creat on first usage within app context.
-            cv = config_value("MSG_" + self._original_message, strict=False)
-            if cv:
-                self.message = make_lazy_string(_local_xlate, cv[0])
+            msg = cv("MSG_" + self._original_message, strict=False)
+            if msg:
+                self.message = make_lazy_string(_local_xlate, msg[0])
             else:
                 self.message = self._original_message
         return super().__call__(form, field)
@@ -175,6 +185,39 @@ def unique_user_email(form, field):
         raise ValidationError(msg)
 
 
+def unique_username(form, field):
+    if not field.data:
+        # N.B. username is NULLABLE in the DB. Whether it is required for an app
+        # is dictated by the USERNAME_REQUIRED config.
+        return
+    uia_username = get_identity_attribute("username")
+    norm_username = _security._username_util.normalize(field.data)
+    if (
+        _datastore.find_user(
+            case_insensitive=uia_username.get("case_insensitive", False),
+            username=norm_username,
+        )
+        is not None
+    ):
+        msg = get_message("USERNAME_ALREADY_ASSOCIATED", username=norm_username)[0]
+        raise ValidationError(msg)
+
+
+def valid_username(form, field):
+    msg, field.data = _security._username_util.validate(field.data)
+    if msg:
+        raise ValidationError(msg)
+
+
+def allowed_username(form, field):
+    # Is username allowed on the form.
+    if not field.data:
+        return
+    msg = _security._username_util.allowed()
+    if msg:
+        raise ValidationError(msg)
+
+
 def unique_identity_attribute(form, field):
     """A validator that checks the field data against all configured
     SECURITY_USER_IDENTITY_ATTRIBUTES.
@@ -188,7 +231,7 @@ def unique_identity_attribute(form, field):
     :return: Nothing; if field data corresponds to an existing User, ValidationError
         is raised.
     """
-    for mapping in config_value("USER_IDENTITY_ATTRIBUTES"):
+    for mapping in cv("USER_IDENTITY_ATTRIBUTES"):
         attr = list(mapping.keys())[0]
         details = mapping[attr]
         idata = details["mapper"](field.data)
@@ -275,6 +318,15 @@ class NextFormMixin:
 
 class RegisterFormMixin:
     submit = SubmitField(get_form_field_label("register"))
+
+    # Note that we always add this field regardless of USERNAME_ENABLED setting
+    # since one can't 'dynamically' add a field and we don't want to 'delete'
+    # this as part of the view since the application might have set up their own
+    # form.
+    username = NullableStringField(
+        get_form_field_label("username"),
+        validators=[allowed_username, valid_username, unique_username],
+    )
 
     def to_dict(self, only_user):
         """
@@ -371,7 +423,7 @@ class LoginForm(Form, NextFormMixin):
         super().__init__(*args, **kwargs)
         if not self.next.data:
             self.next.data = request.args.get("next", "")
-        self.remember.default = config_value("DEFAULT_REMEMBER_ME")
+        self.remember.default = cv("DEFAULT_REMEMBER_ME")
         if (
             current_app.extensions["security"].recoverable
             and not self.password.description
@@ -452,7 +504,7 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
             return False
 
         # To support unified sign in - we permit registering with no password.
-        if not config_value("UNIFIED_SIGNIN"):
+        if not cv("UNIFIED_SIGNIN"):
             # password required
             if not self.password.data or not self.password.data.strip():
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
@@ -493,7 +545,7 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
     def validate(self):
         if not super().validate():
             return False
-        if not config_value("UNIFIED_SIGNIN"):
+        if not cv("UNIFIED_SIGNIN"):
             # password_confirm required
             if not self.password_confirm.data or not self.password_confirm.data.strip():
                 self.password_confirm.errors.append(
@@ -588,11 +640,11 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
         # TODO: the super class validate is never called - thus we have to
         # initialize errors to lists below. It also means that 'email' is never
         # validated - though it isn't required so the mixin might not be correct.
-        choices = config_value("TWO_FACTOR_ENABLED_METHODS")
+        choices = cv("TWO_FACTOR_ENABLED_METHODS")
         if "email" in choices:
             # backwards compat
             choices.append("mail")
-        if not config_value("TWO_FACTOR_REQUIRED"):
+        if not cv("TWO_FACTOR_REQUIRED"):
             choices.append("disable")
         if "setup" not in self.data or self.data["setup"] not in choices:
             self.setup.errors = list()
@@ -626,11 +678,11 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
             self.primary_method == "google_authenticator"
             or self.primary_method == "authenticator"
         ):
-            self.window = config_value("TWO_FACTOR_AUTHENTICATOR_VALIDITY")
+            self.window = cv("TWO_FACTOR_AUTHENTICATOR_VALIDITY")
         elif self.primary_method == "email" or self.primary_method == "mail":
-            self.window = config_value("TWO_FACTOR_MAIL_VALIDITY")
+            self.window = cv("TWO_FACTOR_MAIL_VALIDITY")
         elif self.primary_method == "sms":
-            self.window = config_value("TWO_FACTOR_SMS_VALIDITY")
+            self.window = cv("TWO_FACTOR_SMS_VALIDITY")
         else:
             return False
 

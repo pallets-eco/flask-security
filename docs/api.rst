@@ -131,6 +131,8 @@ Utils
 
 .. autofunction:: flask_security.uia_email_mapper
 
+.. autofunction:: flask_security.uia_username_mapper
+
 .. autofunction:: flask_security.url_for_security
 
 .. autofunction:: flask_security.send_mail
@@ -171,6 +173,10 @@ Utils
   :special-members: __init__
 
 .. autoclass:: flask_security.PasswordUtil
+  :members:
+  :special-members: __init__
+
+.. autoclass:: flask_security.UsernameUtil
   :members:
   :special-members: __init__
 

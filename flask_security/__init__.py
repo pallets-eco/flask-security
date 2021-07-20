@@ -77,6 +77,7 @@ from .unified_signin import (
     UnifiedVerifyForm,
     us_send_security_token,
 )
+from .username_util import UsernameUtil
 from .utils import (
     FsJsonEncoder,
     SmsSenderBaseClass,
@@ -98,6 +99,7 @@ from .utils import (
     transform_url,
     uia_phone_mapper,
     uia_email_mapper,
+    uia_username_mapper,
     url_for_security,
     verify_password,
     verify_and_update_password,

@@ -9,7 +9,7 @@ import pytest
 import re
 from flask import Flask
 import markupsafe
-from tests.test_utils import authenticate, check_xlation, logout
+from tests.test_utils import authenticate, check_xlation, json_authenticate, logout
 
 from flask_security import Security
 from flask_security.core import UserMixin
@@ -370,34 +370,21 @@ def test_easy_password(app, sqlalchemy_datastore):
     )
 
 
-def test_nullable_username(app, sqlalchemy_datastore):
+@pytest.mark.settings(username_enable=True)
+def test_nullable_username(app, client):
     # sqlalchemy datastore uses fsqlav2 which has username as unique and nullable
     # make sure can register multiple users with no username
     # Note that current WTForms (2.2.1) has a bug where StringFields can never be
     # None - it changes them to an empty string. DBs don't like that if you have
     # your column be 'nullable'.
-    class NullableStringField(StringField):
-        def process_formdata(self, valuelist):
-            if valuelist:
-                self.data = valuelist[0]
-
-    class MyRegisterForm(ConfirmRegisterForm):
-        username = NullableStringField("Username")
-
-    app.config["SECURITY_CONFIRM_REGISTER_FORM"] = MyRegisterForm
-    security = Security(datastore=sqlalchemy_datastore)
-    security.init_app(app)
-
-    client = app.test_client()
-
-    data = dict(email="u1@test.com", password="password", password_confirm="password")
+    data = dict(email="u1@test.com", password="password")
     response = client.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 200
     logout(client)
 
-    data = dict(email="u2@test.com", password="password", password_confirm="password")
+    data = dict(email="u2@test.com", password="password")
     response = client.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
@@ -479,3 +466,148 @@ def test_form_error(app, client, get_message):
             register_user_form=rform,
         )
         assert get_message("EMAIL_NOT_PROVIDED") in rendered.encode("utf-8")
+
+
+@pytest.mark.settings(username_enable=True)
+@pytest.mark.unified_signin()
+def test_username(app, client, get_message):
+    data = dict(
+        email="dude@lp.com",
+        username="dude",
+        password="awesome sunset",
+    )
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    logout(client)
+
+    # login using historic - email field...
+    response = json_authenticate(client, email="dude", password="awesome sunset")
+    assert response.status_code == 200
+
+    logout(client)
+
+    # login using us-signin
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="dude", passcode="awesome sunset"),
+        follow_redirects=True,
+    )
+    assert b"Welcome dude@lp.com" in response.data
+
+    # make sure username is unique
+    logout(client)
+    data = dict(
+        email="dude@lp.com",
+        username="dude",
+        password="awesome sunset",
+    )
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert (
+        get_message("USERNAME_ALREADY_ASSOCIATED", username="dude")
+        == response.json["response"]["errors"]["username"][0].encode()
+    )
+
+
+@pytest.mark.settings(username_enable=True)
+@pytest.mark.unified_signin()
+def test_username_normalize(app, client, get_message):
+    data = dict(
+        email="dude@lp.com",
+        username="Imnumber\N{ROMAN NUMERAL ONE}",
+        password="awesome sunset",
+    )
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/us-signin",
+        data=dict(
+            identity="Imnumber\N{LATIN CAPITAL LETTER I}", passcode="awesome sunset"
+        ),
+        follow_redirects=True,
+    )
+    assert b"Welcome dude@lp.com" in response.data
+
+
+@pytest.mark.settings(username_enable=True, username_required=True)
+def test_username_errors(app, client, get_message):
+    data = dict(
+        email="dude@lp.com",
+        username="dud",
+        password="awesome sunset",
+    )
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert (
+        "Username must be at least"
+        in response.json["response"]["errors"]["username"][0]
+    )
+
+    data["username"] = "howlongcanIbebeforeyoucomplainIsupposereallyreallylong"
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert (
+        "Username must be at least"
+        in response.json["response"]["errors"]["username"][0]
+    )
+
+    # try evil characters
+    data["username"] = "hi <script>doing evil</script>"
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert (
+        get_message("USERNAME_ILLEGAL_CHARACTERS")
+        == response.json["response"]["errors"]["username"][0].encode()
+    )
+
+    # No spaces or punctuation
+    data["username"] = "hi there?"
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert (
+        get_message("USERNAME_DISALLOWED_CHARACTERS")
+        in response.json["response"]["errors"]["username"][0].encode()
+    )
+
+    data["username"] = None
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert (
+        get_message("USERNAME_NOT_PROVIDED")
+        == response.json["response"]["errors"]["username"][0].encode()
+    )
+
+
+def test_username_not_enabled(app, client, get_message):
+    data = dict(
+        email="dude@lp.com",
+        username="dud",
+        password="awesome sunset",
+    )
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert (
+        get_message("USERNAME_NOT_ALLOWED")
+        in response.json["response"]["errors"]["username"][0].encode()
+    )

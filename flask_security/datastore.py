@@ -538,7 +538,6 @@ class UserDatastore:
         .. versionadded: 3.4.1
         """
         user.us_totp_secrets = None
-        user.us_phone_number = None
         self.put(user)  # type: ignore
 
 

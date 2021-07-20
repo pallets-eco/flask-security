@@ -13,6 +13,7 @@ Features
 - (:issue:`474`) Add public API and CLI command to change a user's password.
 - (:issue:`140`) Add type hints. Please note that many of the packages that flask-security
   depends on aren't typed yet - so there are likely errors in some of the types.
+- (:issue:`466`) Add first-class support for using username for signing in.
 
 Fixes
 +++++

@@ -701,7 +701,7 @@ Registerable
 
     Sets the subject for the confirmation email.
 
-    Default: ``Welcome``.
+    Default: ``"Welcome"``.
 .. py:data:: SECURITY_REGISTER_USER_TEMPLATE
 
     Specifies the path to the template for the user registration page.
@@ -719,6 +719,51 @@ Registerable
     Specifies the register URL.
 
     Default: ``"/register"``.
+
+.. py:data:: SECURITY_USERNAME_ENABLE
+
+    If set to True, the default registration form and template will have
+    a username field added. This requires that your user model contain the
+    field ``username``. It MUST be set as 'unique' and if you don't want
+    to require a username, it should be set as 'nullable'.
+
+    Validation and normalization is encapsulated in the :class:`.UsernameUtil`
+
+    Default: ``False``
+
+    .. versionadded:: 4.1.0
+
+.. py:data:: SECURITY_USERNAME_REQUIRED
+
+    If username is enabled, is it required as part of registration?
+
+    Default: ``False``
+    .. versionadded:: 4.1.0
+
+
+.. py:data:: SECURITY_USERNAME_MIN_LENGTH
+
+    Minimum length of a username.
+
+    Default: ``4``
+
+    .. versionadded:: 4.1.0
+
+.. py:data:: SECURITY_USERNAME_MAX_LENGTH
+
+    Maximum length of a username.
+
+    Default: ``32``
+
+    .. versionadded:: 4.1.0
+
+.. py:data:: SECURITY_USERNAME_NORMALIZE_FORM
+
+    Usernames can be unicode normalization is performed using the Python unicodedata.normalize() method.
+
+    Default: ``"NFKD"``
+
+    .. versionadded:: 4.1.0
 
 Confirmable
 -----------
@@ -1357,3 +1402,9 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_US_SPECIFY_IDENTITY``
 * ``SECURITY_MSG_USE_CODE``
 * ``SECURITY_MSG_USER_DOES_NOT_EXIST``
+* ``SECURITY_USERNAME_INVALID_LENGTH``
+* ``SECURITY_USERNAME_ILLEGAL_CHARACTERS``
+* ``SECURITY_USERNAME_DISALLOWED_CHARACTERS``
+* ``SECURITY_USERNAME_NOT_PROVIDED``
+* ``SECURITY_USERNAME_NOT_ALLOWED``
+* ``SECURITY_USERNAME_ALREADY_ASSOCIATED``
