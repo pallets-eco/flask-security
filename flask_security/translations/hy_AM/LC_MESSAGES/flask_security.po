@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2021-03-31 21:47-0700\n"
+"POT-Creation-Date: 2021-07-22 11:01-0700\n"
 "PO-Revision-Date: 2020-12-01 11:47+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hy_AM\n"
@@ -17,118 +17,118 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.0\n"
+"Generated-By: Babel 2.9.1\n"
 
-#: flask_security/core.py:209
+#: flask_security/core.py:223
 msgid "Login Required"
 msgstr "Անհրաժեշտ է մուտք գործել"
 
-#: flask_security/core.py:210
+#: flask_security/core.py:224
 #: flask_security/templates/security/email/two_factor_instructions.html:1
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
-#: flask_security/templates/security/email/us_instructions.html:1
-#: flask_security/templates/security/email/us_instructions.txt:1
+#: flask_security/templates/security/email/us_instructions.html:9
+#: flask_security/templates/security/email/us_instructions.txt:9
 msgid "Welcome"
 msgstr "Բարի գալուստ"
 
-#: flask_security/core.py:211
+#: flask_security/core.py:225
 msgid "Please confirm your email"
 msgstr "Հաստատեք Ձեր էլ․փոստի հասցեն"
 
-#: flask_security/core.py:212
+#: flask_security/core.py:226
 msgid "Login instructions"
 msgstr "Մուտքի հրահանգներ"
 
-#: flask_security/core.py:213
+#: flask_security/core.py:227
 #: flask_security/templates/security/email/reset_notice.html:1
 #: flask_security/templates/security/email/reset_notice.txt:1
 msgid "Your password has been reset"
 msgstr "Ձեր գաղտնաբառը վերականգնվել է"
 
-#: flask_security/core.py:214
+#: flask_security/core.py:228
 #: flask_security/templates/security/email/change_notice.txt:1
 msgid "Your password has been changed"
 msgstr "Ձեր գաղտնաբառը փոխվեց"
 
-#: flask_security/core.py:215
+#: flask_security/core.py:229
 msgid "Password reset instructions"
 msgstr "Գաղտնաբառի վերականգնման հրահանգներ"
 
-#: flask_security/core.py:218
+#: flask_security/core.py:232
 msgid "Two-factor Login"
 msgstr "Երկու գործոնով մուտք"
 
-#: flask_security/core.py:219
+#: flask_security/core.py:233
 msgid "Two-factor Rescue"
 msgstr "Երկու գործոնով վերականգնում"
 
-#: flask_security/core.py:263
+#: flask_security/core.py:277
 msgid "Verification Code"
 msgstr "Վերահաստատման ծածկագիր"
 
-#: flask_security/core.py:278
+#: flask_security/core.py:302
 msgid "Input not appropriate for requested API"
 msgstr "Մուտքը չի համապատասխանում հայցվող API֊ին"
 
-#: flask_security/core.py:279
+#: flask_security/core.py:303
 msgid "You do not have permission to view this resource."
 msgstr "Դուք այս ռեսուրսը դիտելու թույլտվություն չունեք"
 
-#: flask_security/core.py:281
+#: flask_security/core.py:305
 msgid "You are not authenticated. Please supply the correct credentials."
 msgstr "Դուք նույնականացված չեք: Խնդրում ենք մուտքագրել ճիշտ տվյալներ։"
 
-#: flask_security/core.py:285
+#: flask_security/core.py:309
 msgid "You must re-authenticate to access this endpoint"
 msgstr "Դուք պետք է կրկին նույնականցվեք որպեսզի այստեղ մուտք գործեք"
 
-#: flask_security/core.py:289
+#: flask_security/core.py:313
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
 msgstr "Շնորհակալություն. Հաստատման հրահանգներն ուղարկվել են %(email)s հասցեին։"
 
-#: flask_security/core.py:292
+#: flask_security/core.py:316
 msgid "Thank you. Your email has been confirmed."
 msgstr "Շնորհակալություն. Ձեր էլ․փոստի հասցեն հաստատվել է։"
 
-#: flask_security/core.py:293
+#: flask_security/core.py:317
 msgid "Your email has already been confirmed."
 msgstr "Ձեր էլ․փոստի հասցեն արդեն հաստատված է։"
 
-#: flask_security/core.py:294
+#: flask_security/core.py:318
 msgid "Invalid confirmation token."
 msgstr "Հաստատման տոկենը անվավեր է։"
 
-#: flask_security/core.py:296
+#: flask_security/core.py:320
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s արդեն կապված է այլ օգտահաշվի հետ։"
 
-#: flask_security/core.py:300
+#: flask_security/core.py:324
 #, python-format
 msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
 "associated with an account."
 msgstr ""
 
-#: flask_security/core.py:306
+#: flask_security/core.py:330
 msgid "Password does not match"
 msgstr "Գաղտնաբառը չի համապատասխանում"
 
-#: flask_security/core.py:307
+#: flask_security/core.py:331
 msgid "Passwords do not match"
 msgstr "Գաղտնաբառերը չեն համապատասխանում"
 
-#: flask_security/core.py:308
+#: flask_security/core.py:332
 msgid "Redirections outside the domain are forbidden"
 msgstr "Դոմենից դուրս վերահղումներն արգելափակված են"
 
-#: flask_security/core.py:310
+#: flask_security/core.py:334
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr "Գաղտնաբառի վերականգնման հրահանգներն ուղարկվել են %(email)s հասցեին։"
 
-#: flask_security/core.py:314
+#: flask_security/core.py:338
 #, python-format
 msgid ""
 "You did not reset your password within %(within)s. New instructions have "
@@ -137,20 +137,20 @@ msgstr ""
 "Դուք ձեր գաղտնաբառը չեք վերականգնել %(within)s֊ի ընթացքում։ Նոր "
 "հրահանգները ուղարկվել են %(email)s հասցեին։"
 
-#: flask_security/core.py:320
+#: flask_security/core.py:344
 msgid "Invalid reset password token."
 msgstr "Գաղտնաբառի վերականգնման տոկենը անվավեր է։"
 
-#: flask_security/core.py:321
+#: flask_security/core.py:345
 msgid "Email requires confirmation."
 msgstr "Էլ․փոստի հասցեն պետք է հաստատել։"
 
-#: flask_security/core.py:323
+#: flask_security/core.py:347
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr "Հաստատման հրահանգները ուղարկվել են %(email)s հասցեին։"
 
-#: flask_security/core.py:327
+#: flask_security/core.py:351
 #, python-format
 msgid ""
 "You did not confirm your email within %(within)s. New instructions to "
@@ -160,7 +160,7 @@ msgstr ""
 "հրահանգները էլ․փոստի հասցեի հաստատման համար ուղարկվել են %(email)s "
 "հասցեին։"
 
-#: flask_security/core.py:335
+#: flask_security/core.py:359
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -169,81 +169,81 @@ msgstr ""
 "Դուք մուտք չեք գործել %(within)s֊ի ընթացքում. Մուտքի նոր հրահանգները "
 "ուղարկվել են %(email)s հասցեին։"
 
-#: flask_security/core.py:342
+#: flask_security/core.py:366
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr "Մուտքի հրահանգները ուղարկվել են %(email)s հասցեին։"
 
-#: flask_security/core.py:345
+#: flask_security/core.py:369
 msgid "Invalid login token."
 msgstr "Մուտքի անվավեր տոկեն։"
 
-#: flask_security/core.py:346
+#: flask_security/core.py:370
 msgid "Account is disabled."
 msgstr "Օգտահաշիվն արգելափակված է։"
 
-#: flask_security/core.py:347
+#: flask_security/core.py:371
 msgid "Email not provided"
 msgstr "Էլ․փոստի հասցեն տրամադրված չէ"
 
-#: flask_security/core.py:348
+#: flask_security/core.py:372
 msgid "Invalid email address"
 msgstr "Անվավեր էլ․փոստի հասցե"
 
-#: flask_security/core.py:349
+#: flask_security/core.py:373
 msgid "Invalid code"
 msgstr "Անվավեր ծածկագիր"
 
-#: flask_security/core.py:350
+#: flask_security/core.py:374
 msgid "Password not provided"
 msgstr "Գաղտնաբառը տրամադրված չէ"
 
-#: flask_security/core.py:351
+#: flask_security/core.py:375
 msgid "No password is set for this user"
 msgstr "Այս օգտատերը գաղնաբառ չունի"
 
-#: flask_security/core.py:353
+#: flask_security/core.py:377
 #, python-format
 msgid "Password must be at least %(length)s characters"
 msgstr "Գաղտնաբառը պետք է պարունակի առնվազն %(length)s նիշ"
 
-#: flask_security/core.py:356
+#: flask_security/core.py:380
 msgid "Password not complex enough"
 msgstr "Գաղտնաբառը բավարար բարդ չէ"
 
-#: flask_security/core.py:357
+#: flask_security/core.py:381
 msgid "Password on breached list"
 msgstr "Գաղտնաբառը բացված գաղտնաբառերի ցուցակում է"
 
-#: flask_security/core.py:359
+#: flask_security/core.py:383
 msgid "Failed to contact breached passwords site"
 msgstr "Չհաջողվեց կապվել բացված գաղտնաբառերի կայքի հետ"
 
-#: flask_security/core.py:362
+#: flask_security/core.py:386
 msgid "Phone number not valid e.g. missing country code"
 msgstr "Հեռախոսահամարը անվավեր է, օրինակ՝ բացակայում է երկրի կոդը"
 
-#: flask_security/core.py:363
+#: flask_security/core.py:387
 msgid "Specified user does not exist"
 msgstr "Նշված օգտատերը գոյություն չունի"
 
-#: flask_security/core.py:364
+#: flask_security/core.py:388
 msgid "Invalid password"
 msgstr "Անվավեր գաղտնաբառ"
 
-#: flask_security/core.py:365
+#: flask_security/core.py:389
 msgid "Password or code submitted is not valid"
 msgstr "Ներկայացված գաղտնաբառը կամ ծածկագիրը վավեր չէ"
 
-#: flask_security/core.py:366
+#: flask_security/core.py:390
 msgid "You have successfully logged in."
 msgstr "Դուք բարեհաջող մուտք էք գործել։"
 
-#: flask_security/core.py:367
+#: flask_security/core.py:391
 msgid "Forgot password?"
 msgstr "Մոռացել ե՞ք գաղտնաբառը"
 
-#: flask_security/core.py:369
+#: flask_security/core.py:393
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
@@ -251,204 +251,236 @@ msgstr ""
 "Դուք հաջողությամբ վերականգնել եք ձեր գաղտնաբառը եւ մուտք էք գործել "
 "համակարգ ինքնաբերաբար։"
 
-#: flask_security/core.py:376
+#: flask_security/core.py:400
 msgid "Your new password must be different than your previous password."
 msgstr "Ձեր նոր գաղտնաբառը պետք է տարբերվի նախկինից"
 
-#: flask_security/core.py:379
+#: flask_security/core.py:403
 msgid "You successfully changed your password."
 msgstr "Դուք հաջողությամբ փոխեցիք ձեր գաղտնաբառը։"
 
-#: flask_security/core.py:380
+#: flask_security/core.py:404
 msgid "Please log in to access this page."
 msgstr "Մուտք գործեք այս էջից օգտվելու համար։"
 
-#: flask_security/core.py:381
+#: flask_security/core.py:405
 msgid "Please reauthenticate to access this page."
 msgstr "Այս էջ մուտք գործելու համար անհրաժեշտ է նորից նույնականացվել:"
 
-#: flask_security/core.py:382
+#: flask_security/core.py:406
 msgid "Reauthentication successful"
 msgstr "Նույնականացումը հաջողված է"
 
-#: flask_security/core.py:384
+#: flask_security/core.py:408
 msgid "You can only access this endpoint when not logged in."
 msgstr "Դուք կարող եք մտնել այս վերջնակետ միայն այն ժամանակ, երբ մուտք չեք գործել"
 
-#: flask_security/core.py:387
+#: flask_security/core.py:411
 msgid "Failed to send code. Please try again later"
 msgstr "Չհաջողվեց ուղարկել ծածկագիրը: Խնդրում ենք փորձել ավելի ուշ"
 
-#: flask_security/core.py:388
+#: flask_security/core.py:412
 msgid "Invalid Token"
 msgstr "Անվավեր թոքեն"
 
-#: flask_security/core.py:389
+#: flask_security/core.py:413
 msgid "Your token has been confirmed"
 msgstr "Ձեր թոքենը հաստատված է"
 
-#: flask_security/core.py:391
+#: flask_security/core.py:415
 msgid "You successfully changed your two-factor method."
 msgstr "Դուք հաջողությամբ փոխեցիք ձեր երկու֊գործոն տարբերակը"
 
-#: flask_security/core.py:395
+#: flask_security/core.py:419
 msgid "You currently do not have permissions to access this page"
 msgstr "Ներկայումս դուք չունեք այս էջ մուտք գործելու թույլտվություն"
 
-#: flask_security/core.py:398
+#: flask_security/core.py:422
 msgid "Marked method is not valid"
 msgstr "Նշված տարբերակը վավեր չէ"
 
-#: flask_security/core.py:400
+#: flask_security/core.py:424
 msgid "You successfully disabled two factor authorization."
 msgstr "Դուք հաջողությամբ անջատել եք երկու գործոնի թույլտվությունը"
 
-#: flask_security/core.py:403
+#: flask_security/core.py:427
 msgid "Requested method is not valid"
 msgstr "Հայցվող մեթոդը վավեր չէ"
 
-#: flask_security/core.py:405
+#: flask_security/core.py:429
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
 msgstr "Կարգավորումը պետք է ավարտվի %(within)s ընթացքում։ Խնդրում ենք նորից սկսել։"
 
-#: flask_security/core.py:408
+#: flask_security/core.py:432
 msgid "Unified sign in setup successful"
 msgstr "Միասնական մուտքի տեղադրումը հաջող է"
 
-#: flask_security/core.py:409
+#: flask_security/core.py:433
 msgid "You must specify a valid identity to sign in"
 msgstr "Մուտք գործելու համար պետք է նշեք վավեր ինքնություն"
 
-#: flask_security/core.py:410
+#: flask_security/core.py:434
 #, python-format
 msgid "Use this code to sign in: %(code)s."
 msgstr "Մուտքի համար օգտագործեք այս ծածկագիրը․ %(code)s։"
 
-#: flask_security/forms.py:53
+#: flask_security/core.py:436
+#, python-format
+msgid ""
+"Username must be at least %(min)d characters and less than %(max)d "
+"characters"
+msgstr ""
+
+#: flask_security/core.py:443
+msgid "Username contains illegal characters"
+msgstr ""
+
+#: flask_security/core.py:447
+msgid "Username can contain only letters and numbers"
+msgstr ""
+
+#: flask_security/core.py:450
+msgid "Username not provided"
+msgstr ""
+
+#: flask_security/core.py:451
+msgid "Username not allowed"
+msgstr ""
+
+#: flask_security/core.py:453
+#, python-format
+msgid "%(username)s is already associated with an account."
+msgstr ""
+
+#: flask_security/forms.py:58
 msgid "Email Address"
 msgstr "Էլեկտրոնային փոստի հասցե"
 
-#: flask_security/forms.py:54
+#: flask_security/forms.py:59
 msgid "Password"
 msgstr "Գաղտնաբառ"
 
-#: flask_security/forms.py:55
+#: flask_security/forms.py:60
 msgid "Remember Me"
 msgstr "Հիշիր ինձ"
 
-#: flask_security/forms.py:56 flask_security/templates/security/_menu.html:5
+#: flask_security/forms.py:61 flask_security/templates/security/_menu.html:5
 #: flask_security/templates/security/login_user.html:6
 #: flask_security/templates/security/send_login.html:6
 msgid "Login"
 msgstr "Մուտք"
 
-#: flask_security/forms.py:57
-#: flask_security/templates/security/email/us_instructions.html:8
+#: flask_security/forms.py:62
+#: flask_security/templates/security/email/us_instructions.html:16
 #: flask_security/templates/security/us_signin.html:6
 msgid "Sign In"
 msgstr "Մուտք գործել"
 
-#: flask_security/forms.py:58 flask_security/templates/security/_menu.html:11
+#: flask_security/forms.py:63 flask_security/templates/security/_menu.html:11
 #: flask_security/templates/security/register_user.html:6
 msgid "Register"
 msgstr "Գրանցվել"
 
-#: flask_security/forms.py:59
+#: flask_security/forms.py:64
 msgid "Resend Confirmation Instructions"
 msgstr "Վերստին հաստատեք ցուցումները"
 
-#: flask_security/forms.py:60
+#: flask_security/forms.py:65
 msgid "Recover Password"
 msgstr "Վերականգնել գաղտնաբառը"
 
-#: flask_security/forms.py:61
+#: flask_security/forms.py:66
 msgid "Reset Password"
 msgstr "Զրոյացնել գաղտնաբառը"
 
-#: flask_security/forms.py:62
+#: flask_security/forms.py:67
 msgid "Retype Password"
 msgstr "Կրկին մուտքագրել գաղտնաբառը"
 
-#: flask_security/forms.py:63
+#: flask_security/forms.py:68
 msgid "New Password"
 msgstr "Նոր գաղտնաբառ"
 
-#: flask_security/forms.py:64
+#: flask_security/forms.py:69
 msgid "Change Password"
 msgstr "Փոխել գաղտնաբառը"
 
-#: flask_security/forms.py:65
+#: flask_security/forms.py:70
 msgid "Send Login Link"
 msgstr "Ուղարկել մուտքի հղումը"
 
-#: flask_security/forms.py:66
+#: flask_security/forms.py:71
 msgid "Verify Password"
 msgstr "Ստուգեք գաղտնաբառը"
 
-#: flask_security/forms.py:67
+#: flask_security/forms.py:72
 msgid "Change Method"
 msgstr "Փոխել տարբերակը"
 
-#: flask_security/forms.py:68
+#: flask_security/forms.py:73
 msgid "Phone Number"
 msgstr "Հեռախոսահամար"
 
-#: flask_security/forms.py:69
+#: flask_security/forms.py:74
 msgid "Authentication Code"
 msgstr "Նույնականացման ծածկագիր"
 
-#: flask_security/forms.py:70
+#: flask_security/forms.py:75
 msgid "Submit"
 msgstr "Ներկայացնել"
 
-#: flask_security/forms.py:71
+#: flask_security/forms.py:76
 msgid "Submit Code"
 msgstr "Ներկայացնել ծածկագիր"
 
-#: flask_security/forms.py:72
+#: flask_security/forms.py:77
 msgid "Error(s)"
 msgstr "Սխալ"
 
-#: flask_security/forms.py:73
+#: flask_security/forms.py:78
 msgid "Identity"
 msgstr "Ինքնություն"
 
-#: flask_security/forms.py:74
+#: flask_security/forms.py:79
 msgid "Send Code"
 msgstr "Ուղարկել ծածկագիր"
 
-#: flask_security/forms.py:75
+#: flask_security/forms.py:80
 msgid "Passcode"
 msgstr "Գաղտնագիր"
 
-#: flask_security/unified_signin.py:131
+#: flask_security/forms.py:81
+msgid "Username"
+msgstr ""
+
+#: flask_security/unified_signin.py:129
 msgid "Code or Password"
 msgstr "Ծածկագիր կամ Գաղտնաբառ"
 
-#: flask_security/unified_signin.py:136 flask_security/unified_signin.py:262
+#: flask_security/unified_signin.py:134 flask_security/unified_signin.py:260
 msgid "Available Methods"
 msgstr "Առկա տարբերակներ"
 
-#: flask_security/unified_signin.py:137
+#: flask_security/unified_signin.py:135
 msgid "Via email"
 msgstr "Էլ․ Փոստով"
 
-#: flask_security/unified_signin.py:137
+#: flask_security/unified_signin.py:135
 msgid "Via SMS"
 msgstr "SMS հաղորդագրությամբ"
 
-#: flask_security/unified_signin.py:264
+#: flask_security/unified_signin.py:262
 msgid "Set up using email"
 msgstr "Կարգավորեք էլ․փոստի միջոցով"
 
-#: flask_security/unified_signin.py:267
+#: flask_security/unified_signin.py:265
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
 "Կարգավորեք օգտագործելով վավերացման ծրագիր (ինչպիսիք են՝ google, lastpass,"
 " authy)"
 
-#: flask_security/unified_signin.py:269
+#: flask_security/unified_signin.py:267
 msgid "Set up using SMS"
 msgstr "Կարգավորեք օգտագործելով SMS"
 
@@ -587,20 +619,20 @@ msgstr "այն վերականգնելու համար սեղմեք այստեղ"
 msgid "If you did not change your password, click the link below to reset it."
 msgstr "Եթե դուք չեք փոխել Ձեր գաղտնաբառը, սեղմեք հղումին, որպեսզի փոխեք այն"
 
-#: flask_security/templates/security/email/confirmation_instructions.html:1
-#: flask_security/templates/security/email/confirmation_instructions.txt:1
+#: flask_security/templates/security/email/confirmation_instructions.html:8
+#: flask_security/templates/security/email/confirmation_instructions.txt:8
 msgid "Please confirm your email through the link below:"
 msgstr "Ստորև բերված հղումով հաստատեք ձեր էլ. փոստի հասցեն․"
 
-#: flask_security/templates/security/email/confirmation_instructions.html:3
-#: flask_security/templates/security/email/welcome.html:6
+#: flask_security/templates/security/email/confirmation_instructions.html:10
+#: flask_security/templates/security/email/welcome.html:13
 msgid "Confirm my account"
 msgstr "Հաստատել իմ օգտահաշիվը"
 
 #: flask_security/templates/security/email/login_instructions.html:1
 #: flask_security/templates/security/email/login_instructions.txt:1
-#: flask_security/templates/security/email/welcome.html:1
-#: flask_security/templates/security/email/welcome.txt:1
+#: flask_security/templates/security/email/welcome.html:8
+#: flask_security/templates/security/email/welcome.txt:8
 #, python-format
 msgid "Welcome %(email)s!"
 msgstr "Բարի գալուստ %(email)s!"
@@ -614,11 +646,11 @@ msgstr "Դուք կարող եք մուտք գործել Ձեր օգտահաշի
 msgid "Login now"
 msgstr "Մուտք գործել հիմա"
 
-#: flask_security/templates/security/email/reset_instructions.html:1
+#: flask_security/templates/security/email/reset_instructions.html:8
 msgid "Click here to reset your password"
 msgstr "Ձեր գաղտնաբառը վերականգնելու համար սեղմեք այստեղ"
 
-#: flask_security/templates/security/email/reset_instructions.txt:1
+#: flask_security/templates/security/email/reset_instructions.txt:8
 msgid "Click the link below to reset your password:"
 msgstr "Ձեր գաղտնաբառը վերականգնելու համար սեղմեք սեղմեք հղումին"
 
@@ -632,21 +664,18 @@ msgstr "Դուք կարող եք մտնել Ձեր օգտահաշիվ՝ օգտա
 msgid "can not access mail account"
 msgstr "Օգտահաշիվ հնարավոր չէ մուտք գործել"
 
-#: flask_security/templates/security/email/us_instructions.html:3
-#: flask_security/templates/security/email/us_instructions.txt:3
+#: flask_security/templates/security/email/us_instructions.html:11
+#: flask_security/templates/security/email/us_instructions.txt:11
 msgid "You can sign into your account using the following code:"
 msgstr "Կարող եք մուտք գործել Ձեր օգտահաշիվ՝ օգտագործելով հետևյալ ծածկագիրը."
 
-#: flask_security/templates/security/email/us_instructions.html:6
-msgid "Or use the the link below:"
-msgstr "Կամ օգտագործեք ստորեւ նշված հղումը"
-
-#: flask_security/templates/security/email/us_instructions.txt:7
+#: flask_security/templates/security/email/us_instructions.html:14
+#: flask_security/templates/security/email/us_instructions.txt:15
 msgid "Or use the link below:"
 msgstr "Կամ օգտագործեք ստորեւ նշված հղումը"
 
-#: flask_security/templates/security/email/welcome.html:4
-#: flask_security/templates/security/email/welcome.txt:4
+#: flask_security/templates/security/email/welcome.html:11
+#: flask_security/templates/security/email/welcome.txt:11
 msgid "You can confirm your email through the link below:"
 msgstr "Դուք կարող եք հաստատել ձեր էլ. փոստի հասցեն ստորև նշված հղումով."
 
@@ -658,3 +687,6 @@ msgstr "Դուք կարող եք հաստատել ձեր էլ. փոստի հաս
 #~ "Բացեք ձեր վավերականացման ծրագիրը ձեր "
 #~ "սարքում և սկանավորեք հետևյալ QRcode-ը "
 #~ "ծածկագրեր ստանալու համար:"
+
+#~ msgid "Or use the the link below:"
+#~ msgstr "Կամ օգտագործեք ստորեւ նշված հղումը"

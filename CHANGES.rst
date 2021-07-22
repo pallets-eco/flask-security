@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 4.1.0
 -------------
 
-Released TBD
+Released July 23, 2021
 
 Features
 ++++++++
