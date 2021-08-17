@@ -330,27 +330,29 @@ msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
 "characters"
 msgstr ""
+"Erabiltzaile izenak gutxienez %(min)d karaktere eta %(max)d karaktere "
+"baino gutxiago izan behar ditu"
 
 #: flask_security/core.py:443
 msgid "Username contains illegal characters"
-msgstr ""
+msgstr "Erabiltzaile izenak legez kanpoko karaktereak ditu"
 
 #: flask_security/core.py:447
 msgid "Username can contain only letters and numbers"
-msgstr ""
+msgstr "Erabiltzaile izenak letrak eta zenbakiak soilik izan ditzake"
 
 #: flask_security/core.py:450
 msgid "Username not provided"
-msgstr ""
+msgstr "Erabiltzaile izena ez da eman"
 
 #: flask_security/core.py:451
 msgid "Username not allowed"
-msgstr ""
+msgstr "Erabiltzaile izena ez da onartzen"
 
 #: flask_security/core.py:453
 #, python-format
 msgid "%(username)s is already associated with an account."
-msgstr ""
+msgstr "%(username)s dagoeneko kontu batekin lotuta dago."
 
 #: flask_security/forms.py:58
 msgid "Email Address"
@@ -451,7 +453,7 @@ msgstr "Pasakodea"
 
 #: flask_security/forms.py:81
 msgid "Username"
-msgstr ""
+msgstr "Erabiltzaile izena"
 
 #: flask_security/unified_signin.py:129
 msgid "Code or Password"
@@ -679,6 +681,3 @@ msgstr "Edo erabili beheko esteka:"
 #: flask_security/templates/security/email/welcome.txt:11
 msgid "You can confirm your email through the link below:"
 msgstr "Zure posta elektronikoa beheko estekaren bidez baiezta dezakezu:"
-
-#~ msgid "Or use the the link below:"
-#~ msgstr "Edo erabili beheko esteka:"
