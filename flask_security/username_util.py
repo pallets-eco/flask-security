@@ -37,19 +37,6 @@ class UsernameUtil:
         """
         pass
 
-    def allowed(self) -> t.Optional[str]:
-        """
-        Is providing a username allowed?
-        We use this as a validator for the form.
-        This is critical since the form always has 'username' but we don't want to
-        look at or accept a value if it isn't enabled.
-
-        Returns None if allowed, error message if not allowed.
-        """
-        if cv("USERNAME_ENABLE"):
-            return None
-        return get_message("USERNAME_NOT_ALLOWED")[0]
-
     def check_username(self, username: str) -> t.Optional[str]:
         """
         Given a username - check for allowable character categories.
@@ -76,7 +63,6 @@ class UsernameUtil:
         if not username:
             return ""
 
-        # we allow pretty much anything - but we bleach it.
         username = bleach.clean(username.strip(), strip=True)
         if not username:
             return ""
@@ -91,6 +77,7 @@ class UsernameUtil:
         Called in app/request context.
 
         The username is first validated then normalized.
+        Input is restricted/validated via a call to check_username.
         Return value is a tuple (msg, normalized_username). msg will be None if
         properly validated.
         """

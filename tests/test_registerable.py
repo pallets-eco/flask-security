@@ -598,16 +598,6 @@ def test_username_errors(app, client, get_message):
 
 
 def test_username_not_enabled(app, client, get_message):
-    data = dict(
-        email="dude@lp.com",
-        username="dud",
-        password="awesome sunset",
-    )
-    response = client.post(
-        "/register", json=data, headers={"Content-Type": "application/json"}
-    )
-    assert response.status_code == 400
-    assert (
-        get_message("USERNAME_NOT_ALLOWED")
-        in response.json["response"]["errors"]["username"][0].encode()
-    )
+    response = client.get("/register")
+    assert b"username" not in response.data
+    assert not hasattr(RegisterForm, "username")

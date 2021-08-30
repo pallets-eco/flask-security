@@ -62,7 +62,7 @@ class FlashMail:
 
 def create_app():
     # Use real templates - not test templates...
-    app = Flask(__name__, template_folder="../")
+    app = Flask("view_scaffold", template_folder="../")
     app.config["DEBUG"] = True
     # SECRET_KEY generated using: secrets.token_urlsafe()
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"

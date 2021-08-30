@@ -726,8 +726,12 @@ Registerable
     a username field added. This requires that your user model contain the
     field ``username``. It MUST be set as 'unique' and if you don't want
     to require a username, it should be set as 'nullable'.
+    Also, if set, the LoginForm will have the 'email' input changed from
+    an EmailField (which renders as an html input=email) to a StringField.
 
-    Validation and normalization is encapsulated in the :class:`.UsernameUtil`
+    Validation and normalization is encapsulated in :class:`.UsernameUtil`.
+    Note that the default validation restricts username input to be unicode
+    letters and numbers.
 
     Default: ``False``
 
@@ -1406,5 +1410,4 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_USERNAME_ILLEGAL_CHARACTERS``
 * ``SECURITY_USERNAME_DISALLOWED_CHARACTERS``
 * ``SECURITY_USERNAME_NOT_PROVIDED``
-* ``SECURITY_USERNAME_NOT_ALLOWED``
 * ``SECURITY_USERNAME_ALREADY_ASSOCIATED``

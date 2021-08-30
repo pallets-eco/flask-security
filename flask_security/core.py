@@ -42,12 +42,16 @@ from .forms import (
     LoginForm,
     PasswordlessLoginForm,
     RegisterForm,
+    RegisterFormMixin,
     ResetPasswordForm,
     SendConfirmationForm,
     TwoFactorVerifyCodeForm,
     TwoFactorSetupForm,
     TwoFactorRescueForm,
     VerifyForm,
+    login_email_field,
+    login_string_field,
+    register_username_field,
 )
 from .mail_util import MailUtil
 from .password_util import PasswordUtil
@@ -448,7 +452,6 @@ _default_messages = {
         "error",
     ),
     "USERNAME_NOT_PROVIDED": (_("Username not provided"), "error"),
-    "USERNAME_NOT_ALLOWED": (_("Username not allowed"), "error"),
     "USERNAME_ALREADY_ASSOCIATED": (
         _("%(username)s is already associated with an account."),
         "error",
@@ -1306,7 +1309,8 @@ class Security:
             for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):
                 uialist.append(list(uia.keys())[0])
             if "username" not in uialist:
-                cv("USER_IDENTITY_ATTRIBUTES", app=app).append(
+                uias = cv("USER_IDENTITY_ATTRIBUTES", app=app).copy()
+                uias.append(
                     {
                         "username": {
                             "mapper": uia_username_mapper,
@@ -1314,6 +1318,28 @@ class Security:
                         }
                     }
                 )
+                app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = uias
+
+            # Add dynamic fields based on whether USERNAME_ENABLE is set.
+            if issubclass(self.register_form, RegisterFormMixin) and not hasattr(
+                self.register_form, "username"
+            ):
+                self.register_form.username = register_username_field
+            if issubclass(
+                self.confirm_register_form, RegisterFormMixin
+            ) and not hasattr(self.confirm_register_form, "username"):
+                self.confirm_register_form.username = register_username_field
+
+        # N.B. this - and above actually modify the class (by adding an attribute).
+        # Thus if there are 2 instance/apps, with different settings for
+        # USERNAME_ENABLE - it won't work.
+        if issubclass(self.login_form, LoginForm) and not hasattr(
+            self.login_form, "email"
+        ):
+            if cv("USERNAME_ENABLE", app):
+                self.login_form.email = login_string_field
+            else:
+                self.login_form.email = login_email_field
 
         if self.register_blueprint:
             bp = create_blueprint(

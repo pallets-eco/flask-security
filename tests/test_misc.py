@@ -1120,7 +1120,7 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
 def test_validate_redirect(app, sqlalchemy_datastore):
     """
     Test various possible URLs that urlsplit() shows as relative but
-    many browsers will interpret as absolute - and this have a
+    many browsers will interpret as absolute - and thus have a
     open-redirect vulnerability. Note this vulnerability only
     is viable if the application sets autocorrect_location_header = False
     """
