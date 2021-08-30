@@ -13,7 +13,7 @@ import datetime
 from pytest import raises, skip
 from tests.test_utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
-from flask_security import RoleMixin, Security, UserMixin
+from flask_security import RoleMixin, Security, UserMixin, LoginForm, RegisterForm
 from flask_security.datastore import Datastore, UserDatastore
 
 
@@ -192,15 +192,24 @@ def test_access_datastore_from_app_factory_pattern(app, datastore):
 
 
 def test_init_app_kwargs_override_constructor_kwargs(app, datastore):
+    class ConLoginForm(LoginForm):
+        pass
+
+    class ConRegisterForm(RegisterForm):
+        pass
+
+    class InitLoginForm(LoginForm):
+        pass
+
     security = Security(
         datastore=datastore,
-        login_form="__init__login_form",
-        register_form="__init__register_form",
+        login_form=ConLoginForm,
+        register_form=ConRegisterForm,
     )
-    security.init_app(app, login_form="init_app_login_form")
+    security.init_app(app, login_form=InitLoginForm)
 
-    assert security.login_form == "init_app_login_form"
-    assert security.register_form == "__init__register_form"
+    assert security.login_form == InitLoginForm
+    assert security.register_form == ConRegisterForm
 
 
 def test_create_user_with_roles_and_permissions(app, datastore):

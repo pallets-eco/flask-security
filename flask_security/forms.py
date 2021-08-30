@@ -11,6 +11,7 @@
 """
 
 import inspect
+import typing as t
 
 from flask import Markup, current_app, request
 from flask_login import current_user
@@ -209,15 +210,6 @@ def valid_username(form, field):
         raise ValidationError(msg)
 
 
-def allowed_username(form, field):
-    # Is username allowed on the form.
-    if not field.data:
-        return
-    msg = _security._username_util.allowed()
-    if msg:
-        raise ValidationError(msg)
-
-
 def unique_identity_attribute(form, field):
     """A validator that checks the field data against all configured
     SECURITY_USER_IDENTITY_ATTRIBUTES.
@@ -316,17 +308,18 @@ class NextFormMixin:
             raise ValidationError(get_message("INVALID_REDIRECT")[0])
 
 
+register_username_field = NullableStringField(
+    get_form_field_label("username"),
+    validators=[valid_username, unique_username],
+)
+
+
 class RegisterFormMixin:
     submit = SubmitField(get_form_field_label("register"))
 
-    # Note that we always add this field regardless of USERNAME_ENABLED setting
-    # since one can't 'dynamically' add a field and we don't want to 'delete'
-    # this as part of the view since the application might have set up their own
-    # form.
-    username = NullableStringField(
-        get_form_field_label("username"),
-        validators=[allowed_username, valid_username, unique_username],
-    )
+    # The "username" field is added in init_app if USERNAME_ENABLE is set.
+    # This is just a type hint.
+    username: t.ClassVar[Field]
 
     def to_dict(self, only_user):
         """
@@ -409,10 +402,20 @@ class PasswordlessLoginForm(Form, UserEmailFormMixin):
         return True
 
 
+login_email_field = EmailField(
+    get_form_field_label("email"), validators=[email_required]
+)
+
+login_string_field = StringField(
+    get_form_field_label("email"), validators=[email_required]
+)
+
+
 class LoginForm(Form, NextFormMixin):
     """The default login form"""
 
-    email = EmailField(get_form_field_label("email"), validators=[email_required])
+    # Note: "email" field is added at init_app time - depending on whether
+    # username is enabled or not (EmailField versus StringField)
     password = PasswordField(
         get_form_field_label("password"), validators=[password_required]
     )

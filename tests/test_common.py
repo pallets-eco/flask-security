@@ -153,6 +153,15 @@ def test_login_form(client):
     assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
 
 
+@pytest.mark.settings(username_enable=True)
+def test_login_form_username(client):
+    # If USERNAME_ENABLE is set then login form should have a StringField, not Email
+    response = client.post("/login", data={"email": "matt@lp.com"})
+    assert b"matt@lp.com" in response.data
+    # Should be a string field - not html5 email input type
+    assert not re.search(b'<input[^>]*type="email"[^>]*>', response.data)
+
+
 def test_unprovided_username(client, get_message):
     response = authenticate(client, "")
     assert get_message("EMAIL_NOT_PROVIDED") in response.data
