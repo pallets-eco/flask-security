@@ -34,7 +34,7 @@ from tests.test_utils import (
     populate_data,
 )
 
-from flask import abort, request, Response
+from flask import Flask, abort, request, Response
 from flask_security import Security
 from flask_security.forms import (
     ChangePasswordForm,
@@ -66,7 +66,6 @@ from flask_security.utils import (
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask import Flask
     from flask.testing import FlaskClient
 
 
@@ -1144,3 +1143,27 @@ def test_nodatastore(app):
     with pytest.raises(ValueError):
         s = Security(app)
         s.init_app(app)
+
+
+def test_reuse_security_object(sqlalchemy_datastore):
+    # See: https://github.com/Flask-Middleware/flask-security/issues/518
+    # Let folks re-use the Security object (mostly for testing).
+    security = Security(datastore=sqlalchemy_datastore)
+
+    app = Flask(__name__)
+    app.response_class = Response
+    app.debug = True
+    app.config["SECRET_KEY"] = "secret"
+    app.config["TESTING"] = True
+
+    security.init_app(app)
+    assert hasattr(app, "login_manager")
+
+    app = Flask(__name__)
+    app.response_class = Response
+    app.debug = True
+    app.config["SECRET_KEY"] = "secret"
+    app.config["TESTING"] = True
+
+    security.init_app(app)
+    assert hasattr(app, "login_manager")
