@@ -3,6 +3,21 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.1.1
+--------------
+
+Released September 10, 2021
+
+Fixes
+-----
+- (:issue:`518`) Fix corner case where Security object was being reused in tests.
+- (:issue:`512`) If USERNAME_ENABLE is set, change LoginForm field from EmailField
+  to StringField. Also - dynamically add fields to Login and Registration forms
+  rather than always having them - this made the RegistrationForm much simpler.
+- (:issue:`516`) Improved username feature handling solved issue of always requiring
+  bleach.
+- (:issue:`513`) Improve documentation of default username validation.
+
 Version 4.1.0
 -------------
 
@@ -36,7 +51,7 @@ Backwards Compatibility Concerns
   completely control their environment (such as system pre-installed versions of
   python) this caused applications that didn't even want translation services to
   fail on startup. With this release, Flask-Security still attempts to import
-  one of the other package - however if those modules are NOT initialized,
+  one or the other package - however if those modules are NOT initialized,
   Flask-Security will simply ignore them and no translations will occur.
 - (:issue:`497`) The CSRF_COOKIE and TWO_FACTOR_VALIDITY cookie had their defaults
   changed to set ``samesite=Strict``. This follows the Flask-Security goal of
