@@ -1137,7 +1137,7 @@ class Security:
             app.config.setdefault("SECURITY_MSG_" + key, value)
 
         # Override default forms
-        # BC - kwarg value here overrides init time
+        # BC - kwarg value here overrides init/constructor time
         # BC - we allow forms to be set as config items
         # Can't wait for assignment expressions.
         form_names = [
@@ -1166,7 +1166,7 @@ class Security:
                     self, form_name, app.config.get(f"SECURITY_{form_name.upper()}")
                 )
 
-        # Allow kwargs to overwrite/init other constructor attributes
+        # BC - Allow kwargs to overwrite/init other constructor attributes
         attr_names = [
             "anonymous_user",
             "json_encoder_cls",
@@ -1181,7 +1181,7 @@ class Security:
             if kwargs.get(attr, None):
                 setattr(self, attr, kwargs.get(attr))
 
-        # set all config items as attributes (minus the SECURITY_ prefix)
+        # set all (SECURITY) config items as attributes (minus the SECURITY_ prefix)
         for key, value in get_config(app).items():
             setattr(self, key.lower(), value)
 
@@ -1282,7 +1282,17 @@ class Security:
         if rvre:
             self._redirect_validate_re = re.compile(rvre)
 
-        if not self.login_manager:
+        # login_manager is a bit strange - when we initialize it we are actually
+        # initializing Flask-Login which will register itself as an extension on the
+        # Flask object and set app.login_manager.
+        # We allow apps to provide their own and pass it in as part of the constructor.
+        # While not best practice there are users who reuse
+        # the Security object on different apps (e.g. for testing).
+        # We also support the case where we replace the Security object on an existing
+        # app (we do this in test_misc).
+        # We need to re-initialize Flask-Login if the app doesn't have it yet.
+        if not hasattr(app, "login_manager") or not self.login_manager:
+            # This is the 99% case - just let us manage Flask-Login
             self.login_manager = _get_login_manager(app, self.anonymous_user)
 
         self.remember_token_serializer = _get_serializer(app, "remember")
