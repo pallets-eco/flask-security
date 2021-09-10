@@ -126,20 +126,17 @@ SQLAlchemy Install requirements
 
      $ python3 -m venv pymyenv
      $ . pymyenv/bin/activate
-     $ pip install flask-security-too sqlalchemy bcrypt
-
-Also, you can use the extension `Flask-SQLAlchemy-Session documentation
-<http://flask-sqlalchemy-session.readthedocs.io/en/latest/>`_.
+     $ pip install flask-security-too[common] sqlalchemy
 
 SQLAlchemy Application
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The following code sample illustrates how to get started as quickly as
 possible using `SQLAlchemy in a declarative way
-<https://flask.palletsprojects.com/en/1.1.x/patterns/sqlalchemy/#declarative>`_:
+<https://flask.palletsprojects.com/en/2.0.x/patterns/sqlalchemy/#declarative>`_:
 
-We are gonna split the application at least in three files: app.py, database.py
-and models.py. You can also do the models a folder and spread your tables there.
+This example shows how to split your application into 3 files: app.py, database.py
+and models.py.
 
 - app.py ::
 
@@ -462,7 +459,7 @@ with a single HTTP proxy in front of the web application::
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
 To learn more about the ``ProxyFix`` middleware, please see the
-`Werkzeug documentation <https://werkzeug.palletsprojects.com/en/1.0.x/middleware/proxy_fix/#module-werkzeug.middleware.proxy_fix>`_.
+`Werkzeug documentation <https://werkzeug.palletsprojects.com/en/2.0.x/middleware/proxy_fix/#module-werkzeug.middleware.proxy_fix>`_.
 
 .. _unit-testing:
 

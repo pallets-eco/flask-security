@@ -176,7 +176,7 @@ Password Reset/Recovery
 
 Password reset and recovery is available for when a user forgets their
 password. Flask-Security sends an email to the user with a link to a view which
-they can reset their password. Once the password is reset they are automatically
+allows them to reset their password. Once the password is reset they are automatically
 logged in and can use the new password from then on. Password reset links can
 be configured to expire after a specified amount of time.
 
@@ -193,7 +193,7 @@ This view can be overridden if your registration process requires more fields.
 User email is validated and normalized using the
 `email_validator <https://pypi.org/project/email-validator/>`_ package.
 
-The :py:data:`SECURITY_USERNAME_ENABLE` configuration option is set to ``True`` will add
+The :py:data:`SECURITY_USERNAME_ENABLE` configuration option, when set to ``True``, will add
 support for the user to register a username in addition to an email. By default, the user will be
 able to authenticate with EITHER email or username - however that can be changed via the
 :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
