@@ -32,6 +32,7 @@ possible using SQLAlchemy:
 
 ::
 
+    import os
     from flask import Flask, current_app, render_template
     from flask_sqlalchemy import SQLAlchemy
     from flask_security import Security, SQLAlchemyUserDatastore, \
@@ -78,9 +79,10 @@ possible using SQLAlchemy:
         id = db.Column(db.Integer, primary_key=True)
         email = db.Column(db.String(255), unique=True)
         # Make username unique but not required.
-        username = Column(String(255), unique=True, nullable=True)
+        username = db.Column(db.String(255), unique=True, nullable=True)
         password = db.Column(db.String(255))
         active = db.Column(db.Boolean())
+        fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
         confirmed_at = db.Column(db.DateTime())
         roles = db.relationship('Role', secondary=roles_users,
                                 backref=db.backref('users', lazy='dynamic'))
@@ -104,7 +106,7 @@ possible using SQLAlchemy:
 
     # Views
     @app.route('/')
-    @auth_required
+    @auth_required()
     def home():
         return render_template('index.html')
 
