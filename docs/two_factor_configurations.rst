@@ -106,7 +106,7 @@ possible using SQLAlchemy:
 
     # Views
     @app.route('/')
-    @auth_required
+    @auth_required()
     def home():
         return render_template('index.html')
 
