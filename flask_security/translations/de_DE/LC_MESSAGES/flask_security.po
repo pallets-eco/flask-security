@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2021-09-09 14:42-0700\n"
-"PO-Revision-Date: 2017-09-25 09:14+0200\n"
+"PO-Revision-Date: 2021-09-13 15:13+0200\n"
 "Last-Translator: Pascua Theus <pascua@identeco.de>\n"
 "Language: de_DE\n"
 "Language-Team: de_DE <LL@li.org>\n"
@@ -113,6 +113,8 @@ msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
 "associated with an account."
 msgstr ""
+"Benutzermerkmal '%(attr)s' mit Wert '%(value)s' ist bereits mit einem anderen Benutzerkonto "
+"verknüpft"
 
 #: flask_security/core.py:334
 msgid "Password does not match"
@@ -322,7 +324,7 @@ msgstr ""
 
 #: flask_security/core.py:436
 msgid "Unified sign in setup successful"
-msgstr ""
+msgstr "Single-User-Login erfolgreich eingerichtet"
 
 #: flask_security/core.py:437
 msgid "You must specify a valid identity to sign in"
@@ -338,24 +340,24 @@ msgstr "Code zur Anmeldung: %(code)s"
 msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
 "characters"
-msgstr ""
+msgstr "Der Benutzername muss mindestens %(min)d und darf nicht länger als %(max)d Zeichen sein."
 
 #: flask_security/core.py:447
 msgid "Username contains illegal characters"
-msgstr ""
+msgstr "Der Benutzername enthält ungültige Zeichen."
 
 #: flask_security/core.py:451
 msgid "Username can contain only letters and numbers"
-msgstr ""
+msgstr "Der Benutzername darf nur aus Buchstaben und Ziffern bestehen"
 
 #: flask_security/core.py:454
 msgid "Username not provided"
-msgstr ""
+msgstr "Benutzername nicht angegeben"
 
 #: flask_security/core.py:456
 #, python-format
 msgid "%(username)s is already associated with an account."
-msgstr ""
+msgstr "%(username)s ist bereits mit einem Benutzerkonto verknüpft."
 
 #: flask_security/forms.py:59
 msgid "Email Address"
@@ -456,7 +458,7 @@ msgstr "Anmelde-Code"
 
 #: flask_security/forms.py:82
 msgid "Username"
-msgstr ""
+msgstr "Benutzername"
 
 #: flask_security/unified_signin.py:129
 msgid "Code or Password"
@@ -492,7 +494,7 @@ msgstr "Menü"
 
 #: flask_security/templates/security/_menu.html:8
 msgid "Unified Sign In"
-msgstr ""
+msgstr "Single-User-Login"
 
 #: flask_security/templates/security/_menu.html:14
 msgid "Forgot password"
@@ -575,7 +577,7 @@ msgstr ""
 
 #: flask_security/templates/security/us_setup.html:36
 msgid "Setup Unified Sign In options"
-msgstr ""
+msgstr "Single-User-Login einrichten"
 
 #: flask_security/templates/security/us_setup.html:58
 #: flask_security/templates/security/us_signin.html:23
@@ -603,7 +605,7 @@ msgstr "Keine Methode ausgewählt – keine Einrichtung erfolgt"
 #: flask_security/templates/security/us_signin.html:15
 #: flask_security/templates/security/us_verify.html:13
 msgid "Request one-time code be sent"
-msgstr ""
+msgstr "Senden eines einmaligen Codes anfordern"
 
 #: flask_security/templates/security/us_verify.html:6
 #, fuzzy
