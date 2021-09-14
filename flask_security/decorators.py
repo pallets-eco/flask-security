@@ -32,6 +32,7 @@ from .utils import (
     check_and_update_authn_fresh,
     json_error_response,
     set_request_attr,
+    url_for_security,
 )
 
 # Convenient references
@@ -103,15 +104,10 @@ def default_reauthn_handler(within, grace):
         payload["unified_signin_enabled"] = is_us
         return _security._render_json(payload, 401, None, None)
 
-    if config_value("UNIFIED_SIGNIN"):
-        view = _security.us_verify_url
-    else:
-        view = _security.verify_url
-    if view:
-        do_flash(m, c)
-        redirect_url = get_url(view, qparams={"next": request.url})
-        return redirect(redirect_url)
-    abort(401)
+    view = "us_verify" if config_value("UNIFIED_SIGNIN") else "verify"
+    do_flash(m, c)
+    redirect_url = url_for_security(view, next=request.url)
+    return redirect(redirect_url)
 
 
 def default_unauthz_handler(func, params):
