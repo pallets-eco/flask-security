@@ -881,6 +881,27 @@ def test_authn_freshness_callable(app, client, get_message):
     assert response.status_code == 200
 
 
+@pytest.mark.settings(url_prefix="/myprefix")
+def test_default_authn_bp(app, client):
+    """Test default reauthn handler with blueprint prefix"""
+
+    @auth_required(within=0.001, grace=0)
+    def myview():
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+    authenticate(client, endpoint="/myprefix/login")
+
+    # This should require additional authn and redirect to verify
+    time.sleep(0.1)
+    response = client.get("/myview", follow_redirects=False)
+    assert response.status_code == 302
+    assert (
+        response.location
+        == "http://localhost/myprefix/verify?next=http%3A%2F%2Flocalhost%2Fmyview"
+    )
+
+
 def test_authn_freshness_grace(app, client, get_message):
     # Test that grace override within.
     @auth_required(within=lambda: timedelta(minutes=30), grace=10)
