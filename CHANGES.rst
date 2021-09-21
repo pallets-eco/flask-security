@@ -3,6 +3,17 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.1.2
+-------------
+
+Released September 22, 2021
+
+Fixes
+-----
+-(:issue:`526`) default_reauthn_handler doesn't honor SECURITY_URL_PREFIX
+-(:pr:`528`) Improve German translations (sr-verde)
+-(:pr:`527`) Fix two-factor sample code (djpnewton)
+
 Version 4.1.1
 --------------
 
