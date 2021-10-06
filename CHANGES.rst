@@ -9,10 +9,10 @@ Version 4.1.2
 Released September 22, 2021
 
 Fixes
------
--(:issue:`526`) default_reauthn_handler doesn't honor SECURITY_URL_PREFIX
--(:pr:`528`) Improve German translations (sr-verde)
--(:pr:`527`) Fix two-factor sample code (djpnewton)
++++++
+- (:issue:`526`) default_reauthn_handler doesn't honor SECURITY_URL_PREFIX
+- (:pr:`528`) Improve German translations (sr-verde)
+- (:pr:`527`) Fix two-factor sample code (djpnewton)
 
 Version 4.1.1
 --------------
@@ -20,7 +20,7 @@ Version 4.1.1
 Released September 10, 2021
 
 Fixes
------
++++++
 - (:issue:`518`) Fix corner case where Security object was being reused in tests.
 - (:issue:`512`) If USERNAME_ENABLE is set, change LoginForm field from EmailField
   to StringField. Also - dynamically add fields to Login and Registration forms
