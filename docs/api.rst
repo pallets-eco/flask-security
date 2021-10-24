@@ -107,6 +107,11 @@ Datastores
     The Role model. This must be provided by the application.
     See :ref:`Models <models_topic>`.
 
+.. class:: WebAuthn
+
+    The WebAuthn model. This must be provided by the application.
+    See :ref:`Models <models_topic>`.
+
 Utils
 -----
 .. autofunction:: flask_security.login_user

@@ -22,10 +22,10 @@ data and a mail sender that flashes what mail would be sent!
 """
 
 import datetime
-import typing as t
 import os
 
 from flask import Flask, flash, render_template_string, request, session
+from flask_sqlalchemy import SQLAlchemy
 
 from flask.json import JSONEncoder
 from flask_security import (
@@ -33,8 +33,9 @@ from flask_security import (
     auth_required,
     current_user,
     login_required,
-    SQLAlchemySessionUserDatastore,
+    SQLAlchemyUserDatastore,
 )
+from flask_security.models import fsqla_v3 as fsqla
 from flask_security.signals import (
     us_security_token_sent,
     tf_security_token_sent,
@@ -62,7 +63,9 @@ class FlashMail:
 
 def create_app():
     # Use real templates - not test templates...
-    app = Flask("view_scaffold", template_folder="../")
+    app = Flask(
+        "view_scaffold", template_folder="../", static_folder="../flask_security/static"
+    )
     app.config["DEBUG"] = True
     # SECRET_KEY generated using: secrets.token_urlsafe()
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
@@ -70,7 +73,7 @@ def create_app():
     app.config["SECURITY_PASSWORD_SALT"] = "156043940537155509276282232127182067465"
 
     app.config["LOGIN_DISABLED"] = False
-    app.config["WTF_CSRF_ENABLED"] = False
+    app.config["WTF_CSRF_ENABLED"] = True
     app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
         {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
         {"us_phone_number": {"mapper": uia_phone_mapper}},
@@ -97,6 +100,7 @@ def create_app():
         "confirmable",
         "two_factor",
         "unified_signin",
+        "webauthn",
     ]:
         app.config["SECURITY_" + opt.upper()] = True
 
@@ -105,14 +109,29 @@ def create_app():
         app.config.from_envvar("SETTINGS")
     # Allow any SECURITY_ config to be set in environment.
     for ev in os.environ:
-        if ev.startswith("SECURITY_"):
+        if ev.startswith("SECURITY_") or ev.startswith("SQLALCHEMY_"):
             app.config[ev] = _find_bool(os.environ.get(ev))
     mail = FlashMail(app)
     app.mail = mail
 
     app.json_encoder = JSONEncoder
+
+    # Create database models and hook up.
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db = SQLAlchemy(app)
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        pass
+
+    class WebAuthn(db.Model, fsqla.FsWebAuthnMixin):
+        pass
+
     # Setup Flask-Security
-    user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
     Security(app, user_datastore)
 
     try:
@@ -150,8 +169,7 @@ def create_app():
     # Create a user to test with
     @app.before_first_request
     def create_user():
-        init_db()
-        db_session.commit()
+        db.create_all()
         test_acct = "test@test.com"
         if not user_datastore.find_user(email=test_acct):
             add_user(user_datastore, test_acct, "password", ["admin"])
@@ -212,31 +230,6 @@ def create_app():
     return app
 
 
-"""
-
-Datastore
-
-"""
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-
-engine = create_engine("sqlite:////tmp/view_scaffold.db?check_same_thread=False")
-db_session = scoped_session(
-    sessionmaker(autocommit=False, autoflush=False, bind=engine)
-)
-Base = declarative_base()
-Base.query = db_session.query_property()
-
-
-def init_db():
-    # import all modules here that might define models so that
-    # they will be registered properly on the metadata.  Otherwise
-    # you will have to import them first before calling init_db()
-    Base.metadata.create_all(bind=engine)
-
-
 def add_user(ds, email, password, roles):
     pw = hash_password(password)
     roles = [ds.find_or_create_role(rn) for rn in roles]
@@ -248,58 +241,6 @@ def add_user(ds, email, password, roles):
     for role in roles:
         ds.add_role_to_user(user, role)
     ds.commit()
-
-
-"""
-
-Required Models
-
-"""
-
-from flask_security import UserMixin, RoleMixin
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy import Boolean, DateTime, Column, Integer, String, Text, ForeignKey
-
-
-class RolesUsers(Base):
-    __tablename__ = "roles_users"
-    id = Column(Integer(), primary_key=True)
-    user_id = Column("user_id", Integer(), ForeignKey("user.id"))
-    role_id = Column("role_id", Integer(), ForeignKey("role.id"))
-
-
-class Role(Base, RoleMixin):
-    __tablename__ = "role"
-    id = Column(Integer(), primary_key=True)
-    name = Column(String(80), unique=True)
-    description = Column(String(255))
-
-
-class User(Base, UserMixin):
-    __tablename__ = "user"
-    id = Column(Integer, primary_key=True)
-    fs_uniquifier = Column(String(64), unique=True, nullable=False)
-    email = Column(String(255), unique=True)
-    username = Column(String(255), unique=True, nullable=True)
-    password = Column(String(255), nullable=False)
-    last_login_at = Column(DateTime())
-    current_login_at = Column(DateTime())
-    last_login_ip = Column(String(100))
-    current_login_ip = Column(String(100))
-    login_count = Column(Integer)
-    active = Column(Boolean())
-    confirmed_at = Column(DateTime())
-
-    tf_phone_number = Column(String(128))
-    tf_primary_method = Column(String(64))
-    tf_totp_secret = Column(String(255))
-
-    us_totp_secrets = Column(Text(), nullable=True)
-    us_phone_number = Column(String(128), nullable=True)
-
-    roles: t.List = relationship(
-        "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
-    )
 
 
 if __name__ == "__main__":

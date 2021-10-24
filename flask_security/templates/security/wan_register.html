@@ -1,0 +1,50 @@
+{#
+  This template receives the following pieces of context in addition to the form:
+#}
+
+{% extends "security/base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
+
+{% block head_scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/webauthn.js') }}"
+          xmlns="http://www.w3.org/1999/html"></script>
+  <script src="{{ url_for('static', filename='js/base64.js') }}"></script>
+{% endblock head_scripts %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        .center { text-align: center }
+        .important { font-size: larger; font-weight: bold }
+    </style>
+{% endblock %}
+
+{% block content %}
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain("Setup New WebAuthn Security Key") }}</h1>
+    <form action="{{ url_for_security("wan_register") }}" method="POST"
+          name="wan_register_form" id="wan-register-form">
+      {{ wan_register_form.hidden_tag() }}
+      {{ render_field_with_errors(wan_register_form.name) }}
+      {{ render_field(wan_register_form.submit) }}
+      <span id="wan-error"></span>
+      <input type="hidden" name="url" value="{{ url_for_security("wan_register") }}" readonly>
+      <input type="hidden" name="response_url" value="{{ url_for_security("wan_register_response") }}" readonly>
+    </form>
+  <h3>Currently registered credentials:</h3>
+    <ul>
+      {% for name, value in registered_credentials.items() %}
+        <li>{{ name }} with id of "{{ value.credential_id }}" last used on {{ value.lastuse }}</li>
+      {% endfor %}
+    </ul>
+
+  <hr>
+  <h2>{{ _fsdomain("Delete existing WebAuthn Security Key") }}</h2>
+    <form action="{{ url_for_security("wan_delete") }}" method="POST"
+          name="wan_delete_form">
+      {{ wan_delete_form.hidden_tag() }}
+      {{ render_field_with_errors(wan_delete_form.name) }}
+      {{ render_field(wan_delete_form.submit) }}
+    </form>
+{% endblock %}

@@ -40,9 +40,16 @@ class FsModels:
     fs_model_version = 1
     user_table_name = "user"
     role_table_name = "role"
+    webauthn_table_name = "webauthn"
 
     @classmethod
-    def set_db_info(cls, appdb, user_table_name="user", role_table_name="role"):
+    def set_db_info(
+        cls,
+        appdb,
+        user_table_name="user",
+        role_table_name="role",
+        webauthn_table_name="webauthn",
+    ):
         """Initialize Model.
         This needs to be called after the DB object has been created
         (e.g. db = Sqlalchemy())
@@ -50,6 +57,7 @@ class FsModels:
         cls.db = appdb
         cls.user_table_name = user_table_name
         cls.role_table_name = role_table_name
+        cls.webauthn_table_name = webauthn_table_name
         cls.roles_users = appdb.Table(
             "roles_users",
             Column("user_id", Integer(), ForeignKey(f"{cls.user_table_name}.id")),

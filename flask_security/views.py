@@ -61,6 +61,13 @@ from .unified_signin import (
     us_verify_link,
     us_verify_send_code,
 )
+from .webauthn import (
+    webauthn_delete,
+    webauthn_register,
+    webauthn_register_response,
+    webauthn_signin,
+    webauthn_signin_response,
+)
 from .recoverable import (
     reset_password_token_status,
     send_reset_password_instructions,
@@ -1149,5 +1156,24 @@ def create_blueprint(app, state, import_name, json_encoder=None):
             methods=["GET", "POST"],
             endpoint="confirm_email",
         )(confirm_email)
+
+    if state.webauthn:
+        bp.route(
+            state.wan_register_start_url,
+            methods=["GET", "POST"],
+            endpoint="wan_register",
+        )(webauthn_register)
+        bp.route(
+            state.wan_register_url, methods=["POST"], endpoint="wan_register_response"
+        )(webauthn_register_response)
+        bp.route(
+            state.wan_signin_start_url, methods=["GET", "POST"], endpoint="wan_signin"
+        )(webauthn_signin)
+        bp.route(
+            state.wan_signin_url, methods=["POST"], endpoint="wan_signin_response"
+        )(webauthn_signin_response)
+        bp.route(state.wan_delete_url, methods=["POST"], endpoint="wan_delete")(
+            webauthn_delete
+        )
 
     return bp
