@@ -126,6 +126,7 @@ class UserDatastore:
 
     :param user_model: A user model class definition
     :param role_model: A role model class definition
+    :param webauthn_model: A model used to store webauthn registrations
 
     .. important::
         For mutating operations, the user/role will be added to the
@@ -134,9 +135,15 @@ class UserDatastore:
         commit the transaction by calling datastore.commit().
     """
 
-    def __init__(self, user_model: t.Type["User"], role_model: t.Type["Role"]):
+    def __init__(
+        self,
+        user_model: t.Type["User"],
+        role_model: t.Type["Role"],
+        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
+    ):
         self.user_model = user_model
         self.role_model = role_model
+        self.webauthn_model = webauthn_model
 
     def _prepare_role_modify_args(
         self, role: t.Union[str, "Role"]
@@ -156,6 +163,8 @@ class UserDatastore:
         kwargs.setdefault("fs_uniquifier", uuid.uuid4().hex)
         if hasattr(self.user_model, "fs_token_uniquifier"):
             kwargs.setdefault("fs_token_uniquifier", uuid.uuid4().hex)
+        if hasattr(self.user_model, "fs_webauthn_uniquifier"):
+            kwargs.setdefault("fs_webauthn_uniquifier", uuid.uuid4().hex)
 
         return kwargs
 
@@ -167,6 +176,10 @@ class UserDatastore:
 
     def find_role(self, role: str) -> t.Union["Role", None]:
         """Returns a role matching the provided name."""
+        raise NotImplementedError
+
+    def find_webauthn(self, **kwargs: t.Any) -> t.Union["WebAuthn", None]:
+        """Returns a credential matching the id."""
         raise NotImplementedError
 
     def add_role_to_user(self, user: "User", role: t.Union["Role", str]) -> bool:
@@ -540,6 +553,31 @@ class UserDatastore:
         user.us_totp_secrets = None
         self.put(user)  # type: ignore
 
+    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+        """
+        Create a new webauthn registration record.
+
+        .. versionadded: 4.2.0
+        """
+
+        if not hasattr(self, "webauthn_model") or not self.webauthn_model:
+            raise NotImplementedError
+        if not all(
+            k in kwargs for k in ["name", "credential_id", "public_key", "sign_count"]
+        ):
+            raise ValueError("Missing kwarg for webauthn registration")
+        webauthn = self.webauthn_model(
+            lastuse_datetime=datetime.datetime.utcnow(), **kwargs
+        )
+        user.webauthn.append(webauthn)
+        self.put(user)  # type: ignore
+
+    def delete_webauthn(self, webauthn: "WebAuthn") -> None:
+        """
+        .. versionadded: 4.2.0
+        """
+        self.delete(webauthn)  # type: ignore
+
 
 class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
     """A UserDatastore implementation that assumes the
@@ -550,6 +588,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
     :param db:
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
+    :param webauthn_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(
@@ -557,9 +596,10 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         db: "flask_sqlalchemy.SQLAlchemy",
         user_model: t.Type["User"],
         role_model: t.Type["Role"],
+        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
     ):
         SQLAlchemyDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model)
+        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
 
     def find_user(
         self, case_insensitive: bool = False, **kwargs: t.Any
@@ -589,6 +629,9 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
     def find_role(self, role: str) -> t.Union["Role", None]:
         return self.role_model.query.filter_by(name=role).first()  # type: ignore
 
+    def find_webauthn(self, **kwargs: t.Any) -> t.Union["WebAuthn", None]:
+        return self.webauthn_model.query.filter_by(**kwargs).first()  # type: ignore
+
 
 class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastore):
     """A UserDatastore implementation that directly uses
@@ -598,6 +641,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
     :param session:
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
+    :param webauthn_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(
@@ -605,6 +649,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
         session: "sqlalchemy.orm.scoping.scoped_session",
         user_model: t.Type["User"],
         role_model: t.Type["Role"],
+        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
     ):
         class PretendFlaskSQLAlchemyDb:
             """This is a pretend db object, so we can just pass in a session."""
@@ -613,7 +658,11 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
                 self.session = session
 
         SQLAlchemyUserDatastore.__init__(
-            self, PretendFlaskSQLAlchemyDb(session), user_model, role_model
+            self,
+            PretendFlaskSQLAlchemyDb(session),
+            user_model,
+            role_model,
+            webauthn_model,
         )
 
     def commit(self):
@@ -629,6 +678,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
     :param db:
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
+    :param webauthn_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(
@@ -636,9 +686,10 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         db: "flask_mongoengine.MongoEngine",
         user_model: t.Type["User"],
         role_model: t.Type["Role"],
+        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
     ):
         MongoEngineDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model)
+        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
 
     def find_user(self, case_insensitive=False, **kwargs):
         from mongoengine.queryset.visitor import Q, QCombination
@@ -676,17 +727,19 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
     :param role_link:
+    :param webauthn_model: See :ref:`Models <models_topic>`.
     """
 
-    def __init__(self, db, user_model, role_model, role_link):
+    def __init__(self, db, user_model, role_model, role_link, webauthn_model=None):
         """
         :param db:
         :param user_model: A user model class definition
         :param role_model: A role model class definition
         :param role_link: A model implementing the many-to-many user-role relation
+
         """
         PeeweeDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model)
+        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
         self.UserRole = role_link
 
     def find_user(self, case_insensitive=False, **kwargs):
@@ -773,11 +826,12 @@ class PonyUserDatastore(PonyDatastore, UserDatastore):
     :param db:
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
+    :param webauthn_model: See :ref:`Models <models_topic>`.
     """
 
-    def __init__(self, db, user_model, role_model):
+    def __init__(self, db, user_model, role_model, webauthn_model=None):
         PonyDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model)
+        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
 
     @with_pony_session
     def find_user(self, case_insensitive=False, **kwargs):
@@ -812,7 +866,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
     # Normally - the application creates the Models and glues them together
     # For typing we do that here since we don't know which DB interface they
     # will pick.
-    from .core import UserMixin, RoleMixin
+    from .core import UserMixin, RoleMixin, WebAuthnMixin
 
     class CanonicalUserDatastore(Datastore, UserDatastore):
         pass
@@ -825,6 +879,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         active: bool
         fs_uniquifier: str
         fs_token_uniquifier: str
+        fs_webauthn_uniquifier: str
         confirmed_at: datetime.datetime
         last_login_at: datetime.datetime
         current_login_at: datetime.datetime
@@ -834,11 +889,13 @@ if t.TYPE_CHECKING:  # pragma: no cover
         tf_primary_method: t.Optional[str]
         tf_totp_secret: t.Optional[str]
         tf_phone_number: t.Optional[str]
+        tf_recovery_codes: t.Optional[str]
         us_phone_number: t.Optional[str]
         us_totp_secrets: t.Optional[t.Union[str, bytes]]
         create_datetime: datetime.datetime
         update_datetime: datetime.datetime
         roles: t.List["Role"]
+        webauthn: t.List["WebAuthn"]
 
         def __init__(self, **kwargs):
             ...
@@ -849,6 +906,19 @@ if t.TYPE_CHECKING:  # pragma: no cover
         description: t.Optional[str]
         permissions: t.Optional[t.Union[str, set, list]]
         update_datetime: datetime.datetime
+
+        def __init__(self, **kwargs):
+            ...
+
+    class WebAuthn(WebAuthnMixin):
+        id: int
+        credential_id: bytes
+        public_key: t.Optional[bytes]
+        sign_count: int
+        transports: t.Optional[str]
+        create_datetime: datetime.datetime
+        lastuse_datetime: datetime.datetime
+        user_id: str
 
         def __init__(self, **kwargs):
             ...

@@ -65,6 +65,7 @@ from .unified_signin import (
     UnifiedVerifyForm,
     us_send_security_token,
 )
+from .webauthn import WebAuthnDeleteForm, WebAuthnRegisterForm, WebAuthnSigninForm
 from .username_util import UsernameUtil
 from .totp import Totp
 from .utils import _
@@ -299,6 +300,18 @@ _default_config: t.Dict[str, t.Any] = {
     "USERNAME_MIN_LENGTH": 4,
     "USERNAME_MAX_LENGTH": 32,
     "USERNAME_NORMALIZE_FORM": "NFKD",
+    "WEBAUTHN": False,
+    "WAN_CHALLENGE_BYTES": None,  # uses system default
+    "WAN_RP_NAME": "My Flask App",
+    "WAN_REGISTER_TIMEOUT": 60000,  # milliseconds
+    "WAN_REGISTER_TEMPLATE": "security/wan_register.html",
+    "WAN_REGISTER_START_URL": "/wan_register_start",
+    "WAN_REGISTER_URL": "/wan_register",
+    "WAN_SIGNIN_TIMEOUT": 60000,  # milliseconds
+    "WAN_SIGNIN_TEMPLATE": "security/wan_signin.html",
+    "WAN_SIGNIN_START_URL": "/wan_signin_start",
+    "WAN_SIGNIN_URL": "/wan_signin",
+    "WAN_DELETE_URL": "/wan_delete",
 }
 
 #: Default Flask-Security messages
@@ -454,6 +467,22 @@ _default_messages = {
     "USERNAME_NOT_PROVIDED": (_("Username not provided"), "error"),
     "USERNAME_ALREADY_ASSOCIATED": (
         _("%(username)s is already associated with an account."),
+        "error",
+    ),
+    "WEBAUTHN_NAME_INUSE": (
+        _("%(name)s is already associated with a credential."),
+        "error",
+    ),
+    "WEBAUTHN_REGISTER_SUCCESSFUL": (
+        _("Successfully added WebAuthn Security Key with name %(name)s"),
+        "info",
+    ),
+    "WEBAUTHN_UNKNOWN_CREDENTIAL_ID": (
+        _("Unregistered WebAuthn credential id."),
+        "error",
+    ),
+    "WEBAUTHN_ORPHAN_CREDENTIAL_ID": (
+        _("WebAuthn credential doesn't below to any user."),
         "error",
     ),
 }
@@ -880,6 +909,10 @@ class UserMixin(BaseUserMixin):
         return None
 
 
+class WebAuthnMixin:
+    ...
+
+
 class AnonymousUser(AnonymousUserMixin):
     """AnonymousUser definition"""
 
@@ -915,6 +948,9 @@ class Security:
     :param us_setup_form: set form for the unified sign in setup view
     :param us_setup_validate_form: set form for the unified sign in setup validate view
     :param us_verify_form: set form for re-authenticating due to freshness check
+    :param wan_register_form: set form for registering a webauthn security key
+    :param wan_signin_form: set form for authenticating with a webauthn security key
+    :param wan_delete_form: delete a webauthn security key
     :param anonymous_user: class to use for anonymous user
     :param login_manager: An subclass of LoginManager
     :param json_encoder_cls: Class to use as blueprint.json_encoder.
@@ -962,6 +998,9 @@ class Security:
         ``two_factor_verify_password_form`` removed.
         ``password_validator`` removed in favor of the new ``password_util_cls``.
 
+    .. versionadded:: 4.2.0
+        ``wan_register_form``, ``webauthn_signin_form``, ``webauthn_delete_form``.
+
     """
 
     def __init__(
@@ -985,6 +1024,9 @@ class Security:
         us_setup_form: t.Type[FlaskForm] = UnifiedSigninSetupForm,
         us_setup_validate_form: t.Type[FlaskForm] = UnifiedSigninSetupValidateForm,
         us_verify_form: t.Type[FlaskForm] = UnifiedVerifyForm,
+        wan_register_form: t.Type[FlaskForm] = WebAuthnRegisterForm,
+        wan_signin_form: t.Type[FlaskForm] = WebAuthnSigninForm,
+        wan_delete_form: t.Type[FlaskForm] = WebAuthnDeleteForm,
         anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
         login_manager: t.Optional["flask_login.LoginManager"] = None,
         json_encoder_cls: t.Type[JSONEncoder] = FsJsonEncoder,
@@ -1024,6 +1066,9 @@ class Security:
         self.us_setup_form = us_setup_form
         self.us_setup_validate_form = us_setup_validate_form
         self.us_verify_form = us_verify_form
+        self.wan_register_form = wan_register_form
+        self.wan_signin_form = wan_signin_form
+        self.wan_delete_form = wan_delete_form
         self.anonymous_user = anonymous_user
         self.json_encoder_cls = json_encoder_cls
         self.login_manager = login_manager
@@ -1085,6 +1130,7 @@ class Security:
         self.two_factor: bool = False
         self.unified_signin: bool = False
         self.passwordless: bool = False
+        self.webauthn: bool = False
 
         self.redirect_behavior: t.Optional[str] = None
 
@@ -1157,6 +1203,9 @@ class Security:
             "us_setup_form",
             "us_setup_validate_form",
             "us_verify_form",
+            "wan_register_form",
+            "wan_signin_form",
+            "wan_delete_form",
         ]
         for form_name in form_names:
             if kwargs.get(form_name, None):
@@ -1435,6 +1484,9 @@ class Security:
 
         if cv("PASSWORD_COMPLEXITY_CHECKER", app=app) == "zxcvbn":
             self._check_modules("zxcvbn", "PASSWORD_COMPLEXITY_CHECKER")
+
+        if cv("WEBAUTHN", app=app):
+            self._check_modules("webauthn", "WEBAUTHN")
 
         app.extensions["security"] = self
 
