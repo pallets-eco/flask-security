@@ -182,7 +182,7 @@ In this example, create a file ``flask_security.po`` under a directory:
 
 Then compile it with::
 
-    pybabel compile -d translations/ -i translations/fr_FR/LC_MESSAGES/flask_security.po -l fr_FR
+    pybabel compile -d translations/ -i translations/fr_FR/LC_MESSAGES/flask_security.po -l fr_FR -D flask_security
 
 Finally add your translations directory to your configuration::
 
