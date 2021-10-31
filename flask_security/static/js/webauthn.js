@@ -4,6 +4,9 @@
  * This code should be considered to be licensed:
  * Copyright (c) 2017 Duo Security, Inc. All rights reserved.
  * with the BSD 3-Clause "New" or "Revised" License.
+ * Further changes:
+ *  :copyright: (c) 2021-2021 by J. Christopher Wagner (jwag).
+ *  :license: MIT, see LICENSE for more details.
  */
 
 
@@ -23,8 +26,14 @@ function b64RawEnc(buf) {
 async function fetch_json(url, options) {
     const response = await fetch(url, options);
     const body = await response.json();
-    if (body.fail)
-        throw body.fail;
+    if (body.fail) {
+      // Convert exception to our JSON API response.
+      return {
+        response: {
+          error: body.fail
+        }
+      }
+    }
     return body;
 }
 
@@ -33,12 +42,13 @@ async function fetch_json(url, options) {
  * ["response"]["error"] = str OR
  * ["response"]["errors"]["<field_name>"] = list of str
  *
- * Given a response - look for errors - and return True if there were some.
+ * Given a response - look for errors and insert them into an element
+ *  - and return True if there were some.
  */
 function display_errors(response, id) {
-  if (!("error" in response) && !("errors" in response)){
+  if (!("error" in response) && !("errors" in response))
     return false
-  }
+
   const error_element = document.getElementById(id)
   if (error_element) {
     if ("error" in response) {
@@ -95,7 +105,9 @@ const didClickRegister = async (e) => {
             publicKey: publicKeyCredentialCreateOptions
         });
     } catch (err) {
-        return console.error("Error creating credential:", err);
+      const err_msg = `Error creating credential: ${err}`
+      display_errors({error: err_msg}, "wan-error")
+      return
     }
 
     // we now have a new credential! We now need to encode the byte arrays
@@ -253,7 +265,9 @@ const didClickLogin = async (e) => {
             publicKey: transformedCredentialRequestOptions,
         })
     } catch (err) {
-        return console.error("Error when creating credential:", err)
+      const err_msg = `Error when creating credential: ${err}`
+      display_errors({error: err_msg}, "wan-error")
+      return
     }
 
     // we now have an authentication assertion! encode the byte arrays contained

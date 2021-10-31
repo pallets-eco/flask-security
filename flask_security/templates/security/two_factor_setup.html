@@ -18,14 +18,6 @@
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_no_label, render_field_errors %}
 
-{% block styles %}
-    {{ super() }}
-    <style type="text/css">
-        .center { text-align: center }
-        .important { font-size: larger; font-weight: bold }
-    </style>
-{% endblock %}
-
 {% block content %}
     {% include "security/_messages.html" %}
     <h1>{{ _fsdomain("Two-factor authentication adds an extra layer of security to your account") }}</h1>
@@ -40,11 +32,11 @@
         {{ render_field_errors(two_factor_setup_form.setup) }}
         {{ render_field(two_factor_setup_form.submit) }}
         {% if chosen_method=="email" and chosen_method in choices %}
-            <p>{{ _fsdomain("To complete logging in, please enter the code sent to your mail") }}</p>
+            <div>{{ _fsdomain("To complete logging in, please enter the code sent to your mail") }}</div>
         {% endif %}
         {% if chosen_method=="authenticator" and chosen_method in choices %}
           <hr>
-          <div class="center">
+          <div class="fs-center">
             <div>
               {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving codes:") }}
             </div>

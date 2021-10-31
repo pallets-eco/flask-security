@@ -86,7 +86,7 @@ def create_app():
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
-    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=0.5)
+    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=60)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
     app.config["SECURITY_USERNAME_ENABLE"] = True
 

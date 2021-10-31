@@ -780,7 +780,7 @@ def test_setup_basic(app, client, get_message):
     }
     response = client.get("/us-setup", headers=headers)
     assert response.status_code == 200
-    assert b"Setup Unified Sign In options" in response.data
+    assert b"Setup Unified Sign In" in response.data
 
 
 def test_setup_bad_token(app, client, get_message):

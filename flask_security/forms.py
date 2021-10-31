@@ -82,6 +82,7 @@ _default_field_labels = {
     "username": _("Username"),
     "credential_nickname": _("Nickname to associate with this WebAuthn registration"),
     "delete": _("Delete"),
+    "register_webauthn_credential": _("Register WebAuthn Credential"),
 }
 
 

@@ -469,6 +469,10 @@ _default_messages = {
         _("%(username)s is already associated with an account."),
         "error",
     ),
+    "WEBAUTHN_NAME_REQUIRED": (
+        _("Nickname for new credential is required."),
+        "error",
+    ),
     "WEBAUTHN_NAME_INUSE": (
         _("%(name)s is already associated with a credential."),
         "error",

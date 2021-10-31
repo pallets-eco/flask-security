@@ -10,7 +10,7 @@
       {{ render_field_with_errors(us_verify_form.passcode) }}
       {{ render_field(us_verify_form.submit) }}
       {% if code_methods %}
-        <h4>{{  _fsdomain("Request one-time code be sent") }}</h4>
+        <h4>{{ _fsdomain("Request one-time code be sent") }}</h4>
         {% for subfield in us_verify_form.chosen_method %}
           {% if subfield.data in code_methods %}
             {{ render_field_with_errors(subfield) }}

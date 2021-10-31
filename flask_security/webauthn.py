@@ -27,6 +27,8 @@
           but make this an option since it enables leaking of user info.
         - update/add examples to support webauthn
         - does remember me make sense?
+        - transports?
+        - should we store things like user verified in 'last use'...
 
 """
 
@@ -42,7 +44,18 @@ from wtforms import BooleanField, StringField, SubmitField, ValidationError
 
 try:
     import webauthn
-    from webauthn.helpers import bytes_to_base64url, structs
+    from webauthn.helpers.exceptions import (
+        InvalidAuthenticationResponse,
+        InvalidRegistrationResponse,
+    )
+    from webauthn.helpers.structs import (
+        AuthenticationCredential,
+        AuthenticatorSelectionCriteria,
+        RegistrationCredential,
+        ResidentKeyRequirement,
+        UserVerificationRequirement,
+    )
+    from webauthn.helpers import bytes_to_base64url
 except ImportError:
     pass
 
@@ -148,8 +161,8 @@ def webauthn_register() -> "ResponseValue":
             user_id=current_user.fs_webauthn_uniquifier,
             user_name=current_user.calc_username(),
             timeout=cv("WAN_REGISTER_TIMEOUT"),
-            authenticator_selection=structs.AuthenticatorSelectionCriteria(
-                resident_key=structs.ResidentKeyRequirement.REQUIRED,
+            authenticator_selection=AuthenticatorSelectionCriteria(
+                resident_key=ResidentKeyRequirement.REQUIRED,
             ),
         )
 
@@ -213,7 +226,7 @@ def webauthn_register_response() -> "ResponseValue":
         try:
             # TODO should this be in the form validate?
             try:
-                reg_cred = structs.RegistrationCredential.parse_raw(request.data)
+                reg_cred = RegistrationCredential.parse_raw(request.data)
             except ValueError:
                 raise ValidationError(message="API_ERROR")
             try:
@@ -243,7 +256,7 @@ def webauthn_register_response() -> "ResponseValue":
                 do_flash(msg, c)
                 return redirect(url_for_security("wan_register"))
 
-            except webauthn.helpers.exceptions.InvalidRegistrationResponse:
+            except InvalidRegistrationResponse:
                 raise ValidationError(message="API_ERROR")
         except ValidationError as e:
             msg, c = get_message(e.args[0])
@@ -280,7 +293,7 @@ def webauthn_signin() -> "ResponseValue":
             rp_id=request.host.split(":")[0],
             challenge=challenge,
             timeout=cv("WAN_SIGNIN_TIMEOUT"),
-            user_verification=structs.UserVerificationRequirement.DISCOURAGED,
+            user_verification=UserVerificationRequirement.DISCOURAGED,
         )
 
         o_json = webauthn.options_to_json(options)
@@ -327,7 +340,7 @@ def webauthn_signin_response() -> "ResponseValue":
         try:
             # TODO should this be in the form validate?
             try:
-                auth_cred = structs.AuthenticationCredential.parse_raw(request.data)
+                auth_cred = AuthenticationCredential.parse_raw(request.data)
             except ValueError:
                 raise ValidationError(message="API_ERROR")
 
@@ -371,7 +384,7 @@ def webauthn_signin_response() -> "ResponseValue":
 
                 return redirect(goto_url)
 
-            except webauthn.helpers.exceptions.InvalidAuthenticationResponse:
+            except InvalidAuthenticationResponse:
                 raise ValidationError(message="API_ERROR")
         except ValidationError as e:
             msg, c = get_message(e.args[0])
