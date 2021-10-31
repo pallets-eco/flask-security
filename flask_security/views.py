@@ -255,7 +255,7 @@ def logout():
 
     # No body is required - so if a POST and json - return OK
     if request.method == "POST" and _security._want_json(request):
-        return _security._render_json({}, 200, headers=None, user=None)
+        return _security._render_json({}, 200, None, None)
 
     return redirect(get_post_logout_redirect())
 

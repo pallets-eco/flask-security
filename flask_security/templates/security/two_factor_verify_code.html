@@ -15,10 +15,10 @@
         {{ two_factor_rescue_form.hidden_tag() }}
         {{ render_field_with_errors(two_factor_rescue_form.help_setup) }}
         {% if problem=="lost_device" %}
-            <p>{{ _fsdomain("The code for authentication was sent to your email address") }}</p>
+            <div>{{ _fsdomain("The code for authentication was sent to your email address") }}</div>
         {% endif %}
         {% if problem=="no_mail_access" %}
-            <p>{{ _fsdomain("A mail was sent to us in order to reset your application account") }}</p>
+            <div>{{ _fsdomain("A mail was sent to us in order to reset your application account") }}</div>
         {% endif %}
         {{ render_field(two_factor_rescue_form.submit) }}
     </form>

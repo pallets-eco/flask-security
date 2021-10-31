@@ -1011,7 +1011,7 @@ def base_render_json(
 
 def default_want_json(req):
     """Return True if response should be in json
-    N.B. do not call this directly - use security.want_json()
+    N.B. do not call this directly - use security._want_json()
 
     :param req: Flask/Werkzeug Request
     """

@@ -86,6 +86,7 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
 
     elif method == "google_authenticator" or method == "authenticator":
         # password are generated automatically in the authenticator apps
+        token_to_be_sent = None
         pass
     tf_security_token_sent.send(
         app._get_current_object(),

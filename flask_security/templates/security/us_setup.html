@@ -23,45 +23,44 @@
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
 
-{% block styles %}
-    {{ super() }}
-    <style type="text/css">
-        .center { text-align: center }
-        .important { font-size: larger; font-weight: bold }
-    </style>
-{% endblock %}
-
 {% block content %}
     {% include "security/_messages.html" %}
-    <h1>{{ _fsdomain("Setup Unified Sign In options") }}</h1>
+    <h1>{{ _fsdomain("Setup Unified Sign In") }}</h1>
     <form action="{{ url_for_security("us_setup") }}" method="POST"
           name="us_setup_form">
       {{ us_setup_form.hidden_tag() }}
       {% if setup_methods %}
-        <p>Currently Active options:
+        <div class="fs-div">Currently Active Sign In Options:
         {% if active_methods %}
           {{ ", ".join(active_methods) }}
         {% else %}
           None.
         {% endif %}
-        </p>
-        {% for subfield in us_setup_form.chosen_method %}
-          {% if subfield.data in available_methods %}
-              {{ render_field_with_errors(subfield) }}
+        </div>
+
+        <h3>Setup Additional Sign In Option</h3>
+        <div class="fs-div">
+          {% for subfield in us_setup_form.chosen_method %}
+            {% if subfield.data in available_methods %}
+                {{ render_field_with_errors(subfield) }}
+            {% endif %}
+          {% endfor %}
+          {{ render_field_errors(us_setup_form.chosen_method) }}
+        </div>
+
+        <div class="fs-div">
+          {% if "sms" in available_methods %}
+            {{ render_field_with_errors(us_setup_form.phone) }}
           {% endif %}
-        {% endfor %}
-        {{ render_field_errors(us_setup_form.chosen_method) }}
-        {% if "sms" in available_methods %}
-          {{ render_field_with_errors(us_setup_form.phone) }}
-        {% endif %}
-        {% if code_sent %}
-          <div class="important">{{ _fsdomain("Code has been sent") }}</div>
-        {% endif %}
-        {{ render_field(us_setup_form.submit) }}
+          {% if code_sent %}
+            <div class="fs-important">{{ _fsdomain("Code has been sent") }}</div>
+          {% endif %}
+          {{ render_field(us_setup_form.submit) }}
+        </div>
 
         {% if chosen_method == "authenticator" %}
           <hr>
-          <div class="center">
+          <div class="fs-center">
             <div>
               {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving passcodes:") }}
             </div>
@@ -74,7 +73,7 @@
           </div>
         {% endif %}
       {% else %}
-        <h3>{{  _fsdomain("No methods have been enabled - nothing to setup") }}</h3>
+        <h3>{{ _fsdomain("No methods have been enabled - nothing to setup") }}</h3>
       {% endif %}
     </form>
     {% if state %}

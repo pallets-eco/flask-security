@@ -12,14 +12,6 @@
   <script src="{{ url_for('static', filename='js/base64.js') }}"></script>
 {% endblock head_scripts %}
 
-{% block styles %}
-    {{ super() }}
-    <style>
-        .center { text-align: center }
-        .important { font-size: larger; font-weight: bold }
-    </style>
-{% endblock %}
-
 {% block content %}
     {% include "security/_messages.html" %}
     <h1>{{ _fsdomain("Sign in using WebAuthn Security Key") }}</h1>
