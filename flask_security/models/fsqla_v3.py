@@ -66,6 +66,9 @@ class FsWebAuthnMixin:
     public_key = Column(LargeBinary, nullable=True)
     sign_count = Column(Integer, default=0)
     transports = Column(String(255), nullable=True)  # comma separated
+
+    # a JSON string as returned from registration
+    extensions = Column(String(255), nullable=True)
     create_datetime = Column(type_=DateTime, nullable=False, server_default=func.now())
     lastuse_datetime = Column(type_=DateTime, nullable=False)
     # name is provided by user - we make sure is unique per user

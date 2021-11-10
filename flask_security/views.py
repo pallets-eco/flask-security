@@ -1159,18 +1159,23 @@ def create_blueprint(app, state, import_name, json_encoder=None):
 
     if state.webauthn:
         bp.route(
-            state.wan_register_start_url,
+            state.wan_register_url,
             methods=["GET", "POST"],
             endpoint="wan_register",
         )(webauthn_register)
         bp.route(
-            state.wan_register_url, methods=["POST"], endpoint="wan_register_response"
+            state.wan_register_url
+            + slash_url_suffix(state.wan_register_url, "<token>"),
+            methods=["POST"],
+            endpoint="wan_register_response",
         )(webauthn_register_response)
+        bp.route(state.wan_signin_url, methods=["GET", "POST"], endpoint="wan_signin")(
+            webauthn_signin
+        )
         bp.route(
-            state.wan_signin_start_url, methods=["GET", "POST"], endpoint="wan_signin"
-        )(webauthn_signin)
-        bp.route(
-            state.wan_signin_url, methods=["POST"], endpoint="wan_signin_response"
+            state.wan_signin_url + slash_url_suffix(state.wan_signin_url, "<token>"),
+            methods=["POST"],
+            endpoint="wan_signin_response",
         )(webauthn_signin_response)
         bp.route(state.wan_delete_url, methods=["POST"], endpoint="wan_delete")(
             webauthn_delete

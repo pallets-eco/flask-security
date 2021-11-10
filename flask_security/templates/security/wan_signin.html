@@ -13,15 +13,31 @@
 {% endblock head_scripts %}
 
 {% block content %}
-    {% include "security/_messages.html" %}
-    <h1>{{ _fsdomain("Sign in using WebAuthn Security Key") }}</h1>
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain("Sign in using WebAuthn Security Key") }}</h1>
+  {% if not credential_options %}
     <form action="{{ url_for_security("wan_signin") }}" method="POST"
           name="wan_signin_form" id="wan-signin-form">
       {{ wan_signin_form.hidden_tag() }}
       {{ render_field_with_errors(wan_signin_form.remember) }}
+      {{ render_field_errors(wan_signin_form.credential) }}
       {{ render_field(wan_signin_form.submit) }}
-      <span id="wan-error"></span>
-      <input type="hidden" name="url" value="{{ url_for_security("wan_signin") }}" readonly>
-      <input type="hidden" name="response_url" value="{{ url_for_security("wan_signin_response") }}" readonly>
     </form>
+  {% else %}
+    <form action="{{ url_for_security("wan_signin_response", token=wan_state) }}" method="POST"
+          name="wan_signin_response_form" id="wan-signin-response-form">
+      {{ wan_signin_response_form.hidden_tag() }}
+    </form>
+      <script type="text/javascript">
+        handleSignin('{{ credential_options|safe }}', "credential")
+        .then((credential) => {
+          document.getElementById("credential").value = credential
+          {# We auto-submit this form - there is a Submit button on the
+             form we could use - but there really isn't any reason to force the
+             user to click yet another button
+           #}
+          document.forms["wan-signin-response-form"].submit()
+        })
+      </script>
+  {% endif %}
 {% endblock %}

@@ -12,7 +12,7 @@
       {{ render_field_with_errors(us_signin_form.remember) }}
       {{ render_field(us_signin_form.submit) }}
       {% if code_methods %}
-        <h4>{{  _fsdomain("Request one-time code be sent") }}</h4>
+        <h4>{{ _fsdomain("Request one-time code be sent") }}</h4>
         {% for subfield in us_signin_form.chosen_method %}
           {% if subfield.data in code_methods %}
             {{ render_field_with_errors(subfield) }}
@@ -25,5 +25,16 @@
         {{ render_field(us_signin_form.submit_send_code, formaction=url_for_security('us_signin_send_code')) }}
       {% endif %}
       </form>
+  {% if security.webauthn %}
+    <hr class="fs-gap">
+    <h3>Use WebAuthn to Sign In</h3>
+    <div>
+      <form method="POST" id="wan-signin-form" name="wan_signin_form">
+        {{ us_signin_form.hidden_tag() }}
+        <input id="wan_signin" name="wan_signin" type="submit" value="Sign in with WebAuthn"
+          formaction="{{ url_for_security("wan_signin") }}">
+      </form>
+    </div>
+  {% endif %}
   {% include "security/_menu.html" %}
 {% endblock %}
