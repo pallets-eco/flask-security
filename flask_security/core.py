@@ -65,7 +65,13 @@ from .unified_signin import (
     UnifiedVerifyForm,
     us_send_security_token,
 )
-from .webauthn import WebAuthnDeleteForm, WebAuthnRegisterForm, WebAuthnSigninForm
+from .webauthn import (
+    WebAuthnDeleteForm,
+    WebAuthnRegisterForm,
+    WebAuthnRegisterResponseForm,
+    WebAuthnSigninForm,
+    WebAuthnSigninResponseForm,
+)
 from .username_util import UsernameUtil
 from .totp import Totp
 from .utils import _
@@ -305,13 +311,14 @@ _default_config: t.Dict[str, t.Any] = {
     "WAN_RP_NAME": "My Flask App",
     "WAN_REGISTER_TIMEOUT": 60000,  # milliseconds
     "WAN_REGISTER_TEMPLATE": "security/wan_register.html",
-    "WAN_REGISTER_START_URL": "/wan_register_start",
-    "WAN_REGISTER_URL": "/wan_register",
+    "WAN_REGISTER_SALT": "wan-register-salt",
+    "WAN_REGISTER_URL": "/wan-register",
+    "WAN_REGISTER_WITHIN": "30 minutes",
     "WAN_SIGNIN_TIMEOUT": 60000,  # milliseconds
     "WAN_SIGNIN_TEMPLATE": "security/wan_signin.html",
-    "WAN_SIGNIN_START_URL": "/wan_signin_start",
-    "WAN_SIGNIN_URL": "/wan_signin",
-    "WAN_DELETE_URL": "/wan_delete",
+    "WAN_SIGNIN_URL": "/wan-signin",
+    "WAN_SIGNIN_WITHIN": "1 minutes",
+    "WAN_DELETE_URL": "/wan-delete",
 }
 
 #: Default Flask-Security messages
@@ -469,6 +476,10 @@ _default_messages = {
         _("%(username)s is already associated with an account."),
         "error",
     ),
+    "WAN_EXPIRED": (
+        _("WebAuthn operation must be completed within %(within)s. Please start over."),
+        "error",
+    ),
     "WEBAUTHN_NAME_REQUIRED": (
         _("Nickname for new credential is required."),
         "error",
@@ -480,6 +491,10 @@ _default_messages = {
     "WEBAUTHN_REGISTER_SUCCESSFUL": (
         _("Successfully added WebAuthn Security Key with name %(name)s"),
         "info",
+    ),
+    "WEBAUTHN_CREDENTIAL_ID_INUSE": (
+        _("WebAuthn credential id already registered."),
+        "error",
     ),
     "WEBAUTHN_UNKNOWN_CREDENTIAL_ID": (
         _("Unregistered WebAuthn credential id."),
@@ -953,7 +968,9 @@ class Security:
     :param us_setup_validate_form: set form for the unified sign in setup validate view
     :param us_verify_form: set form for re-authenticating due to freshness check
     :param wan_register_form: set form for registering a webauthn security key
+    :param wan_register_response_form: set form for registering a webauthn security key
     :param wan_signin_form: set form for authenticating with a webauthn security key
+    :param wan_signin_response_form: set form for authenticating with a webauthn
     :param wan_delete_form: delete a webauthn security key
     :param anonymous_user: class to use for anonymous user
     :param login_manager: An subclass of LoginManager
@@ -1003,7 +1020,9 @@ class Security:
         ``password_validator`` removed in favor of the new ``password_util_cls``.
 
     .. versionadded:: 4.2.0
-        ``wan_register_form``, ``webauthn_signin_form``, ``webauthn_delete_form``.
+        ``wan_register_form``, ``wan_register_response_form``,
+         ``webauthn_signin_form``, ``wan_signin_response_form``,
+         ``webauthn_delete_form``.
 
     """
 
@@ -1029,7 +1048,9 @@ class Security:
         us_setup_validate_form: t.Type[FlaskForm] = UnifiedSigninSetupValidateForm,
         us_verify_form: t.Type[FlaskForm] = UnifiedVerifyForm,
         wan_register_form: t.Type[FlaskForm] = WebAuthnRegisterForm,
+        wan_register_response_form: t.Type[FlaskForm] = WebAuthnRegisterResponseForm,
         wan_signin_form: t.Type[FlaskForm] = WebAuthnSigninForm,
+        wan_signin_response_form: t.Type[FlaskForm] = WebAuthnSigninResponseForm,
         wan_delete_form: t.Type[FlaskForm] = WebAuthnDeleteForm,
         anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
         login_manager: t.Optional["flask_login.LoginManager"] = None,
@@ -1071,7 +1092,9 @@ class Security:
         self.us_setup_validate_form = us_setup_validate_form
         self.us_verify_form = us_verify_form
         self.wan_register_form = wan_register_form
+        self.wan_register_response_form = wan_register_response_form
         self.wan_signin_form = wan_signin_form
+        self.wan_signin_response_form = wan_signin_response_form
         self.wan_delete_form = wan_delete_form
         self.anonymous_user = anonymous_user
         self.json_encoder_cls = json_encoder_cls
@@ -1107,6 +1130,7 @@ class Security:
         self.confirm_serializer: URLSafeTimedSerializer
         self.us_setup_serializer: URLSafeTimedSerializer
         self.tf_validity_serializer: URLSafeTimedSerializer
+        self.wan_serializer: URLSafeTimedSerializer
         self.principal: Principal
         self.pwd_context: CryptContext
         self.hashing_context: CryptContext
@@ -1208,7 +1232,9 @@ class Security:
             "us_setup_validate_form",
             "us_verify_form",
             "wan_register_form",
+            "wan_register_response_form",
             "wan_signin_form",
+            "wan_signin_response_form",
             "wan_delete_form",
         ]
         for form_name in form_names:
@@ -1354,6 +1380,7 @@ class Security:
         self.confirm_serializer = _get_serializer(app, "confirm")
         self.us_setup_serializer = _get_serializer(app, "us_setup")
         self.tf_validity_serializer = _get_serializer(app, "two_factor_validity")
+        self.wan_serializer = _get_serializer(app, "wan")
         self.principal = _get_principal(app)
         self.pwd_context = _get_pwd_context(app)
         self.hashing_context = _get_hashing_context(app)

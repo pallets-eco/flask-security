@@ -52,6 +52,8 @@ from .signals import user_authenticated
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Flask, Response
+    from flask.typing import ResponseValue
+    from flask_wtf import FlaskForm
     from .datastore import User
 
 SB = t.Union[str, bytes]
@@ -958,12 +960,12 @@ def csrf_cookie_handler(response: "Response") -> "Response":
 
 
 def base_render_json(
-    form,
-    include_user=True,
-    include_auth_token=False,
-    additional=None,
-    error_status_code=400,
-):
+    form: "FlaskForm",
+    include_user: bool = True,
+    include_auth_token: bool = False,
+    additional: t.Optional[t.Dict[str, t.Any]] = None,
+    error_status_code: int = 400,
+) -> "ResponseValue":
     """
     This method is called by all views that return JSON responses.
     This fills in the response and then calls :meth:`.Security.render_json`

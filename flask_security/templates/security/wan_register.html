@@ -15,28 +15,49 @@
 {% block content %}
   {% include "security/_messages.html" %}
   <h1>{{ _fsdomain("Setup New WebAuthn Security Key") }}</h1>
+  {% if not credential_options %}
+    {# Initial form to get CreateOptions #}
     <form action="{{ url_for_security("wan_register") }}" method="POST"
-          name="wan_register_form" id="wan-register-form">
-      {{ wan_register_form.hidden_tag() }}
-      {{ render_field_with_errors(wan_register_form.name) }}
-      {{ render_field(wan_register_form.submit) }}
-      <span id="wan-error"></span>
-      <input type="hidden" name="url" value="{{ url_for_security("wan_register") }}" readonly>
-      <input type="hidden" name="response_url" value="{{ url_for_security("wan_register_response") }}" readonly>
+            name="wan_register_form" id="wan-register-form">
+        {{ wan_register_form.hidden_tag() }}
+        {{ render_field_with_errors(wan_register_form.name) }}
+        {{ render_field(wan_register_form.submit) }}
     </form>
-  <h3>Currently registered credentials:</h3>
+  {% else %}
+    <form action="{{ url_for_security("wan_register_response", token=wan_state) }}" method="POST"
+          name="wan_register_response_form" id="wan-register-response-form">
+      {{ wan_register_response_form.hidden_tag() }}
+    </form>
+      <script type="text/javascript">
+        handleRegister('{{ credential_options|safe }}', "credential")
+        .then((credential) => {
+          document.getElementById("credential").value = credential
+          {# We auto-submit this form - there is a Submit button on the
+             form we could use - but there really isn't any reason to force the
+             user to click yet another button
+           #}
+          document.forms["wan-register-response-form"].submit()
+        })
+      </script>
+  {% endif %}
+
+  {% if registered_credentials %}
+    <h3>Currently registered credentials:</h3>
     <ul>
       {% for name, value in registered_credentials.items() %}
-        <li>{{ name }} with id of "{{ value.credential_id }}" last used on {{ value.lastuse }}</li>
+        <li>Nickname: "{{ name }}" transports: "{{ value.transports }}" discoverable: "{{ value.discoverable }}" last used on {{ value.lastuse }}</li>
       {% endfor %}
     </ul>
+  {% endif %}
 
-  <hr>
-  <h2>{{ _fsdomain("Delete existing WebAuthn Security Key") }}</h2>
-    <form action="{{ url_for_security("wan_delete") }}" method="POST"
-          name="wan_delete_form">
-      {{ wan_delete_form.hidden_tag() }}
-      {{ render_field_with_errors(wan_delete_form.name) }}
-      {{ render_field(wan_delete_form.submit) }}
-    </form>
+  {% if wan_delete_form %}
+    <hr>
+    <h2>{{ _fsdomain("Delete existing WebAuthn Security Key") }}</h2>
+      <form action="{{ url_for_security("wan_delete") }}" method="POST"
+            name="wan_delete_form">
+        {{ wan_delete_form.hidden_tag() }}
+        {{ render_field_with_errors(wan_delete_form.name) }}
+        {{ render_field(wan_delete_form.submit) }}
+      </form>
+  {% endif %}
 {% endblock %}

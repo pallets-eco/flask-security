@@ -76,6 +76,13 @@
         <h3>{{ _fsdomain("No methods have been enabled - nothing to setup") }}</h3>
       {% endif %}
     </form>
+    {% if security.webauthn %}
+      <h3>WebAuthn</h3>
+      <div class="fs-div">
+        Your application supports WebAuthn security keys. You can set them up
+        <a href="{{ url_for_security('wan_register') }}">here.</a>
+      </div>
+    {% endif %}
     {% if state %}
       <hr>
       <form action="{{ url_for_security("us_setup_validate", token=state) }}" method="POST"

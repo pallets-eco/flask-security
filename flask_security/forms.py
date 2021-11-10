@@ -80,7 +80,7 @@ _default_field_labels = {
     "sendcode": _("Send Code"),
     "passcode": _("Passcode"),
     "username": _("Username"),
-    "credential_nickname": _("Nickname to associate with this WebAuthn registration"),
+    "credential_nickname": _("Nickname"),
     "delete": _("Delete"),
     "register_webauthn_credential": _("Register WebAuthn Credential"),
 }
