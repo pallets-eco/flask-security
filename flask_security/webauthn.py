@@ -153,7 +153,9 @@ class WebAuthnRegisterResponseForm(Form):
         except InvalidRegistrationResponse:
             self.credential.errors.append(get_message("API_ERROR"))
             return False
-        self.transports = reg_cred.transports
+        self.transports = (
+            [str(tr) for tr in reg_cred.transports] if reg_cred.transports else []
+        )
         # Alas py_webauthn doesn't support extensions yet - so we have to dig in
         response_full = json.loads(self.credential.data)
         # TODO - verify this is JSON
@@ -259,7 +261,7 @@ def webauthn_register() -> "ResponseValue":
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        challenge = secrets.token_urlsafe(cv("WAN_CHALLENGE_BYTES"))
+        challenge = secrets.token_bytes(cv("WAN_CHALLENGE_BYTES"))
         state = {"challenge": challenge, "name": form.name.data}
 
         # TODO make authenticator selection a call back so app can set whatever
@@ -397,7 +399,7 @@ def webauthn_signin() -> "ResponseValue":
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        challenge = secrets.token_urlsafe(cv("WAN_CHALLENGE_BYTES"))
+        challenge = secrets.token_bytes(cv("WAN_CHALLENGE_BYTES"))
         state = {
             "challenge": challenge,
         }

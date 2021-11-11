@@ -62,8 +62,7 @@ class FsWebAuthnMixin:
 
     id = Column(Integer, primary_key=True)
     credential_id = Column(LargeBinary(1024), unique=True, nullable=False)
-    # TODO: should this be nullable? unique?
-    public_key = Column(LargeBinary, nullable=True)
+    public_key = Column(LargeBinary, nullable=False)
     sign_count = Column(Integer, default=0)
     transports = Column(String(255), nullable=True)  # comma separated
 

@@ -3,6 +3,22 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.2.0
+-------------
+
+Released TBD
+
+Features
+++++++++
+- (:issue:`475`) Support for WebAuthn
+- (:pr:`532`) Support for Python 3.10
+- (:pr:`540`) Improve Templates in support of JS required by WebAuthn
+
+Fixes
++++++
+
+
+
 Version 4.1.2
 -------------
 
