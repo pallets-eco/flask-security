@@ -8,9 +8,11 @@ include babel.ini
 include pytest.ini
 include tox.ini
 include requirements/*.txt
+include flask_security/py.typed
 graft docs
 graft flask_security/templates
 graft flask_security/translations
+graft flask_security/static
 graft tests
 prune tests/.pytest_cache
 prune tests/.DS_Store

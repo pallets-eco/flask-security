@@ -913,7 +913,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
     class WebAuthn(WebAuthnMixin):
         id: int
         credential_id: bytes
-        public_key: t.Optional[bytes]
+        public_key: bytes
         sign_count: int
         transports: t.Optional[str]
         create_datetime: datetime.datetime
