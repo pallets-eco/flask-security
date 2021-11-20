@@ -61,13 +61,6 @@ from .unified_signin import (
     us_verify_link,
     us_verify_send_code,
 )
-from .webauthn import (
-    webauthn_delete,
-    webauthn_register,
-    webauthn_register_response,
-    webauthn_signin,
-    webauthn_signin_response,
-)
 from .recoverable import (
     reset_password_token_status,
     send_reset_password_instructions,
@@ -104,6 +97,14 @@ from .utils import (
     suppress_form_csrf,
     url_for_security,
     view_commit,
+)
+from .webauthn import (
+    has_webauthn_tf,
+    webauthn_delete,
+    webauthn_register,
+    webauthn_register_response,
+    webauthn_signin,
+    webauthn_signin_response,
 )
 
 if get_quart_status():  # pragma: no cover
@@ -950,10 +951,19 @@ def two_factor_token_validation():
     else:
         rescue_form = _security.two_factor_rescue_form()
 
+        wan_signin_form = None
+        has_webauthn = has_webauthn_tf(form.user)
+        if has_webauthn:
+            wan_signin_form = _security.wan_signin_form(
+                identity=form.user.calc_username()
+            )
+
         return _security.render_template(
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
+            has_webauthn=has_webauthn,
+            wan_signin_form=wan_signin_form,
             problem=None,
             **_ctx("tf_token_validation"),
         )

@@ -27,22 +27,28 @@
     <form action="{{ url_for_security("wan_register_response", token=wan_state) }}" method="POST"
           name="wan_register_response_form" id="wan-register-response-form">
       {{ wan_register_response_form.hidden_tag() }}
+      <div id="wan-errors"></div>
     </form>
       <script type="text/javascript">
-        handleRegister('{{ credential_options|safe }}', "credential")
-        .then((credential) => {
-          document.getElementById("credential").value = credential
-          {# We auto-submit this form - there is a Submit button on the
-             form we could use - but there really isn't any reason to force the
-             user to click yet another button
-           #}
-          document.forms["wan-register-response-form"].submit()
-        })
+        handleRegister('{{ credential_options|safe }}')
+          .then((result) => {
+            if (result.credential) {
+              document.getElementById("credential").value = result.credential
+              {# We auto-submit this form - there is a Submit button on the
+                 form we could use - but there really isn't any reason to force the
+                 user to click yet another button
+               #}
+              document.forms["wan-register-response-form"].submit()
+            } else {
+              const error_element = document.getElementById("wan-errors")
+              error_element.innerHTML = `<em>${result.error_msg}</em`
+            }
+          })
       </script>
   {% endif %}
 
   {% if registered_credentials %}
-    <h3>Currently registered credentials:</h3>
+    <h3>Currently registered security keys:</h3>
     <ul>
       {% for name, value in registered_credentials.items() %}
         <li>Nickname: "{{ name }}" transports: "{{ value.transports }}" discoverable: "{{ value.discoverable }}" last used on {{ value.lastuse }}</li>

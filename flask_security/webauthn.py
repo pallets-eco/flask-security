@@ -15,6 +15,10 @@
     For testing - you can see your YubiKey (or other) resident keys in chrome!
     chrome://settings/securityKeys
 
+    Observation: if key isn't resident than Chrome for example won't let you use
+    it if it isn't part of allowedCredentials - throw error: referencing:
+    https://www.w3.org/TR/webauthn-2/#sctn-privacy-considerations-client
+
     TODO:
         - deal with fs_webauthn_uniquifier for existing users
         - add webauthn to other datastores
@@ -26,14 +30,20 @@
         - make sure reset functions reset fs_webauthn - and remove credentials?
         - context processors
         - add config variables for Origin and RP_ID?
-        - Add signin form option to add username so we can return allowedCredentials
-          but make this an option since it enables leaking of user info.
         - update/add examples to support webauthn
         - does remember me make sense?
         - should we store things like user verified in 'last use'...
-        - config for allow as Primary, allow as Primary/MFA
+        - config for allow as Primary, TF only,  allow as Primary/MFA
         - some options to request user verification and check on register - i.e.
           'I want a two-factor capable key'
+        - Add a way to order registered credentials so we can return an ordered list
+          in allowCredentials.
+        - Add no-webauthn test to tox
+        - Deal with username and security implications
+        - Research: by insisting on 2FA if user has registered a webauthn - things
+          get interesting if they try to log in on a different device....
+          How would they register a security key for a new device? They would need
+          some OTHER 2FA? Force them to register a NEW webauthn key?
 
 """
 
@@ -41,7 +51,7 @@ import datetime
 import json
 import secrets
 import typing as t
-
+from functools import partial
 
 from flask import after_this_request, request
 from flask_login import current_user
@@ -61,6 +71,8 @@ try:
     from webauthn.helpers.structs import (
         AuthenticationCredential,
         AuthenticatorSelectionCriteria,
+        AuthenticatorTransport,
+        PublicKeyCredentialDescriptor,
         RegistrationCredential,
         ResidentKeyRequirement,
         UserVerificationRequirement,
@@ -78,6 +90,7 @@ from .utils import (
     check_and_get_token_status,
     config_value as cv,
     do_flash,
+    find_user,
     json_error_response,
     get_message,
     get_post_login_redirect,
@@ -90,6 +103,7 @@ from .utils import (
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
+    from .datastore import User
 
 if get_quart_status():  # pragma: no cover
     from quart import redirect
@@ -154,7 +168,7 @@ class WebAuthnRegisterResponseForm(Form):
             self.credential.errors.append(get_message("API_ERROR"))
             return False
         self.transports = (
-            [str(tr) for tr in reg_cred.transports] if reg_cred.transports else []
+            [tr.value for tr in reg_cred.transports] if reg_cred.transports else []
         )
         # Alas py_webauthn doesn't support extensions yet - so we have to dig in
         response_full = json.loads(self.credential.data)
@@ -165,8 +179,17 @@ class WebAuthnRegisterResponseForm(Form):
 
 class WebAuthnSigninForm(Form):
 
+    # Identity isn't required since if you have a resident key you don't require this.
+    # However for non-resident keys, and to allow us to return keys that HAVE
+    # been registered with this application - adding identity is very useful.
+    # Look at
+    # https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-username-enumeration
+    # for possible concerns.
+    identity = StringField(get_form_field_label("identity"))
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_signin")
+
+    user: t.Optional["User"] = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -175,6 +198,14 @@ class WebAuthnSigninForm(Form):
     def validate(self):
         if not super().validate():
             return False
+        if self.identity.data:
+            self.user = find_user(self.identity.data)
+            if not self.user:
+                self.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
+                return False
+            if not self.user.is_active:
+                self.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
+                return False
         return True
 
 
@@ -186,6 +217,8 @@ class WebAuthnSigninResponseForm(Form):
     authentication_verification: "VerifiedAuthentication"
     user = None
     cred = None
+    # Set to True if this authentication qualifies as 'multi-factor'
+    mf_check = False
 
     def validate(self) -> bool:
         if not super().validate():
@@ -206,19 +239,26 @@ class WebAuthnSigninResponseForm(Form):
             self.credential.errors.append(get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID"))
             return False
 
+        verify = partial(
+            webauthn.verify_authentication_response,
+            credential=auth_cred,
+            expected_challenge=self.challenge.encode(),
+            expected_origin=request.host_url.rstrip("/"),
+            expected_rp_id=request.host.split(":")[0],
+            credential_public_key=self.cred.public_key,
+            credential_current_sign_count=self.cred.sign_count,
+        )
         try:
-            self.authentication_verification = webauthn.verify_authentication_response(
-                credential=auth_cred,
-                expected_challenge=self.challenge.encode(),
-                expected_origin=request.host_url.rstrip("/"),
-                expected_rp_id=request.host.split(":")[0],
-                credential_public_key=self.cred.public_key,
-                credential_current_sign_count=self.cred.sign_count,
-                require_user_verification=True,
-            )
+            self.authentication_verification = verify(require_user_verification=True)
+            self.mf_check = True
         except InvalidAuthenticationResponse:
-            self.credential.errors.append(get_message("API_ERROR"))
-            return False
+            try:
+                self.authentication_verification = verify(
+                    require_user_verification=False
+                )
+            except InvalidAuthenticationResponse:
+                self.credential.errors.append(get_message("WEBAUTHN_NO_VERIFY"))
+                return False
         return True
 
 
@@ -261,13 +301,13 @@ def webauthn_register() -> "ResponseValue":
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        challenge = secrets.token_bytes(cv("WAN_CHALLENGE_BYTES"))
+        challenge = secrets.token_urlsafe(cv("WAN_CHALLENGE_BYTES"))
         state = {"challenge": challenge, "name": form.name.data}
 
         # TODO make authenticator selection a call back so app can set whatever
         # it needs?
         credential_options = webauthn.generate_registration_options(
-            challenge=challenge,
+            challenge=challenge.encode(),
             rp_name=cv("WAN_RP_NAME"),
             rp_id=request.host.split(":")[0],
             user_id=current_user.fs_webauthn_uniquifier,
@@ -276,6 +316,7 @@ def webauthn_register() -> "ResponseValue":
             authenticator_selection=AuthenticatorSelectionCriteria(
                 resident_key=ResidentKeyRequirement.DISCOURAGED,
             ),
+            exclude_credentials=create_credential_list(current_user),
         )
         #
         co_json = json.loads(webauthn.options_to_json(credential_options))
@@ -362,7 +403,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
         after_this_request(view_commit)
 
         # convert transports to comma separated
-        transports = ",".join(tr.value for tr in form.transports)
+        transports = ",".join(form.transports)
 
         _datastore.create_webauthn(
             current_user,
@@ -399,16 +440,23 @@ def webauthn_signin() -> "ResponseValue":
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        challenge = secrets.token_bytes(cv("WAN_CHALLENGE_BYTES"))
+        challenge = secrets.token_urlsafe(cv("WAN_CHALLENGE_BYTES"))
         state = {
             "challenge": challenge,
         }
 
+        # If they passed in an identity - look it up - if we find it we
+        # can populate allowedCredentials.
+        allow_credentials = None
+        if form.user:
+            allow_credentials = create_credential_list(form.user)
+
         options = webauthn.generate_authentication_options(
             rp_id=request.host.split(":")[0],
-            challenge=challenge,
+            challenge=challenge.encode(),
             timeout=cv("WAN_SIGNIN_TIMEOUT"),
             user_verification=UserVerificationRequirement.DISCOURAGED,
+            allow_credentials=allow_credentials,
         )
 
         o_json = webauthn.options_to_json(options)
@@ -518,3 +566,29 @@ def webauthn_delete() -> "ResponseValue":
         # TODO - errors, json, flash
 
     return redirect(url_for_security("wan_register"))
+
+
+def has_webauthn_tf(user: "User") -> bool:
+    # Return True if have a WebAuthn key designated for second factor
+    security_keys = getattr(user, "webauthn", None)
+    if security_keys:
+        if len(security_keys) > 0:
+            return True
+    return False
+
+
+def create_credential_list(user: "User") -> t.List["PublicKeyCredentialDescriptor"]:
+    cl = []
+
+    for cred in user.webauthn:
+        descriptor = PublicKeyCredentialDescriptor(
+            type="public-key", id=cred.credential_id
+        )
+        if cred.transports:
+            tlist = cred.transports.split(",")
+            transports = [AuthenticatorTransport(transport) for transport in tlist]
+            descriptor.transports = transports
+        # TODO order is important - figure out a way to add 'weight'
+        cl.append(descriptor)
+
+    return cl
