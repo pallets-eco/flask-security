@@ -29,8 +29,7 @@
     <hr class="fs-gap">
     <h3>Use WebAuthn to Sign In</h3>
     <div>
-      <form method="POST" id="wan-signin-form" name="wan_signin_form">
-        {{ us_signin_form.hidden_tag() }}
+      <form method="GET" id="wan-signin-form" name="wan_signin_form">
         <input id="wan_signin" name="wan_signin" type="submit" value="Sign in with WebAuthn"
           formaction="{{ url_for_security("wan_signin") }}">
       </form>

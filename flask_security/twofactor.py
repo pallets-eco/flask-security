@@ -33,6 +33,8 @@ from .signals import (
     tf_profile_changed,
 )
 
+from .webauthn import has_webauthn_tf
+
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Response
 
@@ -84,10 +86,10 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
         sms_sender = SmsSenderFactory.createSender(config_value("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=msg)
 
-    elif method == "google_authenticator" or method == "authenticator":
-        # password are generated automatically in the authenticator apps
+    else:
+        # password are generated automatically in the authenticator apps or not needed
         token_to_be_sent = None
-        pass
+
     tf_security_token_sent.send(
         app._get_current_object(),
         user=user,
@@ -132,7 +134,7 @@ def tf_disable(user):
 
 def is_tf_setup(user):
     """Return True is user account is setup for 2FA."""
-    return user.tf_totp_secret and user.tf_primary_method
+    return (user.tf_totp_secret and user.tf_primary_method) or has_webauthn_tf(user)
 
 
 def tf_login(user, remember=None, primary_authn_via=None):
@@ -155,10 +157,9 @@ def tf_login(user, remember=None, primary_authn_via=None):
     if remember:
         session["tf_remember_login"] = remember
 
-    # Set info into form for JSON response
     json_response = {"tf_required": True}
     # if user's two-factor properties are not configured
-    if user.tf_primary_method is None or user.tf_totp_secret is None:
+    if not is_tf_setup(user):
         session["tf_state"] = "setup_from_login"
         json_response["tf_state"] = "setup_from_login"
         if not _security._want_json(request):
@@ -169,21 +170,24 @@ def tf_login(user, remember=None, primary_authn_via=None):
         session["tf_state"] = "ready"
         json_response["tf_state"] = "ready"
         json_response["tf_primary_method"] = user.tf_primary_method
+        # TODO add webauthn
 
-        msg = user.tf_send_security_token(
-            method=user.tf_primary_method,
-            totp_secret=user.tf_totp_secret,
-            phone_number=getattr(user, "tf_phone_number", None),
-        )
-        if msg:
-            # send code didn't work
-            if not _security._want_json(request):
-                # This is a mess - we are deep down in the login/unified sign in flow.
-                do_flash(msg, "error")
-                return redirect(url_for_security("login"))
-            else:
-                payload = json_error_response(errors=msg)
-                return _security._render_json(payload, 500, None, None)
+        if user.tf_primary_method in ["mail", "email", "sms"]:
+            msg = user.tf_send_security_token(
+                method=user.tf_primary_method,
+                totp_secret=user.tf_totp_secret,
+                phone_number=getattr(user, "tf_phone_number", None),
+            )
+            if msg:
+                # send code didn't work
+                if not _security._want_json(request):
+                    # This is a mess -
+                    # we are deep down in the login/unified sign in flow.
+                    do_flash(msg, "error")
+                    return redirect(url_for_security("login"))
+                else:
+                    payload = json_error_response(errors=msg)
+                    return _security._render_json(payload, 500, None, None)
 
         if not _security._want_json(request):
             return redirect(url_for_security("two_factor_token_validation"))
@@ -195,12 +199,12 @@ def tf_login(user, remember=None, primary_authn_via=None):
     return base_render_json(form, include_user=False, additional=json_response)
 
 
-def generate_tf_validity_token(fs_uniqifier):
+def generate_tf_validity_token(fs_uniquifier):
     """Generates a unique token for the specified user.
 
-    :param fs_uniqifier: The fs_uniqifier of a user to whom the token belongs to
+    :param fs_uniquifier: The fs_uniquifier of a user to whom the token belongs to
     """
-    return _security.tf_validity_serializer.dumps(fs_uniqifier)
+    return _security.tf_validity_serializer.dumps(fs_uniquifier)
 
 
 def tf_validity_token_status(token):

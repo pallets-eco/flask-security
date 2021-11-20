@@ -504,6 +504,10 @@ _default_messages = {
         _("WebAuthn credential doesn't below to any user."),
         "error",
     ),
+    "WEBAUTHN_NO_VERIFY": (
+        _("Could not verify WebAuthn credential."),
+        "error",
+    ),
 }
 
 
