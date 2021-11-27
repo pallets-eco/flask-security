@@ -72,6 +72,7 @@ from .webauthn import (
     WebAuthnSigninForm,
     WebAuthnSigninResponseForm,
 )
+from .webauthn_util import WebauthnUtil
 from .username_util import UsernameUtil
 from .totp import Totp
 from .utils import _
@@ -488,8 +489,16 @@ _default_messages = {
         _("%(name)s is already associated with a credential."),
         "error",
     ),
+    "WEBAUTHN_NAME_NOT_FOUND": (
+        _("%(name)s not registered with current user."),
+        "error",
+    ),
+    "WEBAUTHN_CREDENTIAL_DELETED": (
+        _("Successfully deleted WebAuthn credential with name %(name)s"),
+        "info",
+    ),
     "WEBAUTHN_REGISTER_SUCCESSFUL": (
-        _("Successfully added WebAuthn Security Key with name %(name)s"),
+        _("Successfully added WebAuthn credential with name %(name)s"),
         "info",
     ),
     "WEBAUTHN_CREDENTIAL_ID_INUSE": (
@@ -505,7 +514,7 @@ _default_messages = {
         "error",
     ),
     "WEBAUTHN_NO_VERIFY": (
-        _("Could not verify WebAuthn credential."),
+        _("Could not verify WebAuthn credential: %(cause)s."),
         "error",
     ),
 }
@@ -1027,6 +1036,8 @@ class Security:
         ``wan_register_form``, ``wan_register_response_form``,
          ``webauthn_signin_form``, ``wan_signin_response_form``,
          ``webauthn_delete_form``.
+    .. versionadded:: 4.2.0
+        ``WebauthnUtil`` class.
 
     """
 
@@ -1065,6 +1076,7 @@ class Security:
         render_template: t.Callable[..., str] = default_render_template,
         totp_cls: t.Type["Totp"] = Totp,
         username_util_cls: t.Type["UsernameUtil"] = UsernameUtil,
+        webauthn_util_cls: t.Type["WebauthnUtil"] = WebauthnUtil,
         **kwargs: t.Any,
     ):
 
@@ -1109,6 +1121,7 @@ class Security:
         self.render_template = render_template
         self.totp_cls = totp_cls
         self.username_util_cls = username_util_cls
+        self.webauthn_util_cls = webauthn_util_cls
 
         # Attributes not settable from init.
         self._unauthn_handler: t.Callable[
@@ -1361,6 +1374,7 @@ class Security:
         self._mail_util = self.mail_util_cls(app)
         self._password_util = self.password_util_cls(app)
         self._username_util = self.username_util_cls(app)
+        self._webauthn_util = self.webauthn_util_cls(app)
         rvre = cv("REDIRECT_VALIDATE_RE", app=app)
         if rvre:
             self._redirect_validate_re = re.compile(rvre)

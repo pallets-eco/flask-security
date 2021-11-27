@@ -29,7 +29,6 @@
         - integrate with unified signin?
         - make sure reset functions reset fs_webauthn - and remove credentials?
         - context processors
-        - add config variables for Origin and RP_ID?
         - update/add examples to support webauthn
         - does remember me make sense?
         - should we store things like user verified in 'last use'...
@@ -38,7 +37,6 @@
           'I want a two-factor capable key'
         - Add a way to order registered credentials so we can return an ordered list
           in allowCredentials.
-        - Add no-webauthn test to tox
         - Deal with username and security implications
         - Research: by insisting on 2FA if user has registered a webauthn - things
           get interesting if they try to log in on a different device....
@@ -49,7 +47,6 @@
 
 import datetime
 import json
-import secrets
 import typing as t
 from functools import partial
 
@@ -70,11 +67,9 @@ try:
     )
     from webauthn.helpers.structs import (
         AuthenticationCredential,
-        AuthenticatorSelectionCriteria,
         AuthenticatorTransport,
         PublicKeyCredentialDescriptor,
         RegistrationCredential,
-        ResidentKeyRequirement,
         UserVerificationRequirement,
     )
     from webauthn.helpers import bytes_to_base64url
@@ -114,14 +109,16 @@ else:
 class WebAuthnRegisterForm(Form):
 
     name = StringField(
-        get_form_field_label("credential_nickname"), validators=[Required()]
+        get_form_field_label("credential_nickname"),
+        validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
     )
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_register")
 
     def validate(self):
         if not super().validate():
             return False
-        if _datastore.find_webauthn(name=self.name.data):
+        inuse = any([self.name.data == cred.name for cred in current_user.webauthn])
+        if inuse:
             msg = get_message("WEBAUTHN_NAME_INUSE", name=self.name.data)[0]
             self.name.errors.append(msg)
             return False
@@ -143,36 +140,39 @@ class WebAuthnRegisterResponseForm(Form):
     def validate(self) -> bool:
         if not super().validate():
             return False
-        if _datastore.find_webauthn(name=self.name):
+        inuse = any([self.name == cred.name for cred in current_user.webauthn])
+        if inuse:
             msg = get_message("WEBAUTHN_NAME_INUSE", name=self.name)[0]
             self.credential.errors.append(msg)
             return False
         try:
             reg_cred = RegistrationCredential.parse_raw(self.credential.data)
         except ValueError:
-            self.credential.errors.append(get_message("API_ERROR"))
+            self.credential.errors.append(get_message("API_ERROR")[0])
             return False
         try:
             self.registration_verification = webauthn.verify_registration_response(
                 credential=reg_cred,
                 expected_challenge=self.challenge.encode(),
-                expected_origin=request.host_url.rstrip("/"),
+                expected_origin=_security._webauthn_util.origin(),
                 expected_rp_id=request.host.split(":")[0],
                 require_user_verification=True,
             )
             if _datastore.find_webauthn(credential_id=reg_cred.raw_id):
-                msg = get_message("WEBAUTHN_CREDENTIALID_INUSE")[0]
+                msg = get_message("WEBAUTHN_CREDENTIAL_ID_INUSE")[0]
                 self.credential.errors.append(msg)
                 return False
-        except InvalidRegistrationResponse:
-            self.credential.errors.append(get_message("API_ERROR"))
+        except InvalidRegistrationResponse as exc:
+            self.credential.errors.append(
+                get_message("WEBAUTHN_NO_VERIFY", cause=str(exc))[0]
+            )
             return False
         self.transports = (
             [tr.value for tr in reg_cred.transports] if reg_cred.transports else []
         )
         # Alas py_webauthn doesn't support extensions yet - so we have to dig in
         response_full = json.loads(self.credential.data)
-        # TODO - verify this is JSON
+        # TODO - verify this is JSON (created with JSON.stringify)
         self.extensions = response_full.get("extensions", None)
         return True
 
@@ -226,24 +226,28 @@ class WebAuthnSigninResponseForm(Form):
         try:
             auth_cred = AuthenticationCredential.parse_raw(self.credential.data)
         except ValueError:
-            self.credential.errors.append(get_message("API_ERROR"))
+            self.credential.errors.append(get_message("API_ERROR")[0])
             return False
 
         # Look up credential Id (raw_id) and user.
         self.cred = _datastore.find_webauthn(credential_id=auth_cred.raw_id)
         if not self.cred:
-            self.credential.errors.append(get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID"))
+            self.credential.errors.append(
+                get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")[0]
+            )
             return False
         self.user = _datastore.find_user(id=self.cred.user_id)
         if not self.user:
-            self.credential.errors.append(get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID"))
+            self.credential.errors.append(
+                get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID")[0]
+            )
             return False
 
         verify = partial(
             webauthn.verify_authentication_response,
             credential=auth_cred,
             expected_challenge=self.challenge.encode(),
-            expected_origin=request.host_url.rstrip("/"),
+            expected_origin=_security._webauthn_util.origin(),
             expected_rp_id=request.host.split(":")[0],
             credential_public_key=self.cred.public_key,
             credential_current_sign_count=self.cred.sign_count,
@@ -256,8 +260,10 @@ class WebAuthnSigninResponseForm(Form):
                 self.authentication_verification = verify(
                     require_user_verification=False
                 )
-            except InvalidAuthenticationResponse:
-                self.credential.errors.append(get_message("WEBAUTHN_NO_VERIFY"))
+            except InvalidAuthenticationResponse as exc:
+                self.credential.errors.append(
+                    get_message("WEBAUTHN_NO_VERIFY", cause=str(exc))[0]
+                )
                 return False
         return True
 
@@ -265,12 +271,18 @@ class WebAuthnSigninResponseForm(Form):
 class WebAuthnDeleteForm(Form):
 
     name = StringField(
-        get_form_field_label("credential_nickname"), validators=[Required()]
+        get_form_field_label("credential_nickname"),
+        validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
     )
     submit = SubmitField(label=get_form_field_label("delete"))
 
     def validate(self):
         if not super().validate():
+            return False
+        if not any([self.name.data == cred.name for cred in current_user.webauthn]):
+            self.name.errors.append(
+                get_message("WEBAUTHN_NAME_NOT_FOUND", name=self.name.data)[0]
+            )
             return False
         return True
 
@@ -301,11 +313,11 @@ def webauthn_register() -> "ResponseValue":
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        challenge = secrets.token_urlsafe(cv("WAN_CHALLENGE_BYTES"))
+        challenge = _security._webauthn_util.generate_challenge(
+            cv("WAN_CHALLENGE_BYTES")
+        )
         state = {"challenge": challenge, "name": form.name.data}
 
-        # TODO make authenticator selection a call back so app can set whatever
-        # it needs?
         credential_options = webauthn.generate_registration_options(
             challenge=challenge.encode(),
             rp_name=cv("WAN_RP_NAME"),
@@ -313,8 +325,8 @@ def webauthn_register() -> "ResponseValue":
             user_id=current_user.fs_webauthn_uniquifier,
             user_name=current_user.calc_username(),
             timeout=cv("WAN_REGISTER_TIMEOUT"),
-            authenticator_selection=AuthenticatorSelectionCriteria(
-                resident_key=ResidentKeyRequirement.DISCOURAGED,
+            authenticator_selection=_security._webauthn_util.authenticator_selection(
+                current_user
             ),
             exclude_credentials=create_credential_list(current_user),
         )
@@ -326,7 +338,7 @@ def webauthn_register() -> "ResponseValue":
 
         if _security._want_json(request):
             payload = {
-                "credential_options": json.dumps(co_json),
+                "credential_options": co_json,
                 "wan_state": state_token,
             }
             return base_render_json(form, include_user=False, additional=payload)
@@ -339,12 +351,14 @@ def webauthn_register() -> "ResponseValue":
             credential_options=json.dumps(co_json),
         )
 
-    current_creds = {}
+    current_creds = []
     for cred in current_user.webauthn:
-        current_creds[cred.name] = {
+        cl = {
+            "name": cred.name,
             "credential_id": bytes_to_base64url(cred.credential_id),
             "transports": cred.transports,
             "lastuse": cred.lastuse_datetime.isoformat(),
+            "created": cred.create_datetime.isoformat(),
         }
         # TODO: i18n
         discoverable = "Unknown"
@@ -352,7 +366,8 @@ def webauthn_register() -> "ResponseValue":
             extensions = json.loads(cred.extensions)
             if "credProps" in extensions:
                 discoverable = extensions["credProps"].get("rk", "Unknown")
-        current_creds[cred.name]["discoverable"] = discoverable
+        cl["discoverable"] = discoverable
+        current_creds.append(cl)
 
     payload = {"registered_credentials": current_creds}
     if _security._want_json(request):
@@ -374,10 +389,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
         WebAuthnRegisterResponseForm
     ] = _security.wan_register_response_form
     if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
+        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
         form = form_class(meta=suppress_form_csrf())
 
@@ -423,7 +435,8 @@ def webauthn_register_response(token: str) -> "ResponseValue":
 
     if _security._want_json(request):
         return base_render_json(form)
-    # TODO flash error....
+    if len(form.errors) > 0:
+        do_flash(form.errors["credential"][0], "error")
     return redirect(url_for_security("wan_register"))
 
 
@@ -440,7 +453,9 @@ def webauthn_signin() -> "ResponseValue":
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        challenge = secrets.token_urlsafe(cv("WAN_CHALLENGE_BYTES"))
+        challenge = _security._webauthn_util.generate_challenge(
+            cv("WAN_CHALLENGE_BYTES")
+        )
         state = {
             "challenge": challenge,
         }
@@ -459,7 +474,7 @@ def webauthn_signin() -> "ResponseValue":
             allow_credentials=allow_credentials,
         )
 
-        o_json = webauthn.options_to_json(options)
+        o_json = json.loads(webauthn.options_to_json(options))
         state_token = _security.wan_serializer.dumps(state)
         if _security._want_json(request):
             payload = {"credential_options": o_json, "wan_state": state_token}
@@ -470,7 +485,7 @@ def webauthn_signin() -> "ResponseValue":
             wan_signin_form=form,
             wan_signin_response_form=WebAuthnSigninResponseForm(),
             wan_state=state_token,
-            credential_options=o_json,
+            credential_options=json.dumps(o_json),
         )
 
     if _security._want_json(request):
@@ -487,10 +502,7 @@ def webauthn_signin() -> "ResponseValue":
 def webauthn_signin_response(token: str) -> "ResponseValue":
     form_class: t.Type[WebAuthnSigninResponseForm] = _security.wan_signin_response_form
     if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
+        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
         form = form_class(meta=suppress_form_csrf())
 
@@ -551,20 +563,23 @@ def webauthn_delete() -> "ResponseValue":
 
     form_class: t.Type[WebAuthnDeleteForm] = _security.wan_delete_form
     if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
+        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
         form = form_class(meta=suppress_form_csrf())
 
     if form.validate_on_submit():
-        cred = _datastore.find_webauthn(name=form.name.data)
-        if cred:
-            after_this_request(view_commit)
-            _datastore.delete_webauthn(cred)
-        # TODO - errors, json, flash
+        # validate made sure form.name.data exists.
+        cred = [c for c in current_user.webauthn if c.name == form.name.data][0]
+        after_this_request(view_commit)
+        _datastore.delete_webauthn(cred)
+        if _security._want_json(request):
+            return base_render_json(form)
+        msg, c = get_message("WEBAUTHN_CREDENTIAL_DELETED", name=form.name.data)
+        do_flash(msg, c)
 
+    if _security._want_json(request):
+        return base_render_json(form)
+    # TODO flash something?
     return redirect(url_for_security("wan_register"))
 
 

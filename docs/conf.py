@@ -102,6 +102,7 @@ nitpick_ignore = [
     ("py:class", "flask_mongoengine.MongoEngine"),
     ("py:class", "ResponseValue"),
     ("py:class", "function"),
+    ("py:class", "AuthenticatorSelectionCriteria"),
 ]
 autodoc_typehints = "description"
 # autodoc_mock_imports = ["flask_sqlalchemy"]

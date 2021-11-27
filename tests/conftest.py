@@ -92,6 +92,7 @@ def app(request: pytest.FixtureRequest) -> "Flask":
         "confirmable",
         "two_factor",
         "unified_signin",
+        "webauthn",
     ]:
         app.config["SECURITY_" + opt.upper()] = opt in request.keywords
 
@@ -314,7 +315,7 @@ def sqlalchemy_datastore(request, app, tmpdir, realdburl):
 def sqlalchemy_setup(request, app, tmpdir, realdburl):
     pytest.importorskip("flask_sqlalchemy")
     from flask_sqlalchemy import SQLAlchemy
-    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security.models import fsqla_v3 as fsqla
 
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)
@@ -338,6 +339,9 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
             # Make sure we still properly hook up to flask JSONEncoder
             return {"email": str(self.email), "last_update": self.update_datetime}
 
+    class WebAuthn(db.Model, fsqla.FsWebAuthnMixin):
+        pass
+
     with app.app_context():
         db.create_all()
 
@@ -348,7 +352,7 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
     request.addfinalizer(tear_down)
 
-    return SQLAlchemyUserDatastore(db, User, Role)
+    return SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
 
 
 @pytest.fixture()
