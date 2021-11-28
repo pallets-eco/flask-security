@@ -50,8 +50,8 @@
   {% if registered_credentials %}
     <h3>Currently registered security keys:</h3>
     <ul>
-      {% for name, value in registered_credentials.items() %}
-        <li>Nickname: "{{ name }}" transports: "{{ value.transports }}" discoverable: "{{ value.discoverable }}" last used on {{ value.lastuse }}</li>
+      {% for cred in registered_credentials %}
+        <li>Nickname: "{{ cred.name }}" transports: "{{ cred.transports }}" discoverable: "{{ cred.discoverable }}" last used on {{ cred.lastuse }}</li>
       {% endfor %}
     </ul>
   {% endif %}

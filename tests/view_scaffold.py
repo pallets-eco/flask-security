@@ -23,6 +23,7 @@ data and a mail sender that flashes what mail would be sent!
 
 import datetime
 import os
+import typing as t
 
 from flask import Flask, flash, render_template_string, request, session
 from flask_sqlalchemy import SQLAlchemy
@@ -30,6 +31,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
+    WebauthnUtil,
     auth_required,
     current_user,
     login_required,
@@ -90,6 +92,13 @@ def create_app():
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
     app.config["SECURITY_USERNAME_ENABLE"] = True
 
+    class TestWebauthnUtil(WebauthnUtil):
+        def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
+            # Use a constant Challenge so we can us this app to generate gold
+            # responses for use in unit testing. See test_webauthn.
+            # NEVER NEVER NEVER do this in production
+            return "smCCiy_k2CqQydSQ_kPEjV5a2d0ApfatcpQ1aXDmQPo"
+
     # Turn on all features (except passwordless since that removes normal login)
     for opt in [
         "changeable",
@@ -132,7 +141,7 @@ def create_app():
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
-    Security(app, user_datastore)
+    Security(app, user_datastore, webauthn_util_cls=TestWebauthnUtil)
 
     try:
         import flask_babel

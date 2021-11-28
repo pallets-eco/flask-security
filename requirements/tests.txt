@@ -12,6 +12,7 @@ bleach
 check-manifest
 coverage
 cryptography
+python-dateutil
 mongoengine
 mongomock
 msgcheck
