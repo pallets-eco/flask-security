@@ -13,6 +13,7 @@ Features
 - (:issue:`475`) Support for WebAuthn
 - (:pr:`532`) Support for Python 3.10
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn
+- (:pr:`xxx`) Make roles joinedload compatible with SQLAlchemy 2.0
 
 Fixes
 +++++
