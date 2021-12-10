@@ -562,6 +562,10 @@ Core - rarely need changing
 
     Default: ``"us-setup-salt"``
 
+.. py:data:: SECURITY_WAN_SALT
+
+    Default: ``"wan-salt"``
+
 .. py:data:: SECURITY_EMAIL_PLAINTEXT
 
     Sends email as plaintext using ``*.txt`` template.
@@ -742,6 +746,7 @@ Registerable
     If username is enabled, is it required as part of registration?
 
     Default: ``False``
+
     .. versionadded:: 4.1.0
 
 
@@ -763,7 +768,7 @@ Registerable
 
 .. py:data:: SECURITY_USERNAME_NORMALIZE_FORM
 
-    Usernames can be unicode normalization is performed using the Python unicodedata.normalize() method.
+    Usernames, by default, are normalized using the Python unicodedata.normalize() method.
 
     Default: ``"NFKD"``
 
@@ -1090,6 +1095,9 @@ Configuration related to the two-factor authentication feature.
 Unified Signin
 --------------
 
+    Unified sign in provides a generalized sign in endpoint that takes an `identity`
+    and a `passcode`.
+
     .. versionadded:: 3.4.0
 
 .. py:data:: SECURITY_UNIFIED_SIGNIN
@@ -1277,6 +1285,51 @@ Trackable
 
     Default: ``False``
 
+WebAuthn
+--------------
+
+    .. versionadded:: 4.2.0
+
+.. py:data:: SECURITY_WEBAUTHN
+
+    To enable this feature - set this to ``True``. Please see :ref:`models` for
+    required additions to your database models.
+
+    Default: ``False``
+
+.. py:data:: SECURITY_WAN_REGISTER_URL
+
+    Endpoint for registering WebAuthn credentials.
+
+    Default: ``"/wan-register"``
+
+.. py:data:: SECURITY_WAN_SIGNIN_URL
+
+    Endpoint for signing in using a WebAuthn credential.
+
+    Default: ``"/wan-signin"``
+
+.. py:data:: SECURITY_WAN_DELETE_URL
+
+    Endpoint for removing a WebAuthn credential.
+
+    Default: ``"/wan-delete"``
+
+.. py:data:: SECURITY_WAN_REGISTER_TEMPLATE
+
+    Default: ``"security/wan_register.html"``
+
+.. py:data:: SECURITY_WAN_SIGNIN_TEMPLATE
+
+    Default: ``"security/wan_signin.html"``
+
+.. py:data:: SECURITY_WAN_RP_NAME
+
+    The Relying Party (that's us!) name passed as part of credential
+    creation. Defined in the `spec <https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-pkcredentialentity>`_.
+
+    Default: ``"My Flask App"``
+
 Feature Flags
 -------------
 All feature flags. By default all are 'False'/not enabled.
@@ -1289,6 +1342,7 @@ All feature flags. By default all are 'False'/not enabled.
 * ``SECURITY_CHANGEABLE``
 * ``SECURITY_TWO_FACTOR``
 * :py:data:`SECURITY_UNIFIED_SIGNIN`
+* :py:data:`SECURITY_WEBAUTHN`
 
 URLs and Views
 --------------
@@ -1322,6 +1376,9 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_US_VERIFY_URL`
 * :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL`
 * :py:data:`SECURITY_US_POST_SETUP_VIEW`
+* :py:data:`SECURITY_WAN_REGISTER_URL`
+* :py:data:`SECURITY_WAN_SIGNIN_URL`
+* :py:data:`SECURITY_WAN_DELETE_URL`
 
 Template Paths
 --------------
@@ -1340,6 +1397,8 @@ A list of all templates:
 * :py:data:`SECURITY_US_SIGNIN_TEMPLATE`
 * :py:data:`SECURITY_US_SETUP_TEMPLATE`
 * :py:data:`SECURITY_US_VERIFY_TEMPLATE`
+* :py:data:`SECURITY_WAN_REGISTER_TEMPLATE`
+* :py:data:`SECURITY_WAN_SIGNIN_TEMPLATE`
 
 Messages
 -------------

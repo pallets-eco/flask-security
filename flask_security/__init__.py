@@ -12,7 +12,14 @@
 
 # flake8: noqa: F401
 from .changeable import admin_change_password
-from .core import Security, RoleMixin, UserMixin, AnonymousUser, current_user
+from .core import (
+    Security,
+    RoleMixin,
+    UserMixin,
+    WebAuthnMixin,
+    AnonymousUser,
+    current_user,
+)
 from .datastore import (
     UserDatastore,
     SQLAlchemyUserDatastore,

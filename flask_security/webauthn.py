@@ -7,7 +7,7 @@
     :copyright: (c) 2021-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
-    This implements support for webauthn/FIDO2 using the py_webauthn package.
+    This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
 
     Check out: https://golb.hplar.ch/2019/08/webauthn.html
     for some ideas on recovery and adding additional authenticators.
@@ -21,7 +21,6 @@
 
     TODO:
         - deal with fs_webauthn_uniquifier for existing users
-        - add webauthn to other datastores
         - unit tests!
         - docs!
         - openapi.yml
@@ -99,7 +98,7 @@ from .utils import (
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
-    from .datastore import User
+    from .datastore import User, WebAuthn
 
 if get_quart_status():  # pragma: no cover
     from quart import redirect
@@ -216,10 +215,10 @@ class WebAuthnSigninResponseForm(Form):
 
     # returned to caller
     authentication_verification: "VerifiedAuthentication"
-    user = None
-    cred = None
+    user: t.Optional["User"] = None
+    cred: t.Optional["WebAuthn"] = None
     # Set to True if this authentication qualifies as 'multi-factor'
-    mf_check = False
+    mf_check: bool = False
 
     def validate(self) -> bool:
         if not super().validate():
@@ -237,7 +236,7 @@ class WebAuthnSigninResponseForm(Form):
                 get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")[0]
             )
             return False
-        self.user = _datastore.find_user(id=self.cred.user_id)
+        self.user = _datastore.find_user_from_webauthn(self.cred)
         if not self.user:
             self.credential.errors.append(
                 get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID")[0]
@@ -277,7 +276,7 @@ class WebAuthnDeleteForm(Form):
     )
     submit = SubmitField(label=get_form_field_label("delete"))
 
-    def validate(self):
+    def validate(self) -> bool:
         if not super().validate():
             return False
         if not any([self.name.data == cred.name for cred in current_user.webauthn]):
@@ -359,7 +358,6 @@ def webauthn_register() -> "ResponseValue":
             "credential_id": bytes_to_base64url(cred.credential_id),
             "transports": cred.transports,
             "lastuse": cred.lastuse_datetime.isoformat(),
-            "created": cred.create_datetime.isoformat(),
         }
         # TODO: i18n
         discoverable = "Unknown"
@@ -419,7 +417,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
         transports = ",".join(form.transports)
 
         _datastore.create_webauthn(
-            current_user,
+            current_user._get_current_object(),  # Not needed with Werkzeug >2.0.0
             name=state["name"],
             credential_id=form.registration_verification.credential_id,
             public_key=form.registration_verification.credential_public_key,
@@ -551,8 +549,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
     # TODO set into a special form element error?
     signin_form = _security.wan_signin_form()
     if form.credential.errors:
-        m, c = form.credential.errors[0]
-        do_flash(m, c)
+        do_flash(form.credential.errors[0], "error")
     return _security.render_template(
         cv("WAN_SIGNIN_TEMPLATE"), wan_signin_form=signin_form
     )

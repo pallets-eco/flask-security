@@ -153,8 +153,7 @@ def _signin_start_json(client, identity=None):
 
 
 @pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
-def test_basic(app, client, get_message):
-    clients = client
+def test_basic(app, clients, get_message):
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -209,8 +208,7 @@ def test_basic(app, client, get_message):
 
 
 @pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
-def test_basic_json(app, client, get_message):
-    clients = client
+def test_basic_json(app, clients, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     auths = []
@@ -236,14 +234,16 @@ def test_basic_json(app, client, get_message):
     response = clients.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
 
-    # reset lastuse_datatime so we can verify signing in correctly alters it
+    # reset lastuse_datetime so we can verify signing in correctly alters it
     fake_dt = datetime.datetime(2020, 4, 7, 9, 27)
     with app.app_context():
         user = app.security.datastore.find_user(email="matt@lp.com")
-        cred = user.webauthn[0]
-        cred.lastuse_datetime = fake_dt
-        app.security.datastore.put(cred)
+        for cred in user.webauthn:
+            cred.lastuse_datetime = fake_dt
+            app.security.datastore.put(cred)
         app.security.datastore.commit()
+        if hasattr(app.security.datastore.db, "close_db"):
+            app.security.datastore.db.close_db(None)
 
     response = clients.get("/wan-register", headers=headers)
     active_creds = response.json["response"]["registered_credentials"]
@@ -276,20 +276,18 @@ def test_basic_json(app, client, get_message):
 
 
 @pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
-def test_constraints(app, client, get_message):
+def test_constraints(app, clients, get_message):
     """Test that nickname is unique for a given user but different users
     can have the same nickname.
     Also that credential_id is unique across the app.
     """
-    clients = client
-
     authenticate(clients)
     register_options, response_url = _register_start_json(clients, name="testr3")
     response = clients.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
 
     # register same name again
-    response = client.post("wan-register", json=dict(name="testr3"))
+    response = clients.post("wan-register", json=dict(name="testr3"))
     assert response.status_code == 400
     assert response.json["response"]["errors"]["name"][0].encode(
         "utf-8"
@@ -313,10 +311,8 @@ def test_constraints(app, client, get_message):
 
 
 @pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
-def test_delete(app, client, get_message):
-    clients = client
-
-    authenticate(client)
+def test_delete(app, clients, get_message):
+    authenticate(clients)
     register_options, response_url = _register_start(clients, name="testr3")
     response = clients.post(
         response_url, data=dict(credential=json.dumps(REG_DATA1)), follow_redirects=True
@@ -349,12 +345,10 @@ def test_delete(app, client, get_message):
 
 
 @pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
-def test_delete_json(app, client, get_message):
+def test_delete_json(app, clients, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-    clients = client
-
-    authenticate(client)
+    authenticate(clients)
     register_options, response_url = _register_start_json(clients, name="testr3")
     response = clients.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
