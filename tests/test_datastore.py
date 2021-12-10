@@ -10,7 +10,7 @@
 """
 
 import datetime
-from pytest import raises, skip
+from pytest import raises, skip, importorskip
 from tests.test_utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
 from flask_security import RoleMixin, Security, UserMixin, LoginForm, RegisterForm
@@ -450,8 +450,7 @@ def test_uuid(app, request, tmpdir, realdburl):
 
 
 def test_webauthn(app, datastore):
-    if not datastore.webauthn_model:
-        skip("Skipping - no webauthn model defined")
+    importorskip("webauthn")
     init_app_with_options(app, datastore)
 
     with app.app_context():
@@ -480,8 +479,7 @@ def test_webauthn(app, datastore):
 
 
 def test_webauthn_cascade(app, datastore):
-    if not datastore.webauthn_model:
-        skip("Skipping - no webauthn model defined")
+    importorskip("webauthn")
     init_app_with_options(app, datastore)
 
     with app.app_context():

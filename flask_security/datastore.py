@@ -733,12 +733,6 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
                 obj = self.user_model.objects(query).first()
         except ValidationError:  # pragma: no cover
             return None
-        if obj and "webauthn" in obj:
-            # Alas py-webauthn used Pydantic that doesn't allow sub-classing
-            # and Mongoengine returns a Binary(bytes) instance.
-            for w in obj.webauthn:
-                w.credential_id = bytes(w.credential_id)
-                w.public_key = bytes(w.public_key)
         return obj
 
     def find_role(self, role):
@@ -751,9 +745,6 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         obj = self.webauthn_model.objects(  # type: ignore
             credential_id=credential_id
         ).first()
-        if obj:
-            obj.credential_id = bytes(obj.credential_id)
-            obj.public_key = bytes(obj.public_key)
         return obj
 
     def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
