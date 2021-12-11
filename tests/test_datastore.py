@@ -451,6 +451,8 @@ def test_uuid(app, request, tmpdir, realdburl):
 
 def test_webauthn(app, datastore):
     importorskip("webauthn")
+    if not datastore.webauthn_model:
+        skip("No WebAuthn model defined")
     init_app_with_options(app, datastore)
 
     with app.app_context():
@@ -480,6 +482,8 @@ def test_webauthn(app, datastore):
 
 def test_webauthn_cascade(app, datastore):
     importorskip("webauthn")
+    if not datastore.webauthn_model:
+        skip("No WebAuthn model defined")
     init_app_with_options(app, datastore)
 
     with app.app_context():
