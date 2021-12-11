@@ -69,6 +69,7 @@ try:
         AuthenticationCredential,
         AuthenticatorTransport,
         PublicKeyCredentialDescriptor,
+        PublicKeyCredentialType,
         RegistrationCredential,
         UserVerificationRequirement,
     )
@@ -597,7 +598,7 @@ def create_credential_list(user: "User") -> t.List["PublicKeyCredentialDescripto
 
     for cred in user.webauthn:
         descriptor = PublicKeyCredentialDescriptor(
-            type="public-key", id=cred.credential_id
+            type=PublicKeyCredentialType.PUBLIC_KEY, id=cred.credential_id
         )
         if cred.transports:
             tlist = cred.transports.split(",")
