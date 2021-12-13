@@ -15,7 +15,7 @@ which are a bit of a pain. To make things easier - Flask-Security includes mixin
 contain ALL the fields and tables required for all features. They also contain
 various `best practice` fields - such as update and create times. These mixins can
 be easily extended to add any sort of custom fields and can be found in the
-`models` module (today there is just one for using Flask-SqlAlchemy).
+`models` module (today there is just one for using Flask-SQLAlchemy).
 
 The provided models are versioned since they represent actual DB models, and any
 changes require a schema migration (and perhaps a data migration). Applications
@@ -23,7 +23,8 @@ must specifically import the version they want (and handle any required migratio
 
 Your `User` model needs a Primary Key - Flask-Security doesn't actually reference
 this - so it can be any name or type your application needs. It should be used in the
-foreign relationship between `User` and `Role`.
+foreign relationship between `User` and `Role`. The `webauthn` feature also
+references this primary key.
 
 At the bare minimum your `User` and `Role` model should include the following fields:
 
@@ -33,7 +34,7 @@ At the bare minimum your `User` and `Role` model should include the following fi
 * ``email`` (for most features - unique, non-nullable)
 * ``password`` (non-nullable)
 * ``active`` (boolean, non-nullable)
-* ``fs_uniquifier`` (unique, non-nullable)
+* ``fs_uniquifier`` (string, 64 bytes, unique, non-nullable)
 
 
 **Role**
@@ -78,13 +79,13 @@ If you enable two-factor by setting your application's `SECURITY_TWO_FACTOR`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
-* ``tf_totp_secret`` (string)
+* ``tf_totp_secret`` (string, 255 bytes, nullable)
 * ``tf_primary_method`` (string)
 
 If you include 'sms' in `SECURITY_TWO_FACTOR_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
-* ``tf_phone_number`` (string)
+* ``tf_phone_number`` (string, 128 bytes, nullable)
 
 Unified Sign In
 ^^^^^^^^^^^^^^^
@@ -105,7 +106,7 @@ Separate Identity Domains
 If you want authentication tokens to not be invalidated when the user changes their
 password add the following to your `User` model:
 
-* ``fs_token_uniquifier`` (unique, non-nullable)
+* ``fs_token_uniquifier`` (string, 64 bytes, unique, non-nullable)
 
 Permissions
 ^^^^^^^^^^^
@@ -113,6 +114,41 @@ If you want to protect endpoints with permissions, and assign permissions to rol
 that are then assigned to users the Role model requires:
 
 * ``permissions`` (UnicodeText)
+
+WebAuthn
+^^^^^^^^
+Flask Security can act as a WebAuthn Relying Party by enabling
+:py:data:`SECURITY_WEBAUTHN`. This requires an additional table as well as
+references from the User model. Users can have many WebAuthn credentials, and
+Flask-Security must be able to locate a User record based on a credential id.
+
+.. important::
+    It is important that you maintain data consistency when deleting WebAuthn
+    records or users.
+
+A new model 'WebAuthn' requires the following fields:
+
+* ``id`` (primary key)
+* ``credential_id`` (binary, 1024 bytes, indexed, non-nullable, unique)
+* ``public_key`` (binary, 1024 bytes, non-nullable)
+* ``sign_count`` (integer, default=0)
+* ``transports`` (string, 255 bytes)
+* ``extensions`` (string, 255 bytes)
+* ``lastuse_datetime`` (datetime, non-nullable)
+* ``name`` (string, 64 bytes, non-nullable)
+
+It also needs a reference to the owning `User` record. The shipped datastore
+implementations depend on the following:
+
+* ``user_id`` For SQLAlchemy based datastores (including Flask-SQLAlchemy)
+* ``user`` For Peewee and MongoEngine
+
+The `User` model needs the following additional fields:
+
+* ``webauthn`` (one-to-many to WebAuthn model).
+  The reference to the registered WebAuthn credentials.
+* ``fs_webauthn_uniquifier`` (string, 64 bytes, unique).
+  This is used as the `PublicKeyCredentialUserEntity` `id` value.
 
 Custom User Payload
 ^^^^^^^^^^^^^^^^^^^

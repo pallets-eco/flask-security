@@ -10,7 +10,7 @@
 """
 
 import datetime
-from pytest import raises, skip
+from pytest import raises, skip, importorskip
 from tests.test_utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
 from flask_security import RoleMixin, Security, UserMixin, LoginForm, RegisterForm
@@ -46,7 +46,7 @@ def test_unimplemented_datastore_methods():
 def test_unimplemented_user_datastore_methods():
     datastore = UserDatastore(None, None)
     with raises(NotImplementedError):
-        datastore.find_user(None)
+        datastore.find_user()
     with raises(NotImplementedError):
         datastore.find_role(None)
 
@@ -447,3 +447,79 @@ def test_uuid(app, request, tmpdir, realdburl):
     with app.app_context():
         user = ds.find_user(email="matt@lp.com")
         assert not user
+
+
+def test_webauthn(app, datastore):
+    importorskip("webauthn")
+    if not datastore.webauthn_model:
+        skip("No WebAuthn model defined")
+    init_app_with_options(app, datastore)
+
+    with app.app_context():
+        user = datastore.find_user(email="matt@lp.com")
+        datastore.create_webauthn(
+            user,
+            name="cred1",
+            credential_id=b"1",
+            public_key=b"key",
+            sign_count=0,
+            transports=None,
+            extensions=None,
+        )
+        datastore.commit()
+        cred = datastore.find_webauthn(b"1")
+        assert cred.name == "cred1"
+
+        user = datastore.find_user(email="matt@lp.com")
+        assert len(user.webauthn) == 1
+        assert user.webauthn[0].name == "cred1"
+
+        datastore.delete_webauthn(user.webauthn[0])
+        datastore.commit()
+        user = datastore.find_user(email="matt@lp.com")
+        assert len(user.webauthn) == 0
+
+
+def test_webauthn_cascade(app, datastore):
+    importorskip("webauthn")
+    if not datastore.webauthn_model:
+        skip("No WebAuthn model defined")
+    init_app_with_options(app, datastore)
+
+    with app.app_context():
+        user = datastore.find_user(email="matt@lp.com")
+        datastore.create_webauthn(
+            user,
+            name="cred1",
+            credential_id=b"1",
+            public_key=b"key",
+            sign_count=0,
+            transports=None,
+            extensions=None,
+        )
+        datastore.create_webauthn(
+            user,
+            name="cred2",
+            credential_id=b"2",
+            public_key=b"key",
+            sign_count=0,
+            transports=None,
+            extensions=None,
+        )
+        datastore.commit()
+
+        user = datastore.find_user(email="matt@lp.com")
+        assert len(user.webauthn) == 2
+        names = [cred.name for cred in user.webauthn]
+        assert set(names) == {"cred1", "cred2"}
+
+        # delete user
+        datastore.delete_user(user)
+        datastore.commit()
+        user = datastore.find_user(email="matt@lp.com")
+        assert not user
+
+        cred = datastore.find_webauthn(b"1")
+        assert not cred
+        cred = datastore.find_webauthn(b"2")
+        assert not cred

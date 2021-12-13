@@ -21,6 +21,7 @@ from sqlalchemy.sql import func
 from .fsqla_v2 import FsModels as FsModelsV2
 from .fsqla_v2 import FsUserMixin as FsUserMixinV2
 from .fsqla_v2 import FsRoleMixin as FsRoleMixinV2
+from flask_security import WebAuthnMixin
 
 
 class FsModels(FsModelsV2):
@@ -37,7 +38,9 @@ class FsUserMixin(FsUserMixinV2):
     # List of WebAuthn registrations
     @declared_attr
     def webauthn(cls):
-        return FsModels.db.relationship("WebAuthn", backref="users")
+        return FsModels.db.relationship(
+            "WebAuthn", backref="users", cascade="all, delete"
+        )
 
     # a unique user id (ala fs_uniquifier). This allows us to separately invalidate
     # all webauthn registrations. Note max length 64 as specified in spec.
@@ -57,11 +60,11 @@ class FsUserMixin(FsUserMixinV2):
         )
 
 
-class FsWebAuthnMixin:
+class FsWebAuthnMixin(WebAuthnMixin):
     """WebAuthn"""
 
     id = Column(Integer, primary_key=True)
-    credential_id = Column(LargeBinary(1024), unique=True, nullable=False)
+    credential_id = Column(LargeBinary(1024), index=True, unique=True, nullable=False)
     public_key = Column(LargeBinary, nullable=False)
     sign_count = Column(Integer, default=0)
     transports = Column(String(255), nullable=True)  # comma separated

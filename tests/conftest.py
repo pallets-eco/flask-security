@@ -5,6 +5,7 @@
     Test fixtures and what not
 
     :copyright: (c) 2017 by CERN.
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -16,8 +17,7 @@ from datetime import datetime
 from urllib.parse import urlsplit
 
 import pytest
-from flask import Flask, Response, render_template
-from flask import jsonify
+from flask import Flask, Response, jsonify, render_template
 from flask import request as flask_request
 from flask.json import JSONEncoder
 from flask_mail import Mail
@@ -31,6 +31,7 @@ from flask_security import (
     SQLAlchemySessionUserDatastore,
     SQLAlchemyUserDatastore,
     UserMixin,
+    WebAuthnMixin,
     auth_required,
     auth_token_required,
     http_auth_required,
@@ -251,6 +252,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
     pytest.importorskip("flask_mongoengine")
     from flask_mongoengine import MongoEngine
     from mongoengine.fields import (
+        BinaryField,
         BooleanField,
         DateTimeField,
         IntField,
@@ -258,6 +260,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         ReferenceField,
         StringField,
     )
+    from mongoengine import PULL, CASCADE
 
     db_name = "flask_security_test_%s" % str(time.time()).replace(".", "_")
     app.config["MONGODB_SETTINGS"] = {
@@ -275,9 +278,34 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         permissions = StringField(max_length=255)
         meta = {"db_alias": db_name}
 
+    class WebAuthn(db.Document, WebAuthnMixin):
+        credential_id = BinaryField(
+            primary_key=True, max_bytes=1024, unique=True, required=True
+        )
+        public_key = BinaryField(required=True)
+        sign_count = IntField(default=0)
+        transports = StringField(max_length=255)
+
+        # a JSON string as returned from registration
+        extensions = StringField(max_length=255)
+        lastuse_datetime = DateTimeField(required=True)
+        # name is provided by user - we make sure it is unique per user
+        name = StringField(max_length=64, required=True)
+        # we need to be able look up a user from a credential_id
+        user = ReferenceField("User")
+        # user_id = ObjectIdField(required=True)
+        meta = {"db_alias": db_name}
+
+        def get_user_mapping(self) -> t.Dict[str, str]:
+            """
+            Return the mapping from webauthn back to User
+            """
+            return dict(id=self.user.id)
+
     class User(db.Document, UserMixin):
         email = StringField(unique=True, max_length=255)
         fs_uniquifier = StringField(unique=True, max_length=64, required=True)
+        fs_webauthn_uniquifier = StringField(unique=True, max_length=64)
         username = StringField(unique=True, required=False, sparse=True, max_length=255)
         password = StringField(required=False, max_length=255)
         security_number = IntField(unique=True, required=False, sparse=True)
@@ -294,17 +322,23 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         active = BooleanField(default=True)
         confirmed_at = DateTimeField()
         roles = ListField(ReferenceField(Role), default=[])
+        webauthn = ListField(
+            ReferenceField(WebAuthn, reverse_delete_rule=PULL), default=[]
+        )
         meta = {"db_alias": db_name}
+
+    db.Document.register_delete_rule(WebAuthn, "user", CASCADE)
 
     def tear_down():
         with app.app_context():
             User.drop_collection()
             Role.drop_collection()
+            WebAuthn.drop_collection()
             db.connection.drop_database(db_name)
 
     request.addfinalizer(tear_down)
 
-    return MongoEngineUserDatastore(db, User, Role)
+    return MongoEngineUserDatastore(db, User, Role, WebAuthn)
 
 
 @pytest.fixture()
@@ -361,16 +395,20 @@ def sqlalchemy_session_datastore(request, app, tmpdir, realdburl):
 
 
 def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
+    """
+    Note that we test having a different user id column name here.
+    """
     pytest.importorskip("sqlalchemy")
     from sqlalchemy import create_engine
     from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
-    from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.ext.declarative import declarative_base, declared_attr
     from sqlalchemy.sql import func
     from sqlalchemy import (
         Boolean,
         DateTime,
         Column,
         Integer,
+        LargeBinary,
         String,
         Text,
         ForeignKey,
@@ -413,6 +451,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         __tablename__ = "user"
         myuserid = Column(Integer, primary_key=True)
         fs_uniquifier = Column(String(64), unique=True, nullable=False)
+        fs_webauthn_uniquifier = Column(String(64), unique=True, nullable=True)
         email = Column(String(255), unique=True)
         username = Column(String(255), unique=True, nullable=True)
         password = Column(String(255))
@@ -439,9 +478,48 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
             onupdate=datetime.utcnow,
         )
 
+        @declared_attr
+        def webauthn(cls):
+            return relationship("WebAuthn", backref="users", cascade="all, delete")
+
         def get_security_payload(self):
             # Make sure we still properly hook up to flask JSONEncoder
             return {"email": str(self.email), "last_update": self.update_datetime}
+
+    class WebAuthn(Base, WebAuthnMixin):
+        __tablename__ = "webauthn"
+
+        id = Column(Integer, primary_key=True)
+        credential_id = Column(
+            LargeBinary(1024), index=True, unique=True, nullable=False
+        )
+        public_key = Column(LargeBinary, nullable=False)
+        sign_count = Column(Integer, default=0)
+        transports = Column(String(255), nullable=True)  # comma separated
+
+        # a JSON string as returned from registration
+        extensions = Column(String(255), nullable=True)
+        create_datetime = Column(
+            type_=DateTime, nullable=False, server_default=func.now()
+        )
+        lastuse_datetime = Column(type_=DateTime, nullable=False)
+        # name is provided by user - we make sure is unique per user
+        name = Column(String(64), nullable=False)
+
+        @declared_attr
+        def myuser_id(cls):
+            return Column(
+                Integer,
+                ForeignKey("user.myuserid", ondelete="CASCADE"),
+                nullable=False,
+            )
+
+        def get_user_mapping(self) -> t.Dict[str, t.Any]:
+            """
+            Return the filter needed by find_user() to get the user
+            associated with this webauthn credential.
+            """
+            return dict(myuserid=self.myuser_id)
 
     with app.app_context():
         Base.metadata.create_all(bind=engine)
@@ -453,7 +531,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
 
     request.addfinalizer(tear_down)
 
-    return SQLAlchemySessionUserDatastore(db_session, User, Role)
+    return SQLAlchemySessionUserDatastore(db_session, User, Role, WebAuthn)
 
 
 @pytest.fixture()
@@ -468,6 +546,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
         DateTimeField,
         IntegerField,
         BooleanField,
+        BlobField,
         ForeignKeyField,
         CharField,
     )
@@ -506,6 +585,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
     class User(UserMixin, db.Model):
         email = TextField(unique=True, null=False)
         fs_uniquifier = TextField(unique=True, null=False)
+        fs_webauthn_uniquifier = TextField(unique=True, null=True)
         username = TextField(unique=True, null=True)
         security_number = IntegerField(null=True)
         password = TextField(null=True)
@@ -522,6 +602,21 @@ def peewee_setup(request, app, tmpdir, realdburl):
         active = BooleanField(default=True)
         confirmed_at = DateTimeField(null=True)
 
+    class WebAuthn(WebAuthnMixin, db.Model):
+        credential_id = BlobField(unique=True, null=False, index=True)
+        public_key = BlobField(null=False)
+        sign_count = IntegerField(default=0)
+        transports = TextField(null=True)  # comma separated
+
+        # a JSON string as returned from registration
+        extensions = TextField(null=True)
+        lastuse_datetime = DateTimeField(null=False)
+        # name is provided by user - we make sure is unique per user
+        name = TextField(null=False)
+
+        # This creates a real column called user_id
+        user = ForeignKeyField(User, backref="webauthn")
+
     class UserRoles(db.Model):
         """Peewee does not have built-in many-to-many support, so we have to
         create this mapping class to link users to roles."""
@@ -535,7 +630,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
             return self.role.get_permissions()
 
     with app.app_context():
-        for Model in (Role, User, UserRoles):
+        for Model in (Role, User, UserRoles, WebAuthn):
             Model.drop_table()
             Model.create_table()
 
@@ -550,7 +645,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
 
     request.addfinalizer(tear_down)
 
-    return PeeweeUserDatastore(db, User, Role, UserRoles)
+    return PeeweeUserDatastore(db, User, Role, UserRoles, WebAuthn)
 
 
 @pytest.fixture()

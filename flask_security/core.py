@@ -310,9 +310,9 @@ _default_config: t.Dict[str, t.Any] = {
     "WEBAUTHN": False,
     "WAN_CHALLENGE_BYTES": None,  # uses system default
     "WAN_RP_NAME": "My Flask App",
+    "WAN_SALT": "wan-salt",
     "WAN_REGISTER_TIMEOUT": 60000,  # milliseconds
     "WAN_REGISTER_TEMPLATE": "security/wan_register.html",
-    "WAN_REGISTER_SALT": "wan-register-salt",
     "WAN_REGISTER_URL": "/wan-register",
     "WAN_REGISTER_WITHIN": "30 minutes",
     "WAN_SIGNIN_TIMEOUT": 60000,  # milliseconds
@@ -510,7 +510,7 @@ _default_messages = {
         "error",
     ),
     "WEBAUTHN_ORPHAN_CREDENTIAL_ID": (
-        _("WebAuthn credential doesn't below to any user."),
+        _("WebAuthn credential doesn't belong to any user."),
         "error",
     ),
     "WEBAUTHN_NO_VERIFY": (
@@ -652,7 +652,7 @@ def _get_hashing_context(app: "flask.Flask") -> CryptContext:
 
 def _get_serializer(app, name):
     secret_key = app.config.get("SECRET_KEY")
-    salt = app.config.get("SECURITY_%s_SALT" % name.upper())
+    salt = cv(f"{name.upper()}_SALT", app=app)
     return URLSafeTimedSerializer(secret_key=secret_key, salt=salt)
 
 
@@ -942,7 +942,15 @@ class UserMixin(BaseUserMixin):
 
 
 class WebAuthnMixin:
-    ...
+    def get_user_mapping(self) -> t.Dict[str, t.Any]:
+        """
+        Return the filter needed by find_user() to get the user
+        associated with this webauthn credential.
+        Note that this probably has to be overridden using mongoengine.
+
+        .. versionadded:: 4.2.0
+        """
+        return dict(id=self.user_id)  # type: ignore
 
 
 class AnonymousUser(AnonymousUserMixin):

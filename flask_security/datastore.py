@@ -133,6 +133,11 @@ class UserDatastore:
         datastore (by calling self.put(<object>). If the datastore is session based
         (such as for SQLAlchemyDatastore) it is up to caller to actually
         commit the transaction by calling datastore.commit().
+
+
+    .. note::
+        You must implement get_user_mapping in your WebAuthn model
+        if your User model doesn't have a primary key Column called 'id'
     """
 
     def __init__(
@@ -168,18 +173,15 @@ class UserDatastore:
 
         return kwargs
 
-    def find_user(
-        self, case_insensitive: bool = False, **kwargs: t.Any
-    ) -> t.Union["User", None]:
-        """Returns a user matching the provided parameters."""
+    def find_user(self, **kwargs: t.Any) -> t.Union["User", None]:
+        """Returns a user matching the provided parameters.
+        Besides keyword arguments used to filter the results,
+        'case_insensitive' can be passed (defaults to False)
+        """
         raise NotImplementedError
 
     def find_role(self, role: str) -> t.Union["Role", None]:
         """Returns a role matching the provided name."""
-        raise NotImplementedError
-
-    def find_webauthn(self, **kwargs: t.Any) -> t.Union["WebAuthn", None]:
-        """Returns a credential matching the id."""
         raise NotImplementedError
 
     def add_role_to_user(self, user: "User", role: t.Union["Role", str]) -> bool:
@@ -556,27 +558,35 @@ class UserDatastore:
     def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
         """
         Create a new webauthn registration record.
+        Note that we need to find webauthn records per user as well as
+        find a user from a given webauthn (credential_id) record.
 
         .. versionadded: 4.2.0
         """
-
-        if not hasattr(self, "webauthn_model") or not self.webauthn_model:
-            raise NotImplementedError
-        if not all(
-            k in kwargs for k in ["name", "credential_id", "public_key", "sign_count"]
-        ):
-            raise ValueError("Missing kwarg for webauthn registration")
-        webauthn = self.webauthn_model(
-            lastuse_datetime=datetime.datetime.utcnow(), **kwargs
-        )
-        user.webauthn.append(webauthn)
-        self.put(user)  # type: ignore
+        raise NotImplementedError
 
     def delete_webauthn(self, webauthn: "WebAuthn") -> None:
         """
         .. versionadded: 4.2.0
         """
         self.delete(webauthn)  # type: ignore
+
+    def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
+        """Returns a credential matching the id.
+
+        .. versionadded: 4.2.0
+        """
+        raise NotImplementedError
+
+    def find_user_from_webauthn(self, webauthn: "WebAuthn") -> t.Union["User", None]:
+        """Returns user associated with this webauthn credential
+
+        .. versionadded: 4.2.0
+        """
+        if not self.webauthn_model:
+            raise NotImplementedError
+        user_filter = webauthn.get_user_mapping()
+        return self.find_user(**user_filter)
 
 
 class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
@@ -629,8 +639,20 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
     def find_role(self, role: str) -> t.Union["Role", None]:
         return self.role_model.query.filter_by(name=role).first()  # type: ignore
 
-    def find_webauthn(self, **kwargs: t.Any) -> t.Union["WebAuthn", None]:
-        return self.webauthn_model.query.filter_by(**kwargs).first()  # type: ignore
+    def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
+        return self.webauthn_model.query.filter_by(  # type: ignore
+            credential_id=credential_id
+        ).first()
+
+    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+        if not hasattr(self, "webauthn_model") or not self.webauthn_model:
+            raise NotImplementedError
+        webauthn = self.webauthn_model(
+            lastuse_datetime=datetime.datetime.utcnow(), **kwargs
+        )
+        user.webauthn.append(webauthn)
+        self.put(webauthn)  # type: ignore
+        self.put(user)  # type: ignore
 
 
 class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastore):
@@ -704,16 +726,38 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
                     raise ValueError("Case insensitive option only supports single key")
                 attr, identifier = kwargs.popitem()
                 query = {f"{attr}__iexact": identifier}
-                return self.user_model.objects(**query).first()
+                obj = self.user_model.objects(**query).first()
             else:
                 queries = map(lambda i: Q(**{i[0]: i[1]}), kwargs.items())
                 query = QCombination(QCombination.AND, queries)
-                return self.user_model.objects(query).first()
+                obj = self.user_model.objects(query).first()
         except ValidationError:  # pragma: no cover
             return None
+        return obj
 
     def find_role(self, role):
         return self.role_model.objects(name=role).first()
+
+    def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
+        if not self.webauthn_model:
+            raise NotImplementedError
+
+        obj = self.webauthn_model.objects(  # type: ignore
+            credential_id=credential_id
+        ).first()
+        return obj
+
+    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+        if not hasattr(self, "webauthn_model") or not self.webauthn_model:
+            raise NotImplementedError
+        webauthn = self.webauthn_model(
+            lastuse_datetime=datetime.datetime.utcnow(),
+            user=user,
+            **kwargs,
+        )
+        user.webauthn.append(webauthn)
+        self.put(webauthn)  # type: ignore
+        self.put(user)  # type: ignore
 
 
 class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
@@ -722,12 +766,6 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
     `Peewee Flask utils \
        <https://docs.peewee-orm.com/en/latest/peewee/playhouse.html#flask-utils>`_
     for datastore transactions.
-
-    :param db:
-    :param user_model: See :ref:`Models <models_topic>`.
-    :param role_model: See :ref:`Models <models_topic>`.
-    :param role_link:
-    :param webauthn_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(self, db, user_model, role_model, role_link, webauthn_model=None):
@@ -736,6 +774,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         :param user_model: A user model class definition
         :param role_model: A role model class definition
         :param role_link: A model implementing the many-to-many user-role relation
+        :param webauthn_model: A webauthn model class definition
 
         """
         PeeweeDatastore.__init__(self, db)
@@ -812,6 +851,24 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
             return True
         else:
             return False
+
+    def find_webauthn(self, credential_id):
+        if not self.webauthn_model:
+            raise NotImplementedError
+        try:
+            return self.webauthn_model.filter(credential_id=credential_id).get()
+        except self.webauthn_model.DoesNotExist:
+            return None
+
+    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+        if not hasattr(self, "webauthn_model") or not self.webauthn_model:
+            raise NotImplementedError
+        webauthn = self.webauthn_model(
+            lastuse_datetime=datetime.datetime.utcnow(),
+            user=user,
+            **kwargs,
+        )
+        self.put(webauthn)  # type: ignore
 
 
 class PonyUserDatastore(PonyDatastore, UserDatastore):
@@ -916,9 +973,8 @@ if t.TYPE_CHECKING:  # pragma: no cover
         public_key: bytes
         sign_count: int
         transports: t.Optional[str]
-        create_datetime: datetime.datetime
         lastuse_datetime: datetime.datetime
-        user_id: str
+        user_id: int
 
         def __init__(self, **kwargs):
             ...
