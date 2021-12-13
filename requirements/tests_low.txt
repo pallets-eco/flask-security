@@ -8,7 +8,7 @@ peewee==3.11.2
 argon2_cffi==20.1.0
 babel==2.7.0
 bcrypt==3.2.0
-bleach==3.2.2
+bleach==3.3.0
 # These 2 come from webauthn requirements
 cryptography==3.0.0;python_version<'3.8'
 cryptography==3.4.7;python_version>='3.8'
