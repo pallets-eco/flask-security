@@ -1,7 +1,7 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 default_language_version:
-    python: python3.8
+    python: python3.9
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
@@ -17,9 +17,9 @@ repos:
     rev: v2.29.1
     hooks:
     -   id: pyupgrade
-        args: [--py36-plus]
+        args: [--py37-plus]
 -   repo: https://github.com/psf/black
-    rev: 21.11b1
+    rev: 21.12b0
     hooks:
     -   id: black
 -   repo: https://gitlab.com/pycqa/flake8

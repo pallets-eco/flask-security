@@ -21,16 +21,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: '3.6', tox: 'py36-release'}
-          - {python: '3.6', tox: 'py36-low'}
           - {python: '3.7', tox: 'py37-release'}
           - {python: '3.7', tox: 'py37-low'}
           - {python: '3.8', tox: 'py38-release'}
           - {python: '3.8', tox: 'py38-low'}
           - {python: '3.9', tox: 'py39-release'}
           - {python: '3.9', tox: 'py39-low'}
-          - {python: 'pypy3', tox: 'pypy3-release'}
-          - {python: 'pypy3', tox: 'pypy3-low'}
+          - {python: '3.10', tox: 'py310-release'}
+          - {python: '3.10', tox: 'py310-low'}
+          - {python: 'pypy-3.8', tox: 'pypy38-release'}
+          - {python: 'pypy-3.8', tox: 'pypy38-low'}
 
     steps:
       - uses: actions/checkout@v2
@@ -63,21 +63,21 @@ jobs:
         - uses: actions/checkout@v2
         - uses: actions/setup-python@v2
           with:
-            python-version: "3.8"
+            python-version: "3.9"
         - name: update pip
           run: |
             pip install -U wheel setuptools
             python -m pip install -U pip
-        - name: Style, docs, mypy, nobabel
+        - name: Style, docs, mypy, nobabel, nowebauthn
           run: |
             pip install tox
-            tox -e style -e docs -e nobabel -e mypy
+            tox -e style -e docs -e nobabel -e mypy -e nowebauthn
         - name: Coverage
           run: |
             pip install tox coverage
             tox -e coverage
         - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v1
+          uses: codecov/codecov-action@v2
           with:
             fail_ci_if_error: false
   realdb:
@@ -103,7 +103,7 @@ jobs:
         - uses: actions/checkout@v2
         - uses: actions/setup-python@v2
           with:
-            python-version: "3.8"
+            python-version: "3.9"
         - name: update pip
           run: |
             pip install -U wheel setuptools
