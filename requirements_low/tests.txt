@@ -14,7 +14,7 @@ cryptography==3.0.0;python_version<'3.8'
 cryptography==3.4.7;python_version>='3.8'
 python-dateutil==2.8.2
 # next 2 come from minimums from Flask 1.1.2 and need newer jinja2 for 3.10
-jinja2==2.11.0
+jinja2==2.11.3
 itsdangerous==1.1.0
 mongoengine==0.22.1
 mongomock==3.22.0
