@@ -22,6 +22,7 @@ pip-log.txt
 .coverage*
 .tox
 .travis*requirements*
+coverage.xml
 
 #Translations
 *.mo
