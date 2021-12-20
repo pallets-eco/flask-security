@@ -16,7 +16,6 @@ import typing as t
 from flask import Markup, current_app, request
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
-from werkzeug.local import LocalProxy
 from wtforms import (
     BooleanField,
     Field,
@@ -38,6 +37,7 @@ from wtforms.validators import StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
 from .confirmable import requires_confirmation
+from .proxies import _security
 from .utils import (
     _,
     _datastore,
@@ -52,8 +52,8 @@ from .utils import (
     validate_redirect_url,
 )
 
-# Convenient references
-_security = LocalProxy(lambda: current_app.extensions["security"])
+if t.TYPE_CHECKING:  # pragma: no cover
+    from .datastore import User
 
 _default_field_labels = {
     "email": _("Email Address"),
@@ -621,7 +621,7 @@ class ChangePasswordForm(Form, PasswordFormMixin):
         return True
 
 
-class TwoFactorSetupForm(Form, UserEmailFormMixin):
+class TwoFactorSetupForm(Form):
     """The Two-factor token validation form"""
 
     setup = RadioField(
@@ -635,6 +635,7 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
             ("sms", "Set up using SMS"),
             ("disable", "Disable two factor authentication"),
         ],
+        validate_choice=False,
     )
     phone = StringField(get_form_field_label("phone"))
     submit = SubmitField(get_form_field_label("submit"))
@@ -642,18 +643,16 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        # TODO: the super class validate is never called - thus we have to
-        # initialize errors to lists below. It also means that 'email' is never
-        # validated - though it isn't required so the mixin might not be correct.
-        choices = cv("TWO_FACTOR_ENABLED_METHODS")
+    def validate(self) -> bool:
+        if not super().validate():  # pragma: no cover
+            return False
+        choices = list(cv("TWO_FACTOR_ENABLED_METHODS"))
         if "email" in choices:
             # backwards compat
             choices.append("mail")
         if not cv("TWO_FACTOR_REQUIRED"):
             choices.append("disable")
         if "setup" not in self.data or self.data["setup"] not in choices:
-            self.setup.errors = list()
             self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
             return False
         if self.setup.data == "sms" and self.phone.data and len(self.phone.data) > 0:
@@ -669,17 +668,23 @@ class TwoFactorSetupForm(Form, UserEmailFormMixin):
         return True
 
 
-class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
+class TwoFactorVerifyCodeForm(Form):
     """The Two-factor token validation form"""
 
     code = StringField(get_form_field_label("code"))
     submit = SubmitField(get_form_field_label("submitcode"))
 
+    window: int
+    primary_method: str
+    tf_totp_secret: str
+    user: "User"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        # codes sent by sms or mail will be valid for another window cycle
+    def validate(self) -> bool:
+        if not super().validate():  # pragma: no cover
+            return False
         if (
             self.primary_method == "google_authenticator"
             or self.primary_method == "authenticator"
@@ -699,9 +704,7 @@ class TwoFactorVerifyCodeForm(Form, UserEmailFormMixin):
             user=self.user,
             window=self.window,
         ):
-            self.code.errors = list()
             self.code.errors.append(get_message("TWO_FACTOR_INVALID_TOKEN")[0])
-
             return False
 
         return True
@@ -722,7 +725,7 @@ class TwoFactorRescueForm(Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
+    def validate(self) -> bool:
         if not super().validate():
             return False
         return True

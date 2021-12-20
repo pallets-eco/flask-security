@@ -26,7 +26,7 @@ from flask_security.signals import (
 )
 from flask_security.utils import hash_data, hash_password
 
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.http import parse_cookie
 
 _missing = object
@@ -292,3 +292,22 @@ def get_auth_token_version_3x(app, user):
     if hasattr(user, "fs_uniquifier"):
         data.append(user.fs_uniquifier)
     return app.security.remember_token_serializer.dumps(data)
+
+
+class FakeSerializer:
+    def __init__(self, age=None, invalid=False):
+        self.age = age
+        self.invalid = invalid
+
+    def loads(self, token, max_age):
+        if self.age:
+            assert max_age == self.age
+            raise SignatureExpired("expired")
+        if self.invalid:
+            raise BadSignature("bad")
+
+    def loads_unsafe(self, token):
+        return None, None
+
+    def dumps(self, state):
+        return "heres your state"

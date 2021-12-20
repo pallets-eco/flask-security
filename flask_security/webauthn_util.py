@@ -19,7 +19,7 @@ try:
         AuthenticatorSelectionCriteria,
         ResidentKeyRequirement,
     )
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 
@@ -29,6 +29,16 @@ if t.TYPE_CHECKING:  # pragma: no cover
 
 
 class WebauthnUtil:
+    """
+    Utility class allowing an application to fine-tune various Relying Party
+    attributes.
+
+    To provide your own implementation, pass in the class as ``webauthn_util_cls``
+    at init time.  Your class will be instantiated once as part of app initialization.
+
+    .. versionadded:: 4.2.0
+    """
+
     def __init__(self, app: "flask.Flask"):
         """Instantiate class.
 
@@ -48,15 +58,19 @@ class WebauthnUtil:
         """
         Part of the registration ceremony is providing information about what kind
         of authenticators the app is interested in.
-        See: https://www.w3.org/TR/2021/REC-webauthn-2-20210408
-        /#dictionary-authenticatorSelection
+        See: https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-authenticatorSelection
 
-        Simply - if the key isn't resident then it isn't discoverable which means that
+        The main options are:
+            - whether you want a ResidentKey (discoverable)
+            - Attachment - platform or cross-platform
+            - Does the key have to provide user-verification
+
+        Note1 - if the key isn't resident then it isn't discoverable which means that
         the user won't be able to use that key unless they identify themselves
         (use the key as a second factor OR type in their identity). If they are forced
         to type in their identity PRIOR to be authenticated, then there is the
         possibility that the app will leak username information.
-        """
+        """  # noqa: E501
         return AuthenticatorSelectionCriteria(
             resident_key=ResidentKeyRequirement.PREFERRED
         )

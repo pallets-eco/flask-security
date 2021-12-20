@@ -14,7 +14,6 @@ from contextlib import contextmanager
 from datetime import timedelta
 from passlib.totp import TOTP
 import re
-import time
 from urllib.parse import parse_qsl, urlsplit
 
 import pytest
@@ -22,6 +21,7 @@ from flask import Flask
 from tests.test_utils import (
     SmsBadSender,
     SmsTestSender,
+    FakeSerializer,
     authenticate,
     capture_flashes,
     capture_reset_password_requests,
@@ -803,13 +803,14 @@ def test_setup_bad_token(app, client, get_message):
     assert get_message("API_ERROR") in response.data
 
 
-@pytest.mark.settings(us_setup_within="1 milliseconds")
+@pytest.mark.settings(us_setup_within="2 seconds")
 def test_setup_timeout(app, client, get_message):
     # Test setup timeout
     us_authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     sms_sender = SmsSenderFactory.createSender("test")
+    app.security.us_setup_serializer = FakeSerializer(2.0)
     response = client.post(
         "us-setup",
         json=dict(chosen_method="sms", phone="650-555-1212"),
@@ -817,7 +818,6 @@ def test_setup_timeout(app, client, get_message):
     )
     assert response.status_code == 200
     state = response.json["response"]["state"]
-    time.sleep(1)
 
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post(

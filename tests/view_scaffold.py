@@ -141,7 +141,7 @@ def create_app():
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
-    Security(app, user_datastore, webauthn_util_cls=TestWebauthnUtil)
+    security = Security(app, user_datastore, webauthn_util_cls=TestWebauthnUtil)
 
     try:
         import flask_babel
@@ -221,9 +221,13 @@ def create_app():
     @login_required
     def home():
         return render_template_string(
-            "{% include 'security/_messages.html' %}"
-            "{{ _fsdomain('Welcome') }} {{email}} !",
+            """
+            {% include 'security/_messages.html' %}
+            {{ _fsdomain('Welcome') }} {{email}} !
+            {% include "security/_menu.html" %}
+            """,
             email=current_user.email,
+            security=security,
         )
 
     @app.route("/basicauth")

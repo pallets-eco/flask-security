@@ -143,7 +143,8 @@ def tf_login(user, remember=None, primary_authn_via=None):
     This is called only when login/password have already been validated.
     This can be from login, register, confirm, unified sign in, unified magic link.
 
-    The result of this is either sending a 2FA token OR starting setup for new user.
+    If two-factor is already setup then this sends a code if the method requires it.
+    If not, then user is redirected to two-factor-setup.
     In either case we do NOT log in user, so we must store some info in session to
     track our state (including what user).
     """
@@ -170,7 +171,12 @@ def tf_login(user, remember=None, primary_authn_via=None):
         session["tf_state"] = "ready"
         json_response["tf_state"] = "ready"
         json_response["tf_primary_method"] = user.tf_primary_method
-        # TODO add webauthn
+        methods = []
+        if user.tf_primary_method:
+            methods.append(user.tf_primary_method)
+        if has_webauthn_tf(user):
+            methods.append("webauthn")
+        json_response["tf_methods"] = methods
 
         if user.tf_primary_method in ["mail", "email", "sms"]:
             msg = user.tf_send_security_token(

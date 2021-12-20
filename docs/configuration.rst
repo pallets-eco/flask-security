@@ -1330,6 +1330,34 @@ WebAuthn
 
     Default: ``"My Flask App"``
 
+.. py:data:: SECURITY_WAN_REGISTER_WITHIN
+
+    Specifies the amount of time a user has before their register
+    token expires. Always pluralize the time unit for this value.
+
+    Default: "30 minutes"
+
+.. py:data:: SECURITY_WAN_REGISTER_TIMEOUT
+
+    Specifies the timeout that is passed as part of PublicKeyCredentialCreationOptions.
+    In milliseconds.
+
+    Default: "60000"
+
+.. py:data:: SECURITY_WAN_SIGNIN_WITHIN
+
+    Specifies the amount of time a user has before their signin
+    token expires. Always pluralize the time unit for this value.
+
+    Default: "1 minutes"
+
+.. py:data:: SECURITY_WAN_SIGNIN_TIMEOUT
+
+    Specifies the timeout that is passed as part of PublicKeyCredentialRequestOptions.
+    In milliseconds.
+
+    Default: "60000"
+
 Feature Flags
 -------------
 All feature flags. By default all are 'False'/not enabled.

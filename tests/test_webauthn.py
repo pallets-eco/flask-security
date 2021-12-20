@@ -8,6 +8,8 @@
     :license: MIT, see LICENSE for more details.
 
 """
+
+import copy
 import datetime
 from dateutil import parser
 import json
@@ -16,6 +18,7 @@ import typing as t
 
 import pytest
 from tests.test_utils import (
+    FakeSerializer,
     authenticate,
     capture_flashes,
     logout,
@@ -191,6 +194,7 @@ def test_basic(app, clients, get_message):
     allow_credentials = signin_options["allowCredentials"]
     assert len(allow_credentials) == 1
     assert allow_credentials[0]["id"] == REG_DATA1["id"]
+    assert allow_credentials[0]["transports"] == ["usb"]
 
     response = clients.post(
         response_url,
@@ -273,6 +277,7 @@ def test_basic_json(app, clients, get_message):
     response = clients.get("/wan-register", headers=headers)
     active_creds = response.json["response"]["registered_credentials"]
     assert parser.parse(active_creds[0]["lastuse"]) != fake_dt
+    assert active_creds[0]["transports"] == ["usb"]
 
 
 @pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
@@ -371,3 +376,197 @@ def test_delete_json(app, clients, get_message):
 
     response = clients.post("/wan-delete", json=dict(name="testr3"))
     assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+def test_disabled_account(app, client, get_message):
+    authenticate(client)
+
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.deactivate_user(user)
+        app.security.datastore.commit()
+
+    response = client.post("wan-signin", json=dict(identity="matt@lp.com"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["identity"][0].encode(
+        "utf-8"
+    ) == get_message("DISABLED_ACCOUNT")
+
+
+@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+def test_unk_credid(app, client, get_message):
+    authenticate(client)
+
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    assert len(signin_options["allowCredentials"]) == 1
+
+    bad_signin = copy.deepcopy(SIGNIN_DATA1)
+    bad_signin["rawId"] = bad_signin["rawId"].replace("w", "d")
+
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(bad_signin)),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")
+
+
+@pytest.mark.two_factor()
+@pytest.mark.unified_signin()
+@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+def test_tf(app, client, get_message):
+    # Test using webauthn key as a second factor
+    authenticate(client)
+
+    register_options, response_url = _register_start(client, name="testr3")
+    response = client.post(
+        response_url, data=dict(credential=json.dumps(REG_DATA1)), follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert get_message("WEBAUTHN_REGISTER_SUCCESSFUL", name="testr3") in response.data
+
+    logout(client)
+
+    # log back in - should require MFA.
+    response = client.post(
+        "/us-signin",
+        data=dict(identity="matt@lp.com", passcode="password", remember=True),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"matt@lp.com" in response.data
+    # verify NOT logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert "localhost/login" in response.location
+
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 200
+
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+
+@pytest.mark.two_factor()
+@pytest.mark.unified_signin()
+@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+def test_tf_json(app, client, get_message):
+    # Test using webauthn key as a second factor
+    authenticate(client)
+
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    logout(client)
+
+    # log back in - should require MFA.
+    response = client.post(
+        "/us-signin",
+        json=dict(identity="matt@lp.com", passcode="password", remember=True),
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_methods"] == ["webauthn"]
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"
+
+    # verify NOT logged in
+    response = client.get("/profile", headers={"accept": "application/json"})
+    assert response.status_code == 401
+
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 200
+
+    # verify actually logged in
+    response = client.get("/profile", headers={"accept": "application/json"})
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(
+    webauthn_util_cls=TestWebauthnUtil, wan_register_within="1 seconds"
+)
+def test_register_timeout(app, client, get_message):
+
+    authenticate(client)
+
+    app.security.wan_serializer = FakeSerializer(1.0)
+    register_options, response_url = _register_start_json(client, name="testr3")
+
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "WEBAUTHN_EXPIRED", within=app.config["SECURITY_WAN_REGISTER_WITHIN"]
+    )
+
+
+@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil, wan_signin_within="2 seconds")
+def test_signin_timeout(app, client, get_message):
+
+    authenticate(client)
+
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    app.security.wan_serializer = FakeSerializer(2.0)
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "WEBAUTHN_EXPIRED", within=app.config["SECURITY_WAN_SIGNIN_WITHIN"]
+    )
+
+
+@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+def test_bad_token(app, client, get_message):
+    authenticate(client)
+
+    response = client.post("/wan-register/not a token", json=dict())
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
+    # same w/o json
+    response = client.post(
+        "/wan-register/not a token", data=dict(), follow_redirects=True
+    )
+    assert get_message("API_ERROR") in response.data
+
+    # Test signin
+    logout(client)
+
+    response = client.post("/wan-signin/not a token", json=dict())
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
+    # same w/o json
+    response = client.post(
+        "/wan-signin/not a token", data=dict(), follow_redirects=True
+    )
+    assert get_message("API_ERROR") in response.data
