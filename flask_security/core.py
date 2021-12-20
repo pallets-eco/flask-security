@@ -477,7 +477,7 @@ _default_messages = {
         _("%(username)s is already associated with an account."),
         "error",
     ),
-    "WAN_EXPIRED": (
+    "WEBAUTHN_EXPIRED": (
         _("WebAuthn operation must be completed within %(within)s. Please start over."),
         "error",
     ),
@@ -494,11 +494,11 @@ _default_messages = {
         "error",
     ),
     "WEBAUTHN_CREDENTIAL_DELETED": (
-        _("Successfully deleted WebAuthn credential with name %(name)s"),
+        _("Successfully deleted WebAuthn credential with name: %(name)s"),
         "info",
     ),
     "WEBAUTHN_REGISTER_SUCCESSFUL": (
-        _("Successfully added WebAuthn credential with name %(name)s"),
+        _("Successfully added WebAuthn credential with name: %(name)s"),
         "info",
     ),
     "WEBAUTHN_CREDENTIAL_ID_INUSE": (

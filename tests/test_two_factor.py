@@ -362,14 +362,14 @@ def test_two_factor_flag(app, client):
     response = client.post("/tf-validate", data=dict(code=wrong_code))
     assert b"Invalid Token" in response.data
 
-    # sumbit right token and show appropriate response
+    # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your token has been confirmed" in response.data
 
-    # Upon completion, session cookie shouldnt have any two factor stuff in it.
+    # Upon completion, session cookie shouldn't have any two factor stuff in it.
     assert not tf_in_session(get_session(response))
 
-    # Test change two_factor view to from sms to mail
+    # Test change two_factor view from sms to mail
     with app.mail.record_messages() as outbox:
         setup_data = dict(setup="email")
         response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
@@ -379,10 +379,11 @@ def test_two_factor_flag(app, client):
         # Fetch token validate form
         response = client.get("/tf-validate")
         assert response.status_code == 200
+        # make sure two_factor_verify_code_form is set
         assert b'name="code"' in response.data
 
     code = outbox[0].body.split()[-1]
-    # sumbit right token and show appropriate response
+    # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed your two-factor method" in response.data
 
@@ -449,7 +450,7 @@ def test_two_factor_flag(app, client):
     assert b"Open an authenticator app on your device" in response.data
     assert b"data:image/svg+xml;base64," in response.data
 
-    # check appearence of setup page when sms picked and phone number entered
+    # check appearance of setup page when sms picked and phone number entered
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)

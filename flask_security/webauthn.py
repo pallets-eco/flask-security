@@ -21,7 +21,6 @@
 
     TODO:
         - deal with fs_webauthn_uniquifier for existing users
-        - unit tests!
         - docs!
         - openapi.yml
         - add signals
@@ -73,7 +72,7 @@ try:
         UserVerificationRequirement,
     )
     from webauthn.helpers import bytes_to_base64url
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
@@ -139,7 +138,7 @@ class WebAuthnRegisterResponseForm(Form):
 
     def validate(self) -> bool:
         if not super().validate():
-            return False
+            return False  # pragma: no cover
         inuse = any([self.name == cred.name for cred in current_user.webauthn])
         if inuse:
             msg = get_message("WEBAUTHN_NAME_INUSE", name=self.name)[0]
@@ -167,13 +166,16 @@ class WebAuthnRegisterResponseForm(Form):
                 get_message("WEBAUTHN_NO_VERIFY", cause=str(exc))[0]
             )
             return False
-        self.transports = (
-            [tr.value for tr in reg_cred.transports] if reg_cred.transports else []
-        )
-        # Alas py_webauthn doesn't support extensions yet - so we have to dig in
+
+        # Alas py_webauthn doesn't support extensions nor transports yet
         response_full = json.loads(self.credential.data)
         # TODO - verify this is JSON (created with JSON.stringify)
         self.extensions = response_full.get("extensions", None)
+        self.transports = (
+            [tr for tr in response_full["transports"]]
+            if response_full.get("transports", None)
+            else []
+        )
         return True
 
 
@@ -197,7 +199,7 @@ class WebAuthnSigninForm(Form):
 
     def validate(self):
         if not super().validate():
-            return False
+            return False  # pragma: no cover
         if self.identity.data:
             self.user = find_user(self.identity.data)
             if not self.user:
@@ -236,8 +238,10 @@ class WebAuthnSigninResponseForm(Form):
                 get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")[0]
             )
             return False
+        # This shouldn't be able to happen if datastore properly cascades
+        # delete
         self.user = _datastore.find_user_from_webauthn(self.cred)
-        if not self.user:
+        if not self.user:  # pragma: no cover
             self.credential.errors.append(
                 get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID")[0]
             )
@@ -356,7 +360,7 @@ def webauthn_register() -> "ResponseValue":
         cl = {
             "name": cred.name,
             "credential_id": bytes_to_base64url(cred.credential_id),
-            "transports": cred.transports,
+            "transports": cred.transports.split(","),
             "lastuse": cred.lastuse_datetime.isoformat(),
         }
         # TODO: i18n
@@ -398,7 +402,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("WAN_EXPIRED", within=cv("WAN_REGISTER_WITHIN"))
+        m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_REGISTER_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
             payload = json_error_response(errors=m)
@@ -511,7 +515,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("WAN_EXPIRED", within=cv("WAN_SIGNIN_WITHIN"))
+        m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_SIGNIN_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
             payload = json_error_response(errors=m)

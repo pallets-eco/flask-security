@@ -943,6 +943,7 @@ def two_factor_token_validation():
             cv("TWO_FACTOR_SETUP_TEMPLATE"),
             two_factor_setup_form=setup_form,
             two_factor_verify_code_form=form,
+            chosen_method=pm,
             choices=cv("TWO_FACTOR_ENABLED_METHODS"),
             **_ctx("tf_setup"),
         )
@@ -962,6 +963,7 @@ def two_factor_token_validation():
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
+            chosen_method=pm,
             has_webauthn=has_webauthn,
             wan_signin_form=wan_signin_form,
             problem=None,
@@ -1038,6 +1040,7 @@ def two_factor_rescue():
         cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
         two_factor_rescue_form=form,
+        chosen_method=user.tf_primary_method,
         rescue_mail=cv("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
         **_ctx("tf_token_validation"),

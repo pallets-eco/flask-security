@@ -765,7 +765,7 @@ def check_and_get_token_status(
     :param token: The token to check
     :param serializer_name: The name of the serializer. Can be one of the
                        following: ``confirm``, ``login``, ``reset``, ``us_setup``
-                       ``remember``, ``two_factor_validity``
+                       ``remember``, ``two_factor_validity``, ``wan``
     :param within: max age - passed as a timedelta
 
     :return: a tuple of (expired, invalid, data)

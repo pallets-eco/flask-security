@@ -17,6 +17,7 @@
   <h1>{{ _fsdomain("Setup New WebAuthn Security Key") }}</h1>
   {% if not credential_options %}
     {# Initial form to get CreateOptions #}
+    <div>{{ _fsdomain("Start by providing a unique name for your new security key:") }}</div>
     <form action="{{ url_for_security("wan_register") }}" method="POST"
             name="wan_register_form" id="wan-register-form">
         {{ wan_register_form.hidden_tag() }}
@@ -48,10 +49,10 @@
   {% endif %}
 
   {% if registered_credentials %}
-    <h3>Currently registered security keys:</h3>
+    <h3>{{ _fsdomain("Currently registered security keys:") }}</h3>
     <ul>
       {% for cred in registered_credentials %}
-        <li>Nickname: "{{ cred.name }}" transports: "{{ cred.transports }}" discoverable: "{{ cred.discoverable }}" last used on {{ cred.lastuse }}</li>
+        <li>Nickname: "{{ cred.name }}" transports: "{{ cred.transports|join(", ") }}" discoverable: "{{ cred.discoverable }}" last used on {{ cred.lastuse }}</li>
       {% endfor %}
     </ul>
   {% endif %}
@@ -66,4 +67,5 @@
         {{ render_field(wan_delete_form.submit) }}
       </form>
   {% endif %}
+  {% include "security/_menu.html" %}
 {% endblock %}

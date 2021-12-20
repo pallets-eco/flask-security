@@ -79,8 +79,8 @@
     {% if security.webauthn %}
       <h3>WebAuthn</h3>
       <div class="fs-div">
-        Your application supports WebAuthn security keys. You can set them up
-        <a href="{{ url_for_security('wan_register') }}">here.</a>
+        {{ _fsdomain("This application supports WebAuthn security keys.") }}
+        <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</a>
       </div>
     {% endif %}
     {% if state %}
@@ -91,5 +91,6 @@
         {{ render_field_with_errors(us_setup_validate_form.passcode) }}
         {{ render_field(us_setup_validate_form.submit) }}
       </form>
-    {%  endif %}
+    {% endif %}
+    {% include "security/_menu.html" %}
 {% endblock %}
