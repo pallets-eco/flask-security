@@ -1,6 +1,6 @@
 -r docs.txt
 -r tests.txt
-mypy==0.910
+mypy==0.920
 wheel
 psycopg2
 pymysql
