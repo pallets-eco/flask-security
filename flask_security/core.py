@@ -1070,11 +1070,15 @@ class Security:
         us_setup_form: t.Type[FlaskForm] = UnifiedSigninSetupForm,
         us_setup_validate_form: t.Type[FlaskForm] = UnifiedSigninSetupValidateForm,
         us_verify_form: t.Type[FlaskForm] = UnifiedVerifyForm,
-        wan_register_form: t.Type[FlaskForm] = WebAuthnRegisterForm,
-        wan_register_response_form: t.Type[FlaskForm] = WebAuthnRegisterResponseForm,
-        wan_signin_form: t.Type[FlaskForm] = WebAuthnSigninForm,
-        wan_signin_response_form: t.Type[FlaskForm] = WebAuthnSigninResponseForm,
-        wan_delete_form: t.Type[FlaskForm] = WebAuthnDeleteForm,
+        wan_register_form: t.Type[WebAuthnRegisterForm] = WebAuthnRegisterForm,
+        wan_register_response_form: t.Type[
+            WebAuthnRegisterResponseForm
+        ] = WebAuthnRegisterResponseForm,
+        wan_signin_form: t.Type[WebAuthnSigninForm] = WebAuthnSigninForm,
+        wan_signin_response_form: t.Type[
+            WebAuthnSigninResponseForm
+        ] = WebAuthnSigninResponseForm,
+        wan_delete_form: t.Type[WebAuthnDeleteForm] = WebAuthnDeleteForm,
         anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
         login_manager: t.Optional["flask_login.LoginManager"] = None,
         json_encoder_cls: t.Type[JSONEncoder] = FsJsonEncoder,
@@ -1779,3 +1783,13 @@ class Security:
         self, fn: t.Callable[[], t.Dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("us_verify", fn)
+
+    def wan_register_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("wan_register", fn)
+
+    def wan_signin_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("wan_signin", fn)

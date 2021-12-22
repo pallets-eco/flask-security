@@ -27,6 +27,8 @@ from tests.test_utils import (
 from flask_security import (
     WebauthnUtil,
     user_authenticated,
+    wan_registered,
+    wan_deleted,
 )
 
 pytest.importorskip("webauthn")
@@ -162,6 +164,11 @@ def test_basic(app, clients, get_message):
     @user_authenticated.connect_via(app)
     def authned(myapp, user, **extra_args):
         auths.append((user.email, extra_args["authn_via"]))
+
+    @wan_registered.connect_via(app)
+    def pc(sender, user, name, **extra_args):
+        assert name == "testr1"
+        assert len(user.webauthn) == 1
 
     authenticate(clients)
 
@@ -317,6 +324,11 @@ def test_constraints(app, clients, get_message):
 
 @pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
 def test_delete(app, clients, get_message):
+    @wan_deleted.connect_via(app)
+    def pc(sender, user, name, **extra_args):
+        assert name == "testr3"
+        assert len(user.webauthn) == 1
+
     authenticate(clients)
     register_options, response_url = _register_start(clients, name="testr3")
     response = clients.post(
@@ -570,3 +582,44 @@ def test_bad_token(app, client, get_message):
         "/wan-signin/not a token", data=dict(), follow_redirects=True
     )
     assert get_message("API_ERROR") in response.data
+
+
+@pytest.mark.settings(
+    wan_register_template="custom_security/wan_register.html",
+    wan_signin_template="custom_security/wan_signin.html",
+)
+def test_wan_context_processors(client, app):
+    @app.security.context_processor
+    def default_ctx_processor():
+        return {"global": "global"}
+
+    @app.security.wan_register_context_processor
+    def register_ctx():
+        return {"foo": "register"}
+
+    authenticate(client)
+
+    response = client.get("wan-register")
+    assert b"CUSTOM WAN REGISTER" in response.data
+    assert b"global" in response.data
+    assert b"register" in response.data
+
+    response = client.post("wan-register", data=dict(name="matt@lp.com"))
+    assert b"CUSTOM WAN REGISTER" in response.data
+    assert b"global" in response.data
+    assert b"register" in response.data
+    logout(client)
+
+    @app.security.wan_signin_context_processor
+    def signin_ctx():
+        return {"foo": "signin"}
+
+    response = client.get("wan-signin")
+    assert b"CUSTOM WAN SIGNIN" in response.data
+    assert b"global" in response.data
+    assert b"signin" in response.data
+
+    response = client.post("wan-signin", data=dict(name="matt@lp.com"))
+    assert b"CUSTOM WAN SIGNIN" in response.data
+    assert b"global" in response.data
+    assert b"signin" in response.data

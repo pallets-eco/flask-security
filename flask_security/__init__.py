@@ -74,6 +74,8 @@ from .signals import (
     user_registered,
     us_security_token_sent,
     us_profile_changed,
+    wan_deleted,
+    wan_registered,
 )
 from .totp import Totp
 from .twofactor import tf_send_security_token
@@ -110,6 +112,13 @@ from .utils import (
     url_for_security,
     verify_password,
     verify_and_update_password,
+)
+from .webauthn import (
+    WebAuthnRegisterForm,
+    WebAuthnRegisterResponseForm,
+    WebAuthnSigninForm,
+    WebAuthnSigninResponseForm,
+    WebAuthnDeleteForm,
 )
 from .webauthn_util import WebauthnUtil
 
