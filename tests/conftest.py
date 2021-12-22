@@ -291,7 +291,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         lastuse_datetime = DateTimeField(required=True)
         # name is provided by user - we make sure it is unique per user
         name = StringField(max_length=64, required=True)
-        # we need to be able look up a user from a credential_id
+        # we need to be able to look up a user from a credential_id
         user = ReferenceField("User")
         # user_id = ObjectIdField(required=True)
         meta = {"db_alias": db_name}

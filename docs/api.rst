@@ -196,6 +196,19 @@ Utils
 .. autoclass:: flask_security.SmsSenderFactory
   :members: createSender
 
+Forms
+-----
+
+.. autoclass:: flask_security.WebAuthnRegisterForm
+
+.. autoclass:: flask_security.WebAuthnRegisterResponseForm
+
+.. autoclass:: flask_security.WebAuthnSigninForm
+
+.. autoclass:: flask_security.WebAuthnSigninResponseForm
+
+.. autoclass:: flask_security.WebAuthnDeleteForm
+
 .. _signals_topic:
 
 Signals
@@ -303,5 +316,19 @@ sends the following signals.
     (which is the sender), it is passed `user` and `method` arguments.
 
     .. versionadded:: 3.4.0
+
+.. data:: wan_registered
+
+    Sent when a WebAuthn credential was successfully created. In addition to the app
+    (which is the sender), it is passed `user` and `name` arguments.
+
+    .. versionadded:: 4.2.0
+
+.. data:: wan_deleted
+
+    Sent when a WebAuthn credential was deleted. In addition to the app
+    (which is the sender), it is passed `user` and `name` arguments.
+
+    .. versionadded:: 4.2.0
 
 .. _Flask documentation on signals: https://flask.palletsprojects.com/en/1.1.x/signals/

@@ -5,7 +5,7 @@
     Flask-Security signals module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -40,3 +40,7 @@ tf_disabled = signals.signal("tf-disabled")
 us_security_token_sent = signals.signal("us-security-token-sent")
 
 us_profile_changed = signals.signal("us-profile-changed")
+
+wan_registered = signals.signal("wan-registered")
+
+wan_deleted = signals.signal("wan-deleted")

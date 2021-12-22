@@ -23,10 +23,9 @@
         - deal with fs_webauthn_uniquifier for existing users
         - docs!
         - openapi.yml
-        - add signals
         - integrate with unified signin?
+        - deal with user needing to select WHICH 2FA to use from tf_login
         - make sure reset functions reset fs_webauthn - and remove credentials?
-        - context processors
         - update/add examples to support webauthn
         - does remember me make sense?
         - should we store things like user verified in 'last use'...
@@ -35,8 +34,10 @@
           'I want a two-factor capable key'
         - Add a way to order registered credentials so we can return an ordered list
           in allowCredentials.
+
+    Research:
         - Deal with username and security implications
-        - Research: by insisting on 2FA if user has registered a webauthn - things
+        - By insisting on 2FA if user has registered a webauthn - things
           get interesting if they try to log in on a different device....
           How would they register a security key for a new device? They would need
           some OTHER 2FA? Force them to register a NEW webauthn key?
@@ -49,6 +50,7 @@ import typing as t
 from functools import partial
 
 from flask import after_this_request, request
+from flask import current_app as app
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
 from wtforms import BooleanField, HiddenField, StringField, SubmitField
@@ -79,6 +81,7 @@ from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import Form, Required, get_form_field_label
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
+from .signals import wan_registered, wan_deleted
 from .utils import (
     base_render_json,
     check_and_get_token_status,
@@ -106,7 +109,6 @@ else:
 
 
 class WebAuthnRegisterForm(Form):
-
     name = StringField(
         get_form_field_label("credential_nickname"),
         validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
@@ -182,7 +184,7 @@ class WebAuthnRegisterResponseForm(Form):
 class WebAuthnSigninForm(Form):
 
     # Identity isn't required since if you have a resident key you don't require this.
-    # However for non-resident keys, and to allow us to return keys that HAVE
+    # However, for non-resident keys, and to allow us to return keys that HAVE
     # been registered with this application - adding identity is very useful.
     # Look at
     # https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-username-enumeration
@@ -307,7 +309,7 @@ def webauthn_register() -> "ResponseValue":
     """
     payload: t.Dict[str, t.Any]
 
-    form_class: t.Type[WebAuthnRegisterForm] = _security.wan_register_form
+    form_class = _security.wan_register_form
     if request.is_json:
         if request.content_length:
             form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
@@ -353,6 +355,7 @@ def webauthn_register() -> "ResponseValue":
             wan_register_response_form=WebAuthnRegisterResponseForm(),
             wan_state=state_token,
             credential_options=json.dumps(co_json),
+            **_security._run_ctx_processor("wan_register")
         )
 
     current_creds = []
@@ -375,12 +378,12 @@ def webauthn_register() -> "ResponseValue":
     payload = {"registered_credentials": current_creds}
     if _security._want_json(request):
         return base_render_json(form, additional=payload)
-    # TODO context processors
     return _security.render_template(
         cv("WAN_REGISTER_TEMPLATE"),
         wan_register_form=form,
         wan_delete_form=_security.wan_delete_form(),
         registered_credentials=current_creds,
+        **_security._run_ctx_processor("wan_register")
     )
 
 
@@ -388,9 +391,7 @@ def webauthn_register() -> "ResponseValue":
 def webauthn_register_response(token: str) -> "ResponseValue":
     """Response from browser."""
 
-    form_class: t.Type[
-        WebAuthnRegisterResponseForm
-    ] = _security.wan_register_response_form
+    form_class = _security.wan_register_response_form
     if request.is_json:
         form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
@@ -429,6 +430,11 @@ def webauthn_register_response(token: str) -> "ResponseValue":
             transports=transports,
             extensions=form.extensions,
         )
+        wan_registered.send(
+            app._get_current_object(),  # type: ignore
+            user=current_user,
+            name=state["name"],
+        )
 
         if _security._want_json(request):
             return base_render_json(form)
@@ -446,7 +452,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def webauthn_signin() -> "ResponseValue":
-    form_class: t.Type[WebAuthnSigninForm] = _security.wan_signin_form
+    form_class = _security.wan_signin_form
     if request.is_json:
         if request.content_length:
             form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
@@ -489,6 +495,7 @@ def webauthn_signin() -> "ResponseValue":
             wan_signin_response_form=WebAuthnSigninResponseForm(),
             wan_state=state_token,
             credential_options=json.dumps(o_json),
+            **_security._run_ctx_processor("wan_signin")
         )
 
     if _security._want_json(request):
@@ -497,13 +504,14 @@ def webauthn_signin() -> "ResponseValue":
         cv("WAN_SIGNIN_TEMPLATE"),
         wan_signin_form=form,
         wan_signin_response_form=WebAuthnSigninResponseForm(),
+        **_security._run_ctx_processor("wan_signin")
     )
 
 
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def webauthn_signin_response(token: str) -> "ResponseValue":
-    form_class: t.Type[WebAuthnSigninResponseForm] = _security.wan_signin_response_form
+    form_class = _security.wan_signin_response_form
     if request.is_json:
         form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
@@ -550,20 +558,16 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
 
     # Here on validate error - since the response is auto submitted - we go back to
     # signin form - for now use flash.
-    # TODO set into a special form element error?
-    signin_form = _security.wan_signin_form()
     if form.credential.errors:
         do_flash(form.credential.errors[0], "error")
-    return _security.render_template(
-        cv("WAN_SIGNIN_TEMPLATE"), wan_signin_form=signin_form
-    )
+    return redirect(url_for_security("wan_signin"))
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def webauthn_delete() -> "ResponseValue":
     """Deletes an existing registered credential."""
 
-    form_class: t.Type[WebAuthnDeleteForm] = _security.wan_delete_form
+    form_class = _security.wan_delete_form
     if request.is_json:
         form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
@@ -573,6 +577,12 @@ def webauthn_delete() -> "ResponseValue":
         # validate made sure form.name.data exists.
         cred = [c for c in current_user.webauthn if c.name == form.name.data][0]
         after_this_request(view_commit)
+
+        wan_deleted.send(
+            app._get_current_object(),  # type: ignore
+            user=current_user,
+            name=cred.name,
+        )
         _datastore.delete_webauthn(cred)
         if _security._want_json(request):
             return base_render_json(form)
