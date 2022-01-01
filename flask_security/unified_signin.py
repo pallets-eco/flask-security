@@ -46,7 +46,7 @@ from .signals import us_profile_changed, us_security_token_sent
 from .twofactor import (
     is_tf_setup,
     tf_login,
-    tf_verify_validility_token,
+    tf_verify_validity_token,
 )
 from .utils import (
     _,
@@ -70,6 +70,7 @@ from .utils import (
     url_for_security,
     view_commit,
 )
+from .webauthn import has_webauthn_tf
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
@@ -515,18 +516,9 @@ def us_signin() -> "ResponseValue":
         # required.
         remember_me = form.remember.data if "remember" in form else None
         if cv("TWO_FACTOR") and form.authn_via in cv("US_MFA_REQUIRED"):
-            if request.is_json and request.content_length:
-                tf_validity_token = request.get_json().get(  # type: ignore
-                    "tf_validity_token", None
-                )
-            else:
-                tf_validity_token = request.cookies.get("tf_validity", default=None)
-
-            tf_validity_token_is_valid = tf_verify_validility_token(
-                tf_validity_token, form.user.fs_uniquifier
-            )
+            tf_fresh = tf_verify_validity_token(form.user.fs_uniquifier)
             if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
-                if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
+                if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_fresh):
 
                     return tf_login(
                         form.user,
@@ -674,7 +666,7 @@ def us_verify_link() -> "ResponseValue":
     if (
         cv("TWO_FACTOR")
         and "email" in cv("US_MFA_REQUIRED")
-        and (cv("TWO_FACTOR_REQUIRED") or is_tf_setup(user))
+        and (cv("TWO_FACTOR_REQUIRED") or is_tf_setup(user) or has_webauthn_tf(user))
     ):
         # tf_login doesn't know anything about "spa" etc. In general two-factor
         # isn't quite ready for SPA. So we return an error via a redirect rather

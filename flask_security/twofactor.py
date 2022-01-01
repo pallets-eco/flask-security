@@ -227,19 +227,22 @@ def tf_validity_token_status(token):
     )
 
 
-def tf_verify_validility_token(token, fs_uniquifier):
-    """Returns the status of the Two-Factor Validity token
+def tf_verify_validity_token(fs_uniquifier: str) -> bool:
+    """Returns the status of the Two-Factor Validity token based on the current
+    request.
 
-    :param token: The Two-Factor Validity token
     :param fs_uniquifier: The ``fs_uniquifier`` of the submitting user.
     """
+    if request.is_json and request.content_length:
+        token = request.get_json().get("tf_validity_token", None)  # type: ignore
+    else:
+        token = request.cookies.get("tf_validity", default=None)
+
     if token is None:
         return False
 
     expired, invalid, uniquifier = tf_validity_token_status(token)
-
     if expired or invalid or (fs_uniquifier != uniquifier):
-
         return False
 
     return True

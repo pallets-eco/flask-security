@@ -320,6 +320,9 @@ _default_config: t.Dict[str, t.Any] = {
     "WAN_SIGNIN_URL": "/wan-signin",
     "WAN_SIGNIN_WITHIN": "1 minutes",
     "WAN_DELETE_URL": "/wan-delete",
+    "WAN_ALLOW_AS_FIRST_FACTOR": True,
+    "WAN_ALLOW_AS_MULTI_FACTOR": True,
+    "WAN_ALLOW_USER_HINTS": False,
 }
 
 #: Default Flask-Security messages

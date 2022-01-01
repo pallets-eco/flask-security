@@ -75,7 +75,7 @@ from .twofactor import (
     tf_disable,
     tf_login,
     tf_set_validity_token_cookie,
-    tf_verify_validility_token,
+    tf_verify_validity_token,
 )
 from .utils import (
     base_render_json,
@@ -170,18 +170,11 @@ def login() -> "ResponseValue":
     if form.validate_on_submit():
         remember_me = form.remember.data if "remember" in form else None
         if cv("TWO_FACTOR"):
-            if request.is_json and request.content_length:
-                tf_validity_token = request.get_json().get(  # type: ignore
-                    "tf_validity_token", None
-                )
-            else:
-                tf_validity_token = request.cookies.get("tf_validity", default=None)
-
-            tf_validity_token_is_valid = tf_verify_validility_token(
-                tf_validity_token, form.user.fs_uniquifier
+            tf_validity_token_is_valid = tf_verify_validity_token(
+                form.user.fs_uniquifier
             )
 
-            if cv("TWO_FACTOR_REQUIRED") or (is_tf_setup(form.user)):
+            if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
                 if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
 
                     return tf_login(
