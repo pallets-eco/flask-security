@@ -12,10 +12,11 @@
 import secrets
 import typing as t
 
-from flask import request
+from flask import current_app, request
 
 try:
     from webauthn.helpers.structs import (
+        AuthenticatorAttachment,
         AuthenticatorSelectionCriteria,
         ResidentKeyRequirement,
     )
@@ -71,6 +72,14 @@ class WebauthnUtil:
         to type in their identity PRIOR to be authenticated, then there is the
         possibility that the app will leak username information.
         """  # noqa: E501
-        return AuthenticatorSelectionCriteria(
-            resident_key=ResidentKeyRequirement.PREFERRED
-        )
+
+        select_criteria = AuthenticatorSelectionCriteria()
+        if current_app.config.get("SECURITY_WAN_ALLOW_AS_FIRST_FACTOR"):
+            select_criteria.authenticator_attachment = (
+                AuthenticatorAttachment.CROSS_PLATFORM
+            )
+        if not current_app.config.get("SECURITY_WAN_ALLOW_USER_HINTS"):
+            select_criteria.resident_key = ResidentKeyRequirement.REQUIRED
+        else:
+            select_criteria.resident_key = ResidentKeyRequirement.PREFERRED
+        return select_criteria

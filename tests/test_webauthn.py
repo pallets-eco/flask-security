@@ -94,7 +94,7 @@ REG_DATA2 = {
 }
 
 
-class TestWebauthnUtil(WebauthnUtil):
+class HackWebauthnUtil(WebauthnUtil):
     def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
         return CHALLENGE
 
@@ -157,7 +157,7 @@ def _signin_start_json(client, identity=None):
     return signin_options, response_url
 
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
 def test_basic(app, clients, get_message):
     auths = []
 
@@ -218,7 +218,7 @@ def test_basic(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
 def test_basic_json(app, clients, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -286,8 +286,43 @@ def test_basic_json(app, clients, get_message):
     assert parser.parse(active_creds[0]["lastuse"]) != fake_dt
     assert active_creds[0]["transports"] == ["usb"]
 
+    logout(clients)
+    response = clients.post("/wan-signin", json=dict(identity="whoami@lp.com"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["identity"][0].encode(
+        "utf-8"
+    ) == get_message("US_SPECIFY_IDENTITY")
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_basic_json_nohints(app, client, get_message):
+    # Test that with no hints allowed, we don't get any credentials and we can still
+    # sign in.
+    authenticate(client)
+    register_options, response_url = _register_start_json(client)
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    # With no hints we default to requiring a resident key
+    # With allow as primary we default to requiring a cross-platform key
+    assert (
+        register_options["authenticatorSelection"]["authenticatorAttachment"]
+        == "cross-platform"
+    )
+    assert register_options["authenticatorSelection"]["residentKey"] == "required"
+    logout(client)
+
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    allow_credentials = signin_options["allowCredentials"]
+    assert len(allow_credentials) == 0
+
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_constraints(app, clients, get_message):
     """Test that nickname is unique for a given user but different users
     can have the same nickname.
@@ -322,7 +357,76 @@ def test_constraints(app, clients, get_message):
     ) == get_message("WEBAUTHN_CREDENTIAL_ID_INUSE")
 
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_bad_data_register(app, client, get_message):
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, name="testr3")
+
+    # first try mangling json - should get API_ERROR
+    response = client.post(response_url, json=dict(credential="hi there"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("API_ERROR")
+
+    # Now pass incorrect keys
+    bad_register = copy.deepcopy(REG_DATA1)
+    del bad_register["rawId"]
+    response = client.post(response_url, json=dict(credential=json.dumps(bad_register)))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("API_ERROR")
+
+    # now muck with attestation - should get VERIFY ERROR
+    bad_register = copy.deepcopy(REG_DATA1)
+    bad_register["rawId"] = "unknown"
+    response = client.post(response_url, json=dict(credential=json.dumps(bad_register)))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("WEBAUTHN_NO_VERIFY", cause="id and raw_id were not equivalent")
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_bad_data_signin(app, client, get_message):
+    authenticate(client)
+    register_options, response_url = _register_start_json(client)
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    logout(client)
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(response_url, json=dict(credential="hi there"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("API_ERROR")
+
+    # Now pass incorrect keys
+    bad_signin = copy.deepcopy(SIGNIN_DATA1)
+    del bad_signin["rawId"]
+    response = client.post(response_url, json=dict(credential=json.dumps(bad_signin)))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("API_ERROR")
+
+    # now muck with attestation - should get VERIFY ERROR
+    bad_signin = copy.deepcopy(SIGNIN_DATA1)
+    bad_signin["response"]["signature"] = bad_signin["response"]["signature"].replace(
+        "M", "N"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(bad_signin)))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message(
+        "WEBAUTHN_NO_VERIFY", cause="Could not verify authentication signature"
+    )
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_delete(app, clients, get_message):
     @wan_deleted.connect_via(app)
     def pc(sender, user, name, **extra_args):
@@ -361,7 +465,7 @@ def test_delete(app, clients, get_message):
     assert b"testr3" not in response.data
 
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_delete_json(app, clients, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -390,8 +494,9 @@ def test_delete_json(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
 def test_disabled_account(app, client, get_message):
+    # With USER_HINTS enabled, should get 400 on initial signin POST
     authenticate(client)
 
     register_options, response_url = _register_start_json(client, name="testr3")
@@ -410,8 +515,25 @@ def test_disabled_account(app, client, get_message):
         "utf-8"
     ) == get_message("DISABLED_ACCOUNT")
 
+    # Now set USER_HINTS false (the default) and should get 400 on second POST
+    app.config["SECURITY_WAN_ALLOW_USER_HINTS"] = False
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+    # Identity should be ignored
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    allow_credentials = signin_options["allowCredentials"]
+    assert len(allow_credentials) == 0
+
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("DISABLED_ACCOUNT")
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
 def test_unk_credid(app, client, get_message):
     authenticate(client)
 
@@ -436,9 +558,26 @@ def test_unk_credid(app, client, get_message):
     ) == get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")
 
 
+@pytest.mark.settings(
+    webauthn_util_cls=HackWebauthnUtil,
+    wan_allow_user_hints=True,
+    wan_allow_as_first_factor=False,
+)
+def test_no_first_factor(app, client, get_message):
+    authenticate(client)
+
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post("wan-signin", json=dict(identity="matt@lp.com"))
+    assert response.status_code == 404
+
+
 @pytest.mark.two_factor()
 @pytest.mark.unified_signin()
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf(app, client, get_message):
     # Test using webauthn key as a second factor
     authenticate(client)
@@ -478,7 +617,7 @@ def test_tf(app, client, get_message):
 
 @pytest.mark.two_factor()
 @pytest.mark.unified_signin()
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf_json(app, client, get_message):
     # Test using webauthn key as a second factor
     authenticate(client)
@@ -516,7 +655,7 @@ def test_tf_json(app, client, get_message):
 
 
 @pytest.mark.settings(
-    webauthn_util_cls=TestWebauthnUtil, wan_register_within="1 seconds"
+    webauthn_util_cls=HackWebauthnUtil, wan_register_within="1 seconds"
 )
 def test_register_timeout(app, client, get_message):
 
@@ -532,7 +671,7 @@ def test_register_timeout(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil, wan_signin_within="2 seconds")
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_signin_within="2 seconds")
 def test_signin_timeout(app, client, get_message):
 
     authenticate(client)
@@ -554,7 +693,7 @@ def test_signin_timeout(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=TestWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_bad_token(app, client, get_message):
     authenticate(client)
 

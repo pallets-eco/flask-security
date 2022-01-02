@@ -60,9 +60,14 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from flask.testing import FlaskClient
 
 
+class SecurityFixture(Flask):
+    security: Security
+    mail: Mail
+
+
 @pytest.fixture()
-def app(request: pytest.FixtureRequest) -> "Flask":
-    app = Flask(__name__)
+def app(request: pytest.FixtureRequest) -> "SecurityFixture":
+    app = SecurityFixture(__name__)
     app.response_class = Response
     app.debug = True
     app.config["SECRET_KEY"] = "secret"
@@ -720,11 +725,11 @@ def pony_setup(request, app, tmpdir, realdburl):
 
 @pytest.fixture()
 def sqlalchemy_app(
-    app: "Flask", sqlalchemy_datastore: SQLAlchemyUserDatastore
-) -> t.Callable[[], "Flask"]:
-    def create() -> "Flask":
+    app: SecurityFixture, sqlalchemy_datastore: SQLAlchemyUserDatastore
+) -> t.Callable[[], SecurityFixture]:
+    def create() -> SecurityFixture:
         security = Security(app, datastore=sqlalchemy_datastore)
-        app.security = security  # type: ignore
+        app.security = security
         return app
 
     return create

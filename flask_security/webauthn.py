@@ -49,7 +49,7 @@ import json
 import typing as t
 from functools import partial
 
-from flask import after_this_request, request
+from flask import abort, after_this_request, request, session
 from flask import current_app as app
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
@@ -148,7 +148,7 @@ class WebAuthnRegisterResponseForm(Form):
             return False
         try:
             reg_cred = RegistrationCredential.parse_raw(self.credential.data)
-        except ValueError:
+        except (ValueError, KeyError):
             self.credential.errors.append(get_message("API_ERROR")[0])
             return False
         try:
@@ -163,6 +163,9 @@ class WebAuthnRegisterResponseForm(Form):
                 msg = get_message("WEBAUTHN_CREDENTIAL_ID_INUSE")[0]
                 self.credential.errors.append(msg)
                 return False
+        except KeyError:
+            self.credential.errors.append(get_message("API_ERROR")[0])
+            return False
         except InvalidRegistrationResponse as exc:
             self.credential.errors.append(
                 get_message("WEBAUTHN_NO_VERIFY", cause=str(exc))[0]
@@ -182,13 +185,6 @@ class WebAuthnRegisterResponseForm(Form):
 
 
 class WebAuthnSigninForm(Form):
-
-    # Identity isn't required since if you have a resident key you don't require this.
-    # However, for non-resident keys, and to allow us to return keys that HAVE
-    # been registered with this application - adding identity is very useful.
-    # Look at
-    # https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-username-enumeration
-    # for possible concerns.
     identity = StringField(get_form_field_label("identity"))
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_signin")
@@ -202,14 +198,15 @@ class WebAuthnSigninForm(Form):
     def validate(self):
         if not super().validate():
             return False  # pragma: no cover
-        if self.identity.data:
-            self.user = find_user(self.identity.data)
-            if not self.user:
-                self.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
-                return False
-            if not self.user.is_active:
-                self.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
-                return False
+        if cv("WAN_ALLOW_USER_HINTS"):
+            if self.identity.data:
+                self.user = find_user(self.identity.data)
+                if not self.user:
+                    self.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
+                    return False
+                if not self.user.is_active:
+                    self.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
+                    return False
         return True
 
 
@@ -217,6 +214,8 @@ class WebAuthnSigninResponseForm(Form):
     submit = SubmitField(label=get_form_field_label("submit"))
     credential = HiddenField()
 
+    # set by caller
+    challenge: str
     # returned to caller
     authentication_verification: "VerifiedAuthentication"
     user: t.Optional["User"] = None
@@ -229,7 +228,7 @@ class WebAuthnSigninResponseForm(Form):
             return False
         try:
             auth_cred = AuthenticationCredential.parse_raw(self.credential.data)
-        except ValueError:
+        except (ValueError, KeyError):
             self.credential.errors.append(get_message("API_ERROR")[0])
             return False
 
@@ -247,6 +246,10 @@ class WebAuthnSigninResponseForm(Form):
             self.credential.errors.append(
                 get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID")[0]
             )
+            return False
+
+        if not self.user.is_active:
+            self.credential.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
 
         verify = partial(
@@ -452,6 +455,15 @@ def webauthn_register_response(token: str) -> "ResponseValue":
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def webauthn_signin() -> "ResponseValue":
+
+    if not (
+        cv("WAN_ALLOW_AS_FIRST_FACTOR")
+        or (
+            all(k in session for k in ["tf_user_id", "tf_state"])
+            and session["tf_state"] in ["ready"]
+        )
+    ):
+        abort(404)
     form_class = _security.wan_signin_form
     if request.is_json:
         if request.content_length:
@@ -542,6 +554,26 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         form.cred.sign_count = form.authentication_verification.new_sign_count
         _datastore.put(form.cred)
 
+        """
+        # Two-factor:
+        #   - Is it required?
+        #   - Did this credential provide 2-factor and is WAN_ALLOW_AS_MULTI_FACTOR set
+        #   - Is another 2FA setup?
+        need_2fa = False
+        if cv("TWO_FACTOR"):
+            if form.mf_check and cv("WAN_ALLOW_AS_MULTI_FACTOR"):
+                pass
+            else:
+                tf_fresh = tf_verify_validity_token(form.user.fs_uniquifier)
+                if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
+                    if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_fresh):
+                        need_2fa = True
+
+        if need_2fa:
+            return tf_login(
+                form.user, remember=remember_me, primary_authn_via="webauthn"
+            )
+        """
         # login user
         login_user(form.user, remember=remember_me, authn_via=["webauthn"])
 

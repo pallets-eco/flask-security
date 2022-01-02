@@ -1335,28 +1335,58 @@ WebAuthn
     Specifies the amount of time a user has before their register
     token expires. Always pluralize the time unit for this value.
 
-    Default: "30 minutes"
+    Default: ``"30 minutes"``
 
 .. py:data:: SECURITY_WAN_REGISTER_TIMEOUT
 
     Specifies the timeout that is passed as part of PublicKeyCredentialCreationOptions.
     In milliseconds.
 
-    Default: "60000"
+    Default: ``60000``
 
 .. py:data:: SECURITY_WAN_SIGNIN_WITHIN
 
     Specifies the amount of time a user has before their signin
     token expires. Always pluralize the time unit for this value.
 
-    Default: "1 minutes"
+    Default: ``"1 minutes"``
 
 .. py:data:: SECURITY_WAN_SIGNIN_TIMEOUT
 
     Specifies the timeout that is passed as part of PublicKeyCredentialRequestOptions.
     In milliseconds.
 
-    Default: "60000"
+    Default: ``60000``
+
+.. py:data:: SECURITY_WAN_ALLOW_AS_FIRST_FACTOR
+
+    If True then a WebAuthn credential/key may be used as the first (or only)
+    authentication factor. This will set the default ``AuthenticatorSelectionCriteria``
+    to require a cross-platform key.
+
+    Default: ``True``
+
+.. py:data:: SECURITY_WAN_ALLOW_AS_MULTI_FACTOR
+
+    If True then a WebAuthn credential/key can be used
+    as both a primary and a secondary factor. This requires that the key
+    supports 'UserVerification'.
+
+    Default: ``True``
+
+.. py:data:: SECURITY_WAN_ALLOW_USER_HINTS
+
+    If True then an unauthenticated user can request a list of registered
+    WebAuthn credentials/keys. This allows the use of non-resident (non-discoverable)
+    keys, but has the possible security concern that it allows 'user discovery'.
+    Look at https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-username-enumeration
+    for a good writeup.
+
+    If this is ``False`` and :py:data:`SECURITY_WAN_ALLOW_AS_FIRST_FACTOR` is ``True``
+    (the default) then by default, ``AuthenticatorSelectionCriteria`` will be set
+    to require a Resident key.
+
+    Default: ``False``
 
 Feature Flags
 -------------
