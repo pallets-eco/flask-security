@@ -132,9 +132,12 @@ def tf_disable(user):
     tf_disabled.send(app._get_current_object(), user=user)
 
 
-def is_tf_setup(user):
+def is_tf_setup(user, include_webauthn=True):
     """Return True is user account is setup for 2FA."""
-    return (user.tf_totp_secret and user.tf_primary_method) or has_webauthn_tf(user)
+    if include_webauthn:
+        return (user.tf_totp_secret and user.tf_primary_method) or has_webauthn_tf(user)
+    else:
+        return user.tf_totp_secret and user.tf_primary_method
 
 
 def tf_login(user, remember=None, primary_authn_via=None):

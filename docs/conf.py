@@ -103,6 +103,7 @@ nitpick_ignore = [
     ("py:class", "ResponseValue"),
     ("py:class", "function"),
     ("py:class", "AuthenticatorSelectionCriteria"),
+    ("py:class", "UserVerificationRequirement"),
 ]
 autodoc_typehints = "description"
 # autodoc_mock_imports = ["flask_sqlalchemy"]

@@ -322,7 +322,7 @@ _default_config: t.Dict[str, t.Any] = {
     "WAN_DELETE_URL": "/wan-delete",
     "WAN_ALLOW_AS_FIRST_FACTOR": True,
     "WAN_ALLOW_AS_MULTI_FACTOR": True,
-    "WAN_ALLOW_USER_HINTS": False,
+    "WAN_ALLOW_USER_HINTS": True,
 }
 
 #: Default Flask-Security messages
@@ -518,6 +518,10 @@ _default_messages = {
     ),
     "WEBAUTHN_NO_VERIFY": (
         _("Could not verify WebAuthn credential: %(cause)s."),
+        "error",
+    ),
+    "WEBAUTHN_CREDENTIAL_WRONG_USAGE": (
+        _("Credential not registered for this use (first or secondary)"),
         "error",
     ),
 }

@@ -4,7 +4,7 @@
 
     Flask-Security Unified Signin module
 
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     This implements a unified sign in endpoint - allowing
@@ -70,7 +70,6 @@ from .utils import (
     url_for_security,
     view_commit,
 )
-from .webauthn import has_webauthn_tf
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
@@ -666,7 +665,7 @@ def us_verify_link() -> "ResponseValue":
     if (
         cv("TWO_FACTOR")
         and "email" in cv("US_MFA_REQUIRED")
-        and (cv("TWO_FACTOR_REQUIRED") or is_tf_setup(user) or has_webauthn_tf(user))
+        and (cv("TWO_FACTOR_REQUIRED") or is_tf_setup(user))
     ):
         # tf_login doesn't know anything about "spa" etc. In general two-factor
         # isn't quite ready for SPA. So we return an error via a redirect rather

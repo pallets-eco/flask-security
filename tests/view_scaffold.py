@@ -94,7 +94,7 @@ def create_app():
 
     class TestWebauthnUtil(WebauthnUtil):
         def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
-            # Use a constant Challenge so we can us this app to generate gold
+            # Use a constant Challenge so we can use this app to generate gold
             # responses for use in unit testing. See test_webauthn.
             # NEVER NEVER NEVER do this in production
             return "smCCiy_k2CqQydSQ_kPEjV5a2d0ApfatcpQ1aXDmQPo"

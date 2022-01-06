@@ -555,7 +555,18 @@ class UserDatastore:
         user.us_totp_secrets = None
         self.put(user)  # type: ignore
 
-    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+    def create_webauthn(
+        self,
+        user: "User",
+        credential_id: bytes,
+        public_key: bytes,
+        name: str,
+        sign_count: int,
+        usage: str,
+        transports: t.Optional[t.List[str]] = None,
+        extensions: t.Optional[str] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """
         Create a new webauthn registration record.
         Note that we need to find webauthn records per user as well as
@@ -644,11 +655,31 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
             credential_id=credential_id
         ).first()
 
-    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+    def create_webauthn(
+        self,
+        user: "User",
+        credential_id: bytes,
+        public_key: bytes,
+        name: str,
+        sign_count: int,
+        usage: str,
+        transports: t.Optional[t.List[str]] = None,
+        extensions: t.Optional[str] = None,
+        **kwargs: t.Any,
+    ) -> None:
         if not hasattr(self, "webauthn_model") or not self.webauthn_model:
             raise NotImplementedError
+
         webauthn = self.webauthn_model(
-            lastuse_datetime=datetime.datetime.utcnow(), **kwargs
+            credential_id=credential_id,
+            public_key=public_key,
+            name=name,
+            sign_count=sign_count,
+            usage=usage,
+            transports=transports,
+            extensions=extensions,
+            lastuse_datetime=datetime.datetime.utcnow(),
+            **kwargs,
         )
         user.webauthn.append(webauthn)
         self.put(webauthn)  # type: ignore
@@ -747,12 +778,30 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         ).first()
         return obj
 
-    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+    def create_webauthn(
+        self,
+        user: "User",
+        credential_id: bytes,
+        public_key: bytes,
+        name: str,
+        sign_count: int,
+        usage: str,
+        transports: t.Optional[t.List[str]] = None,
+        extensions: t.Optional[str] = None,
+        **kwargs: t.Any,
+    ) -> None:
         if not hasattr(self, "webauthn_model") or not self.webauthn_model:
             raise NotImplementedError
         webauthn = self.webauthn_model(
-            lastuse_datetime=datetime.datetime.utcnow(),
             user=user,
+            credential_id=credential_id,
+            public_key=public_key,
+            name=name,
+            sign_count=sign_count,
+            usage=usage,
+            transports=transports,
+            extensions=extensions,
+            lastuse_datetime=datetime.datetime.utcnow(),
             **kwargs,
         )
         user.webauthn.append(webauthn)
@@ -860,12 +909,30 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         except self.webauthn_model.DoesNotExist:
             return None
 
-    def create_webauthn(self, user: "User", **kwargs: t.Any) -> None:
+    def create_webauthn(
+        self,
+        user: "User",
+        credential_id: bytes,
+        public_key: bytes,
+        name: str,
+        sign_count: int,
+        usage: str,
+        transports: t.Optional[t.List[str]] = None,
+        extensions: t.Optional[str] = None,
+        **kwargs: t.Any,
+    ) -> None:
         if not hasattr(self, "webauthn_model") or not self.webauthn_model:
             raise NotImplementedError
         webauthn = self.webauthn_model(
-            lastuse_datetime=datetime.datetime.utcnow(),
             user=user,
+            credential_id=credential_id,
+            public_key=public_key,
+            name=name,
+            sign_count=sign_count,
+            usage=usage,
+            transports=transports,
+            extensions=extensions,
+            lastuse_datetime=datetime.datetime.utcnow(),
             **kwargs,
         )
         self.put(webauthn)  # type: ignore
@@ -946,7 +1013,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         tf_primary_method: t.Optional[str]
         tf_totp_secret: t.Optional[str]
         tf_phone_number: t.Optional[str]
-        tf_recovery_codes: t.Optional[str]
+        tf_recovery_codes: t.Optional[t.List[str]]
         us_phone_number: t.Optional[str]
         us_totp_secrets: t.Optional[t.Union[str, bytes]]
         create_datetime: datetime.datetime
@@ -972,9 +1039,11 @@ if t.TYPE_CHECKING:  # pragma: no cover
         credential_id: bytes
         public_key: bytes
         sign_count: int
-        transports: t.Optional[str]
+        transports: t.Optional[t.List[str]]
+        extensions: t.Optional[str]
         lastuse_datetime: datetime.datetime
         user_id: int
+        usage: str
 
         def __init__(self, **kwargs):
             ...

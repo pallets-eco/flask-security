@@ -465,6 +465,7 @@ def test_webauthn(app, datastore):
             sign_count=0,
             transports=None,
             extensions=None,
+            usage="first",
         )
         datastore.commit()
         cred = datastore.find_webauthn(b"1")
@@ -496,6 +497,7 @@ def test_webauthn_cascade(app, datastore):
             sign_count=0,
             transports=None,
             extensions=None,
+            usage="first",
         )
         datastore.create_webauthn(
             user,
@@ -505,6 +507,7 @@ def test_webauthn_cascade(app, datastore):
             sign_count=0,
             transports=None,
             extensions=None,
+            usage="secondary",
         )
         datastore.commit()
 

@@ -289,13 +289,14 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         )
         public_key = BinaryField(required=True)
         sign_count = IntField(default=0)
-        transports = StringField(max_length=255)
+        transports = ListField(required=False)
 
         # a JSON string as returned from registration
         extensions = StringField(max_length=255)
         lastuse_datetime = DateTimeField(required=True)
         # name is provided by user - we make sure it is unique per user
         name = StringField(max_length=64, required=True)
+        usage = StringField(max_length=64, required=True)
         # we need to be able to look up a user from a credential_id
         user = ReferenceField("User")
         # user_id = ObjectIdField(required=True)
@@ -419,6 +420,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         ForeignKey,
         UnicodeText,
     )
+    from flask_security.models.fsqla_v3 import AsaList
 
     f, path = tempfile.mkstemp(
         prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)
@@ -500,7 +502,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         )
         public_key = Column(LargeBinary, nullable=False)
         sign_count = Column(Integer, default=0)
-        transports = Column(String(255), nullable=True)  # comma separated
+        transports = Column(AsaList(255), nullable=True)  # comma separated
 
         # a JSON string as returned from registration
         extensions = Column(String(255), nullable=True)
@@ -510,6 +512,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         lastuse_datetime = Column(type_=DateTime, nullable=False)
         # name is provided by user - we make sure is unique per user
         name = Column(String(64), nullable=False)
+        usage = Column(String(64), nullable=False)
 
         @declared_attr
         def myuser_id(cls):
@@ -549,6 +552,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
     from peewee import (
         TextField,
         DateTimeField,
+        Field,
         IntegerField,
         BooleanField,
         BlobField,
@@ -582,6 +586,19 @@ def peewee_setup(request, app, tmpdir, realdburl):
 
     db = FlaskDB(app)
 
+    class AsaList(Field):
+        field_type = "text"
+
+        def db_value(self, value):
+            if value:
+                return ",".join(value)
+            return value
+
+        def python_value(self, value):
+            if value:
+                return value.split(",")
+            return value
+
     class Role(RoleMixin, db.Model):
         name = CharField(unique=True, max_length=80)
         description = TextField(null=True)
@@ -611,13 +628,14 @@ def peewee_setup(request, app, tmpdir, realdburl):
         credential_id = BlobField(unique=True, null=False, index=True)
         public_key = BlobField(null=False)
         sign_count = IntegerField(default=0)
-        transports = TextField(null=True)  # comma separated
+        transports = AsaList(null=True)  # comma separated
 
         # a JSON string as returned from registration
         extensions = TextField(null=True)
         lastuse_datetime = DateTimeField(null=False)
         # name is provided by user - we make sure is unique per user
         name = TextField(null=False)
+        usage = TextField(null=False)
 
         # This creates a real column called user_id
         user = ForeignKeyField(User, backref="webauthn")

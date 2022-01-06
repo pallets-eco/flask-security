@@ -126,16 +126,17 @@ Flask-Security must be able to locate a User record based on a credential id.
     It is important that you maintain data consistency when deleting WebAuthn
     records or users.
 
-A new model 'WebAuthn' requires the following fields:
+The 'WebAuthn' model requires the following fields:
 
 * ``id`` (primary key)
 * ``credential_id`` (binary, 1024 bytes, indexed, non-nullable, unique)
 * ``public_key`` (binary, 1024 bytes, non-nullable)
-* ``sign_count`` (integer, default=0)
-* ``transports`` (string, 255 bytes)
+* ``sign_count`` (integer, default=0, non-nullable)
+* ``transports`` (list of string)
 * ``extensions`` (string, 255 bytes)
 * ``lastuse_datetime`` (datetime, non-nullable)
 * ``name`` (string, 64 bytes, non-nullable)
+* ``usage`` (string, 64 bytes, non-nullable)
 
 It also needs a reference to the owning `User` record. The shipped datastore
 implementations depend on the following:
