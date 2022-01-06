@@ -4,7 +4,7 @@
 
     WebAuthn tests
 
-    :copyright: (c) 2021-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2021-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -19,12 +19,14 @@ import typing as t
 import pytest
 from tests.test_utils import (
     FakeSerializer,
+    SmsTestSender,
     authenticate,
     capture_flashes,
     logout,
 )
 
 from flask_security import (
+    SmsSenderFactory,
     WebauthnUtil,
     user_authenticated,
     wan_registered,
@@ -93,6 +95,43 @@ REG_DATA2 = {
     "transports": ["nfc", "usb"],
 }
 
+# This has user_verification=True - i.e. a multi-factor capable key
+REG_DATA_UV = {
+    "id": "s3xZpfGy0ZH-sSkfxIsgChwbkw_O0jOFtZeJ1LXUMEa8atG1oEskNqmFJCfgKZGy",
+    "rawId": "s3xZpfGy0ZH-sSkfxIsgChwbkw_O0jOFtZeJ1LXUMEa8atG1oEskNqmFJCfgKZGy",
+    "type": "public-key",
+    "response": {
+        "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjC"
+        "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2PFAAAABAAAAA"
+        "AAAAAAAAAAAAAAAAAAMLN8WaXxstGR_rEpH8SLIAocG5MPztIzhbWXi"
+        "dS11DBGvGrRtaBLJDaphSQn4CmRsqUBAgMmIAEhWCCzfFml8bLRkf"
+        "6xKR_EUnaoI333MuxRlv5-LwojDibdTyJYIFMifFwn-RfkDDgsTHF"
+        "jWgE6bld-Jc4nhFMTkQja9P8IoWtjcmVkUHJvdGVjdAI",
+        "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiYzI"
+        "xRFEybDVYMnN5UTNGUmVXUlRVVjlyVUVWcVZqVmhNbVF3UVhCbVlY"
+        "UmpjRkV4WVZoRWJWRlFidyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2Nhb"
+        "Ghvc3Q6NTAwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+    },
+    "extensions": '{"credProps":{"rk":true}}',
+    "transports": ["nfc", "usb"],
+}
+
+SIGNIN_DATA_UV = {
+    "id": "s3xZpfGy0ZH-sSkfxIsgChwbkw_O0jOFtZeJ1LXUMEa8atG1oEskNqmFJCfgKZGy",
+    "rawId": "s3xZpfGy0ZH-sSkfxIsgChwbkw_O0jOFtZeJ1LXUMEa8atG1oEskNqmFJCfgKZGy",
+    "type": "public-key",
+    "response": {
+        "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAABQ==",
+        "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiYzIxRFEy"
+        "bDVYMnN5UTNGUmVXUlRVVjlyVUVWcVZqVmhNbVF3UVhCbVlYUmpjRkV4W"
+        "VZoRWJWRlFidyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTAwMSI"
+        "sImNyb3NzT3JpZ2luIjpmYWxzZX0=",
+        "signature": "MEUCIQDR0m9Ob4nqVGiAPUf1Tu5XohDh2frl1LJ6G41GURlUIgIgKUPfkw"
+        "AjP2863L2nDhcR2EKqoGEQLqlQ5xymZstyO6o=",
+    },
+    "assertionClientExtensions": "{}",
+}
+
 
 class HackWebauthnUtil(WebauthnUtil):
     def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
@@ -103,8 +142,22 @@ class HackWebauthnUtil(WebauthnUtil):
         return "http://localhost:5001"
 
 
-def _register_start(client, name="testr1"):
-    response = client.post("wan-register", data=dict(name=name))
+def setup_tf(client):
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="+442083661188")
+    client.post("/tf-setup", json=data)
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+    response = client.post("/tf-validate", json=dict(code=code))
+    assert response.status_code == 200
+    return sms_sender
+
+
+SmsSenderFactory.senders["test"] = SmsTestSender
+
+
+def _register_start(client, name="testr1", usage="secondary"):
+    response = client.post("wan-register", data=dict(name=name, usage=usage))
     matcher = re.match(
         r".*handleRegister\(\'(.*)\'\).*",
         response.data.decode("utf-8"),
@@ -121,10 +174,8 @@ def _register_start(client, name="testr1"):
     return register_options, response_url
 
 
-def _register_start_json(client, name="testr1"):
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
-
-    response = client.post("wan-register", headers=headers, json=dict(name=name))
+def _register_start_json(client, name="testr1", usage="secondary"):
+    response = client.post("wan-register", json=dict(name=name, usage=usage))
     register_options = response.json["response"]["credential_options"]
     response_url = f'wan-register/{response.json["response"]["wan_state"]}'
     return register_options, response_url
@@ -157,7 +208,7 @@ def _signin_start_json(client, identity=None):
     return signin_options, response_url
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_basic(app, clients, get_message):
     auths = []
 
@@ -178,7 +229,7 @@ def test_basic(app, clients, get_message):
     response = clients.post("/wan-register", data=dict())
     assert get_message("WEBAUTHN_NAME_REQUIRED") in response.data
 
-    register_options, response_url = _register_start(clients)
+    register_options, response_url = _register_start(clients, usage="first")
     assert register_options["rp"]["name"] == "My Flask App"
     assert register_options["user"]["name"] == "matt@lp.com"
     assert not register_options["excludeCredentials"]
@@ -197,7 +248,7 @@ def test_basic(app, clients, get_message):
     logout(clients)
     signin_options, response_url = _signin_start(clients, "matt@lp.com")
     assert signin_options["timeout"] == app.config["SECURITY_WAN_SIGNIN_TIMEOUT"]
-    assert signin_options["userVerification"] == "discouraged"
+    assert signin_options["userVerification"] == "preferred"
     allow_credentials = signin_options["allowCredentials"]
     assert len(allow_credentials) == 1
     assert allow_credentials[0]["id"] == REG_DATA1["id"]
@@ -218,7 +269,7 @@ def test_basic(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_basic_json(app, clients, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -237,7 +288,7 @@ def test_basic_json(app, clients, get_message):
         "utf-8"
     ) == get_message("WEBAUTHN_NAME_REQUIRED")
 
-    register_options, response_url = _register_start_json(clients)
+    register_options, response_url = _register_start_json(clients, usage="first")
     assert register_options["rp"]["name"] == "My Flask App"
     assert register_options["user"]["name"] == "matt@lp.com"
 
@@ -264,7 +315,7 @@ def test_basic_json(app, clients, get_message):
     # sign in - simple case use identity so we get back allowCredentials
     logout(clients)
     signin_options, response_url = _signin_start_json(clients, "matt@lp.com")
-    assert signin_options["userVerification"] == "discouraged"
+    assert signin_options["userVerification"] == "preferred"
     allow_credentials = signin_options["allowCredentials"]
     assert len(allow_credentials) == 1
     assert allow_credentials[0]["id"] == REG_DATA1["id"]
@@ -285,21 +336,20 @@ def test_basic_json(app, clients, get_message):
     active_creds = response.json["response"]["registered_credentials"]
     assert parser.parse(active_creds[0]["lastuse"]) != fake_dt
     assert active_creds[0]["transports"] == ["usb"]
+    assert active_creds[0]["usage"] == "first"
 
     logout(clients)
+    # verify that unknown identities are just ignored when USER_HINTS is True
     response = clients.post("/wan-signin", json=dict(identity="whoami@lp.com"))
-    assert response.status_code == 400
-    assert response.json["response"]["errors"]["identity"][0].encode(
-        "utf-8"
-    ) == get_message("US_SPECIFY_IDENTITY")
+    assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=False)
 def test_basic_json_nohints(app, client, get_message):
     # Test that with no hints allowed, we don't get any credentials and we can still
     # sign in.
     authenticate(client)
-    register_options, response_url = _register_start_json(client)
+    register_options, response_url = _register_start_json(client, usage="first")
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
     # With no hints we default to requiring a resident key
@@ -320,6 +370,25 @@ def test_basic_json_nohints(app, client, get_message):
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
     )
     assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_usage(app, client, get_message):
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("WEBAUTHN_CREDENTIAL_WRONG_USAGE")
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
@@ -391,7 +460,7 @@ def test_bad_data_register(app, client, get_message):
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_bad_data_signin(app, client, get_message):
     authenticate(client)
-    register_options, response_url = _register_start_json(client)
+    register_options, response_url = _register_start_json(client, usage="first")
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
 
@@ -494,12 +563,15 @@ def test_delete_json(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_disabled_account(app, client, get_message):
-    # With USER_HINTS enabled, should get 400 on initial signin POST
+    # With USER_HINTS enabled, should get 200 on initial signin POST, but
+    # not receive a list of registered credentials.
     authenticate(client)
 
-    register_options, response_url = _register_start_json(client, name="testr3")
+    register_options, response_url = _register_start_json(
+        client, name="testr3", usage="first"
+    )
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
     logout(client)
@@ -509,13 +581,12 @@ def test_disabled_account(app, client, get_message):
         app.security.datastore.deactivate_user(user)
         app.security.datastore.commit()
 
-    response = client.post("wan-signin", json=dict(identity="matt@lp.com"))
-    assert response.status_code == 400
-    assert response.json["response"]["errors"]["identity"][0].encode(
-        "utf-8"
-    ) == get_message("DISABLED_ACCOUNT")
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    assert response.status_code == 200
+    allow_credentials = signin_options["allowCredentials"]
+    assert len(allow_credentials) == 0
 
-    # Now set USER_HINTS false (the default) and should get 400 on second POST
+    # Now set USER_HINTS false and should get 400 on second POST
     app.config["SECURITY_WAN_ALLOW_USER_HINTS"] = False
 
     # Identity should be ignored
@@ -533,7 +604,7 @@ def test_disabled_account(app, client, get_message):
     ) == get_message("DISABLED_ACCOUNT")
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=True)
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_unk_credid(app, client, get_message):
     authenticate(client)
 
@@ -560,10 +631,11 @@ def test_unk_credid(app, client, get_message):
 
 @pytest.mark.settings(
     webauthn_util_cls=HackWebauthnUtil,
-    wan_allow_user_hints=True,
     wan_allow_as_first_factor=False,
 )
 def test_no_first_factor(app, client, get_message):
+    # make sure that is app not configured to allow a webauthn key as a 'first'
+    # authenticator, that the endpoint 'disappears'.
     authenticate(client)
 
     register_options, response_url = _register_start_json(client, name="testr3")
@@ -762,3 +834,74 @@ def test_wan_context_processors(client, app):
     assert b"CUSTOM WAN SIGNIN" in response.data
     assert b"global" in response.data
     assert b"signin" in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_alt_tf(app, client, get_message):
+    # Use webauthn as primary and set up SMS as second factor
+    authenticate(client)
+
+    register_options, response_url = _register_start_json(client, usage="first")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    sms_sender = setup_tf(client)
+    logout(client)
+
+    # sign in using webauthn key
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    code = sms_sender.messages[0].split()[-1]
+    response = client.post("/tf-validate", json=dict(code=code))
+    assert response.status_code == 200
+    # verify logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_all_in_one(app, client, get_message):
+    # Use a key that supports user_verification - we should be able to
+    # use that alone.
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, usage="first")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
+    assert response.status_code == 200
+    setup_tf(client)
+
+    logout(client)
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UV))
+    )
+
+    # verify actually logged in
+    response = client.get("/profile", headers={"accept": "application/json"})
+    assert response.status_code == 200
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_all_in_one_not_allowed(app, client, get_message):
+    # now test when we don't allow a key to satisfy both factors
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, usage="first")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
+    assert response.status_code == 200
+    setup_tf(client)
+    logout(client)
+
+    app.config["SECURITY_WAN_ALLOW_AS_MULTI_FACTOR"] = False
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UV))
+    )
+    assert response.json["response"]["tf_required"]

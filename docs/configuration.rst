@@ -1360,7 +1360,7 @@ WebAuthn
 
 .. py:data:: SECURITY_WAN_ALLOW_AS_FIRST_FACTOR
 
-    If True then a WebAuthn credential/key may be used as the first (or only)
+    If True then a WebAuthn credential/key may be registered for use as the first (or only)
     authentication factor. This will set the default ``AuthenticatorSelectionCriteria``
     to require a cross-platform key.
 
@@ -1386,7 +1386,7 @@ WebAuthn
     (the default) then by default, ``AuthenticatorSelectionCriteria`` will be set
     to require a Resident key.
 
-    Default: ``False``
+    Default: ``True``
 
 Feature Flags
 -------------
@@ -1523,8 +1523,19 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_US_SPECIFY_IDENTITY``
 * ``SECURITY_MSG_USE_CODE``
 * ``SECURITY_MSG_USER_DOES_NOT_EXIST``
-* ``SECURITY_USERNAME_INVALID_LENGTH``
-* ``SECURITY_USERNAME_ILLEGAL_CHARACTERS``
-* ``SECURITY_USERNAME_DISALLOWED_CHARACTERS``
-* ``SECURITY_USERNAME_NOT_PROVIDED``
-* ``SECURITY_USERNAME_ALREADY_ASSOCIATED``
+* ``SECURITY_MSG_USERNAME_INVALID_LENGTH``
+* ``SECURITY_MSG_USERNAME_ILLEGAL_CHARACTERS``
+* ``SECURITY_MSG_USERNAME_DISALLOWED_CHARACTERS``
+* ``SECURITY_MSG_USERNAME_NOT_PROVIDED``
+* ``SECURITY_MSG_USERNAME_ALREADY_ASSOCIATED``
+* ``SECURITY_MSG_WEBAUTHN_EXPIRED``
+* ``SECURITY_MSG_WEBAUTHN_NAME_REQUIRED``
+* ``SECURITY_MSG_WEBAUTHN_NAME_INUSE``
+* ``SECURITY_MSG_WEBAUTHN_NAME_NOT_FOUND``
+* ``SECURITY_MSG_WEBAUTHN_CREDENTIAL_DELETED``
+* ``SECURITY_MSG_WEBAUTHN_REGISTER_SUCCESSFUL``
+* ``SECURITY_MSG_WEBAUTHN_CREDENTIAL_ID_INUSE``
+* ``SECURITY_MSG_WEBAUTHN_UNKNOWN_CREDENTIAL_ID``
+* ``SECURITY_MSG_WEBAUTHN_ORPHAN_CREDENTIAL_ID``
+* ``SECURITY_MSG_WEBAUTHN_NO_VERIFY``
+* ``SECURITY_MSG_WEBAUTHN_CREDENTIAL_WRONG_USAGE``

@@ -159,6 +159,16 @@ If you disable the freshness check then sessions aren't required.
     * Registration and Confirmation only work with email - so while you can enable multiple
       authentication methods, you still have to register with email.
 
+.. _webauthn:
+
+WebAuthn
+---------------
+**This feature is in Beta - mostly due to it being brand new and little to no production soak time**
+
+WebAuthn is a standardized protocol that connects authenticators (such as YubiKey and mobile biometrics)
+with websites. Flask-Security supports using WebAuthn keys as either 'first' or 'secondary'
+authenticators.
+
 Email Confirmation
 ------------------
 
@@ -243,6 +253,7 @@ JSON is supported for the following operations:
 * Passwordless login requests
 * Two-factor login requests
 * Change two-factor method requests
+* WebAuthn registration and signin requests
 
 In addition, Single-Page-Applications (like those built with Vue, Angular, and
 React) are supported via customizable redirect links.

@@ -4,7 +4,7 @@
 
     Flask-Security WebAuthn module
 
-    :copyright: (c) 2021-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2021-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
@@ -23,17 +23,19 @@
         - deal with fs_webauthn_uniquifier for existing users
         - docs!
         - openapi.yml
-        - integrate with unified signin?
-        - deal with user needing to select WHICH 2FA to use from tf_login
+        - integrate with us-verify, verify
+        - integrate with plain login
         - make sure reset functions reset fs_webauthn - and remove credentials?
         - update/add examples to support webauthn
         - does remember me make sense?
+        - if two-factor is required - can they register a webauthn key?
         - should we store things like user verified in 'last use'...
-        - config for allow as Primary, TF only,  allow as Primary/MFA
         - some options to request user verification and check on register - i.e.
           'I want a two-factor capable key'
         - Add a way to order registered credentials so we can return an ordered list
           in allowCredentials.
+        - #sctn-usecase-new-device-registration - allow more than one "first" key
+          and have them not necessarily be cross-platform.. add form option?
 
     Research:
         - Deal with username and security implications
@@ -53,7 +55,7 @@ from flask import abort, after_this_request, request, session
 from flask import current_app as app
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
-from wtforms import BooleanField, HiddenField, StringField, SubmitField
+from wtforms import BooleanField, HiddenField, RadioField, StringField, SubmitField
 
 try:
     import webauthn
@@ -71,7 +73,6 @@ try:
         PublicKeyCredentialDescriptor,
         PublicKeyCredentialType,
         RegistrationCredential,
-        UserVerificationRequirement,
     )
     from webauthn.helpers import bytes_to_base64url
 except ImportError:  # pragma: no cover
@@ -83,6 +84,7 @@ from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import wan_registered, wan_deleted
 from .utils import (
+    _,
     base_render_json,
     check_and_get_token_status,
     config_value as cv,
@@ -113,6 +115,15 @@ class WebAuthnRegisterForm(Form):
         get_form_field_label("credential_nickname"),
         validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
     )
+    usage = RadioField(
+        _("Usage"),
+        choices=[
+            ("first", _("Use as a first authentication factor")),
+            ("secondary", _("Use as a secondary authentication factor")),
+        ],
+        default="secondary",
+        validate_choice=True,
+    )
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_register")
 
     def validate(self):
@@ -123,6 +134,8 @@ class WebAuthnRegisterForm(Form):
             msg = get_message("WEBAUTHN_NAME_INUSE", name=self.name.data)[0]
             self.name.errors.append(msg)
             return False
+        if not cv("WAN_ALLOW_AS_FIRST_FACTOR"):
+            self.usage.data = "secondary"
         return True
 
 
@@ -133,6 +146,7 @@ class WebAuthnRegisterResponseForm(Form):
     # from state
     challenge: str
     name: str
+    usage: str
     # this is returned to caller (not part of the client form)
     registration_verification: "VerifiedRegistration"
     transports: t.List[str] = []
@@ -190,6 +204,8 @@ class WebAuthnSigninForm(Form):
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_signin")
 
     user: t.Optional["User"] = None
+    # set by caller - is this a second factor authentication?
+    is_secondary: bool
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -198,15 +214,14 @@ class WebAuthnSigninForm(Form):
     def validate(self):
         if not super().validate():
             return False  # pragma: no cover
-        if cv("WAN_ALLOW_USER_HINTS"):
+        if self.is_secondary or cv("WAN_ALLOW_USER_HINTS"):
+            # If we allow HINTS - provide them - but don't error
+            # out if an unknown or disabled account - that would provide too
+            # much 'discovery' capability of un-authenticated users.
             if self.identity.data:
                 self.user = find_user(self.identity.data)
-                if not self.user:
-                    self.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
-                    return False
-                if not self.user.is_active:
-                    self.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
-                    return False
+                if self.user and not self.user.is_active:
+                    self.user = None
         return True
 
 
@@ -216,6 +231,7 @@ class WebAuthnSigninResponseForm(Form):
 
     # set by caller
     challenge: str
+    is_secondary: bool
     # returned to caller
     authentication_verification: "VerifiedAuthentication"
     user: t.Optional["User"] = None
@@ -225,7 +241,7 @@ class WebAuthnSigninResponseForm(Form):
 
     def validate(self) -> bool:
         if not super().validate():
-            return False
+            return False  # pragma: no cover
         try:
             auth_cred = AuthenticationCredential.parse_raw(self.credential.data)
         except (ValueError, KeyError):
@@ -245,6 +261,18 @@ class WebAuthnSigninResponseForm(Form):
         if not self.user:  # pragma: no cover
             self.credential.errors.append(
                 get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID")[0]
+            )
+            return False
+
+        # We require that credentials be registered with a specific
+        # usage - either 'first' or 'secondary'
+        if (
+            self.is_secondary
+            and self.cred.usage != "secondary"
+            or (not self.is_secondary and self.cred.usage != "first")
+        ):
+            self.credential.errors.append(
+                get_message("WEBAUTHN_CREDENTIAL_WRONG_USAGE")[0]
             )
             return False
 
@@ -325,7 +353,11 @@ def webauthn_register() -> "ResponseValue":
         challenge = _security._webauthn_util.generate_challenge(
             cv("WAN_CHALLENGE_BYTES")
         )
-        state = {"challenge": challenge, "name": form.name.data}
+        state = {
+            "challenge": challenge,
+            "name": form.name.data,
+            "usage": form.usage.data,
+        }
 
         credential_options = webauthn.generate_registration_options(
             challenge=challenge.encode(),
@@ -335,7 +367,8 @@ def webauthn_register() -> "ResponseValue":
             user_name=current_user.calc_username(),
             timeout=cv("WAN_REGISTER_TIMEOUT"),
             authenticator_selection=_security._webauthn_util.authenticator_selection(
-                current_user
+                current_user,
+                form.usage.data,
             ),
             exclude_credentials=create_credential_list(current_user),
         )
@@ -366,8 +399,9 @@ def webauthn_register() -> "ResponseValue":
         cl = {
             "name": cred.name,
             "credential_id": bytes_to_base64url(cred.credential_id),
-            "transports": cred.transports.split(","),
+            "transports": cred.transports,
             "lastuse": cred.lastuse_datetime.isoformat(),
+            "usage": cred.usage,
         }
         # TODO: i18n
         discoverable = "Unknown"
@@ -416,22 +450,20 @@ def webauthn_register_response(token: str) -> "ResponseValue":
 
     form.challenge = state["challenge"]
     form.name = state["name"]
+    form.usage = state["usage"]
     if form.validate_on_submit():
 
         # store away successful registration
         after_this_request(view_commit)
-
-        # convert transports to comma separated
-        transports = ",".join(form.transports)
-
         _datastore.create_webauthn(
             current_user._get_current_object(),  # Not needed with Werkzeug >2.0.0
             name=state["name"],
             credential_id=form.registration_verification.credential_id,
             public_key=form.registration_verification.credential_public_key,
             sign_count=form.registration_verification.sign_count,
-            transports=transports,
+            transports=form.transports,
             extensions=form.extensions,
+            usage=form.usage,
         )
         wan_registered.send(
             app._get_current_object(),  # type: ignore
@@ -455,14 +487,14 @@ def webauthn_register_response(token: str) -> "ResponseValue":
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def webauthn_signin() -> "ResponseValue":
-
-    if not (
-        cv("WAN_ALLOW_AS_FIRST_FACTOR")
-        or (
-            all(k in session for k in ["tf_user_id", "tf_state"])
-            and session["tf_state"] in ["ready"]
-        )
-    ):
+    # This view can be called either as a 'first' authentication or as part of
+    # 2FA.
+    is_secondary = all(k in session for k in ["tf_user_id", "tf_state"]) and session[
+        "tf_state"
+    ] in ["ready"]
+    if is_secondary or cv("WAN_ALLOW_AS_FIRST_FACTOR"):
+        pass
+    else:
         abort(404)
     form_class = _security.wan_signin_form
     if request.is_json:
@@ -473,6 +505,7 @@ def webauthn_signin() -> "ResponseValue":
     else:
         form = form_class(meta=suppress_form_csrf())
 
+    form.is_secondary = is_secondary
     if form.validate_on_submit():
         challenge = _security._webauthn_util.generate_challenge(
             cv("WAN_CHALLENGE_BYTES")
@@ -485,13 +518,17 @@ def webauthn_signin() -> "ResponseValue":
         # can populate allowedCredentials.
         allow_credentials = None
         if form.user:
-            allow_credentials = create_credential_list(form.user)
+            allow_credentials = create_credential_list(
+                form.user, "secondary" if is_secondary else "first"
+            )
 
         options = webauthn.generate_authentication_options(
             rp_id=request.host.split(":")[0],
             challenge=challenge.encode(),
             timeout=cv("WAN_SIGNIN_TIMEOUT"),
-            user_verification=UserVerificationRequirement.DISCOURAGED,
+            user_verification=_security._webauthn_util.user_verification(
+                form.user, "secondary" if is_secondary else "first"
+            ),
             allow_credentials=allow_credentials,
         )
 
@@ -523,6 +560,10 @@ def webauthn_signin() -> "ResponseValue":
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def webauthn_signin_response(token: str) -> "ResponseValue":
+    is_secondary = all(k in session for k in ["tf_user_id", "tf_state"]) and session[
+        "tf_state"
+    ] in ["ready"]
+
     form_class = _security.wan_signin_response_form
     if request.is_json:
         form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
@@ -544,6 +585,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         return redirect(url_for_security("wan_signin"))
 
     form.challenge = state["challenge"]
+    form.is_secondary = is_secondary
 
     if form.validate_on_submit():
         remember_me = form.remember.data if "remember" in form else None
@@ -554,26 +596,29 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         form.cred.sign_count = form.authentication_verification.new_sign_count
         _datastore.put(form.cred)
 
-        """
-        # Two-factor:
-        #   - Is it required?
-        #   - Did this credential provide 2-factor and is WAN_ALLOW_AS_MULTI_FACTOR set
-        #   - Is another 2FA setup?
-        need_2fa = False
-        if cv("TWO_FACTOR"):
-            if form.mf_check and cv("WAN_ALLOW_AS_MULTI_FACTOR"):
-                pass
-            else:
-                tf_fresh = tf_verify_validity_token(form.user.fs_uniquifier)
-                if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
-                    if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_fresh):
-                        need_2fa = True
+        if not is_secondary:
+            # Two-factor:
+            #   - Is it required?
+            #   - Did this credential provide 2-factor and
+            #     is WAN_ALLOW_AS_MULTI_FACTOR set
+            #   - Is another 2FA setup?
+            from .twofactor import tf_verify_validity_token, is_tf_setup, tf_login
 
-        if need_2fa:
-            return tf_login(
-                form.user, remember=remember_me, primary_authn_via="webauthn"
-            )
-        """
+            need_2fa = False
+            if cv("TWO_FACTOR"):
+                if form.mf_check and cv("WAN_ALLOW_AS_MULTI_FACTOR"):
+                    pass
+                else:
+                    tf_fresh = tf_verify_validity_token(form.user.fs_uniquifier)
+                    if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
+                        if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_fresh):
+                            need_2fa = True
+
+            if need_2fa:
+                return tf_login(
+                    form.user, remember=remember_me, primary_authn_via="webauthn"
+                )
+
         # login user
         login_user(form.user, remember=remember_me, authn_via=["webauthn"])
 
@@ -629,22 +674,28 @@ def webauthn_delete() -> "ResponseValue":
 
 def has_webauthn_tf(user: "User") -> bool:
     # Return True if have a WebAuthn key designated for second factor
-    security_keys = getattr(user, "webauthn", None)
-    if security_keys:
-        if len(security_keys) > 0:
+    wan_keys = getattr(user, "webauthn", [])
+    for cred in wan_keys:
+        if cred.usage == "secondary":
             return True
     return False
 
 
-def create_credential_list(user: "User") -> t.List["PublicKeyCredentialDescriptor"]:
+def create_credential_list(
+    user: "User", usage: t.Optional[str] = None
+) -> t.List["PublicKeyCredentialDescriptor"]:
+    # Return a list of registered credentials - filtered by whether they apply to our
+    # authentication state (first or secondary)
     cl = []
 
     for cred in user.webauthn:
+        if usage and cred.usage != usage:
+            pass
         descriptor = PublicKeyCredentialDescriptor(
             type=PublicKeyCredentialType.PUBLIC_KEY, id=cred.credential_id
         )
         if cred.transports:
-            tlist = cred.transports.split(",")
+            tlist = cred.transports
             transports = [AuthenticatorTransport(transport) for transport in tlist]
             descriptor.transports = transports
         # TODO order is important - figure out a way to add 'weight'
