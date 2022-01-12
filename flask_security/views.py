@@ -5,7 +5,7 @@
     Flask-Security views module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     CSRF is tricky. By default all our forms have CSRF protection built in via
@@ -159,7 +159,7 @@ def login() -> "ResponseValue":
     form_class = _security.login_form
 
     if request.is_json:
-        # Allow GET so we can return csrf_token for pre-login.
+        # Allow GET, so we can return csrf_token for pre-login.
         if request.content_length:
             form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
         else:
@@ -176,7 +176,6 @@ def login() -> "ResponseValue":
 
             if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
                 if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
-
                     return tf_login(
                         form.user, remember=remember_me, primary_authn_via="password"
                     )

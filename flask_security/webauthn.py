@@ -126,8 +126,8 @@ class WebAuthnRegisterForm(Form):
     )
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_register")
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False
         inuse = any([self.name.data == cred.name for cred in current_user.webauthn])
         if inuse:
@@ -152,8 +152,8 @@ class WebAuthnRegisterResponseForm(Form):
     transports: t.List[str] = []
     extensions: str
 
-    def validate(self) -> bool:
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False  # pragma: no cover
         inuse = any([self.name == cred.name for cred in current_user.webauthn])
         if inuse:
@@ -211,8 +211,8 @@ class WebAuthnSigninForm(Form):
         super().__init__(*args, **kwargs)
         self.remember.default = cv("DEFAULT_REMEMBER_ME")
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False  # pragma: no cover
         if self.is_secondary or cv("WAN_ALLOW_USER_HINTS"):
             # If we allow HINTS - provide them - but don't error
@@ -239,8 +239,8 @@ class WebAuthnSigninResponseForm(Form):
     # Set to True if this authentication qualifies as 'multi-factor'
     mf_check: bool = False
 
-    def validate(self) -> bool:
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False  # pragma: no cover
         try:
             auth_cred = AuthenticationCredential.parse_raw(self.credential.data)
@@ -313,8 +313,8 @@ class WebAuthnDeleteForm(Form):
     )
     submit = SubmitField(label=get_form_field_label("delete"))
 
-    def validate(self) -> bool:
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False
         if not any([self.name.data == cred.name for cred in current_user.webauthn]):
             self.name.errors.append(
@@ -372,7 +372,6 @@ def webauthn_register() -> "ResponseValue":
             ),
             exclude_credentials=create_credential_list(current_user),
         )
-        #
         co_json = json.loads(webauthn.options_to_json(credential_options))
         co_json["extensions"] = {"credProps": True}
 

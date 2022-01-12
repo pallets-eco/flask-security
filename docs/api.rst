@@ -199,14 +199,26 @@ Utils
 Forms
 -----
 
+.. autoclass:: flask_security.ChangePasswordForm
+.. autoclass:: flask_security.ConfirmRegisterForm
+.. autoclass:: flask_security.ForgotPasswordForm
+.. autoclass:: flask_security.LoginForm
+.. autoclass:: flask_security.PasswordlessLoginForm
+.. autoclass:: flask_security.RegisterForm
+.. autoclass:: flask_security.ResetPasswordForm
+.. autoclass:: flask_security.SendConfirmationForm
+.. autoclass:: flask_security.TwoFactorVerifyCodeForm
+.. autoclass:: flask_security.TwoFactorSetupForm
+.. autoclass:: flask_security.TwoFactorRescueForm
+.. autoclass:: flask_security.UnifiedSigninForm
+.. autoclass:: flask_security.UnifiedSigninSetupForm
+.. autoclass:: flask_security.UnifiedSigninSetupValidateForm
+.. autoclass:: flask_security.UnifiedVerifyForm
+.. autoclass:: flask_security.VerifyForm
 .. autoclass:: flask_security.WebAuthnRegisterForm
-
 .. autoclass:: flask_security.WebAuthnRegisterResponseForm
-
 .. autoclass:: flask_security.WebAuthnSigninForm
-
 .. autoclass:: flask_security.WebAuthnSigninResponseForm
-
 .. autoclass:: flask_security.WebAuthnDeleteForm
 
 .. _signals_topic:

@@ -80,6 +80,7 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_pre_ping": True,
     }
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Create database connection object
     db = SQLAlchemy(app)
