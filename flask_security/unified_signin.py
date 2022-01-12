@@ -73,6 +73,7 @@ from .utils import (
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
+    from .datastore import User
 
 if get_quart_status():  # pragma: no cover
     from quart import redirect
@@ -121,8 +122,11 @@ def _us_common_validate(form):
 class _UnifiedPassCodeForm(Form):
     """Common form for signin and verify/reauthenticate."""
 
-    user = None
-    authn_via = None
+    # filled in by caller
+    user: "User"
+
+    # Filled in here
+    authn_via: str
 
     passcode = StringField(
         get_form_field_label("passcode"),
@@ -140,14 +144,12 @@ class _UnifiedPassCodeForm(Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False
-        if not self.user:
-            # This is sign-in case.
-            if not _us_common_validate(self):
-                return False
+        return True
 
+    def validate2(self) -> bool:
         totp_secrets = _datastore.us_get_totp_secrets(self.user)
         if self.submit.data:
             # This is authn - verify passcode/password
@@ -211,8 +213,6 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
     For either identity/password or request and enter code.
     """
 
-    user = None
-
     identity = StringField(
         get_form_field_label("identity"),
         validators=[Required()],
@@ -224,9 +224,12 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
         self.remember.default = cv("DEFAULT_REMEMBER_ME")
         self.requires_confirmation = False
 
-    def validate(self):
-        self.user = None
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
+            return False
+        if not _us_common_validate(self):
+            return False
+        if not super().validate2():
             return False
 
         if self.submit.data:
@@ -244,11 +247,11 @@ class UnifiedVerifyForm(_UnifiedPassCodeForm):
     This is for freshness 'reauthentication' required.
     """
 
-    user = None
-
-    def validate(self):
+    def validate(self, **kwargs: t.Any) -> bool:
         self.user = current_user
-        if not super().validate():
+        if not super().validate(**kwargs):
+            return False
+        if not super().validate2():
             return False
         return True
 
@@ -273,8 +276,8 @@ class UnifiedSigninSetupForm(Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False
         if self.chosen_method.data not in cv("US_ENABLED_METHODS"):
             self.chosen_method.errors.append(get_message("US_METHOD_NOT_AVAILABLE")[0])
@@ -293,8 +296,8 @@ class UnifiedSigninSetupValidateForm(Form):
     """The unified sign in setup validation form"""
 
     # These 2 filled in by view
-    user = None
-    totp_secret = None
+    user: "User"
+    totp_secret: str
 
     passcode = StringField(get_form_field_label("passcode"), validators=[Required()])
     submit = SubmitField(get_form_field_label("submitcode"))
@@ -302,8 +305,8 @@ class UnifiedSigninSetupValidateForm(Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs: t.Any) -> bool:
+        if not super().validate(**kwargs):
             return False
 
         if not _security._totp_factory.verify_totp(
@@ -347,7 +350,7 @@ def _send_code_helper(form):
 
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
-def us_signin_send_code():
+def us_signin_send_code() -> "ResponseValue":
     """
     Send code view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -405,7 +408,7 @@ def us_signin_send_code():
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def us_verify_send_code():
+def us_verify_send_code() -> "ResponseValue":
     """
     Send code during verify.
     """

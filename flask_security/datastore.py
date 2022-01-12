@@ -1004,7 +1004,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         fs_uniquifier: str
         fs_token_uniquifier: str
         fs_webauthn_uniquifier: str
-        confirmed_at: datetime.datetime
+        confirmed_at: t.Optional[datetime.datetime]
         last_login_at: datetime.datetime
         current_login_at: datetime.datetime
         last_login_ip: t.Optional[str]

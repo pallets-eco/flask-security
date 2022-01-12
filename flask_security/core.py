@@ -7,7 +7,7 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
     :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -23,7 +23,6 @@ from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
 from flask_principal import Identity, Principal, RoleNeed, UserNeed, identity_loaded
-from flask_wtf import FlaskForm
 from itsdangerous import URLSafeTimedSerializer
 from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
@@ -1061,22 +1060,26 @@ class Security:
         app: t.Optional["flask.Flask"] = None,
         datastore: t.Optional["UserDatastore"] = None,
         register_blueprint: bool = True,
-        login_form: t.Type[FlaskForm] = LoginForm,
-        verify_form: t.Type[FlaskForm] = VerifyForm,
-        confirm_register_form: t.Type[FlaskForm] = ConfirmRegisterForm,
-        register_form: t.Type[FlaskForm] = RegisterForm,
-        forgot_password_form: t.Type[FlaskForm] = ForgotPasswordForm,
-        reset_password_form: t.Type[FlaskForm] = ResetPasswordForm,
-        change_password_form: t.Type[FlaskForm] = ChangePasswordForm,
-        send_confirmation_form: t.Type[FlaskForm] = SendConfirmationForm,
-        passwordless_login_form: t.Type[FlaskForm] = PasswordlessLoginForm,
-        two_factor_verify_code_form: t.Type[FlaskForm] = TwoFactorVerifyCodeForm,
-        two_factor_setup_form: t.Type[FlaskForm] = TwoFactorSetupForm,
-        two_factor_rescue_form: t.Type[FlaskForm] = TwoFactorRescueForm,
-        us_signin_form: t.Type[FlaskForm] = UnifiedSigninForm,
-        us_setup_form: t.Type[FlaskForm] = UnifiedSigninSetupForm,
-        us_setup_validate_form: t.Type[FlaskForm] = UnifiedSigninSetupValidateForm,
-        us_verify_form: t.Type[FlaskForm] = UnifiedVerifyForm,
+        login_form: t.Type[LoginForm] = LoginForm,
+        verify_form: t.Type[VerifyForm] = VerifyForm,
+        confirm_register_form: t.Type[ConfirmRegisterForm] = ConfirmRegisterForm,
+        register_form: t.Type[RegisterForm] = RegisterForm,
+        forgot_password_form: t.Type[ForgotPasswordForm] = ForgotPasswordForm,
+        reset_password_form: t.Type[ResetPasswordForm] = ResetPasswordForm,
+        change_password_form: t.Type[ChangePasswordForm] = ChangePasswordForm,
+        send_confirmation_form: t.Type[SendConfirmationForm] = SendConfirmationForm,
+        passwordless_login_form: t.Type[PasswordlessLoginForm] = PasswordlessLoginForm,
+        two_factor_verify_code_form: t.Type[
+            TwoFactorVerifyCodeForm
+        ] = TwoFactorVerifyCodeForm,
+        two_factor_setup_form: t.Type[TwoFactorSetupForm] = TwoFactorSetupForm,
+        two_factor_rescue_form: t.Type[TwoFactorRescueForm] = TwoFactorRescueForm,
+        us_signin_form: t.Type[UnifiedSigninForm] = UnifiedSigninForm,
+        us_setup_form: t.Type[UnifiedSigninSetupForm] = UnifiedSigninSetupForm,
+        us_setup_validate_form: t.Type[
+            UnifiedSigninSetupValidateForm
+        ] = UnifiedSigninSetupValidateForm,
+        us_verify_form: t.Type[UnifiedVerifyForm] = UnifiedVerifyForm,
         wan_register_form: t.Type[WebAuthnRegisterForm] = WebAuthnRegisterForm,
         wan_register_response_form: t.Type[
             WebAuthnRegisterResponseForm
@@ -1195,6 +1198,19 @@ class Security:
         self.unified_signin: bool = False
         self.passwordless: bool = False
         self.webauthn: bool = False
+
+        # Redirect URLs
+        self.login_url: str = ""
+        self.login_error_view: str = ""
+        self.us_verify_send_code_url: str = ""
+        self.post_change_view: str = ""
+        self.post_login_view: str = ""
+        self.post_reset_view: str = ""
+        self.reset_view: str = ""
+        self.reset_error_view: str = ""
+        self.requires_confirmation_error_view: str = ""
+        self.post_confirm_view: str = ""
+        self.confirm_error_view: str = ""
 
         self.redirect_behavior: t.Optional[str] = None
 
