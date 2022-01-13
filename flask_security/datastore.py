@@ -388,7 +388,7 @@ class UserDatastore:
                 except ValueError:
 
         .. note::
-            The roles kwparam is modified as part of the call - it will, if necessary
+            The roles kwparam is modified as part of the call - it will, if necessary,
             be converted from names to role instances.
 
         .. danger::
@@ -484,7 +484,7 @@ class UserDatastore:
             self.put(user)  # type: ignore
 
     def tf_reset(self, user: "User") -> None:
-        """Disable two-factor auth for user
+        """Disable two-factor auth for user.
 
         .. versionadded: 3.4.1
         """

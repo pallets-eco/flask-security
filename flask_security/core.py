@@ -1041,11 +1041,6 @@ class Security:
     .. versionadded:: 4.1.0
         ``username_util_cls`` added to encapsulate username handling.
 
-    .. deprecated:: 4.0.0
-        ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
-        ``two_factor_verify_password_form`` removed.
-        ``password_validator`` removed in favor of the new ``password_util_cls``.
-
     .. versionadded:: 4.2.0
         ``wan_register_form``, ``wan_register_response_form``,
          ``webauthn_signin_form``, ``wan_signin_response_form``,
@@ -1053,6 +1048,13 @@ class Security:
     .. versionadded:: 4.2.0
         ``WebauthnUtil`` class.
 
+    .. deprecated:: 4.0.0
+        ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
+        ``two_factor_verify_password_form`` removed.
+        ``password_validator`` removed in favor of the new ``password_util_cls``.
+
+    .. deprecated:: 4.2.0
+        Passing in a LoginManager instance will be removed in 5.0
     """
 
     def __init__(
@@ -1414,6 +1416,12 @@ class Security:
         if rvre:
             self._redirect_validate_re = re.compile(rvre)
 
+        if self.login_manager:
+            warnings.warn(
+                "Replacing login_manager is deprecated in 4.2.0 and will be"
+                "removed in 5.0",
+                DeprecationWarning,
+            )
         # login_manager is a bit strange - when we initialize it we are actually
         # initializing Flask-Login which will register itself as an extension on the
         # Flask object and set app.login_manager.
@@ -1439,6 +1447,13 @@ class Security:
         self.hashing_context = _get_hashing_context(app)
         self.i18n_domain = FsDomain(app)
 
+        if cv("PASSWORDLESS", app=app):
+            warnings.warn(
+                "The passwordless feature was deprecated in Version 4.2.0"
+                "and will be removed in 5.0. Please use the Unified Signin"
+                "feature instead.",
+                DeprecationWarning,
+            )
         if cv("USERNAME_ENABLE", app):
             if hasattr(self.datastore, "user_model") and not hasattr(
                 self.datastore.user_model, "username"
