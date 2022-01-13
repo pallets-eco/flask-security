@@ -8,6 +8,7 @@
 import re
 import time
 from urllib.parse import parse_qsl, urlsplit
+import warnings
 
 import pytest
 from flask import Flask
@@ -17,8 +18,7 @@ from tests.test_utils import (
     logout,
 )
 
-from flask_security.core import UserMixin
-from flask_security.signals import login_instructions_sent
+from flask_security import Security, UserMixin, login_instructions_sent
 
 pytestmark = pytest.mark.passwordless()
 
@@ -206,3 +206,13 @@ def test_spa_get_bad_token(app, client, get_message):
         msg = get_message("INVALID_LOGIN_TOKEN")
         assert msg == qparams["error"].encode("utf-8")
     assert len(flashes) == 0
+
+
+def test_deprecated(app, sqlalchemy_datastore):
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        security = Security()
+        security.init_app(app, sqlalchemy_datastore)
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)

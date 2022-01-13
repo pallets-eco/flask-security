@@ -5,7 +5,7 @@
     Flask-Security decorators module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -273,7 +273,7 @@ def auth_required(
     grace: t.Optional[t.Union[int, float, t.Callable[[], datetime.timedelta]]] = None
 ) -> DecoratedView:
     """
-    Decorator that protects endpoints through multiple mechanisms
+    Decorator that protects endpoints through multiple mechanisms.
     Example::
 
         @app.route('/dashboard')
