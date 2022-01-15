@@ -14,13 +14,22 @@ Features
 - (:pr:`532`) Support for Python 3.10
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn
 - (:pr:`xxx`) Make roles joinedload compatible with SQLAlchemy 2.0
-- (:pr:`xxx`) Deprecate the old passwordless feature in favor of Unified Signin.
+- (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
    Deprecate replacing login_manager so we can possibly vendor that in in the future.
 
 Fixes
 +++++
 
 
+DB Migration
+~~~~~~~~~~~~
+
+To use the new WebAuthn feature a new table and two new columns in the User model are required.
+To ease updates - Flask-Security will automatically create a fs_webauthn_user_handle
+upon first use for existing users.
+If you are using Alembic the schema migration is easy::
+
+    op.add_column('user', sa.Column('fs_webauthn_user_handle', sa.String(length=64), nullable=True))
 
 Version 4.1.2
 -------------

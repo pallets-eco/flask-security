@@ -20,18 +20,13 @@
     https://www.w3.org/TR/webauthn-2/#sctn-privacy-considerations-client
 
     TODO:
-        - deal with fs_webauthn_uniquifier for existing users
         - docs!
         - openapi.yml
         - integrate with us-verify, verify
         - integrate with plain login
-        - make sure reset functions reset fs_webauthn - and remove credentials?
         - update/add examples to support webauthn
         - does remember me make sense?
         - if two-factor is required - can they register a webauthn key?
-        - should we store things like user verified in 'last use'...
-        - some options to request user verification and check on register - i.e.
-          'I want a two-factor capable key'
         - Add a way to order registered credentials so we can return an ordered list
           in allowCredentials.
         - #sctn-usecase-new-device-registration - allow more than one "first" key
@@ -39,6 +34,7 @@
 
     Research:
         - Deal with username and security implications
+        - should we store things like user verified in 'last use'...
         - By insisting on 2FA if user has registered a webauthn - things
           get interesting if they try to log in on a different device....
           How would they register a security key for a new device? They would need
@@ -248,7 +244,7 @@ class WebAuthnSigninResponseForm(Form):
             self.credential.errors.append(get_message("API_ERROR")[0])
             return False
 
-        # Look up credential Id (raw_id) and user.
+        # Look up credential Id (raw_id) and user. 7.2.6/7
         self.cred = _datastore.find_webauthn(credential_id=auth_cred.raw_id)
         if not self.cred:
             self.credential.errors.append(
@@ -263,6 +259,17 @@ class WebAuthnSigninResponseForm(Form):
                 get_message("WEBAUTHN_ORPHAN_CREDENTIAL_ID")[0]
             )
             return False
+
+        # Verify user Handle. 7.2.6
+        if auth_cred.response.user_handle:
+            if (
+                auth_cred.response.user_handle
+                != self.user.fs_webauthn_user_handle.encode()
+            ):
+                self.credential.errors.append(
+                    get_message("WEBAUTHN_MISMATCH_USER_HANDLE")[0]
+                )
+                return False
 
         # We require that credentials be registered with a specific
         # usage - either 'first' or 'secondary'
@@ -358,12 +365,18 @@ def webauthn_register() -> "ResponseValue":
             "name": form.name.data,
             "usage": form.usage.data,
         }
+        if not current_user.fs_webauthn_user_handle:
+            # set a user handle. This allows an easy migration when adding this
+            # column (and not requiring as part of schema change to update all existing
+            # records. New users will have this set as part of user creation.
+            after_this_request(view_commit)
+            _datastore.set_webauthn_user_id(current_user)
 
         credential_options = webauthn.generate_registration_options(
             challenge=challenge.encode(),
             rp_name=cv("WAN_RP_NAME"),
             rp_id=request.host.split(":")[0],
-            user_id=current_user.fs_webauthn_uniquifier,
+            user_id=current_user.fs_webauthn_user_handle,
             user_name=current_user.calc_username(),
             timeout=cv("WAN_REGISTER_TIMEOUT"),
             authenticator_selection=_security._webauthn_util.authenticator_selection(

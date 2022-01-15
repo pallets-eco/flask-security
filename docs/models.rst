@@ -148,7 +148,7 @@ The `User` model needs the following additional fields:
 
 * ``webauthn`` (one-to-many to WebAuthn model).
   The reference to the registered WebAuthn credentials.
-* ``fs_webauthn_uniquifier`` (string, 64 bytes, unique).
+* ``fs_webauthn_user_handle`` (string, 64 bytes, unique).
   This is used as the `PublicKeyCredentialUserEntity` `id` value.
 
 Custom User Payload

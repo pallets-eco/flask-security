@@ -5,7 +5,7 @@
  * Copyright (c) 2017 Duo Security, Inc. All rights reserved.
  * with the BSD 3-Clause "New" or "Revised" License.
  * Further changes:
- *  :copyright: (c) 2021-2021 by J. Christopher Wagner (jwag).
+ *  :copyright: (c) 2021-2022 by J. Christopher Wagner (jwag).
  *  :license: MIT, see LICENSE for more details.
  */
 
@@ -181,10 +181,11 @@ const transformCredentialRequestOptions = (credentialRequestOptionsFromServer) =
  */
 const transformAssertionForServer = (newAssertion) => {
     const authData = new Uint8Array(newAssertion.response.authenticatorData);
-    const clientDataJSON = new Uint8Array(newAssertion.response.clientDataJSON);
-    const rawId = new Uint8Array(newAssertion.rawId);
-    const sig = new Uint8Array(newAssertion.response.signature);
-    const assertionClientExtensions = newAssertion.getClientExtensionResults();
+    const clientDataJSON = new Uint8Array(newAssertion.response.clientDataJSON)
+    const rawId = new Uint8Array(newAssertion.rawId)
+    const sig = new Uint8Array(newAssertion.response.signature)
+    const userHandle = new Uint8Array(newAssertion.response.userHandle)
+    const assertionClientExtensions = newAssertion.getClientExtensionResults()
 
     return {
         id: newAssertion.id,
@@ -193,7 +194,9 @@ const transformAssertionForServer = (newAssertion) => {
         response: {
           authenticatorData: b64RawEnc(authData),
           clientDataJSON: b64RawEnc(clientDataJSON),
-          signature: b64RawEnc(sig) },
+          signature: b64RawEnc(sig),
+          userHandle: b64RawEnc(userHandle)
+        },
         assertionClientExtensions: JSON.stringify(assertionClientExtensions)
     };
 };
