@@ -523,6 +523,10 @@ _default_messages = {
         _("Credential not registered for this use (first or secondary)"),
         "error",
     ),
+    "WEBAUTHN_MISMATCH_USER_HANDLE": (
+        _("Credential user handle didn't match"),
+        "error",
+    ),
 }
 
 
@@ -783,7 +787,7 @@ class UserMixin(BaseUserMixin):
 
         .. versionchanged:: 4.0.0
             If user model has ``fs_token_uniquifier`` - use that (raise ValueError
-            if not set). Otherwise fallback to using ``fs_uniqifier``.
+            if not set). Otherwise fallback to using ``fs_uniquifier``.
         """
 
         if hasattr(self, "fs_token_uniquifier"):

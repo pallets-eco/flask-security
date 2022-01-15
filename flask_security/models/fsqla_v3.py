@@ -57,9 +57,9 @@ class FsUserMixin(FsUserMixinV2):
             "WebAuthn", backref="users", cascade="all, delete"
         )
 
-    # a unique user id (ala fs_uniquifier). This allows us to separately invalidate
-    # all webauthn registrations. Note max length 64 as specified in spec.
-    fs_webauthn_uniquifier = Column(String(64), unique=True, nullable=True)
+    # The user handle as required during registration.
+    # Note max length 64 as specified in spec.
+    fs_webauthn_user_handle = Column(String(64), unique=True)
 
     # 2FA - one time recovery codes - comma separated.
     tf_recovery_codes = Column(AsaList(1024), nullable=True)

@@ -5,7 +5,7 @@
     This module contains an user datastore classes.
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import datetime
@@ -150,6 +150,14 @@ class UserDatastore:
         self.role_model = role_model
         self.webauthn_model = webauthn_model
 
+    if t.TYPE_CHECKING:  # pragma: no cover
+        # These are available from a DataStore implementation
+        def delete(self, model):
+            pass
+
+        def put(self, model):
+            pass
+
     def _prepare_role_modify_args(
         self, role: t.Union[str, "Role"]
     ) -> t.Union["Role", None]:
@@ -168,8 +176,8 @@ class UserDatastore:
         kwargs.setdefault("fs_uniquifier", uuid.uuid4().hex)
         if hasattr(self.user_model, "fs_token_uniquifier"):
             kwargs.setdefault("fs_token_uniquifier", uuid.uuid4().hex)
-        if hasattr(self.user_model, "fs_webauthn_uniquifier"):
-            kwargs.setdefault("fs_webauthn_uniquifier", uuid.uuid4().hex)
+        if hasattr(self.user_model, "fs_webauthn_user_handle"):
+            kwargs.setdefault("fs_webauthn_user_handle", uuid.uuid4().hex)
 
         return kwargs
 
@@ -197,7 +205,7 @@ class UserDatastore:
             raise ValueError(f"Role: {role} doesn't exist")
         if role_obj not in user.roles:
             user.roles.append(role_obj)
-            self.put(user)  # type: ignore
+            self.put(user)
             return True
         return False
 
@@ -215,7 +223,7 @@ class UserDatastore:
         if role_obj in user.roles:
             rv = True
             user.roles.remove(role_obj)
-            self.put(user)  # type: ignore
+            self.put(user)
         return rv
 
     def add_permissions_to_role(
@@ -238,7 +246,7 @@ class UserDatastore:
         if role_obj:
             rv = True
             role_obj.add_permissions(permissions)
-            self.put(role_obj)  # type: ignore
+            self.put(role_obj)
         return rv
 
     def remove_permissions_from_role(
@@ -261,13 +269,13 @@ class UserDatastore:
         if role_obj:
             rv = True
             role_obj.remove_permissions(permissions)
-            self.put(role_obj)  # type: ignore
+            self.put(role_obj)
         return rv
 
     def toggle_active(self, user: "User") -> bool:
         """Toggles a user's active status. Always returns True."""
         user.active = not user.active
-        self.put(user)  # type: ignore
+        self.put(user)
         return True
 
     def deactivate_user(self, user: "User") -> bool:
@@ -281,7 +289,7 @@ class UserDatastore:
         """
         if user.active:
             user.active = False
-            self.put(user)  # type: ignore
+            self.put(user)
             return True
         return False
 
@@ -292,7 +300,7 @@ class UserDatastore:
         """
         if not user.active:
             user.active = True
-            self.put(user)  # type: ignore
+            self.put(user)
             return True
         return False
 
@@ -311,7 +319,7 @@ class UserDatastore:
         if not uniquifier:
             uniquifier = uuid.uuid4().hex
         user.fs_uniquifier = uniquifier
-        self.put(user)  # type: ignore
+        self.put(user)
 
     def set_token_uniquifier(
         self, user: "User", uniquifier: t.Union[str, None] = None
@@ -331,7 +339,7 @@ class UserDatastore:
             uniquifier = uuid.uuid4().hex
         if hasattr(user, "fs_token_uniquifier"):
             user.fs_token_uniquifier = uniquifier
-            self.put(user)  # type: ignore
+            self.put(user)
 
     def create_role(self, **kwargs: t.Any) -> "Role":
         """
@@ -359,7 +367,7 @@ class UserDatastore:
             kwargs["permissions"] = perms
 
         role = self.role_model(**kwargs)
-        return self.put(role)  # type: ignore
+        return self.put(role)
 
     def find_or_create_role(self, name: str, **kwargs: t.Any) -> "Role":
         """Returns a role matching the given name or creates it with any
@@ -411,7 +419,7 @@ class UserDatastore:
         """
         kwargs = self._prepare_create_user_args(**kwargs)
         user = self.user_model(**kwargs)
-        return self.put(user)  # type: ignore
+        return self.put(user)
 
     def delete_user(self, user: "User") -> None:
         """Deletes the specified user.
@@ -430,6 +438,7 @@ class UserDatastore:
             * reset fs_token_uniquifier (if present) - cause auth tokens to be unusable
             * remove all unified signin TOTP secrets so those can't be used
             * remove all two-factor secrets so those can't be used
+            * remove all registered webauthn credentials
 
         Note that if using unified sign in and allow 'email' as a way to receive a code;
         if the email is compromised - login is still possible. To handle this - it
@@ -448,6 +457,8 @@ class UserDatastore:
             self.us_reset(user)
         if hasattr(user, "tf_primary_method"):
             self.tf_reset(user)
+        if hasattr(user, "webauthn"):
+            self.webauthn_reset(user)
 
     def tf_set(
         self,
@@ -481,7 +492,7 @@ class UserDatastore:
             user.tf_phone_number = phone
             changed = True
         if changed:
-            self.put(user)  # type: ignore
+            self.put(user)
 
     def tf_reset(self, user: "User") -> None:
         """Disable two-factor auth for user.
@@ -491,7 +502,7 @@ class UserDatastore:
         user.tf_primary_method = None
         user.tf_totp_secret = None
         user.tf_phone_number = None
-        self.put(user)  # type: ignore
+        self.put(user)
 
     def us_get_totp_secrets(self, user: "User") -> t.Dict[str, str]:
         """Return totp secrets.
@@ -542,7 +553,7 @@ class UserDatastore:
             self.us_put_totp_secrets(user, totp_secrets)
         if phone and user.us_phone_number != phone:
             user.us_phone_number = phone
-            self.put(user)  # type: ignore
+            self.put(user)
 
     def us_reset(self, user: "User") -> None:
         """Disable unified sign in for user.
@@ -553,7 +564,19 @@ class UserDatastore:
         .. versionadded: 3.4.1
         """
         user.us_totp_secrets = None
-        self.put(user)  # type: ignore
+        self.put(user)
+
+    def set_webauthn_user_id(
+        self, user: "User", user_id: t.Union[str, None] = None
+    ) -> None:
+        """Set the value for the Relaying Party's (that's us)
+        UserHandle (user.id)
+        If no value is passed in, a UUID is generated.
+        """
+        if not user_id:
+            user_id = uuid.uuid4().hex
+        user.fs_webauthn_user_handle = user_id
+        self.put(user)
 
     def create_webauthn(
         self,
@@ -580,7 +603,7 @@ class UserDatastore:
         """
         .. versionadded: 4.2.0
         """
-        self.delete(webauthn)  # type: ignore
+        self.delete(webauthn)
 
     def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
         """Returns a credential matching the id.
@@ -598,6 +621,18 @@ class UserDatastore:
             raise NotImplementedError
         user_filter = webauthn.get_user_mapping()
         return self.find_user(**user_filter)
+
+    def webauthn_reset(self, user: "User") -> None:
+        """Reset access via webauthn credentials.
+        This will DELETE all registered credentials.
+        There doesn't appear to be any reason to change the user's
+        fs_webauthn_user_handle.
+
+        .. versionadded: 4.2.0
+        """
+        for cred in user.webauthn:
+            self.delete(cred)
+        self.put(user)
 
 
 class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
@@ -682,8 +717,8 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
             **kwargs,
         )
         user.webauthn.append(webauthn)
-        self.put(webauthn)  # type: ignore
-        self.put(user)  # type: ignore
+        self.put(webauthn)
+        self.put(user)
 
 
 class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastore):

@@ -9,6 +9,7 @@
 
 """
 
+from base64 import urlsafe_b64encode
 import copy
 import datetime
 from dateutil import parser
@@ -38,7 +39,7 @@ pytest.importorskip("webauthn")
 pytestmark = pytest.mark.webauthn()
 
 # We can't/don't test the actual client-side javascript and browser APIs - so
-# to create reproducible tests, use view_scaffold, set breakpoints in the browser and
+# to create reproducible tests, use view_scaffold, set breakpoints in the views and
 # cut-and-paste the responses. That requires that 'challenge' and 'rp_origin' be
 # identical between view_scaffold and tests here.
 CHALLENGE = "smCCiy_k2CqQydSQ_kPEjV5a2d0ApfatcpQ1aXDmQPo"
@@ -128,6 +129,45 @@ SIGNIN_DATA_UV = {
         "sImNyb3NzT3JpZ2luIjpmYWxzZX0=",
         "signature": "MEUCIQDR0m9Ob4nqVGiAPUf1Tu5XohDh2frl1LJ6G41GURlUIgIgKUPfkw"
         "AjP2863L2nDhcR2EKqoGEQLqlQ5xymZstyO6o=",
+    },
+    "assertionClientExtensions": "{}",
+}
+
+REG_DATA_UH = {
+    "id": "rHb1OXVM--dgGcWg0u3cfomyc-Tu4l4kK8GjVkS8bms-foXmBAlWHyTzuhgGgCnx",
+    "rawId": "rHb1OXVM--dgGcWg0u3cfomyc-Tu4l4kK8GjVkS8bms-foXmBAlWHyTzuhgGgCnx",
+    "type": "public-key",
+    "response": {
+        "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjCSZYN5YgOjGh0NBc"
+        "PZHZgW4_krrmihjLHmVzzuoMd"
+        "l2PFAAAAAgAAAAAAAAAAAAAAAAAAAAAAMKx29Tl1TPvnYBnFoNLt3H6J"
+        "snPk7uJeJCvBo1ZEvG5rPn6F"
+        "5gQJVh8k87oYBoAp8aUBAgMmIAEhWCCsdvU5dUz752AZxaDSyN-ocBL"
+        "Bo99GevEWTnUxSkMRICJYIILE"
+        "DLF8cQNM5l6ZgDxIYpvU88xgbq44lmR6oCBbNaHhoWtjcmVkUHJvdG"
+        "VjdAI",
+        "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiYzIx"
+        "RFEybDVYMnN5UTNGUmVXUlRVVjl"
+        "yVUVWcVZqVmhNbVF3UVhCbVlYUmpjRkV4WVZoRWJWRlFidyIsIm9yaWdpbi"
+        "I6Imh0dHA6Ly9sb2NhbGhvc3"
+        "Q6NTAwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+    },
+    "extensions": '{"credProps":{"rk": true}}"',
+    "transports": ["nfc", "usb"],
+}
+SIGNIN_DATA_UH = {
+    "id": "rHb1OXVM--dgGcWg0u3cfomyc-Tu4l4kK8GjVkS8bms-foXmBAlWHyTzuhgGgCnx",
+    "rawId": "rHb1OXVM--dgGcWg0u3cfomyc-Tu4l4kK8GjVkS8bms-foXmBAlWHyTzuhgGgCnx",
+    "type": "public-key",
+    "response": {
+        "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAABQ==",
+        "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiYzIxRFEy"
+        "bDVYMnN5UTNGUmVXUlRVVjlyVUVWcVZqVmhNbVF3UVhCbVlYUmpjR"
+        "kV4WVZoRWJWRlFidyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q"
+        "6NTAwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0=",
+        "signature": "MEUCIQCbKwaQv_GzrWfc0nVXqhe6WZs_5Sb2b7xHC9iDW9aHeQIgF2PlfM7FdyV"
+        "xcPhofekJjLBgDMTbK4mwIWHgiExZ54s=",
+        "userHandle": "NTgxMTU3YmM2MGU3NGM1OTg0OTBjYTI1ZTgwNjc4MDY=",
     },
     "assertionClientExtensions": "{}",
 }
@@ -905,3 +945,91 @@ def test_all_in_one_not_allowed(app, client, get_message):
         response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UV))
     )
     assert response.json["response"]["tf_required"]
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_reset(app, client):
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    authenticate(client)
+    register_options, response_url = _register_start_json(client)
+    client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
+
+    response = client.get("/wan-register", headers=headers)
+    active_creds = response.json["response"]["registered_credentials"]
+    assert active_creds[0]["name"] == "testr1"
+
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.webauthn_reset(user)
+        app.security.datastore.commit()
+
+    response = client.get("/wan-register", headers=headers)
+    active_creds = response.json["response"]["registered_credentials"]
+    assert len(active_creds) == 0
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_user_handle(app, client, get_message):
+    """Test that we fail signin if user_handle doesn't match.
+    Since we generated the SIGNIN_DATA_OH from view_scaffold - the user_handle
+    has no way of matching.
+    """
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, usage="first")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UH)))
+    assert response.status_code == 200
+
+    # verify can't sign in
+    logout(client)
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UH))
+    )
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("WEBAUTHN_MISMATCH_USER_HANDLE")
+
+    # Now change the user_handle both for the user and SIGNIN_DATA_UH
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.set_webauthn_user_id(user)
+        app.security.datastore.commit()
+
+        b64_user_handle = (
+            urlsafe_b64encode(user.fs_webauthn_user_handle.encode())
+            .decode("utf-8")
+            .replace("=", "")
+        )
+        upd_signin_data = copy.deepcopy(SIGNIN_DATA_UH)
+        upd_signin_data["response"]["userHandle"] = b64_user_handle
+        signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+        response = client.post(
+            response_url, json=dict(credential=json.dumps(upd_signin_data))
+        )
+        # verify actually logged in
+        response = client.get("/profile", headers={"accept": "application/json"})
+        assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_autogen_user_handle(app, client, get_message):
+    # Test that is an existing user doesn't have a fs_webauthn_user_handle - it will
+    # be generated.
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        user.fs_webauthn_user_handle = None
+        app.security.datastore.put(user)
+        app.security.datastore.commit()
+
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, usage="first")
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        assert user.fs_webauthn_user_handle
+        b64_user_handle = (
+            urlsafe_b64encode(user.fs_webauthn_user_handle.encode())
+            .decode("utf-8")
+            .replace("=", "")
+        )
+        assert b64_user_handle == register_options["user"]["id"]

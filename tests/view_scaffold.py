@@ -82,8 +82,8 @@ def create_app():
     ]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["password"]
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["authenticator", "password"]
-
     # app.config["SECURITY_US_SIGNIN_REPLACES_LOGIN"] = True
+    # app.config["SECURITY_WAN_ALLOW_USER_HINTS"] = False
 
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"

@@ -311,7 +311,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
     class User(db.Document, UserMixin):
         email = StringField(unique=True, max_length=255)
         fs_uniquifier = StringField(unique=True, max_length=64, required=True)
-        fs_webauthn_uniquifier = StringField(unique=True, max_length=64)
+        fs_webauthn_user_handle = StringField(unique=True, max_length=64)
         username = StringField(unique=True, required=False, sparse=True, max_length=255)
         password = StringField(required=False, max_length=255)
         security_number = IntField(unique=True, required=False, sparse=True)
@@ -458,7 +458,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         __tablename__ = "user"
         myuserid = Column(Integer, primary_key=True)
         fs_uniquifier = Column(String(64), unique=True, nullable=False)
-        fs_webauthn_uniquifier = Column(String(64), unique=True, nullable=True)
+        fs_webauthn_user_handle = Column(String(64), unique=True, nullable=True)
         email = Column(String(255), unique=True)
         username = Column(String(255), unique=True, nullable=True)
         password = Column(String(255))
@@ -607,7 +607,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
     class User(UserMixin, db.Model):
         email = TextField(unique=True, null=False)
         fs_uniquifier = TextField(unique=True, null=False)
-        fs_webauthn_uniquifier = TextField(unique=True, null=True)
+        fs_webauthn_user_handle = TextField(unique=True, null=True)
         username = TextField(unique=True, null=True)
         security_number = IntegerField(null=True)
         password = TextField(null=True)
