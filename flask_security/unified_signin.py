@@ -600,10 +600,14 @@ def us_verify() -> "ResponseValue":
         return redirect(get_post_verify_redirect())
 
     # Here on GET or failed POST validate
+    from .webauthn import has_webauthn
+
+    webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
     if _security._want_json(request):
         payload = {
             "available_methods": cv("US_ENABLED_METHODS"),
             "code_methods": code_methods,
+            "has_webauthn_verify_credential": webauthn_available,
         }
         return base_render_json(form, additional=payload)
 
@@ -618,6 +622,8 @@ def us_verify() -> "ResponseValue":
             cv("US_VERIFY_SEND_CODE_URL"),
             qparams={"next": propagate_next(request.url)},
         ),
+        has_webauthn_verify_credential=webauthn_available,
+        wan_verify_form=_security.wan_verify_form(),
         **_security._run_ctx_processor("us_verify")
     )
 

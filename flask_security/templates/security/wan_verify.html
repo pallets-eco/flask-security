@@ -1,9 +1,5 @@
-{#
-  This template receives the following pieces of context in addition to the form:
-#}
-
 {% extends "security/base.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
 
 {% block head_scripts %}
   {{ super() }}
@@ -14,18 +10,15 @@
 
 {% block content %}
   {% include "security/_messages.html" %}
-  <h1>{{ _fsdomain("Sign In Using WebAuthn Security Key") }}</h1>
+  <h1>{{ _fsdomain("Please Re-Authenticate Using Your WebAuthn Security Key") }}</h1>
   {% if not credential_options %}
-    <form action="{{ url_for_security("wan_signin") }}" method="POST"
-          name="wan_signin_form" id="wan-signin-form">
-      {{ wan_signin_form.hidden_tag() }}
-      {{ render_field_with_errors(wan_signin_form.identity) }}
-      {{ render_field_with_errors(wan_signin_form.remember) }}
-      {{ render_field_errors(wan_signin_form.credential) }}
-      {{ render_field(wan_signin_form.submit) }}
+    <form action="{{ url_for_security("wan_verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
+          name="wan_verify_form">
+        {{ wan_verify_form.hidden_tag() }}
+        {{ render_field(wan_verify_form.submit) }}
     </form>
   {% else %}
-    <form action="{{ url_for_security("wan_signin_response", token=wan_state) }}" method="POST"
+    <form action="{{ url_for_security("wan_verify_response", token=wan_state) }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
           name="wan_signin_response_form" id="wan-signin-response-form">
       {{ wan_signin_response_form.hidden_tag() }}
       <div id="wan-errors"></div>

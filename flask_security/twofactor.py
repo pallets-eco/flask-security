@@ -5,7 +5,7 @@
     Flask-Security two_factor module
 
     :copyright: (c) 2016 by Gal Stainfeld, at Emedgene
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
 """
 
 import typing as t
@@ -33,7 +33,7 @@ from .signals import (
     tf_profile_changed,
 )
 
-from .webauthn import has_webauthn_tf
+from .webauthn import has_webauthn
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Response
@@ -132,12 +132,11 @@ def tf_disable(user):
     tf_disabled.send(app._get_current_object(), user=user)
 
 
-def is_tf_setup(user, include_webauthn=True):
+def is_tf_setup(user):
     """Return True is user account is setup for 2FA."""
-    if include_webauthn:
-        return (user.tf_totp_secret and user.tf_primary_method) or has_webauthn_tf(user)
-    else:
-        return user.tf_totp_secret and user.tf_primary_method
+    return (user.tf_totp_secret and user.tf_primary_method) or has_webauthn(
+        user, "secondary"
+    )
 
 
 def tf_login(user, remember=None, primary_authn_via=None):
@@ -177,7 +176,7 @@ def tf_login(user, remember=None, primary_authn_via=None):
         methods = []
         if user.tf_primary_method:
             methods.append(user.tf_primary_method)
-        if has_webauthn_tf(user):
+        if has_webauthn(user, "secondary"):
             methods.append("webauthn")
         json_response["tf_methods"] = methods
 

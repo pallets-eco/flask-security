@@ -70,6 +70,7 @@ from .webauthn import (
     WebAuthnRegisterResponseForm,
     WebAuthnSigninForm,
     WebAuthnSigninResponseForm,
+    WebAuthnVerifyForm,
 )
 from .webauthn_util import WebauthnUtil
 from .username_util import UsernameUtil
@@ -319,9 +320,12 @@ _default_config: t.Dict[str, t.Any] = {
     "WAN_SIGNIN_URL": "/wan-signin",
     "WAN_SIGNIN_WITHIN": "1 minutes",
     "WAN_DELETE_URL": "/wan-delete",
+    "WAN_VERIFY_URL": "/wan-verify",
+    "WAN_VERIFY_TEMPLATE": "security/wan_verify.html",
     "WAN_ALLOW_AS_FIRST_FACTOR": True,
     "WAN_ALLOW_AS_MULTI_FACTOR": True,
     "WAN_ALLOW_USER_HINTS": True,
+    "WAN_ALLOW_AS_VERIFY": ["first", "secondary"],
 }
 
 #: Default Flask-Security messages
@@ -1003,6 +1007,7 @@ class Security:
     :param wan_signin_form: set form for authenticating with a webauthn security key
     :param wan_signin_response_form: set form for authenticating with a webauthn
     :param wan_delete_form: delete a webauthn security key
+    :param wan_verify_form: delete a webauthn security key
     :param anonymous_user: class to use for anonymous user
     :param login_manager: An subclass of LoginManager
     :param json_encoder_cls: Class to use as blueprint.json_encoder.
@@ -1048,7 +1053,7 @@ class Security:
     .. versionadded:: 4.2.0
         ``wan_register_form``, ``wan_register_response_form``,
          ``webauthn_signin_form``, ``wan_signin_response_form``,
-         ``webauthn_delete_form``.
+         ``webauthn_delete_form``, ``webauthn_verify_form``.
     .. versionadded:: 4.2.0
         ``WebauthnUtil`` class.
 
@@ -1095,6 +1100,7 @@ class Security:
             WebAuthnSigninResponseForm
         ] = WebAuthnSigninResponseForm,
         wan_delete_form: t.Type[WebAuthnDeleteForm] = WebAuthnDeleteForm,
+        wan_verify_form: t.Type[WebAuthnVerifyForm] = WebAuthnVerifyForm,
         anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
         login_manager: t.Optional["flask_login.LoginManager"] = None,
         json_encoder_cls: t.Type[JSONEncoder] = FsJsonEncoder,
@@ -1140,6 +1146,7 @@ class Security:
         self.wan_signin_form = wan_signin_form
         self.wan_signin_response_form = wan_signin_response_form
         self.wan_delete_form = wan_delete_form
+        self.wan_verify_form = wan_verify_form
         self.anonymous_user = anonymous_user
         self.json_encoder_cls = json_encoder_cls
         self.login_manager = login_manager
@@ -1294,6 +1301,7 @@ class Security:
             "wan_signin_form",
             "wan_signin_response_form",
             "wan_delete_form",
+            "wan_verify_form",
         ]
         for form_name in form_names:
             if kwargs.get(form_name, None):
@@ -1423,7 +1431,7 @@ class Security:
         if self.login_manager:
             warnings.warn(
                 "Replacing login_manager is deprecated in 4.2.0 and will be"
-                "removed in 5.0",
+                " removed in 5.0",
                 DeprecationWarning,
             )
         # login_manager is a bit strange - when we initialize it we are actually
@@ -1835,3 +1843,8 @@ class Security:
         self, fn: t.Callable[[], t.Dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("wan_signin", fn)
+
+    def wan_verify_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("wan_verify", fn)

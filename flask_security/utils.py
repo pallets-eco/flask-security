@@ -5,7 +5,7 @@
     Flask-Security utils module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import abc
@@ -73,7 +73,7 @@ def _(translate):
 def get_request_attr(name: str) -> t.Any:
     """Retrieve a request local attribute.
 
-    Currently public attributes are:
+    Current public attributes are:
 
     **fs_authn_via**
         will be set to the authentication mechanism (session, token, basic)
@@ -263,7 +263,7 @@ def check_and_update_authn_fresh(
     fs_gexp = session.get("fs_gexp", None)
     if fs_gexp:
         if now.timestamp() < fs_gexp:
-            # Within grace period - extend it and we're good.
+            # Within grace period - extend it, and we're good.
             session["fs_gexp"] = grace_ts
             return True
 
@@ -274,7 +274,7 @@ def check_and_update_authn_fresh(
 
     authn_time = datetime.datetime.utcfromtimestamp(session["fs_paa"])
     # allow for some time drift where it's possible authn_time is in the future
-    # but lets be cautious and not allow arbitrary future times
+    # but let's be cautious and not allow arbitrary future times
     delta = now - authn_time
     if within > delta > -within:
         session["fs_gexp"] = grace_ts

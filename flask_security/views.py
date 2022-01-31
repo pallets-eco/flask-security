@@ -99,12 +99,14 @@ from .utils import (
     view_commit,
 )
 from .webauthn import (
-    has_webauthn_tf,
+    has_webauthn,
     webauthn_delete,
     webauthn_register,
     webauthn_register_response,
     webauthn_signin,
     webauthn_signin_response,
+    webauthn_verify,
+    webauthn_verify_response,
 )
 
 if get_quart_status():  # pragma: no cover
@@ -210,7 +212,7 @@ def login() -> "ResponseValue":
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def verify():
-    """View function which handles a authentication verification request."""
+    """View function which handles a reauthentication request."""
     form_class = _security.verify_form
 
     if request.is_json:
@@ -230,12 +232,22 @@ def verify():
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
         return redirect(get_post_verify_redirect())
 
+    from .webauthn import has_webauthn
+
+    webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
     if _security._want_json(request):
         assert form.user == current_user
-        return base_render_json(form)
+        payload = {
+            "has_webauthn_verify_credential": webauthn_available,
+        }
+        return base_render_json(form, additional=payload)
 
     return _security.render_template(
-        cv("VERIFY_TEMPLATE"), verify_form=form, **_ctx("verify")
+        cv("VERIFY_TEMPLATE"),
+        verify_form=form,
+        has_webauthn_verify_credential=webauthn_available,
+        wan_verify_form=_security.wan_verify_form(),
+        **_ctx("verify"),
     )
 
 
@@ -945,8 +957,8 @@ def two_factor_token_validation():
         rescue_form = _security.two_factor_rescue_form()
 
         wan_signin_form = None
-        has_webauthn = has_webauthn_tf(form.user)
-        if has_webauthn:
+        webauthn_available = has_webauthn(form.user, "secondary")
+        if webauthn_available:
             wan_signin_form = _security.wan_signin_form(
                 identity=form.user.calc_username()
             )
@@ -956,7 +968,7 @@ def two_factor_token_validation():
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
             chosen_method=pm,
-            has_webauthn=has_webauthn,
+            has_webauthn=webauthn_available,
             wan_signin_form=wan_signin_form,
             problem=None,
             **_ctx("tf_token_validation"),
@@ -1185,5 +1197,17 @@ def create_blueprint(app, state, import_name, json_encoder=None):
         bp.route(state.wan_delete_url, methods=["POST"], endpoint="wan_delete")(
             webauthn_delete
         )
+        if cv("FRESHNESS", app=app).total_seconds() >= 0 and cv(
+            "WAN_ALLOW_AS_VERIFY", app=app
+        ):
+            bp.route(
+                state.wan_verify_url, methods=["GET", "POST"], endpoint="wan_verify"
+            )(webauthn_verify)
+            bp.route(
+                state.wan_verify_url
+                + slash_url_suffix(state.wan_verify_url, "<token>"),
+                methods=["POST"],
+                endpoint="wan_verify_response",
+            )(webauthn_verify_response)
 
     return bp

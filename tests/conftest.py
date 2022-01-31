@@ -5,7 +5,7 @@
     Test fixtures and what not
 
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -227,7 +227,7 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
         return render_template("index.html", content="Unauthorized")
 
     @app.route("/fresh", methods=["GET", "POST"])
-    @auth_required(within=0)
+    @auth_required(within=60)
     def fresh():
         if app.security._want_json(flask_request):
             return jsonify(title="Fresh Only")

@@ -119,6 +119,7 @@ from .webauthn import (
     WebAuthnSigninForm,
     WebAuthnSigninResponseForm,
     WebAuthnDeleteForm,
+    WebAuthnVerifyForm,
 )
 from .webauthn_util import WebauthnUtil
 

@@ -5,7 +5,7 @@
     Lots of tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -32,7 +32,9 @@ from tests.test_utils import (
     json_authenticate,
     logout,
     populate_data,
+    reset_fresh,
 )
+from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
 from flask import Flask, abort, request, Response
 from flask_security import Security
@@ -93,7 +95,9 @@ def test_my_mail_util(app, sqlalchemy_datastore):
 
 
 def test_register_blueprint_flag(app, sqlalchemy_datastore):
-    app.security = Security(app, datastore=Security, register_blueprint=False)
+    app.security = Security(
+        app, datastore=sqlalchemy_datastore, register_blueprint=False
+    )
     client = app.test_client()
     response = client.get("/login")
     assert response.status_code == 404
@@ -885,7 +889,7 @@ def test_authn_freshness_callable(app, client, get_message):
 def test_default_authn_bp(app, client):
     """Test default reauthn handler with blueprint prefix"""
 
-    @auth_required(within=0.001, grace=0)
+    @auth_required(within=1, grace=0)
     def myview():
         return Response(status=200)
 
@@ -893,7 +897,7 @@ def test_default_authn_bp(app, client):
     authenticate(client, endpoint="/myprefix/login")
 
     # This should require additional authn and redirect to verify
-    time.sleep(0.1)
+    reset_fresh(client, within=timedelta(minutes=1))
     response = client.get("/myview", follow_redirects=False)
     assert response.status_code == 302
     assert (
@@ -950,10 +954,11 @@ def test_authn_freshness_nc(app, client_nc, get_message):
 def test_verify_fresh(app, client, get_message):
     # Hit a fresh-required endpoint and walk through verify
     authenticate(client)
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
 
     with capture_flashes() as flashes:
         response = client.get("/fresh", follow_redirects=True)
-        assert b"Please Enter Your Password" in response.data
+        assert b"Please Reauthenticate" in response.data
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "REAUTHENTICATION_REQUIRED"
@@ -964,13 +969,14 @@ def test_verify_fresh(app, client, get_message):
     )
     verify_url = matcher.group(1)
 
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
     response = client.get(verify_url)
-    assert b"Please Enter Your Password" in response.data
+    assert b"Please Reauthenticate" in response.data
 
     response = client.post(
         verify_url, data=dict(password="not my password"), follow_redirects=False
     )
-    assert b"Please Enter Your Password" in response.data
+    assert b"Please Reauthenticate" in response.data
 
     response = client.post(
         verify_url, data=dict(password="password"), follow_redirects=False
@@ -987,12 +993,13 @@ def test_verify_fresh_json(app, client, get_message):
     authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
     response = client.get("/fresh", headers=headers)
     assert response.status_code == 401
     assert response.json["response"]["reauth_required"]
 
     response = client.get("/verify")
-    assert b"Please Enter Your Password" in response.data
+    assert b"Please Reauthenticate" in response.data
 
     response = client.post(
         "/verify", json=dict(password="not my password"), headers=headers
@@ -1057,6 +1064,36 @@ def test_verify_next(app, client, get_message):
         base_url="http://127.0.0.1:5000",
     )
     assert response.location == "http://127.0.0.1:5000/dashboard/settings/"
+
+
+@pytest.mark.webauthn()
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_verify_wan(app, client, get_message):
+    # test get correct options when requiring a reauthentication and have wan keys
+    # setup.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    reg_2_keys(client)
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("/fresh", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert response.json["response"]["has_webauthn_verify_credential"]
+
+    # the verify form should have the webauthn verify form attached
+    response = client.get("verify")
+    assert b'action="/wan-verify"' in response.data
+
+    app.config["SECURITY_WAN_ALLOW_AS_VERIFY"] = None
+    response = client.get("/fresh", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert not response.json["response"]["has_webauthn_verify_credential"]
+
+    # the verify form should NOT have the webauthn verify form attached
+    response = client.get("verify")
+    assert b'action="/wan-verify"' not in response.data
 
 
 def test_direct_decorator(app, client, get_message):

@@ -30,7 +30,7 @@
           name="us_setup_form">
       {{ us_setup_form.hidden_tag() }}
       {% if setup_methods %}
-        <div class="fs-div">Currently Active Sign In Options:
+        <div class="fs-div">Currently active sign in options:
         {% if active_methods %}
           {{ ", ".join(active_methods) }}
         {% else %}
@@ -38,7 +38,7 @@
         {% endif %}
         </div>
 
-        <h3>Setup Additional Sign In Option</h3>
+        <h3>{{ _fsdomain("Setup additional sign in option") }}</h3>
         <div class="fs-div">
           {% for subfield in us_setup_form.chosen_method %}
             {% if subfield.data in available_methods %}
@@ -77,7 +77,8 @@
       {% endif %}
     </form>
     {% if security.webauthn %}
-      <h3>WebAuthn</h3>
+      <hr class="fs-gap">
+      <h2>WebAuthn</h2>
       <div class="fs-div">
         {{ _fsdomain("This application supports WebAuthn security keys.") }}
         <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</a>
