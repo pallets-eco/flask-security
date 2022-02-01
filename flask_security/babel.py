@@ -50,7 +50,7 @@ except ImportError:  # pragma: no cover
 
             @staticmethod
             def gettext(string, **variables):
-                return string % variables
+                return string if not variables else string % variables
 
             @staticmethod
             def ngettext(singular, plural, num, **variables):
@@ -80,7 +80,7 @@ if not t.TYPE_CHECKING:
 
             def gettext(self, string, **variables):
                 if not has_babel_ext():
-                    return string % variables
+                    return string if not variables else string % variables
                 return super().gettext(string, **variables)
 
             def ngettext(self, singular, plural, num, **variables):  # pragma: no cover

@@ -108,6 +108,13 @@ password add the following to your `User` model:
 
 * ``fs_token_uniquifier`` (string, 64 bytes, unique, non-nullable)
 
+Username
+~~~~~~~~~
+If you set :py:data:`SECURITY_USERNAME_ENABLE` to `True`, then your `User` model
+requires the following additional field:
+
+* ``username`` (string, 64 bytes, unique, nullable)
+
 Permissions
 ^^^^^^^^^^^
 If you want to protect endpoints with permissions, and assign permissions to roles

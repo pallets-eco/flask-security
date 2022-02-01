@@ -1038,7 +1038,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         active: bool
         fs_uniquifier: str
         fs_token_uniquifier: str
-        fs_webauthn_uniquifier: str
+        fs_webauthn_user_handle: str
         confirmed_at: t.Optional[datetime.datetime]
         last_login_at: datetime.datetime
         current_login_at: datetime.datetime

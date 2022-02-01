@@ -3,7 +3,7 @@
 
 {% block content %}
     {% include "security/_messages.html" %}
-    <h1>{{ _fsdomain("Please re-authenticate") }}</h1>
+    <h1>{{ _fsdomain("Please Reauthenticate") }}</h1>
       <form action="{{ url_for_security("us_verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
           name="us_verify_form">
       {{ us_verify_form.hidden_tag() }}
@@ -23,5 +23,14 @@
         {{ render_field(us_verify_form.submit_send_code, formaction=send_code_to) }}
       {% endif %}
       </form>
+      {% if has_webauthn_verify_credential %}
+        <hr class="fs-gap">
+        <h2>Use a WebAuthn Security Key to Reauthenticate</h2>
+        <form action="{{ url_for_security("wan_verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
+          name="wan_verify_form">
+            {{ wan_verify_form.hidden_tag() }}
+            {{ render_field(wan_verify_form.submit) }}
+        </form>
+      {% endif %}
   {% include "security/_menu.html" %}
 {% endblock %}

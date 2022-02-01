@@ -98,10 +98,15 @@ def default_reauthn_handler(within, grace):
     m, c = get_message("REAUTHENTICATION_REQUIRED")
 
     if _security._want_json(request):
+        from .webauthn import has_webauthn
+
         is_us = config_value("UNIFIED_SIGNIN")
         payload = json_error_response(errors=m)
         payload["reauth_required"] = True
         payload["unified_signin_enabled"] = is_us
+        payload["has_webauthn_verify_credential"] = has_webauthn(
+            current_user, config_value("WAN_ALLOW_AS_VERIFY")
+        )
         return _security._render_json(payload, 401, None, None)
 
     view = "us_verify" if config_value("UNIFIED_SIGNIN") else "verify"

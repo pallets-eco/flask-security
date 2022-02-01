@@ -26,7 +26,9 @@ from tests.test_utils import (
     capture_flashes,
     capture_reset_password_requests,
     logout,
+    reset_fresh,
 )
+from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
 from flask_security import (
     SmsSenderFactory,
@@ -846,7 +848,7 @@ def test_verify(app, client, get_message):
 
     response = client.get("us-setup", follow_redirects=True)
     form_response = response.data.decode("utf-8")
-    assert "Please re-authenticate" in form_response
+    assert "Please Reauthenticate" in form_response
     matcher = re.match(
         r'.*formaction="([^"]*)".*', form_response, re.IGNORECASE | re.DOTALL
     )
@@ -1639,3 +1641,33 @@ def test_us_tf_validity(app, client, get_message):
     assert response.json["response"]["tf_primary_method"] == "authenticator"
     assert response.json["response"]["tf_required"]
     assert response.json["response"]["tf_state"] == "ready"
+
+
+@pytest.mark.webauthn()
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_us_verify_wan(app, client, get_message):
+    # test get correct options when requiring a reauthentication and have wan keys
+    # setup.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    reg_2_keys(client)
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("us-setup", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert response.json["response"]["has_webauthn_verify_credential"]
+
+    # the us-verify form should have the webauthn verify form attached
+    response = client.get("us-verify")
+    assert b'action="/wan-verify"' in response.data
+
+    app.config["SECURITY_WAN_ALLOW_AS_VERIFY"] = None
+    response = client.get("us-setup", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert not response.json["response"]["has_webauthn_verify_credential"]
+
+    # the us-verify form should NOT have the webauthn verify form attached
+    response = client.get("us-verify")
+    assert b'action="/wan-verify"' not in response.data

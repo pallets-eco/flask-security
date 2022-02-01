@@ -493,11 +493,21 @@ These are used by the Two-Factor and Unified Signin features.
 .. py:data:: SECURITY_FRESHNESS
 
     A timedelta used to protect endpoints that alter sensitive information.
-    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`, and
-    :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`.
+    This is used to protect the following endpoints:
+
+        - :py:data:`SECURITY_US_SETUP_URL`
+        - :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
+        - :py:data:`SECURITY_WAN_REGISTER_URL`
+
     Setting this to a negative number will disable any freshness checking and
-    the endpoints :py:data:`SECURITY_VERIFY_URL`, :py:data:`SECURITY_US_VERIFY_URL`
-    and :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL` won't be registered.
+    the endpoints:
+
+        - :py:data:`SECURITY_VERIFY_URL`
+        - :py:data:`SECURITY_US_VERIFY_URL`
+        - :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL`
+        - :py:data:`SECURITY_WAN_VERIFY_URL`
+
+    won't be registered.
     Setting this to 0 results in undefined behavior.
     Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
 
@@ -509,8 +519,12 @@ These are used by the Two-Factor and Unified Signin features.
 
     A timedelta that provides a grace period when altering sensitive
     information.
-    This is used to protect the endpoint: :py:data:`SECURITY_US_SETUP_URL`, and
-    :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`.
+    This is used to protect the endpoints:
+
+        - :py:data:`SECURITY_US_SETUP_URL`
+        - :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
+        - :py:data:`SECURITY_WAN_REGISTER_URL`
+
     N.B. To avoid strange behavior, be sure to set the grace period less than
     the freshness period.
     Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
@@ -1292,7 +1306,7 @@ WebAuthn
 
 .. py:data:: SECURITY_WEBAUTHN
 
-    To enable this feature - set this to ``True``. Please see :ref:`models` for
+    To enable this feature - set this to ``True``. Please see :ref:`models_topic` for
     required additions to your database models.
 
     Default: ``False``
@@ -1315,6 +1329,12 @@ WebAuthn
 
     Default: ``"/wan-delete"``
 
+.. py:data:: SECURITY_WAN_VERIFY_URL
+
+    Endpoint for re-authenticating using a WebAuthn credential.
+
+    Default: ``"/wan-verify"``
+
 .. py:data:: SECURITY_WAN_REGISTER_TEMPLATE
 
     Default: ``"security/wan_register.html"``
@@ -1322,6 +1342,11 @@ WebAuthn
 .. py:data:: SECURITY_WAN_SIGNIN_TEMPLATE
 
     Default: ``"security/wan_signin.html"``
+
+.. py:data:: SECURITY_WAN_VERIFY_TEMPLATE
+
+    Default: ``"security/wan_verify.html"``
+
 
 .. py:data:: SECURITY_WAN_RP_NAME
 
@@ -1388,6 +1413,19 @@ WebAuthn
 
     Default: ``True``
 
+.. py:data:: SECURITY_WAN_ALLOW_AS_VERIFY
+
+    Sets which type of WebAuthn security credential, if any, may be used for
+    reauthentication/verify events. This is a list with possible values:
+
+        - ``"first"`` - just keys registered as "first" usage are allowed
+        - ``"secondary"`` - just keys registered as "secondary" are allowed
+
+    If list is empty or ``None`` WebAuthn keys aren't allowed. This also means that the
+            :py:data::``SECURITY_WAN_VERIFY`` endpoint won't be registered.
+
+
+
 Feature Flags
 -------------
 All feature flags. By default all are 'False'/not enabled.
@@ -1437,6 +1475,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_WAN_REGISTER_URL`
 * :py:data:`SECURITY_WAN_SIGNIN_URL`
 * :py:data:`SECURITY_WAN_DELETE_URL`
+* :py:data:`SECURITY_WAN_VERIFY_URL`
 
 Template Paths
 --------------
@@ -1457,6 +1496,7 @@ A list of all templates:
 * :py:data:`SECURITY_US_VERIFY_TEMPLATE`
 * :py:data:`SECURITY_WAN_REGISTER_TEMPLATE`
 * :py:data:`SECURITY_WAN_SIGNIN_TEMPLATE`
+* :py:data:`SECURITY_WAN_VERIFY_TEMPLATE`
 
 Messages
 -------------
@@ -1539,3 +1579,4 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_WEBAUTHN_ORPHAN_CREDENTIAL_ID``
 * ``SECURITY_MSG_WEBAUTHN_NO_VERIFY``
 * ``SECURITY_MSG_WEBAUTHN_CREDENTIAL_WRONG_USAGE``
+* ``SECURITY_MSG_WEBAUTHN_MISMATCH_USER_HANDLE``

@@ -73,11 +73,12 @@ class WebauthnUtil:
             - Attachment - platform or cross-platform
             - Does the key have to provide user-verification
 
-        Note1 - if the key isn't resident then it isn't discoverable which means that
-        the user won't be able to use that key unless they identify themselves
-        (use the key as a second factor OR type in their identity). If they are forced
-        to type in their identity PRIOR to being authenticated, then there is the
-        possibility that the app will leak username information.
+        :note::
+            If the key isn't resident then it isn't discoverable which means that
+            the user won't be able to use that key unless they identify themselves
+            (use the key as a second factor OR type in their identity). If they are forced
+            to type in their identity PRIOR to being authenticated, then there is the
+            possibility that the app will leak username information.
         """  # noqa: E501
 
         select_criteria = AuthenticatorSelectionCriteria()
@@ -94,18 +95,20 @@ class WebauthnUtil:
         return select_criteria
 
     def user_verification(
-        self, user: t.Optional["User"], usage: str
+        self, user: t.Optional["User"], usage: t.List[str]
     ) -> "UserVerificationRequirement":
         """
         As part of signin - do we want/need user verification.
-        This is called from /wan-signin
+        This is called from /wan-signin and /wan-verify
 
         :param user: User object - could be used to configure on a per-user basis.
             Note that this may not be set on initial wan-signin.
-        :param usage: Either "first" or "secondary" (webauthn is being used as a second
-            factor for authentication
+        :param usage: List of  "first", "secondary" (webauthn is being used as a second
+            factor for authentication). Note that in the ``verify``/``reauthentication``
+            case this list is derived from :py:data:`SECURITY_WAN_ALLOW_AS_VERIFY`
+
         """
-        if usage == "secondary":
+        if "secondary" in usage:
             return UserVerificationRequirement.DISCOURAGED
         if current_app.config.get("SECURITY_WAN_ALLOW_AS_MULTI_FACTOR"):
             return UserVerificationRequirement.PREFERRED

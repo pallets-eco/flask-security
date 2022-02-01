@@ -220,6 +220,7 @@ Forms
 .. autoclass:: flask_security.WebAuthnSigninForm
 .. autoclass:: flask_security.WebAuthnSigninResponseForm
 .. autoclass:: flask_security.WebAuthnDeleteForm
+.. autoclass:: flask_security.WebAuthnVerifyForm
 
 .. _signals_topic:
 
@@ -343,4 +344,4 @@ sends the following signals.
 
     .. versionadded:: 4.2.0
 
-.. _Flask documentation on signals: https://flask.palletsprojects.com/en/1.1.x/signals/
+.. _Flask documentation on signals: https://flask.palletsprojects.com/en/2.0.x/signals/

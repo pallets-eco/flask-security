@@ -4,7 +4,7 @@
 
     Test utils
 
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 from contextlib import contextmanager
@@ -92,6 +92,17 @@ def get_session(response):
                 )
                 val = serializer.loads_unsafe(encoded_cookie)
                 return val[1]
+
+
+def reset_fresh(client, within):
+    # Assumes client authenticated.
+    # Upon return the NEXT request if protected with a freshness check
+    # will require a fresh authentication.
+    with client.session_transaction() as sess:
+        old_paa = sess["fs_paa"] - within.total_seconds() - 100
+        sess["fs_paa"] = old_paa
+        sess.pop("fs_gexp", None)
+    return old_paa
 
 
 def check_xlation(app, locale):

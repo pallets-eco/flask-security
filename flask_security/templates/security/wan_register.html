@@ -53,16 +53,17 @@
 
   {% if registered_credentials %}
     <h3>{{ _fsdomain("Currently registered security keys:") }}</h3>
+    {% set listing = _fsdomain('Nickname: "%s" Usage: "%s" Transports: "%s" Discoverable: "%s" Last used on: %s') %}
     <ul>
       {% for cred in registered_credentials %}
-        <li>Nickname: "{{ cred.name }}" Usage: "{{ cred.usage }}" transports: "{{ cred.transports|join(", ") }}" discoverable: "{{ cred.discoverable }}" last used on {{ cred.lastuse }}</li>
+        <li>{{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.lastuse)}}</li>
       {% endfor %}
     </ul>
   {% endif %}
 
   {% if wan_delete_form %}
     <hr>
-    <h2>{{ _fsdomain("Delete existing WebAuthn Security Key") }}</h2>
+    <h2>{{ _fsdomain("Delete Existing WebAuthn Security Key") }}</h2>
       <form action="{{ url_for_security("wan_delete") }}" method="POST"
             name="wan_delete_form">
         {{ wan_delete_form.hidden_tag() }}

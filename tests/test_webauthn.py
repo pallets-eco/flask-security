@@ -24,6 +24,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     logout,
+    reset_fresh,
 )
 
 from flask_security import (
@@ -221,8 +222,33 @@ def _register_start_json(client, name="testr1", usage="secondary"):
     return register_options, response_url
 
 
-def _signin_start(client, identity=None):
-    response = client.post("wan-signin", data=dict(identity=identity))
+def reg_2_keys(client):
+    # Register 2 keys - one first, one secondary
+    authenticate(client)
+    register_options, response_url = _register_start_json(
+        client, name="first", usage="first"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    register_options, response_url = _register_start_json(
+        client, name="second", usage="secondary"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
+    assert response.status_code == 200
+
+    return {
+        "first": {"id": REG_DATA1["id"], "signin": SIGNIN_DATA1},
+        "secondary": {"id": REG_DATA_UV["id"], "signin": SIGNIN_DATA_UV},
+    }
+
+
+def _signin_start(
+    client,
+    identity=None,
+    endpoint="wan-signin",
+):
+    response = client.post(endpoint, data=dict(identity=identity))
     matcher = re.match(
         r".*handleSignin\(\'(.*)\'\).*",
         response.data.decode("utf-8"),
@@ -496,6 +522,20 @@ def test_bad_data_register(app, client, get_message):
         "utf-8"
     ) == get_message("WEBAUTHN_NO_VERIFY", cause="id and raw_id were not equivalent")
 
+    # same with forms
+    with capture_flashes() as flashes:
+        response = client.post(
+            response_url,
+            data=dict(credential=json.dumps(bad_register)),
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert response.location == "http://localhost/wan-register"
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "WEBAUTHN_NO_VERIFY", cause="id and raw_id were not equivalent"
+    )
+
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_bad_data_signin(app, client, get_message):
@@ -648,7 +688,9 @@ def test_disabled_account(app, client, get_message):
 def test_unk_credid(app, client, get_message):
     authenticate(client)
 
-    register_options, response_url = _register_start_json(client, name="testr3")
+    register_options, response_url = _register_start_json(
+        client, name="testr3", usage="first"
+    )
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
     logout(client)
@@ -667,6 +709,20 @@ def test_unk_credid(app, client, get_message):
     assert response.json["response"]["errors"]["credential"][0].encode(
         "utf-8"
     ) == get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")
+
+    # same with forms
+    with capture_flashes() as flashes:
+        response = client.post(
+            response_url,
+            data=dict(credential=json.dumps(bad_signin)),
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert response.location == "http://localhost/wan-signin"
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "WEBAUTHN_UNKNOWN_CREDENTIAL_ID"
+    )
 
 
 @pytest.mark.settings(
@@ -692,15 +748,8 @@ def test_no_first_factor(app, client, get_message):
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf(app, client, get_message):
     # Test using webauthn key as a second factor
-    authenticate(client)
-
-    register_options, response_url = _register_start(client, name="testr3")
-    response = client.post(
-        response_url, data=dict(credential=json.dumps(REG_DATA1)), follow_redirects=True
-    )
-    assert response.status_code == 200
-    assert get_message("WEBAUTHN_REGISTER_SUCCESSFUL", name="testr3") in response.data
-
+    # Register 2 keys - one "first" one "secondary"
+    keys = reg_2_keys(client)
     logout(client)
 
     # log back in - should require MFA.
@@ -711,14 +760,19 @@ def test_tf(app, client, get_message):
     )
     assert response.status_code == 200
     assert b"matt@lp.com" in response.data
+    # we should have a wan key available
+    assert b'action="/wan-signin"' in response.data
+
     # verify NOT logged in
     response = client.get("/profile", follow_redirects=False)
     assert "localhost/login" in response.location
 
     signin_options, response_url = _signin_start(client, "matt@lp.com")
+    assert len(signin_options["allowCredentials"]) == 1
+    assert signin_options["allowCredentials"][0]["id"] == keys["secondary"]["id"]
     response = client.post(
         response_url,
-        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+        json=dict(credential=json.dumps(keys["secondary"]["signin"])),
     )
     assert response.status_code == 200
 
@@ -732,12 +786,8 @@ def test_tf(app, client, get_message):
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf_json(app, client, get_message):
     # Test using webauthn key as a second factor
-    authenticate(client)
-
-    register_options, response_url = _register_start_json(client, name="testr3")
-    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
-    assert response.status_code == 200
-
+    # Register 2 keys - one "first" one "secondary"
+    keys = reg_2_keys(client)
     logout(client)
 
     # log back in - should require MFA.
@@ -755,9 +805,11 @@ def test_tf_json(app, client, get_message):
     assert response.status_code == 401
 
     signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    assert len(signin_options["allowCredentials"]) == 1
+    assert signin_options["allowCredentials"][0]["id"] == keys["secondary"]["id"]
     response = client.post(
         response_url,
-        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+        json=dict(credential=json.dumps(keys["secondary"]["signin"])),
     )
     assert response.status_code == 200
 
@@ -819,6 +871,26 @@ def test_bad_token(app, client, get_message):
         "/wan-register/not a token", data=dict(), follow_redirects=True
     )
     assert get_message("API_ERROR") in response.data
+    response = client.post(
+        "/wan-register/not a token", data=dict(), follow_redirects=False
+    )
+    assert response.location == "http://localhost/wan-register"
+
+    # Test wan-verify
+    response = client.post("/wan-verify/not a token", json=dict())
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
+    # same w/o json
+    response = client.post(
+        "/wan-verify/not a token", data=dict(), follow_redirects=True
+    )
+    assert get_message("API_ERROR") in response.data
+    response = client.post(
+        "/wan-verify/not a token", data=dict(), follow_redirects=False
+    )
+    assert response.location == "http://localhost/wan-verify"
 
     # Test signin
     logout(client)
@@ -833,11 +905,16 @@ def test_bad_token(app, client, get_message):
         "/wan-signin/not a token", data=dict(), follow_redirects=True
     )
     assert get_message("API_ERROR") in response.data
+    response = client.post(
+        "/wan-signin/not a token", data=dict(), follow_redirects=False
+    )
+    assert response.location == "http://localhost/wan-signin"
 
 
 @pytest.mark.settings(
     wan_register_template="custom_security/wan_register.html",
     wan_signin_template="custom_security/wan_signin.html",
+    wan_verify_template="custom_security/wan_verify.html",
 )
 def test_wan_context_processors(client, app):
     @app.security.context_processor
@@ -874,6 +951,21 @@ def test_wan_context_processors(client, app):
     assert b"CUSTOM WAN SIGNIN" in response.data
     assert b"global" in response.data
     assert b"signin" in response.data
+
+    @app.security.wan_verify_context_processor
+    def verify_ctx():
+        return {"foo": "verify"}
+
+    authenticate(client)
+    response = client.get("wan-verify")
+    assert b"CUSTOM WAN VERIFY" in response.data
+    assert b"global" in response.data
+    assert b"verify" in response.data
+
+    response = client.post("wan-verify", data=dict(name="matt@lp.com"))
+    assert b"CUSTOM WAN VERIFY" in response.data
+    assert b"global" in response.data
+    assert b"verify" in response.data
 
 
 @pytest.mark.two_factor()
@@ -1033,3 +1125,212 @@ def test_autogen_user_handle(app, client, get_message):
             .replace("=", "")
         )
         assert b64_user_handle == register_options["user"]["id"]
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_verify_json(app, client, get_message):
+    # Test can re-authenticate using existing webauthn key.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, usage="first")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+
+    response = client.get("fresh", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert response.json["response"]["has_webauthn_verify_credential"]
+
+    response = client.get("wan-verify", headers=headers)
+    assert response.status_code == 200
+
+    response = client.post("wan-verify", json=dict())
+    # default webauthn_utils will set userVerification to discouraged in the
+    # case of verify.
+    signin_options = response.json["response"]["credential_options"]
+    assert signin_options["userVerification"] == "discouraged"
+
+    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
+    assert response.status_code == 200
+
+    response = client.get("fresh", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_verify(app, client, get_message):
+    # Test can re-authenticate using existing webauthn key.
+    # Forms version - verify that the 'next' qparam is properly maintained during the
+    # 2 part authentication.
+    authenticate(client)
+    register_options, response_url = _register_start(client, usage="first")
+    response = client.post(
+        response_url, data=dict(credential=json.dumps(REG_DATA1)), follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert b"testr1" in response.data
+
+    old_paa = reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("fresh")
+    verify_url = response.location
+    assert verify_url == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Ffresh"
+    signin_options, response_url = _signin_start(
+        client, endpoint="wan-verify?next=/fresh"
+    )
+
+    response = client.post(
+        response_url,
+        data=dict(credential=json.dumps(SIGNIN_DATA1)),
+        follow_redirects=False,
+    )
+    assert response.location == "http://localhost/fresh"
+    with client.session_transaction() as sess:
+        assert sess["fs_paa"] > old_paa
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_signin_within="2 seconds")
+def test_verify_timeout(app, client, get_message):
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    app.security.wan_serializer = FakeSerializer(2.0)
+    response = client.post("wan-verify", json=dict())
+    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf-8") == get_message(
+        "WEBAUTHN_EXPIRED", within=app.config["SECURITY_WAN_SIGNIN_WITHIN"]
+    )
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_verify_validate_error(app, client, get_message):
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    response = client.post("wan-verify", json=dict())
+    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    # send wrong signin data
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UH))
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")
+
+    # same thing - with forms - this should redirect to wan-verify and flash a message
+    with capture_flashes() as flashes:
+        response = client.post(
+            response_url,
+            data=dict(credential=json.dumps(SIGNIN_DATA_UH)),
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert response.location == "http://localhost/wan-verify"
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "WEBAUTHN_UNKNOWN_CREDENTIAL_ID"
+    )
+
+
+@pytest.mark.settings(wan_allow_as_verify=None)
+def test_no_verify(app, client):
+    authenticate(client)
+    response = client.get("/wan-verify")
+    assert response.status_code == 404
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_verify_usage_any_json(app, client, get_message):
+    # Test the WAN_ALLOW_AS_VERIFY config.
+    # Make sure only allowed credentials show up as options
+    # Make sure if we use a disallowed credential, we get an error.
+    keys = reg_2_keys(client)
+
+    # Default WAN_ALLOW_AS_VERIFY is ["first", "secondary"]
+    response = client.post("wan-verify", json=dict())
+    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    allow_credentials = response.json["response"]["credential_options"][
+        "allowCredentials"
+    ]
+    assert len(allow_credentials) == 2
+
+    # make sure can sign in with either
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(keys["first"]["signin"]))
+    )
+    assert response.status_code == 200
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(keys["secondary"]["signin"]))
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_as_verify="first")
+def test_verify_usage_first_json(app, client, get_message):
+    # Test the WAN_ALLOW_AS_VERIFY config.
+    # Make sure only allowed credentials show up as options
+    # Make sure if we use a disallowed credential, we get an error.
+    keys = reg_2_keys(client)
+
+    response = client.post("wan-verify", json=dict())
+    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    allow_credentials = response.json["response"]["credential_options"][
+        "allowCredentials"
+    ]
+    assert len(allow_credentials) == 1
+    assert allow_credentials[0]["id"] == keys["first"]["id"]
+
+    # make sure can sign in with just "first"
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(keys["first"]["signin"]))
+    )
+    assert response.status_code == 200
+    # but not "secondary"
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(keys["secondary"]["signin"]))
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("WEBAUTHN_CREDENTIAL_WRONG_USAGE")
+
+
+@pytest.mark.settings(
+    webauthn_util_cls=HackWebauthnUtil, wan_allow_as_verify="secondary"
+)
+def test_verify_usage_secondary_json(app, client, get_message):
+    # Test the WAN_ALLOW_AS_VERIFY config.
+    # Make sure only allowed credentials show up as options
+    # Make sure if we use a disallowed credential, we get an error.
+    keys = reg_2_keys(client)
+
+    response = client.post("wan-verify", json=dict())
+    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    allow_credentials = response.json["response"]["credential_options"][
+        "allowCredentials"
+    ]
+    assert len(allow_credentials) == 1
+    assert allow_credentials[0]["id"] == keys["secondary"]["id"]
+
+    # make sure can sign in with just "secondary"
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(keys["first"]["signin"]))
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["credential"][0].encode(
+        "utf-8"
+    ) == get_message("WEBAUTHN_CREDENTIAL_WRONG_USAGE")
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(keys["secondary"]["signin"]))
+    )
+    assert response.status_code == 200
