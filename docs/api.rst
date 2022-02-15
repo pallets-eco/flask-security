@@ -164,10 +164,17 @@ Utils
 
 .. autofunction:: flask_security.tf_send_security_token
 
-.. autoclass:: flask_security.FsJsonEncoder
+.. autoclass:: flask_security.SmsSenderBaseClass
+  :members: send_sms
 
-.. autoclass:: flask_security.Totp
-  :members: get_last_counter, set_last_counter, generate_qrcode
+.. autoclass:: flask_security.SmsSenderFactory
+  :members: createSender
+
+
+Extendable Classes
+------------------
+Each of the following classes can be extended and passed in as part of
+Security() instantiation.
 
 .. autoclass:: flask_security.PhoneUtil
   :members:
@@ -189,12 +196,10 @@ Utils
   :members:
   :special-members: __init__
 
+.. autoclass:: flask_security.Totp
+  :members: get_last_counter, set_last_counter, generate_qrcode
 
-.. autoclass:: flask_security.SmsSenderBaseClass
-  :members: send_sms
-
-.. autoclass:: flask_security.SmsSenderFactory
-  :members: createSender
+.. autoclass:: flask_security.FsJsonEncoder
 
 Forms
 -----

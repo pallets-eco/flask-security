@@ -24,7 +24,7 @@
         - openapi.yml
         - integrate with plain login
         - update/add examples to support webauthn
-        - does remember me make sense?
+        - remember me support
         - if two-factor is required - can they register a webauthn key?
         - Add a way to order registered credentials so we can return an ordered list
           in allowCredentials.
@@ -392,23 +392,23 @@ def webauthn_register() -> "ResponseValue":
             # column (and not requiring as part of schema change to update all existing
             # records. New users will have this set as part of user creation.
             after_this_request(view_commit)
-            _datastore.set_webauthn_user_id(current_user)
+            _datastore.set_webauthn_user_handle(current_user)
 
-        credential_options = webauthn.generate_registration_options(
+        ro = dict(
             challenge=challenge.encode(),
             rp_name=cv("WAN_RP_NAME"),
             rp_id=request.host.split(":")[0],
             user_id=current_user.fs_webauthn_user_handle,
             user_name=current_user.calc_username(),
             timeout=cv("WAN_REGISTER_TIMEOUT"),
-            authenticator_selection=_security._webauthn_util.authenticator_selection(
-                current_user,
-                form.usage.data,
-            ),
             exclude_credentials=create_credential_list(
                 current_user, ["first", "secondary"]
             ),
         )
+        ro = _security._webauthn_util.registration_options(
+            current_user, form.usage.data, ro
+        )
+        credential_options = webauthn.generate_registration_options(**ro)
         co_json = json.loads(webauthn.options_to_json(credential_options))
         co_json["extensions"] = {"credProps": True}
 
@@ -534,13 +534,14 @@ def _signin_common(user: t.Optional["User"], usage: t.List[str]) -> t.Tuple[t.An
     if user:
         allow_credentials = create_credential_list(user, usage)
 
-    options = webauthn.generate_authentication_options(
+    ao = dict(
         rp_id=request.host.split(":")[0],
         challenge=challenge.encode(),
         timeout=cv("WAN_SIGNIN_TIMEOUT"),
-        user_verification=_security._webauthn_util.user_verification(user, usage),
         allow_credentials=allow_credentials,
     )
+    ao = _security._webauthn_util.authentication_options(user, usage, ao)
+    options = webauthn.generate_authentication_options(**ao)
 
     o_json = json.loads(webauthn.options_to_json(options))
     state_token = t.cast(str, _security.wan_serializer.dumps(state))

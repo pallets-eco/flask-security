@@ -1085,7 +1085,7 @@ def test_user_handle(app, client, get_message):
     # Now change the user_handle both for the user and SIGNIN_DATA_UH
     with app.test_request_context("/"):
         user = app.security.datastore.find_user(email="matt@lp.com")
-        app.security.datastore.set_webauthn_user_id(user)
+        app.security.datastore.set_webauthn_user_handle(user)
         app.security.datastore.commit()
 
         b64_user_handle = (

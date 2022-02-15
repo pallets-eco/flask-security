@@ -23,8 +23,9 @@ must specifically import the version they want (and handle any required migratio
 
 Your `User` model needs a Primary Key - Flask-Security doesn't actually reference
 this - so it can be any name or type your application needs. It should be used in the
-foreign relationship between `User` and `Role`. The `webauthn` feature also
-references this primary key.
+foreign relationship between `User` and `Role`. The `WebAuthn` model also
+references this primary key (which can be overridden by providing a
+suitable implementation of ``get_user_mapping``).
 
 At the bare minimum your `User` and `Role` model should include the following fields:
 
@@ -118,7 +119,7 @@ requires the following additional field:
 Permissions
 ^^^^^^^^^^^
 If you want to protect endpoints with permissions, and assign permissions to roles
-that are then assigned to users the Role model requires:
+that are then assigned to users, the ``Role`` model requires:
 
 * ``permissions`` (UnicodeText)
 
@@ -145,16 +146,55 @@ The 'WebAuthn' model requires the following fields:
 * ``name`` (string, 64 bytes, non-nullable)
 * ``usage`` (string, 64 bytes, non-nullable)
 
-It also needs a reference to the owning `User` record. The shipped datastore
-implementations depend on the following:
+There needs to be a bi-directional relationship between the WebAuthn record and
+the User record (since we need to look up the ``User`` based on a WebAuthn ``credential_id``.
 
-* ``user_id`` For SQLAlchemy based datastores (including Flask-SQLAlchemy)
-* ``user`` For Peewee and MongoEngine
+**For SQLAlchemy**::
+
+    Add the following to the WebAuthn model (assuming your primary key is named ``id``):
+
+        @declared_attr
+        def user_id(cls):
+            return Column(
+                Integer,
+                ForeignKey("user.id", ondelete="CASCADE"),
+                nullable=False,
+            )
+
+    Add the following to the User model:
+
+        @declared_attr
+        def webauthn(cls):
+            return relationship("WebAuthn", backref="users", cascade="all, delete")
+
+**For mongoengine**::
+
+    Add the following to the WebAuthn model:
+
+        user = ReferenceField("User")
+        def get_user_mapping(self) -> t.Dict[str, str]:
+            """Return the mapping from webauthn back to User"""
+            return dict(id=self.user.id)
+
+    Add the following to the User model:
+
+        webauthn = ListField(ReferenceField(WebAuthn, reverse_delete_rule=PULL), default=[])
+
+
+**For peewee**::
+
+    Add the following to the WebAuthn model:
+
+        user = ForeignKeyField(User, backref="webauthn")
+
+    This will add a column called ``user_id`` that references the User model's
+    ``id`` primary key field. It will also create a virtual column ``webauthn``
+    as part of the User model. Note that the default Peewee datastore implementation
+    calls ``delete_instance(recursive=True)`` which correctly deals with ensuring
+    that WebAuthn records get deleted if a User is deleted.
 
 The `User` model needs the following additional fields:
 
-* ``webauthn`` (one-to-many to WebAuthn model).
-  The reference to the registered WebAuthn credentials.
 * ``fs_webauthn_user_handle`` (string, 64 bytes, unique).
   This is used as the `PublicKeyCredentialUserEntity` `id` value.
 

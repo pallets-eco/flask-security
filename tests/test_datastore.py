@@ -515,6 +515,7 @@ def test_webauthn_cascade(app, datastore):
         assert len(user.webauthn) == 2
         names = [cred.name for cred in user.webauthn]
         assert set(names) == {"cred1", "cred2"}
+        assert datastore.find_webauthn(b"1")
 
         # delete user
         datastore.delete_user(user)

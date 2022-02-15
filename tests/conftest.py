@@ -249,11 +249,12 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
 
 
 @pytest.fixture()
-def mongoengine_datastore(request, app, tmpdir, realdburl):
-    return mongoengine_setup(request, app, tmpdir, realdburl)
+def mongoengine_datastore(request, app, tmpdir, realmongodburl):
+    return mongoengine_setup(request, app, tmpdir, realmongodburl)
 
 
-def mongoengine_setup(request, app, tmpdir, realdburl):
+def mongoengine_setup(request, app, tmpdir, realmongodburl):
+    # To run against a realdb: mongod --dbpath <somewhere>
     pytest.importorskip("flask_mongoengine")
     from flask_mongoengine import MongoEngine
     from mongoengine.fields import (
@@ -270,7 +271,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
     db_name = "flask_security_test_%s" % str(time.time()).replace(".", "_")
     app.config["MONGODB_SETTINGS"] = {
         "db": db_name,
-        "host": "mongomock://localhost",
+        "host": realmongodburl if realmongodburl else "mongomock://localhost",
         "port": 27017,
         "alias": db_name,
     }
@@ -284,9 +285,7 @@ def mongoengine_setup(request, app, tmpdir, realdburl):
         meta = {"db_alias": db_name}
 
     class WebAuthn(db.Document, WebAuthnMixin):
-        credential_id = BinaryField(
-            primary_key=True, max_bytes=1024, unique=True, required=True
-        )
+        credential_id = BinaryField(primary_key=True, max_bytes=1024, required=True)
         public_key = BinaryField(required=True)
         sign_count = IntField(default=0)
         transports = ListField(required=False)
@@ -599,6 +598,13 @@ def peewee_setup(request, app, tmpdir, realdburl):
                 return value.split(",")
             return value
 
+    class BytesBlobField(BlobField):
+        # Alas pydantic/py_webauthn doesn't understand memoryviews
+        def python_value(self, value):
+            if value:
+                return bytes(value)
+            return value
+
     class Role(RoleMixin, db.Model):
         name = CharField(unique=True, max_length=80)
         description = TextField(null=True)
@@ -625,10 +631,10 @@ def peewee_setup(request, app, tmpdir, realdburl):
         confirmed_at = DateTimeField(null=True)
 
     class WebAuthn(WebAuthnMixin, db.Model):
-        credential_id = BlobField(unique=True, null=False, index=True)
-        public_key = BlobField(null=False)
+        credential_id = BytesBlobField(unique=True, null=False, index=True)
+        public_key = BytesBlobField(null=False)
         sign_count = IntegerField(default=0)
-        transports = AsaList(null=True)  # comma separated
+        transports = AsaList(null=True)
 
         # a JSON string as returned from registration
         extensions = TextField(null=True)
@@ -806,13 +812,13 @@ def client_nc(request, sqlalchemy_app):
 
 
 @pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo", "cl-peewee"])
-def clients(request, app, tmpdir, realdburl):
+def clients(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "cl-sqlalchemy":
         ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
     elif request.param == "c2":
         ds = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
     elif request.param == "cl-mongo":
-        ds = mongoengine_setup(request, app, tmpdir, realdburl)
+        ds = mongoengine_setup(request, app, tmpdir, realmongodburl)
     elif request.param == "cl-peewee":
         ds = peewee_setup(request, app, tmpdir, realdburl)
     elif request.param == "cl-pony":
@@ -853,13 +859,13 @@ def get_message_local(app):
 @pytest.fixture(
     params=["sqlalchemy", "sqlalchemy-session", "mongoengine", "peewee", "pony"]
 )
-def datastore(request, app, tmpdir, realdburl):
+def datastore(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "sqlalchemy":
         rv = sqlalchemy_setup(request, app, tmpdir, realdburl)
     elif request.param == "sqlalchemy-session":
         rv = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
     elif request.param == "mongoengine":
-        rv = mongoengine_setup(request, app, tmpdir, realdburl)
+        rv = mongoengine_setup(request, app, tmpdir, realmongodburl)
     elif request.param == "peewee":
         rv = peewee_setup(request, app, tmpdir, realdburl)
     elif request.param == "pony":
@@ -893,6 +899,13 @@ def pytest_addoption(parser):
         help="""Set url for using real database for testing.
         For postgres: 'postgresql://user:password@host/')""",
     )
+    parser.addoption(
+        "--realmongodburl",
+        action="store",
+        default=None,
+        help="""Set url for using real mongo database for testing.
+        e.g. 'localhost'""",
+    )
 
 
 @pytest.fixture(scope="session")
@@ -908,6 +921,16 @@ def realdburl(request):
     --realdburl "mysql+pymysql://root:<password>@localhost/"
     """
     return request.config.option.realdburl
+
+
+@pytest.fixture(scope="session")
+def realmongodburl(request):
+    """
+    Support running datastore tests against a real Mongo DB.
+    --realmongodburl "localhost"
+
+    """
+    return request.config.option.realmongodburl
 
 
 def _setup_realdb(realdburl):
