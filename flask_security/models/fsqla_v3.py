@@ -82,7 +82,7 @@ class FsWebAuthnMixin(WebAuthnMixin):
     credential_id = Column(LargeBinary(1024), index=True, unique=True, nullable=False)
     public_key = Column(LargeBinary, nullable=False)
     sign_count = Column(Integer, default=0)
-    transports = Column(AsaList(255), nullable=True)  # comma separated
+    transports = Column(AsaList(255), nullable=True)
 
     # a JSON string as returned from registration
     extensions = Column(String(255), nullable=True)

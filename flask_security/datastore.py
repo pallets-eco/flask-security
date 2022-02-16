@@ -566,16 +566,16 @@ class UserDatastore:
         user.us_totp_secrets = None
         self.put(user)
 
-    def set_webauthn_user_id(
-        self, user: "User", user_id: t.Union[str, None] = None
+    def set_webauthn_user_handle(
+        self, user: "User", user_handle: t.Union[str, None] = None
     ) -> None:
         """Set the value for the Relaying Party's (that's us)
         UserHandle (user.id)
         If no value is passed in, a UUID is generated.
         """
-        if not user_id:
-            user_id = uuid.uuid4().hex
-        user.fs_webauthn_user_handle = user_id
+        if not user_handle:
+            user_handle = uuid.uuid4().hex
+        user.fs_webauthn_user_handle = user_handle
         self.put(user)
 
     def create_webauthn(

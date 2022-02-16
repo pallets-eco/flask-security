@@ -1462,8 +1462,8 @@ class Security:
         if cv("PASSWORDLESS", app=app):
             warnings.warn(
                 "The passwordless feature was deprecated in Version 4.2.0"
-                "and will be removed in 5.0. Please use the Unified Signin"
-                "feature instead.",
+                " and will be removed in 5.0. Please use the Unified Signin"
+                " feature instead.",
                 DeprecationWarning,
             )
         if cv("USERNAME_ENABLE", app):

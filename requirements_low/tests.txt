@@ -9,9 +9,6 @@ argon2_cffi==20.1.0
 babel==2.7.0
 bcrypt==3.2.0
 bleach==3.2.2
-# These 2 come from webauthn requirements
-cryptography==3.0.0;python_version<'3.8'
-cryptography==3.4.7;python_version>='3.8'
 python-dateutil==2.8.2
 # next 2 come from minimums from Flask 1.1.4 and need newer jinja2 for 3.10
 jinja2==2.11.0
@@ -23,6 +20,9 @@ phonenumberslite==8.11.1
 pyqrcode==1.2
 sqlalchemy==1.3.24
 sqlalchemy-utils==0.37.1
-webauthn==1.2.0;python_version>='3.8'
+# These 2 come from webauthn requirements
+cryptography==3.3.2;python_version<'3.8'
+cryptography==36.0.1;python_version>='3.8'
+webauthn==1.3.0;python_version>='3.8'
 werkzeug==0.16.1
 zxcvbn==4.4.28

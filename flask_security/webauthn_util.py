@@ -56,6 +56,22 @@ class WebauthnUtil:
         # Return the RP origin - normally this is just the URL of the application.
         return request.host_url.rstrip("/")
 
+    def registration_options(
+        self, user: "User", usage: str, existing_options: t.Dict[str, t.Any]
+    ) -> t.Dict[str, t.Any]:
+        """
+        :param user: User object - could be used to configure on a per-user basis.
+        :param usage: Either "first" or "secondary" (webauthn is being used as a second
+            factor for authentication)
+        :param existing_options: Currently filled in registration options.
+
+        Return a dict that will be sent in to py-webauthn generate_registration_options
+        """
+        existing_options["authenticator_selection"] = self.authenticator_selection(
+            user, usage
+        )
+        return existing_options
+
     def authenticator_selection(
         self, user: "User", usage: str
     ) -> "AuthenticatorSelectionCriteria":
@@ -93,6 +109,25 @@ class WebauthnUtil:
         else:
             select_criteria.resident_key = ResidentKeyRequirement.PREFERRED
         return select_criteria
+
+    def authentication_options(
+        self,
+        user: t.Optional["User"],
+        usage: t.List[str],
+        existing_options: t.Dict[str, t.Any],
+    ) -> t.Dict[str, t.Any]:
+        """
+        :param user: User object - could be used to configure on a per-user basis.
+            However this can be null.
+        :param usage: Either "first" or "secondary" (webauthn is being used as a second
+            factor for authentication)
+        :param existing_options: Currently filled in authentication options.
+
+        Return a dict that will be sent in to
+         py-webauthn generate_authentication_options
+        """
+        existing_options["user_verification"] = self.user_verification(user, usage)
+        return existing_options
 
     def user_verification(
         self, user: t.Optional["User"], usage: t.List[str]
