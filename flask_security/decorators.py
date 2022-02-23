@@ -239,7 +239,7 @@ def http_auth_required(realm: t.Any) -> DecoratedView:
             else:
                 r = _security.default_http_auth_realm if callable(realm) else realm
                 h = {"WWW-Authenticate": 'Basic realm="%s"' % r}
-                return _security._unauthn_handler(["basic"], headers=h)
+                return _security._unauthn_handler(["basic"], h)
 
         return wrapper
 

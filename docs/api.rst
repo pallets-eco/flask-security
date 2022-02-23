@@ -57,6 +57,9 @@ User Object Helpers
 .. autoclass:: flask_security.RoleMixin
    :members:
 
+.. autoclass:: flask_security.WebAuthnMixin
+   :members:
+
 .. autoclass:: flask_security.AnonymousUser
    :members:
 
