@@ -749,7 +749,8 @@ Registerable
 
     Validation and normalization is encapsulated in :class:`.UsernameUtil`.
     Note that the default validation restricts username input to be unicode
-    letters and numbers.
+    letters and numbers. It also uses ``bleach`` to scrub any risky input. Be
+    sure your application requirements includes ``bleach``.
 
     Default: ``False``
 

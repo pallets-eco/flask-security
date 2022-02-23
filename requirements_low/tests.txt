@@ -13,6 +13,7 @@ python-dateutil==2.8.2
 # next 2 come from minimums from Flask 1.1.4 and need newer jinja2 for 3.10
 jinja2==2.11.0
 itsdangerous==1.1.0
+markupsafe==2.0.1
 mongoengine==0.22.1
 mongomock==3.22.0
 pony==0.7.14;python_version<'3.10'

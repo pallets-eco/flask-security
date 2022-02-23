@@ -978,6 +978,15 @@ class AnonymousUser(AnonymousUserMixin):
         return False
 
 
+class UnauthnCb(t.Protocol):
+    def __call__(
+        self,
+        mechanisms: t.Union[t.Set[str], t.List[str]],
+        headers: t.Optional[t.Dict[str, str]] = None,
+    ) -> "ResponseValue":
+        ...
+
+
 class Security:
     """The :class:`Security` class initializes the Flask-Security extension.
 
@@ -1159,9 +1168,7 @@ class Security:
         self.webauthn_util_cls = webauthn_util_cls
 
         # Attributes not settable from init.
-        self._unauthn_handler: t.Callable[
-            [t.List[str], t.Optional[t.Dict[str, str]]], "ResponseValue"
-        ] = default_unauthn_handler
+        self._unauthn_handler: UnauthnCb = default_unauthn_handler
         self._reauthn_handler: t.Callable[
             [timedelta, timedelta], "ResponseValue"
         ] = default_reauthn_handler
@@ -1694,7 +1701,7 @@ class Security:
 
     def unauthn_handler(
         self,
-        cb: t.Callable[[t.List[str], t.Optional[t.Dict[str, str]]], "ResponseValue"],
+        cb: UnauthnCb,
     ) -> None:
         """
         Callback for failed authentication.

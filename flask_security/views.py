@@ -610,7 +610,7 @@ def reset_password(token):
 
     if form.validate_on_submit():
         after_this_request(view_commit)
-        update_password(user, _security._password_util.normalize(form.password.data))
+        update_password(user, form.password.data)
         if cv("TWO_FACTOR") and (
             cv("TWO_FACTOR_REQUIRED")
             or (form.user.tf_totp_secret and form.user.tf_primary_method)
