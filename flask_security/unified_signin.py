@@ -70,6 +70,7 @@ from .utils import (
     url_for_security,
     view_commit,
 )
+from .webauthn import has_webauthn
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
@@ -600,8 +601,6 @@ def us_verify() -> "ResponseValue":
         return redirect(get_post_verify_redirect())
 
     # Here on GET or failed POST validate
-    from .webauthn import has_webauthn
-
     webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
     if _security._want_json(request):
         payload = {

@@ -232,8 +232,6 @@ def verify():
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
         return redirect(get_post_verify_redirect())
 
-    from .webauthn import has_webauthn
-
     webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
     if _security._want_json(request):
         assert form.user == current_user
