@@ -1118,7 +1118,7 @@ class Security:
             raise ValueError("Datastore must be provided")
         self.datastore = self._datastore
 
-        if register_blueprint:
+        if register_blueprint is not None:
             self._register_blueprint = register_blueprint
         self.register_blueprint = self._register_blueprint
 

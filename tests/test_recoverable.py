@@ -566,3 +566,40 @@ def test_email_normalization(client, get_message):
     )
     assert response.status_code == 200
     assert get_message("PASSWORD_RESET_REQUEST", email="joe@lp.com") in response.data
+
+
+def test_password_normalization(app, client, get_message):
+    with capture_reset_password_requests() as requests:
+        response = client.post(
+            "/reset",
+            json=dict(email="matt@lp.com"),
+        )
+        assert response.status_code == 200
+    token = requests[0]["token"]
+
+    response = client.post(
+        "/reset/" + token,
+        json=dict(password="HöheHöhe", password_confirm="HöheHöhe"),
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    # make sure can log in with new password both normnalized or not
+    response = client.post(
+        "/login",
+        json=dict(email="matt@lp.com", password="HöheHöhe"),
+    )
+    assert response.status_code == 200
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/login",
+        json=dict(email="matt@lp.com", password="Ho\u0308heHo\u0308he"),
+    )
+    assert response.status_code == 200
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
