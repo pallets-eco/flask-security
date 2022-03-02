@@ -44,7 +44,6 @@ if get_quart_status():  # pragma: no cover
 
         return functools.update_wrapper(decorator, f)
 
-
 else:
     import flask.cli
 

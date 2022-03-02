@@ -15,7 +15,7 @@ which are a bit of a pain. To make things easier - Flask-Security includes mixin
 contain ALL the fields and tables required for all features. They also contain
 various `best practice` fields - such as update and create times. These mixins can
 be easily extended to add any sort of custom fields and can be found in the
-`models` module (today there is just one for using Flask-SqlAlchemy).
+`models` module (today there is just one for using Flask-SQLAlchemy).
 
 The provided models are versioned since they represent actual DB models, and any
 changes require a schema migration (and perhaps a data migration). Applications
@@ -33,7 +33,7 @@ At the bare minimum your `User` and `Role` model should include the following fi
 * ``email`` (for most features - unique, non-nullable)
 * ``password`` (non-nullable)
 * ``active`` (boolean, non-nullable)
-* ``fs_uniquifier`` (unique, non-nullable)
+* ``fs_uniquifier`` (string, 64 bytes, unique, non-nullable)
 
 
 **Role**
@@ -78,13 +78,13 @@ If you enable two-factor by setting your application's `SECURITY_TWO_FACTOR`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
-* ``tf_totp_secret`` (string)
+* ``tf_totp_secret`` (string, 255 bytes, nullable)
 * ``tf_primary_method`` (string)
 
 If you include 'sms' in `SECURITY_TWO_FACTOR_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
-* ``tf_phone_number`` (string)
+* ``tf_phone_number`` (string, 255 bytes, nullable)
 
 Unified Sign In
 ^^^^^^^^^^^^^^^
@@ -105,12 +105,19 @@ Separate Identity Domains
 If you want authentication tokens to not be invalidated when the user changes their
 password add the following to your `User` model:
 
-* ``fs_token_uniquifier`` (unique, non-nullable)
+* ``fs_token_uniquifier`` (string, 64 bytes, unique, non-nullable)
+
+Username
+~~~~~~~~~
+If you set :py:data:`SECURITY_USERNAME_ENABLE` to `True`, then your `User` model
+requires the following additional field:
+
+* ``username`` (string, 64 bytes, unique, nullable)
 
 Permissions
 ^^^^^^^^^^^
 If you want to protect endpoints with permissions, and assign permissions to roles
-that are then assigned to users the Role model requires:
+that are then assigned to users, the ``Role`` model requires:
 
 * ``permissions`` (UnicodeText)
 

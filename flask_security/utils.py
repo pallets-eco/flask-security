@@ -98,7 +98,6 @@ if get_quart_status():  # pragma: no cover
         _datastore.commit()
         return response
 
-
 else:
 
     def view_commit(response=None):

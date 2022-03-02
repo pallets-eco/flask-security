@@ -731,7 +731,8 @@ Registerable
 
     Validation and normalization is encapsulated in :class:`.UsernameUtil`.
     Note that the default validation restricts username input to be unicode
-    letters and numbers.
+    letters and numbers. It also uses ``bleach`` to scrub any risky input. Be
+    sure your application requirements includes ``bleach``.
 
     Default: ``False``
 
@@ -763,7 +764,7 @@ Registerable
 
 .. py:data:: SECURITY_USERNAME_NORMALIZE_FORM
 
-    Usernames can be unicode normalization is performed using the Python unicodedata.normalize() method.
+    Usernames, by default, are normalized using the Python unicodedata.normalize() method.
 
     Default: ``"NFKD"``
 
@@ -1090,6 +1091,9 @@ Configuration related to the two-factor authentication feature.
 Unified Signin
 --------------
 
+    Unified sign in provides a generalized sign in endpoint that takes an `identity`
+    and a `passcode`.
+
     .. versionadded:: 3.4.0
 
 .. py:data:: SECURITY_UNIFIED_SIGNIN
@@ -1406,8 +1410,8 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_US_SPECIFY_IDENTITY``
 * ``SECURITY_MSG_USE_CODE``
 * ``SECURITY_MSG_USER_DOES_NOT_EXIST``
-* ``SECURITY_USERNAME_INVALID_LENGTH``
-* ``SECURITY_USERNAME_ILLEGAL_CHARACTERS``
-* ``SECURITY_USERNAME_DISALLOWED_CHARACTERS``
-* ``SECURITY_USERNAME_NOT_PROVIDED``
-* ``SECURITY_USERNAME_ALREADY_ASSOCIATED``
+* ``SECURITY_MSG_USERNAME_INVALID_LENGTH``
+* ``SECURITY_MSG_USERNAME_ILLEGAL_CHARACTERS``
+* ``SECURITY_MSG_USERNAME_DISALLOWED_CHARACTERS``
+* ``SECURITY_MSG_USERNAME_NOT_PROVIDED``
+* ``SECURITY_MSG_USERNAME_ALREADY_ASSOCIATED``

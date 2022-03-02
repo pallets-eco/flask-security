@@ -3,16 +3,30 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.1.3
+-------------
+
+Released March 2, 2022
+
+Fixes
++++++
+- (:issue:`581`) Fix bug when attempting to disable register_blueprint. (halali)
+- (:pr:`539`) Fix example documentation re: generating localized messages. (kazuhei2)
+- (:pr:`546`) Make roles joinedload compatible with SQLAlchemy 2.0. (keats)
+- (:pr:`586`) Ship py.typed as part of package.
+- (:issue:`580`) Improve documentation around use of bleach and include in common install extra.
+
+
 Version 4.1.2
 -------------
 
 Released September 22, 2021
 
 Fixes
------
--(:issue:`526`) default_reauthn_handler doesn't honor SECURITY_URL_PREFIX
--(:pr:`528`) Improve German translations (sr-verde)
--(:pr:`527`) Fix two-factor sample code (djpnewton)
++++++
+- (:issue:`526`) default_reauthn_handler doesn't honor SECURITY_URL_PREFIX
+- (:pr:`528`) Improve German translations (sr-verde)
+- (:pr:`527`) Fix two-factor sample code (djpnewton)
 
 Version 4.1.1
 --------------
@@ -20,7 +34,7 @@ Version 4.1.1
 Released September 10, 2021
 
 Fixes
------
++++++
 - (:issue:`518`) Fix corner case where Security object was being reused in tests.
 - (:issue:`512`) If USERNAME_ENABLE is set, change LoginForm field from EmailField
   to StringField. Also - dynamically add fields to Login and Registration forms
