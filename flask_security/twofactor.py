@@ -14,14 +14,12 @@ from flask import current_app as app, redirect, request, session
 from werkzeug.datastructures import MultiDict
 
 from .proxies import _security, _datastore
+from .tf_plugin import TfPluginBase, tf_clean_session
 from .utils import (
     SmsSenderFactory,
     base_render_json,
-    check_and_get_token_status,
     config_value,
     do_flash,
-    get_within_delta,
-    login_user,
     json_error_response,
     send_mail,
     url_for_security,
@@ -33,25 +31,11 @@ from .signals import (
     tf_profile_changed,
 )
 
-from .webauthn import has_webauthn
-
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask import Response
-
-
-def tf_clean_session():
-    """
-    Clean out ALL stuff stored in session (e.g. on logout)
-    """
-    if config_value("TWO_FACTOR"):
-        for k in [
-            "tf_state",
-            "tf_user_id",
-            "tf_primary_method",
-            "tf_remember_login",
-            "tf_totp_secret",
-        ]:
-            session.pop(k, None)
+    import flask
+    from .core import Security
+    from .datastore import User
+    from flask.typing import ResponseValue
 
 
 def tf_send_security_token(user, method, totp_secret, phone_number):
@@ -99,9 +83,7 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
     )
 
 
-def complete_two_factor_process(
-    user, primary_method, totp_secret, is_changing, remember_login=None
-):
+def complete_two_factor_process(user, primary_method, totp_secret, is_changing):
     """clean session according to process (login or changing two-factor method)
     and perform action accordingly
     """
@@ -109,6 +91,7 @@ def complete_two_factor_process(
     _datastore.tf_set(user, primary_method, totp_secret=totp_secret)
 
     # if we are changing two-factor method
+    dologin = False
     if is_changing:
         completion_message = "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL"
         tf_profile_changed.send(
@@ -120,9 +103,9 @@ def complete_two_factor_process(
         tf_code_confirmed.send(
             app._get_current_object(), user=user, method=primary_method
         )
-        login_user(user, remember=remember_login)
-    tf_clean_session()
-    return completion_message
+        dologin = True
+    token = _security.two_factor_plugins.tf_complete(user, dologin)
+    return completion_message, token
 
 
 def tf_disable(user):
@@ -134,140 +117,72 @@ def tf_disable(user):
 
 def is_tf_setup(user):
     """Return True is user account is setup for 2FA."""
-    return (user.tf_totp_secret and user.tf_primary_method) or has_webauthn(
-        user, "secondary"
-    )
+    return user.tf_totp_secret and user.tf_primary_method
 
 
-def tf_login(user, remember=None, primary_authn_via=None):
-    """Helper for two-factor authentication login
+class CodeTfPlugin(TfPluginBase):
+    def __init__(self, app: "flask.Flask"):
+        super().__init__(app)
 
-    This is called only when login/password have already been validated.
-    This can be from login, register, confirm, unified sign in, unified magic link.
+    def create_blueprint(
+        self, app: "flask.Flask", bp: "flask.Blueprint", state: "Security"
+    ) -> None:
+        pass
 
-    If two-factor is already setup then this sends a code if the method requires it.
-    If not, then user is redirected to two-factor-setup.
-    In either case we do NOT log in user, so we must store some info in session to
-    track our state (including what user).
-    """
+    def get_setup_methods(self, user: "User") -> t.List[t.Optional[str]]:
+        if is_tf_setup(user):
+            return [user.tf_primary_method]
+        return []
 
-    # on initial login clear any possible state out - this can happen if on same
-    # machine log in  more than once since for 2FA you are not authenticated
-    # until complete 2FA.
-    tf_clean_session()
+    def tf_login(
+        self, user: "User", json_payload: t.Dict[str, t.Any]
+    ) -> t.Optional["ResponseValue"]:
+        """Helper for two-factor authentication login
 
-    session["tf_user_id"] = user.fs_uniquifier
-    if remember:
-        session["tf_remember_login"] = remember
+        This is called only when login/password have already been validated.
+        This can be from login, register, confirm, unified sign in, unified magic link.
 
-    json_response = {"tf_required": True}
-    # if user's two-factor properties are not configured
-    if not is_tf_setup(user):
-        session["tf_state"] = "setup_from_login"
-        json_response["tf_state"] = "setup_from_login"
-        if not _security._want_json(request):
-            return redirect(url_for_security("two_factor_setup"))
+        If two-factor is already setup then this sends a code if the method requires it.
+        If not, then user is redirected to two-factor-setup.
+        In either case we do NOT log in user, so we must store some info in session to
+        track our state (including what user).
+        """
 
-    # if user's two-factor properties are configured
-    else:
-        session["tf_state"] = "ready"
-        json_response["tf_state"] = "ready"
-        json_response["tf_primary_method"] = user.tf_primary_method
-        methods = []
-        if user.tf_primary_method:
-            methods.append(user.tf_primary_method)
-        if has_webauthn(user, "secondary"):
-            methods.append("webauthn")
-        json_response["tf_methods"] = methods
+        # if user's two-factor properties are not configured
+        if not is_tf_setup(user):
+            session["tf_state"] = "setup_from_login"
+            json_payload["tf_state"] = "setup_from_login"
+            if not _security._want_json(request):
+                return redirect(url_for_security("two_factor_setup"))
 
-        if user.tf_primary_method in ["mail", "email", "sms"]:
-            msg = user.tf_send_security_token(
-                method=user.tf_primary_method,
-                totp_secret=user.tf_totp_secret,
-                phone_number=getattr(user, "tf_phone_number", None),
-            )
-            if msg:
-                # send code didn't work
-                if not _security._want_json(request):
-                    # This is a mess -
-                    # we are deep down in the login/unified sign in flow.
-                    do_flash(msg, "error")
-                    return redirect(url_for_security("login"))
-                else:
-                    payload = json_error_response(errors=msg)
-                    return _security._render_json(payload, 500, None, None)
+        # if user's two-factor properties are configured
+        else:
+            session["tf_state"] = "ready"
+            json_payload["tf_state"] = "ready"
+            json_payload["tf_primary_method"] = user.tf_primary_method
+            json_payload["tf_method"] = user.tf_primary_method
 
-        if not _security._want_json(request):
-            return redirect(url_for_security("two_factor_token_validation"))
+            if user.tf_primary_method in ["mail", "email", "sms"]:
+                msg = user.tf_send_security_token(
+                    method=user.tf_primary_method,
+                    totp_secret=user.tf_totp_secret,
+                    phone_number=getattr(user, "tf_phone_number", None),
+                )
+                if msg:
+                    # send code didn't work
+                    if not _security._want_json(request):
+                        # This is a mess -
+                        # we are deep down in the login/unified sign in flow.
+                        do_flash(msg, "error")
+                        return redirect(url_for_security("login"))
+                    else:
+                        payload = json_error_response(errors=msg)
+                        return _security._render_json(payload, 500, None, None)
 
-    # JSON response - Fake up a form - doesn't really matter which.
-    form = _security.login_form(MultiDict([]))
-    form.user = user
+            if not _security._want_json(request):
+                return redirect(url_for_security("two_factor_token_validation"))
 
-    return base_render_json(form, include_user=False, additional=json_response)
-
-
-def generate_tf_validity_token(fs_uniquifier):
-    """Generates a unique token for the specified user.
-
-    :param fs_uniquifier: The fs_uniquifier of a user to whom the token belongs to
-    """
-    return _security.tf_validity_serializer.dumps(fs_uniquifier)
-
-
-def tf_validity_token_status(token):
-    """Returns the expired status, invalid status, and user of a
-    Two-Factor Validity token.
-    For example::
-
-        expired, invalid, user = tf_validity_token_status('...')
-
-    :param token: The Two-Factor Validity token
-    """
-    return check_and_get_token_status(
-        token, "tf_validity", get_within_delta("TWO_FACTOR_LOGIN_VALIDITY")
-    )
-
-
-def tf_verify_validity_token(fs_uniquifier: str) -> bool:
-    """Returns the status of the Two-Factor Validity token based on the current
-    request.
-
-    :param fs_uniquifier: The ``fs_uniquifier`` of the submitting user.
-    """
-    if request.is_json and request.content_length:
-        token = request.get_json().get("tf_validity_token", None)  # type: ignore
-    else:
-        token = request.cookies.get("tf_validity", default=None)
-
-    if token is None:
-        return False
-
-    expired, invalid, uniquifier = tf_validity_token_status(token)
-    if expired or invalid or (fs_uniquifier != uniquifier):
-        return False
-
-    return True
-
-
-def tf_set_validity_token_cookie(
-    response: "Response", fs_uniquifier: t.Optional[str] = None, remember: bool = False
-) -> "Response":
-    """Sets the Two-Factor validity token for a specific user given that is
-    configured and the user selects remember me
-
-    :param response: The response with which to set the set_cookie
-    :param fs_uniquifier: The ``fs_uniquifier`` of a user that has successfully
-                        authenticated and validated with Two-Factor
-                        authentication.
-    :param remember: Flag specifying if the tf_validity cookie should be set.
-    """
-    if not config_value("TWO_FACTOR_ALWAYS_VALIDATE") and remember:
-        token = generate_tf_validity_token(fs_uniquifier)
-        cookie_kwargs = config_value("TWO_FACTOR_VALIDITY_COOKIE")
-        max_age = int(get_within_delta("TWO_FACTOR_LOGIN_VALIDITY").total_seconds())
-        response.set_cookie(
-            "tf_validity", value=token, max_age=max_age, **cookie_kwargs
-        )
-
-    return response
+        # JSON response - Fake up a form - doesn't really matter which.
+        form = _security.login_form(MultiDict([]))
+        form.user = user
+        return base_render_json(form, include_user=False, additional=json_payload)

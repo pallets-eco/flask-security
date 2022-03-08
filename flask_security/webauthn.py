@@ -25,7 +25,7 @@
         - integrate with plain login
         - update/add examples to support webauthn
         - remember me support
-        - if two-factor is required - can they register a webauthn key?
+        - should we universally add endpoint urls to JSON responses?
         - Add a way to order registered credentials so we can return an ordered list
           in allowCredentials.
         - #sctn-usecase-new-device-registration - allow more than one "first" key
@@ -75,10 +75,11 @@ except ImportError:  # pragma: no cover
     pass
 
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
-from .forms import Form, Required, get_form_field_label
+from .forms import Form, Required, get_form_field_label, get_form_field_xlate
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import wan_registered, wan_deleted
+from .tf_plugin import TfPluginBase, tf_set_validity_token_cookie
 from .utils import (
     _,
     base_render_json,
@@ -94,13 +95,16 @@ from .utils import (
     get_within_delta,
     login_user,
     propagate_next,
+    simple_render_json,
     suppress_form_csrf,
     url_for_security,
     view_commit,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
+    import flask
     from flask.typing import ResponseValue
+    from .core import Security
     from .datastore import User, WebAuthn
 
 if get_quart_status():  # pragma: no cover
@@ -200,7 +204,7 @@ class WebAuthnRegisterResponseForm(Form):
 class WebAuthnSigninForm(Form):
     identity = StringField(get_form_field_label("identity"))
     remember = BooleanField(get_form_field_label("remember_me"))
-    submit = SubmitField(label=get_form_field_label("submit"), id="wan_signin")
+    submit = SubmitField(label=get_form_field_xlate(_("Start")), id="wan_signin")
 
     user: t.Optional["User"] = None
     # set by caller - is this a second factor authentication?
@@ -213,14 +217,18 @@ class WebAuthnSigninForm(Form):
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False  # pragma: no cover
-        if self.is_secondary or cv("WAN_ALLOW_USER_HINTS"):
+        user = None
+        if self.is_secondary:
+            if "tf_user_id" in session:
+                user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
+        elif cv("WAN_ALLOW_USER_HINTS"):
             # If we allow HINTS - provide them - but don't error
             # out if an unknown or disabled account - that would provide too
             # much 'discovery' capability of un-authenticated users.
             if self.identity.data:
-                self.user = find_user(self.identity.data)
-                if self.user and not self.user.is_active:
-                    self.user = None
+                user = find_user(self.identity.data)
+        if user and user.is_active:
+            self.user = user
         return True
 
 
@@ -230,6 +238,7 @@ class WebAuthnSigninResponseForm(Form):
     verify.
     """
 
+    remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(label=get_form_field_label("submit"))
     credential = HiddenField()
 
@@ -581,18 +590,22 @@ def webauthn_signin() -> "ResponseValue":
         return _security.render_template(
             cv("WAN_SIGNIN_TEMPLATE"),
             wan_signin_form=form,
-            wan_signin_response_form=WebAuthnSigninResponseForm(),
+            wan_signin_response_form=WebAuthnSigninResponseForm(
+                remember=form.remember.data
+            ),
             wan_state=state_token,
             credential_options=json.dumps(o_json),
+            is_secondary=is_secondary,
             **_security._run_ctx_processor("wan_signin")
         )
 
     if _security._want_json(request):
-        return base_render_json(form)
+        return base_render_json(form, additional={"is_secondary": is_secondary})
     return _security.render_template(
         cv("WAN_SIGNIN_TEMPLATE"),
         wan_signin_form=form,
         wan_signin_response_form=WebAuthnSigninResponseForm(),
+        is_secondary=is_secondary,
         **_security._run_ctx_processor("wan_signin")
     )
 
@@ -628,20 +641,39 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
     form.is_verify = False
 
     if form.validate_on_submit():
-        remember_me = form.remember.data if "remember" in form else None
-
         # update last use and sign count
         after_this_request(view_commit)
         form.cred.lastuse_datetime = datetime.datetime.utcnow()
         form.cred.sign_count = form.authentication_verification.new_sign_count
         _datastore.put(form.cred)
 
-        if not is_secondary:
-            # Two-factor:
+        json_payload = {}
+        if is_secondary:
+            tf_token = _security.two_factor_plugins.tf_complete(form.user, True)
+            if tf_token:
+                json_payload["tf_validity_token"] = tf_token
+                after_this_request(
+                    partial(tf_set_validity_token_cookie, token=tf_token)
+                )
+
+        else:
+            # Need Two-factor?:
             #   - Is it required?
             #   - Did this credential provide 2-factor and
             #     is WAN_ALLOW_AS_MULTI_FACTOR set
             #   - Is another 2FA setup?
+            remember_me = form.remember.data if "remember" in form else None
+            if form.mf_check and cv("WAN_ALLOW_AS_MULTI_FACTOR"):
+                pass
+            else:
+                response = _security.two_factor_plugins.tf_enter(
+                    form.user, remember_me, "webauthn"
+                )
+                if response:
+                    return response
+            # login user
+            login_user(form.user, remember=remember_me, authn_via=["webauthn"])
+            """
             from .twofactor import tf_verify_validity_token, is_tf_setup, tf_login
 
             need_2fa = False
@@ -658,16 +690,16 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
                 return tf_login(
                     form.user, remember=remember_me, primary_authn_via="webauthn"
                 )
-
-        # login user
-        login_user(form.user, remember=remember_me, authn_via=["webauthn"])
+            """
 
         goto_url = get_post_login_redirect()
         if _security._want_json(request):
             # Tell caller where we would go if forms based - they can use it or
             # not.
-            payload = {"post_login_url": goto_url}
-            return base_render_json(form, include_auth_token=True, additional=payload)
+            json_payload["post_login_url"] = goto_url
+            return base_render_json(
+                form, include_auth_token=True, additional=json_payload
+            )
         return redirect(goto_url)
 
     # Here on validate error
@@ -855,3 +887,34 @@ def create_credential_list(
         cl.append(descriptor)
 
     return cl
+
+
+class WebAuthnTfPlugin(TfPluginBase):
+    def __init__(self, app: "flask.Flask"):
+        super().__init__(app)
+
+    def create_blueprint(
+        self, app: "flask.Flask", bp: "flask.Blueprint", state: "Security"
+    ) -> None:
+        """Our endpoints are already registered since webauthn can be both
+        a 'first' or 'secondary' authentication mechanism.
+        """
+        pass
+
+    def get_setup_methods(self, user: "User") -> t.List[t.Optional[str]]:
+        if has_webauthn(user, "secondary"):
+            return [_("webauthn")]
+        return []
+
+    def tf_login(
+        self, user: "User", json_payload: t.Dict[str, t.Any]
+    ) -> t.Optional["ResponseValue"]:
+        session["tf_state"] = "ready"
+        if not _security._want_json(request):
+            return redirect(url_for_security("wan_signin"))
+
+        # JSON response
+        json_payload["tf_signin_url"] = url_for_security("wan_signin")
+        json_payload["tf_state"] = "ready"
+        json_payload["tf_method"] = "webauthn"
+        return simple_render_json(additional=json_payload)

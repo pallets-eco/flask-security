@@ -13,7 +13,6 @@ Features
 - (:issue:`475`) Support for WebAuthn
 - (:pr:`532`) Support for Python 3.10
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn
-- (:pr:`xxx`) Make roles joinedload compatible with SQLAlchemy 2.0
 - (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
    Deprecate replacing login_manager so we can possibly vendor that in in the future.
 

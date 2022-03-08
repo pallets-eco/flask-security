@@ -1084,6 +1084,24 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``"/tf-rescue"``.
 
+.. py:data:: SECURITY_TWO_FACTOR_SELECT_URL
+
+    Specifies the two factor select URL. This is used when the user has
+    setup more than one second factor.
+
+    Default: ``"/tf-select"``.
+
+    .. versionadded:: 4.2.0
+
+
+.. py:data:: SECURITY_TWO_FACTOR_SELECT_TEMPLATE
+
+    Specifies the path to the template for the select method page for the two-factor authentication process.
+
+    Default: ``security/two_factor_select.html``.
+
+    .. versionadded:: 4.2.0
+
 .. py:data:: SECURITY_TWO_FACTOR_ALWAYS_VALIDATE
 
     Specifies whether the application should require a two factor code upon every login.
@@ -1105,6 +1123,15 @@ Configuration related to the two-factor authentication feature.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
     Default: ``{'httponly': True, 'secure': False, 'samesite': None}``.
+
+.. py:data:: SECURITY_TWO_FACTOR_IMPLEMENTATIONS
+
+    A dictionary of supported second factor implementations. All of these must
+    implement the TfPluginBase interface.
+
+    Default: ``{"code": "flask_security.twofactor.CodeTfPlugin", "webauthn": "flask_security.webauthn.WebAuthnTfPlugin",}``
+
+    .. versionadded:: 4.2.0
 
 
 Unified Signin
@@ -1423,7 +1450,9 @@ WebAuthn
         - ``"secondary"`` - just keys registered as "secondary" are allowed
 
     If list is empty or ``None`` WebAuthn keys aren't allowed. This also means that the
-            :py:data::``SECURITY_WAN_VERIFY`` endpoint won't be registered.
+            :py:data:``SECURITY_WAN_VERIFY`` endpoint won't be registered.
+
+    Default:: ``["first", "secondary"]``
 
 
 

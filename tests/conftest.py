@@ -369,6 +369,9 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
     class Role(db.Model, fsqla.FsRoleMixin):
         pass
 
+    class WebAuthn(db.Model, fsqla.FsWebAuthnMixin):
+        pass
+
     class User(db.Model, fsqla.FsUserMixin):
         security_number = db.Column(db.Integer, unique=True)
         # For testing allow null passwords.
@@ -377,9 +380,6 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
         def get_security_payload(self):
             # Make sure we still properly hook up to flask JSONEncoder
             return {"email": str(self.email), "last_update": self.update_datetime}
-
-    class WebAuthn(db.Model, fsqla.FsWebAuthnMixin):
-        pass
 
     with app.app_context():
         db.create_all()

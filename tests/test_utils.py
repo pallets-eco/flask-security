@@ -94,6 +94,16 @@ def get_session(response):
                 return val[1]
 
 
+def get_existing_session(client):
+    cookie = next(
+        (cookie for cookie in client.cookie_jar if cookie.name == "session"), None
+    )
+    if cookie:
+        serializer = URLSafeTimedSerializer("secret", serializer=TaggedJSONSerializer())
+        val = serializer.loads_unsafe(cookie.value)
+        return val[1]
+
+
 def reset_fresh(client, within):
     # Assumes client authenticated.
     # Upon return the NEXT request if protected with a freshness check

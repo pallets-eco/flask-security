@@ -67,15 +67,14 @@ from .recoverable import (
     update_password,
 )
 from .registerable import register_user
+from .tf_plugin import (
+    tf_illegal_state,
+    tf_set_validity_token_cookie,
+)
 from .twofactor import (
     complete_two_factor_process,
-    generate_tf_validity_token,
-    is_tf_setup,
     tf_clean_session,
     tf_disable,
-    tf_login,
-    tf_set_validity_token_cookie,
-    tf_verify_validity_token,
 )
 from .utils import (
     base_render_json,
@@ -171,19 +170,14 @@ def login() -> "ResponseValue":
 
     if form.validate_on_submit():
         remember_me = form.remember.data if "remember" in form else None
-        if cv("TWO_FACTOR"):
-            tf_validity_token_is_valid = tf_verify_validity_token(
-                form.user.fs_uniquifier
-            )
-
-            if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
-                if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
-                    return tf_login(
-                        form.user, remember=remember_me, primary_authn_via="password"
-                    )
-
-        login_user(form.user, remember=remember_me, authn_via=["password"])
+        response = _security.two_factor_plugins.tf_enter(
+            form.user, remember_me, "password"
+        )
+        if response:
+            return response
+        # two factor not required - login user
         after_this_request(view_commit)
+        login_user(form.user, remember=remember_me, authn_via=["password"])
 
         if _security._want_json(request):
             return base_render_json(form, include_auth_token=True)
@@ -231,8 +225,6 @@ def verify():
             return base_render_json(form)
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
         return redirect(get_post_verify_redirect())
-
-    from .webauthn import has_webauthn
 
     webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
     if _security._want_json(request):
@@ -294,8 +286,12 @@ def register() -> "ResponseValue":
         # since the beginning. Note that we still enforce 2FA - however for unified
         # signin - we adhere to historic behavior.
         if not _security.confirmable or cv("LOGIN_WITHOUT_CONFIRMATION"):
-            if cv("TWO_FACTOR") and cv("TWO_FACTOR_REQUIRED"):
-                return tf_login(user, primary_authn_via="register")
+            response = _security.two_factor_plugins.tf_enter(
+                form.user, False, "register"
+            )
+            if response:
+                return response
+            # two factor not required - login user.
             after_this_request(view_commit)
             login_user(user, authn_via=["register"])
             did_login = True
@@ -459,8 +455,9 @@ def confirm_email(token):
             # and you have the LOGIN_WITH_CONFIRMATION flag since in that case
             # you can be logged in and doing stuff - but another person could
             # get the email.
-            if cv("TWO_FACTOR") and cv("TWO_FACTOR_REQUIRED"):
-                return tf_login(user, primary_authn_via="confirm")
+            response = _security.two_factor_plugins.tf_enter(user, False, "confirm")
+            if response:
+                return response
             login_user(user, authn_via=["confirm"])
 
     m, c = get_message("EMAIL_CONFIRMED")
@@ -611,11 +608,10 @@ def reset_password(token):
     if form.validate_on_submit():
         after_this_request(view_commit)
         update_password(user, form.password.data)
-        if cv("TWO_FACTOR") and (
-            cv("TWO_FACTOR_REQUIRED")
-            or (form.user.tf_totp_secret and form.user.tf_primary_method)
-        ):
-            return tf_login(user, primary_authn_via="reset")
+        response = _security.two_factor_plugins.tf_enter(form.user, False, "reset")
+        if response:
+            return response
+        # two factor not required - just login
         login_user(user, authn_via=["reset"])
         if _security._want_json(request):
             login_form = _security.login_form()
@@ -711,12 +707,12 @@ def two_factor_setup():
         ] not in ["setup_from_login", "validating_profile"]:
             # illegal call on this endpoint
             tf_clean_session()
-            return _tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, _security.login_url)
 
         user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
         if not user:
             tf_clean_session()
-            return _tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, _security.login_url)
 
     else:
         # Caller is changing their TFA profile. This requires a 'fresh' authentication
@@ -878,13 +874,13 @@ def two_factor_token_validation():
         ):
             # illegal call on this endpoint
             tf_clean_session()
-            return _tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, _security.login_url)
 
         user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
         form.user = user
         if not user:
             tf_clean_session()
-            return _tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, _security.login_url)
 
         if session["tf_state"] == "ready":
             pm = user.tf_primary_method
@@ -901,7 +897,7 @@ def two_factor_token_validation():
             tf_clean_session()
             # logout since this seems like attack-ish/logic error
             logout_user()
-            return _tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, _security.login_url)
         pm = session["tf_primary_method"]
         totp_secret = session["tf_totp_secret"]
         form.user = current_user
@@ -910,31 +906,24 @@ def two_factor_token_validation():
     form.tf_totp_secret = totp_secret
     if form.validate_on_submit():
         # Success - log in user and clear all session variables
-        remember = session.pop("tf_remember_login", None)
-        completion_message = complete_two_factor_process(
-            form.user, pm, totp_secret, changing, remember
+        completion_message, token = complete_two_factor_process(
+            form.user, pm, totp_secret, changing
         )
 
         after_this_request(view_commit)
 
         if not _security._want_json(request):
-            after_this_request(
-                partial(
-                    tf_set_validity_token_cookie,
-                    fs_uniquifier=form.user.fs_uniquifier,
-                    remember=remember,
-                )
-            )
+            if token:
+                after_this_request(partial(tf_set_validity_token_cookie, token=token))
             do_flash(*get_message(completion_message))
-
             return redirect(get_post_login_redirect())
 
-        if (not cv("TWO_FACTOR_ALWAYS_VALIDATE") and remember) and _security._want_json(
-            request
-        ):
-            token = generate_tf_validity_token(form.user.fs_uniquifier)
-            json_response = {"tf_validity_token": token}
-            return base_render_json(form, additional=json_response)
+        else:
+            json_payload = {}
+            if token:
+                json_payload["tf_validity_token"] = token
+            return base_render_json(form, additional=json_payload)
+
     # GET or not successful POST
     if _security._want_json(request):
         return base_render_json(form)
@@ -955,21 +944,11 @@ def two_factor_token_validation():
     # if we were trying to validate an existing method
     else:
         rescue_form = _security.two_factor_rescue_form()
-
-        wan_signin_form = None
-        webauthn_available = has_webauthn(form.user, "secondary")
-        if webauthn_available:
-            wan_signin_form = _security.wan_signin_form(
-                identity=form.user.calc_username()
-            )
-
         return _security.render_template(
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
             chosen_method=pm,
-            has_webauthn=webauthn_available,
-            wan_signin_form=wan_signin_form,
             problem=None,
             **_ctx("tf_token_validation"),
         )
@@ -998,13 +977,13 @@ def two_factor_rescue():
         or session["tf_state"] != "ready"
     ):
         tf_clean_session()
-        return _tf_illegal_state(form, _security.login_url)
+        return tf_illegal_state(form, _security.login_url)
 
     user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
     form.user = user
     if not user:
         tf_clean_session()
-        return _tf_illegal_state(form, _security.login_url)
+        return tf_illegal_state(form, _security.login_url)
 
     rproblem = ""
     if form.validate_on_submit():
@@ -1049,15 +1028,6 @@ def two_factor_rescue():
         problem=rproblem,
         **_ctx("tf_token_validation"),
     )
-
-
-def _tf_illegal_state(form, redirect_to):
-    m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
-    if not _security._want_json(request):
-        do_flash(m, c)
-        return redirect(get_url(redirect_to))
-    else:
-        return _security._render_json(json_error_response(m), 400, None, None)
 
 
 def create_blueprint(app, state, import_name, json_encoder=None):

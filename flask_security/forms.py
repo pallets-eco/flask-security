@@ -176,6 +176,10 @@ def get_form_field_label(key):
     return make_lazy_string(_local_xlate, _default_field_labels.get(key, ""))
 
 
+def get_form_field_xlate(txt):
+    return make_lazy_string(_local_xlate, txt)
+
+
 def unique_user_email(form, field):
     uia_email = get_identity_attribute("email")
     norm_email = _security._mail_util.normalize(field.data)

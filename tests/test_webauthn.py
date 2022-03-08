@@ -18,11 +18,16 @@ import re
 import typing as t
 
 import pytest
+
+from tests.test_two_factor import tf_in_session
 from tests.test_utils import (
     FakeSerializer,
     SmsTestSender,
     authenticate,
     capture_flashes,
+    get_existing_session,
+    get_session,
+    json_authenticate,
     logout,
     reset_fresh,
 )
@@ -224,6 +229,7 @@ def _register_start_json(client, name="testr1", usage="secondary"):
 
 def reg_2_keys(client):
     # Register 2 keys - one first, one secondary
+    # This can be used by other tests outside this module.
     authenticate(client)
     register_options, response_url = _register_start_json(
         client, name="first", usage="first"
@@ -272,6 +278,28 @@ def _signin_start_json(client, identity=None):
     signin_options = response.json["response"]["credential_options"]
     response_url = f'wan-signin/{response.json["response"]["wan_state"]}'
     return signin_options, response_url
+
+
+def wan_signin(client, identity, signin_data):
+    # perform complete sign in - useful for tests outside this module.
+    signin_options, response_url = _signin_start_json(client, identity)
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(signin_data)),
+    )
+    assert response.status_code == 200
+    return response
+
+
+def reset_signcount(app, email, keyname):
+    # Due to replay attack prevention, we can only use a key once since the server
+    # increments the sign_count and we can't do that on the client side!
+    with app.app_context():
+        user = app.security.datastore.find_user(email=email)
+        cred = [c for c in user.webauthn if c.name == keyname][0]
+        cred.sign_count = cred.sign_count - 1
+        app.security.datastore.put(cred)
+        app.security.datastore.commit()
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
@@ -759,7 +787,7 @@ def test_tf(app, client, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"matt@lp.com" in response.data
+    assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
     # we should have a wan key available
     assert b'action="/wan-signin"' in response.data
 
@@ -796,15 +824,17 @@ def test_tf_json(app, client, get_message):
         json=dict(identity="matt@lp.com", passcode="password", remember=True),
     )
     assert response.status_code == 200
-    assert response.json["response"]["tf_methods"] == ["webauthn"]
+    assert response.json["response"]["tf_method"] == "webauthn"
     assert response.json["response"]["tf_required"]
     assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_signin_url"] == "/wan-signin"
 
     # verify NOT logged in
     response = client.get("/profile", headers={"accept": "application/json"})
     assert response.status_code == 401
 
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    # For secondary, identity is stored in session
+    signin_options, response_url = _signin_start_json(client, "")
     assert len(signin_options["allowCredentials"]) == 1
     assert signin_options["allowCredentials"][0]["id"] == keys["secondary"]["id"]
     response = client.post(
@@ -815,6 +845,107 @@ def test_tf_json(app, client, get_message):
 
     # verify actually logged in
     response = client.get("/profile", headers={"accept": "application/json"})
+    assert response.status_code == 200
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    webauthn_util_cls=HackWebauthnUtil, two_factor_always_validate=False
+)
+def test_tf_validity_window(app, client, get_message):
+    # Test with a two-factor validity setting - we don't get re-prompted.
+    authenticate(client)
+    assert "tf_validity" not in [c.name for c in client.cookie_jar]
+    register_options, response_url = _register_start_json(client)
+    client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    logout(client)
+
+    # login - should require second factor
+    response = client.post(
+        "/login",
+        data=dict(email="matt@lp.com", password="password"),
+        follow_redirects=True,
+    )
+    assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
+    session = get_session(response)
+    assert "tf_user_id" in session
+
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
+    assert response.status_code == 200
+
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+    reset_signcount(app, "matt@lp.com", "testr1")
+    logout(client)
+
+    # since we didn't specify 'remember' previously - should still require 2FA
+    response = client.post(
+        "/login",
+        data=dict(email="matt@lp.com", password="password", remember=True),
+        follow_redirects=True,
+    )
+    assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
+
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
+    assert response.status_code == 200
+    assert "tf_validity" in [c.name for c in client.cookie_jar]
+    logout(client)
+
+    # since we did specify 'remember' previously - should not require 2FA
+    response = client.post(
+        "/login",
+        data=dict(email="matt@lp.com", password="password"),
+        follow_redirects=True,
+    )
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+    # Since logged in all tf related attributes in session should be gone.
+    assert not tf_in_session(get_existing_session(client))
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    webauthn_util_cls=HackWebauthnUtil, two_factor_always_validate=False
+)
+def test_tf_validity_window_json(app, client, get_message):
+    # Test with a two-factor validity setting - we don't get re-prompted.
+    response = json_authenticate(client)
+    register_options, response_url = _register_start_json(client)
+    client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    logout(client)
+
+    response = client.post(
+        "/login", json=dict(email="matt@lp.com", password="password", remember=True)
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
+    assert response.status_code == 200
+    tf_token = response.json["response"]["tf_validity_token"]
+    logout(client)
+
+    # make sure the cookie doesn't affect the JSON request
+    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+
+    # Sign in again - shouldn't require 2FA
+    response = client.post(
+        "/login",
+        json=dict(
+            email="matt@lp.com",
+            password="password",
+            remember=True,
+            tf_validity_token=tf_token,
+        ),
+    )
+    assert response.status_code == 200
+    response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
 
 

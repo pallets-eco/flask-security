@@ -30,13 +30,13 @@
           name="us_setup_form">
       {{ us_setup_form.hidden_tag() }}
       {% if setup_methods %}
-        <div class="fs-div">Currently active sign in options:
+        <div class="fs-div">Currently active sign in options:<em>
         {% if active_methods %}
           {{ ", ".join(active_methods) }}
         {% else %}
           None.
         {% endif %}
-        </div>
+        </em></div>
 
         <h3>{{ _fsdomain("Setup additional sign in option") }}</h3>
         <div class="fs-div">
