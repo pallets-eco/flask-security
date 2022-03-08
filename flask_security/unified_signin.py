@@ -43,11 +43,6 @@ from .forms import Form, Required, get_form_field_label
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import us_profile_changed, us_security_token_sent
-from .twofactor import (
-    is_tf_setup,
-    tf_login,
-    tf_verify_validity_token,
-)
 from .utils import (
     _,
     SmsSenderFactory,
@@ -514,21 +509,15 @@ def us_signin() -> "ResponseValue":
 
     if form.validate_on_submit():
 
-        # Require multi-factor is it is enabled, and the method
-        # we authenticated with requires it and either user has requested MFA or it is
-        # required.
+        # Check if multi-factor is required. Some (this is configurable) don't
+        # need 2FA since they ARE multi-factor (such as SMS and authenticator).
         remember_me = form.remember.data if "remember" in form else None
-        if cv("TWO_FACTOR") and form.authn_via in cv("US_MFA_REQUIRED"):
-            tf_fresh = tf_verify_validity_token(form.user.fs_uniquifier)
-            if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
-                if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_fresh):
-
-                    return tf_login(
-                        form.user,
-                        remember=remember_me,
-                        primary_authn_via=form.authn_via,
-                    )
-
+        if form.authn_via in cv("US_MFA_REQUIRED"):
+            response = _security.two_factor_plugins.tf_enter(
+                form.user, remember_me, form.authn_via
+            )
+            if response:
+                return response
         after_this_request(view_commit)
         login_user(form.user, remember=remember_me, authn_via=[form.authn_via])
 
@@ -670,10 +659,11 @@ def us_verify_link() -> "ResponseValue":
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
+    tf_setup_methods = _security.two_factor_plugins.get_setup_tf_methods(user)
     if (
         cv("TWO_FACTOR")
         and "email" in cv("US_MFA_REQUIRED")
-        and (cv("TWO_FACTOR_REQUIRED") or is_tf_setup(user))
+        and (cv("TWO_FACTOR_REQUIRED") or len(tf_setup_methods) > 0)
     ):
         # tf_login doesn't know anything about "spa" etc. In general two-factor
         # isn't quite ready for SPA. So we return an error via a redirect rather
@@ -686,7 +676,9 @@ def us_verify_link() -> "ResponseValue":
                     qparams=user.get_redirect_qparams({"tf_required": 1}),
                 )
             )
-        return tf_login(user, primary_authn_via="email")
+        response = _security.two_factor_plugins.tf_enter(user, False, "email")
+        if response:
+            return response
 
     login_user(user, authn_via=["email"])
     after_this_request(view_commit)

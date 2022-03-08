@@ -4,7 +4,7 @@
 
     two_factor tests
 
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -78,6 +78,7 @@ def tf_in_session(session):
             "tf_user_id",
             "tf_remember_login",
             "tf_totp_secret",
+            "tf_select",
         ]
     )
 

@@ -1010,6 +1010,15 @@ def base_render_json(
     return _security._render_json(payload, code, None, user)
 
 
+def simple_render_json(
+    additional: t.Optional[t.Dict[str, t.Any]] = None,
+) -> "ResponseValue":
+    payload = dict(csrf_token=csrf.generate_csrf())
+    if additional:
+        payload.update(additional)
+    return _security._render_json(payload, 200, None, None)
+
+
 def default_want_json(req):
     """Return True if response should be in json
     N.B. do not call this directly - use security._want_json()

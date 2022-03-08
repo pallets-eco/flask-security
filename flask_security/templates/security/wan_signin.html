@@ -14,13 +14,19 @@
 
 {% block content %}
   {% include "security/_messages.html" %}
-  <h1>{{ _fsdomain("Sign In Using WebAuthn Security Key") }}</h1>
+  {% if not is_secondary %}
+    <h1>{{ _fsdomain("Sign In Using WebAuthn Security Key") }}</h1>
+  {% else %}
+    <h1>{{ _fsdomain("Use Your WebAuthn Security Key as a Second Factor") }}</h1>
+  {% endif %}
   {% if not credential_options %}
     <form action="{{ url_for_security("wan_signin") }}" method="POST"
           name="wan_signin_form" id="wan-signin-form">
       {{ wan_signin_form.hidden_tag() }}
-      {{ render_field_with_errors(wan_signin_form.identity) }}
-      {{ render_field_with_errors(wan_signin_form.remember) }}
+      {% if not is_secondary %}
+        {{ render_field_with_errors(wan_signin_form.identity) }}
+        {{ render_field_with_errors(wan_signin_form.remember) }}
+      {% endif %}
       {{ render_field_errors(wan_signin_form.credential) }}
       {{ render_field(wan_signin_form.submit) }}
     </form>

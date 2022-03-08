@@ -12,6 +12,7 @@
 """
 
 from datetime import datetime, timedelta
+import importlib
 import re
 import typing as t
 import warnings
@@ -56,6 +57,7 @@ from .mail_util import MailUtil
 from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
 from .proxies import _security
+from .tf_plugin import TfPlugin, TwoFactorSelectForm
 from .twofactor import tf_send_security_token
 from .unified_signin import (
     UnifiedSigninForm,
@@ -163,6 +165,7 @@ _default_config: t.Dict[str, t.Any] = {
     "TWO_FACTOR_SETUP_URL": "/tf-setup",
     "TWO_FACTOR_TOKEN_VALIDATION_URL": "/tf-validate",
     "TWO_FACTOR_RESCUE_URL": "/tf-rescue",
+    "TWO_FACTOR_SELECT_URL": "/tf-select",
     "LOGOUT_METHODS": ["GET", "POST"],
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
@@ -192,6 +195,7 @@ _default_config: t.Dict[str, t.Any] = {
     "VERIFY_TEMPLATE": "security/verify.html",
     "TWO_FACTOR_VERIFY_CODE_TEMPLATE": "security/two_factor_verify_code.html",
     "TWO_FACTOR_SETUP_TEMPLATE": "security/two_factor_setup.html",
+    "TWO_FACTOR_SELECT_TEMPLATE": "security/two_factor_select.html",
     "CONFIRMABLE": False,
     "REGISTERABLE": False,
     "RECOVERABLE": False,
@@ -270,6 +274,10 @@ _default_config: t.Dict[str, t.Any] = {
         "ACCOUNT_SID": None,
         "AUTH_TOKEN": None,
         "PHONE_NUMBER": None,
+    },
+    "TWO_FACTOR_IMPLEMENTATIONS": {
+        "code": "flask_security.twofactor.CodeTfPlugin",
+        "webauthn": "flask_security.webauthn.WebAuthnTfPlugin",
     },
     "UNIFIED_SIGNIN": False,
     "US_SETUP_SALT": "us-setup-salt",
@@ -998,6 +1006,7 @@ class Security:
     :param two_factor_setup_form: set form for the 2FA setup view
     :param two_factor_verify_code_form: set form the the 2FA verify code view
     :param two_factor_rescue_form: set form for the 2FA rescue view
+    :param two_factor_select_form: set form for selecting between active 2FA methods
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
     :param us_setup_validate_form: set form for the unified sign in setup validate view
@@ -1053,7 +1062,7 @@ class Security:
     .. versionadded:: 4.2.0
         ``wan_register_form``, ``wan_register_response_form``,
          ``webauthn_signin_form``, ``wan_signin_response_form``,
-         ``webauthn_delete_form``, ``webauthn_verify_form``.
+         ``webauthn_delete_form``, ``webauthn_verify_form``, ``tf_select_form``.
     .. versionadded:: 4.2.0
         ``WebauthnUtil`` class.
 
@@ -1085,6 +1094,7 @@ class Security:
         ] = TwoFactorVerifyCodeForm,
         two_factor_setup_form: t.Type[TwoFactorSetupForm] = TwoFactorSetupForm,
         two_factor_rescue_form: t.Type[TwoFactorRescueForm] = TwoFactorRescueForm,
+        two_factor_select_form: t.Type[TwoFactorSelectForm] = TwoFactorSelectForm,
         us_signin_form: t.Type[UnifiedSigninForm] = UnifiedSigninForm,
         us_setup_form: t.Type[UnifiedSigninSetupForm] = UnifiedSigninSetupForm,
         us_setup_validate_form: t.Type[
@@ -1137,6 +1147,7 @@ class Security:
         self.two_factor_verify_code_form = two_factor_verify_code_form
         self.two_factor_setup_form = two_factor_setup_form
         self.two_factor_rescue_form = two_factor_rescue_form
+        self.two_factor_select_form = two_factor_select_form
         self.us_signin_form = us_signin_form
         self.us_setup_form = us_setup_form
         self.us_setup_validate_form = us_setup_validate_form
@@ -1192,6 +1203,7 @@ class Security:
         self.i18n_domain: FsDomain
         self.datastore: "UserDatastore"
         self.register_blueprint: bool
+        self.two_factor_plugins: TfPlugin
 
         self._mail_util: MailUtil
         self._phone_util: PhoneUtil
@@ -1292,6 +1304,7 @@ class Security:
             "two_factor_verify_code_form",
             "two_factor_setup_form",
             "two_factor_rescue_form",
+            "two_factor_select_form",
             "us_signin_form",
             "us_setup_form",
             "us_setup_validate_form",
@@ -1511,10 +1524,19 @@ class Security:
             else:
                 self.login_form.email = login_email_field
 
+        # initialize two-factor plugins.
+        self.two_factor_plugins = TfPlugin()
+        for name, impl_class in cv("TWO_FACTOR_IMPLEMENTATIONS", app).items():
+            module_path, class_name = impl_class.rsplit(".", 1)
+            module = importlib.import_module(module_path)
+            self.two_factor_plugins.register_tf_impl(
+                app, name, getattr(module, class_name)
+            )
         if self.register_blueprint:
             bp = create_blueprint(
                 app, self, __name__, json_encoder=self.json_encoder_cls
             )
+            self.two_factor_plugins.create_blueprint(app, bp, self)
             app.register_blueprint(bp)
             app.context_processor(_context_processor)
 
@@ -1818,6 +1840,11 @@ class Security:
         self, fn: t.Callable[[], t.Dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("tf_token_validation", fn)
+
+    def tf_select_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("tf_select", fn)
 
     def us_signin_context_processor(
         self, fn: t.Callable[[], t.Dict[str, t.Any]]

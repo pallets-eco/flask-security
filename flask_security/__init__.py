@@ -6,7 +6,7 @@
     security via Flask-Login, Flask-Principal, Flask-WTF, and passlib.
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner.
+    :copyright: (c) 2019-2022 by J. Christopher Wagner.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -79,6 +79,7 @@ from .signals import (
 )
 from .totp import Totp
 from .twofactor import tf_send_security_token
+from .tf_plugin import TwoFactorSelectForm
 from .unified_signin import (
     UnifiedSigninForm,
     UnifiedSigninSetupForm,

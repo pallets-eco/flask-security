@@ -217,6 +217,7 @@ Forms
 .. autoclass:: flask_security.SendConfirmationForm
 .. autoclass:: flask_security.TwoFactorVerifyCodeForm
 .. autoclass:: flask_security.TwoFactorSetupForm
+.. autoclass:: flask_security.TwoFactorSelectForm
 .. autoclass:: flask_security.TwoFactorRescueForm
 .. autoclass:: flask_security.UnifiedSigninForm
 .. autoclass:: flask_security.UnifiedSigninSetupForm
