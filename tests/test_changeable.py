@@ -440,8 +440,7 @@ def test_basic_change(app, client_nc, get_message):
     assert b"Home Page" in response.data
 
 
-@pytest.mark.settings(password_complexity_checker="zxcvbn")
-def test_easy_password(app, client):
+def __test_easy_password(client):
     authenticate(client)
 
     data = (
@@ -453,9 +452,21 @@ def test_easy_password(app, client):
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["Content-Type"] == "application/json"
+    return response
+
+
+@pytest.mark.settings(password_complexity_checker="zxcvbn")
+def test_easy_password(app, client):
+    response = __test_easy_password(client)
     assert response.status_code == 400
     # Response from zxcvbn
     assert "Repeats like" in response.json["response"]["errors"]["new_password"][0]
+
+
+@pytest.mark.settings(password_complexity_checker="zxcvbn", zxcvbn_minimum_score=0)
+def test_easy_password_ok(app, client):
+    response = __test_easy_password(client)
+    assert response.status_code == 200
 
 
 def test_my_validator(app, sqlalchemy_datastore):

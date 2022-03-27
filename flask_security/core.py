@@ -334,6 +334,7 @@ _default_config: t.Dict[str, t.Any] = {
     "WAN_ALLOW_AS_MULTI_FACTOR": True,
     "WAN_ALLOW_USER_HINTS": True,
     "WAN_ALLOW_AS_VERIFY": ["first", "secondary"],
+    "ZXCVBN_MINIMUM_SCORE": 3,
 }
 
 #: Default Flask-Security messages

@@ -126,6 +126,15 @@ These configuration keys are used globally across all features.
     Default: ``None``
 
     .. versionadded:: 3.4.0
+.. py:data:: SECURITY_ZXCVBN_MINIMUM_SCORE
+
+    Required ``zxcvbn`` password complexity score (0-4).
+    Refer to https://github.com/dropbox/zxcvbn#usage for exact meanings of
+    different score values.
+
+    Default: ``3`` (Good or Strong)
+
+    .. versionadded:: 4.2.0
 .. py:data:: SECURITY_PASSWORD_CHECK_BREACHED
 
     If not ``None`` new/changed passwords will be checked against the

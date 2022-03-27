@@ -1180,8 +1180,7 @@ def password_complexity_validator(
             if kwargs:
                 user_info = list(kwargs.values())
         results = zxcvbn.zxcvbn(password, user_inputs=user_info)
-        if results["score"] > 2:
-            # Good or Strong
+        if results["score"] >= config_value("ZXCVBN_MINIMUM_SCORE"):
             return None
         # Should we return suggestions? Default forms don't really know what to do.
         if results["feedback"]["warning"]:
