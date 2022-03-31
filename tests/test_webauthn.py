@@ -26,7 +26,6 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     get_existing_session,
-    get_session,
     json_authenticate,
     logout,
     reset_fresh,
@@ -558,7 +557,7 @@ def test_bad_data_register(app, client, get_message):
             follow_redirects=False,
         )
         assert response.status_code == 302
-        assert response.location == "http://localhost/wan-register"
+        assert "/wan-register" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "WEBAUTHN_NO_VERIFY", cause="id and raw_id were not equivalent"
@@ -746,7 +745,7 @@ def test_unk_credid(app, client, get_message):
             follow_redirects=False,
         )
         assert response.status_code == 302
-        assert response.location == "http://localhost/wan-signin"
+        assert "/wan-signin" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "WEBAUTHN_UNKNOWN_CREDENTIAL_ID"
@@ -793,7 +792,7 @@ def test_tf(app, client, get_message):
 
     # verify NOT logged in
     response = client.get("/profile", follow_redirects=False)
-    assert "localhost/login" in response.location
+    assert "/login" in response.location
 
     signin_options, response_url = _signin_start(client, "matt@lp.com")
     assert len(signin_options["allowCredentials"]) == 1
@@ -867,8 +866,8 @@ def test_tf_validity_window(app, client, get_message):
         follow_redirects=True,
     )
     assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
-    session = get_session(response)
-    assert "tf_user_id" in session
+    with client.session_transaction() as session:
+        assert "tf_user_id" in session
 
     signin_options, response_url = _signin_start(client, "matt@lp.com")
     response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
@@ -1005,7 +1004,7 @@ def test_bad_token(app, client, get_message):
     response = client.post(
         "/wan-register/not a token", data=dict(), follow_redirects=False
     )
-    assert response.location == "http://localhost/wan-register"
+    assert "/wan-register" in response.location
 
     # Test wan-verify
     response = client.post("/wan-verify/not a token", json=dict())
@@ -1021,7 +1020,7 @@ def test_bad_token(app, client, get_message):
     response = client.post(
         "/wan-verify/not a token", data=dict(), follow_redirects=False
     )
-    assert response.location == "http://localhost/wan-verify"
+    assert "/wan-verify" in response.location
 
     # Test signin
     logout(client)
@@ -1039,7 +1038,7 @@ def test_bad_token(app, client, get_message):
     response = client.post(
         "/wan-signin/not a token", data=dict(), follow_redirects=False
     )
-    assert response.location == "http://localhost/wan-signin"
+    assert "/wan-signin" in response.location
 
 
 @pytest.mark.settings(
@@ -1307,8 +1306,7 @@ def test_verify(app, client, get_message):
 
     old_paa = reset_fresh(client, app.config["SECURITY_FRESHNESS"])
     response = client.get("fresh")
-    verify_url = response.location
-    assert verify_url == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Ffresh"
+    assert "/verify?next=http%3A%2F%2Flocalhost%2Ffresh" in response.location
     signin_options, response_url = _signin_start(
         client, endpoint="wan-verify?next=/fresh"
     )
@@ -1318,7 +1316,7 @@ def test_verify(app, client, get_message):
         data=dict(credential=json.dumps(SIGNIN_DATA1)),
         follow_redirects=False,
     )
-    assert response.location == "http://localhost/fresh"
+    assert "/fresh" in response.location
     with client.session_transaction() as sess:
         assert sess["fs_paa"] > old_paa
 
@@ -1366,7 +1364,7 @@ def test_verify_validate_error(app, client, get_message):
             follow_redirects=False,
         )
         assert response.status_code == 302
-        assert response.location == "http://localhost/wan-verify"
+        assert "/wan-verify" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "WEBAUTHN_UNKNOWN_CREDENTIAL_ID"

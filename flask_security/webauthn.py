@@ -379,13 +379,10 @@ def webauthn_register() -> "ResponseValue":
     payload: t.Dict[str, t.Any]
 
     form_class = _security.wan_register_form
-    if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     if form.validate_on_submit():
         challenge = _security._webauthn_util.generate_challenge(
@@ -433,7 +430,7 @@ def webauthn_register() -> "ResponseValue":
         return _security.render_template(
             cv("WAN_REGISTER_TEMPLATE"),
             wan_register_form=form,
-            wan_register_response_form=WebAuthnRegisterResponseForm(),
+            wan_register_response_form=WebAuthnRegisterResponseForm(formdata=None),
             wan_state=state_token,
             credential_options=json.dumps(co_json),
             **_security._run_ctx_processor("wan_register")
@@ -463,7 +460,7 @@ def webauthn_register() -> "ResponseValue":
     return _security.render_template(
         cv("WAN_REGISTER_TEMPLATE"),
         wan_register_form=form,
-        wan_delete_form=_security.wan_delete_form(),
+        wan_delete_form=_security.wan_delete_form(formdata=None),
         registered_credentials=current_creds,
         **_security._run_ctx_processor("wan_register")
     )
@@ -474,10 +471,10 @@ def webauthn_register_response(token: str) -> "ResponseValue":
     """Response from browser."""
 
     form_class = _security.wan_register_response_form
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     expired, invalid, state = check_and_get_token_status(
         token, "wan", get_within_delta("WAN_REGISTER_WITHIN")
@@ -570,13 +567,10 @@ def webauthn_signin() -> "ResponseValue":
     else:
         abort(404)
     form_class = _security.wan_signin_form
-    if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     form.is_secondary = is_secondary
     if form.validate_on_submit():
@@ -604,7 +598,7 @@ def webauthn_signin() -> "ResponseValue":
     return _security.render_template(
         cv("WAN_SIGNIN_TEMPLATE"),
         wan_signin_form=form,
-        wan_signin_response_form=WebAuthnSigninResponseForm(),
+        wan_signin_response_form=WebAuthnSigninResponseForm(formdata=None),
         is_secondary=is_secondary,
         **_security._run_ctx_processor("wan_signin")
     )
@@ -617,10 +611,10 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
     ] in ["ready"]
 
     form_class = _security.wan_signin_response_form
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     expired, invalid, state = check_and_get_token_status(
         token, "wan", get_within_delta("WAN_SIGNIN_WITHIN")
@@ -718,10 +712,10 @@ def webauthn_delete() -> "ResponseValue":
     """Deletes an existing registered credential."""
 
     form_class = _security.wan_delete_form
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     if form.validate_on_submit():
         # validate made sure form.name.data exists.
@@ -755,13 +749,10 @@ def webauthn_verify() -> "ResponseValue":
     """
     form_class = _security.wan_verify_form
 
-    if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     if form.validate_on_submit():
         o_json, state_token = _signin_common(form.user, cv("WAN_ALLOW_AS_VERIFY"))
@@ -772,7 +763,7 @@ def webauthn_verify() -> "ResponseValue":
         return _security.render_template(
             cv("WAN_VERIFY_TEMPLATE"),
             wan_verify_form=form,
-            wan_signin_response_form=WebAuthnSigninResponseForm(),
+            wan_signin_response_form=WebAuthnSigninResponseForm(formdata=None),
             wan_state=state_token,
             credential_options=json.dumps(o_json),
             **_security._run_ctx_processor("wan_verify")
@@ -783,7 +774,7 @@ def webauthn_verify() -> "ResponseValue":
     return _security.render_template(
         cv("WAN_VERIFY_TEMPLATE"),
         wan_verify_form=form,
-        wan_signin_response_form=WebAuthnSigninResponseForm(),
+        wan_signin_response_form=WebAuthnSigninResponseForm(formdata=None),
         skip_login_menu=True,
         response_to=get_url(
             cv("WAN_VERIFY_URL"),
@@ -796,10 +787,10 @@ def webauthn_verify() -> "ResponseValue":
 @unauth_csrf(fall_through=True)
 def webauthn_verify_response(token: str) -> "ResponseValue":
     form_class = _security.wan_signin_response_form
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     expired, invalid, state = check_and_get_token_status(
         token, "wan", get_within_delta("WAN_SIGNIN_WITHIN")
@@ -908,7 +899,7 @@ class WebAuthnTfPlugin(TfPluginBase):
 
     def tf_login(
         self, user: "User", json_payload: t.Dict[str, t.Any]
-    ) -> t.Optional["ResponseValue"]:
+    ) -> "ResponseValue":
         session["tf_state"] = "ready"
         if not _security._want_json(request):
             return redirect(url_for_security("wan_signin"))

@@ -611,7 +611,7 @@ def us_verify() -> "ResponseValue":
             qparams={"next": propagate_next(request.url)},
         ),
         has_webauthn_verify_credential=webauthn_available,
-        wan_verify_form=_security.wan_verify_form(),
+        wan_verify_form=_security.wan_verify_form(formdata=None),
         **_security._run_ctx_processor("us_verify")
     )
 
@@ -796,7 +796,7 @@ def us_setup() -> "ResponseValue":
             code_sent=form.chosen_method.data in _compute_code_methods(),
             chosen_method=form.chosen_method.data,
             us_setup_form=form,
-            us_setup_validate_form=_security.us_setup_validate_form(),
+            us_setup_validate_form=_security.us_setup_validate_form(formdata=None),
             **qrcode_values,
             state=state_token,
             **_security._run_ctx_processor("us_setup")

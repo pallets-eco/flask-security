@@ -136,7 +136,7 @@ class CodeTfPlugin(TfPluginBase):
 
     def tf_login(
         self, user: "User", json_payload: t.Dict[str, t.Any]
-    ) -> t.Optional["ResponseValue"]:
+    ) -> "ResponseValue":
         """Helper for two-factor authentication login
 
         This is called only when login/password have already been validated.
