@@ -52,7 +52,7 @@ def test_default_unauthn(app, client):
 
     response = client.get("/profile")
     assert response.status_code == 302
-    assert response.headers["Location"] == "http://localhost/login?next=%2Fprofile"
+    assert "/login?next=%2Fprofile" in response.location
 
     response = client.get("/profile", headers={"Accept": "application/json"})
     assert response.status_code == 401
@@ -68,10 +68,7 @@ def test_default_unauthn_bp(app, client):
 
     response = client.get("/profile")
     assert response.status_code == 302
-    assert (
-        response.headers["Location"]
-        == "http://localhost/myprefix/mylogin?next=%2Fprofile"
-    )
+    assert "/myprefix/mylogin?next=%2Fprofile" in response.location
 
 
 def test_default_unauthn_myjson(app, client):

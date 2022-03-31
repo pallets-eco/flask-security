@@ -119,4 +119,4 @@ def test_tf_select_auth(app, client, get_message):
     # /tf-select is an unauthenticated endpoint - make sure only allowable in correct
     # state.
     response = client.get("/tf-select", follow_redirects=False)
-    assert response.location == "http://localhost/login"
+    assert "/login" in response.location
