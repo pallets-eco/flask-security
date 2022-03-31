@@ -320,8 +320,8 @@ def test_two_factor_flag(app, client):
         "/tf-setup", data=dict(setup="not_a_method"), follow_redirects=True
     )
     assert b"Marked method is not valid" in response.data
-    session = get_session(response)
-    assert session["tf_state"] == "setup_from_login"
+    with client.session_transaction() as session:
+        assert session["tf_state"] == "setup_from_login"
 
     # try non-existing setup on setup page (using json)
     data = dict(setup="not_a_method")
@@ -853,7 +853,7 @@ def test_admin_setup_reset(app, client, get_message):
     # we shouldn't be logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == "http://localhost/login?next=%2Fprofile"
+    assert "/login?next=%2Fprofile" in response.location
 
     # Use admin to setup gene's SMS/phone.
     with app.app_context():
@@ -1107,7 +1107,7 @@ def test_bad_sender(app, client, get_message):
         data = {"email": "gal@lp.com", "password": "password"}
         response = client.post("login", data=data, follow_redirects=False)
         assert response.status_code == 302
-        assert response.location == "http://localhost/login"
+        assert "/login" in response.location
     assert get_message("FAILED_TO_SEND_CODE") in flashes[0]["message"].encode("utf-8")
 
     # test w/ JSON
@@ -1188,10 +1188,7 @@ def test_verify(app, client, get_message):
     # Test setup when re-authenticate required
     authenticate(client)
     response = client.get("tf-setup", follow_redirects=False)
-    verify_url = response.location
-    assert (
-        verify_url == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Ftf-setup"
-    )
+    assert "/verify?next=http%3A%2F%2Flocalhost%2Ftf-setup" in response.location
     logout(client)
 
     # Now try again - follow redirects to get to verify form

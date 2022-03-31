@@ -238,7 +238,7 @@ def verify():
         cv("VERIFY_TEMPLATE"),
         verify_form=form,
         has_webauthn_verify_credential=webauthn_available,
-        wan_verify_form=_security.wan_verify_form(),
+        wan_verify_form=_security.wan_verify_form(formdata=None),
         **_ctx("verify"),
     )
 
@@ -614,7 +614,7 @@ def reset_password(token):
         # two factor not required - just login
         login_user(user, authn_via=["reset"])
         if _security._want_json(request):
-            login_form = _security.login_form()
+            login_form = _security.login_form(formdata=None)
             login_form.user = user
             return base_render_json(login_form, include_auth_token=True)
         else:
@@ -798,7 +798,7 @@ def two_factor_setup():
                 authr_username=authr_setup_values["username"],
                 authr_issuer=authr_setup_values["issuer"],
             )
-        code_form = _security.two_factor_verify_code_form()
+        code_form = _security.two_factor_verify_code_form(formdata=None)
         if not _security._want_json(request):
             return _security.render_template(
                 cv("TWO_FACTOR_SETUP_TEMPLATE"),
@@ -828,7 +828,7 @@ def two_factor_setup():
         }
         return base_render_json(form, include_user=False, additional=json_response)
 
-    code_form = _security.two_factor_verify_code_form()
+    code_form = _security.two_factor_verify_code_form(formdata=None)
     return _security.render_template(
         cv("TWO_FACTOR_SETUP_TEMPLATE"),
         two_factor_setup_form=form,
@@ -930,7 +930,7 @@ def two_factor_token_validation():
 
     # if we were trying to validate a new method
     if changing:
-        setup_form = _security.two_factor_setup_form()
+        setup_form = _security.two_factor_setup_form(formdata=None)
 
         return _security.render_template(
             cv("TWO_FACTOR_SETUP_TEMPLATE"),
@@ -943,7 +943,7 @@ def two_factor_token_validation():
 
     # if we were trying to validate an existing method
     else:
-        rescue_form = _security.two_factor_rescue_form()
+        rescue_form = _security.two_factor_rescue_form(formdata=None)
         return _security.render_template(
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
@@ -1018,7 +1018,7 @@ def two_factor_rescue():
     if _security._want_json(request):
         return base_render_json(form, include_user=False)
 
-    code_form = _security.two_factor_verify_code_form()
+    code_form = _security.two_factor_verify_code_form(formdata=None)
     return _security.render_template(
         cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
