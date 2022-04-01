@@ -25,7 +25,7 @@
       </form>
       {% if has_webauthn_verify_credential %}
         <hr class="fs-gap">
-        <h2>Use a WebAuthn Security Key to Reauthenticate</h2>
+        <h2>{{ _fsdomain("Use a WebAuthn Security Key to Reauthenticate") }}</h2>
         <form action="{{ url_for_security("wan_verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
           name="wan_verify_form">
             {{ wan_verify_form.hidden_tag() }}

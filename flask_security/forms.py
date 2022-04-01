@@ -80,9 +80,12 @@ _default_field_labels = {
     "sendcode": _("Send Code"),
     "passcode": _("Passcode"),
     "username": _("Username"),
-    "credential_nickname": _("Nickname"),
     "delete": _("Delete"),
-    "register_webauthn_credential": _("Register WebAuthn Credential"),
+    "email_method": _("Set up using email"),
+    "authapp_method": _(
+        "Set up using an authenticator app (e.g. google, lastpass, authy)"
+    ),
+    "sms_method": _("Set up using SMS"),
 }
 
 
@@ -631,13 +634,13 @@ class TwoFactorSetupForm(Form):
     setup = RadioField(
         "Available Methods",
         choices=[
-            ("email", "Set up using email"),
+            ("email", get_form_field_label("email_method")),
             (
                 "authenticator",
-                "Set up using an authenticator app (e.g. google, lastpass, authy)",
+                get_form_field_label("authapp_method"),
             ),
-            ("sms", "Set up using SMS"),
-            ("disable", "Disable two factor authentication"),
+            ("sms", get_form_field_label("sms_method")),
+            ("disable", get_form_field_xlate(_("Disable two factor authentication"))),
         ],
         validate_choice=False,
     )

@@ -76,6 +76,15 @@
         <h3>{{ _fsdomain("No methods have been enabled - nothing to setup") }}</h3>
       {% endif %}
     </form>
+    {% if state %}
+      <hr class="fs-gap">
+      <form action="{{ url_for_security("us_setup_validate", token=state) }}" method="POST"
+          name="us_setup_validate_form">
+        {{ us_setup_validate_form.hidden_tag() }}
+        {{ render_field_with_errors(us_setup_validate_form.passcode) }}
+        {{ render_field(us_setup_validate_form.submit) }}
+      </form>
+    {% endif %}
     {% if security.webauthn %}
       <hr class="fs-gap">
       <h2>WebAuthn</h2>
@@ -83,15 +92,6 @@
         {{ _fsdomain("This application supports WebAuthn security keys.") }}
         <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</a>
       </div>
-    {% endif %}
-    {% if state %}
-      <hr>
-      <form action="{{ url_for_security("us_setup_validate", token=state) }}" method="POST"
-          name="us_setup_validate_form">
-        {{ us_setup_validate_form.hidden_tag() }}
-        {{ render_field_with_errors(us_setup_validate_form.passcode) }}
-        {{ render_field(us_setup_validate_form.submit) }}
-      </form>
     {% endif %}
     {% include "security/_menu.html" %}
 {% endblock %}
