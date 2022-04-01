@@ -115,14 +115,17 @@ else:
 
 class WebAuthnRegisterForm(Form):
     name = StringField(
-        get_form_field_label("credential_nickname"),
+        get_form_field_xlate(_("Nickname")),
         validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
     )
     usage = RadioField(
-        _("Usage"),
+        get_form_field_xlate(_("Usage")),
         choices=[
-            ("first", _("Use as a first authentication factor")),
-            ("secondary", _("Use as a secondary authentication factor")),
+            ("first", get_form_field_xlate(_("Use as a first authentication factor"))),
+            (
+                "secondary",
+                get_form_field_xlate(_("Use as a secondary authentication factor")),
+            ),
         ],
         default="secondary",
         validate_choice=True,
@@ -333,7 +336,7 @@ class WebAuthnSigninResponseForm(Form):
 
 class WebAuthnDeleteForm(Form):
     name = StringField(
-        get_form_field_label("credential_nickname"),
+        get_form_field_xlate(_("Nickname")),
         validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
     )
     submit = SubmitField(label=get_form_field_label("delete"))

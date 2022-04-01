@@ -39,7 +39,7 @@ from wtforms import BooleanField, RadioField, StringField, SubmitField, validato
 
 from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
-from .forms import Form, Required, get_form_field_label
+from .forms import Form, Required, get_form_field_label, get_form_field_xlate
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import us_profile_changed, us_security_token_sent
@@ -132,7 +132,10 @@ class _UnifiedPassCodeForm(Form):
 
     chosen_method = RadioField(
         _("Available Methods"),
-        choices=[("email", _("Via email")), ("sms", _("Via SMS"))],
+        choices=[
+            ("email", get_form_field_xlate(_("Via email"))),
+            ("sms", get_form_field_xlate(_("Via SMS"))),
+        ],
         validators=[validators.Optional()],
     )
     submit_send_code = SubmitField(get_form_field_label("sendcode"))
@@ -256,14 +259,14 @@ class UnifiedSigninSetupForm(Form):
     """Setup form"""
 
     chosen_method = RadioField(
-        _("Available Methods"),
+        get_form_field_xlate(_("Available Methods")),
         choices=[
-            ("email", _("Set up using email")),
+            ("email", get_form_field_label("email_method")),
             (
                 "authenticator",
-                _("Set up using an authenticator app (e.g. google, lastpass, authy)"),
+                get_form_field_label("authapp_method"),
             ),
-            ("sms", _("Set up using SMS")),
+            ("sms", get_form_field_label("sms_method")),
         ],
     )
     phone = StringField(get_form_field_label("phone"))
