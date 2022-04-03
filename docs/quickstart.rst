@@ -71,6 +71,10 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 
+    # have session and remember cookie be samesite (flask/flask_login)
+    app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
+    app.config["SESSION_COOKIE_SAMESITE"] = "strict"
+
     # Use an in-memory db
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
