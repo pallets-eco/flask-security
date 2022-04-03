@@ -14,10 +14,11 @@ Features
 - (:pr:`532`) Support for Python 3.10
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn
 - (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
-   Deprecate replacing login_manager so we can possibly vendor that in in the future.
+  Deprecate replacing login_manager so we can possibly vendor that in in the future.
 
 Fixes
 +++++
+- (:pr:`591`) Make the required zxcvbn complexity score configurable (mephi42)
 
 
 DB Migration
@@ -29,6 +30,19 @@ upon first use for existing users.
 If you are using Alembic the schema migration is easy::
 
     op.add_column('user', sa.Column('fs_webauthn_user_handle', sa.String(length=64), nullable=True))
+
+Version 4.1.3
+-------------
+
+Released March 2, 2022
+
+Fixes
++++++
+- (:issue:`581`) Fix bug when attempting to disable register_blueprint. (halali)
+- (:pr:`539`) Fix example documentation re: generating localized messages. (kazuhei2)
+- (:pr:`546`) Make roles joinedload compatible with SQLAlchemy 2.0. (keats)
+- (:pr:`586`) Ship py.typed as part of package.
+- (:issue:`580`) Improve documentation around use of bleach and include in common install extra.
 
 Version 4.1.2
 -------------

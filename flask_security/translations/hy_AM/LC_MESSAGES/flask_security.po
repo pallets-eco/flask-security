@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2022-04-01 07:48-0700\n"
+"POT-Creation-Date: 2022-04-02 08:11-0700\n"
 "PO-Revision-Date: 2020-12-01 11:47+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hy_AM\n"
@@ -550,27 +550,27 @@ msgstr "Էլ․ Փոստով"
 msgid "Via SMS"
 msgstr "SMS հաղորդագրությամբ"
 
-#: flask_security/webauthn.py:118 flask_security/webauthn.py:339
+#: flask_security/webauthn.py:115 flask_security/webauthn.py:336
 msgid "Nickname"
 msgstr ""
 
-#: flask_security/webauthn.py:122
+#: flask_security/webauthn.py:119
 msgid "Usage"
 msgstr ""
 
-#: flask_security/webauthn.py:124
+#: flask_security/webauthn.py:121
 msgid "Use as a first authentication factor"
 msgstr ""
 
-#: flask_security/webauthn.py:127
+#: flask_security/webauthn.py:124
 msgid "Use as a secondary authentication factor"
 msgstr ""
 
-#: flask_security/webauthn.py:210
+#: flask_security/webauthn.py:207
 msgid "Start"
 msgstr ""
 
-#: flask_security/webauthn.py:900
+#: flask_security/webauthn.py:879
 msgid "webauthn"
 msgstr ""
 
@@ -613,6 +613,15 @@ msgstr "Փոխել գաղտնաբառը"
 #: flask_security/templates/security/forgot_password.html:6
 msgid "Send password reset instructions"
 msgstr "Ուղարկել գաղտնաբառի վերականգնման հրահանգները"
+
+#: flask_security/templates/security/login_user.html:17
+#: flask_security/templates/security/us_signin.html:30
+msgid "Use WebAuthn to Sign In"
+msgstr ""
+
+#: flask_security/templates/security/login_user.html:20
+msgid "Sign in with WebAuthn"
+msgstr ""
 
 #: flask_security/templates/security/reset_password.html:6
 msgid "Reset password"

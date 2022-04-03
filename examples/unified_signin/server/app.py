@@ -104,6 +104,10 @@ def create_app():
     app.config["WTF_CSRF_CHECK_DEFAULT"] = False
     app.config["WTF_CSRF_TIME_LIMIT"] = None
 
+    # have session and remember cookie be samesite (flask/flask_login)
+    app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
+    app.config["SESSION_COOKIE_SAMESITE"] = "strict"
+
     # This means the first 'fresh-required' endpoint after login will always require
     # re-verification - but after that the grace period will kick in.
     # This isn't likely something a normal app would need/want to do.

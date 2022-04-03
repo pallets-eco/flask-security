@@ -258,7 +258,7 @@ JSON is supported for the following operations:
 In addition, Single-Page-Applications (like those built with Vue, Angular, and
 React) are supported via customizable redirect links.
 
-Note: All registeration requests done through JSON/Ajax utilize the ``confirm_register_form``.
+Note: All registration requests done through JSON/Ajax utilize the ``confirm_register_form``.
 
 Command Line Interface
 ----------------------

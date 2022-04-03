@@ -27,10 +27,10 @@
       </form>
   {% if security.webauthn %}
     <hr class="fs-gap">
-    <h2>Use WebAuthn to Sign In</h2>
+    <h2>{{ _fsdomain("Use WebAuthn to Sign In") }}</h2>
     <div>
       <form method="GET" id="wan-signin-form" name="wan_signin_form">
-        <input id="wan_signin" name="wan_signin" type="submit" value="Sign in with WebAuthn"
+        <input id="wan_signin" name="wan_signin" type="submit" value="{{ _fsdomain('Sign in with WebAuthn') }}"
           formaction="{{ url_for_security("wan_signin") }}">
       </form>
     </div>
