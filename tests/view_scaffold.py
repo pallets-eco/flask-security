@@ -76,6 +76,8 @@ def create_app():
 
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = True
+    app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
+    app.config["SESSION_COOKIE_SAMESITE"] = "strict"
     app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
         {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
         {"us_phone_number": {"mapper": uia_phone_mapper}},

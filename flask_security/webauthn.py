@@ -22,9 +22,7 @@
     TODO:
         - docs!
         - openapi.yml
-        - integrate with plain login
         - update/add examples to support webauthn
-        - remember me support
         - should we universally add endpoint urls to JSON responses?
         - Add a way to order registered credentials so we can return an ordered list
           in allowCredentials.
@@ -32,7 +30,6 @@
           and have them not necessarily be cross-platform.. add form option?
 
     Research:
-        - Deal with username and security implications
         - should we store things like user verified in 'last use'...
         - By insisting on 2FA if user has registered a webauthn - things
           get interesting if they try to log in on a different device....
@@ -241,7 +238,7 @@ class WebAuthnSigninResponseForm(Form):
     verify.
     """
 
-    remember = BooleanField(get_form_field_label("remember_me"))
+    remember = HiddenField()
     submit = SubmitField(label=get_form_field_label("submit"))
     credential = HiddenField()
 
@@ -581,9 +578,15 @@ def webauthn_signin() -> "ResponseValue":
             form.user, ["secondary"] if is_secondary else ["first"]
         )
         if _security._want_json(request):
-            payload = {"credential_options": o_json, "wan_state": state_token}
+            payload = {
+                "credential_options": o_json,
+                "wan_state": state_token,
+                "remember": form.remember.data,
+            }
             return base_render_json(form, include_user=False, additional=payload)
 
+        # Copy the user's remember field into the next form - since that is
+        # auto-submitted.
         return _security.render_template(
             cv("WAN_SIGNIN_TEMPLATE"),
             wan_signin_form=form,
@@ -670,24 +673,6 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
                     return response
             # login user
             login_user(form.user, remember=remember_me, authn_via=["webauthn"])
-            """
-            from .twofactor import tf_verify_validity_token, is_tf_setup, tf_login
-
-            need_2fa = False
-            if cv("TWO_FACTOR"):
-                if form.mf_check and cv("WAN_ALLOW_AS_MULTI_FACTOR"):
-                    pass
-                else:
-                    tf_fresh = tf_verify_validity_token(form.user.fs_uniquifier)
-                    if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
-                        if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_fresh):
-                            need_2fa = True
-
-            if need_2fa:
-                return tf_login(
-                    form.user, remember=remember_me, primary_authn_via="webauthn"
-                )
-            """
 
         goto_url = get_post_login_redirect()
         if _security._want_json(request):

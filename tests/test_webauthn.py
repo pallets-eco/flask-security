@@ -270,10 +270,12 @@ def _signin_start(
     return signin_options, response_url
 
 
-def _signin_start_json(client, identity=None):
+def _signin_start_json(client, identity=None, remember=False):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-    response = client.post("wan-signin", headers=headers, json=dict(identity=identity))
+    response = client.post(
+        "wan-signin", headers=headers, json=dict(identity=identity, remember=remember)
+    )
     signin_options = response.json["response"]["credential_options"]
     response_url = f'wan-signin/{response.json["response"]["wan_state"]}'
     return signin_options, response_url
@@ -1463,3 +1465,69 @@ def test_verify_usage_secondary_json(app, client, get_message):
         response_url, json=dict(credential=json.dumps(keys["secondary"]["signin"]))
     )
     assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_remember_token(client):
+    # test that remember token properly set on primary authn with webauthn
+    authenticate(client)
+    register_options, response_url = _register_start_json(
+        client, name="testr3", usage="first"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    assert "remember_token" not in [c.name for c in client.cookie_jar]
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    response = client.post(
+        "wan-signin", headers=headers, json=dict(identity="matt@lp.com", remember=True)
+    )
+    response_url = f'wan-signin/{response.json["response"]["wan_state"]}'
+    assert response.json["response"]["remember"]
+
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1), remember=True),
+    )
+    assert "remember_token" in [c.name for c in client.cookie_jar]
+    client.cookie_jar.clear_session_cookies()
+    response = client.get("/profile")
+    assert b"profile" in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.unified_signin()
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_remember_token_tf(client):
+    # test that remember token properly set after secondary authn with webauthn
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    assert "remember_token" not in [c.name for c in client.cookie_jar]
+
+    # login again - should require MFA
+    response = client.post(
+        "/us-signin",
+        json=dict(identity="matt@lp.com", passcode="password", remember=True),
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_method"] == "webauthn"
+    assert response.json["response"]["tf_required"]
+    with client.session_transaction() as session:
+        assert session["tf_remember_login"]
+
+    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1), remember=True),
+    )
+    assert "remember_token" in [c.name for c in client.cookie_jar]
+    client.cookie_jar.clear_session_cookies()
+    response = client.get("/profile")
+    assert b"profile" in response.data

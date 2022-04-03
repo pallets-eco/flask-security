@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2022-04-01 07:48-0700\n"
+"POT-Creation-Date: 2022-04-02 08:11-0700\n"
 "PO-Revision-Date: 2017-03-23 14:04+0100\n"
 "Last-Translator: Leonhard Printz <leonhardprintz@protonmail.ch>\n"
 "Language: da_DK\n"
@@ -549,27 +549,27 @@ msgstr ""
 msgid "Via SMS"
 msgstr ""
 
-#: flask_security/webauthn.py:118 flask_security/webauthn.py:339
+#: flask_security/webauthn.py:115 flask_security/webauthn.py:336
 msgid "Nickname"
 msgstr ""
 
-#: flask_security/webauthn.py:122
+#: flask_security/webauthn.py:119
 msgid "Usage"
 msgstr ""
 
-#: flask_security/webauthn.py:124
+#: flask_security/webauthn.py:121
 msgid "Use as a first authentication factor"
 msgstr ""
 
-#: flask_security/webauthn.py:127
+#: flask_security/webauthn.py:124
 msgid "Use as a secondary authentication factor"
 msgstr ""
 
-#: flask_security/webauthn.py:210
+#: flask_security/webauthn.py:207
 msgid "Start"
 msgstr ""
 
-#: flask_security/webauthn.py:900
+#: flask_security/webauthn.py:879
 msgid "webauthn"
 msgstr ""
 
@@ -612,6 +612,15 @@ msgstr "Ændre adgangskode"
 #: flask_security/templates/security/forgot_password.html:6
 msgid "Send password reset instructions"
 msgstr "Send adgangskode nulstillingsinstruktioner"
+
+#: flask_security/templates/security/login_user.html:17
+#: flask_security/templates/security/us_signin.html:30
+msgid "Use WebAuthn to Sign In"
+msgstr ""
+
+#: flask_security/templates/security/login_user.html:20
+msgid "Sign in with WebAuthn"
+msgstr ""
 
 #: flask_security/templates/security/reset_password.html:6
 msgid "Reset password"
