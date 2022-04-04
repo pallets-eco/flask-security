@@ -141,13 +141,13 @@ def test_confirmation_template(app, client, get_message):
         recorded_tokens_sent.append(kwargs["confirmation_token"])
 
     with capture_registrations() as registrations:
-        with app.mail.record_messages() as outbox:
-            data = dict(email="mary@lp.com", password="awesome sunset", next="")
-            # Register - this will use the welcome template
-            client.post("/register", data=data, follow_redirects=True)
-            # Explicitly ask for confirmation -
-            # this will use the confirmation_instructions template
-            client.post("/confirm", data=dict(email="mary@lp.com"))
+        data = dict(email="mary@lp.com", password="awesome sunset", next="")
+        # Register - this will use the welcome template
+        client.post("/register", data=data, follow_redirects=True)
+        # Explicitly ask for confirmation -
+        # this will use the confirmation_instructions template
+        client.post("/confirm", data=dict(email="mary@lp.com"))
+        outbox = app.mail.outbox
         assert len(outbox) == 2
         # check registration email
         matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)

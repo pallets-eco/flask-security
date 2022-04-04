@@ -100,22 +100,22 @@ def test_changeable_flag(app, client, get_message):
     assert get_message("PASSWORD_IS_THE_SAME") in response.data
 
     # Test successful submit sends email notification
-    with app.mail.record_messages() as outbox:
-        response = client.post(
-            "/change",
-            data={
-                "password": "password",
-                "new_password": "new strong password",
-                "new_password_confirm": "new strong password",
-            },
-            follow_redirects=True,
-        )
+    response = client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "new strong password",
+            "new_password_confirm": "new strong password",
+        },
+        follow_redirects=True,
+    )
+    outbox = app.mail.outbox
 
     assert get_message("PASSWORD_CHANGE") in response.data
     assert b"Home Page" in response.data
     assert len(recorded) == 1
     assert len(outbox) == 1
-    assert "Your password has been changed" in outbox[0].html
+    assert "Your password has been changed" in outbox[0].body
 
     # Test leading & trailing whitespace not stripped
     response = client.post(
@@ -322,16 +322,16 @@ def test_xlation(app, client, get_message_local):
         submit = localize_callback(_default_field_labels["change_password"])
         assert f'value="{submit}"'.encode() in response.data
 
-    with app.mail.record_messages() as outbox:
-        response = client.post(
-            "/change",
-            data={
-                "password": "password",
-                "new_password": "new strong password",
-                "new_password_confirm": "new strong password",
-            },
-            follow_redirects=True,
-        )
+    response = client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "new strong password",
+            "new_password_confirm": "new strong password",
+        },
+        follow_redirects=True,
+    )
+    outbox = app.mail.outbox
 
     with app.test_request_context():
         assert get_message_local("PASSWORD_CHANGE").encode("utf-8") in response.data
@@ -345,7 +345,7 @@ def test_xlation(app, client, get_message_local):
         )
         assert (
             str(markupsafe.escape(localize_callback("Your password has been changed.")))
-            in outbox[0].html
+            in outbox[0].alternatives[0][0]
         )
         assert localize_callback("Your password has been changed") in outbox[0].body
 
@@ -366,17 +366,16 @@ def test_custom_change_template(client):
 
 @pytest.mark.settings(send_password_change_email=False)
 def test_disable_change_emails(app, client):
-    with app.mail.record_messages() as outbox:
-        client.post(
-            "/change",
-            data={
-                "password": "password",
-                "new_password": "newpassword",
-                "new_password_confirm": "newpassword",
-            },
-            follow_redirects=True,
-        )
-    assert len(outbox) == 0
+    client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "newpassword",
+            "new_password_confirm": "newpassword",
+        },
+        follow_redirects=True,
+    )
+    assert not app.mail.outbox
 
 
 @pytest.mark.settings(post_change_view="/profile")
