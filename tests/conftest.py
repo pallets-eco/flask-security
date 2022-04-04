@@ -20,7 +20,7 @@ import pytest
 from flask import Flask, Response, jsonify, render_template
 from flask import request as flask_request
 from flask.json import JSONEncoder
-from flask_mail import Mail
+from flask_mailman import Mail
 
 from flask_security import (
     MongoEngineUserDatastore,

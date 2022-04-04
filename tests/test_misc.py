@@ -448,15 +448,17 @@ def test_no_email_sender(app, sqlalchemy_datastore):
     with app.app_context():
         app.try_trigger_before_first_request_functions()
         user = TestUser("matt@lp.com")
-        with app.mail.record_messages() as outbox:
-            send_mail("Test Default Sender", user.email, "welcome", user=user)
-            assert 1 == len(outbox)
-            assert "test@testme.com" == outbox[0].sender
+        send_mail("Test Default Sender", user.email, "welcome", user=user)
+        outbox = app.mail.outbox
+        assert 1 == len(outbox)
+        assert "test@testme.com" == outbox[0].from_email
 
 
 def test_sender_tuple(app, sqlalchemy_datastore):
     """Verify that if sender is a (name, address) tuple,
     in the received email sender is properly formatted as "name <address>"
+    Flask-Mail takes tuples - Flask-Mailman takes them - however the
+    local-mem backend doesn't format them correctly (SMTP backend doesn't work either?)
     """
     app.config["MAIL_DEFAULT_SENDER"] = ("Test User", "test@testme.com")
 
@@ -470,10 +472,10 @@ def test_sender_tuple(app, sqlalchemy_datastore):
     with app.app_context():
         app.try_trigger_before_first_request_functions()
         user = TestUser("matt@lp.com")
-        with app.mail.record_messages() as outbox:
-            send_mail("Test Tuple Sender", user.email, "welcome", user=user)
-            assert 1 == len(outbox)
-            assert "Test User <test@testme.com>" == outbox[0].sender
+        send_mail("Test Tuple Sender", user.email, "welcome", user=user)
+        outbox = app.mail.outbox
+        assert 1 == len(outbox)
+        assert outbox[0].from_email == "Test User <test@testme.com>"
 
 
 @pytest.mark.babel()

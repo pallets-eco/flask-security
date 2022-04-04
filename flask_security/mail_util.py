@@ -4,11 +4,11 @@
 
     Utility class providing methods for validating, normalizing and sending emails.
 
-    :copyright: (c) 2020-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
-    While this default implementation uses FlaskMail - we want to make sure that
-    FlaskMail isn't REQUIRED (if this implementation isn't used).
+    While this default implementation uses Flask-Mailman - we want to make sure that
+    Flask-Mailman isn't REQUIRED (if this implementation isn't used).
 """
 import typing as t
 
@@ -27,7 +27,7 @@ class MailUtil:
     Utility class providing methods for validating, normalizing and sending emails.
 
     This default class uses the email_validator package to handle validation and
-    normalization, and the flask_mail package to send emails.
+    normalization, and the flask_mailman package to send emails.
 
     To provide your own implementation, pass in the class as ``mail_util_cls``
     at init time.  Your class will be instantiated once as part of app initialization.
@@ -49,9 +49,9 @@ class MailUtil:
         recipient: str,
         sender: t.Union[str, tuple],
         body: str,
-        html: str,
+        html: t.Optional[str],
         user: "User",
-        **kwargs: t.Any
+        **kwargs: t.Any,
     ) -> None:
         """Send an email via the Flask-Mail extension.
 
@@ -63,16 +63,50 @@ class MailUtil:
         :param body: the rendered body (text)
         :param html: the rendered body (html)
         :param user: the user model
+
+        It is possible that sender is a lazy_string for localization (unlikely but..)
+        so we cast to str() here to force localization.
         """
 
-        from flask_mail import Message
+        try:
+            from flask_mailman import EmailMultiAlternatives, Mail
 
-        msg = Message(subject, sender=sender, recipients=[recipient])
-        msg.body = body
-        msg.html = html
+            # Flask-Mailman doesn't appear to take a tuple - a bug has been filed
+            # but not sure they will fix it (parts of Flask-Mailman work - but not
+            # the actual email headers).
+            if isinstance(sender, tuple) and len(sender) == 2:
+                #  sender = (str(sender[0]), str(sender[1]))
+                sender = f"{str(sender[0])} <{str(sender[1])}>"
+            else:
+                sender = str(sender)
 
-        mail = current_app.extensions.get("mail")
-        mail.send(msg)  # type: ignore
+            mail: Mail = current_app.extensions.get("mailman")
+            with mail.get_connection() as connection:
+                msg = EmailMultiAlternatives(
+                    subject,
+                    body=body,
+                    from_email=sender,
+                    to=[recipient],
+                    connection=connection,
+                )
+                if html:
+                    msg.attach_alternative(html, "text/html")
+                msg.send()
+
+        except ImportError:  # pragma: no cover
+            from flask_mail import Message
+
+            # In Flask-Mail, sender can be a two element tuple -- (name, address)
+            if isinstance(sender, tuple) and len(sender) == 2:
+                sender = (str(sender[0]), str(sender[1]))
+            else:
+                sender = str(sender)
+            msg = Message(subject, sender=sender, recipients=[recipient])
+            msg.body = body
+            msg.html = html
+
+            mail = current_app.extensions.get("mail")
+            mail.send(msg)  # type: ignore
 
     def normalize(self, email: str) -> str:
         """

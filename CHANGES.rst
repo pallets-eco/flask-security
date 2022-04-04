@@ -19,7 +19,8 @@ Features
 Fixes
 +++++
 - (:pr:`591`) Make the required zxcvbn complexity score configurable (mephi42)
-
+- (:issue:`531`) Get rid of Flask-Mail. Flask-Mailman is now the default preferred email package.
+  Flask-Mail is still supported so there should be no backwards compatability issues.
 
 DB Migration
 ~~~~~~~~~~~~

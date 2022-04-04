@@ -102,10 +102,9 @@ def test_context_processors(client, app):
 
     client.get("/logout")
 
-    with app.mail.record_messages() as outbox:
-        client.post("/reset", data=dict(email="matt@lp.com"))
+    client.post("/reset", data=dict(email="matt@lp.com"))
 
-    email = outbox[0]
+    email = app.mail.outbox[1]
     assert "global" in email.body
     assert "bar-mail" in email.body
 

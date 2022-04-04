@@ -51,11 +51,10 @@ def test_registerable_flag(clients, app, get_message):
         password_confirm="battery staple",
         next="",
     )
-    with app.mail.record_messages() as outbox:
-        response = clients.post("/register", data=data, follow_redirects=True)
+    response = clients.post("/register", data=data, follow_redirects=True)
 
     assert len(recorded) == 1
-    assert len(outbox) == 1
+    assert len(app.mail.outbox) == 1
     assert b"Post Register" in response.data
 
     logout(clients)
@@ -129,16 +128,16 @@ def test_xlation(app, client, get_message_local):
         submit = localize_callback(_default_field_labels["register"])
         assert f'value="{submit}"'.encode() in response.data
 
-    with app.mail.record_messages() as outbox:
-        response = client.post(
-            "/register",
-            data={
-                "email": "me@fr.com",
-                "password": "new strong password",
-                "password_confirm": "new strong password",
-            },
-            follow_redirects=True,
-        )
+    response = client.post(
+        "/register",
+        data={
+            "email": "me@fr.com",
+            "password": "new strong password",
+            "password_confirm": "new strong password",
+        },
+        follow_redirects=True,
+    )
+    outbox = app.mail.outbox
 
     with app.test_request_context():
         assert (
@@ -159,7 +158,7 @@ def test_xlation(app, client, get_message_local):
                     )
                 )
             )
-            in outbox[0].html
+            in outbox[0].alternatives[0][0]
         )
 
 
@@ -252,9 +251,8 @@ def test_disable_register_emails(client, app):
     data = dict(
         email="dude@lp.com", password="password", password_confirm="password", next=""
     )
-    with app.mail.record_messages() as outbox:
-        client.post("/register", data=data, follow_redirects=True)
-    assert len(outbox) == 0
+    client.post("/register", data=data, follow_redirects=True)
+    assert not app.mail.outbox
 
 
 @pytest.mark.two_factor()

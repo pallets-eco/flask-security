@@ -156,16 +156,15 @@ def test_simple_signin(app, clients, get_message):
     assert get_message("DISABLED_ACCOUNT") in response.data
 
     with capture_send_code_requests() as requests:
-        with app.mail.record_messages() as outbox:
-            response = clients.post(
-                "/us-signin/send-code",
-                data=dict(identity="matt@lp.com", chosen_method="email"),
-                follow_redirects=True,
-            )
-            assert response.status_code == 200
-            assert b"Sign In" in response.data
+        response = clients.post(
+            "/us-signin/send-code",
+            data=dict(identity="matt@lp.com", chosen_method="email"),
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert b"Sign In" in response.data
     assert len(requests) == 1
-    assert len(outbox) == 1
+    assert len(app.mail.outbox) == 1
 
     # try bad code
     response = clients.post(
@@ -241,18 +240,17 @@ def test_simple_signin_json(app, client_nc, get_message):
         assert set(jresponse["code_methods"]) == {"email", "sms"}
 
         with capture_send_code_requests() as requests:
-            with app.mail.record_messages() as outbox:
-                response = client_nc.post(
-                    "/us-signin/send-code",
-                    json=dict(identity="matt@lp.com", chosen_method="email"),
-                    headers=headers,
-                    follow_redirects=True,
-                )
-                assert response.status_code == 200
-                assert "csrf_token" in response.json["response"]
-                assert "user" not in response.json["response"]
+            response = client_nc.post(
+                "/us-signin/send-code",
+                json=dict(identity="matt@lp.com", chosen_method="email"),
+                headers=headers,
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            assert "csrf_token" in response.json["response"]
+            assert "user" not in response.json["response"]
         assert len(requests) == 1
-        assert len(outbox) == 1
+        assert len(app.mail.outbox) == 1
 
         # try bad code
         response = client_nc.post(
@@ -350,26 +348,26 @@ def test_us_signin_template(app, client, get_message):
     # in order to check all context vars since the default template
     # doesn't have all of them.
     with capture_send_code_requests() as requests:
-        with app.mail.record_messages() as outbox:
-            response = client.post(
-                "/us-signin/send-code",
-                data=dict(identity="matt@lp.com", chosen_method="email"),
-                follow_redirects=True,
-            )
-            assert len(outbox) == 1
-            matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
-            # should be 5 - link, email, token, config item, username
-            assert matcher[1].split(":")[1] == "matt@lp.com"
-            token = matcher[2].split(":")[1]
-            assert token == requests[0]["token"]  # deprecated
-            assert token == requests[0]["login_token"]
-            assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
-            assert matcher[4].split(":")[1] == "matt@lp.com"
+        response = client.post(
+            "/us-signin/send-code",
+            data=dict(identity="matt@lp.com", chosen_method="email"),
+            follow_redirects=True,
+        )
+        outbox = app.mail.outbox
+        assert len(outbox) == 1
+        matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+        # should be 5 - link, email, token, config item, username
+        assert matcher[1].split(":")[1] == "matt@lp.com"
+        token = matcher[2].split(":")[1]
+        assert token == requests[0]["token"]  # deprecated
+        assert token == requests[0]["login_token"]
+        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+        assert matcher[4].split(":")[1] == "matt@lp.com"
 
-            # check link
-            link = matcher[0].split(":", 1)[1]
-            response = client.get(link, follow_redirects=True)
-            assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
+        # check link
+        link = matcher[0].split(":", 1)[1]
+        response = client.get(link, follow_redirects=True)
+        assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
 
 
 def test_admin_setup_user_reset(app, client_nc, get_message):
@@ -496,17 +494,17 @@ def test_verify_link(app, client, get_message):
     def authned(myapp, user, **extra_args):
         auths.append((user.email, extra_args["authn_via"]))
 
-    with app.mail.record_messages() as outbox:
-        response = client.post(
-            "/us-signin/send-code",
-            data=dict(identity="matt@lp.com", chosen_method="email"),
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
-        assert b"Sign In" in response.data
+    response = client.post(
+        "/us-signin/send-code",
+        data=dict(identity="matt@lp.com", chosen_method="email"),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Sign In" in response.data
+    outbox = app.mail.outbox
 
-    assert outbox[0].recipients == ["matt@lp.com"]
-    assert outbox[0].sender == "no-reply@localhost"
+    assert outbox[0].to == ["matt@lp.com"]
+    assert outbox[0].from_email == "no-reply@localhost"
     assert outbox[0].subject == "Code For You"
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
@@ -551,13 +549,13 @@ def test_verify_link_spa(app, client, get_message):
     # N.B. we use client here since this only works/ is supported if using
     # sessions.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
-    with app.mail.record_messages() as outbox:
-        response = client.post(
-            "/us-signin/send-code",
-            json=dict(identity="matt@lp.com", chosen_method="email"),
-            headers=headers,
-        )
-        assert response.status_code == 200
+    response = client.post(
+        "/us-signin/send-code",
+        json=dict(identity="matt@lp.com", chosen_method="email"),
+        headers=headers,
+    )
+    assert response.status_code == 200
+    outbox = app.mail.outbox
 
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
@@ -655,20 +653,20 @@ def test_setup_email(app, client, get_message):
     # setup with email - make sure magic link isn't sent and code is.
     # N.B. this is using the test us_instructions template
     us_authenticate(client)
-    with app.mail.record_messages() as outbox:
-        response = client.post("us-setup", data=dict(chosen_method="email"))
-        assert response.status_code == 200
-        assert b"Code has been sent" in response.data
+    response = client.post("us-setup", data=dict(chosen_method="email"))
+    assert response.status_code == 200
+    assert b"Code has been sent" in response.data
+    outbox = app.mail.outbox
 
-        matcher = re.match(
-            r'.*<form action="([^\s]*)".*',
-            response.data.decode("utf-8"),
-            re.IGNORECASE | re.DOTALL,
-        )
-        verify_url = matcher.group(1)
+    matcher = re.match(
+        r'.*<form action="([^\s]*)".*',
+        response.data.decode("utf-8"),
+        re.IGNORECASE | re.DOTALL,
+    )
+    verify_url = matcher.group(1)
 
-    # verify no magic link
-    matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+    # verify no magic link - us_authenticate received first email - we want the second
+    matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
     # should be 4 - link, email, token, config item
     assert matcher[0].split(":")[1] == "None"
     assert matcher[1].split(":")[1] == "matt@lp.com"
@@ -1276,14 +1274,14 @@ def test_tf(app, client, get_message):
 @pytest.mark.settings(two_factor_required=True)
 def test_tf_link(app, client, get_message):
     # Verify two-factor required when using magic link
-    with app.mail.record_messages() as outbox:
-        response = client.post(
-            "/us-signin/send-code",
-            data=dict(identity="matt@lp.com", chosen_method="email"),
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
-        assert b"Sign In" in response.data
+    response = client.post(
+        "/us-signin/send-code",
+        data=dict(identity="matt@lp.com", chosen_method="email"),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Sign In" in response.data
+    outbox = app.mail.outbox
 
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
@@ -1305,14 +1303,14 @@ def test_tf_link(app, client, get_message):
 def test_tf_link_spa(app, client, get_message):
     # Verify two-factor required when using magic link and SPA
     # This currently isn't supported and should redirect to an error.
-    with app.mail.record_messages() as outbox:
-        response = client.post(
-            "/us-signin/send-code",
-            data=dict(identity="matt@lp.com", chosen_method="email"),
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
-        assert b"Sign In" in response.data
+    response = client.post(
+        "/us-signin/send-code",
+        data=dict(identity="matt@lp.com", chosen_method="email"),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Sign In" in response.data
+    outbox = app.mail.outbox
 
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
