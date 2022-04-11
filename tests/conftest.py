@@ -332,6 +332,9 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
         )
         meta = {"db_alias": db_name}
 
+        def get_security_payload(self):
+            return {"email": str(self.email)}
+
     db.Document.register_delete_rule(WebAuthn, "user", CASCADE)
 
     def tear_down():
@@ -598,13 +601,6 @@ def peewee_setup(request, app, tmpdir, realdburl):
                 return value.split(",")
             return value
 
-    class BytesBlobField(BlobField):
-        # Alas pydantic/py_webauthn doesn't understand memoryviews
-        def python_value(self, value):
-            if value:
-                return bytes(value)
-            return value
-
     class Role(RoleMixin, db.Model):
         name = CharField(unique=True, max_length=80)
         description = TextField(null=True)
@@ -630,9 +626,12 @@ def peewee_setup(request, app, tmpdir, realdburl):
         active = BooleanField(default=True)
         confirmed_at = DateTimeField(null=True)
 
+        def get_security_payload(self):
+            return {"email": str(self.email)}
+
     class WebAuthn(WebAuthnMixin, db.Model):
-        credential_id = BytesBlobField(unique=True, null=False, index=True)
-        public_key = BytesBlobField(null=False)
+        credential_id = BlobField(unique=True, null=False, index=True)
+        public_key = BlobField(null=False)
         sign_count = IntegerField(default=0)
         transports = AsaList(null=True)
 

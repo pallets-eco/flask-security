@@ -278,12 +278,12 @@ def _signin_start_json(client, identity=None, remember=False):
     )
     signin_options = response.json["response"]["credential_options"]
     response_url = f'wan-signin/{response.json["response"]["wan_state"]}'
-    return signin_options, response_url
+    return signin_options, response_url, response.json
 
 
 def wan_signin(client, identity, signin_data):
     # perform complete sign in - useful for tests outside this module.
-    signin_options, response_url = _signin_start_json(client, identity)
+    signin_options, response_url, _ = _signin_start_json(client, identity)
     response = client.post(
         response_url,
         json=dict(credential=json.dumps(signin_data)),
@@ -409,17 +409,19 @@ def test_basic_json(app, clients, get_message):
 
     # sign in - simple case use identity so we get back allowCredentials
     logout(clients)
-    signin_options, response_url = _signin_start_json(clients, "matt@lp.com")
+    signin_options, response_url, rjson = _signin_start_json(clients, "matt@lp.com")
     assert signin_options["userVerification"] == "preferred"
     allow_credentials = signin_options["allowCredentials"]
     assert len(allow_credentials) == 1
     assert allow_credentials[0]["id"] == REG_DATA1["id"]
+    assert "user" not in rjson["response"]
 
     response = clients.post(
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
     )
     assert response.status_code == 200
+    assert response.json["response"]["user"]["email"] == "matt@lp.com"
     assert auths[1][1] == ["webauthn"]
 
     # verify actually logged in
@@ -456,15 +458,17 @@ def test_basic_json_nohints(app, client, get_message):
     assert register_options["authenticatorSelection"]["residentKey"] == "required"
     logout(client)
 
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, rjson = _signin_start_json(client, "matt@lp.com")
     allow_credentials = signin_options["allowCredentials"]
     assert len(allow_credentials) == 0
+    assert "user" not in rjson["response"]
 
     response = client.post(
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
     )
     assert response.status_code == 200
+    assert response.json["response"]["user"]["email"] == "matt@lp.com"
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
@@ -475,7 +479,7 @@ def test_usage(app, client, get_message):
     assert response.status_code == 200
     logout(client)
 
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
@@ -574,7 +578,7 @@ def test_bad_data_signin(app, client, get_message):
     assert response.status_code == 200
 
     logout(client)
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(response_url, json=dict(credential="hi there"))
     assert response.status_code == 400
     assert response.json["response"]["errors"]["credential"][0].encode(
@@ -724,7 +728,7 @@ def test_unk_credid(app, client, get_message):
     assert response.status_code == 200
     logout(client)
 
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     assert len(signin_options["allowCredentials"]) == 1
 
     bad_signin = copy.deepcopy(SIGNIN_DATA1)
@@ -835,7 +839,7 @@ def test_tf_json(app, client, get_message):
     assert response.status_code == 401
 
     # For secondary, identity is stored in session
-    signin_options, response_url = _signin_start_json(client, "")
+    signin_options, response_url, _ = _signin_start_json(client, "")
     assert len(signin_options["allowCredentials"]) == 1
     assert signin_options["allowCredentials"][0]["id"] == keys["secondary"]["id"]
     response = client.post(
@@ -978,7 +982,7 @@ def test_signin_timeout(app, client, get_message):
     logout(client)
 
     app.security.wan_serializer = FakeSerializer(2.0)
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
@@ -1114,7 +1118,7 @@ def test_alt_tf(app, client, get_message):
     logout(client)
 
     # sign in using webauthn key
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
@@ -1142,10 +1146,12 @@ def test_all_in_one(app, client, get_message):
     setup_tf(client)
 
     logout(client)
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, rjson = _signin_start_json(client, "matt@lp.com")
+    assert "user" not in rjson["response"]
     response = client.post(
         response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UV))
     )
+    assert response.json["response"]["user"]["email"] == "matt@lp.com"
 
     # verify actually logged in
     response = client.get("/profile", headers={"accept": "application/json"})
@@ -1164,7 +1170,9 @@ def test_all_in_one_not_allowed(app, client, get_message):
     logout(client)
 
     app.config["SECURITY_WAN_ALLOW_AS_MULTI_FACTOR"] = False
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, rjson = _signin_start_json(client, "matt@lp.com")
+    assert "user" not in rjson["response"]
+
     response = client.post(
         response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UV))
     )
@@ -1206,7 +1214,7 @@ def test_user_handle(app, client, get_message):
 
     # verify can't sign in
     logout(client)
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(
         response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UH))
     )
@@ -1227,7 +1235,7 @@ def test_user_handle(app, client, get_message):
         )
         upd_signin_data = copy.deepcopy(SIGNIN_DATA_UH)
         upd_signin_data["response"]["userHandle"] = b64_user_handle
-        signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+        signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
         response = client.post(
             response_url, json=dict(credential=json.dumps(upd_signin_data))
         )
@@ -1522,7 +1530,7 @@ def test_remember_token_tf(client):
     with client.session_transaction() as session:
         assert session["tf_remember_login"]
 
-    signin_options, response_url = _signin_start_json(client, "matt@lp.com")
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1), remember=True),
