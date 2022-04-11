@@ -222,7 +222,7 @@ def verify():
         session["fs_paa"] = time.time()
 
         if _security._want_json(request):
-            return base_render_json(form)
+            return base_render_json(form, include_auth_token=True)
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
         return redirect(get_post_verify_redirect())
 

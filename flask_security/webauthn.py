@@ -582,6 +582,7 @@ def webauthn_signin() -> "ResponseValue":
                 "credential_options": o_json,
                 "wan_state": state_token,
                 "remember": form.remember.data,
+                "is_secondary": is_secondary,
             }
             return base_render_json(form, include_user=False, additional=payload)
 
@@ -772,7 +773,7 @@ def webauthn_verify() -> "ResponseValue":
     )
 
 
-@unauth_csrf(fall_through=True)
+@auth_required(lambda: cv("API_ENABLED_METHODS"))
 def webauthn_verify_response(token: str) -> "ResponseValue":
     form_class = _security.wan_signin_response_form
     form_data = None

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   description: |
     Default API for Flask-Security.
@@ -13,7 +13,7 @@ info:
     Please read the online documentation to find out details on how CSRF can be configured.
 
     You can download the latest spec from: https://github.com/Flask-Middleware/flask-security/blob/master/docs/openapi.yaml
-  version: 1.0.0
+  version: 2.0.0
   title: "Flask-Security External API"
   contact:
     name: Flask-Security-Too
@@ -203,6 +203,69 @@ paths:
                         type: integer
                         example: 200
                         description: Http status code
+  /verify:
+    get:
+      summary: Basic re-authentication.
+      description: >
+        If an endpoint is protected with @auth_required() with a freshness declaration
+        this endpoint will be called to request an already signed in user to re-authenticate.
+      responses:
+        200:
+          description: Verify/re-authenticate form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_VERIFY_TEMPLATE)
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_webauthn_verify_credential:
+                    type: boolean
+                    description: <
+                      True if caller has a registered WebAuthn Key which has a `usage` that
+                      is allowed by the SECURITY_WAN_ALLOW_AS_VERIFY configuration setting.
+    post:
+      summary: Basic re-authentication
+      parameters:
+        - $ref: "#/components/parameters/include_auth_token"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Verify"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/Verify"
+      responses:
+        200:
+          description: Verify/re-authenticate response.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - description: >
+                      The user successfully re-authenticated.
+                  - $ref: "#/components/schemas/JsonResponseWithToken"
+            text/html:
+              schema:
+                description: Unsuccessful re-authentication.
+                type: string
+                example: render_template(SECURITY_VERIFY_TEMPLATE) with error values
+        302:
+          description: User successfully re-authenticated when using form based request.
+          headers:
+            Location:
+              description: Redirect to ``next`` or ``SECURITY_POST_VERIFY_VIEW``
+              schema:
+                type: string
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /register:
     get:
       summary: Return register form
@@ -678,6 +741,11 @@ paths:
                   code_methods:
                     type: string
                     description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+                  has_webauthn_verify_credential:
+                    type: boolean
+                    description: <
+                      True if caller has a registered WebAuthn Key which has a `usage` that
+                      is allowed by the SECURITY_WAN_ALLOW_AS_VERIFY configuration setting.
     post:
       summary: Unified sign in re-authentication
       parameters:
@@ -1131,6 +1199,431 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /tf-select:
+    get:
+      summary: Select between previously set up two-factor methods.
+      description: >
+        If a user has set up more than one way to provide a second factor of
+        authentication, this view will ask the user to choose.
+      responses:
+        200:
+          description: Two-factor method select form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tf_setup_methods:
+                    type: string
+                    description: A list of methods to choose from
+                  tf_select:
+                    type: boolean
+                    example: True
+    post:
+      summary: Select a two-factor method
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                which:
+                  type: string
+                  description: <
+                    Which two-factor method to use.
+          application/x-www-form-urlencoded:
+            schema:
+                description: Select Form
+                type: string
+                example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
+      responses:
+        200:
+          description: Verify/re-authenticate response.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - description: >
+                      The user successfully re-authenticated.
+                  - $ref: "#/components/schemas/JsonResponseWithToken"
+            text/html:
+              schema:
+                description: Unsuccessful re-authentication.
+                type: string
+                example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE) with error values
+        302:
+          description: User successfully re-authenticated when using form based request.
+          headers:
+            Location:
+              description: Redirect to ``next`` or ``SECURITY_POST_VERIFY_VIEW``
+              schema:
+                type: string
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /wan-register:
+    get:
+      summary: Register a new WebAuthn key - Step 1
+      responses:
+        200:
+          description: Register WebAuthn form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_WAN_REGISTER_TEMPLATE)
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseJsonResponse'
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          registered_credentials:
+                            type: array
+                            description: List of already registered WebAuthn keys
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                credential_id:
+                                  type: string
+                                transports:
+                                  type: string
+                                lastuse:
+                                  type: string
+                                usage:
+                                  type: string
+
+    post:
+      summary: Register a new WebAuthn key - Step 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WanRegister"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/WanRegister"
+      responses:
+        200:
+          description: WebAuthn Register Step 1 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WanRegisterJsonResponse"
+            text/html:
+              schema:
+                description: Validation failed
+                type: string
+                example: render_template(SECURITY_WAN_REGISTER_TEMPLATE) with error values
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /wan-register/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Register a new WebAuthn key - Step 2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credential:
+                  type: string
+                  description: Credential returned from browser
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                credential:
+                  type: string
+                  description: Credential returned from browser
+      responses:
+        200:
+          description: WebAuthn Register Step 2 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        302:
+          description: >
+            Validation failed - since this form is often auto-submitted
+            the errors are flashed and user is redirected.
+          headers:
+            Location:
+              description: Redirect to ``SECURITY_WAN_REGISTER_URL``
+              schema:
+                type: string
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /wan-signin:
+    get:
+      summary: Sign in using a WebAuthn key - Step 1
+      responses:
+        200:
+          description: Sign in with WebAuthn form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_WAN_SIGNIN_TEMPLATE)
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseJsonResponse'
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          registered_credentials:
+                            type: array
+                            description: List of already registered WebAuthn keys
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                credential_id:
+                                  type: string
+                                transports:
+                                  type: string
+                                lastuse:
+                                  type: string
+                                usage:
+                                  type: string
+
+    post:
+      summary: Sign in using a WebAuthn key - Step 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WanSignin"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/WanSignin"
+      responses:
+        200:
+          description: WebAuthn Sign in Step 1 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WanSigninJsonResponse"
+            text/html:
+              schema:
+                description: >
+                  Next step OR Validation failed.
+                  If valid form then "wan_state" and "credential_options" will be set.
+                  If not valid, form will have error values filled in.
+                type: string
+                example: render_template(SECURITY_WAN_SIGNIN_TEMPLATE)
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /wan-signin/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Sign in using a WebAuthn key - Step 2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WanSignin2"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/WanSignin2"
+      responses:
+        200:
+          description: WebAuthn Sign in Step 2 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        302:
+          description: >
+            Validation failed - since this form is often auto-submitted
+            the errors are flashed and user is redirected.
+          headers:
+            Location:
+              description: Redirect to ``SECURITY_WAN_SIGNIN_URL``
+              schema:
+                type: string
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /wan-delete:
+    get:
+      summary: Delete an existing WebAuthn key
+      responses:
+        200:
+          description: Delete an existing WebAuthn Key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+        302:
+          description: >
+            This form is associated with the register endpoint and so redirects there.
+          headers:
+            Location:
+              description: Redirect to ``SECURITY_WAN_REGISTER_URL``
+              schema:
+                type: string
+    post:
+      summary: Delete an existing WebAuthn key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WanDelete"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/WanDelete"
+      responses:
+        200:
+          description: Delete response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+        302:
+          description: >
+            Validation failed - this form is part of the registration form
+            so any errors or success redirects there.
+          headers:
+            Location:
+              description: Redirect to ``SECURITY_WAN_REGISTER_URL``
+              schema:
+                type: string
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /wan-verify:
+    get:
+      summary: Re-authenticate using a WebAuthn Key.
+      description: >
+        If an endpoint is protected with @auth_required() with a freshness declaration
+        this endpoint can be used to re-authenticate with a previously registered WebAuthn Key.
+      responses:
+        200:
+          description: Verify/re-authenticate form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_WAN_VERIFY_TEMPLATE)
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+    post:
+      summary: Re-authenticate using a WebAuthn Key.
+      responses:
+        200:
+          description: Verify/re-authenticate response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WanVerifyJsonResponse"
+            text/html:
+              schema:
+                description: >
+                  Next step OR Validation failed.
+                  If valid form then "wan_state" and "credential_options" will be set.
+                  If not valid, form will have error values filled in.
+                type: string
+                example: render_template(SECURITY_WAN_VERIFY_TEMPLATE)
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /wan-verify/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Re-authenticate using a WebAuthn Key - Part 2.
+      parameters:
+        - $ref: "#/components/parameters/include_auth_token"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WanSignin2"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/WanSignin2"
+      responses:
+        200:
+          description: Verify/re-authenticate response.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - description: >
+                      The user successfully re-authenticated.
+                  - $ref: "#/components/schemas/JsonResponseWithToken"
+        302:
+          description: User successfully re-authenticated or error in validation when using form based request.
+          headers:
+            Location:
+              description: <
+                Redirect to ``next`` or ``SECURITY_POST_VERIFY_VIEW`` (on success)
+                or ``SECURITY_WAN_VERIFY_URL`` on validation failure.
+              schema:
+                type: string
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
 
 components:
   schemas:
@@ -1146,7 +1639,7 @@ components:
         password:
           type: string
           description: Password
-        remember_me:
+        remember:
           type: boolean
           description: >
             If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
@@ -1184,73 +1677,100 @@ components:
             tf_primary_method:
               type: string
               description: Which method was used to send code.
-    DefaultJsonResponse:
+    BaseJsonResponse:
       type: object
-      properties:
-        user:
-          type: object
-          description: >
-            By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
-        csrf_token:
-          type: string
-          description: Session CSRF token
-    DefaultJsonResponseNoUser:
-      type: object
-      properties:
-        csrf_token:
-          type: string
-          description: Session CSRF token
-    JsonResponseWithToken:
-      type: object
-      properties:
-        user:
-          type: object
-          description: >
-            By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
-          properties:
-            authentication_token:
-              type: string
-              description: >
-                Token to be used in future token-based API calls.
-                Note this only returned from those APIs that accept a
-                'include_auth_token' query param.
-        csrf_token:
-          type: string
-          description: Session CSRF token
-    DefaultJsonErrorResponse:
-      type: object
-      required: [meta, response]
+      required: [ meta, response ]
       properties:
         meta:
           type: object
-          required: [code]
+          required: [ code ]
           properties:
             code:
               type: integer
-              example: 400
+              example: 200
               description: Http status code
-        response:
-          type: object
-          description: >
-            For form validation errors, the 'errors' key will be set with a list of errors per
-            invalid form input field. For non-form related errors, the 'error' key will be set
-            with a single (localized) error string.
+    DefaultJsonResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
           properties:
-            errors:
+            response:
+              type: object
+              properties:
+                user:
+                  type: object
+                  description: >
+                    By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
+                csrf_token:
+                  type: string
+                  description: Session CSRF token
+    DefaultJsonResponseNoUser:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          properties:
+            response:
+              type: object
+              properties:
+                csrf_token:
+                  type: string
+                  description: Session CSRF token
+    JsonResponseWithToken:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          properties:
+            response:
+              type: object
+              properties:
+                user:
+                  type: object
+                  description: >
+                    By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
+                  properties:
+                    authentication_token:
+                      type: string
+                      description: >
+                        Token to be used in future token-based API calls.
+                        Note this only returned from those APIs that accept a
+                        'include_auth_token' query param.
+                csrf_token:
+                  type: string
+                  description: Session CSRF token
+    DefaultJsonErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          properties:
+            response:
               type: object
               description: >
-                Errors per input/form field ('email' below is just an example)
+                For form validation errors, the 'errors' key will be set with a list of errors per
+                invalid form input field. For non-form related errors, the 'error' key will be set
+                with a single (localized) error string.
               properties:
-                email:
-                  type: array
-                  items:
-                    type: string
-                    example: Email issues.
-                    description: Error message (localized)
-            error:
-              type: string
-              example: "Unauthenticated"
-              description: Error message (localized)
+                errors:
+                  type: object
+                  description: >
+                    Errors per input/form field
+                  properties:
+                    field-name:
+                      type: array
+                      items:
+                        type: string
+                        example: field validation error.
+                        description: Error message (localized)
+                error:
+                  type: string
+                  example: "Unauthenticated"
+                  description: Error message (localized)
+    Verify:
+      type: object
+      required: [ password ]
+      properties:
+        password:
+          type: string
+          description: Password
     Register:
       type: object
       required: [email, password]
@@ -1325,7 +1845,7 @@ components:
         passcode:
           type: string
           description: password or code
-        remember_me:
+        remember:
           type: boolean
         tf_validity_token:
           type: string
@@ -1517,6 +2037,85 @@ components:
         tf_validity_token:
           type: string
           description: A timed token that verifies that the user has successfully completed 2FA. Only sent if SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False and remember_me (from /login POST) is True
+
+    WanRegister:
+      type: object
+      required: [ name, usage ]
+      properties:
+        name:
+          type: string
+          example: Wankey1
+        usage:
+          type: string
+          enum: [ first, secondary ]
+    WanRegisterJsonResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          properties:
+            response:
+              type: object
+              properties:
+                credential_options:
+                  type: string
+                wan_state:
+                  type: string
+    WanSignin:
+      type: object
+      properties:
+        identity:
+          type: string
+          example: lp@me.com
+        remember:
+          type: boolean
+          description: >
+            If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
+    WanSigninJsonResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          properties:
+            response:
+              type: object
+              properties:
+                credential_options:
+                  type: string
+                wan_state:
+                  type: string
+                is_secondary:
+                  type: boolean
+                  description: Is this sign in part of a secondary authentication.
+                remember:
+                  type: boolean
+                  description: This is simply the same value as was passed in the body.
+    WanSignin2:
+      type: object
+      required: [ credential ]
+      properties:
+        credential:
+          type: string
+          description: Credential returned from browser
+        remember:
+          type: boolean
+    WanDelete:
+      type: object
+      required: [ name ]
+      properties:
+        name:
+          type: string
+          description: Name of WebAuthn key to delete.
+    WanVerifyJsonResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          properties:
+            response:
+              type: object
+              properties:
+                credential_options:
+                  type: string
+                wan_state:
+                  type: string
 
   headers:
     X-CSRF-Token:
