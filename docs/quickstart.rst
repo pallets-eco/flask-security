@@ -7,7 +7,7 @@ There are some complete (but simple) examples available in the *examples* direct
 .. note::
     The below quickstarts are just that - they don't enable most of the features (such as registration, reset, etc.).
     They basically create a single user, and you can login as that user... that's it.
-    As you add more features, additional packages (e.g. Flask-Mail, Flask-Babel, pyqrcode) might be required
+    As you add more features, additional packages (e.g. Flask-Mailman, Flask-Babel, pyqrcode) might be required
     and will need to be added to your requirements.txt (or equivalent) file.
     Flask-Security does some configuration validation and will output error messages to the console
     for some missing packages.

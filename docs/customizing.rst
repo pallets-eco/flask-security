@@ -30,6 +30,7 @@ following is a list of view templates:
 * `security/us_verify.html`
 * `security/wan_register.html`
 * `security/wan_signin.html`
+* `security/wan_verify.html`
 
 Overriding these templates is simple:
 
@@ -114,6 +115,7 @@ be passed if the model looks like::
 The following is a list of all the available form overrides:
 
 * ``login_form``: Login form
+* ``verify_form``: Verify form
 * ``confirm_register_form``: Confirmable register form
 * ``register_form``: Register form
 * ``forgot_password_form``: Forgot password form
@@ -128,10 +130,13 @@ The following is a list of all the available form overrides:
 * ``us_signin_form``: Unified sign in form
 * ``us_setup_form``: Unified sign in setup form
 * ``us_setup_validate_form``: Unified sign in setup validation form
+* ``us_verify_form``: Unified sign in verify form
+* ``wan_delete_form``: WebAuthn delete a registered key form
 * ``wan_register_form``: WebAuthn initiate registration ceremony form
 * ``wan_register_response_form``: WebAuthn registration ceremony form
 * ``wan_signin_form``: WebAuthn initiate sign in ceremony form
 * ``wan_signin_response_form``: WebAuthn sign in ceremony form
+* ``wan_verify_form``: WebAuthn verify form
 
 .. tip::
     Changing/extending the form class won't directly change how it is displayed.

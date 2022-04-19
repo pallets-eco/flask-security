@@ -1016,8 +1016,8 @@ class Security:
     :param wan_register_response_form: set form for registering a webauthn security key
     :param wan_signin_form: set form for authenticating with a webauthn security key
     :param wan_signin_response_form: set form for authenticating with a webauthn
-    :param wan_delete_form: delete a webauthn security key
-    :param wan_verify_form: delete a webauthn security key
+    :param wan_delete_form: set form for deleting a webauthn security key
+    :param wan_verify_form: set form for using a webauthn key to verify authenticity
     :param anonymous_user: class to use for anonymous user
     :param login_manager: An subclass of LoginManager
     :param json_encoder_cls: Class to use as blueprint.json_encoder.

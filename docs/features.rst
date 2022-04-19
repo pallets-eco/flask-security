@@ -167,7 +167,7 @@ WebAuthn
 
 WebAuthn is a standardized protocol that connects authenticators (such as YubiKey and mobile biometrics)
 with websites. Flask-Security supports using WebAuthn keys as either 'first' or 'secondary'
-authenticators.
+authenticators. Please read :ref:`webauthn_topic` for more details.
 
 Email Confirmation
 ------------------

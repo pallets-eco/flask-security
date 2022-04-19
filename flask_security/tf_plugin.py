@@ -115,12 +115,21 @@ class TfPluginBase:  # pragma no cover
         raise NotImplementedError
 
     def get_setup_methods(self, user: "User") -> t.List[t.Optional[str]]:
-        # Return a list of methods that ``user`` has setup for this second factor
+        """
+        Return a list of methods that ``user`` has setup for this second factor
+        """
         raise NotImplementedError
 
     def tf_login(
         self, user: "User", json_payload: t.Dict[str, t.Any]
     ) -> "ResponseValue":
+        """
+        Called from first/primary authenticated views if the user successfully
+        authenticated, and required a second method of authentication.
+        This method returns the necessary information for the user UI to continue.
+        For forms, this is usually a redirect to a secondary sign in form. For JSON
+        it is just a payload that describes that the user has to do next.
+        """
         raise NotImplementedError
 
 
@@ -216,8 +225,8 @@ class TfPlugin:
                         session["tf_select"] = True
                         if not _security._want_json(request):
                             return redirect(url_for_security("tf_select"))
-                        # Lets force app to go through tf-select just in case we want
-                        # to do further validation... However provide the choices
+                        # Let's force app to go through tf-select just in case we want
+                        # to do further validation... However, provide the choices
                         # so they can just to a POST
                         json_payload.update(
                             {

@@ -20,8 +20,6 @@
     https://www.w3.org/TR/webauthn-2/#sctn-privacy-considerations-client
 
     TODO:
-        - docs!
-        - openapi.yml
         - update/add examples to support webauthn
         - should we universally add endpoint urls to JSON responses?
         - Add a way to order registered credentials so we can return an ordered list
@@ -234,8 +232,7 @@ class WebAuthnSigninForm(Form):
 
 class WebAuthnSigninResponseForm(Form):
     """
-    This form is used both for signin (primary/first or secondary) as well as
-    verify.
+    This form is used both for signin (primary/first or secondary) and verify.
     """
 
     remember = HiddenField()
