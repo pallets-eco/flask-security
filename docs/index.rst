@@ -70,6 +70,7 @@ Customizing and Usage Patterns
    :maxdepth: 2
 
    customizing
+   webauthn
    two_factor_configurations
    spa
    patterns
