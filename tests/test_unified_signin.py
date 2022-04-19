@@ -4,7 +4,7 @@
 
     Unified signin tests
 
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -513,7 +513,7 @@ def test_verify_link(app, client, get_message):
 
     # Try with no code
     response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=False)
-    assert response.location == "http://localhost/us-signin"
+    assert "/us-signin" in response.location
     response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=True)
     assert get_message("API_ERROR") in response.data
 
@@ -837,10 +837,7 @@ def test_verify(app, client, get_message):
     us_authenticate(client)
     response = client.get("us-setup", follow_redirects=False)
     verify_url = response.location
-    assert (
-        verify_url
-        == "http://localhost/us-verify?next=http%3A%2F%2Flocalhost%2Fus-setup"
-    )
+    assert "/us-verify?next=http%3A%2F%2Flocalhost%2Fus-setup" in verify_url
     logout(client)
     us_authenticate(client)
 
@@ -1099,7 +1096,7 @@ def test_next(app, client, get_message):
         data=dict(identity="matt@lp.com", passcode=requests[0]["token"]),
         follow_redirects=False,
     )
-    assert response.location == "http://localhost/post_login"
+    assert "/post_login" in response.location
 
     logout(client)
     response = client.post(
@@ -1109,7 +1106,8 @@ def test_next(app, client, get_message):
         ),
         follow_redirects=False,
     )
-    assert response.location == "http://localhost/post_login"
+
+    assert "/post_login" in response.location
 
 
 @pytest.mark.registerable()

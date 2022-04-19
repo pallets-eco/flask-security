@@ -49,7 +49,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Flask-Security"
-copyright = "2012-2021"
+copyright = "2012-2022"
 author = "Matt Wright & Chris Wagner"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -57,7 +57,7 @@ author = "Matt Wright & Chris Wagner"
 # built documents.
 #
 # The short X.Y version.
-version = "4.1.3"
+version = "4.1.4"
 # The full version, including alpha/beta/rc tags.
 release = version
 

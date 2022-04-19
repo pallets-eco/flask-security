@@ -5,7 +5,7 @@
     Lots of tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -814,8 +814,7 @@ def test_authn_freshness(
         response = client.get("/myspecialview", follow_redirects=False)
         assert response.status_code == 302
         assert (
-            response.location
-            == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Fmyspecialview"
+            "/verify?next=http%3A%2F%2Flocalhost%2Fmyspecialview" in response.location
         )
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
@@ -896,10 +895,7 @@ def test_default_authn_bp(app, client):
     time.sleep(0.1)
     response = client.get("/myview", follow_redirects=False)
     assert response.status_code == 302
-    assert (
-        response.location
-        == "http://localhost/myprefix/verify?next=http%3A%2F%2Flocalhost%2Fmyview"
-    )
+    assert "/myprefix/verify?next=http%3A%2F%2Flocalhost%2Fmyview" in response.location
 
 
 def test_authn_freshness_grace(app, client, get_message):
@@ -941,10 +937,7 @@ def test_authn_freshness_nc(app, client_nc, get_message):
     # This should fail - should be a redirect
     response = client_nc.get("/myview", headers=h, follow_redirects=False)
     assert response.status_code == 302
-    assert (
-        response.location
-        == "http://localhost/verify?next=http%3A%2F%2Flocalhost%2Fmyview"
-    )
+    assert "/verify?next=http%3A%2F%2Flocalhost%2Fmyview" in response.location
 
 
 def test_verify_fresh(app, client, get_message):
@@ -1106,11 +1099,11 @@ def test_post_security_with_application_root(app, sqlalchemy_datastore):
         "/login", data=dict(email="matt@lp.com", password="password")
     )
     assert response.status_code == 302
-    assert response.headers["Location"] == "http://localhost/root"
+    assert "/root" in response.location
 
     response = client.get("/logout")
     assert response.status_code == 302
-    assert response.headers["Location"] == "http://localhost/root"
+    assert "/root" in response.location
 
 
 def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore):
@@ -1129,11 +1122,11 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
         "/login", data=dict(email="matt@lp.com", password="password")
     )
     assert response.status_code == 302
-    assert response.headers["Location"] == "http://localhost/post_login"
+    assert "/post_login" in response.location
 
     response = client.get("/logout")
     assert response.status_code == 302
-    assert response.headers["Location"] == "http://localhost/post_logout"
+    assert "/post_logout" in response.location
 
 
 @pytest.mark.settings(redirect_validate_mode="regex")
