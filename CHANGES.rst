@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.1.4
+-------------
+
+Released April 19, 2022
+
+Fixes
++++++
+- (:issue:`594`) Fix test failures with newer Flask versions.
+
 Version 4.1.3
 -------------
 
