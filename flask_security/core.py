@@ -971,7 +971,7 @@ class WebAuthnMixin:
         associated with this webauthn credential.
         Note that this probably has to be overridden using mongoengine.
 
-        .. versionadded:: 4.2.0
+        .. versionadded:: 5.0.0
         """
         return dict(id=self.user_id)  # type: ignore
 
@@ -1060,11 +1060,11 @@ class Security:
     .. versionadded:: 4.1.0
         ``username_util_cls`` added to encapsulate username handling.
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
         ``wan_register_form``, ``wan_register_response_form``,
          ``webauthn_signin_form``, ``wan_signin_response_form``,
          ``webauthn_delete_form``, ``webauthn_verify_form``, ``tf_select_form``.
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
         ``WebauthnUtil`` class.
 
     .. deprecated:: 4.0.0
@@ -1072,8 +1072,8 @@ class Security:
         ``two_factor_verify_password_form`` removed.
         ``password_validator`` removed in favor of the new ``password_util_cls``.
 
-    .. deprecated:: 4.2.0
-        Passing in a LoginManager instance will be removed in 5.0
+    .. deprecated:: 5.0.0
+        Passing in a LoginManager instance was removed in 5.0.0
     """
 
     def __init__(
@@ -1444,7 +1444,7 @@ class Security:
 
         if self.login_manager:
             warnings.warn(
-                "Replacing login_manager is deprecated in 4.2.0 and will be"
+                "Replacing login_manager is deprecated in 5.0.0 and will be"
                 " removed in 5.0",
                 DeprecationWarning,
             )
@@ -1475,8 +1475,8 @@ class Security:
 
         if cv("PASSWORDLESS", app=app):
             warnings.warn(
-                "The passwordless feature was deprecated in Version 4.2.0"
-                " and will be removed in 5.0. Please use the Unified Signin"
+                "The passwordless feature was deprecated in Version 5.0.0"
+                " and will be removed in the future. Please use the Unified Signin"
                 " feature instead.",
                 DeprecationWarning,
             )
