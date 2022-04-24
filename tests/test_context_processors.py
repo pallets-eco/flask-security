@@ -176,7 +176,7 @@ def test_unified_signin_context_processors(client, app):
     assert b"global" in response.data
     assert b"signin" in response.data
 
-    response = client.get("/us-signin/send-code")
+    response = client.post("/us-signin/send-code")
     assert b"CUSTOM UNIFIED SIGN IN" in response.data
     assert b"global" in response.data
     assert b"signin" in response.data

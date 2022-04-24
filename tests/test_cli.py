@@ -40,7 +40,7 @@ def test_cli_createuser(script_info):
     # Create user
     result = runner.invoke(
         users_create,
-        ["email@example.org", "--password", "battery staple"],
+        ["email@example.tld", "--password", "battery staple"],
         obj=script_info,
     )
     assert result.exit_code == 0
@@ -49,7 +49,7 @@ def test_cli_createuser(script_info):
     result = runner.invoke(
         users_create,
         [
-            "email1@example.org",
+            "email1@example.tld",
             "us_phone_number:5551212",
             "--password",
             "battery staple",
@@ -70,7 +70,7 @@ def test_cli_createuser_extraargs(script_info):
     result = runner.invoke(
         users_create,
         [
-            "email1@example.org",
+            "email1@example.tld",
             "security_number:666",
             "--password",
             "battery staple",
@@ -79,7 +79,7 @@ def test_cli_createuser_extraargs(script_info):
         obj=script_info,
     )
     assert result.exit_code == 0
-    result = runner.invoke(users_activate, ["email1@example.org"], obj=script_info)
+    result = runner.invoke(users_activate, ["email1@example.tld"], obj=script_info)
     assert result.exit_code == 0
     assert "was already activated" in result.output
 
@@ -90,15 +90,15 @@ def test_cli_createuser_normalize(script_info):
 
     result = runner.invoke(
         users_create,
-        ["email@EXAMPLE.org", "--password", "battery staple\N{ROMAN NUMERAL ONE}"],
+        ["email@example.tld", "--password", "battery staple\N{ROMAN NUMERAL ONE}"],
         obj=script_info,
     )
     assert result.exit_code == 0
-    assert "email@example.org" in result.stdout
+    assert "email@example.tld" in result.stdout
 
     app = script_info.load_app()
     with app.app_context():
-        user = app.security.datastore.find_user(email="email@example.org")
+        user = app.security.datastore.find_user(email="email@example.tld")
         assert verify_password(
             "battery staple\N{LATIN CAPITAL LETTER I}", user.password
         )
@@ -169,7 +169,7 @@ def test_cli_addremove_role(script_info):
 
     # Create a user and a role
     result = runner.invoke(
-        users_create, ["a@example.org", "--password", "battery staple"], obj=script_info
+        users_create, ["a@example.tld", "--password", "battery staple"], obj=script_info
     )
     assert result.exit_code == 0
     result = runner.invoke(roles_create, ["superuser"], obj=script_info)
@@ -177,42 +177,42 @@ def test_cli_addremove_role(script_info):
 
     # User not found
     result = runner.invoke(
-        roles_add, ["inval@example.org", "superuser"], obj=script_info
+        roles_add, ["inval@example.tld", "superuser"], obj=script_info
     )
     assert result.exit_code != 0
 
     # Add:
-    result = runner.invoke(roles_add, ["a@example.org", "invalid"], obj=script_info)
+    result = runner.invoke(roles_add, ["a@example.tld", "invalid"], obj=script_info)
     assert result.exit_code != 0
 
     result = runner.invoke(
-        roles_remove, ["inval@example.org", "superuser"], obj=script_info
+        roles_remove, ["inval@example.tld", "superuser"], obj=script_info
     )
     assert result.exit_code != 0
 
     # Remove:
-    result = runner.invoke(roles_remove, ["a@example.org", "invalid"], obj=script_info)
+    result = runner.invoke(roles_remove, ["a@example.tld", "invalid"], obj=script_info)
     assert result.exit_code != 0
 
     result = runner.invoke(
-        roles_remove, ["b@example.org", "superuser"], obj=script_info
+        roles_remove, ["b@example.tld", "superuser"], obj=script_info
     )
     assert result.exit_code != 0
 
     result = runner.invoke(
-        roles_remove, ["a@example.org", "superuser"], obj=script_info
+        roles_remove, ["a@example.tld", "superuser"], obj=script_info
     )
     assert result.exit_code != 0
 
     # Add:
-    result = runner.invoke(roles_add, ["a@example.org", "superuser"], obj=script_info)
+    result = runner.invoke(roles_add, ["a@example.tld", "superuser"], obj=script_info)
     assert result.exit_code == 0
-    result = runner.invoke(roles_add, ["a@example.org", "superuser"], obj=script_info)
+    result = runner.invoke(roles_add, ["a@example.tld", "superuser"], obj=script_info)
     assert result.exit_code != 0
 
     # Remove:
     result = runner.invoke(
-        roles_remove, ["a@example.org", "superuser"], obj=script_info
+        roles_remove, ["a@example.tld", "superuser"], obj=script_info
     )
     assert result.exit_code == 0
 
@@ -261,7 +261,7 @@ def test_cli_activate_deactivate(script_info):
 
     # Create a user
     result = runner.invoke(
-        users_create, ["a@example.org", "--password", "battery staple"], obj=script_info
+        users_create, ["a@example.tld", "--password", "battery staple"], obj=script_info
     )
     assert result.exit_code == 0
 
@@ -271,15 +271,15 @@ def test_cli_activate_deactivate(script_info):
     result = runner.invoke(users_deactivate, ["in@valid.org"], obj=script_info)
     assert result.exit_code != 0
 
-    result = runner.invoke(users_activate, ["a@example.org"], obj=script_info)
+    result = runner.invoke(users_activate, ["a@example.tld"], obj=script_info)
     assert result.exit_code == 0
-    result = runner.invoke(users_activate, ["a@example.org"], obj=script_info)
+    result = runner.invoke(users_activate, ["a@example.tld"], obj=script_info)
     assert result.exit_code == 0
 
     # Deactivate
-    result = runner.invoke(users_deactivate, ["a@example.org"], obj=script_info)
+    result = runner.invoke(users_deactivate, ["a@example.tld"], obj=script_info)
     assert result.exit_code == 0
-    result = runner.invoke(users_deactivate, ["a@example.org"], obj=script_info)
+    result = runner.invoke(users_deactivate, ["a@example.tld"], obj=script_info)
     assert result.exit_code == 0
 
 
@@ -288,7 +288,7 @@ def test_cli_reset_user(script_info):
     result = runner.invoke(
         users_create,
         [
-            "email1@example.org",
+            "email1@example.tld",
             "us_phone_number:5551212",
             "--password",
             "battery staple",
@@ -299,7 +299,7 @@ def test_cli_reset_user(script_info):
     result = runner.invoke(users_reset_access, ["5551212"], obj=script_info)
     assert result.exit_code == 0
     result = runner.invoke(users_reset_access, ["5551212"], obj=script_info)
-    assert result.exit_code == 0
+    assert result.exit_code == 2
 
     result = runner.invoke(users_reset_access, ["4441212"], obj=script_info)
     assert "User not found" in result.output
@@ -310,12 +310,12 @@ def test_cli_change_password(script_info):
 
     runner.invoke(
         users_create,
-        ["email1@example.org", "--password", "battery staple"],
+        ["email1@example.tld", "--password", "battery staple"],
         obj=script_info,
     )
     result = runner.invoke(
         users_change_password,
-        ["email1@example.org", "--password", "battery_staple"],
+        ["email1@example.tld", "--password", "battery_staple"],
         obj=script_info,
     )
     assert result.exit_code == 0
@@ -323,7 +323,7 @@ def test_cli_change_password(script_info):
     # check too short a password
     result = runner.invoke(
         users_change_password,
-        ["email1@example.org", "--password", "hi"],
+        ["email1@example.tld", "--password", "hi"],
         obj=script_info,
     )
     assert result.exit_code == 2
@@ -332,14 +332,14 @@ def test_cli_change_password(script_info):
     # check that password is properly normalized
     result = runner.invoke(
         users_change_password,
-        ["email1@EXAMPLE.org", "--password", "battery staple\N{ROMAN NUMERAL ONE}"],
+        ["email1@example.tld", "--password", "battery staple\N{ROMAN NUMERAL ONE}"],
         obj=script_info,
     )
     assert result.exit_code == 0
 
     app = script_info.load_app()
     with app.app_context():
-        user = app.security.datastore.find_user(email="email1@example.org")
+        user = app.security.datastore.find_user(email="email1@example.tld")
         assert verify_password(
             "battery staple\N{LATIN CAPITAL LETTER I}", user.password
         )
@@ -350,7 +350,7 @@ def test_cli_change_password(script_info):
     # check unknown user
     result = runner.invoke(
         users_change_password,
-        ["wrong_email@example.org", "--password", "battery_staple"],
+        ["wrong_email@example.tld", "--password", "battery_staple"],
         obj=script_info,
     )
     assert result.exit_code == 2

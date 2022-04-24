@@ -53,7 +53,7 @@ class MailUtil:
         user: "User",
         **kwargs: t.Any,
     ) -> None:
-        """Send an email via the Flask-Mail extension.
+        """Send an email via the Flask-Mailman or Flask-Mail extension.
 
         :param template: the Template name. The message has already been rendered
             however this might be useful to differentiate why the email is being sent.

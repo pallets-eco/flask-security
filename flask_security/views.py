@@ -277,6 +277,7 @@ def register() -> "ResponseValue":
 
     form = form_class(form_data, meta=suppress_form_csrf())
     if form.validate_on_submit():
+        after_this_request(view_commit)
         did_login = False
         user = register_user(form)
         form.user = user
@@ -292,7 +293,6 @@ def register() -> "ResponseValue":
             if response:
                 return response
             # two factor not required - login user.
-            after_this_request(view_commit)
             login_user(user, authn_via=["register"])
             did_login = True
 
@@ -1069,7 +1069,7 @@ def create_blueprint(app, state, import_name, json_encoder=None):
         )
         bp.route(
             state.us_signin_send_code_url,
-            methods=["GET", "POST"],
+            methods=["POST"],
             endpoint="us_signin_send_code",
         )(us_signin_send_code)
         bp.route(state.us_setup_url, methods=["GET", "POST"], endpoint="us_setup")(
@@ -1088,7 +1088,7 @@ def create_blueprint(app, state, import_name, json_encoder=None):
             )(us_verify)
             bp.route(
                 state.us_verify_send_code_url,
-                methods=["GET", "POST"],
+                methods=["POST"],
                 endpoint="us_verify_send_code",
             )(us_verify_send_code)
 

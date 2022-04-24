@@ -9,8 +9,8 @@
 
     This implements a unified sign in endpoint - allowing
     authentication via identity and passcode - where identity is configured
-    via SECURITY_USER_IDENTITY_ATTRIBUTES, and allowable passcodes are either a
-    password or one of US_ENABLED_METHODS.
+    via SECURITY_USER_IDENTITY_ATTRIBUTES, and allowable passcodes are
+    one of US_ENABLED_METHODS.
 
     Finish up:
     - we should be able to add a phone number as part of setup even w/o any METHODS -
@@ -22,6 +22,8 @@
     - Right now ChangePassword won't work - it requires an existing password - so
       if the user doesn't have one - can't change it. However ForgotPassword will in
       fact allow the user to add a password. Is that sufficient?
+    - This also means that there is no way to REMOVE your password once it is setup,
+      although user can register without one.
     - Any reason to support 'next' in form? xx?next=yyy works fine.
     - separate code validation times for SMS, email, authenticator?
     - token versus code versus passcode? Confusing terminology.
@@ -88,14 +90,15 @@ def _compute_setup_methods():
 
 
 def _compute_active_methods(user):
-    # Compute methods already setup. The only oddity is that 'email'
-    # can be 'auto-setup' - so include that.
+    # Compute methods already setup.
     active_methods = set(cv("US_ENABLED_METHODS")) & set(
         _datastore.us_get_totp_secrets(user).keys()
     )
-    if "email" in cv("US_ENABLED_METHODS"):
-        active_methods |= {"email"}
     return list(active_methods)
+
+
+def _compute_active_code_methods(user):
+    return list(set(_compute_active_methods(user)) & set(_compute_code_methods()))
 
 
 def _us_common_validate(form):
@@ -191,10 +194,7 @@ class _UnifiedPassCodeForm(Form):
                     get_message("US_METHOD_NOT_AVAILABLE")[0]
                 )
                 return False
-            # Don't require 'email' to be setup since in the case of no password
-            # we have to rely on the 'confirmation' email as verification.
-            # In send_code_helper, we will setup the totp_secret for email on the fly.
-            if cm != "email" and cm not in totp_secrets:
+            if cm not in totp_secrets:
                 self.chosen_method.errors.append(
                     get_message("US_METHOD_NOT_AVAILABLE")[0]
                 )
@@ -231,13 +231,11 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
         if not super().validate2():
             return False
 
-        if self.submit.data:
-            # This is login
-            # Only check this once authenticated to not give away info
-            self.requires_confirmation = requires_confirmation(self.user)
-            if self.requires_confirmation:
-                self.identity.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
-                return False
+        # Can't authenticate nor get a code if still required confirmation.
+        self.requires_confirmation = requires_confirmation(self.user)
+        if self.requires_confirmation:
+            self.identity.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
+            return False
         return True
 
 
@@ -259,7 +257,7 @@ class UnifiedSigninSetupForm(Form):
     """Setup form"""
 
     chosen_method = RadioField(
-        get_form_field_xlate(_("Available Methods")),
+        get_form_field_xlate(_("Setup additional sign in option")),
         choices=[
             ("email", get_form_field_label("email_method")),
             (
@@ -268,6 +266,19 @@ class UnifiedSigninSetupForm(Form):
             ),
             ("sms", get_form_field_label("sms_method")),
         ],
+        validate_choice=False,
+    )
+    delete_method = RadioField(
+        get_form_field_xlate(_("Delete active sign in option")),
+        choices=[
+            ("email", get_form_field_xlate("Delete email option")),
+            (
+                "authenticator",
+                get_form_field_xlate("Delete authenticator option"),
+            ),
+            ("sms", get_form_field_xlate("Delete SMS option")),
+        ],
+        validate_choice=False,
     )
     phone = StringField(get_form_field_label("phone"))
     submit = SubmitField(get_form_field_label("submit"))
@@ -278,14 +289,24 @@ class UnifiedSigninSetupForm(Form):
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
-        if self.chosen_method.data not in cv("US_ENABLED_METHODS"):
-            self.chosen_method.errors.append(get_message("US_METHOD_NOT_AVAILABLE")[0])
-            return False
 
-        if self.chosen_method.data == "sms":
-            msg = _security._phone_util.validate_phone_number(self.phone.data)
-            if msg:
-                self.phone.errors.append(msg)
+        if self.chosen_method.data:
+            if self.chosen_method.data not in cv("US_ENABLED_METHODS"):
+                self.chosen_method.errors.append(
+                    get_message("US_METHOD_NOT_AVAILABLE")[0]
+                )
+                return False
+
+            if self.chosen_method.data == "sms":
+                msg = _security._phone_util.validate_phone_number(self.phone.data)
+                if msg:
+                    self.phone.errors.append(msg)
+                    return False
+        if self.delete_method.data:
+            if self.delete_method.data not in _compute_active_methods(current_user):
+                self.delete_method.errors.append(
+                    get_message("US_METHOD_NOT_AVAILABLE")[0]
+                )
                 return False
 
         return True
@@ -325,13 +346,6 @@ def _send_code_helper(form):
     user = form.user
     method = form.chosen_method.data
     totp_secrets = _datastore.us_get_totp_secrets(user)
-    # We 'auto-setup' email since in the case of no password the normal us-setup
-    # mechanisms of course don't work. We rely on the fact that the user went
-    # through the 'confirmation' process to validate the email.
-    if method == "email" and method not in totp_secrets:
-        after_this_request(view_commit)
-        totp_secrets[method] = _security._totp_factory.generate_totp_secret()
-        _datastore.us_put_totp_secrets(user, totp_secrets)
 
     msg = user.us_send_security_token(
         method,
@@ -351,17 +365,14 @@ def _send_code_helper(form):
 @unauth_csrf(fall_through=True)
 def us_signin_send_code() -> "ResponseValue":
     """
-    Send code view.
+    Send code view. POST only.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a method request to send a code.
     """
     form_class = _security.us_signin_form
 
     if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
+        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
@@ -387,7 +398,7 @@ def us_signin_send_code() -> "ResponseValue":
             **_security._run_ctx_processor("us_signin")
         )
 
-    # Here on GET or failed validation
+    # Here on failed validation
     if _security._want_json(request):
         payload = {
             "available_methods": cv("US_ENABLED_METHODS"),
@@ -395,6 +406,10 @@ def us_signin_send_code() -> "ResponseValue":
             "identity_attributes": get_identity_attributes(),
         }
         return base_render_json(form, include_user=False, additional=payload)
+
+    if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
+        do_flash(*get_message("CONFIRMATION_REQUIRED"))
+        return redirect(get_url(cv("REQUIRES_CONFIRMATION_ERROR_VIEW")))
 
     return _security.render_template(
         cv("US_SIGNIN_TEMPLATE"),
@@ -409,20 +424,17 @@ def us_signin_send_code() -> "ResponseValue":
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def us_verify_send_code() -> "ResponseValue":
     """
-    Send code during verify.
+    Send code during verify. POST only.
     """
     form_class = _security.us_verify_form
 
     if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
+        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
     else:
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
 
-    code_methods = _compute_code_methods()
+    code_methods = _compute_active_code_methods(current_user)
 
     if form.validate_on_submit():
         code_sent, msg = _send_code_helper(form)
@@ -447,13 +459,9 @@ def us_verify_send_code() -> "ResponseValue":
             **_security._run_ctx_processor("us_verify")
         )
 
-    # Here on GET or failed validation
+    # Here on failed validation
     if _security._want_json(request):
-        payload = {
-            "available_methods": cv("US_ENABLED_METHODS"),
-            "code_methods": code_methods,
-        }
-        return base_render_json(form, additional=payload)
+        return base_render_json(form)
 
     return _security.render_template(
         cv("US_VERIFY_TEMPLATE"),
@@ -511,7 +519,6 @@ def us_signin() -> "ResponseValue":
     form.submit.data = True
 
     if form.validate_on_submit():
-
         # Check if multi-factor is required. Some (this is configurable) don't
         # need 2FA since they ARE multi-factor (such as SMS and authenticator).
         remember_me = form.remember.data if "remember" in form else None
@@ -580,7 +587,7 @@ def us_verify() -> "ResponseValue":
         form = form_class(meta=suppress_form_csrf())
     form.submit.data = True
 
-    code_methods = _compute_code_methods()
+    code_methods = _compute_active_code_methods(current_user)
 
     if form.validate_on_submit():
         # verified - so set freshness time.
@@ -725,69 +732,86 @@ def us_setup() -> "ResponseValue":
     active_methods = _compute_active_methods(current_user)
 
     if form.validate_on_submit():
-        method = form.chosen_method.data
-        # Always generate a totp_secret. We don't set it in the DB until
-        # user has successfully validated.
-        totp = _security._totp_factory.generate_totp_secret()
-
-        # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
-        # to send it to the user.
-        # Only check phone number if SMS (see form validate)
-        phone_number = (
-            _security._phone_util.get_canonical_form(form.phone.data)
-            if method == "sms"
-            else None
-        )
-        state = {
-            "totp_secret": totp,
-            "chosen_method": method,
-            "phone_number": phone_number,
-        }
-        msg = current_user.us_send_security_token(
-            method=method,
-            totp_secret=totp,
-            phone_number=phone_number,
-        )
-        if msg:
-            # sending didn't work.
-            form.chosen_method.errors.append(msg)
-            if _security._want_json(request):
-                # Not authenticated yet - so don't send any user info.
-                return base_render_json(
-                    form, include_user=False, error_status_code=500 if msg else 400
-                )
-            return _security.render_template(
-                cv("US_SETUP_TEMPLATE"),
-                available_methods=cv("US_ENABLED_METHODS"),
-                active_methods=active_methods,
-                setup_methods=setup_methods,
-                us_setup_form=form,
-                **_security._run_ctx_processor("us_setup")
-            )
-
-        state_token = _security.us_setup_serializer.dumps(state)
-        json_response = dict(
-            chosen_method=form.chosen_method.data,
-            phone=phone_number,
-            state=state_token,
-        )
         qrcode_values = dict()
-        if form.chosen_method.data == "authenticator":
-            authr_setup_values = _security._totp_factory.fetch_setup_values(
-                totp, current_user
+        json_response = dict()
+        state_token = None
+        delete_method = form.delete_method.data
+        add_method = form.chosen_method.data
+
+        if delete_method:
+            after_this_request(view_commit)
+            _datastore.us_reset(current_user, delete_method)
+            active_methods = _compute_active_methods(current_user)
+            us_profile_changed.send(
+                app._get_current_object(),  # type: ignore
+                user=current_user,
+                method=delete_method,
+                delete=True,
             )
 
-            # Add all the values used in qrcode to json response
-            json_response["authr_key"] = authr_setup_values["key"]
-            json_response["authr_username"] = authr_setup_values["username"]
-            json_response["authr_issuer"] = authr_setup_values["issuer"]
+        if add_method:
+            # Always generate a totp_secret. We don't set it in the DB until
+            # user has successfully validated.
+            totp = _security._totp_factory.generate_totp_secret()
 
-            qrcode_values = dict(
-                authr_qrcode=authr_setup_values["image"],
-                authr_key=authr_setup_values["key"],
-                authr_username=authr_setup_values["username"],
-                authr_issuer=authr_setup_values["issuer"],
+            # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
+            # to send it to the user.
+            # Only check phone number if SMS (see form validate)
+            phone_number = (
+                _security._phone_util.get_canonical_form(form.phone.data)
+                if add_method == "sms"
+                else None
             )
+            state = {
+                "totp_secret": totp,
+                "chosen_method": add_method,
+                "phone_number": phone_number,
+            }
+            msg = current_user.us_send_security_token(
+                method=add_method,
+                totp_secret=totp,
+                phone_number=phone_number,
+            )
+            if msg:
+                # sending didn't work.
+                form.chosen_method.errors.append(msg)
+                if _security._want_json(request):
+                    # Not authenticated yet - so don't send any user info.
+                    return base_render_json(
+                        form, include_user=False, error_status_code=500 if msg else 400
+                    )
+                return _security.render_template(
+                    cv("US_SETUP_TEMPLATE"),
+                    available_methods=cv("US_ENABLED_METHODS"),
+                    active_methods=active_methods,
+                    setup_methods=setup_methods,
+                    us_setup_form=form,
+                    **_security._run_ctx_processor("us_setup")
+                )
+
+            state_token = _security.us_setup_serializer.dumps(state)
+            json_response = dict(
+                chosen_method=form.chosen_method.data,
+                phone=phone_number,
+                state=state_token,
+            )
+
+            if form.chosen_method.data == "authenticator":
+                authr_setup_values = _security._totp_factory.fetch_setup_values(
+                    totp, current_user
+                )
+
+                # Add all the values used in qrcode to json response
+                json_response["authr_key"] = authr_setup_values["key"]
+                json_response["authr_username"] = authr_setup_values["username"]
+                json_response["authr_issuer"] = authr_setup_values["issuer"]
+
+                qrcode_values = dict(
+                    authr_qrcode=authr_setup_values["image"],
+                    authr_key=authr_setup_values["key"],
+                    authr_username=authr_setup_values["username"],
+                    authr_issuer=authr_setup_values["issuer"],
+                )
 
         if _security._want_json(request):
             return base_render_json(form, include_user=False, additional=json_response)
@@ -868,7 +892,10 @@ def us_setup_validate(token: str) -> "ResponseValue":
         _datastore.us_set(current_user, method, state["totp_secret"], phone)
 
         us_profile_changed.send(
-            app._get_current_object(), user=current_user, method=method  # type: ignore
+            app._get_current_object(),  # type: ignore
+            user=current_user,
+            method=method,
+            delete=False,
         )
         if _security._want_json(request):
             return base_render_json(
@@ -880,9 +907,7 @@ def us_setup_validate(token: str) -> "ResponseValue":
             )
         else:
             do_flash(*get_message("US_SETUP_SUCCESSFUL"))
-            return redirect(
-                get_url(cv("US_POST_SETUP_VIEW")) or get_url(cv("POST_LOGIN_VIEW"))
-            )
+            return redirect(get_url(cv("US_POST_SETUP_VIEW")))
 
     # Code not correct/outdated.
     if _security._want_json(request):

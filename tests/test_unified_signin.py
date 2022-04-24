@@ -132,7 +132,17 @@ def set_phone(app, email="matt@lp.com", phone="650-273-3780"):
         app.security.datastore.commit()
 
 
+def set_email(app, email="matt@lp.com"):
+    # A quick way to 'setup' email
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email=email)
+        totp_secret = app.security._totp_factory.generate_totp_secret()
+        app.security.datastore.us_set(user, "email", totp_secret)
+        app.security.datastore.commit()
+
+
 def test_simple_signin(app, clients, get_message):
+    set_email(app)
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -221,6 +231,7 @@ def test_simple_signin(app, clients, get_message):
 
 
 def test_simple_signin_json(app, client_nc, get_message):
+    set_email(app)
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -343,31 +354,114 @@ def test_signin_pwd_json(app, client, get_message):
     assert response.status_code == 200
 
 
-def test_us_signin_template(app, client, get_message):
+@pytest.mark.registerable()
+def test_us_passwordless(app, client, get_message):
+    # Check passwordless.
     # Check contents of email template - this uses a test template
     # in order to check all context vars since the default template
     # doesn't have all of them.
+    response = client.post(
+        "/register", data=dict(email="nopasswd-dude@lp.com"), follow_redirects=True
+    )
+    logout(client)
     with capture_send_code_requests() as requests:
         response = client.post(
             "/us-signin/send-code",
-            data=dict(identity="matt@lp.com", chosen_method="email"),
+            data=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
             follow_redirects=True,
         )
         outbox = app.mail.outbox
-        assert len(outbox) == 1
-        matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+        # 2 emails - first from registration.
+        assert len(outbox) == 2
+        matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
         # should be 5 - link, email, token, config item, username
-        assert matcher[1].split(":")[1] == "matt@lp.com"
+        assert matcher[1].split(":")[1] == "nopasswd-dude@lp.com"
         token = matcher[2].split(":")[1]
         assert token == requests[0]["token"]  # deprecated
         assert token == requests[0]["login_token"]
         assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
-        assert matcher[4].split(":")[1] == "matt@lp.com"
+        assert matcher[4].split(":")[1] == "nopasswd-dude@lp.com"
 
         # check link
         link = matcher[0].split(":", 1)[1]
         response = client.get(link, follow_redirects=True)
         assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
+
+
+@pytest.mark.registerable()
+@pytest.mark.confirmable()
+def test_us_passwordless_confirm(app, client, get_message):
+    # Check passwordless with confirmation required.
+    response = client.post(
+        "/register", data=dict(email="nopasswd-dude@lp.com"), follow_redirects=True
+    )
+    # Try logging in - should get confirmation required.
+    response = client.post(
+        "/us-signin/send-code",
+        data=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
+        follow_redirects=True,
+    )
+    assert get_message("CONFIRMATION_REQUIRED") in response.data
+    # grab welcome email which has confirmation link (test version of welcome.txt)
+    outbox = app.mail.outbox
+    matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+    link = matcher[0].split(":", 1)[1]
+    response = client.get(link, follow_redirects=True)
+    assert get_message("EMAIL_CONFIRMED") in response.data
+    logout(client)
+
+    # should be able to authenticate now.
+    response = client.post(
+        "/us-signin/send-code",
+        data=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
+        follow_redirects=True,
+    )
+    outbox = app.mail.outbox
+    # 2 emails - first from registration.
+    assert len(outbox) == 2
+    matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
+    # authenticate with link
+    link = matcher[0].split(":", 1)[1]
+    response = client.get(link, follow_redirects=True)
+    assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
+
+
+@pytest.mark.registerable()
+@pytest.mark.confirmable()
+def test_us_passwordless_confirm_json(app, client, get_message):
+    # Check passwordless with confirmation required.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.post("/register", json=dict(email="nopasswd-dude@lp.com"))
+    # Try logging in - should get confirmation required.
+    response = client.post(
+        "/us-signin/send-code",
+        json=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
+    )
+    assert response.json["response"]["errors"]["identity"][0].encode(
+        "utf-8"
+    ) == get_message("CONFIRMATION_REQUIRED")
+
+    # grab welcome email which has confirmation link (test version of welcome.txt)
+    outbox = app.mail.outbox
+    matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+    link = matcher[0].split(":", 1)[1]
+    response = client.get(link, headers=headers, follow_redirects=True)
+    assert get_message("EMAIL_CONFIRMED") in response.data
+    logout(client)
+
+    # should be able to authenticate now.
+    response = client.post(
+        "/us-signin/send-code",
+        json=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
+    )
+    outbox = app.mail.outbox
+    # 2 emails - first from registration.
+    assert len(outbox) == 2
+    matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
+    # authenticate with link
+    link = matcher[0].split(":", 1)[1]
+    response = client.get(link, headers=headers, follow_redirects=True)
+    assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
 
 
 def test_admin_setup_user_reset(app, client_nc, get_message):
@@ -488,6 +582,7 @@ def test_post_already_authenticated(client, get_message):
 
 @pytest.mark.settings(us_email_subject="Code For You")
 def test_verify_link(app, client, get_message):
+    set_email(app)
     auths = []
 
     @user_authenticated.connect_via(app)
@@ -548,6 +643,7 @@ def test_verify_link(app, client, get_message):
 def test_verify_link_spa(app, client, get_message):
     # N.B. we use client here since this only works/ is supported if using
     # sessions.
+    set_email(app)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.post(
         "/us-signin/send-code",
@@ -607,11 +703,13 @@ def test_verify_link_spa(app, client, get_message):
 
 
 def test_setup(app, client, get_message):
+    set_email(app)
     us_authenticate(client)
     response = client.get("us-setup")
+    # Email should be in delete options since we just set that up.
     assert all(
         i in response.data
-        for i in [b"chosen_method-0", b"chosen_method-1", b"chosen_method-2"]
+        for i in [b"delete_method-0", b"chosen_method-1", b"chosen_method-2"]
     )
 
     # test missing phone
@@ -623,7 +721,7 @@ def test_setup(app, client, get_message):
     response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
     assert response.status_code == 200
     assert get_message("PHONE_INVALID") in response.data
-    assert b"Code has been sent" not in response.data
+    assert b"Enter code here to complete setup" not in response.data
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client.post(
@@ -631,7 +729,7 @@ def test_setup(app, client, get_message):
     )
     assert response.status_code == 200
     assert b"Submit Code" in response.data
-    assert b"Code has been sent" in response.data
+    assert b"Enter code here to complete setup" in response.data
     matcher = re.match(
         r'.*<form action="([^\s]*)".*',
         response.data.decode("utf-8"),
@@ -652,10 +750,11 @@ def test_setup(app, client, get_message):
 def test_setup_email(app, client, get_message):
     # setup with email - make sure magic link isn't sent and code is.
     # N.B. this is using the test us_instructions template
+    set_email(app)
     us_authenticate(client)
     response = client.post("us-setup", data=dict(chosen_method="email"))
     assert response.status_code == 200
-    assert b"Code has been sent" in response.data
+    assert b"Enter code here to complete setup" in response.data
     outbox = app.mail.outbox
 
     matcher = re.match(
@@ -685,10 +784,12 @@ def test_setup_email(app, client, get_message):
 def test_setup_json(app, client_nc, get_message):
     # This shows that by setting freshness to negative doesn't require session.
     @us_profile_changed.connect_via(app)
-    def pc(sender, user, method):
+    def pc(sender, user, method, delete, **kwargs):
+        assert not delete
         assert method == "sms"
         assert user.us_phone_number == "+16505551212"
 
+    set_email(app)
     token = us_authenticate(client_nc)
     headers = {
         "Authentication-Token": token,
@@ -758,6 +859,7 @@ def test_setup_json(app, client_nc, get_message):
 )
 def test_setup_json_no_session(app, client_nc, get_message):
     # Test that with normal config freshness is required so must have session.
+    set_email(app)
     token = us_authenticate(client_nc)
     headers = {
         "Authentication-Token": token,
@@ -784,6 +886,7 @@ def test_setup_basic(app, client, get_message):
 
 
 def test_setup_bad_token(app, client, get_message):
+    set_email(app)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     us_authenticate(client)
 
@@ -806,6 +909,7 @@ def test_setup_bad_token(app, client, get_message):
 @pytest.mark.settings(us_setup_within="2 seconds")
 def test_setup_timeout(app, client, get_message):
     # Test setup timeout
+    set_email(app)
     us_authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -834,6 +938,7 @@ def test_verify(app, client, get_message):
     # Test setup when re-authenticate required
     # With  freshness set to 0 - the first call should require reauth (by
     # redirecting); but the second should work due to grace period.
+    set_email(app)
     us_authenticate(client)
     response = client.get("us-setup", follow_redirects=False)
     verify_url = response.location
@@ -878,6 +983,7 @@ def test_verify_json(app, client, get_message):
     # Test setup when re-authenticate required
     # N.B. with freshness=0 we never set a grace period and should never be able to
     # get to /us-setup
+    set_email(app)
     us_authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -894,9 +1000,9 @@ def test_verify_json(app, client, get_message):
         "authenticator",
         "sms",
     ]
+    # code_methods should just contain active/setup methods.
     assert set(response.json["response"]["code_methods"]) == {
         "email",
-        "sms",
     }
 
     response = client.post(
@@ -940,6 +1046,7 @@ def test_verify_json(app, client, get_message):
 
 @pytest.mark.settings(freshness=timedelta(minutes=-1))
 def test_setup_nofresh(app, client, get_message):
+    set_email(app)
     us_authenticate(client)
     response = client.get("us-setup", follow_redirects=False)
     assert response.status_code == 200
@@ -953,8 +1060,6 @@ def test_invalid_method(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     response = client.get("/us-signin", headers=headers)
-    assert response.json["response"]["available_methods"] == ["sms"]
-    response = client.get("/us-signin/send-code", headers=headers)
     assert response.json["response"]["available_methods"] == ["sms"]
 
     # verify json error
@@ -981,6 +1086,7 @@ def test_invalid_method(app, client, get_message):
 
 @pytest.mark.settings(us_enabled_methods=["sms", "email"])
 def test_invalid_method_setup(app, client, get_message):
+    set_email(app)
     us_authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -1004,12 +1110,13 @@ def test_invalid_method_setup(app, client, get_message):
         data=dict(email="matt@lp.com", chosen_method="authenticators"),
         follow_redirects=True,
     )
-    assert b"Not a valid choice" in response.data
+    assert get_message("US_METHOD_NOT_AVAILABLE") in response.data
 
 
 def test_setup_new_totp(app, client, get_message):
     # us-setup should generate a new totp secret for each setup
     # Verify existing codes no longer work
+    set_email(app)
     us_authenticate(client)
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -1054,6 +1161,7 @@ def test_setup_new_totp(app, client, get_message):
 def test_qrcode(app, client, get_message):
     # Test forms based authenticator setup - can't really parse QRcode - but can use
     # the key sent as part of the response.
+    set_email(app, email="gal@lp.com")
     us_authenticate(client, identity="gal@lp.com")
     response = client.post("us-setup", data=dict(chosen_method="authenticator"))
     assert response.status_code == 200
@@ -1083,6 +1191,7 @@ def test_qrcode(app, client, get_message):
 
 
 def test_next(app, client, get_message):
+    set_email(app)
     with capture_send_code_requests() as requests:
         response = client.post(
             "/us-signin/send-code",
@@ -1118,20 +1227,21 @@ def test_requires_confirmation_error_redirect(app, client):
         email="jyl@lp.com", password="password", password_confirm="password", next=""
     )
     response = client.post("/register", data=data, follow_redirects=True)
+    set_email(app, email="jyl@lp.com")
 
-    with capture_send_code_requests() as requests:
-        response = client.post(
-            "/us-signin/send-code",
-            data=dict(identity="jyl@lp.com", chosen_method="email"),
-            follow_redirects=True,
-        )
+    response = client.post(
+        "/us-signin/send-code",
+        data=dict(identity="jyl@lp.com", chosen_method="email"),
+        follow_redirects=False,
+    )
+    assert "/confirm" in response.location
 
     response = client.post(
         "/us-signin",
-        data=dict(identity="jyl@lp.com", passcode=requests[0]["token"]),
-        follow_redirects=True,
+        data=dict(identity="jyl@lp.com", passcode="password"),
+        follow_redirects=False,
     )
-    assert b"send_confirmation_form" in response.data
+    assert "/confirm" in response.location
 
 
 @pytest.mark.registerable()
@@ -1143,21 +1253,15 @@ def test_confirmable(app, client, get_message):
     )
     response = client.post("/register", data=data, follow_redirects=True)
     assert response.status_code == 200
-
-    # try to get a code - this should succeed
-    with capture_send_code_requests() as requests:
-        response = client.post(
-            "/us-signin/send-code",
-            data=dict(identity="dude@lp.com", chosen_method="email"),
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
+    set_email(app, email="dude@lp.com")
 
     response = client.post(
-        "/us-signin",
-        data=dict(identity="dude@lp.com", passcode=requests[0]["token"]),
+        "/us-signin/send-code",
+        data=dict(identity="dude@lp.com", chosen_method="email"),
         follow_redirects=True,
     )
+    assert response.status_code == 200
+
     assert get_message("CONFIRMATION_REQUIRED") in response.data
 
     # Verify not authenticated
@@ -1274,6 +1378,7 @@ def test_tf(app, client, get_message):
 @pytest.mark.settings(two_factor_required=True)
 def test_tf_link(app, client, get_message):
     # Verify two-factor required when using magic link
+    set_email(app)
     response = client.post(
         "/us-signin/send-code",
         data=dict(identity="matt@lp.com", chosen_method="email"),
@@ -1303,6 +1408,7 @@ def test_tf_link(app, client, get_message):
 def test_tf_link_spa(app, client, get_message):
     # Verify two-factor required when using magic link and SPA
     # This currently isn't supported and should redirect to an error.
+    set_email(app)
     response = client.post(
         "/us-signin/send-code",
         data=dict(identity="matt@lp.com", chosen_method="email"),
@@ -1401,6 +1507,7 @@ def test_bad_sender(app, client, get_message):
     ) == get_message("FAILED_TO_SEND_CODE")
 
     # Now test setup
+    set_email(app)
     us_authenticate(client)
     data = dict(chosen_method="sms", phone="650-555-1212")
     response = client.post("us-setup", data=data)
@@ -1667,3 +1774,90 @@ def test_us_verify_wan(app, client, get_message):
     # the us-verify form should NOT have the webauthn verify form attached
     response = client.get("us-verify")
     assert b'action="/wan-verify"' not in response.data
+
+
+def test_setup_delete(app, client, get_message):
+    set_email(app)
+    us_authenticate(client)
+    response = client.get("us-setup")
+    # Email should be in delete options since we just set that up.
+    assert all(
+        i in response.data
+        for i in [b"delete_method-0", b"chosen_method-1", b"chosen_method-2"]
+    )
+    response = client.post("us-setup", data=dict(delete_method="email"))
+
+    response = client.get("us-setup")
+    # All should be in possible setups.
+    assert all(
+        i in response.data
+        for i in [b"chosen_method-0", b"chosen_method-1", b"chosen_method-2"]
+    )
+
+    response = client.post("us-setup", json=dict(delete_method="email"))
+    assert response.json["response"]["errors"]["delete_method"][0].encode(
+        "utf-8"
+    ) == get_message("US_METHOD_NOT_AVAILABLE")
+
+
+def test_setup_delete_json(app, client, get_message):
+    recorded = []
+
+    @us_profile_changed.connect_via(app)
+    def pc(sender, user, method, delete, **kwargs):
+        if method == "sms":
+            if delete:
+                assert not user.us_phone_number
+                recorded.append("delete")
+            else:
+                assert user.us_phone_number == "+16505551212"
+                recorded.append("setup")
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    set_email(app)
+    us_authenticate(client)
+    response = client.get("us-setup", headers=headers)
+    # Email should be in delete options since we just set that up.
+    assert "email" in response.json["response"]["active_methods"]
+
+    response = client.post("us-setup", json=dict(delete_method="email"))
+    assert response.status_code == 200
+
+    response = client.get("us-setup", headers=headers)
+    assert not response.json["response"]["active_methods"]
+
+    response = client.post("us-setup", json=dict(delete_method="email"))
+    assert response.json["response"]["errors"]["delete_method"][0].encode(
+        "utf-8"
+    ) == get_message("US_METHOD_NOT_AVAILABLE")
+
+    # setup and delete SMS
+    sms_sender = SmsSenderFactory.createSender("test")
+    response = client.post(
+        "us-setup",
+        json=dict(chosen_method="sms", phone="650-555-1212"),
+        headers=headers,
+    )
+    assert response.status_code == 200
+    state = response.json["response"]["state"]
+    assert state
+    code = sms_sender.messages[0].split()[-1].strip(".")
+    response = client.post(
+        "/us-setup/" + state, json=dict(passcode=code), headers=headers
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["chosen_method"] == "sms"
+    assert response.json["response"]["phone"] == "+16505551212"
+
+    # verify SMS in active methods
+    response = client.get("/us-setup", headers=headers)
+    assert response.status_code == 200
+    assert set(response.json["response"]["active_methods"]) == {"sms"}
+
+    # delete SMS
+    response = client.post("/us-setup", json=(dict(delete_method="sms")))
+    assert response.status_code == 200
+    response = client.get("/us-setup", headers=headers)
+    assert not response.json["response"]["active_methods"]
+    assert recorded[0] == "setup"
+    assert recorded[1] == "delete"

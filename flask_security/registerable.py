@@ -28,8 +28,9 @@ def register_user(registration_form):
     """
 
     user_model_kwargs = registration_form.to_dict(only_user=True)
+    blank_password = not user_model_kwargs["password"]
 
-    if not user_model_kwargs["password"]:
+    if blank_password:
         # For no password - set an unguessable password.
         # Since we still allow 'plaintext' as a password scheme - can't use a simple
         # sentinel.
@@ -37,10 +38,10 @@ def register_user(registration_form):
 
     user_model_kwargs["password"] = hash_password(user_model_kwargs["password"])
     user = _datastore.create_user(**user_model_kwargs)
-    # This has always been here - but should probably be removed since in all other
-    # cases we use a 'after_this_request(commit)'. Seems like this would break quart
-    # compat as well?
-    _datastore.commit()
+
+    # if they didn't give a password - auto-setup email magic links.
+    if blank_password:
+        _datastore.us_setup_email(user)
 
     confirmation_link, token = None, None
     if _security.confirmable:

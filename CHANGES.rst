@@ -21,6 +21,38 @@ Fixes
 - (:pr:`591`) Make the required zxcvbn complexity score configurable (mephi42)
 - (:issue:`531`) Get rid of Flask-Mail. Flask-Mailman is now the default preferred email package.
   Flask-Mail is still supported so there should be no backwards compatability issues.
+- (:issue:`597`) A delete option has been added to us-setup (form and view).
+
+Backward Compatibility Concerns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For unified signin:
+
+- The redirect after a successful us-setup used to redirect to ``SECURITY_US_POST_SETUP_VIEW`` or
+  ``SECURITY_POST_LOGIN_VIEW`` (which would default to '/'). Now it just redirects based on
+  ``SECURITY_US_POST_SETUP_VIEW`` configuration which defaults back to the ``/us-setup`` view.
+- The ability to authenticate using a one-time email link was automatically setup by the system
+  for all users.
+  "email" now behaves like the other unified sign in methods and must be explicitly set up - with the
+  exception that if a user registers WITHOUT a password, the system will setup the one-time email link
+  option - since otherwise the user would never be able to authenticate.
+- ``/us-signin/send-code`` didn't used to check if the user account required confirmation it just sent a code
+  and the ``/us-signin`` endpoint did the confirmation check. Now ``send-code`` does the confirmation check and
+  won't send a code unless the user is confirmed.
+- In ``us-verify`` the 'code_methods' item now lists just active/setup methods that generate a code
+  not ALL possible methods that generate a code.
+- ``SECURITY_US_VERIFY_SEND_CODE_URL`` and ``SECURITY_US_SIGNIN_SEND_CODE_URL`` endpoints are now POST only.
+- A very old piece of code in registerable, would immediately commit to the DB when a new user was created.
+  It now does what all over views due, and have the caller responsible for committing the transaction - usually by
+  setting up a flask ``after_this_request`` action. This could affect an application that captured the registration signal
+  and stored the ``user`` object for later use - this user object would likely be invalid after the request is finished.
+
+For templates:
+
+- Pretty much every template was modified to replace <p> with <div class=xx> to make
+  styling possible and to make more complex forms more readable.
+- Many forms had places where things weren't properly localizable - that has (hopefully) been fixed.
+- The ``us_setup.html`` template was modified to add ability to delete an existing set up method.
 
 DB Migration
 ~~~~~~~~~~~~
@@ -31,6 +63,15 @@ upon first use for existing users.
 If you are using Alembic the schema migration is easy::
 
     op.add_column('user', sa.Column('fs_webauthn_user_handle', sa.String(length=64), nullable=True))
+
+Version 4.1.4
+-------------
+
+Released April 19, 2022
+
+Fixes
++++++
+- (:issue:`594`) Fix test failures with newer Flask versions.
 
 Version 4.1.3
 -------------

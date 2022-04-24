@@ -1204,10 +1204,9 @@ Unified Signin
 .. py:data:: SECURITY_US_POST_SETUP_VIEW
 
     Specifies the view to redirect to after a user successfully setups an authentication method (non-json).
-    This value can be set to a URL or an endpoint name. If this value is ``None``, the user is redirected to the
-    value of :py:data:`SECURITY_POST_LOGIN_VIEW`.
+    This value can be set to a URL or an endpoint name.
 
-    Default: ``None``
+    Default: ``"/us-setup"``
 
 .. py:data:: SECURITY_US_SIGNIN_TEMPLATE
 
@@ -1225,7 +1224,8 @@ Unified Signin
 
     Specifies the default enabled methods for unified sign in authentication.
     Be aware that ``password`` only affects this ``SECURITY_US_SIGNIN_URL`` endpoint.
-    Removing it from here won't stop users from using the ``SECURITY_LOGIN_URL`` endpoint.
+    Removing it from here won't stop users from using the ``SECURITY_LOGIN_URL`` endpoint
+    (unless you replace the login endpoint using ``SECURITY_US_SIGNIN_REPLACES_LOGIN``).
 
     If you select ``sms`` then make sure you add this to :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`::
 
@@ -1467,6 +1467,10 @@ WebAuthn
     Default:: ``["first", "secondary"]``
 
 
+Additional relevant configuration variables:
+
+    * :py:data:`SECURITY_FRESHNESS` - Used to protect /us-setup.
+    * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /us-setup.
 
 Feature Flags
 -------------
