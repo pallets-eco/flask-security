@@ -563,7 +563,7 @@ class UserDatastore:
 
         .. versionadded:: 3.4.1
 
-        .. versionchanged:: 4.2.0
+        .. versionchanged:: 5.0.0
             Added optional method argument to delete just a single method
 
         """
@@ -620,27 +620,27 @@ class UserDatastore:
         Note that we need to find webauthn records per user as well as
         find a user from a given webauthn (credential_id) record.
 
-        .. versionadded: 4.2.0
+        .. versionadded: 5.0.0
         """
         raise NotImplementedError
 
     def delete_webauthn(self, webauthn: "WebAuthn") -> None:
         """
-        .. versionadded: 4.2.0
+        .. versionadded: 5.0.0
         """
         self.delete(webauthn)
 
     def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
         """Returns a credential matching the id.
 
-        .. versionadded: 4.2.0
+        .. versionadded: 5.0.0
         """
         raise NotImplementedError
 
     def find_user_from_webauthn(self, webauthn: "WebAuthn") -> t.Union["User", None]:
         """Returns user associated with this webauthn credential
 
-        .. versionadded: 4.2.0
+        .. versionadded: 5.0.0
         """
         if not self.webauthn_model:
             raise NotImplementedError
@@ -653,7 +653,7 @@ class UserDatastore:
         There doesn't appear to be any reason to change the user's
         fs_webauthn_user_handle.
 
-        .. versionadded: 4.2.0
+        .. versionadded: 5.0.0
         """
         for cred in user.webauthn:
             self.delete(cred)

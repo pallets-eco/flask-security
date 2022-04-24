@@ -134,7 +134,7 @@ These configuration keys are used globally across all features.
 
     Default: ``3`` (Good or Strong)
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
 .. py:data:: SECURITY_PASSWORD_CHECK_BREACHED
 
     If not ``None`` new/changed passwords will be checked against the
@@ -1100,7 +1100,7 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``"/tf-select"``.
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
 
 
 .. py:data:: SECURITY_TWO_FACTOR_SELECT_TEMPLATE
@@ -1110,7 +1110,7 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``security/two_factor_select.html``.
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
 
 .. py:data:: SECURITY_TWO_FACTOR_ALWAYS_VALIDATE
 
@@ -1141,7 +1141,7 @@ Configuration related to the two-factor authentication feature.
 
     Default: ``{"code": "flask_security.twofactor.CodeTfPlugin", "webauthn": "flask_security.webauthn.WebAuthnTfPlugin",}``
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
 
 
 Unified Signin
@@ -1288,7 +1288,7 @@ Additional relevant configuration variables:
 Passwordless
 -------------
 
-This feature is DEPRECATED as of 4.2.0. Please use unified signin feature instead.
+This feature is DEPRECATED as of 5.0.0. Please use unified signin feature instead.
 
 .. py:data:: SECURITY_PASSWORDLESS
 
@@ -1342,7 +1342,7 @@ Trackable
 WebAuthn
 --------------
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
 
 .. py:data:: SECURITY_WEBAUTHN
 

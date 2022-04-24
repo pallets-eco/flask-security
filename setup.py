@@ -10,14 +10,15 @@ with open("flask_security/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 install_requires = [
-    "Flask>=1.1.1",
-    "Flask-Login>=0.4.1",
+    "Flask>=2.0.0",
+    "Flask-Login>=0.6.0",
     "Flask-Principal>=0.4.0",
-    "Flask-WTF>=0.14.3",
+    "Flask-WTF>=1.0.0",
     "email-validator>=1.1.1",
-    "itsdangerous>=1.1.0",
-    "passlib>=1.7.2",
+    "itsdangerous>=2.0.0",
+    "passlib>=1.7.4",
     "blinker>=1.4",
+    "wtforms>=3.0.0",  # for form-level errors
 ]
 
 packages = find_packages(exclude=["tests"])

@@ -3,7 +3,7 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
-Version 4.2.0
+Version 5.0.0
 -------------
 
 Released TBD
@@ -15,6 +15,7 @@ Features
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn
 - (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
   Deprecate replacing login_manager so we can possibly vendor that in in the future.
+- (:pr:`608`) Add Icelandic translations. (ofurkusi)
 
 Fixes
 +++++

@@ -38,7 +38,7 @@ class WebauthnUtil:
     To provide your own implementation, pass in the class as ``webauthn_util_cls``
     at init time.  Your class will be instantiated once as part of app initialization.
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
     """
 
     def __init__(self, app: "flask.Flask"):

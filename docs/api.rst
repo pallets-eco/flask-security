@@ -340,7 +340,7 @@ sends the following signals.
 
     .. versionadded:: 3.4.0
 
-    .. versionchanged:: 4.2.0
+    .. versionchanged:: 5.0.0
         Added delete argument.
 
 .. data:: wan_registered
@@ -348,13 +348,13 @@ sends the following signals.
     Sent when a WebAuthn credential was successfully created. In addition to the app
     (which is the sender), it is passed `user` and `name` arguments.
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
 
 .. data:: wan_deleted
 
     Sent when a WebAuthn credential was deleted. In addition to the app
     (which is the sender), it is passed `user` and `name` arguments.
 
-    .. versionadded:: 4.2.0
+    .. versionadded:: 5.0.0
 
 .. _Flask documentation on signals: https://flask.palletsprojects.com/en/2.0.x/signals/
