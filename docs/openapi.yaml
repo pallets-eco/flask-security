@@ -660,28 +660,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /us-signin/send-code:
-    get:
-      summary: Unified Sign In send authentication code
-      responses:
-        200:
-          description: Send Code form
-          content:
-            text/html:
-              schema:
-                example: render_template(SECURITY_US_SIGNIN_TEMPLATE)
-            application/json:
-              schema:
-                type: object
-                properties:
-                  methods:
-                    type: string
-                    description: Config setting SECURITY_US_ENABLED_METHODS
-                  code_methods:
-                    type: string
-                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
-                  identity_attributes:
-                    type: string
-                    description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
     post:
       summary: Send Code for unified sign in.
       requestBody:
@@ -736,11 +714,17 @@ paths:
                 type: object
                 properties:
                   available_methods:
-                    type: string
+                    type: array
                     description: Config setting SECURITY_US_ENABLED_METHODS
+                    items:
+                      type: string
+                      example: ["email", "sms"]
                   code_methods:
-                    type: string
-                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+                    type: array
+                    description: All SECURITY_US_ENABLED_METHODS that the user has setup that require a code to be generated and sent.
+                    items:
+                      type: string
+                      example: ["sms"]
                   has_webauthn_verify_credential:
                     type: boolean
                     description: <
@@ -788,25 +772,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /us-verify/send-code:
-    get:
-      summary: Unified sign in verify/re-authenticate send authentication code
-      responses:
-        200:
-          description: Send Code form
-          content:
-            text/html:
-              schema:
-                example: render_template(SECURITY_US_VERIFY_TEMPLATE)
-            application/json:
-              schema:
-                type: object
-                properties:
-                  methods:
-                    type: string
-                    description: Config setting SECURITY_US_ENABLED_METHODS
-                  code_methods:
-                    type: string
-                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
     post:
       summary: Send Code for unified sign in verify.
       requestBody:
@@ -857,17 +822,29 @@ paths:
                 type: object
                 properties:
                   available_methods:
-                    type: string
+                    type: array
                     description: Config setting SECURITY_US_ENABLED_METHODS
+                    items:
+                      type: string
+                      example: ["email", "sms"]
                   active_methods:
-                    type: string
+                    type: array
                     description: Methods that have already been setup.
+                    items:
+                      type: string
+                      example: ["sms"]
                   setup_methods:
-                    type: string
+                    type: array
                     description: All SECURITY_US_ENABLED_METHODS that require setup.
+                    items:
+                      type: string
+                      example: ["email", "sms", "authenticator"]
                   identity_attributes:
-                    type: string
+                    type: array
                     description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
+                    items:
+                      type: string
+                      example: ["email"]
                   phone:
                     type: string
                     description: existing configured phone number
@@ -950,8 +927,7 @@ paths:
           headers:
             Location:
               description: |
-                On form-success: SECURITY_POST_SETUP_VIEW or
-                                 SECURITY_POST_LOGIN_VIEW
+                On form-success: SECURITY_POST_SETUP_VIEW
               schema:
                 type: string
         400:
@@ -1907,11 +1883,13 @@ components:
           description: which method should be used to send the code, as configured with SECURITY_US_ENABLED_METHODS
     UsSetup:
       type: object
-      required: [chosen_method]
       properties:
         chosen_method:
           type: string
           description: which method should be used to send the code, as configured with SECURITY_US_ENABLED_METHODS
+        delete_method:
+          type: string
+          description: which previously set up method should be deleted.
         phone:
           type: string
           description: phone number (this will be normalized). Required if chosen_method == "sms".
@@ -1929,6 +1907,7 @@ components:
               description: Http status code
         response:
           type: object
+          description: Response when setting up a new method. When deleting, nothing is returned.
           properties:
             chosen_method:
               type: string

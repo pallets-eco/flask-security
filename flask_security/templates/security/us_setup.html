@@ -38,10 +38,10 @@
         {% endif %}
         </em></div>
 
-        <h3>{{ _fsdomain("Setup additional sign in option") }}</h3>
+        <h3>{{ us_setup_form.chosen_method.label }}</h3>
         <div class="fs-div">
           {% for subfield in us_setup_form.chosen_method %}
-            {% if subfield.data in available_methods %}
+            {% if subfield.data in available_methods and subfield.data not in active_methods %}
                 {{ render_field_with_errors(subfield) }}
             {% endif %}
           {% endfor %}
@@ -49,14 +49,22 @@
         </div>
 
         <div class="fs-div">
-          {% if "sms" in available_methods %}
+          {% if "sms" in available_methods and "sms" not in active_methods %}
             {{ render_field_with_errors(us_setup_form.phone) }}
           {% endif %}
-          {% if code_sent %}
-            <div class="fs-important">{{ _fsdomain("Code has been sent") }}</div>
-          {% endif %}
-          {{ render_field(us_setup_form.submit) }}
         </div>
+        {% if active_methods %}
+          <h3>{{ us_setup_form.delete_method.label }}</h3>
+          <div class="fs-div">
+            {% for subfield in us_setup_form.delete_method %}
+              {% if subfield.data in active_methods %}
+                  {{ render_field_with_errors(subfield) }}
+              {% endif %}
+            {% endfor %}
+            {{ render_field_errors(us_setup_form.delete_method) }}
+          </div>
+        {% endif %}
+        <div class="fs-gap">{{ render_field(us_setup_form.submit) }}</div>
 
         {% if chosen_method == "authenticator" %}
           <hr>
@@ -78,11 +86,12 @@
     </form>
     {% if state %}
       <hr class="fs-gap">
+      <div class="fs-important">{{ _fsdomain("Enter code here to complete setup") }}</div>
       <form action="{{ url_for_security("us_setup_validate", token=state) }}" method="POST"
           name="us_setup_validate_form">
         {{ us_setup_validate_form.hidden_tag() }}
         {{ render_field_with_errors(us_setup_validate_form.passcode) }}
-        {{ render_field(us_setup_validate_form.submit) }}
+        <div class="fs-gap">{{ render_field(us_setup_validate_form.submit) }}</div>
       </form>
     {% endif %}
     {% if security.webauthn %}

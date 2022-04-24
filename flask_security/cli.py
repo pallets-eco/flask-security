@@ -331,7 +331,7 @@ def users_change_password(user, password):
     Administratively change a user's password.
     All the user's sessions will be immediately invalidated.
     You will have to inform the user via an out of band mechanism
-    what the their new password is.
+    what their new password is.
 
     USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
 

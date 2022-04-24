@@ -259,6 +259,7 @@ def capture_registrations():
     registrations = []
 
     def _on(app, **data):
+        data["email"] = data["user"].email
         registrations.append(data)
 
     user_registered.connect(_on)

@@ -13,7 +13,7 @@ import json
 import typing as t
 import uuid
 
-from .utils import config_value
+from .utils import config_value as cv
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask_sqlalchemy
@@ -439,10 +439,11 @@ class UserDatastore:
             * remove all unified signin TOTP secrets so those can't be used
             * remove all two-factor secrets so those can't be used
             * remove all registered webauthn credentials
+            * will NOT affect password
 
         Note that if using unified sign in and allow 'email' as a way to receive a code;
-        if the email is compromised - login is still possible. To handle this - it
-        is better to deactivate the user.
+        this will also get reset. If the user registered w/o a password then they likely
+        will have no way to authenticate.
 
         Note - this method isn't used directly by Flask-Security - it is provided
         as a helper for an application's administrative needs.
@@ -544,7 +545,7 @@ class UserDatastore:
 
         To get a totp_secret - use ``app.security._totp_factory.generate_totp_secret()``
 
-        .. versionadded: 3.4.1
+        .. versionadded:: 3.4.1
         """
 
         if totp_secret:
@@ -555,16 +556,40 @@ class UserDatastore:
             user.us_phone_number = phone
             self.put(user)
 
-    def us_reset(self, user: "User") -> None:
+    def us_reset(self, user: "User", method: t.Optional[str] = None) -> None:
         """Disable unified sign in for user.
-        Be aware that if "email" is an allowed way to receive codes, they
-        will still work (as totp secrets are generated on the fly).
-        This will disable authenticator app and SMS.
+        This will disable authenticator app and SMS, and email.
+        N.B. if user has no password they may not be able to authenticate at all.
 
-        .. versionadded: 3.4.1
+        .. versionadded:: 3.4.1
+
+        .. versionchanged:: 4.2.0
+            Added optional method argument to delete just a single method
+
         """
-        user.us_totp_secrets = None
-        self.put(user)
+        if not method:
+            # delete all
+            self.us_put_totp_secrets(user, None)
+            user.us_phone_number = None
+            self.put(user)
+        else:
+            totp_secrets = self.us_get_totp_secrets(user)
+            del totp_secrets[method]
+            self.us_put_totp_secrets(user, totp_secrets)
+            if method == "sms":
+                user.us_phone_number = None
+                self.put(user)
+
+    def us_setup_email(self, user: "User") -> bool:
+        # setup email (if allowed) for user for unified sign in.
+        from .proxies import _security
+
+        if not cv("UNIFIED_SIGNIN") or "email" not in cv("US_ENABLED_METHODS"):
+            return False
+        totp_secrets = self.us_get_totp_secrets(user)
+        totp_secrets["email"] = _security._totp_factory.generate_totp_secret()
+        self.us_put_totp_secrets(user, totp_secrets)
+        return True
 
     def set_webauthn_user_handle(
         self, user: "User", user_handle: t.Union[str, None] = None
@@ -663,7 +688,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         from sqlalchemy import func as alchemyFn
 
         query = self.user_model.query
-        if config_value("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
+        if cv("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
 
             query = query.options(joinedload(self.user_model.roles))

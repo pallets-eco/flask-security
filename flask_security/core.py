@@ -287,7 +287,7 @@ _default_config: t.Dict[str, t.Any] = {
     "US_VERIFY_URL": "/us-verify",
     "US_VERIFY_SEND_CODE_URL": "/us-verify/send-code",
     "US_VERIFY_LINK_URL": "/us-verify-link",
-    "US_POST_SETUP_VIEW": None,
+    "US_POST_SETUP_VIEW": "/us-setup",
     "US_SIGNIN_TEMPLATE": "security/us_signin.html",
     "US_SETUP_TEMPLATE": "security/us_setup.html",
     "US_VERIFY_TEMPLATE": "security/us_verify.html",

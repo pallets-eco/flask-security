@@ -94,8 +94,9 @@ def test_confirmable_flag(app, clients, get_message):
 
     # Test already confirmed and expired token
     app.config["SECURITY_CONFIRM_EMAIL_WITHIN"] = "-1 days"
-    with app.app_context():
-        user = registrations[0]["user"]
+    with app.test_request_context("/"):
+        email = registrations[0]["email"]
+        user = app.security.datastore.find_user(email=email)
         expired_token = generate_confirmation_token(user)
     response = clients.get("/confirm/" + expired_token, follow_redirects=True)
     assert get_message("ALREADY_CONFIRMED") in response.data
@@ -190,13 +191,13 @@ def test_expired_confirmation_token(client, get_message):
         data = dict(email="mary@lp.com", password="awesome sunset", next="")
         client.post("/register", data=data, follow_redirects=True)
 
-    user = registrations[0]["user"]
+    email = registrations[0]["email"]
     token = registrations[0]["confirm_token"]
 
     time.sleep(1)
 
     response = client.get("/confirm/" + token, follow_redirects=True)
-    msg = get_message("CONFIRMATION_EXPIRED", within="1 milliseconds", email=user.email)
+    msg = get_message("CONFIRMATION_EXPIRED", within="1 milliseconds", email=email)
     assert msg in response.data
 
 

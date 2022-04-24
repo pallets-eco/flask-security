@@ -1,4 +1,4 @@
-# :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -30,6 +30,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from flask.json import JSONEncoder
 from flask_security import (
+    MailUtil,
     Security,
     WebauthnUtil,
     auth_required,
@@ -46,6 +47,9 @@ from flask_security.signals import (
 )
 from flask_security.utils import hash_password, uia_email_mapper, uia_phone_mapper
 
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask_security.datastore import User
+
 
 def _find_bool(v):
     if str(v).lower() in ["true"]:
@@ -55,12 +59,19 @@ def _find_bool(v):
     return v
 
 
-class FlashMail:
-    def __init__(self, app):
-        app.extensions["mail"] = self
-
-    def send(self, msg):
-        flash(msg.body)
+class FlashMailUtil(MailUtil):
+    def send_mail(
+        self,
+        template: str,
+        subject: str,
+        recipient: str,
+        sender: t.Union[str, tuple],
+        body: str,
+        html: t.Optional[str],
+        user: "User",
+        **kwargs: t.Any,
+    ) -> None:
+        flash(body)
 
 
 def create_app():
@@ -122,8 +133,6 @@ def create_app():
     for ev in os.environ:
         if ev.startswith("SECURITY_") or ev.startswith("SQLALCHEMY_"):
             app.config[ev] = _find_bool(os.environ.get(ev))
-    mail = FlashMail(app)
-    app.mail = mail
 
     app.json_encoder = JSONEncoder
 
@@ -143,7 +152,12 @@ def create_app():
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
-    security = Security(app, user_datastore, webauthn_util_cls=TestWebauthnUtil)
+    security = Security(
+        app,
+        user_datastore,
+        webauthn_util_cls=TestWebauthnUtil,
+        mail_util_cls=FlashMailUtil,
+    )
 
     try:
         import flask_babel

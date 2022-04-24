@@ -335,9 +335,13 @@ sends the following signals.
 .. data:: us_profile_changed
 
     Sent when user completes changing their unified sign in profile. In addition to the app
-    (which is the sender), it is passed `user` and `method` arguments.
+    (which is the sender), it is passed `user`, `method`, and `delete` arguments.
+    `delete` will be set to ``True`` if the user removed a sign in option.
 
     .. versionadded:: 3.4.0
+
+    .. versionchanged:: 4.2.0
+        Added delete argument.
 
 .. data:: wan_registered
 

@@ -437,6 +437,42 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
     Base = declarative_base()
     Base.query = db_session.query_property()
 
+    class WebAuthn(Base, WebAuthnMixin):
+        __tablename__ = "webauthn"
+
+        id = Column(Integer, primary_key=True)
+        credential_id = Column(
+            LargeBinary(1024), index=True, unique=True, nullable=False
+        )
+        public_key = Column(LargeBinary, nullable=False)
+        sign_count = Column(Integer, default=0)
+        transports = Column(AsaList(255), nullable=True)  # comma separated
+
+        # a JSON string as returned from registration
+        extensions = Column(String(255), nullable=True)
+        create_datetime = Column(
+            type_=DateTime, nullable=False, server_default=func.now()
+        )
+        lastuse_datetime = Column(type_=DateTime, nullable=False)
+        # name is provided by user - we make sure is unique per user
+        name = Column(String(64), nullable=False)
+        usage = Column(String(64), nullable=False)
+
+        @declared_attr
+        def myuser_id(cls):
+            return Column(
+                Integer,
+                ForeignKey("user.myuserid", ondelete="CASCADE"),
+                nullable=False,
+            )
+
+        def get_user_mapping(self) -> t.Dict[str, t.Any]:
+            """
+            Return the filter needed by find_user() to get the user
+            associated with this webauthn credential.
+            """
+            return dict(myuserid=self.myuser_id)
+
     class RolesUsers(Base):
         __tablename__ = "roles_users"
         id = Column(Integer(), primary_key=True)
@@ -494,42 +530,6 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         def get_security_payload(self):
             # Make sure we still properly hook up to flask JSONEncoder
             return {"email": str(self.email), "last_update": self.update_datetime}
-
-    class WebAuthn(Base, WebAuthnMixin):
-        __tablename__ = "webauthn"
-
-        id = Column(Integer, primary_key=True)
-        credential_id = Column(
-            LargeBinary(1024), index=True, unique=True, nullable=False
-        )
-        public_key = Column(LargeBinary, nullable=False)
-        sign_count = Column(Integer, default=0)
-        transports = Column(AsaList(255), nullable=True)  # comma separated
-
-        # a JSON string as returned from registration
-        extensions = Column(String(255), nullable=True)
-        create_datetime = Column(
-            type_=DateTime, nullable=False, server_default=func.now()
-        )
-        lastuse_datetime = Column(type_=DateTime, nullable=False)
-        # name is provided by user - we make sure is unique per user
-        name = Column(String(64), nullable=False)
-        usage = Column(String(64), nullable=False)
-
-        @declared_attr
-        def myuser_id(cls):
-            return Column(
-                Integer,
-                ForeignKey("user.myuserid", ondelete="CASCADE"),
-                nullable=False,
-            )
-
-        def get_user_mapping(self) -> t.Dict[str, t.Any]:
-            """
-            Return the filter needed by find_user() to get the user
-            associated with this webauthn credential.
-            """
-            return dict(myuserid=self.myuser_id)
 
     with app.app_context():
         Base.metadata.create_all(bind=engine)

@@ -20,7 +20,7 @@
         {% if code_sent %}
           <p>{{ _fsdomain("Code has been sent") }}
         {% endif %}
-        {{ render_field(us_verify_form.submit_send_code, formaction=send_code_to) }}
+        <div class="fs-gap">{{ render_field(us_verify_form.submit_send_code, formaction=send_code_to) }}</div>
       {% endif %}
       </form>
       {% if has_webauthn_verify_credential %}
