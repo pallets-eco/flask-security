@@ -942,8 +942,8 @@ def us_setup_validate(token: str) -> "ResponseValue":
         m, c = get_message("US_SETUP_EXPIRED", within=cv("US_SETUP_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
-            payload = json_error_response(errors=m)
-            return _security._render_json(payload, 400, None, None)
+            form.form_errors.append(m)
+            return base_render_json(form, include_user=False)
         do_flash(m, c)
         return redirect(url_for_security("us_setup"))
 

@@ -32,7 +32,6 @@ from .utils import (
     get_message,
     get_within_delta,
     get_url,
-    json_error_response,
     login_user,
     simple_render_json,
     suppress_form_csrf,
@@ -327,7 +326,8 @@ def tf_illegal_state(form, redirect_to):
         do_flash(m, c)
         return redirect(get_url(redirect_to))
     else:
-        return _security._render_json(json_error_response(m), 400, None, None)
+        form.form_errors.append(m)
+        return base_render_json(form, include_user=False)
 
 
 def tf_clean_session():

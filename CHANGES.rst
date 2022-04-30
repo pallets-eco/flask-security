@@ -8,29 +8,33 @@ Version 5.0.0
 
 Released TBD
 
+**PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE**
+
 Features
 ++++++++
-- (:issue:`475`) Support for WebAuthn
-- (:issue:`479`) Support Two-factor recovery codes
-- (:pr:`532`) Support for Python 3.10
-- (:pr:`540`) Improve Templates in support of JS required by WebAuthn
+- (:issue:`475`) Support for WebAuthn.
+- (:issue:`479`) Support Two-factor recovery codes.
+- (:pr:`532`) Support for Python 3.10.
+- (:pr:`540`) Improve Templates in support of JS required by WebAuthn.
 - (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
   Deprecate replacing login_manager so we can possibly vendor that in in the future.
 - (:pr:`608`) Add Icelandic translations. (ofurkusi)
 - (:issue:`256`) Add custom HTML attributes to improve user experience.
   This changed LoginForm quite a bit - please see backwards compatability concerns
   below. The default LoginForm and template should be the same as before.
+- (:pr:`xx`) The JSON errors response has been unified. Please see backwards
+  compatibility concerns below.
 
 Fixes
 +++++
-- (:pr:`591`) Make the required zxcvbn complexity score configurable (mephi42)
-- (:issue:`585`) Provide option to prevent user enumeration.
+- (:pr:`591`) Make the required zxcvbn complexity score configurable. (mephi42)
+- (:issue:`585`) Provide option to prevent user enumeration (i.e. Generic Responses).
 - (:issue:`531`) Get rid of Flask-Mail. Flask-Mailman is now the default preferred email package.
   Flask-Mail is still supported so there should be no backwards compatability issues.
 - (:issue:`597`) A delete option has been added to us-setup (form and view).
 - (:pr:`625`) Improve username support - the LoginForm now has a separate field for username if
   ``SECURITY_USERNAME_ENABLE`` is True, and properly displays input fields only if the associated
-  field is an identity attribute (as specified by :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`)
+  field is an identity attribute (as specified by :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`).
 - (:pr:`627`) Improve empty password handling. Prior, an unguessable password was set into the user
   record when a user registered without a password - now, the DB user model has been changed to
   allow nullable passwords. This provides a better user experience since Flask-Security now
@@ -90,6 +94,13 @@ Other:
 
     - `lost_device` -> `email`
     - `no_mail_access` -> `help`
+- JSON error responses. **THIS IS A BREAKING CHANGE**.
+  In earlier releases, the JSON error response could have either a `error` key which was for rare cases
+  where there was a single non-form related error, or an `errors` key which was a a dict as defined by WTForms.
+  Now, the `errors` key will contain a list of (localized) messages - both non-form related as well as any form related.
+  The key `field_errors` will contain the dict as specified by WTForms. Please note that starting with WTForms 3.0
+  form-level errors are supported and show up in the dict with the field name/key of "none". There are no changes to non-error
+  related JSON responses.
 
 For templates:
 

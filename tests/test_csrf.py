@@ -197,7 +197,7 @@ def test_login_csrf_unauth_double(app, client, get_message):
     # login in again - should work
     response = client.post("/login", content_type="application/json", json=data)
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "ANONYMOUS_USER_REQUIRED"
     )
 

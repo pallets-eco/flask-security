@@ -182,15 +182,15 @@ def test_generic_response(app, client, get_message):
         "/login", json=dict(email="mattwho@lp.com", password="forgot")
     )
     # make sure just 'null' key in errors.
-    assert list(response.json["response"]["errors"].keys()) == ["null"]
-    assert len(response.json["response"]["errors"]["null"]) == 1
-    assert response.json["response"]["errors"]["null"][0].encode(
-        "utf-8"
-    ) == get_message("GENERIC_AUTHN_FAILED")
+    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
+    assert len(response.json["response"]["field_errors"]["null"]) == 1
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "GENERIC_AUTHN_FAILED"
+    )
     response = client.post("/login", json=dict(email="matt@lp.com", password="forgot"))
-    assert response.json["response"]["errors"]["null"][0].encode(
-        "utf-8"
-    ) == get_message("GENERIC_AUTHN_FAILED")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "GENERIC_AUTHN_FAILED"
+    )
 
     # make sure don't get confirmation required
     response = client.post(
@@ -221,11 +221,11 @@ def test_generic_response_username(app, client, get_message):
 
     response = client.post("/login", json=dict(username="dude2", password="forgot"))
     # make sure just 'null' key in errors.
-    assert list(response.json["response"]["errors"].keys()) == ["null"]
-    assert len(response.json["response"]["errors"]["null"]) == 1
-    assert response.json["response"]["errors"]["null"][0].encode(
-        "utf-8"
-    ) == get_message("GENERIC_AUTHN_FAILED")
+    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
+    assert len(response.json["response"]["field_errors"]["null"]) == 1
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "GENERIC_AUTHN_FAILED"
+    )
 
 
 def test_unprovided_username(client, get_message):
@@ -578,7 +578,7 @@ def test_http_auth_no_authentication(client, get_message):
 def test_http_auth_no_authentication_json(client, get_message):
     response = client.get("/http", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
@@ -610,7 +610,7 @@ def test_invalid_http_auth_invalid_username_json(client, get_message):
         },
     )
     assert response.status_code == 401
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
     assert response.headers["Content-Type"] == "application/json"
@@ -802,7 +802,7 @@ def test_anon_required_json(client, get_message):
     authenticate(client, follow_redirects=False)
     response = client.get("/register", headers={"Accept": "application/json"})
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "ANONYMOUS_USER_REQUIRED"
     )
 

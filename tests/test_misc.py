@@ -57,6 +57,7 @@ from flask_security.forms import (
 )
 from flask_security import auth_required, roles_required
 from flask_security.utils import (
+    base_render_json,
     encode_string,
     json_error_response,
     get_request_attr,
@@ -577,7 +578,7 @@ def test_wtform_xlation(app, sqlalchemy_datastore):
         "/login", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
-    flerror = response.json["response"]["errors"]["fixed_length"][0]
+    flerror = response.json["response"]["field_errors"]["fixed_length"][0]
     # This is completely dependent on WTforms translations....
     assert (
         flerror == "Le doit contenir exactement 3 caractères."
@@ -636,7 +637,7 @@ def test_per_request_xlate(app, client):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["new_password"] == [
+    assert response.json["response"]["field_errors"]["new_password"] == [
         "Merci d'indiquer un mot de passe"
     ]
 
@@ -732,21 +733,22 @@ def test_json_error_response_string():
     """Unit test for correct response when a string is given."""
     error_msg = "This is an error!"
     response = json_error_response(errors=error_msg)
-    assert "error" in response
-    assert "errors" not in response
-    assert response["error"] == error_msg
+    assert "field_errors" not in response
+    assert response["errors"][0] == error_msg
 
 
 def test_json_error_response_dict():
     """Unit test for correct response when a dict is given."""
     error_msg = {
-        "e-mail": "The e-mail address is already in the system.",
-        "name": "The name is too long.",
+        "e-mail": ["The e-mail address is already in the system."],
+        "name": ["The name is too long.", "Nice name"],
     }
-    response = json_error_response(errors=error_msg)
+    all_msgs = []
+    [all_msgs.extend(m) for m in error_msg.values()]
+    response = json_error_response(field_errors=error_msg)
     assert "errors" in response
-    assert "error" not in response
-    assert response["errors"] == error_msg
+    assert "field_errors" in response
+    assert all(m in response["errors"] for m in all_msgs)
 
 
 def test_json_error_response_typeerror():
@@ -754,6 +756,16 @@ def test_json_error_response_typeerror():
     error_msg = ("tuple",)
     with pytest.raises(TypeError):
         json_error_response(errors=error_msg)
+
+
+def test_json_form_errors(app, client):
+    """Test wtforms form level errors are correctly sent via json"""
+    with app.test_request_context():
+        form = ChangePasswordForm()
+        form.form_errors.append("I am an error")
+        response = base_render_json(form)
+        assert len(response.json["response"]["errors"]) == 1
+        assert response.json["response"]["errors"][0] == "I am an error"
 
 
 def test_method_view(app, client):
@@ -837,7 +849,7 @@ def test_authn_freshness(
     # Test json error response
     response = client.get("/myspecialview", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.json and response.json["response"]["error"].encode(
+    assert response.json and response.json["response"]["errors"][0].encode(
         "utf-8"
     ) == get_message("REAUTHENTICATION_REQUIRED")
 
@@ -877,7 +889,7 @@ def test_authn_freshness_handler(app, client, get_message):
     # Test json error response
     response = client.get("/myspecialview", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.json["response"]["error"] == "Oh No"
+    assert response.json["response"]["errors"][0] == "Oh No"
 
 
 def test_authn_freshness_callable(app, client, get_message):

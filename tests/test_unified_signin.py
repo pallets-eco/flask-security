@@ -277,9 +277,9 @@ def test_simple_signin_json(app, client_nc, get_message):
             follow_redirects=True,
         )
         assert response.status_code == 400
-        assert response.json["response"]["errors"]["passcode"][0].encode(
-            "utf-8"
-        ) == get_message("INVALID_PASSWORD_CODE")
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+            "INVALID_PASSWORD_CODE"
+        )
 
         # Login successfully with code
         response = client_nc.post(
@@ -446,9 +446,9 @@ def test_us_passwordless_confirm_json(app, client, get_message):
         "/us-signin/send-code",
         json=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
     )
-    assert response.json["response"]["errors"]["identity"][0].encode(
-        "utf-8"
-    ) == get_message("CONFIRMATION_REQUIRED")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "CONFIRMATION_REQUIRED"
+    )
 
     # grab welcome email which has confirmation link (test version of welcome.txt)
     outbox = app.mail.outbox
@@ -512,9 +512,9 @@ def test_admin_setup_user_reset(app, client_nc, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["chosen_method"][0].encode(
-        "utf-8"
-    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "US_METHOD_NOT_AVAILABLE"
+    )
     # Nothing should have been sent.
     assert len(sms_sender.messages) == 1
 
@@ -547,9 +547,9 @@ def test_admin_setup_reset(app, client_nc, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["chosen_method"][0].encode(
-        "utf-8"
-    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "US_METHOD_NOT_AVAILABLE"
+    )
     # Nothing should have been sent.
     assert len(sms_sender.messages) == 1
 
@@ -584,7 +584,7 @@ def test_post_already_authenticated(client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.post("/us-signin", json=data, headers=headers)
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "ANONYMOUS_USER_REQUIRED"
     )
 
@@ -830,9 +830,9 @@ def test_setup_json(app, client_nc, get_message):
         "/us-setup/" + state, json=dict(passcode=12344), headers=headers
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["passcode"][0].encode(
-        "utf-8"
-    ) == get_message("INVALID_PASSWORD_CODE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_PASSWORD_CODE"
+    )
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client_nc.post(
         "/us-setup/" + state, json=dict(passcode=code), headers=headers
@@ -908,7 +908,7 @@ def test_setup_bad_token(app, client, get_message):
         "/us-setup/not a token", json=dict(passcode=12345), headers=headers
     )
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
     )
 
@@ -941,7 +941,7 @@ def test_setup_timeout(app, client, get_message):
         "/us-setup/" + state, json=dict(passcode=code), headers=headers
     )
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "US_SETUP_EXPIRED", within=app.config["SECURITY_US_SETUP_WITHIN"]
     )
 
@@ -1038,15 +1038,18 @@ def test_verify_json(app, client, get_message):
     # Try bad code
     response = client.post("us-verify", json=dict(passcode=42), headers=headers)
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["passcode"][0].encode(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_PASSWORD_CODE"
+    )
+    assert response.json["response"]["field_errors"]["passcode"][0].encode(
         "utf-8"
     ) == get_message("INVALID_PASSWORD_CODE")
 
     response = client.post("us-verify", json=dict(passcode=None), headers=headers)
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["passcode"][0].encode(
-        "utf-8"
-    ) == get_message("INVALID_PASSWORD_CODE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_PASSWORD_CODE"
+    )
 
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post("us-verify", json=dict(passcode=code), headers=headers)
@@ -1083,9 +1086,9 @@ def test_invalid_method(app, client, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["chosen_method"][0].encode(
-        "utf-8"
-    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "US_METHOD_NOT_AVAILABLE"
+    )
 
     # verify form error
     response = client.post(
@@ -1114,9 +1117,9 @@ def test_invalid_method_setup(app, client, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["chosen_method"][0].encode(
-        "utf-8"
-    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "US_METHOD_NOT_AVAILABLE"
+    )
 
     response = client.post(
         "/us-setup",
@@ -1380,9 +1383,12 @@ def test_empty_password(app, client, get_message):
 
     response = client.post("/us-signin", json=dict(identity="trp@lp.com", passcode=""))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["passcode"][0].encode(
+    assert response.json["response"]["field_errors"]["passcode"][0].encode(
         "utf-8"
     ) == get_message("INVALID_PASSWORD_CODE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_PASSWORD_CODE"
+    )
 
 
 @pytest.mark.settings(
@@ -1581,9 +1587,9 @@ def test_bad_sender(app, client, get_message):
 
     response = client.post("us-signin/send-code", json=data, headers=headers)
     assert response.status_code == 500
-    assert response.json["response"]["errors"]["chosen_method"][0].encode(
-        "utf-8"
-    ) == get_message("FAILED_TO_SEND_CODE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "FAILED_TO_SEND_CODE"
+    )
 
     # Now test setup
     set_email(app)
@@ -1594,9 +1600,9 @@ def test_bad_sender(app, client, get_message):
 
     response = client.post("us-setup", json=data, headers=headers)
     assert response.status_code == 500
-    assert response.json["response"]["errors"]["chosen_method"][0].encode(
-        "utf-8"
-    ) == get_message("FAILED_TO_SEND_CODE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "FAILED_TO_SEND_CODE"
+    )
 
     # Test us-verify
     data = dict(chosen_method="sms")
@@ -1604,7 +1610,7 @@ def test_bad_sender(app, client, get_message):
     assert get_message("FAILED_TO_SEND_CODE") in response.data
     response = client.post("us-verify/send-code", json=data)
     assert response.status_code == 500
-    assert response.json["response"]["errors"]["chosen_method"][0].encode(
+    assert response.json["response"]["field_errors"]["chosen_method"][0].encode(
         "utf-8"
     ) == get_message("FAILED_TO_SEND_CODE")
 
@@ -1884,9 +1890,9 @@ def test_setup_delete(app, client, get_message):
     )
 
     response = client.post("us-setup", json=dict(delete_method="email"))
-    assert response.json["response"]["errors"]["delete_method"][0].encode(
-        "utf-8"
-    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "US_METHOD_NOT_AVAILABLE"
+    )
 
 
 def test_setup_delete_json(app, client, get_message):
@@ -1916,9 +1922,9 @@ def test_setup_delete_json(app, client, get_message):
     assert not response.json["response"]["active_methods"]
 
     response = client.post("us-setup", json=dict(delete_method="email"))
-    assert response.json["response"]["errors"]["delete_method"][0].encode(
-        "utf-8"
-    ) == get_message("US_METHOD_NOT_AVAILABLE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "US_METHOD_NOT_AVAILABLE"
+    )
 
     # setup and delete SMS
     sms_sender = SmsSenderFactory.createSender("test")
@@ -1974,7 +1980,9 @@ def test_generic_response(app, client, get_message):
     # for JSON still return 200 as if everything is fine and a code was sent.
     response = client.post("/us-signin/send-code", json=data)
     assert response.status_code == 200
-    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+    assert not any(
+        e in response.json["response"].keys() for e in ["field_errors", "errors"]
+    )
 
     # Unknown identity should return same thing
     data = dict(identity="matt2@lp.com", chosen_method="email")
@@ -1984,7 +1992,9 @@ def test_generic_response(app, client, get_message):
     # for JSON still return 200 as if everything is fine and a code was sent.
     response = client.post("/us-signin/send-code", json=data)
     assert response.status_code == 200
-    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+    assert not any(
+        e in response.json["response"].keys() for e in ["field_errors", "errors"]
+    )
 
     #
     # Now test us-signin itself
@@ -1996,11 +2006,14 @@ def test_generic_response(app, client, get_message):
     data = dict(identity="matt@lp.com", code="12345")
     response = client.post("/us-signin", json=data)
     assert response.status_code == 400
-    assert list(response.json["response"]["errors"].keys()) == ["null"]
-    assert len(response.json["response"]["errors"]["null"]) == 1
-    assert response.json["response"]["errors"]["null"][0].encode(
+    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
+    assert len(response.json["response"]["field_errors"]["null"]) == 1
+    assert response.json["response"]["field_errors"]["null"][0].encode(
         "utf-8"
     ) == get_message("GENERIC_AUTHN_FAILED")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "GENERIC_AUTHN_FAILED"
+    )
 
     # same with unknown user
     data = dict(identity="matt2@lp.com", code="12345")
@@ -2010,11 +2023,14 @@ def test_generic_response(app, client, get_message):
     data = dict(identity="matt2@lp.com", code="12345")
     response = client.post("/us-signin", json=data)
     assert response.status_code == 400
-    assert list(response.json["response"]["errors"].keys()) == ["null"]
-    assert len(response.json["response"]["errors"]["null"]) == 1
-    assert response.json["response"]["errors"]["null"][0].encode(
+    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
+    assert len(response.json["response"]["field_errors"]["null"]) == 1
+    assert response.json["response"]["field_errors"]["null"][0].encode(
         "utf-8"
     ) == get_message("GENERIC_AUTHN_FAILED")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "GENERIC_AUTHN_FAILED"
+    )
 
     #
     # Test /us-verify-link
