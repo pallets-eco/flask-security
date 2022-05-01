@@ -51,10 +51,6 @@ these steps:
 
         $ git clone https://github.com/<your-username>/flask-security
 
-  #. Create a branch for local development::
-
-     $ git checkout -b name-of-your-bugfix-or-feature
-
   #. Change directory to flask_security::
 
         $ cd flask_security
@@ -67,6 +63,10 @@ these steps:
 
         $ pre-commit install
 
+  #. Create a branch for local development::
+
+        $ git checkout -b name-of-your-bugfix-or-feature
+
   #. Develop the Feature/Bug Fix and edit
 
   #. Write Tests for your code in::
@@ -75,9 +75,10 @@ these steps:
 
   #. When done, verify unit tests, syntax etc. all pass::
 
+        $ pip install -r requirements/tests.txt
+        $ python setup.py build_sphinx compile_catalog
         $ pytest tests
         $ pre-commit run --all-files
-        $ python setup.py build_sphinx compile_catalog
 
   #. Use tox::
 
