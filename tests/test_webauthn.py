@@ -629,11 +629,12 @@ def test_delete(app, clients, get_message):
     """
     response = clients.post("/wan-delete")
     assert get_message("WEBAUTHN_NAME_REQUIRED") in response.data
-
-    response = clients.post("/wan-delete", data=dict(name="testr1"))
-    assert response.status_code == 200
-    assert get_message("WEBAUTHN_NAME_NOT_FOUND", name="testr1") in response.data
     """
+
+    response = clients.post(
+        "/wan-delete", data=dict(name="testr1"), follow_redirects=True
+    )
+    assert get_message("WEBAUTHN_NAME_NOT_FOUND", name="testr1") in response.data
 
     with capture_flashes() as flashes:
         response = clients.post(

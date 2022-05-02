@@ -693,7 +693,11 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
     return redirect(url_for_security("wan_signin"))
 
 
-@auth_required(lambda: cv("API_ENABLED_METHODS"))
+@auth_required(
+    lambda: cv("API_ENABLED_METHODS"),
+    within=lambda: cv("FRESHNESS"),
+    grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
+)
 def webauthn_delete() -> "ResponseValue":
     """Deletes an existing registered credential."""
 
@@ -721,7 +725,8 @@ def webauthn_delete() -> "ResponseValue":
 
     if _security._want_json(request):
         return base_render_json(form)
-    # TODO flash something?
+    if form.name.errors:
+        do_flash(form.name.errors[0], "error")
     return redirect(url_for_security("wan_register"))
 
 
