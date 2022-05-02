@@ -290,6 +290,9 @@ class UnifiedSigninSetupForm(Form):
         if not super().validate(**kwargs):
             return False
 
+        if not self.chosen_method.data and not self.delete_method.data:
+            self.form_errors.append(get_message("API_ERROR")[0])
+            return False
         if self.chosen_method.data:
             if self.chosen_method.data not in cv("US_ENABLED_METHODS"):
                 self.chosen_method.errors.append(
@@ -843,6 +846,8 @@ def us_setup() -> "ResponseValue":
 
     # Show user existing phone number
     form.phone.data = current_user.us_phone_number
+    form.chosen_method.data = None
+    form.delete_method.data = None
     return _security.render_template(
         cv("US_SETUP_TEMPLATE"),
         available_methods=cv("US_ENABLED_METHODS"),
