@@ -712,6 +712,10 @@ def test_setup(app, client, get_message):
         for i in [b"delete_method-0", b"chosen_method-1", b"chosen_method-2"]
     )
 
+    # test not supplying anything to do
+    response = client.post("us-setup", data=dict(phone="6505551212"))
+    assert get_message("API_ERROR") in response.data
+
     # test missing phone
     response = client.post("us-setup", data=dict(chosen_method="sms", phone=""))
     assert response.status_code == 200

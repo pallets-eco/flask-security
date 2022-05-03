@@ -4,7 +4,7 @@
     {% if field.errors %}
       <ul>
       {% for error in field.errors %}
-        <li>{{ error }}</li>
+        <li class="fs-error-msg">{{ error }}</li>
       {% endfor %}
       </ul>
     {% endif %}
@@ -20,9 +20,20 @@
     {% if field and field.errors %}
       <ul>
       {% for error in field.errors %}
-        <li>{{ error }}</li>
+        <li class="fs-error-msg">{{ error }}</li>
       {% endfor %}
       </ul>
     {% endif %}
   </div>
+{% endmacro %}
+{% macro render_form_errors(form) %}
+  {% if form.form_errors %}
+    <div class="fs-div" id="fs-form-errors">
+    <ul>
+    {% for error in form.form_errors %}
+      <li class="fs-error-msg">{{ error }}</li>
+    {% endfor %}
+    </ul>
+    </div>
+  {% endif %}
 {% endmacro %}
