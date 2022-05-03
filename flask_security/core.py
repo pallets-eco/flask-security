@@ -317,6 +317,7 @@ _default_config: t.Dict[str, t.Any] = {
     "USERNAME_NORMALIZE_FORM": "NFKD",
     "WEBAUTHN": False,
     "WAN_CHALLENGE_BYTES": None,  # uses system default
+    "WAN_POST_REGISTER_VIEW": "/wan-register",
     "WAN_RP_NAME": "My Flask App",
     "WAN_SALT": "wan-salt",
     "WAN_REGISTER_TIMEOUT": 60000,  # milliseconds

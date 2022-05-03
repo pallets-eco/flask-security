@@ -514,7 +514,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
             return base_render_json(form)
         msg, c = get_message("WEBAUTHN_REGISTER_SUCCESSFUL", name=state["name"])
         do_flash(msg, c)
-        return redirect(url_for_security("wan_register"))
+        return redirect(get_url(cv("WAN_POST_REGISTER_VIEW")))
 
     if _security._want_json(request):
         return base_render_json(form)

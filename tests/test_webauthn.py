@@ -1540,3 +1540,20 @@ def test_remember_token_tf(client):
     client.cookie_jar.clear_session_cookies()
     response = client.get("/profile")
     assert b"profile" in response.data
+
+
+@pytest.mark.settings(
+    webauthn_util_cls=HackWebauthnUtil,
+    wan_post_register_view="/post_register",
+)
+def test_post_register_redirect(app, client, get_message):
+    authenticate(client)
+
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(
+        response_url,
+        data=dict(credential=json.dumps(REG_DATA1)),
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    assert "/post_register" in response.location
