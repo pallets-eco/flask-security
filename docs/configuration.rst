@@ -1375,6 +1375,13 @@ WebAuthn
 
     Default: ``"/wan-verify"``
 
+.. py:data:: SECURITY_WAN_POST_REGISTER_VIEW
+
+    Specifies the view to redirect to after a user successfully registers a new WebAuthn key (non-json).
+    This value can be set to a URL or an endpoint name.
+
+    Default: ``"/wan-register"``
+
 .. py:data:: SECURITY_WAN_REGISTER_TEMPLATE
 
     Default: ``"security/wan_register.html"``
@@ -1523,6 +1530,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_WAN_SIGNIN_URL`
 * :py:data:`SECURITY_WAN_DELETE_URL`
 * :py:data:`SECURITY_WAN_VERIFY_URL`
+* :py:data:`SECURITY_WAN_POST_REGISTER_VIEW`
 
 Template Paths
 --------------

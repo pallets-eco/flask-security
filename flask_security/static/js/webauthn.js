@@ -29,20 +29,6 @@ function encode(attr) {
     c => c.charCodeAt(0));
 }
 
-async function fetch_json(url, options) {
-    const response = await fetch(url, options);
-    const body = await response.json();
-    if (body.fail) {
-      // Convert exception to our JSON API response.
-      return {
-        response: {
-          error: body.fail
-        }
-      }
-    }
-    return body;
-}
-
 /**
  * REGISTRATION FUNCTIONS
  */

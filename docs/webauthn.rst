@@ -28,6 +28,10 @@ there is at least one second-factor authentication method setup that is NOT plat
 Flask-Security requires that when registering a WebAuthn key, the user must specify whether the key
 will be used for first/primary authentication or for multi-factor/second authentication.
 
+It should be noted the the current spec REQUIRES javascript to communicate from your front-end to the browser.
+Flask-Security ships with the basic required JS (static/{webauthn.js,base64.js}).
+An application should be able to simply wire those into their templates or javascript.
+
 
 Configuration
 ++++++++++++++
@@ -47,7 +51,7 @@ flexibility in supporting a wide range of authenticators. The default configurat
 
 The bundled :class:`.WebauthnUtil` class implements the following defaults:
 
-    - The ``AuthenticatorSelectionCriteria`` is set to ``CROSS_PLATFORM`` for  webauthn keys being
+    - The ``AuthenticatorSelectionCriteria`` is set to ``CROSS_PLATFORM`` for webauthn keys being
       registered for first/primary authentication.
     - The ``UserVerificationRequirement`` is set to ``DISCOURAGED`` for keys used for secondary
       authentication, and ``PREFERRED`` for keys used for first/primary or multi-factor.
