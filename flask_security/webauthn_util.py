@@ -104,6 +104,11 @@ class WebauthnUtil:
             select_criteria.authenticator_attachment = (
                 AuthenticatorAttachment.CROSS_PLATFORM
             )
+            select_criteria.user_verification = UserVerificationRequirement.PREFERRED
+        else:
+            # For second factor minimize user-interaction by not asking for UV
+            select_criteria.user_verification = UserVerificationRequirement.DISCOURAGED
+
         if not current_app.config.get("SECURITY_WAN_ALLOW_USER_HINTS"):
             select_criteria.resident_key = ResidentKeyRequirement.REQUIRED
         else:

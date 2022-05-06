@@ -1164,7 +1164,7 @@ def create_blueprint(app, state, import_name, json_encoder=None):
             methods=["POST"],
             endpoint="wan_signin_response",
         )(webauthn_signin_response)
-        bp.route(state.wan_delete_url, methods=["POST"], endpoint="wan_delete")(
+        bp.route(state.wan_delete_url, methods=["GET", "POST"], endpoint="wan_delete")(
             webauthn_delete
         )
         if cv("FRESHNESS", app=app).total_seconds() >= 0 and cv(

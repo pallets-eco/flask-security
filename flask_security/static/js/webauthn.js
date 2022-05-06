@@ -100,13 +100,19 @@ const transformNewAssertionForServer = (newAssertion) => {
 
     const registrationClientExtensions = newAssertion.getClientExtensionResults();
 
+    // Not all browsers support getTransports() (e.g. Firefox)
+    let transports = null
+    if (newAssertion.response.hasOwnProperty('getTransports')) {
+      transports = newAssertion.response.getTransports()
+    }
+
     return {
         id: newAssertion.id,
         rawId: b64enc(rawId),
         type: newAssertion.type,
         response: {"attestationObject": b64enc(attObj), "clientDataJSON": b64enc(clientDataJSON)},
         extensions: JSON.stringify(registrationClientExtensions),
-        transports: newAssertion.response.getTransports(),
+        transports: transports,
     }
 }
 
