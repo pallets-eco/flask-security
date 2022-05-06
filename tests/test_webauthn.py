@@ -233,18 +233,18 @@ def reg_2_keys(client):
     register_options, response_url = _register_start_json(
         client, name="first", usage="first"
     )
-    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
     assert response.status_code == 200
 
     register_options, response_url = _register_start_json(
         client, name="second", usage="secondary"
     )
-    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
 
     return {
-        "first": {"id": REG_DATA1["id"], "signin": SIGNIN_DATA1},
-        "secondary": {"id": REG_DATA_UV["id"], "signin": SIGNIN_DATA_UV},
+        "first": {"id": REG_DATA_UV["id"], "signin": SIGNIN_DATA_UV},
+        "secondary": {"id": REG_DATA1["id"], "signin": SIGNIN_DATA1},
     }
 
 
@@ -625,6 +625,11 @@ def test_delete(app, clients, get_message):
 
     response = clients.get("/wan-register")
     assert b"testr3" in response.data
+
+    # Make sure GET works - this is important if we get a freshness redirect when
+    # attempting to delete - the verify endpoint will redirect back to here.
+    response = clients.get("/wan-delete", follow_redirects=False)
+    assert response.status_code == 302
 
     """
     response = clients.post("/wan-delete")
@@ -1557,3 +1562,50 @@ def test_post_register_redirect(app, client, get_message):
     )
     assert response.status_code == 302
     assert "/post_register" in response.location
+
+
+class MyWebauthnUtil(HackWebauthnUtil):
+    def user_verification(self, user, usage):
+        from webauthn.helpers.structs import UserVerificationRequirement
+
+        return UserVerificationRequirement.REQUIRED
+
+
+@pytest.mark.two_factor()
+@pytest.mark.unified_signin()
+@pytest.mark.settings(webauthn_util_cls=MyWebauthnUtil)
+def test_uv_required(client):
+    # Override WebauthnUtils to require user-verification on signin.
+    keys = reg_2_keys(client)
+    logout(client)
+
+    # log back in - should require MFA.
+    response = client.post(
+        "/us-signin",
+        json=dict(identity="matt@lp.com", passcode="password", remember=True),
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    # since we always REQUIRE user_verification in our WebauthUtil this should fail
+    signin_options, response_url, _ = _signin_start_json(client, "")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(keys["secondary"]["signin"])),
+    )
+    assert response.status_code == 400
+    assert (
+        "User verification is required"
+        in response.json["response"]["errors"]["credential"][0]
+    )
+
+    logout(client)
+
+    # Try signing in with 'first' WebAuthn key - this DOES have UV set so should work.
+    signin_options, response_url, _ = _signin_start_json(client, "")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(keys["first"]["signin"])),
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["user"]["email"] == "matt@lp.com"

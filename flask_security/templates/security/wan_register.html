@@ -36,16 +36,16 @@
       <script type="text/javascript">
         handleRegister('{{ credential_options|safe }}')
           .then((result) => {
-            if (result.credential) {
+            if (result.error_msg) {
+              const error_element = document.getElementById("wan-errors")
+              error_element.innerHTML = `<em>${result.error_msg}</em`
+            } else {
               document.getElementById("credential").value = result.credential
               {# We auto-submit this form - there is a Submit button on the
                  form we could use - but there really isn't any reason to force the
                  user to click yet another button
                #}
               document.forms["wan-register-response-form"].submit()
-            } else {
-              const error_element = document.getElementById("wan-errors")
-              error_element.innerHTML = `<em>${result.error_msg}</em`
             }
           })
       </script>

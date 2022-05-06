@@ -29,9 +29,11 @@ class AsaList(types.TypeDecorator):
     impl = types.String
 
     def process_bind_param(self, value, dialect):
-        if value:
+        # produce a string from an iterable
+        try:
             return ",".join(value)
-        return value
+        except TypeError:
+            return value
 
     def process_result_value(self, value, dialect):
         if value:

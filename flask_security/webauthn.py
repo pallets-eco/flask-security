@@ -64,6 +64,7 @@ try:
         PublicKeyCredentialDescriptor,
         PublicKeyCredentialType,
         RegistrationCredential,
+        UserVerificationRequirement,
     )
     from webauthn.helpers import bytes_to_base64url
 except ImportError:  # pragma: no cover
@@ -148,6 +149,7 @@ class WebAuthnRegisterResponseForm(Form):
     challenge: str
     name: str
     usage: str
+    user_verification: bool
     # this is returned to caller (not part of the client form)
     registration_verification: "VerifiedRegistration"
     transports: t.List[str] = []
@@ -172,7 +174,7 @@ class WebAuthnRegisterResponseForm(Form):
                 expected_challenge=self.challenge.encode(),
                 expected_origin=_security._webauthn_util.origin(),
                 expected_rp_id=request.host.split(":")[0],
-                require_user_verification=True,
+                require_user_verification=self.user_verification,
             )
             if _datastore.find_webauthn(credential_id=reg_cred.raw_id):
                 msg = get_message("WEBAUTHN_CREDENTIAL_ID_INUSE")[0]
@@ -241,6 +243,7 @@ class WebAuthnSigninResponseForm(Form):
 
     # set by caller
     challenge: str
+    user_verification: bool
     is_secondary: bool
     is_verify: bool
     # returned to caller
@@ -312,13 +315,17 @@ class WebAuthnSigninResponseForm(Form):
             credential_public_key=self.cred.public_key,
             credential_current_sign_count=self.cred.sign_count,
         )
+        # Start by verifying requiring user_verification - if that succeeds then
+        # this authn could be used for both primary and secondary.
+        # If it fails, then try to verify with user_verification == False - unless
+        # as part of signin the app required user_verification (as stored in the state)
         try:
             self.authentication_verification = verify(require_user_verification=True)
             self.mf_check = True
         except InvalidAuthenticationResponse:
             try:
                 self.authentication_verification = verify(
-                    require_user_verification=False
+                    require_user_verification=self.user_verification
                 )
             except InvalidAuthenticationResponse as exc:
                 self.credential.errors.append(
@@ -385,11 +392,6 @@ def webauthn_register() -> "ResponseValue":
         challenge = _security._webauthn_util.generate_challenge(
             cv("WAN_CHALLENGE_BYTES")
         )
-        state = {
-            "challenge": challenge,
-            "name": form.name.data,
-            "usage": form.usage.data,
-        }
         if not current_user.fs_webauthn_user_handle:
             # set a user handle. This allows an easy migration when adding this
             # column (and not requiring as part of schema change to update all existing
@@ -415,6 +417,19 @@ def webauthn_register() -> "ResponseValue":
         co_json = json.loads(webauthn.options_to_json(credential_options))
         co_json["extensions"] = {"credProps": True}
 
+        # If we ask for UserVerification then we need to check that in the response.
+        uv = False
+        if credential_options.authenticator_selection:
+            uv = (
+                credential_options.authenticator_selection.user_verification
+                == UserVerificationRequirement.REQUIRED
+            )
+        state = {
+            "challenge": challenge,
+            "name": form.name.data,
+            "usage": form.usage.data,
+            "user_verification": uv,
+        }
         state_token = _security.wan_serializer.dumps(state)
 
         if _security._want_json(request):
@@ -490,6 +505,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
     form.challenge = state["challenge"]
     form.name = state["name"]
     form.usage = state["usage"]
+    form.user_verification = state["user_verification"]
     if form.validate_on_submit():
 
         # store away successful registration
@@ -528,9 +544,6 @@ def _signin_common(user: t.Optional["User"], usage: t.List[str]) -> t.Tuple[t.An
     Common code between signin and verify - once form has been verified.
     """
     challenge = _security._webauthn_util.generate_challenge(cv("WAN_CHALLENGE_BYTES"))
-    state = {
-        "challenge": challenge,
-    }
 
     # Populate allowedCredentials if identity passed and allowed
     allow_credentials = None
@@ -545,6 +558,15 @@ def _signin_common(user: t.Optional["User"], usage: t.List[str]) -> t.Tuple[t.An
     )
     ao = _security._webauthn_util.authentication_options(user, usage, ao)
     options = webauthn.generate_authentication_options(**ao)
+
+    # If we ask for UserVerification then we need to check that in the response.
+    uv = False
+    if options.user_verification == UserVerificationRequirement.REQUIRED:
+        uv = True
+    state = {
+        "challenge": challenge,
+        "user_verification": uv,
+    }
 
     o_json = json.loads(webauthn.options_to_json(options))
     state_token = t.cast(str, _security.wan_serializer.dumps(state))
@@ -635,6 +657,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         return redirect(url_for_security("wan_signin"))
 
     form.challenge = state["challenge"]
+    form.user_verification = state["user_verification"]
     form.is_secondary = is_secondary
     form.is_verify = False
 
@@ -798,6 +821,7 @@ def webauthn_verify_response(token: str) -> "ResponseValue":
         return redirect(url_for_security("wan_verify"))
 
     form.challenge = state["challenge"]
+    form.user_verification = state["user_verification"]
     form.is_secondary = False
     form.is_verify = True
 
