@@ -16,6 +16,7 @@ Features
 - (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
   Deprecate replacing login_manager so we can possibly vendor that in in the future.
 - (:pr:`608`) Add Icelandic translations. (ofurkusi)
+- (:issue:`256`) Add custom HTML attributes to improve user experience.
 
 Fixes
 +++++
@@ -47,6 +48,9 @@ For unified signin:
   It now does what all over views due, and have the caller responsible for committing the transaction - usually by
   setting up a flask ``after_this_request`` action. This could affect an application that captured the registration signal
   and stored the ``user`` object for later use - this user object would likely be invalid after the request is finished.
+- Some fields have custom HTML attributes attached to them (e.g. autocomplete, type, etc). These are stored as part of the
+  form in the ``render_kw`` attribute. This could cause some confusion if an app had its own templates and set different
+  attributes.
 
 For templates:
 

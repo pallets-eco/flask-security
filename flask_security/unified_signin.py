@@ -37,7 +37,15 @@ from flask import current_app as app
 from flask import after_this_request, request, session
 from flask_login import current_user
 from werkzeug.datastructures import MultiDict
-from wtforms import BooleanField, RadioField, StringField, SubmitField, validators
+from wtforms import (
+    BooleanField,
+    PasswordField,
+    RadioField,
+    StringField,
+    SubmitField,
+    TelField,
+    validators,
+)
 
 from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
@@ -127,9 +135,14 @@ class _UnifiedPassCodeForm(Form):
     # Filled in here
     authn_via: str
 
-    passcode = StringField(
+    # PasswordField so it doesn't show, no autocomplete since it might be a password
+    # but it might be a passcode.
+    passcode = PasswordField(
         get_form_field_label("passcode"),
-        render_kw={"placeholder": _("Code or Password")},
+        render_kw={
+            "placeholder": get_form_field_xlate(_("Code or Password")),
+            "autocomplete": "off",
+        },
     )
     submit = SubmitField(get_form_field_label("submit"))
 
@@ -280,7 +293,7 @@ class UnifiedSigninSetupForm(Form):
         ],
         validate_choice=False,
     )
-    phone = StringField(get_form_field_label("phone"))
+    phone = TelField(get_form_field_label("phone"))
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
@@ -322,7 +335,15 @@ class UnifiedSigninSetupValidateForm(Form):
     user: "User"
     totp_secret: str
 
-    passcode = StringField(get_form_field_label("passcode"), validators=[Required()])
+    passcode = StringField(
+        get_form_field_label("passcode"),
+        render_kw={
+            "autocomplete": "one-time-code",
+            "inputtype": "numeric",
+            "pattern": "[0-9]*",
+        },
+        validators=[Required()],
+    )
     submit = SubmitField(get_form_field_label("submitcode"))
 
     def __init__(self, *args, **kwargs):

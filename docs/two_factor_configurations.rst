@@ -20,8 +20,9 @@ SQLAlchemy Install requirements
 
 ::
 
-     $ python3 -m venv /path/to/new/virtual/environment
-     $ pip install flask-security-too flask-sqlalchemy flask-mail bcrypt cryptography pyqrcode
+     $ python3 -m venv pymyenv
+     $ . pymyenv/bin/activate
+     $ pip install flask-security-too[common,mfa,fsqla]
 
 
 Two-factor Application

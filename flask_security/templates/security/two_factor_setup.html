@@ -51,7 +51,7 @@
         {% if chosen_method=="sms" and chosen_method in choices %}
             <p>{{ _fsdomain("To Which Phone Number Should We Send Code To?") }}</p>
             {{ two_factor_setup_form.hidden_tag() }}
-            {{ render_field_with_errors(two_factor_setup_form.phone, placeholder="enter phone number") }}
+            {{ render_field_with_errors(two_factor_setup_form.phone) }}
             {{ render_field(two_factor_setup_form.submit) }}
         {% endif %}
     </form>

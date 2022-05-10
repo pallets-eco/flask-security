@@ -1375,7 +1375,7 @@ def test_tf(app, client, get_message):
     code = sms_sender.messages[0].split()[-1]
 
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
 
 
 @pytest.mark.two_factor()

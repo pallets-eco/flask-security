@@ -450,8 +450,8 @@ _default_messages = {
         "error",
     ),
     "FAILED_TO_SEND_CODE": (_("Failed to send code. Please try again later"), "error"),
-    "TWO_FACTOR_INVALID_TOKEN": (_("Invalid Token"), "error"),
-    "TWO_FACTOR_LOGIN_SUCCESSFUL": (_("Your token has been confirmed"), "success"),
+    "TWO_FACTOR_INVALID_TOKEN": (_("Invalid code"), "error"),
+    "TWO_FACTOR_LOGIN_SUCCESSFUL": (_("Your code has been confirmed"), "success"),
     "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL": (
         _("You successfully changed your two-factor method."),
         "success",

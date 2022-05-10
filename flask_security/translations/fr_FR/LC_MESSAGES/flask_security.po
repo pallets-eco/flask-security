@@ -193,7 +193,7 @@ msgstr "Adresse email non valide"
 
 #: flask_security/core.py:413
 msgid "Invalid code"
-msgstr ""
+msgstr "Code invalide"
 
 #: flask_security/core.py:414
 msgid "Password not provided"
@@ -222,7 +222,7 @@ msgstr ""
 
 #: flask_security/core.py:426
 msgid "Phone number not valid e.g. missing country code"
-msgstr ""
+msgstr "Numéro de téléphone non valide, par ex. code pays manquant"
 
 #: flask_security/core.py:427
 msgid "Specified user does not exist"
@@ -234,7 +234,7 @@ msgstr "Mot de passe non valide"
 
 #: flask_security/core.py:429
 msgid "Password or code submitted is not valid"
-msgstr ""
+msgstr "Le mot de passe ou le code soumis n'est pas valide"
 
 #: flask_security/core.py:430
 msgid "You have successfully logged in."
@@ -426,7 +426,7 @@ msgstr "Connexion"
 #: flask_security/templates/security/email/us_instructions.html:16
 #: flask_security/templates/security/us_signin.html:6
 msgid "Sign In"
-msgstr ""
+msgstr "Sign In"
 
 #: flask_security/forms.py:64 flask_security/templates/security/_menu.html:28
 #: flask_security/templates/security/register_user.html:6
@@ -467,7 +467,7 @@ msgstr ""
 
 #: flask_security/forms.py:73
 msgid "Change Method"
-msgstr ""
+msgstr "Changer de méthode"
 
 #: flask_security/forms.py:74
 msgid "Phone Number"
@@ -475,7 +475,7 @@ msgstr ""
 
 #: flask_security/forms.py:75
 msgid "Authentication Code"
-msgstr ""
+msgstr "Code d'Identification"
 
 #: flask_security/forms.py:76
 msgid "Submit"
@@ -491,7 +491,7 @@ msgstr ""
 
 #: flask_security/forms.py:79
 msgid "Identity"
-msgstr ""
+msgstr "Identité"
 
 #: flask_security/forms.py:80
 msgid "Send Code"
@@ -499,7 +499,7 @@ msgstr ""
 
 #: flask_security/forms.py:81
 msgid "Passcode"
-msgstr ""
+msgstr "Code d'accès"
 
 #: flask_security/forms.py:82
 msgid "Username"
@@ -525,7 +525,7 @@ msgstr "Configurer par SMS"
 
 #: flask_security/forms.py:643
 msgid "Disable two factor authentication"
-msgstr ""
+msgstr "Désactiver l'authentification à deux facteurs"
 
 #: flask_security/tf_plugin.py:51
 msgid "Available Second Factor Methods:"
@@ -537,11 +537,11 @@ msgstr ""
 
 #: flask_security/unified_signin.py:129
 msgid "Code or Password"
-msgstr ""
+msgstr "Code ou mot de passe"
 
 #: flask_security/unified_signin.py:134 flask_security/unified_signin.py:262
 msgid "Available Methods"
-msgstr ""
+msgstr "Méthodes disponibles"
 
 #: flask_security/unified_signin.py:136
 msgid "Via email"
@@ -650,7 +650,7 @@ msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:35
 msgid "To complete logging in, please enter the code sent to your mail"
-msgstr ""
+msgstr "Pour terminer la connexion, veuillez saisir le code envoyé à votre messagerie"
 
 #: flask_security/templates/security/two_factor_setup.html:41
 msgid ""
@@ -705,7 +705,7 @@ msgstr "Configurer une option de connexion supplémentaire"
 #: flask_security/templates/security/us_signin.html:23
 #: flask_security/templates/security/us_verify.html:21
 msgid "Code has been sent"
-msgstr ""
+msgstr "Le code a été envoyé"
 
 #: flask_security/templates/security/us_setup.html:65
 msgid ""

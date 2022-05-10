@@ -112,6 +112,13 @@ def create_app():
             # NEVER NEVER NEVER do this in production
             return "smCCiy_k2CqQydSQ_kPEjV5a2d0ApfatcpQ1aXDmQPo"
 
+        def origin(self) -> str:
+            # Return the RP origin - normally this is just the URL of the application.
+            # To test with ngrok - we need the https address that the browser originally
+            # sent - it is sent as the ORIGIN header - not sure if this should be
+            # default or just for testing.
+            return request.origin if request.origin else request.host_url.rstrip("/")
+
     # Turn on all features (except passwordless since that removes normal login)
     for opt in [
         "changeable",

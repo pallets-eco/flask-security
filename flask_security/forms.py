@@ -6,7 +6,7 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -18,21 +18,18 @@ from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
 from wtforms import (
     BooleanField,
+    EmailField,
     Field,
     HiddenField,
     PasswordField,
     RadioField,
     StringField,
     SubmitField,
+    TelField,
     ValidationError,
     validators,
 )
 
-try:  # pragma: no cover
-    # Version 3+
-    from wtforms.fields import EmailField
-except ImportError:
-    from wtforms.fields.html5 import EmailField
 from wtforms.validators import StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
@@ -87,15 +84,6 @@ _default_field_labels = {
     ),
     "sms_method": _("Set up using SMS"),
 }
-
-
-class NullableStringField(StringField):
-    # Note that current WTForms (2.2.1) has a bug where StringFields can never be
-    # None - it changes them to an empty string. DBs don't like that if you have
-    # your column be 'nullable' and 'unique'.
-    def process_formdata(self, valuelist):
-        if valuelist:
-            self.data = valuelist[0]
 
 
 class ValidatorMixin:
@@ -288,19 +276,24 @@ class UniqueEmailFormMixin:
 
 class PasswordFormMixin:
     password = PasswordField(
-        get_form_field_label("password"), validators=[password_required]
+        get_form_field_label("password"),
+        render_kw={"autocomplete": "current-password"},
+        validators=[password_required],
     )
 
 
 class NewPasswordFormMixin:
     password = PasswordField(
-        get_form_field_label("password"), validators=[password_required]
+        get_form_field_label("password"),
+        render_kw={"autocomplete": "new-password"},
+        validators=[password_required],
     )
 
 
 class PasswordConfirmFormMixin:
     password_confirm = PasswordField(
         get_form_field_label("retype_password"),
+        render_kw={"autocomplete": "new-password"},
         validators=[
             EqualTo("password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
@@ -318,8 +311,21 @@ class NextFormMixin:
             raise ValidationError(get_message("INVALID_REDIRECT")[0])
 
 
-register_username_field = NullableStringField(
+class CodeFormMixin:
+    code = StringField(
+        get_form_field_label("code"),
+        render_kw={
+            "autocomplete": "one-time-code",
+            "inputtype": "numeric",
+            "pattern": "[0-9]*",
+        },
+        validators=[Required()],
+    )
+
+
+register_username_field = StringField(
     get_form_field_label("username"),
+    render_kw={"autocomplete": "username"},
     validators=[valid_username, unique_username],
 )
 
@@ -421,14 +427,11 @@ login_string_field = StringField(
 )
 
 
-class LoginForm(Form, NextFormMixin):
+class LoginForm(Form, PasswordFormMixin, NextFormMixin):
     """The default login form"""
 
     # Note: "email" field is added at init_app time - depending on whether
     # username is enabled or not (EmailField versus StringField)
-    password = PasswordField(
-        get_form_field_label("password"), validators=[password_required]
-    )
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(get_form_field_label("login"))
 
@@ -509,7 +512,9 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
 
     # Password optional when Unified Signin enabled.
     password = PasswordField(
-        get_form_field_label("password"), validators=[validators.Optional()]
+        get_form_field_label("password"),
+        render_kw={"autocomplete": "new-password"},
+        validators=[validators.Optional()],
     )
 
     def validate(self, **kwargs: t.Any) -> bool:
@@ -595,11 +600,14 @@ class ChangePasswordForm(Form, PasswordFormMixin):
     """The default change password form"""
 
     new_password = PasswordField(
-        get_form_field_label("new_password"), validators=[password_required]
+        get_form_field_label("new_password"),
+        render_kw={"autocomplete": "new-password"},
+        validators=[password_required],
     )
 
     new_password_confirm = PasswordField(
         get_form_field_label("retype_password"),
+        render_kw={"autocomplete": "new-password"},
         validators=[
             EqualTo("new_password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
@@ -644,7 +652,7 @@ class TwoFactorSetupForm(Form):
         ],
         validate_choice=False,
     )
-    phone = StringField(get_form_field_label("phone"))
+    phone = TelField(get_form_field_label("phone"))
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
@@ -675,10 +683,9 @@ class TwoFactorSetupForm(Form):
         return True
 
 
-class TwoFactorVerifyCodeForm(Form):
+class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
     """The Two-factor token validation form"""
 
-    code = StringField(get_form_field_label("code"))
     submit = SubmitField(get_form_field_label("submitcode"))
 
     window: int
@@ -704,7 +711,7 @@ class TwoFactorVerifyCodeForm(Form):
         else:
             return False
 
-        # verify entered token with user's totp secret
+        # verify entered code with user's totp secret
         if not _security._totp_factory.verify_totp(
             token=self.code.data,
             totp_secret=self.tf_totp_secret,
