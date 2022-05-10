@@ -26,6 +26,8 @@
     {% endif %}
   </div>
 {% endmacro %}
+
+{# render WTForms (>3.0) form level errors #}
 {% macro render_form_errors(form) %}
   {% if form.form_errors %}
     <div class="fs-div" id="fs-form-errors">

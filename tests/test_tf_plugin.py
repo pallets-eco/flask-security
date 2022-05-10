@@ -70,7 +70,7 @@ def test_tf_select(app, client, get_message):
     assert b"Please enter your authentication code generated via: sms" in response.data
     code = sms_sender.messages[0].split()[-1]
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert b"Your code has been confirmed" in response.data
 
     assert not tf_in_session(get_session(response))
 

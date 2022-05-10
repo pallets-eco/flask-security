@@ -266,9 +266,9 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
         ReferenceField,
         StringField,
     )
-    from mongoengine import PULL, CASCADE
+    from mongoengine import PULL, CASCADE, disconnect_all
 
-    db_name = "flask_security_test_%s" % str(time.time()).replace(".", "_")
+    db_name = "flask_security_test"
     app.config["MONGODB_SETTINGS"] = {
         "db": db_name,
         "host": realmongodburl if realmongodburl else "mongomock://localhost",
@@ -343,6 +343,7 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
             Role.drop_collection()
             WebAuthn.drop_collection()
             db.connection.drop_database(db_name)
+            disconnect_all()
 
     request.addfinalizer(tear_down)
 

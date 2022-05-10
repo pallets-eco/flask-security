@@ -146,12 +146,14 @@ By default the unit tests use an in-memory sqlite DB to test datastores (except 
 MongoDatastore which uses mongomock). While this is sufficient for most changes, changes
 to the datastore layer require testing against a real DB (the CI tests test against
 postgres). It is easy to run the unit tests against a real DB instance. First
-of course install the DB locally then::
+of course install and start the DB locally then::
 
   # For postgres
   pytest --realdburl postgresql://<user>@localhost/
   # For mysql
   pytest --realdburl "mysql+pymysql://root:<password>@localhost/"
+  # For mongodb
+  pytest --realmongodburl "localhost"
 
 Views
 +++++

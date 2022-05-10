@@ -287,10 +287,7 @@ def test_confirmation_different_user_when_logged_in_no_auto(client, get_message)
     response = client.get("/confirm/" + token2, follow_redirects=True)
     assert get_message("EMAIL_CONFIRMED") in response.data
     # should get a login view
-    assert (
-        b'<input id="password" name="password" required type="password" value="">'
-        in response.data
-    )
+    assert b'<a href="/login">Login</a>' in response.data
 
 
 @pytest.mark.registerable()

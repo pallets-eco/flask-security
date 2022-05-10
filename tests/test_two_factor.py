@@ -276,7 +276,7 @@ def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_two_factor_flag(app, client):
+def test_two_factor_flag(app, client, get_message):
     # trying to verify code without going through two-factor
     # first login function
     wrong_code = b"000000"
@@ -361,11 +361,11 @@ def test_two_factor_flag(app, client):
     code = sms_sender.messages[0].split()[-1]
     # submit bad token to two_factor_token_validation
     response = client.post("/tf-validate", data=dict(code=wrong_code))
-    assert b"Invalid Token" in response.data
+    assert get_message("TWO_FACTOR_INVALID_TOKEN") in response.data
 
     # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
 
     # Upon completion, session cookie shouldn't have any two factor stuff in it.
     assert not tf_in_session(get_session(response))
@@ -421,7 +421,7 @@ def test_two_factor_flag(app, client):
     # Generate token from passed totp_secret
     code = totp.generate().token
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
 
     # Verify that the remember token is properly set
     found = False
@@ -459,7 +459,7 @@ def test_two_factor_flag(app, client):
     code = sms_sender.messages[0].split()[-1]
 
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
     assert not tf_in_session(get_session(response))
 
     logout(client)
@@ -488,7 +488,7 @@ def test_two_factor_flag(app, client):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_setup_bad_phone(app, client):
+def test_setup_bad_phone(app, client, get_message):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
     message = b"Two-factor authentication adds an extra layer of security"
@@ -510,7 +510,7 @@ def test_setup_bad_phone(app, client):
     assert b"data:image/png;base64," not in response.data
 
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
     assert not tf_in_session(get_session(response))
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -640,7 +640,7 @@ def test_rescue_json(app, client):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_no_opt_out(app, client):
+def test_no_opt_out(app, client, get_message):
     # Test if 2FA required, can't opt-out.
     sms_sender = SmsSenderFactory.createSender("test")
     response = client.post(
@@ -653,7 +653,7 @@ def test_no_opt_out(app, client):
 
     # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
 
     response = client.get("/tf-setup", follow_redirects=True)
     assert b"Disable two factor" not in response.data
@@ -702,7 +702,7 @@ def test_evil_validate(app, client):
     del signalled_identity[:]
 
 
-def test_opt_in(app, client):
+def test_opt_in(app, client, get_message):
     """
     Test entire lifecycle of user not having 2FA - setting it up, then deciding
     to turn it back off
@@ -754,7 +754,7 @@ def test_opt_in(app, client):
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
     # Verify now logged in
     with app.app_context():
         user = app.security.datastore.find_user(email="jill@lp.com")
@@ -830,7 +830,7 @@ def test_recoverable(app, client, get_message):
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
 
     # verify we are logged in
     response = client.get("/profile", follow_redirects=False)
@@ -869,7 +869,7 @@ def test_admin_setup_reset(app, client, get_message):
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
 
     # verify we are logged in
     response = client.get("/profile", follow_redirects=False)
@@ -897,7 +897,7 @@ def test_admin_setup_reset(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_datastore(app, client):
+def test_datastore(app, client, get_message):
     # Test that user record is properly set after proper 2FA setup.
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(email="gene@lp.com", password="password")
@@ -923,7 +923,7 @@ def test_datastore(app, client):
 
     # submit token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"Your token has been confirmed" in response.data
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
     session = get_session(response)
     # Verify that successful login clears session info
     assert not tf_in_session(session)
