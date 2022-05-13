@@ -34,7 +34,6 @@ from tests.test_utils import (
     populate_data,
     reset_fresh,
 )
-from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
 from flask import Flask, abort, request, Response
 from flask_security import Security
@@ -1059,36 +1058,6 @@ def test_verify_next(app, client, get_message):
         base_url="http://127.0.0.1:5000",
     )
     assert response.location == "http://127.0.0.1:5000/dashboard/settings/"
-
-
-@pytest.mark.webauthn()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
-def test_verify_wan(app, client, get_message):
-    # test get correct options when requiring a reauthentication and have wan keys
-    # setup.
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
-
-    reg_2_keys(client)
-
-    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
-    response = client.get("/fresh", headers=headers)
-    assert response.status_code == 401
-    assert response.json["response"]["reauth_required"]
-    assert response.json["response"]["has_webauthn_verify_credential"]
-
-    # the verify form should have the webauthn verify form attached
-    response = client.get("verify")
-    assert b'action="/wan-verify"' in response.data
-
-    app.config["SECURITY_WAN_ALLOW_AS_VERIFY"] = None
-    response = client.get("/fresh", headers=headers)
-    assert response.status_code == 401
-    assert response.json["response"]["reauth_required"]
-    assert not response.json["response"]["has_webauthn_verify_credential"]
-
-    # the verify form should NOT have the webauthn verify form attached
-    response = client.get("verify")
-    assert b'action="/wan-verify"' not in response.data
 
 
 def test_direct_decorator(app, client, get_message):

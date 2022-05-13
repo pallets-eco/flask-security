@@ -4,6 +4,12 @@
 
     WebAuthn tests
 
+    NOTE: This test suite will be skipped if you don't have webauthn package installed.
+
+    ALSO NOTE: If you import anything from this test suite into another one, that test
+    suite will ALSO by skipped if you don't have webauthn package installed, so be
+    careful with that!
+
     :copyright: (c) 2021-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
@@ -179,6 +185,12 @@ SIGNIN_DATA_UH = {
 
 
 class HackWebauthnUtil(WebauthnUtil):
+    """
+    NOTE: This CANNOT be used by other tests outside this module unless they also are
+    ok with pytest.importorskip("webauthn"), which will skip the whole test suite
+    if webauthn isn't available.
+    """
+
     def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
         return CHALLENGE
 
@@ -227,8 +239,13 @@ def _register_start_json(client, name="testr1", usage="secondary"):
 
 
 def reg_2_keys(client):
-    # Register 2 keys - one first, one secondary
-    # This can be used by other tests outside this module.
+    """
+    Register 2 keys - one first, one secondary
+
+    NOTE: This CANNOT be used by other tests outside this module unless they also are
+    ok with pytest.importorskip("webauthn"), which will skip the whole test suite
+    if webauthn isn't available.
+    """
     authenticate(client)
     register_options, response_url = _register_start_json(
         client, name="first", usage="first"
@@ -1609,3 +1626,64 @@ def test_uv_required(client):
     )
     assert response.status_code == 200
     assert response.json["response"]["user"]["email"] == "matt@lp.com"
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_verify_wan(app, client, get_message):
+    # test get correct options when requiring a re-authentication and have wan keys
+    # setup.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    reg_2_keys(client)
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("/fresh", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert response.json["response"]["has_webauthn_verify_credential"]
+
+    # the verify form should have the webauthn verify form attached
+    response = client.get("verify")
+    assert b'action="/wan-verify"' in response.data
+
+    app.config["SECURITY_WAN_ALLOW_AS_VERIFY"] = None
+    response = client.get("/fresh", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert not response.json["response"]["has_webauthn_verify_credential"]
+
+    # the verify form should NOT have the webauthn verify form attached
+    response = client.get("verify")
+    assert b'action="/wan-verify"' not in response.data
+
+
+@pytest.mark.unified_signin()
+@pytest.mark.settings(
+    webauthn_util_cls=HackWebauthnUtil, us_enabled_methods=["password"]
+)
+def test_us_verify_wan(app, client, get_message):
+    # test get correct options when requiring a re-authentication and have wan keys
+    # setup.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    reg_2_keys(client)
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("/us-setup", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert response.json["response"]["has_webauthn_verify_credential"]
+
+    # the us-verify form should have the webauthn verify form attached
+    response = client.get("/us-verify")
+    assert b'action="/wan-verify"' in response.data
+
+    app.config["SECURITY_WAN_ALLOW_AS_VERIFY"] = None
+    response = client.get("/us-setup", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+    assert not response.json["response"]["has_webauthn_verify_credential"]
+
+    # the us-verify form should NOT have the webauthn verify form attached
+    response = client.get("/us-verify")
+    assert b'action="/wan-verify"' not in response.data
