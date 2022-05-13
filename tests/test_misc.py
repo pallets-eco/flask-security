@@ -85,6 +85,19 @@ def test_my_mail_util(app, sqlalchemy_datastore):
             assert sender == "no-reply@localhost"
             assert isinstance(sender, str)
 
+            # We'll trust email_validator to unit test its own validation methods,
+            # but we can at least smoke test our wrapper methods
+            assert self.normalize("matt@lp.com") == "matt@lp.com"
+            assert self.validate("matt@lp.com") == "matt@lp.com"
+
+            # This exception is raised from email_validator, but our docstrings
+            # say it'll be a ValueError, so let's check that. If email_validator
+            # ever changes that behavior we'll catch it here and be able to either
+            # update docstring, or catch new exception and re-raise ValueError
+            # ourselves.
+            with pytest.raises(ValueError):
+                self.validate("matt.lp.com")
+
     init_app_with_options(
         app, sqlalchemy_datastore, **{"security_args": {"mail_util_cls": MyMailUtil}}
     )

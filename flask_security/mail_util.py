@@ -110,12 +110,13 @@ class MailUtil:
 
     def normalize(self, email: str) -> str:
         """
-        Given an input email - return a normalized version.
+        Given an input email, return a normalized version.
+
         Must be called in app context and uses :py:data:`SECURITY_EMAIL_VALIDATOR_ARGS`
         config variable to pass any relevant arguments to
         email_validator.validate_email() method.
 
-        Will throw email_validator.EmailNotValidError if email isn't even valid.
+        Will throw ValueError if email isn't even valid.
         """
         validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
         valid = email_validator.validate_email(email, **validator_args)
@@ -124,11 +125,12 @@ class MailUtil:
     def validate(self, email: str) -> str:
         """
         Validate the given email.
-        If valid, the normalized version is returned.
 
+        Must be called in app context and uses :py:data:`SECURITY_EMAIL_VALIDATOR_ARGS`
+        config variable to pass any relevant arguments to
+        email_validator.validate_email() method.
+
+        If valid, the normalized version is returned.
         ValueError is thrown if not valid.
         """
-
-        validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
-        valid = email_validator.validate_email(email, **validator_args)
-        return valid.email
+        return self.normalize(email)
