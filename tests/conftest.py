@@ -107,6 +107,13 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
         marker_getter = request.node.get_closest_marker
     else:
         marker_getter = request.keywords.get
+
+    # Import webauthn, or skip test if webauthn isn't installed
+    webauthn_test = marker_getter("webauthn")
+    if webauthn_test is not None:
+        pytest.importorskip("webauthn")
+
+    # Override config settings as requested for this test
     settings = marker_getter("settings")
     if settings is not None:
         for key, value in settings.kwargs.items():
