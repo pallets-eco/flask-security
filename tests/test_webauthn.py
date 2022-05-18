@@ -39,8 +39,6 @@ from flask_security import (
     wan_deleted,
 )
 
-pytest.importorskip("webauthn")
-
 pytestmark = pytest.mark.webauthn()
 
 # We can't/don't test the actual client-side javascript and browser APIs - so
