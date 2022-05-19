@@ -30,7 +30,7 @@ Supported extras are:
 * ``fsqla`` - Use flask-sqlalchemy and sqlalchemy as your storage interface.
 * ``common`` - Install Flask-Mailman, bcrypt (the default password hash), and bleach.
 * ``mfa`` - Install packages used for multi-factor (two-factor, unified signin, WebAuthn):
-  cryptography, pyqrcode, phonenumberslite (note that for SMS you still need
+  cryptography, qrcode, phonenumberslite (note that for SMS you still need
   to pick an SMS provider and install appropriate packages), and webauthn.
 
 Your application will also need a database backend:
