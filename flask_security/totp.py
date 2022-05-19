@@ -139,11 +139,15 @@ class Totp:
         .. versionadded:: 4.0.0
         """
         try:
-            import pyqrcode
+            import qrcode
+            import qrcode.image.svg
 
-            code = pyqrcode.create(self.get_totp_uri(username, totp))
+            image = qrcode.make(
+                self.get_totp_uri(username, totp),
+                image_factory=qrcode.image.svg.SvgImage,
+            )
             with io.BytesIO() as virtual_file:
-                code.svg(file=virtual_file, scale=3)
+                image.save(virtual_file)
                 image_as_str = base64.b64encode(virtual_file.getvalue()).decode("ascii")
 
             return f"data:image/svg+xml;base64,{image_as_str}"

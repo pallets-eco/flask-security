@@ -20,10 +20,10 @@ passlib
 pony
 phonenumberslite
 pydocstyle
-pyqrcode
 pytest-cache
 pytest-cov
 pytest
+qrcode
 sqlalchemy
 sqlalchemy-utils
 webauthn>=1.5.0;python_version>='3.8'
