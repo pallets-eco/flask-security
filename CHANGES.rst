@@ -17,6 +17,8 @@ Features
   Deprecate replacing login_manager so we can possibly vendor that in in the future.
 - (:pr:`608`) Add Icelandic translations. (ofurkusi)
 - (:issue:`256`) Add custom HTML attributes to improve user experience.
+  This changed LoginForm quite a bit - please see backwards compatability concerns
+  below. The default LoginForm and template should be the same as before.
 
 Fixes
 +++++
@@ -24,6 +26,9 @@ Fixes
 - (:issue:`531`) Get rid of Flask-Mail. Flask-Mailman is now the default preferred email package.
   Flask-Mail is still supported so there should be no backwards compatability issues.
 - (:issue:`597`) A delete option has been added to us-setup (form and view).
+- (:pr:`xxx`) Improve username support - the LoginForm now has a separate field for username if
+  ``SECURITY_USERNAME_ENABLE`` is True, and properly displays input fields only if the associated
+  field is an identity attribute (as specified by :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`)
 
 Backward Compatibility Concerns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,13 +49,29 @@ For unified signin:
 - In ``us-verify`` the 'code_methods' item now lists just active/setup methods that generate a code
   not ALL possible methods that generate a code.
 - ``SECURITY_US_VERIFY_SEND_CODE_URL`` and ``SECURITY_US_SIGNIN_SEND_CODE_URL`` endpoints are now POST only.
-- A very old piece of code in registerable, would immediately commit to the DB when a new user was created.
+
+Login:
+
+- Since the beginning of time, the flask-security login form has accepted any input in the
+  'email' field, and used that to check if it corresponds to any field in ``SECURITY_USER_IDENTITY_ATTRIBUTES``.
+  This has always been problematic and confusing - and with the addition of HTML attributes for various
+  form fields - having a field with multiple possible inputs is no longer a viable user experience.
+  This is no longer supported, and the LoginForm now declares the ``email`` field to be of type ``EmailFormMixin``
+  which requires a valid (after normalization) and existing email address. The most common usage of this legacy feature was to allow
+  an email or username - Flask-Security now has core support for a ``username`` option.
+  Please see :ref:`custom_login_form` for an example of how to replicate the legacy behavior.
+- Some error messages have changed - ``USER_DOES_NOT_EXIST`` is now returned for any identity error including an empty value.
+
+Other:
+
+- A very old piece of code in registrable, would immediately commit to the DB when a new user was created.
   It now does what all over views due, and have the caller responsible for committing the transaction - usually by
   setting up a flask ``after_this_request`` action. This could affect an application that captured the registration signal
   and stored the ``user`` object for later use - this user object would likely be invalid after the request is finished.
 - Some fields have custom HTML attributes attached to them (e.g. autocomplete, type, etc). These are stored as part of the
   form in the ``render_kw`` attribute. This could cause some confusion if an app had its own templates and set different
   attributes.
+- encrypt_password method has been removed. It has been deprecated since 2.0.2
 
 For templates:
 

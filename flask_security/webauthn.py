@@ -82,7 +82,6 @@ from .utils import (
     check_and_get_token_status,
     config_value as cv,
     do_flash,
-    find_user,
     json_error_response,
     get_message,
     get_post_login_redirect,
@@ -90,6 +89,7 @@ from .utils import (
     get_url,
     get_within_delta,
     login_user,
+    lookup_identity,
     propagate_next,
     simple_render_json,
     suppress_form_csrf,
@@ -226,7 +226,7 @@ class WebAuthnSigninForm(Form):
             # out if an unknown or disabled account - that would provide too
             # much 'discovery' capability of un-authenticated users.
             if self.identity.data:
-                user = find_user(self.identity.data)
+                user = lookup_identity(self.identity.data)
         if user and user.is_active:
             self.user = user
         return True

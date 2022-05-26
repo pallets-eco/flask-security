@@ -8,7 +8,7 @@
     :license: MIT, see LICENSE for more details.
 
     TODO:
-        - add localzed callback for select choices.
+        - add localized callback for select choices.
 """
 import typing as t
 

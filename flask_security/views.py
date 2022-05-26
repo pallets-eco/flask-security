@@ -81,6 +81,7 @@ from .utils import (
     check_and_update_authn_fresh,
     config_value as cv,
     do_flash,
+    get_identity_attributes,
     get_message,
     get_post_login_redirect,
     get_post_logout_redirect,
@@ -169,6 +170,7 @@ def login() -> "ResponseValue":
         form = form_class(request.form, meta=suppress_form_csrf())
 
     if form.validate_on_submit():
+        assert form.user is not None
         remember_me = form.remember.data if "remember" in form else None
         response = _security.two_factor_plugins.tf_enter(
             form.user, remember_me, "password"
@@ -183,25 +185,32 @@ def login() -> "ResponseValue":
             return base_render_json(form, include_auth_token=True)
         return redirect(get_post_login_redirect())
 
-    if _security._want_json(request):
-        if current_user.is_authenticated:
-            form.user = current_user
-        return base_render_json(form)
-
     if current_user.is_authenticated:
+        form.user = current_user
+        if _security._want_json(request):
+            return base_render_json(form)
         return redirect(get_url(cv("POST_LOGIN_VIEW")))
-    else:
-        if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
-            do_flash(*get_message("CONFIRMATION_REQUIRED"))
-            return redirect(
-                get_url(
-                    cv("REQUIRES_CONFIRMATION_ERROR_VIEW"),
-                    qparams={"email": form.email.data},
-                )
+
+    if _security._want_json(request):
+        payload = {
+            "identity_attributes": get_identity_attributes(),
+        }
+        return base_render_json(form, additional=payload)
+
+    if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
+        do_flash(*get_message("CONFIRMATION_REQUIRED"))
+        return redirect(
+            get_url(
+                cv("REQUIRES_CONFIRMATION_ERROR_VIEW"),
+                qparams={"email": form.email.data},
             )
-        return _security.render_template(
-            cv("LOGIN_USER_TEMPLATE"), login_user_form=form, **_ctx("login")
         )
+    return _security.render_template(
+        cv("LOGIN_USER_TEMPLATE"),
+        login_user_form=form,
+        identity_attributes=get_identity_attributes(),
+        **_ctx("login"),
+    )
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
@@ -214,6 +223,7 @@ def verify():
     else:
         form = form_class(meta=suppress_form_csrf())
 
+    form.user = current_user
     if form.validate_on_submit():
         # form may have called verify_and_update_password()
         after_this_request(view_commit)
@@ -228,7 +238,6 @@ def verify():
 
     webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
     if _security._want_json(request):
-        assert form.user == current_user
         payload = {
             "has_webauthn_verify_credential": webauthn_available,
         }

@@ -49,8 +49,7 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorRescueForm,
     VerifyForm,
-    login_email_field,
-    login_string_field,
+    login_username_field,
     register_username_field,
 )
 from .mail_util import MailUtil
@@ -1489,6 +1488,20 @@ class Security:
                     "User model must contain username if"
                     " SECURITY_USERNAME_ENABLE is True"
                 )
+            # if they want USERNAME_ENABLE - then they better not have defined
+            # username in their own forms
+            if any(
+                hasattr(f, "username")
+                for f in [
+                    self.register_form,
+                    self.confirm_register_form,
+                    self.login_form,
+                ]
+            ):  # pragma: no cover
+                raise ValueError(
+                    "Your login_form or register_form has a"
+                    " 'username' attribute already"
+                )
             # if not already listed in user identity attributes, add it at the end
             uialist = []
             for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):
@@ -1504,27 +1517,15 @@ class Security:
                     }
                 )
                 app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = uias
+                self.user_identity_attributes = uias
 
-            # Add dynamic fields based on whether USERNAME_ENABLE is set.
-            if issubclass(self.register_form, RegisterFormMixin) and not hasattr(
-                self.register_form, "username"
-            ):
+            # Add dynamic fields - probably overkill to check if these are our forms.
+            if issubclass(self.register_form, RegisterFormMixin):
                 self.register_form.username = register_username_field
-            if issubclass(
-                self.confirm_register_form, RegisterFormMixin
-            ) and not hasattr(self.confirm_register_form, "username"):
+            if issubclass(self.confirm_register_form, RegisterFormMixin):
                 self.confirm_register_form.username = register_username_field
-
-        # N.B. this - and above actually modify the class (by adding an attribute).
-        # Thus if there are 2 instance/apps, with different settings for
-        # USERNAME_ENABLE - it won't work.
-        if issubclass(self.login_form, LoginForm) and not hasattr(
-            self.login_form, "email"
-        ):
-            if cv("USERNAME_ENABLE", app):
-                self.login_form.email = login_string_field
-            else:
-                self.login_form.email = login_email_field
+            if issubclass(self.login_form, LoginForm):
+                self.login_form.username = login_username_field
 
         # initialize two-factor plugins.
         self.two_factor_plugins = TfPlugin()

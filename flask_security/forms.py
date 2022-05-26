@@ -30,7 +30,7 @@ from wtforms import (
     validators,
 )
 
-from wtforms.validators import StopValidation
+from wtforms.validators import Optional, StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
 from .confirmable import requires_confirmation
@@ -40,7 +40,6 @@ from .utils import (
     _datastore,
     config_value as cv,
     do_flash,
-    find_user,
     get_identity_attribute,
     get_message,
     hash_password,
@@ -130,7 +129,9 @@ class Length(ValidatorMixin, validators.Length):
 
 
 class EmailValidation:
-    """Simple interface to email_validator."""
+    """Simple interface to email_validator.
+    N.B. Side-effect - if valid email, the field.data is set to the normalized value.
+    """
 
     def __call__(self, form, field):
         if field.data is None:  # pragma: no cover
@@ -171,40 +172,50 @@ def get_form_field_xlate(txt):
     return make_lazy_string(_local_xlate, txt)
 
 
-def unique_user_email(form, field):
+def valid_user_email(form, field):
+    # Verify email exists in DB - be sure to normalize first.
+    # Side-effect - set form.user if field is valid
     uia_email = get_identity_attribute("email")
-    norm_email = _security._mail_util.normalize(field.data)
+    form.user = _datastore.find_user(
+        case_insensitive=uia_email.get("case_insensitive", False), email=field.data
+    )
+    if form.user is None:
+        raise ValidationError(get_message("USER_DOES_NOT_EXIST")[0])
+
+
+def unique_user_email(form, field):
+    # Verify email not already in DB
+    # Assumes field value already normalized - email_validator does this.
+    uia_email = get_identity_attribute("email")
     if (
         _datastore.find_user(
-            case_insensitive=uia_email.get("case_insensitive", False), email=norm_email
+            case_insensitive=uia_email.get("case_insensitive", False), email=field.data
         )
         is not None
     ):
-        msg = get_message("EMAIL_ALREADY_ASSOCIATED", email=norm_email)[0]
+        msg = get_message("EMAIL_ALREADY_ASSOCIATED", email=field.data)[0]
+        raise ValidationError(msg)
+
+
+def username_validator(form, field):
+    # Side-effect - field.data is updated to normalized value.
+    msg, field.data = _security._username_util.validate(field.data)
+    if msg:
         raise ValidationError(msg)
 
 
 def unique_username(form, field):
-    if not field.data:
-        # N.B. username is NULLABLE in the DB. Whether it is required for an app
-        # is dictated by the USERNAME_REQUIRED config.
-        return
+    # Verify username not already in DB
+    # Assumes field value already normalized - username_validator does this.
     uia_username = get_identity_attribute("username")
-    norm_username = _security._username_util.normalize(field.data)
     if (
         _datastore.find_user(
             case_insensitive=uia_username.get("case_insensitive", False),
-            username=norm_username,
+            username=field.data,
         )
         is not None
     ):
-        msg = get_message("USERNAME_ALREADY_ASSOCIATED", username=norm_username)[0]
-        raise ValidationError(msg)
-
-
-def valid_username(form, field):
-    msg, field.data = _security._username_util.validate(field.data)
-    if msg:
+        msg = get_message("USERNAME_ALREADY_ASSOCIATED", username=field.data)[0]
         raise ValidationError(msg)
 
 
@@ -235,17 +246,6 @@ def unique_identity_attribute(form, field):
                 raise ValidationError(msg)
 
 
-def valid_user_email(form, field):
-    # Verify email exists in DB - be sure to normalize first.
-    uia_email = get_identity_attribute("email")
-    norm_email = _security._mail_util.normalize(field.data)
-    form.user = _datastore.find_user(
-        case_insensitive=uia_email.get("case_insensitive", False), email=norm_email
-    )
-    if form.user is None:
-        raise ValidationError(get_message("USER_DOES_NOT_EXIST")[0])
-
-
 class Form(BaseForm):
     def __init__(self, *args, **kwargs):
         if current_app.testing:
@@ -253,23 +253,19 @@ class Form(BaseForm):
         super().__init__(*args, **kwargs)
 
 
-class EmailFormMixin:
-    email = EmailField(
-        get_form_field_label("email"), validators=[email_required, email_validator]
-    )
-
-
 class UserEmailFormMixin:
-    user: "User"
     email = EmailField(
         get_form_field_label("email"),
+        render_kw={"autocomplete": "email"},
         validators=[email_required, email_validator, valid_user_email],
     )
 
 
 class UniqueEmailFormMixin:
+    # Used for register to make sure email isn't already taken
     email = EmailField(
         get_form_field_label("email"),
+        render_kw={"autocomplete": "email"},
         validators=[email_required, email_validator, unique_user_email],
     )
 
@@ -326,7 +322,13 @@ class CodeFormMixin:
 register_username_field = StringField(
     get_form_field_label("username"),
     render_kw={"autocomplete": "username"},
-    validators=[valid_username, unique_username],
+    validators=[Optional(), username_validator, unique_username],
+)
+
+login_username_field = StringField(
+    get_form_field_label("username"),
+    render_kw={"autocomplete": "username"},
+    validators=[Optional(), username_validator],
 )
 
 
@@ -367,6 +369,7 @@ class SendConfirmationForm(Form, UserEmailFormMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user: "User" = None  # set by valid_user_email
         if request.method == "GET":
             self.email.data = request.args.get("email", None)
 
@@ -387,6 +390,7 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.requires_confirmation = False
+        self.user: "User" = None  # set by valid_user_email
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
@@ -408,6 +412,7 @@ class PasswordlessLoginForm(Form, UserEmailFormMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user: "User" = None  # set by valid_user_email
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
@@ -418,20 +423,20 @@ class PasswordlessLoginForm(Form, UserEmailFormMixin):
         return True
 
 
-login_email_field = EmailField(
-    get_form_field_label("email"), validators=[email_required]
-)
-
-login_string_field = StringField(
-    get_form_field_label("email"), validators=[email_required]
-)
-
-
 class LoginForm(Form, PasswordFormMixin, NextFormMixin):
     """The default login form"""
 
-    # Note: "email" field is added at init_app time - depending on whether
-    # username is enabled or not (EmailField versus StringField)
+    # email field - we don't use valid_user_email since for login
+    # we want to somewhat hide the difference between wrong password and
+    # unknown user.
+    email = EmailField(
+        get_form_field_label("email"),
+        render_kw={"autocomplete": "email"},
+        validators=[Optional(), email_validator],
+    )
+
+    # username is added dynamically based on USERNAME_ENABLED.
+    username: t.ClassVar[Field]
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(get_form_field_label("login"))
 
@@ -451,23 +456,53 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
                 )
             )
             self.password.description = html
-        self.requires_confirmation = False
+        self.requires_confirmation: bool = False
+        self.user: t.Optional["User"] = None
+        # ifield can be set by subclasses to skip identity checks.
+        self.ifield: t.Optional[Field] = None
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
 
-        # Historically, this used get_user() which would look at all
-        # USER_IDENTITY_ATTRIBUTES - even though the field name is 'email'
-        # We keep that behavior (for now) as we transition to find_user.
-        self.user = find_user(self.email.data)
+        # Stay clear of accessing 'username' unless we added that field.
+        # Lots of applications have added their own.
+        # To make subclassing easier - if self.ifield has been set we assume
+        # subclass has validated and attempted to look up user. It is also
+        # responsible to deal with USER_IDENTITY_ATTRIBUTES if it cares.
+        if not self.ifield:
+            uia_email = get_identity_attribute("email")
+            if uia_email and self.email.data:
+                self.ifield = self.email
+                self.user = _datastore.find_user(
+                    case_insensitive=uia_email.get("case_insensitive", False),
+                    email=self.email.data,
+                )
+            elif cv("USERNAME_ENABLE"):
+                uia_username = get_identity_attribute("username")
+                if uia_username and self.username.data:
+                    self.user = _datastore.find_user(
+                        case_insensitive=uia_username.get("case_insensitive", False),
+                        username=self.username.data,
+                    )
+                    self.ifield = self.username
+            else:
+                # A bit of backwards compat - the old LoginForm just had email and
+                # any errors would be set on that field.
+                if uia_email:
+                    self.ifield = self.email
 
         if self.user is None:
-            self.email.errors.append(get_message("USER_DOES_NOT_EXIST")[0])
+            msg = get_message("USER_DOES_NOT_EXIST")[0]
+            if self.ifield:
+                self.ifield.errors.append(msg)
+            else:
+                self.form_errors.append(msg)
             # Reduce timing variation between existing and non-existing users
             hash_password(self.password.data)
             return False
         if not self.user.password:
+            # Not sure this can ever happen
             self.password.errors.append(get_message("PASSWORD_NOT_SET")[0])
             # Reduce timing variation between existing and non-existing users
             hash_password(self.password.data)
@@ -478,10 +513,10 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
             return False
         self.requires_confirmation = requires_confirmation(self.user)
         if self.requires_confirmation:
-            self.email.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
+            self.ifield.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False
         if not self.user.is_active:
-            self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
+            self.ifield.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
         return True
 
@@ -489,14 +524,16 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
 class VerifyForm(Form, PasswordFormMixin):
     """The verify authentication form"""
 
-    user = None
     submit = SubmitField(get_form_field_label("verify_password"))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user: "User" = None  # set by view
+
     def validate(self, **kwargs: t.Any) -> bool:
-        if not super().validate(**kwargs):
+        if not super().validate(**kwargs):  # pragma: no cover
             return False
 
-        self.user = current_user
         self.password.data = _security._password_util.normalize(self.password.data)
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
@@ -688,13 +725,13 @@ class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
 
     submit = SubmitField(get_form_field_label("submitcode"))
 
-    window: int
-    primary_method: str
-    tf_totp_secret: str
-    user: "User"
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # These are set by view.
+        self.window: int = 0
+        self.primary_method: str = ""
+        self.tf_totp_secret: str = ""
+        self.user: "User" = None
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
@@ -740,6 +777,6 @@ class TwoFactorRescueForm(Form):
         super().__init__(*args, **kwargs)
 
     def validate(self, **kwargs: t.Any) -> bool:
-        if not super().validate(**kwargs):
+        if not super().validate(**kwargs):  # pragma: no cover
             return False
         return True

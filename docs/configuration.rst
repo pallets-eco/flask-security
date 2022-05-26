@@ -383,13 +383,15 @@ These configuration keys are used globally across all features.
         ]
 
     If you enable :py:data:`SECURITY_UNIFIED_SIGNIN` and set ``sms`` as a :py:data:`SECURITY_US_ENABLED_METHODS`
-    the following would be necessary::
+    and your `SECURITY_USER_IDENTITY_ATTRIBUTES` contained::
 
         [
             {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
             {"us_phone_number": {"mapper": uia_phone_mapper}},
         ]
 
+    Then after the user sets up their SMS - they could login using their phone number and
+    get a text with the authentication code.
 
     .. versionchanged:: 4.0.0
         Changed from list to list of dict.
@@ -749,12 +751,14 @@ Registerable
 
 .. py:data:: SECURITY_USERNAME_ENABLE
 
-    If set to True, the default registration form and template will have
+    If set to True, the default registration form and template, and
+    login form and template will have
     a username field added. This requires that your user model contain the
     field ``username``. It MUST be set as 'unique' and if you don't want
     to require a username, it should be set as 'nullable'.
-    Also, if set, the LoginForm will have the 'email' input changed from
-    an EmailField (which renders as an html input=email) to a StringField.
+
+    If you already have added a username field to your forms, don't set this
+    option - the system will throw an exception at init_app time.
 
     Validation and normalization is encapsulated in :class:`.UsernameUtil`.
     Note that the default validation restricts username input to be unicode
@@ -1222,15 +1226,13 @@ Unified Signin
 
 .. py:data:: SECURITY_US_ENABLED_METHODS
 
-    Specifies the default enabled methods for unified sign in authentication.
+    Specifies the default enabled methods for unified signin authentication.
     Be aware that ``password`` only affects this ``SECURITY_US_SIGNIN_URL`` endpoint.
     Removing it from here won't stop users from using the ``SECURITY_LOGIN_URL`` endpoint
-    (unless you replace the login endpoint using ``SECURITY_US_SIGNIN_REPLACES_LOGIN``).
+    (unless you replace the login endpoint using :py:data:`SECURITY_US_SIGNIN_REPLACES_LOGIN`).
 
-    If you select ``sms`` then make sure you add this to :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`::
-
-        {"us_phone_number": {"mapper": uia_phone_mapper}},
-
+    This config variable defines which methods can be used to provide authentication data.
+    :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` controls what sorts of identities can be used.
 
     Default: ``["password", "email", "authenticator", "sms"]`` - which are the only supported options.
 

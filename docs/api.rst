@@ -117,6 +117,8 @@ Datastores
 
 Utils
 -----
+.. autofunction:: flask_security.lookup_identity
+
 .. autofunction:: flask_security.login_user
 
 .. autofunction:: flask_security.logout_user
