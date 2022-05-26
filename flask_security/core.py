@@ -1596,7 +1596,7 @@ class Security:
                 and "authenticator" in cv("TWO_FACTOR_ENABLED_METHODS", app=app)
             )
             if need_qrcode:
-                self._check_modules("pyqrcode", "TWO_FACTOR or UNIFIED_SIGNIN")
+                self._check_modules("qrcode", "TWO_FACTOR or UNIFIED_SIGNIN")
 
             need_sms = (
                 cv("UNIFIED_SIGNIN", app=app)
