@@ -62,6 +62,7 @@ from flask_security.utils import (
     get_request_attr,
     hash_data,
     send_mail,
+    uia_email_mapper,
     uia_phone_mapper,
     validate_redirect_url,
     verify_hash,
@@ -106,9 +107,15 @@ def test_register_blueprint_flag(app, sqlalchemy_datastore):
 @pytest.mark.registerable()
 @pytest.mark.recoverable()
 @pytest.mark.changeable()
+@pytest.mark.settings(
+    USER_IDENTITY_ATTRIBUTES=[
+        {"email": {"mapper": uia_email_mapper}},
+        {"username": {"mapper": lambda x: x}},
+    ]
+)
 def test_basic_custom_forms(app, sqlalchemy_datastore):
     class MyLoginForm(LoginForm):
-        email = EmailField("My Login Email Address Field")
+        username = StringField("My Login Username Field")
 
     class MyRegisterForm(RegisterForm):
         email = EmailField("My Register Email Address Field")
@@ -139,7 +146,7 @@ def test_basic_custom_forms(app, sqlalchemy_datastore):
     client = app.test_client()
 
     response = client.get("/login")
-    assert b"My Login Email Address Field" in response.data
+    assert b"My Login Username Field" in response.data
 
     response = client.get("/register")
     assert b"My Register Email Address Field" in response.data

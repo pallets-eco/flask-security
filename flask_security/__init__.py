@@ -101,6 +101,7 @@ from .utils import (
     check_and_update_authn_fresh,
     login_user,
     logout_user,
+    lookup_identity,
     password_breached_validator,
     password_complexity_validator,
     password_length_validator,

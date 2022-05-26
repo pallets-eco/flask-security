@@ -38,7 +38,18 @@ paths:
                 example: render_template(SECURITY_LOGIN_USER_TEMPLATE)
             application/json:
               schema:
-                $ref: "#/components/schemas/DefaultJsonResponse"
+                allOf:
+                  - $ref: '#/components/schemas/BaseJsonResponse'
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          identity_attributes:
+                            type: array
+                            description: List of allowable identities
+                            items:
+                              type: string
         302:
           description: Response when already logged in (non-JSON request)
           headers:

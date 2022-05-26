@@ -26,9 +26,9 @@ from .utils import (
     FsPermNeed,
     config_value,
     do_flash,
-    find_user,
     get_message,
     get_url,
+    lookup_identity,
     check_and_update_authn_fresh,
     json_error_response,
     set_request_attr,
@@ -165,7 +165,7 @@ def _check_http_auth():
     auth = request.authorization or BasicAuth(username=None, password=None)
     if not auth.username:
         return False
-    user = find_user(auth.username)
+    user = lookup_identity(auth.username)
     if user and not user.active:
         return False
 

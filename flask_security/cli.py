@@ -20,7 +20,7 @@ from .quart_compat import get_quart_status
 
 from .changeable import admin_change_password
 from .utils import (
-    find_user,
+    lookup_identity,
     get_identity_attributes,
     get_identity_attribute,
     hash_password,
@@ -175,7 +175,7 @@ def roles_add(user, role):
 
     USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
     """
-    user_obj = find_user(user)
+    user_obj = lookup_identity(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
 
@@ -201,7 +201,7 @@ def roles_remove(user, role):
 
     USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
     """
-    user_obj = find_user(user)
+    user_obj = lookup_identity(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
 
@@ -273,7 +273,7 @@ def users_activate(user):
 
     USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
     """
-    user_obj = find_user(user)
+    user_obj = lookup_identity(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
     if _datastore.activate_user(user_obj):
@@ -291,7 +291,7 @@ def users_deactivate(user):
 
     USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
     """
-    user_obj = find_user(user)
+    user_obj = lookup_identity(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
     if _datastore.deactivate_user(user_obj):
@@ -312,7 +312,7 @@ def users_reset_access(user):
     USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
 
     """
-    user_obj = find_user(user)
+    user_obj = lookup_identity(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
     _datastore.reset_user_access(user_obj)
@@ -336,7 +336,7 @@ def users_change_password(user, password):
     USER is identity as defined by SECURITY_USER_IDENTITY_ATTRIBUTES.
 
     """
-    user_obj = find_user(user)
+    user_obj = lookup_identity(user)
     if user_obj is None:
         raise click.UsageError("User not found.")
 

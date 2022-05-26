@@ -112,6 +112,11 @@ be passed if the model looks like::
         first_name = db.Column(db.String(255))
         last_name = db.Column(db.String(255))
 
+.. warning::
+    Adding fields is fine - however re-defining existing fields could cause
+    various views to no longer function. Many fields have complex (and not
+    publicly exposed) validators that have side effects.
+
 The following is a list of all the available form overrides:
 
 * ``login_form``: Login form
@@ -140,7 +145,70 @@ The following is a list of all the available form overrides:
 
 .. tip::
     Changing/extending the form class won't directly change how it is displayed.
-    You need to ALSO provide your own template and explicitly adds the new fields you want displayed.
+    You need to ALSO provide your own template and explicitly add the new fields you want displayed.
+
+.. _custom_login_form:
+
+Customizing the Login Form
+++++++++++++++++++++++++++
+This is an example of how to modify the registration and login form to add a username
+attribute (mimicking legacy Flask-Security behavior). Note that Flask-Security now has
+built-in support for username so this is unnecessary::
+
+    from flask_security import (
+            RegisterForm,
+            LoginForm,
+            Security,
+            lookup_identity,
+            uia_username_mapper,
+            unique_identity_attribute,
+        )
+        from werkzeug.local import LocalProxy
+        from wtforms import StringField, ValidationError, validators
+
+        def username_validator(form, field):
+            # Side-effect - field.data is updated to normalized value.
+            # Use proxy to we can declare this prior to initializing Security.
+            _security = LocalProxy(lambda: app.extensions["security"])
+            msg, field.data = _security._username_util.validate(field.data)
+            if msg:
+                raise ValidationError(msg)
+
+        class MyRegisterForm(RegisterForm):
+            # Note that unique_identity_attribute uses the defined field 'mapper' to
+            # normalize. We validate before that to give better error messages and
+            # to set the normalized value into the form for saving.
+            username = StringField(
+                "Username",
+                validators=[
+                    validators.data_required(),
+                    username_validator,
+                    unique_identity_attribute,
+                ],
+            )
+
+        class MyLoginForm(LoginForm):
+            email = StringField("email", [validators.data_required()])
+
+            def validate(self, **kwargs):
+                self.user = lookup_identity(self.email.data)
+                # Setting 'ifield' informs the default login form validation
+                # handler that the identity has already been confirmed.
+                self.ifield = self.email
+                if not super().validate(**kwargs):
+                    return False
+                return True
+
+        # Allow registration with email, but login only with username
+        app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
+            {"username": {"mapper": uia_username_mapper}}
+        ]
+        security = Security(
+            datastore=sqlalchemy_datastore,
+            register_form=MyRegisterForm,
+            login_form=MyLoginForm,
+        )
+        security.init_app(app)
 
 Localization
 ------------

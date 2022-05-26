@@ -60,7 +60,6 @@ from .utils import (
     check_and_get_token_status,
     config_value as cv,
     do_flash,
-    find_user,
     get_identity_attributes,
     get_post_login_redirect,
     get_post_verify_redirect,
@@ -69,6 +68,7 @@ from .utils import (
     get_within_delta,
     json_error_response,
     login_user,
+    lookup_identity,
     propagate_next,
     send_mail,
     suppress_form_csrf,
@@ -116,7 +116,7 @@ def _us_common_validate(form):
     # Validate identity - we go in order to figure out which user attribute the
     # request gave us. Note that we give up on the first 'match' even if that
     # doesn't yield a user. Why?
-    form.user = find_user(form.identity.data)
+    form.user = lookup_identity(form.identity.data)
     if not form.user:
         form.identity.errors.append(get_message("US_SPECIFY_IDENTITY")[0])
         return False

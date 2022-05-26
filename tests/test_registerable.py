@@ -390,9 +390,9 @@ def test_nullable_username(app, client):
 
 
 def test_email_normalization(app, client):
-    # should be able to login either as LP.com or lp.com
+    # should be able to login either as LP.com or lp.com or canonical unicode form
     data = dict(
-        email="\N{BLACK SCISSORS}@LP.com",
+        email="Imnumber\N{OHM SIGN}@LP.com",
         password="battery staple",
         password_confirm="battery staple",
     )
@@ -403,14 +403,23 @@ def test_email_normalization(app, client):
 
     # Test user can login after registering
     response = authenticate(
-        client, email="\N{BLACK SCISSORS}@lp.com", password="battery staple"
+        client, email="Imnumber\N{OHM SIGN}@lp.com", password="battery staple"
     )
     assert response.status_code == 302
 
     logout(client)
     # Test user can login after registering using original non-canonical email
     response = authenticate(
-        client, email="\N{BLACK SCISSORS}@LP.com", password="battery staple"
+        client, email="Imnumber\N{OHM SIGN}@LP.com", password="battery staple"
+    )
+    assert response.status_code == 302
+
+    logout(client)
+    # Test user can login after registering using original non-canonical email
+    response = authenticate(
+        client,
+        email="Imnumber\N{GREEK CAPITAL LETTER OMEGA}@LP.com",
+        password="battery staple",
     )
     assert response.status_code == 302
 
@@ -481,11 +490,36 @@ def test_username(app, client, get_message):
     assert response.status_code == 200
     logout(client)
 
-    # login using historic - email field...
+    # login using historic - email field to hold a username - won't work since
+    # it is an EmailField
     response = json_authenticate(client, email="dude", password="awesome sunset")
+    assert response.status_code == 400
+    assert (
+        get_message("INVALID_EMAIL_ADDRESS", username="dude")
+        == response.json["response"]["errors"]["email"][0].encode()
+    )
+    # login using username
+    response = client.post(
+        "/login", json=dict(username="dude", password="awesome sunset")
+    )
     assert response.status_code == 200
-
     logout(client)
+
+    # login with email
+    response = client.post(
+        "/login", json=dict(email="dude@lp.com", password="awesome sunset")
+    )
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/login", json=dict(emails="dude", password="awesome sunset")
+    )
+    assert response.status_code == 400
+    assert (
+        get_message("USER_DOES_NOT_EXIST")
+        == response.json["response"]["errors"]["null"][0].encode()
+    )
 
     # login using us-signin
     response = client.post(
@@ -599,3 +633,82 @@ def test_username_not_enabled(app, client, get_message):
     response = client.get("/register")
     assert b"username" not in response.data
     assert not hasattr(RegisterForm, "username")
+
+
+def test_legacy_style_login(app, sqlalchemy_datastore, get_message):
+    # Show how to setup LoginForm to mimic legacy behavior of
+    # allowing any identity in the email field.
+    # N.B. for simplicity we don't enable confirmable....
+    from flask_security import (
+        RegisterForm,
+        LoginForm,
+        Security,
+        uia_username_mapper,
+        unique_identity_attribute,
+    )
+    from flask_security.utils import lookup_identity
+    from werkzeug.local import LocalProxy
+    from wtforms import StringField, ValidationError, validators
+
+    def username_validator(form, field):
+        # Side-effect - field.data is updated to normalized value.
+        # Use proxy to we can declare this prior to initializing Security.
+        _security = LocalProxy(lambda: app.extensions["security"])
+        msg, field.data = _security._username_util.validate(field.data)
+        if msg:
+            raise ValidationError(msg)
+
+    class MyRegisterForm(RegisterForm):
+        # Note that unique_identity_attribute uses the defined field 'mapper' to
+        # normalize. We validate before that to give better error messages and
+        # to set the normalized value into the form for saving.
+        username = StringField(
+            "Username",
+            validators=[
+                validators.data_required(),
+                username_validator,
+                unique_identity_attribute,
+            ],
+        )
+
+    class MyLoginForm(LoginForm):
+        email = StringField("email", [validators.data_required()])
+
+        def validate(self, **kwargs):
+            self.user = lookup_identity(self.email.data)
+            self.ifield = self.email
+            if not super().validate(**kwargs):
+                return False
+            return True
+
+    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
+        {"username": {"mapper": uia_username_mapper}}
+    ]
+    security = Security(
+        datastore=sqlalchemy_datastore,
+        register_form=MyRegisterForm,
+        login_form=MyLoginForm,
+    )
+    security.init_app(app)
+
+    client = app.test_client()
+
+    data = dict(
+        email="mary2@lp.com",
+        username="mary",
+        password="awesome sunset",
+        password_confirm="awesome sunset",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Welcome mary" in response.data
+    logout(client)
+
+    # log in with username
+    response = client.post(
+        "/login",
+        data=dict(email="mary", password="awesome sunset"),
+        follow_redirects=True,
+    )
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200

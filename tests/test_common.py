@@ -113,9 +113,11 @@ def test_authenticate_case_insensitive_email(app, client):
 
 def test_authenticate_with_invalid_input(client, get_message):
     response = client.post(
-        "/login", data="{}", headers={"Content-Type": "application/json"}
+        "/login",
+        json=dict(password="password"),
+        headers={"Content-Type": "application/json"},
     )
-    assert get_message("EMAIL_NOT_PROVIDED") in response.data
+    assert get_message("USER_DOES_NOT_EXIST") in response.data
 
 
 @pytest.mark.settings(post_login_view="/post_login")
@@ -155,16 +157,18 @@ def test_login_form(client):
 
 @pytest.mark.settings(username_enable=True)
 def test_login_form_username(client):
-    # If USERNAME_ENABLE is set then login form should have a StringField, not Email
-    response = client.post("/login", data={"email": "matt@lp.com"})
-    assert b"matt@lp.com" in response.data
-    # Should be a string field - not html5 email input type
-    assert not re.search(b'<input[^>]*type="email"[^>]*>', response.data)
+    # If USERNAME_ENABLE is set then login form should have a both an Email and
+    # StringField
+    response = client.get("/login")
+    # Should be both email with Email type and username with autocomplete
+    assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
+    assert re.search(b'<input[^>]*autocomplete="username"[^>]*>', response.data)
+    assert re.search(b'<input[^>]*autocomplete="current-password"[^>]*>', response.data)
 
 
 def test_unprovided_username(client, get_message):
     response = authenticate(client, "")
-    assert get_message("EMAIL_NOT_PROVIDED") in response.data
+    assert get_message("USER_DOES_NOT_EXIST") in response.data
 
 
 def test_unprovided_password(client, get_message):

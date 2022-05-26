@@ -17,7 +17,6 @@ import hmac
 from pkg_resources import parse_version
 import time
 import typing as t
-import warnings
 from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
 import urllib.request
 import urllib.error
@@ -346,22 +345,6 @@ def verify_and_update_password(password: SB, user: "User") -> bool:
         user.password = hash_password(password)
         _datastore.put(user)
     return verified
-
-
-def encrypt_password(password):  # pragma: no cover
-    """Encrypt the specified plaintext password.
-
-    It uses the configured encryption options.
-
-    .. deprecated:: 2.0.2
-       Use :func:`hash_password` instead.
-
-    :param password: The plaintext password to encrypt
-    """
-    warnings.warn(
-        "Please use hash_password instead of encrypt_password.", DeprecationWarning
-    )
-    return hash_password(password)
 
 
 def hash_password(password: SB) -> t.Any:
@@ -810,7 +793,7 @@ def get_identity_attribute(
     return {}
 
 
-def find_user(identity):
+def lookup_identity(identity):
     """
     Validate identity - we go in order to figure out which user attribute the
     request gave us. Note that we give up on the first 'match' even if that
