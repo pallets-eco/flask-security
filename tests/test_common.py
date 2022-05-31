@@ -267,7 +267,9 @@ def test_inactive_forbids_basic(app, client, get_message):
 
 def test_unset_password(client, get_message):
     response = authenticate(client, "jess@lp.com", "password")
-    assert get_message("PASSWORD_NOT_SET") in response.data
+    assert get_message("INVALID_PASSWORD") in response.data
+    response = authenticate(client, "jess@lp.com", "")
+    assert get_message("PASSWORD_NOT_PROVIDED") in response.data
 
 
 def test_logout(client):

@@ -197,6 +197,7 @@ def test_required_password_confirm(client, get_message):
 
 @pytest.mark.confirmable()
 @pytest.mark.unified_signin()
+@pytest.mark.settings(password_required=False)
 def test_allow_null_password(client, get_message):
     # If unified sign in is enabled - should be able to register w/o password
     data = dict(email="trp@lp.com", password="")
@@ -205,6 +206,7 @@ def test_allow_null_password(client, get_message):
 
 
 @pytest.mark.unified_signin()
+@pytest.mark.settings(password_required=False)
 def test_allow_null_password_nologin(client, get_message):
     # If unified sign in is enabled - should be able to register w/o password
     # With confirmable false - should be logged in automatically upon register.

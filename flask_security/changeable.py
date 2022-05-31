@@ -2,10 +2,10 @@
     flask_security.changeable
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security recoverable module
+    Flask-Security change password module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :author: Eskil Heyn Olsen
     :license: MIT, see LICENSE for more details.
 """
@@ -16,7 +16,7 @@ from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
 
 from .proxies import _datastore
 from .signals import password_changed
-from .utils import config_value, hash_password, login_user, send_mail
+from .utils import config_value as cv, hash_password, login_user, send_mail
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from .datastore import User
@@ -27,13 +27,13 @@ def send_password_changed_notice(user):
 
     :param user: The user to send the notice to
     """
-    if config_value("SEND_PASSWORD_CHANGE_EMAIL"):
-        subject = config_value("EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE")
+    if cv("SEND_PASSWORD_CHANGE_EMAIL"):
+        subject = cv("EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE")
         send_mail(subject, user.email, "change_notice", user=user)
 
 
 def change_user_password(
-    user: "User", password: str, notify: bool = True, autologin: bool = True
+    user: "User", password: t.Optional[str], notify: bool = True, autologin: bool = True
 ) -> None:
     """Change the specified user's password
 
@@ -42,7 +42,11 @@ def change_user_password(
     :param notify: if True send notification (if configured) to user
     :param autologin: if True, login user
     """
-    user.password = hash_password(password)
+
+    if password:
+        user.password = hash_password(password)
+    else:
+        user.password = None
     # Change uniquifier - this will cause ALL sessions to be invalidated.
     _datastore.set_uniquifier(user)
     _datastore.put(user)

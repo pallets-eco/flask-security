@@ -26,9 +26,15 @@ Fixes
 - (:issue:`531`) Get rid of Flask-Mail. Flask-Mailman is now the default preferred email package.
   Flask-Mail is still supported so there should be no backwards compatability issues.
 - (:issue:`597`) A delete option has been added to us-setup (form and view).
-- (:pr:`xxx`) Improve username support - the LoginForm now has a separate field for username if
+- (:pr:`625`) Improve username support - the LoginForm now has a separate field for username if
   ``SECURITY_USERNAME_ENABLE`` is True, and properly displays input fields only if the associated
   field is an identity attribute (as specified by :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`)
+- (:pr:`xxx`) Improve empty password handling. Prior, an unguessable password was set into the user
+  record when a user registered without a password - now, the DB user model has been changed to
+  allow nullable passwords. This provides a better user experience since Flask-Security now
+  knows if a user has an empty password or not. Since registering without a password is not
+  a mainstream feature, a new configuration variable :py:data:`SECURITY_PASSWORD_REQUIRED`
+  has been added (defaults to ``True``).
 
 Backward Compatibility Concerns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,6 +55,8 @@ For unified signin:
 - In ``us-verify`` the 'code_methods' item now lists just active/setup methods that generate a code
   not ALL possible methods that generate a code.
 - ``SECURITY_US_VERIFY_SEND_CODE_URL`` and ``SECURITY_US_SIGNIN_SEND_CODE_URL`` endpoints are now POST only.
+- Empty passwords were always permitted when ``SECURITY_UNIFIED_SIGNIN`` was enabled - now an additional configuration
+  variable ``SECURITY_PASSWORD_REQUIRED`` must be set to False.
 
 Login:
 
@@ -56,16 +64,16 @@ Login:
   'email' field, and used that to check if it corresponds to any field in ``SECURITY_USER_IDENTITY_ATTRIBUTES``.
   This has always been problematic and confusing - and with the addition of HTML attributes for various
   form fields - having a field with multiple possible inputs is no longer a viable user experience.
-  This is no longer supported, and the LoginForm now declares the ``email`` field to be of type ``EmailFormMixin``
-  which requires a valid (after normalization) and existing email address. The most common usage of this legacy feature was to allow
-  an email or username - Flask-Security now has core support for a ``username`` option.
+  This is no longer supported, and the LoginForm now declares the ``email`` field to be of type ``EmailField``
+  which requires a valid (after normalization). The most common usage of this legacy feature was to allow
+  an email or username - Flask-Security now has core support for a ``username`` option - see :py:data:`SECURITY_USERNAME_ENABLE`.
   Please see :ref:`custom_login_form` for an example of how to replicate the legacy behavior.
 - Some error messages have changed - ``USER_DOES_NOT_EXIST`` is now returned for any identity error including an empty value.
 
 Other:
 
 - A very old piece of code in registrable, would immediately commit to the DB when a new user was created.
-  It now does what all over views due, and have the caller responsible for committing the transaction - usually by
+  It is now consistent with all other views, and has the caller responsible for committing the transaction - usually by
   setting up a flask ``after_this_request`` action. This could affect an application that captured the registration signal
   and stored the ``user`` object for later use - this user object would likely be invalid after the request is finished.
 - Some fields have custom HTML attributes attached to them (e.g. autocomplete, type, etc). These are stored as part of the
@@ -89,6 +97,10 @@ upon first use for existing users.
 If you are using Alembic the schema migration is easy::
 
     op.add_column('user', sa.Column('fs_webauthn_user_handle', sa.String(length=64), nullable=True))
+
+
+If you want to allow for empty passwords as part of registration then set :py:data:`SECURITY_PASSWORD_REQUIRED` to ``False``.
+In addition you need to change your DB schema to allow the ``password`` field to be nullable.
 
 Version 4.1.4
 -------------

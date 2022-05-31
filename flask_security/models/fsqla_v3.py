@@ -66,6 +66,10 @@ class FsUserMixin(FsUserMixinV2):
     # 2FA - one time recovery codes - comma separated.
     tf_recovery_codes = Column(AsaList(1024), nullable=True)
 
+    # Change password to nullable so we can tell after registration whether
+    # a user has a password or not.
+    password = Column(String(255), nullable=True)
+
     # This is repeated since I couldn't figure out how to have it reference the
     # new version of FsModels.
     @declared_attr

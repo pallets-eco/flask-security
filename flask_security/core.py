@@ -153,6 +153,7 @@ _default_config: t.Dict[str, t.Any] = {
     "PASSWORD_CHECK_BREACHED": False,
     "PASSWORD_BREACHED_COUNT": 1,
     "PASSWORD_NORMALIZE_FORM": "NFKD",
+    "PASSWORD_REQUIRED": True,
     "DEPRECATED_PASSWORD_SCHEMES": ["auto"],
     "LOGIN_URL": "/login",
     "LOGOUT_URL": "/logout",
@@ -412,7 +413,6 @@ _default_messages = {
     "INVALID_EMAIL_ADDRESS": (_("Invalid email address"), "error"),
     "INVALID_CODE": (_("Invalid code"), "error"),
     "PASSWORD_NOT_PROVIDED": (_("Password not provided"), "error"),
-    "PASSWORD_NOT_SET": (_("No password is set for this user"), "error"),
     "PASSWORD_INVALID_LENGTH": (
         _("Password must be at least %(length)s characters"),
         "error",

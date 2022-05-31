@@ -33,7 +33,7 @@ At the bare minimum your `User` and `Role` model should include the following fi
 
 * primary key
 * ``email`` (for most features - unique, non-nullable)
-* ``password`` (non-nullable)
+* ``password`` (string)
 * ``active`` (boolean, non-nullable)
 * ``fs_uniquifier`` (string, 64 bytes, unique, non-nullable)
 

@@ -166,6 +166,18 @@ These configuration keys are used globally across all features.
 
 .. _5.1.1.2 Memorized Secret Verifiers: https://pages.nist.gov/800-63-3/sp800-63b.html#sec5
 
+.. py:data:: SECURITY_PASSWORD_REQUIRED
+
+    If set to ``False`` then a user can register with an empty password.
+    This requires :py:data:`SECURITY_UNIFIED_SIGNIN` to be enabled. By
+    default, the user will be able to authenticate using an email link.
+    Please note: this does not mean a user can sign in with an empty
+    password - it means that they must have some OTHER means of authenticating.
+
+    Default: ``True``
+
+    .. versionadded:: 5.0.0
+
 .. py:data:: SECURITY_TOKEN_AUTHENTICATION_KEY
 
     Specifies the query string parameter to read when using token authentication.
@@ -1275,6 +1287,7 @@ Unified Signin
 Additional relevant configuration variables:
 
     * :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` - Defines the order and methods for parsing and validating identity.
+    * :py:data:`SECURITY_PASSWORD_REQUIRED` - Can a user register w/o a password?
     * :py:data:`SECURITY_DEFAULT_REMEMBER_ME`
     * :py:data:`SECURITY_SMS_SERVICE` - When SMS is enabled in :py:data:`SECURITY_US_ENABLED_METHODS`.
     * :py:data:`SECURITY_SMS_SERVICE_CONFIG`
@@ -1597,7 +1610,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_PASSWORD_IS_THE_SAME``
 * ``SECURITY_MSG_PASSWORD_MISMATCH``
 * ``SECURITY_MSG_PASSWORD_NOT_PROVIDED``
-* ``SECURITY_MSG_PASSWORD_NOT_SET``
+* ``SECURITY_MSG_PASSWORD_REQUIRED``
 * ``SECURITY_MSG_PASSWORD_RESET``
 * ``SECURITY_MSG_PASSWORD_RESET_EXPIRED``
 * ``SECURITY_MSG_PASSWORD_RESET_REQUEST``
