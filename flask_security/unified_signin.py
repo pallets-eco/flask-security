@@ -179,7 +179,7 @@ class _UnifiedPassCodeForm(Form):
 
             ok = False
             for method in cv("US_ENABLED_METHODS"):
-                if method == "password":
+                if method == "password" and self.user.password:
                     passcode = _security._password_util.normalize(passcode)
                     if self.user.verify_and_update_password(passcode):
                         ok = True
@@ -365,7 +365,7 @@ class UnifiedSigninSetupValidateForm(Form):
         return True
 
 
-def _send_code_helper(form):
+def _send_code_helper(form, send_magic_link):
     # send code
     user = form.user
     method = form.chosen_method.data
@@ -375,7 +375,7 @@ def _send_code_helper(form):
         method,
         totp_secret=totp_secrets[method],
         phone_number=getattr(user, "us_phone_number", None),
-        send_magic_link=True,
+        send_magic_link=send_magic_link,
     )
     code_sent = True
     if msg:
@@ -404,7 +404,7 @@ def us_signin_send_code() -> "ResponseValue":
     code_methods = _compute_code_methods()
 
     if form.validate_on_submit():
-        code_sent, msg = _send_code_helper(form)
+        code_sent, msg = _send_code_helper(form, True)
         if _security._want_json(request):
             # Not authenticated yet - so don't send any user info.
             return base_render_json(
@@ -461,7 +461,7 @@ def us_verify_send_code() -> "ResponseValue":
     code_methods = _compute_active_code_methods(current_user)
 
     if form.validate_on_submit():
-        code_sent, msg = _send_code_helper(form)
+        code_sent, msg = _send_code_helper(form, False)
         if _security._want_json(request):
             # Not authenticated yet - so don't send any user info.
             return base_render_json(

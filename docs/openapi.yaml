@@ -350,6 +350,18 @@ paths:
             text/html:
               schema:
                 example: render_template(SECURITY_CHANGE_PASSWORD_TEMPLATE)
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/DefaultJsonResponse'
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          active_password:
+                            type: boolean
+                            description: Does user already have a password?
     post:
       summary: Change password
       parameters:

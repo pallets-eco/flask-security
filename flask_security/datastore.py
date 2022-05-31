@@ -1059,7 +1059,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         id: int
         email: str
         username: t.Optional[str]
-        password: str
+        password: t.Optional[str]
         active: bool
         fs_uniquifier: str
         fs_token_uniquifier: str

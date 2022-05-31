@@ -5,18 +5,16 @@
     Flask-Security registerable module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
-
-import uuid
 
 from flask import current_app as app
 
 from .confirmable import generate_confirmation_link
 from .proxies import _security, _datastore
 from .signals import user_registered
-from .utils import config_value, do_flash, get_message, hash_password, send_mail
+from .utils import config_value as cv, do_flash, get_message, hash_password, send_mail
 
 
 def register_user(registration_form):
@@ -28,19 +26,14 @@ def register_user(registration_form):
     """
 
     user_model_kwargs = registration_form.to_dict(only_user=True)
-    blank_password = not user_model_kwargs["password"]
 
-    if blank_password:
-        # For no password - set an unguessable password.
-        # Since we still allow 'plaintext' as a password scheme - can't use a simple
-        # sentinel.
-        user_model_kwargs["password"] = "NoPassword-" + uuid.uuid4().hex
-
-    user_model_kwargs["password"] = hash_password(user_model_kwargs["password"])
+    # passwords are always required - with UNIFIED_SIGNIN
+    if user_model_kwargs["password"]:
+        user_model_kwargs["password"] = hash_password(user_model_kwargs["password"])
     user = _datastore.create_user(**user_model_kwargs)
 
-    # if they didn't give a password - auto-setup email magic links.
-    if blank_password:
+    # if they didn't give a password - auto-setup email magic links (if UNIFIED SIGNIN)
+    if not user_model_kwargs["password"] and cv("UNIFIED_SIGNIN"):
         _datastore.us_setup_email(user)
 
     confirmation_link, token = None, None
@@ -56,9 +49,9 @@ def register_user(registration_form):
         form_data=registration_form.to_dict(only_user=False),
     )
 
-    if config_value("SEND_REGISTER_EMAIL"):
+    if cv("SEND_REGISTER_EMAIL"):
         send_mail(
-            config_value("EMAIL_SUBJECT_REGISTER"),
+            cv("EMAIL_SUBJECT_REGISTER"),
             user.email,
             "welcome",
             user=user,

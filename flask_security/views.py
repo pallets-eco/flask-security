@@ -649,11 +649,23 @@ def change_password():
     """View function which handles a change password request."""
 
     form_class = _security.change_password_form
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    if not current_user.password:
+        # This is case where user registered w/o a password - since we can't
+        # confirm with existing password - make sure fresh using whatever authentication
+        # method they have set up.
+        if not check_and_update_authn_fresh(
+            cv("FRESHNESS"),
+            cv("FRESHNESS_GRACE_PERIOD"),
+            get_request_attr("fs_authn_via"),
+        ):
+            return _security._reauthn_handler(
+                cv("FRESHNESS"), cv("FRESHNESS_GRACE_PERIOD")
+            )
 
     if form.validate_on_submit():
         after_this_request(view_commit)
@@ -667,13 +679,16 @@ def change_password():
             get_url(_security.post_change_view) or get_url(_security.post_login_view)
         )
 
+    active_password = True if current_user.password else False
     if _security._want_json(request):
         form.user = current_user
-        return base_render_json(form)
+        payload = dict(active_password=active_password)
+        return base_render_json(form, additional=payload)
 
     return _security.render_template(
         cv("CHANGE_PASSWORD_TEMPLATE"),
         change_password_form=form,
+        active_password=active_password,
         **_ctx("change_password"),
     )
 

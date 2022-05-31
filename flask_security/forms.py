@@ -46,6 +46,7 @@ from .utils import (
     localize_callback,
     url_for_security,
     validate_redirect_url,
+    verify_password,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -502,8 +503,8 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
             hash_password(self.password.data)
             return False
         if not self.user.password:
-            # Not sure this can ever happen
-            self.password.errors.append(get_message("PASSWORD_NOT_SET")[0])
+            # This is result of PASSWORD_REQUIRED=False and UNIFIED_SIGNIN
+            self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             # Reduce timing variation between existing and non-existing users
             hash_password(self.password.data)
             return False
@@ -558,9 +559,9 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
         if not super().validate(**kwargs):
             return False
 
-        # To support unified sign in - we permit registering with no password.
-        if not cv("UNIFIED_SIGNIN"):
-            # password required
+        # whether a password is required is a config variable (PASSWORD_REQUIRED).
+        # For unified signin there are many other ways to authenticate
+        if cv("PASSWORD_REQUIRED") or not cv("UNIFIED_SIGNIN"):
             if not self.password.data or not self.password.data.strip():
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
                 return False
@@ -633,9 +634,12 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
         return True
 
 
-class ChangePasswordForm(Form, PasswordFormMixin):
+class ChangePasswordForm(Form):
     """The default change password form"""
 
+    password = PasswordField(
+        get_form_field_label("password"), render_kw={"autocomplete": "current-password"}
+    )
     new_password = PasswordField(
         get_form_field_label("new_password"),
         render_kw={"autocomplete": "new-password"},
@@ -657,13 +661,21 @@ class ChangePasswordForm(Form, PasswordFormMixin):
         if not super().validate(**kwargs):
             return False
 
-        self.password.data = _security._password_util.normalize(self.password.data)
-        if not current_user.verify_and_update_password(self.password.data):
-            self.password.errors.append(get_message("INVALID_PASSWORD")[0])
-            return False
-        if self.password.data == self.new_password.data:
-            self.password.errors.append(get_message("PASSWORD_IS_THE_SAME")[0])
-            return False
+        # If user doesn't have a password then the caller (view) has already
+        # verified a current fresh session.
+        if current_user.password:
+            if not self.password.data or not self.password.data.strip():
+                self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
+                return False
+
+            self.password.data = _security._password_util.normalize(self.password.data)
+            if not verify_password(current_user.password, self.password.data):
+                self.password.errors.append(get_message("INVALID_PASSWORD")[0])
+                return False
+            if self.password.data == self.new_password.data:
+                self.password.errors.append(get_message("PASSWORD_IS_THE_SAME")[0])
+                return False
+
         pbad, self.new_password.data = _security._password_util.validate(
             self.new_password.data, False, user=current_user
         )

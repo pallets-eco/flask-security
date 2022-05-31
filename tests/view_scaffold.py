@@ -71,7 +71,7 @@ class FlashMailUtil(MailUtil):
         user: "User",
         **kwargs: t.Any,
     ) -> None:
-        flash(body)
+        flash(f"Email body: {body}")
 
 
 def create_app():
@@ -104,6 +104,7 @@ def create_app():
     app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=1)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
     app.config["SECURITY_USERNAME_ENABLE"] = True
+    app.config["SECURITY_PASSWORD_REQUIRED"] = False
 
     class TestWebauthnUtil(WebauthnUtil):
         def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:

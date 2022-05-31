@@ -4,7 +4,7 @@
 
     Changeable tests
 
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -75,6 +75,16 @@ def test_changeable_flag(app, client, get_message):
     response = client.post(
         "/change",
         data={"password": "   ", "new_password": "", "new_password_confirm": ""},
+        follow_redirects=True,
+    )
+    assert get_message("PASSWORD_NOT_PROVIDED") in response.data
+    response = client.post(
+        "/change",
+        data={
+            "password": "   ",
+            "new_password": "awesome password",
+            "new_password_confirm": "awesome password",
+        },
         follow_redirects=True,
     )
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data

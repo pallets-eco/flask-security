@@ -355,6 +355,7 @@ def test_signin_pwd_json(app, client, get_message):
 
 
 @pytest.mark.registerable()
+@pytest.mark.settings(password_required=False)
 def test_us_passwordless(app, client, get_message):
     # Check passwordless.
     # Check contents of email template - this uses a test template
@@ -390,6 +391,7 @@ def test_us_passwordless(app, client, get_message):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
+@pytest.mark.settings(password_required=False)
 def test_us_passwordless_confirm(app, client, get_message):
     # Check passwordless with confirmation required.
     response = client.post(
@@ -428,6 +430,7 @@ def test_us_passwordless_confirm(app, client, get_message):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
+@pytest.mark.settings(password_required=False)
 def test_us_passwordless_confirm_json(app, client, get_message):
     # Check passwordless with confirmation required.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -1275,6 +1278,7 @@ def test_confirmable(app, client, get_message):
 
 @pytest.mark.registerable()
 @pytest.mark.recoverable()
+@pytest.mark.settings(password_required=False)
 def test_can_add_password(app, client, get_message):
     # Test that if register w/o a password, can use 'recover password' to assign one
     data = dict(email="trp@lp.com", password="")
@@ -1308,6 +1312,71 @@ def test_can_add_password(app, client, get_message):
         follow_redirects=True,
     )
     assert b"Welcome trp@lp.com" in response.data
+
+
+@pytest.mark.registerable()
+@pytest.mark.changeable()
+@pytest.mark.settings(password_required=False)
+def test_change_empty_password(app, client):
+    # test that if register w/o a password - can 'change' it.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    data = dict(email="trp@lp.com", password="")
+    response = client.post("/register", data=data, follow_redirects=True)
+    # should have been logged in since no confirmation
+
+    # make sure requires a fresh authentication
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    data = dict(
+        password="",
+        new_password="awesome sunset",
+        new_password_confirm="awesome sunset",
+    )
+
+    response = client.post("/change", json=data)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+
+    client.post(
+        "/us-verify/send-code",
+        json=dict(identity="trp@lp.com", chosen_method="email"),
+    )
+    outbox = app.mail.outbox
+    matcher = re.match(r".*Token:(\d+).*", outbox[1].body, re.IGNORECASE | re.DOTALL)
+    code = matcher.group(1)
+    response = client.post("/us-verify", json=dict(passcode=code))
+    assert response.status_code == 200
+
+    response = client.get("/change", headers=headers)
+    assert not response.json["response"]["active_password"]
+    response = client.get("/change")
+    assert b"You do not" in response.data
+
+    # now should be able to change
+    response = client.post("/change", json=data)
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/login", json=dict(email="trp@lp.com", password="awesome sunset")
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.registerable()
+@pytest.mark.changeable()
+@pytest.mark.settings(password_required=False)
+def test_empty_password(app, client, get_message):
+    # test that if no password - can't log in
+    data = dict(email="trp@lp.com", password="")
+    response = client.post("/register", data=data, follow_redirects=True)
+    logout(client)
+
+    response = client.post("/us-signin", json=dict(identity="trp@lp.com", passcode=""))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["passcode"][0].encode(
+        "utf-8"
+    ) == get_message("INVALID_PASSWORD_CODE")
 
 
 @pytest.mark.settings(
