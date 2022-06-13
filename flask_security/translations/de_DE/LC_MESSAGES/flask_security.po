@@ -83,7 +83,7 @@ msgstr "Sie sind nicht angemeldet. Bitte geben Sie die korrekten Zugangsdaten ei
 #: flask_security/core.py:349
 #, fuzzy
 msgid "You must re-authenticate to access this endpoint"
-msgstr "Bitte neu authentifizieren, um auf diese Seite zuzugreifen."
+msgstr "Bitte neu authentisieren, um auf diese Seite zuzugreifen."
 
 #: flask_security/core.py:353
 #, python-format
@@ -309,7 +309,7 @@ msgstr "Ausgewählte Methode ist nicht gültig"
 
 #: flask_security/core.py:464
 msgid "You successfully disabled two factor authorization."
-msgstr "Zwei-Faktor-Authentifizierung wurde deaktiviert"
+msgstr "Zwei-Faktor-Authentisierung wurde deaktiviert"
 
 #: flask_security/core.py:467
 msgid "Requested method is not valid"
@@ -486,7 +486,7 @@ msgstr "Telefonnummer"
 
 #: flask_security/forms.py:75
 msgid "Authentication Code"
-msgstr "Authentifizierungscode"
+msgstr "Authentisierungscode"
 
 #: flask_security/forms.py:76
 msgid "Submit"
@@ -526,7 +526,7 @@ msgstr "Einrichtung via E-Mail"
 
 #: flask_security/forms.py:85
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
-msgstr "Einrichtung via Authentifizierungs-App"
+msgstr "Einrichtung via Authentisierungs-App"
 
 #: flask_security/forms.py:88
 msgid "Set up using SMS"
@@ -534,7 +534,7 @@ msgstr "Einrichtung via SMS"
 
 #: flask_security/forms.py:643
 msgid "Disable two factor authentication"
-msgstr "Deaktiviere Zwei-Faktor-Authentifizierungs"
+msgstr "Deaktiviere Zwei-Faktor-Authentisierung"
 
 #: flask_security/tf_plugin.py:51
 msgid "Available Second Factor Methods:"
@@ -648,7 +648,7 @@ msgstr "Zwei-Faktor-Methode auswählen"
 #: flask_security/templates/security/two_factor_setup.html:23
 msgid "Two-factor authentication adds an extra layer of security to your account"
 msgstr ""
-"Zwei-Faktor-Authentifizierung bietet eine zusätzliche Sicherheitsebene für "
+"Zwei-Faktor-Authentisierung bietet eine zusätzliche Sicherheitsebene für "
 "Ihr Benutzerkonto"
 
 #: flask_security/templates/security/two_factor_setup.html:24
@@ -666,13 +666,13 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
 msgstr ""
-"Öffnen Sie die Authentifizierungs-App z.B. auf Ihrem Smartphone und scannen "
+"Öffnen Sie die Authentisierungs-App z.B. auf Ihrem Smartphone und scannen "
 "Sie den folgenden QR-Code (oder geben Sie den unten stehenden Code ein), "
 "um den Empfang von Codes zu beginnen"
 
 #: flask_security/templates/security/two_factor_setup.html:44
 msgid "Two factor authentication code"
-msgstr "Zwei-Faktor-Authentifizierungscode"
+msgstr "Zwei-Faktor-Authentisierungscode"
 
 #: flask_security/templates/security/two_factor_setup.html:52
 msgid "To Which Phone Number Should We Send Code To?"
@@ -690,16 +690,16 @@ msgstr "Sie können diese hier einrichten."
 
 #: flask_security/templates/security/two_factor_verify_code.html:6
 msgid "Two-factor Authentication"
-msgstr "Zwei-Faktor-Authentifizierung"
+msgstr "Zwei-Faktor-Authentisierung"
 
 #: flask_security/templates/security/two_factor_verify_code.html:7
 #, python-format
 msgid "Please enter your authentication code generated via: %(method)s"
-msgstr "Bitte geben Sie den Authentifizierungscode ein, den Sie via %(method)s erhalten haben."
+msgstr "Bitte geben Sie den Authentisierungscode ein, den Sie via %(method)s erhalten haben."
 
 #: flask_security/templates/security/two_factor_verify_code.html:18
 msgid "The code for authentication was sent to your email address"
-msgstr "Der Authentifizierungscode wurde an Ihre E-Mail-Adresse gesendet"
+msgstr "Der Authentisierungscode wurde an Ihre E-Mail-Adresse gesendet"
 
 #: flask_security/templates/security/two_factor_verify_code.html:21
 msgid "A mail was sent to us in order to reset your application account"
@@ -726,7 +726,7 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving passcodes:"
 msgstr ""
-"Öffnen Sie die Authentifizierungs-App z.B. auf Ihrem Smartphone und scannen "
+"Öffnen Sie die Authentisierungs-App z.B. auf Ihrem Smartphone und scannen "
 "Sie den folgenden QR-Code (oder geben Sie den unten stehenden Code ein), "
 "um den Empfang von Anmelde-Codes zu beginnen"
 
@@ -746,11 +746,11 @@ msgstr "Senden eines einmaligen Codes anfordern"
 #: flask_security/templates/security/us_verify.html:6
 #: flask_security/templates/security/verify.html:6
 msgid "Please Reauthenticate"
-msgstr "Bitte authentifizieren Sie sich erneut"
+msgstr "Bitte authentisieren Sie sich erneut"
 
 #: flask_security/templates/security/us_verify.html:28
 msgid "Use a WebAuthn Security Key to Reauthenticate"
-msgstr "Bitte nutzen Sie ein WebAuthn-Sicherheitsschlüssel, um sich erneut zu authentifizieren"
+msgstr "Bitte nutzen Sie ein WebAuthn-Sicherheitsschlüssel, um sich erneut zu authentisieren"
 
 #: flask_security/templates/security/wan_register.html:17
 msgid "Setup New WebAuthn Security Key"
@@ -786,7 +786,7 @@ msgstr "Benutzen Sie Ihren WebAuthn-Sicherheitsschlüssel als zweiten Faktor"
 
 #: flask_security/templates/security/wan_verify.html:13
 msgid "Please Re-Authenticate Using Your WebAuthn Security Key"
-msgstr "Bitte authentifizieren Sie sich mit Ihrem WebAuthn-Sicherheitsschlüssel"
+msgstr "Bitte authentisieren Sie sich mit Ihrem WebAuthn-Sicherheitsschlüssel"
 
 #: flask_security/templates/security/email/change_notice.html:1
 msgid "Your password has been changed."
@@ -894,13 +894,13 @@ msgstr "Die E-Mail-Adresse kann über den Link unten bestätigt werden:"
 #~ "verwenden, den wir Ihnen zusenden"
 
 #~ msgid "Please enter your authentication code"
-#~ msgstr "Bitte geben Sie den Authentifizierungscode ein"
+#~ msgstr "Bitte geben Sie den Authentisierungscode ein"
 
 #~ msgid "Setup Unified Sign In options"
 #~ msgstr "Single-User-Login einrichten"
 
 #~ msgid "Please re-authenticate"
-#~ msgstr "Bitte neu authentifizieren, um auf diese Seite zuzugreifen."
+#~ msgstr "Bitte neu authentisieren, um auf diese Seite zuzugreifen."
 
 #~ msgid "Please Enter Your Password"
 #~ msgstr "Bitte geben Sie Ihr Passwort ein"
