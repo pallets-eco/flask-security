@@ -83,7 +83,7 @@ msgstr "Sie sind nicht angemeldet. Bitte geben Sie die korrekten Zugangsdaten ei
 #: flask_security/core.py:349
 #, fuzzy
 msgid "You must re-authenticate to access this endpoint"
-msgstr "Bitte neu authentifizieren, um auf diese Seite zuzugreifen."
+msgstr "Bitte neu authentisieren, um auf diese Seite zuzugreifen."
 
 #: flask_security/core.py:353
 #, python-format
@@ -289,7 +289,7 @@ msgstr ""
 
 #: flask_security/core.py:452
 msgid "Invalid Token"
-msgstr "Untültiger Token"
+msgstr "Ungültiger Token"
 
 #: flask_security/core.py:453
 msgid "Your token has been confirmed"
@@ -368,7 +368,7 @@ msgstr "Der WebAuthn-Vorgang muss innerhalb von %(within)s beendet werden. Bitte
 
 #: flask_security/core.py:500
 msgid "Nickname for new credential is required."
-msgstr "Zum Setzen eines neuen Webauthn-Token ist ein Nickname erforderlich."
+msgstr "Zum Setzen eines neuen Webauthn-Tokens ist ein Nickname erforderlich."
 
 #: flask_security/core.py:504
 #, python-format
@@ -458,7 +458,7 @@ msgstr "Passwort zurücksetzen"
 
 #: flask_security/forms.py:68
 msgid "Retype Password"
-msgstr "Passwort neu eingeben"
+msgstr "Passwort erneut eingeben"
 
 #: flask_security/forms.py:69
 msgid "New Password"
@@ -526,7 +526,7 @@ msgstr "Einrichtung via E-Mail"
 
 #: flask_security/forms.py:85
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
-msgstr "Einrichtung via Authentifikator-App"
+msgstr "Einrichtung via Authentisierungs-App"
 
 #: flask_security/forms.py:88
 msgid "Set up using SMS"
@@ -658,7 +658,7 @@ msgstr "Sie müssen zusätzlich zu Benutzername und Passwort einen Code angeben"
 #: flask_security/templates/security/two_factor_setup.html:35
 msgid "To complete logging in, please enter the code sent to your mail"
 msgstr ""
-"Um die Anmeldung abzuschließen, geben Sie bitte den Code ein, denen wir "
+"Um die Anmeldung abzuschließen, geben Sie bitte den Code ein, den wir "
 "an Ihre E-Mail-Adresse geschickt haben"
 
 #: flask_security/templates/security/two_factor_setup.html:41
@@ -666,7 +666,7 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
 msgstr ""
-"Öffnen Sie die Authentisierungsapp z.B. auf Ihrem Smartphone und scannen "
+"Öffnen Sie die Authentisierungs-App z.B. auf Ihrem Smartphone und scannen "
 "Sie den folgenden QR-Code (oder geben Sie den unten stehenden Code ein), "
 "um den Empfang von Codes zu beginnen"
 
@@ -695,7 +695,7 @@ msgstr "Zwei-Faktor-Authentisierung"
 #: flask_security/templates/security/two_factor_verify_code.html:7
 #, python-format
 msgid "Please enter your authentication code generated via: %(method)s"
-msgstr "Bitte geben Sie den Authentifikationscode ein, den Sie via %(method)s erhalten haben."
+msgstr "Bitte geben Sie den Authentisierungscode ein, den Sie via %(method)s erhalten haben."
 
 #: flask_security/templates/security/two_factor_verify_code.html:18
 msgid "The code for authentication was sent to your email address"
@@ -726,7 +726,7 @@ msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving passcodes:"
 msgstr ""
-"Öffnen Sie die Authentisierungsapp z.B. auf Ihrem Smartphone und scannen "
+"Öffnen Sie die Authentisierungs-App z.B. auf Ihrem Smartphone und scannen "
 "Sie den folgenden QR-Code (oder geben Sie den unten stehenden Code ein), "
 "um den Empfang von Anmelde-Codes zu beginnen"
 
@@ -758,7 +758,7 @@ msgstr "Neuen WebAuthn-Sicherheitsschlüssel einrichten"
 
 #: flask_security/templates/security/wan_register.html:20
 msgid "Start by providing a unique name for your new security key:"
-msgstr "Beginnen Sie indem Sie einen eindeutigen Namen für den neuen Sicherheitsschlüssel vergeben:"
+msgstr "Beginnen Sie, indem Sie einen eindeutigen Namen für den neuen Sicherheitsschlüssel vergeben:"
 
 #: flask_security/templates/security/wan_register.html:55
 msgid "Currently registered security keys:"
@@ -769,7 +769,8 @@ msgstr "Bereits registrierte Sicherheitsschlüssel:"
 msgid ""
 "Nickname: \"%s\" Usage: \"%s\" Transports: \"%s\" Discoverable: \"%s\" "
 "Last used on: %s"
-msgstr ""
+msgstr "Nickname: \"%s\" Verwendung: \"%s\" Transport: \"%s\" Entdeckbar: \"%s\" "
+"Zuletzt verwendet am: %s"
 
 #: flask_security/templates/security/wan_register.html:66
 msgid "Delete Existing WebAuthn Security Key"
@@ -843,7 +844,7 @@ msgstr "Klicken Sie auf den unten stehenden Link, um Ihr Passwort zurückzusetze
 #: flask_security/templates/security/email/two_factor_instructions.html:3
 #: flask_security/templates/security/email/two_factor_instructions.txt:3
 msgid "You can log into your account using the following code:"
-msgstr "Sie können sich mit folgenden Code in Ihr Benutzerkonto anmelden:"
+msgstr "Sie können sich mit folgendem Code in Ihr Benutzerkonto anmelden:"
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
@@ -853,7 +854,7 @@ msgstr "kann E-Mail-Konto nicht erreichen"
 #: flask_security/templates/security/email/us_instructions.html:11
 #: flask_security/templates/security/email/us_instructions.txt:11
 msgid "You can sign into your account using the following code:"
-msgstr "Sie können sich mit folgenden Code in Ihr Benutzerkonto anmelden:"
+msgstr "Sie können sich mit folgendem Code in Ihr Benutzerkonto anmelden:"
 
 #: flask_security/templates/security/email/us_instructions.html:14
 #: flask_security/templates/security/email/us_instructions.txt:15
@@ -863,7 +864,7 @@ msgstr "Oder nutzen Sie den folgenden Link:"
 #: flask_security/templates/security/email/welcome.html:11
 #: flask_security/templates/security/email/welcome.txt:11
 msgid "You can confirm your email through the link below:"
-msgstr "Die E-Mail-Adresse kann über den Link unten bestätigt werden"
+msgstr "Die E-Mail-Adresse kann über den Link unten bestätigt werden:"
 
 #~ msgid "You successfully confirmed password"
 #~ msgstr ""
@@ -899,7 +900,7 @@ msgstr "Die E-Mail-Adresse kann über den Link unten bestätigt werden"
 #~ msgstr "Single-User-Login einrichten"
 
 #~ msgid "Please re-authenticate"
-#~ msgstr "Bitte neu authentifizieren, um auf diese Seite zuzugreifen."
+#~ msgstr "Bitte neu authentisieren, um auf diese Seite zuzugreifen."
 
 #~ msgid "Please Enter Your Password"
 #~ msgstr "Bitte geben Sie Ihr Passwort ein"
