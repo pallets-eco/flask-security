@@ -267,7 +267,7 @@ msgstr "Das Passwort wurde erfolgreich geändert."
 
 #: flask_security/core.py:444
 msgid "Please log in to access this page."
-msgstr "Bitte anmelden Sie sich an, um diese Seite zu sehen."
+msgstr "Bitte melden Sie sich an, um diese Seite zu sehen."
 
 #: flask_security/core.py:445
 msgid "Please reauthenticate to access this page."
