@@ -105,6 +105,7 @@ def create_app():
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
     app.config["SECURITY_USERNAME_ENABLE"] = True
     app.config["SECURITY_PASSWORD_REQUIRED"] = False
+    app.config["SECURITY_MULTI_FACTOR_RECOVERY_CODES"] = True
 
     class TestWebauthnUtil(WebauthnUtil):
         def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:

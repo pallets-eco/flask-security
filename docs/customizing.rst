@@ -16,6 +16,8 @@ following is a list of view templates:
 
 * `security/forgot_password.html`
 * `security/login_user.html`
+* `security/mf_recovery.html`
+* `security/mf_recovery_codes.html`
 * `security/register_user.html`
 * `security/reset_password.html`
 * `security/change_password.html`
@@ -66,6 +68,8 @@ The following is a list of all the available context processor decorators:
 * ``context_processor``: All views
 * ``forgot_password_context_processor``: Forgot password view
 * ``login_context_processor``: Login view
+* ``mf_recovery_codes_context_processor``: Setup recovery codes view
+* ``mf_recovery_context_processor``: Use recovery code view
 * ``register_context_processor``: Register view
 * ``reset_password_context_processor``: Reset password view
 * ``change_password_context_processor``: Change password view
@@ -127,6 +131,8 @@ The following is a list of all the available form overrides:
 * ``reset_password_form``: Reset password form
 * ``change_password_form``: Change password form
 * ``send_confirmation_form``: Send confirmation form
+* ``mf_recovery_codes_form``: Setup recovery codes form
+* ``mf_recovery_form``: Use recovery code form
 * ``passwordless_login_form``: Passwordless login form
 * ``two_factor_verify_code_form``: Two-factor verify code form
 * ``two_factor_select_form``: Two-factor select form

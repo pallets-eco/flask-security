@@ -1165,24 +1165,30 @@ paths:
             schema:
               type: object
               properties:
-                help-setup:
-                  description: Either 'lost_device' or 'no_mail_access'.
+                help_setup:
+                  description: What rescue option is desired.
                   type: string
-                  example: "lost_device"
+                  enum: [help, email, recovery_code]
+                  example: "recovery_code"
           application/x-www-form-urlencoded:
             schema:
               type: object
               properties:
                 help_setup:
-                  description: Either 'lost_device' or 'no_mail_access'.
+                  description: What rescue option is desired.
                   type: string
-                  example: "lost_device"
+                  enum: [help, email, recovery_code]
+                  example: "email"
       responses:
         200:
           description: >
-            If 'lost_device' was specified, then an authentication code was sent to the email
-            on record for the user. If 'no_mail_access' then an email was sent to administrator address
-            specified by SECURITY_TWO_FACTOR_RESCUE_MAIL.
+            If 'email' was specified and SECURITY_TWO_FACTOR_RESCUE_EMAIL is True,
+            then an authentication code was sent to the email
+            on record for the user. If 'help' then an email was sent to administrator address
+            specified by SECURITY_TWO_FACTOR_RESCUE_MAIL. If 'recovery_code' was specified
+            and SECURITY_MULTI_FACTOR_RECOVERY_CODES is True, and the user had previously
+            setup and downloaded a set of recovery codes the user will be redirected to
+            SECURITY_MULTI_FACTOR_RECOVERY_URL.
           content:
             application/json:
               schema:
@@ -1213,14 +1219,21 @@ paths:
                 example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
             application/json:
               schema:
-                type: object
-                properties:
-                  tf_setup_methods:
-                    type: string
-                    description: A list of methods to choose from
-                  tf_select:
-                    type: boolean
-                    example: True
+                allOf:
+                  - $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          tf_setup_methods:
+                            type: array
+                            items:
+                              type: string
+                              description: A list of methods to choose from
+                          tf_select:
+                            type: boolean
+                            example: True
     post:
       summary: Select a two-factor method
       requestBody:
@@ -1267,6 +1280,130 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /mf-recovery-codes:
+    get:
+      summary: Generate and retrieve one-time use recovery codes.
+      description: >
+        If a user has two-factor authentication enabled, they can generate and
+        use a recovery code if they lose or otherwise can't use their second factor
+        device.
+      responses:
+        200:
+          description: Multi-factor recovery code form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          recovery_codes:
+                            type: array
+                            description: A list of codes
+                            items:
+                              type: string
+
+    post:
+      summary: Generate a new set of one-time recovery codes
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+                description: Generate Codes Form
+                type: string
+                example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
+      responses:
+        200:
+          description: New one-time codes generated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          recovery_codes:
+                            type: array
+                            description: List of new recovery codes
+                            items:
+                              type: string
+            text/html:
+              schema:
+                description: New codes generated.
+                type: string
+                example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
+        400:
+          description: Errors while generating new codes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+
+  /mf-recovery:
+    get:
+      summary: Get recovery code form.
+      description: >
+        If a user has two-factor authentication enabled, they can generate and
+        use a recovery code if they lose or otherwise can't use their second factor
+        device.
+      responses:
+        200:
+          description: Multi-factor recovery form
+          content:
+            text/html:
+              schema:
+                example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE)
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+
+    post:
+      summary: Use a one-time recovery code to satisfy a two-factor authentication requirement.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: One-time recovery code
+          application/x-www-form-urlencoded:
+            schema:
+                description: Use one-time code form
+                type: string
+                example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE)
+      responses:
+        200:
+          description: Successful authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        302:
+          description: Successful login
+          headers:
+            Location:
+              description: Redirect to ``SECURITY_POST_LOGIN_VIEW``
+              schema:
+                type: string
+        400:
+          description: Error when validating code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+
   /wan-register:
     get:
       summary: Register a new WebAuthn key - Step 1
@@ -1632,9 +1769,7 @@ components:
       properties:
         email:
           type: string
-          description: |
-            user identifier. This is by default an email address, but can be any (unique)
-            field that is part of the User model and is defined in the __SECURITY_USER_IDENTITY_ATTRIBUTES__ configuration variable. It will also match against numeric User model fields.
+          description: user email
         password:
           type: string
           description: Password
@@ -1644,7 +1779,7 @@ components:
             If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
         tf_validity_token:
           type: string
-          description: Code verifying the user has successfully verfied 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
+          description: Code verifying the user has successfully verified 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
     LoginJsonResponse:
       type: object
       description: >
@@ -1673,9 +1808,21 @@ components:
             tf_state:
               type: string
               description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
-            tf_primary_method:
+            tf_method:
               type: string
               description: Which method was used to send code.
+              example: "webauthn"
+            tf_select:
+              type: boolean
+              description: <
+                If user has setup multiple forms of two-factor authentication, this will be True
+                and the application should prompt the user for which method they want to use.
+            tf_setup_methods:
+              type: array
+              items:
+                type: string
+                description: If user has setup multiple forms of two-factor authentication they are listed
+
     BaseJsonResponse:
       type: object
       required: [ meta, response ]

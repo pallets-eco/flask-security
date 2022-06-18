@@ -439,6 +439,7 @@ class UserDatastore:
             * remove all unified signin TOTP secrets so those can't be used
             * remove all two-factor secrets so those can't be used
             * remove all registered webauthn credentials
+            * remove all one-time recovery codes
             * will NOT affect password
 
         Note that if using unified sign in and allow 'email' as a way to receive a code;
@@ -451,6 +452,9 @@ class UserDatastore:
         Remember to call commit on DB if needed.
 
         .. versionadded:: 3.4.1
+
+        .. versionchanged:: 5.0.0
+            Added webauthn and recovery codes reset.
         """
         self.set_uniquifier(user)
         self.set_token_uniquifier(user)
@@ -460,6 +464,8 @@ class UserDatastore:
             self.tf_reset(user)
         if hasattr(user, "webauthn"):
             self.webauthn_reset(user)
+        if hasattr(user, "mf_recovery_codes"):
+            self.mf_set_recovery_codes(user, None)
 
     def tf_set(
         self,
@@ -504,6 +510,41 @@ class UserDatastore:
         user.tf_totp_secret = None
         user.tf_phone_number = None
         self.put(user)
+
+    def mf_set_recovery_codes(self, user: "User", rcs: t.Optional[t.List[str]]) -> None:
+        """Set MF recovery codes into user record.
+        Any existing codes will be erased.
+
+        .. danger::
+           Be aware that whatever `passwords` are passed in will
+           be stored directly in the DB. Do NOT pass in a plaintext passwords!
+           Best practice is to pass in ``hash_password(plaintext_password)``.
+
+        .. versionadded: 5.0.0
+        """
+        user.mf_recovery_codes = rcs
+        self.put(user)
+
+    def mf_get_recovery_codes(self, user: "User") -> t.List[str]:
+        codes = getattr(user, "mf_recovery_codes", [])
+        return codes if codes else []
+
+    def mf_delete_recovery_code(self, user: "User", code_to_delete: str) -> bool:
+        """Delete a single recovery code.
+        Recovery codes are single-use - so delete after using!
+
+        Return True if code found and deleted, False otherwise.
+
+        .. versionadded: 5.0.0
+        """
+        if not user.mf_recovery_codes:
+            return False
+        try:
+            user.mf_recovery_codes.remove(code_to_delete)
+            self.put(user)
+            return True
+        except ValueError:
+            return False
 
     def us_get_totp_secrets(self, user: "User") -> t.Dict[str, str]:
         """Return totp secrets.
@@ -1073,7 +1114,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         tf_primary_method: t.Optional[str]
         tf_totp_secret: t.Optional[str]
         tf_phone_number: t.Optional[str]
-        tf_recovery_codes: t.Optional[t.List[str]]
+        mf_recovery_codes: t.Optional[t.List[str]]
         us_phone_number: t.Optional[str]
         us_totp_secrets: t.Optional[t.Union[str, bytes]]
         create_datetime: datetime.datetime

@@ -212,3 +212,34 @@ def test_unified_signin_context_processors(client, app):
     assert b"CUSTOM UNIFIED VERIFY" in response.data
     assert b"global" in response.data
     assert b"setup" in response.data
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    multi_factor_recovery_template="custom_security/mf_recovery.html",
+    multi_factor_recovery_codes_template="custom_security/mf_recovery_codes.html",
+    multi_factor_recovery_codes=True,
+)
+def test_mf_recovery_context_processors(client, app):
+    @app.security.context_processor
+    def default_ctx_processor():
+        return {"global": "global"}
+
+    @app.security.mf_recovery_codes_context_processor
+    def codes_ctx():
+        return {"foo": "codes"}
+
+    authenticate(client)
+    response = client.get("/mf-recovery-codes")
+    assert b"global" in response.data
+    assert b"codes" in response.data
+    logout(client)
+
+    @app.security.mf_recovery_context_processor
+    def code_ctx():
+        return {"foo": "code"}
+
+    authenticate(client, "gal@lp.com")
+    response = client.get("/mf-recovery")
+    assert b"global" in response.data
+    assert b"code" in response.data

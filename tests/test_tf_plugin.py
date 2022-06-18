@@ -85,6 +85,7 @@ def test_tf_select(app, client, get_message):
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf_select_json(app, client, get_message):
     # Test basic select mechanism when more than one 2FA has been setup
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
     wankeys = reg_2_keys(client)  # add a webauthn 2FA key (authenticates)
     setup_tf(client)
     logout(client)
@@ -97,10 +98,14 @@ def test_tf_select_json(app, client, get_message):
     choices = response.json["response"]["tf_setup_methods"]
     assert all(k in choices for k in ["sms", "webauthn"])
 
+    # should get same answer for GET on /tf-select
+    response = client.get("/tf-select", headers=headers)
+    choices = response.json["response"]["tf_setup_methods"]
+    assert all(k in choices for k in ["sms", "webauthn"])
+
     # use webauthn as the second factor
     response = client.post("/tf-select", json=dict(which="webauthn"))
     signin_url = response.json["response"]["tf_signin_url"]
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.post(signin_url, headers=headers)
     response_url = f'wan-signin/{response.json["response"]["wan_state"]}'
     response = client.post(

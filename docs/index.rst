@@ -37,7 +37,7 @@ and libraries. They include:
 * `Flask-WTF <https://pypi.org/project/Flask-WTF/>`_
 * `itsdangerous <https://pypi.org/project/itsdangerous/>`_
 * `passlib <https://pypi.org/project/passlib/>`_
-* `PyQRCode <https://pypi.org/project/PyQRCode/>`_
+* `QRCode <https://pypi.org/project/qrcode/>`_
 * `webauthn <https://pypi.org/project/webauthn/>`_
 
 Additionally, it assumes you'll be using a common library for your database

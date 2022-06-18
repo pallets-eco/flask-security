@@ -40,6 +40,8 @@ from .forms import (
     ConfirmRegisterForm,
     ForgotPasswordForm,
     LoginForm,
+    MfRecoveryForm,
+    MfRecoveryCodesForm,
     PasswordlessLoginForm,
     RegisterForm,
     RegisterFormMixin,
@@ -219,6 +221,13 @@ _default_config: t.Dict[str, t.Any] = {
         "secure": False,
         "samesite": "Strict",
     },
+    "TWO_FACTOR_RESCUE_EMAIL": True,
+    "MULTI_FACTOR_RECOVERY_CODES": False,
+    "MULTI_FACTOR_RECOVERY_CODES_N": 5,
+    "MULTI_FACTOR_RECOVERY_CODES_URL": "/mf-recovery-codes",
+    "MULTI_FACTOR_RECOVERY_CODES_TEMPLATE": "security/mf_recovery_codes.html",
+    "MULTI_FACTOR_RECOVERY_URL": "/mf-recovery",
+    "MULTI_FACTOR_RECOVERY_TEMPLATE": "security/mf_recovery.html",
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "5 days",
     "LOGIN_WITHOUT_CONFIRMATION": False,
@@ -371,6 +380,7 @@ _default_messages = {
     "PASSWORD_MISMATCH": (_("Password does not match"), "error"),
     "RETYPE_PASSWORD_MISMATCH": (_("Passwords do not match"), "error"),
     "INVALID_REDIRECT": (_("Redirections outside the domain are forbidden"), "error"),
+    "INVALID_RECOVERY_CODE": (_("Recovery code invalid"), "error"),
     "PASSWORD_RESET_REQUEST": (
         _("Instructions to reset your password have been sent to %(email)s."),
         "info",
@@ -1008,6 +1018,8 @@ class Security:
     :param two_factor_verify_code_form: set form the the 2FA verify code view
     :param two_factor_rescue_form: set form for the 2FA rescue view
     :param two_factor_select_form: set form for selecting between active 2FA methods
+    :param mf_recovery_codes_form: set form for retrieving and setting recovery codes
+    :param mf_recovery_form: set form for multi factor recovery
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
     :param us_setup_validate_form: set form for the unified sign in setup validate view
@@ -1066,6 +1078,9 @@ class Security:
          ``webauthn_delete_form``, ``webauthn_verify_form``, ``tf_select_form``.
     .. versionadded:: 5.0.0
         ``WebauthnUtil`` class.
+    .. versionadded:: 5.0.0
+        Added support for multi-factor recovery codes ``mf_recovery_codes_form``,
+        ``mf_recovery_form``.
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
@@ -1096,6 +1111,8 @@ class Security:
         two_factor_setup_form: t.Type[TwoFactorSetupForm] = TwoFactorSetupForm,
         two_factor_rescue_form: t.Type[TwoFactorRescueForm] = TwoFactorRescueForm,
         two_factor_select_form: t.Type[TwoFactorSelectForm] = TwoFactorSelectForm,
+        mf_recovery_codes_form: t.Type[MfRecoveryCodesForm] = MfRecoveryCodesForm,
+        mf_recovery_form: t.Type[MfRecoveryForm] = MfRecoveryForm,
         us_signin_form: t.Type[UnifiedSigninForm] = UnifiedSigninForm,
         us_setup_form: t.Type[UnifiedSigninSetupForm] = UnifiedSigninSetupForm,
         us_setup_validate_form: t.Type[
@@ -1149,6 +1166,8 @@ class Security:
         self.two_factor_setup_form = two_factor_setup_form
         self.two_factor_rescue_form = two_factor_rescue_form
         self.two_factor_select_form = two_factor_select_form
+        self.mf_recovery_codes_form = mf_recovery_codes_form
+        self.mf_recovery_form = mf_recovery_form
         self.us_signin_form = us_signin_form
         self.us_setup_form = us_setup_form
         self.us_setup_validate_form = us_setup_validate_form
@@ -1239,6 +1258,7 @@ class Security:
         self.confirm_error_view: str = ""
 
         self.redirect_behavior: t.Optional[str] = None
+        self.support_mfa: bool = False
 
         if app is not None and datastore is not None:
             self.init_app(app, datastore, register_blueprint=register_blueprint)
@@ -1306,6 +1326,8 @@ class Security:
             "two_factor_setup_form",
             "two_factor_rescue_form",
             "two_factor_select_form",
+            "mf_recovery_form",
+            "mf_recovery_codes_form",
             "us_signin_form",
             "us_setup_form",
             "us_setup_validate_form",
@@ -1473,6 +1495,9 @@ class Security:
         self.hashing_context = _get_hashing_context(app)
         self.i18n_domain = FsDomain(app)
 
+        if cv("WEBAUTHN", app=app) or cv("TWO_FACTOR", app):
+            self.support_mfa = True
+
         if cv("PASSWORDLESS", app=app):
             warnings.warn(
                 "The passwordless feature was deprecated in Version 5.0.0"
@@ -1527,7 +1552,8 @@ class Security:
             if issubclass(self.login_form, LoginForm):
                 self.login_form.username = login_username_field
 
-        # initialize two-factor plugins.
+        # initialize two-factor plugins. Note that each implementation likely
+        # has its own feature flag which will control whether it is active or not.
         self.two_factor_plugins = TfPlugin()
         for name, impl_class in cv("TWO_FACTOR_IMPLEMENTATIONS", app).items():
             module_path, class_name = impl_class.rsplit(".", 1)
@@ -1535,6 +1561,8 @@ class Security:
             self.two_factor_plugins.register_tf_impl(
                 app, name, getattr(module, class_name)
             )
+
+        # register our blueprint/endpoints
         if self.register_blueprint:
             bp = create_blueprint(
                 app, self, __name__, json_encoder=self.json_encoder_cls
@@ -1565,10 +1593,10 @@ class Security:
             if not app.config.get(newc, None):
                 app.config[newc] = app.config.get(oldc, None)
 
-        # Two factor configuration checks and setup
-        multi_factor = False
+        # Alternate/code authentication configuration checks and setup
+        alt_auth = False
         if cv("UNIFIED_SIGNIN", app=app):
-            multi_factor = True
+            alt_auth = True
             if len(cv("US_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some US_ENABLED_METHODS")
             if "sms" in cv(
@@ -1580,11 +1608,14 @@ class Security:
                     " SECURITY_USER_IDENTITY_ATTRIBUTES"
                 )
         if cv("TWO_FACTOR", app=app):
-            multi_factor = True
+            alt_auth = True
             if len(cv("TWO_FACTOR_ENABLED_METHODS", app=app)) < 1:
                 raise ValueError("Must configure some TWO_FACTOR_ENABLED_METHODS")
+        if cv("MULTI_FACTOR_RECOVERY_CODES", app=app):
+            # These rely on totp to generate
+            alt_auth = True
 
-        if multi_factor:
+        if alt_auth:
             # cryptography is used to encrypt TOTP secrets
             self._check_modules("cryptography", "TWO_FACTOR or UNIFIED_SIGNIN")
 
@@ -1878,3 +1909,13 @@ class Security:
         self, fn: t.Callable[[], t.Dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("wan_verify", fn)
+
+    def mf_recovery_codes_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("mf_recovery_codes", fn)
+
+    def mf_recovery_context_processor(
+        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("mf_recovery", fn)

@@ -105,8 +105,13 @@ an authenticator app such as Google Authenticator, LastPass Authenticator, or Au
 By default, tokens provided by the authenticator app are
 valid for 2 minutes, tokens sent by mail for up to 5 minute and tokens sent by
 sms for up to 2 minutes. The QR code used to supply the authenticator app with
-the secret is generated using the PyQRCode library.
+the secret is generated using the `qrcode <https://pypi.org/project/qrcode/>`_ library.
 Please read :ref:`2fa_theory_of_operation` for more details.
+
+The Two-factor feature offers the ability for a user to 'rescue' themselves if
+they lose track of their secondary factor device. Rescue options include sending
+a one time code via email, send an email to the application admin, and using a previously
+generated and downloaded one-time code.
 
 .. _unified-sign-in:
 

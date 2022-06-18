@@ -11,6 +11,7 @@ Released TBD
 Features
 ++++++++
 - (:issue:`475`) Support for WebAuthn
+- (:issue:`479`) Support Two-factor recovery codes
 - (:pr:`532`) Support for Python 3.10
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn
 - (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
@@ -29,12 +30,14 @@ Fixes
 - (:pr:`625`) Improve username support - the LoginForm now has a separate field for username if
   ``SECURITY_USERNAME_ENABLE`` is True, and properly displays input fields only if the associated
   field is an identity attribute (as specified by :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`)
-- (:pr:`xxx`) Improve empty password handling. Prior, an unguessable password was set into the user
+- (:pr:`627`) Improve empty password handling. Prior, an unguessable password was set into the user
   record when a user registered without a password - now, the DB user model has been changed to
   allow nullable passwords. This provides a better user experience since Flask-Security now
   knows if a user has an empty password or not. Since registering without a password is not
   a mainstream feature, a new configuration variable :py:data:`SECURITY_PASSWORD_REQUIRED`
   has been added (defaults to ``True``).
+- (:issue:`479`) A new configuration option :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL` has been added
+  that allows disabling that feature - defaults to backwards compatible ``True``
 
 Backward Compatibility Concerns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,8 +45,8 @@ Backward Compatibility Concerns
 For unified signin:
 
 - The redirect after a successful us-setup used to redirect to ``SECURITY_US_POST_SETUP_VIEW`` or
-  ``SECURITY_POST_LOGIN_VIEW`` (which would default to '/'). Now it just redirects based on
-  ``SECURITY_US_POST_SETUP_VIEW`` configuration which defaults back to the ``/us-setup`` view.
+  ``SECURITY_POST_LOGIN_VIEW`` (which would default to '/'). Now it just redirects to
+  ``SECURITY_US_POST_SETUP_VIEW`` which defaults back to the ``/us-setup`` view.
 - The ability to authenticate using a one-time email link was automatically setup by the system
   for all users.
   "email" now behaves like the other unified sign in methods and must be explicitly set up - with the
@@ -65,7 +68,7 @@ Login:
   This has always been problematic and confusing - and with the addition of HTML attributes for various
   form fields - having a field with multiple possible inputs is no longer a viable user experience.
   This is no longer supported, and the LoginForm now declares the ``email`` field to be of type ``EmailField``
-  which requires a valid (after normalization). The most common usage of this legacy feature was to allow
+  which requires a valid (after normalization) email address. The most common usage of this legacy feature was to allow
   an email or username - Flask-Security now has core support for a ``username`` option - see :py:data:`SECURITY_USERNAME_ENABLE`.
   Please see :ref:`custom_login_form` for an example of how to replicate the legacy behavior.
 - Some error messages have changed - ``USER_DOES_NOT_EXIST`` is now returned for any identity error including an empty value.
@@ -80,6 +83,10 @@ Other:
   form in the ``render_kw`` attribute. This could cause some confusion if an app had its own templates and set different
   attributes.
 - encrypt_password method has been removed. It has been deprecated since 2.0.2
+- The keys for "/tf-rescue" select options have changed to be more 'action' oriented:
+
+    - `lost_device` -> `email`
+    - `no_mail_access` -> `help`
 
 For templates:
 

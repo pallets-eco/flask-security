@@ -12,6 +12,7 @@ import io
 import typing as t
 
 from passlib.totp import TOTP, TokenError, TotpMatch
+from passlib.pwd import genword
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from .datastore import User
@@ -154,6 +155,23 @@ class Totp:
         except ImportError:  # pragma: no cover
             # This should have been checked at app init.
             raise
+
+    def generate_recovery_codes(self, number: int) -> t.List[str]:
+        """Generate a set of secure passwords - used a 2FA recovery codes.
+            # this is nice for english - but not for others
+            return genphrase(entropy="fair", wordset="eff_short", sep="-",
+             returns=number)
+
+        .. versionadded:: 5.0.0
+        """
+        pwds = genword(length=12, charset="hex", returns=number)
+        # make this a bit easier to type - 3 sets of 4 characters
+        spwds = []
+        for pwd in pwds:
+            spwds.append(
+                "-".join([pwd[i : i + 4] for i in range(0, len(pwd), 4)])  # noqa: E203
+            )
+        return spwds
 
     def get_last_counter(self, user: "User") -> t.Optional[TotpMatch]:
         """Implement this to fetch stored last_counter from cache.

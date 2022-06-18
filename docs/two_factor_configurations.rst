@@ -181,8 +181,12 @@ the desired 2FA method, and finally have the user enter the code and POST to ``/
 
 Rescue
 ~~~~~~
-Life happens - if the user doesn't have their mobile devices (SMS) or authenticator app, then they can request using ``/tf-rescue`` endpoint to have the code sent to their email.
-If they have lost access to their email, they can request an email be sent to the application administrators.
+Life happens - if the user doesn't have their mobile devices (SMS) or authenticator app, then they can use the ``/tf-rescue`` endpoint to
+see possible recovery options. Flask-Security supports the following:
+
+    - Have a one-time code sent to their email.
+    - Send an email to the application administrators.
+    - Use a previously setup one-time recovery code (see :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`)
 
 Validity
 ++++++++
