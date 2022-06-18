@@ -521,6 +521,7 @@ These are used by the Two-Factor and Unified Signin features.
         - :py:data:`SECURITY_US_SETUP_URL`
         - :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
         - :py:data:`SECURITY_WAN_REGISTER_URL`
+        - :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
 
     Setting this to a negative number will disable any freshness checking and
     the endpoints:
@@ -1159,6 +1160,16 @@ Configuration related to the two-factor authentication feature.
 
     .. versionadded:: 5.0.0
 
+.. py:data:: SECURITY_TWO_FACTOR_RESCUE_EMAIL
+
+    If True, then the 'email' option for two-factor rescue is enabled - allowing a user to
+    recover a missing/inoperable second factor device by requesting a one time code sent to their email.
+    While this is very convenient is has the downside that if a user's email is hacked, their second factor
+    is useless to protect their account.
+
+    Default: ``True``
+
+    .. versionadded:: 5.0.0
 
 Unified Signin
 --------------
@@ -1494,6 +1505,52 @@ Additional relevant configuration variables:
     * :py:data:`SECURITY_FRESHNESS` - Used to protect /us-setup.
     * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /us-setup.
 
+Recovery Codes
+--------------
+
+    .. versionadded:: 5.0.0
+
+.. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODES
+
+    To enable this feature - set this to ``True``. Please see :ref:`models_topic` for
+    required additions to your database models. This enables a user to generate and
+    use a recovery code for two-factor authentication. This works for all two-factor
+    mechanisms - including webauthn. Note that these code are single use and
+    the user should be advised to write them down and store in a safe place.
+
+.. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODES_N
+
+    How many recovery codes to generate.
+
+    Default:: 5
+
+.. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODES_URL
+
+    Endpoint for displaying and generating recovery codes.
+
+    Default: ``"/mf-recovery-codes"``
+
+.. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE
+
+    Default: ``"security/mf_recovery_codes.html"``
+
+.. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_URL
+
+    Endpoint for entering a recovery code.
+
+    Default: ``"/mf-recovery"``
+
+.. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE
+
+    Default: ``"security/mf_recovery.html"``
+
+Additional relevant configuration variables:
+
+    * :py:data:`SECURITY_FRESHNESS` - Used to protect /mf-recovery-codes.
+    * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /mf-recovery-codes.
+    * :py:data:`SECURITY_TOTP_SECRETS` - TOTP/passlib is used to generate the codes.
+    * :py:data:`SECURITY_TOTP_ISSUER`
+
 Feature Flags
 -------------
 All feature flags. By default all are 'False'/not enabled.
@@ -1507,6 +1564,7 @@ All feature flags. By default all are 'False'/not enabled.
 * ``SECURITY_TWO_FACTOR``
 * :py:data:`SECURITY_UNIFIED_SIGNIN`
 * :py:data:`SECURITY_WEBAUTHN`
+* :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
 
 URLs and Views
 --------------
@@ -1519,6 +1577,8 @@ A list of all URLs and Views:
 * ``SECURITY_RESET_URL``
 * ``SECURITY_CHANGE_URL``
 * ``SECURITY_CONFIRM_URL``
+* :py:data:``SECURITY_MULTI_FACTOR_RECOVERY_CODES_URL``
+* :py:data:``SECURITY_MULTI_FACTOR_RECOVERY_URL``
 * :py:data:`SECURITY_TWO_FACTOR_SELECT_URL`
 * :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
 * :py:data:`SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL`
@@ -1557,6 +1617,8 @@ A list of all templates:
 * :py:data:`SECURITY_REGISTER_USER_TEMPLATE`
 * :py:data:`SECURITY_RESET_PASSWORD_TEMPLATE`
 * :py:data:`SECURITY_CHANGE_PASSWORD_TEMPLATE`
+* :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE`
+* :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE`
 * :py:data:`SECURITY_SEND_CONFIRMATION_TEMPLATE`
 * :py:data:`SECURITY_SEND_LOGIN_TEMPLATE`
 * :py:data:`SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE`
@@ -1597,6 +1659,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_INVALID_LOGIN_TOKEN``
 * ``SECURITY_MSG_INVALID_PASSWORD``
 * ``SECURITY_MSG_INVALID_PASSWORD_CODE``
+* ``SECURITY_MSG_INVALID_RECOVERY_CODE``
 * ``SECURITY_MSG_INVALID_REDIRECT``
 * ``SECURITY_MSG_INVALID_RESET_PASSWORD_TOKEN``
 * ``SECURITY_MSG_LOGIN``

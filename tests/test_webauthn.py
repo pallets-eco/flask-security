@@ -1607,3 +1607,46 @@ def test_uv_required(client):
     )
     assert response.status_code == 200
     assert response.json["response"]["user"]["email"] == "matt@lp.com"
+
+
+@pytest.mark.settings(
+    multi_factor_recovery_codes=True, webauthn_util_cls=HackWebauthnUtil
+)
+def test_mf(client):
+    # Test using recovery codes in-liu of a webauthn second factor
+    # Note that we are allowed to generate recovery codes even if we don't yet have
+    # an established 2nd factor
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    authenticate(client)
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    # setup webauthn
+    register_options, response_url = _register_start_json(client, name="testr3")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/login", json=dict(email="matt@lp.com", password="password")
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    # oh no - we forgot our webauthn key
+    """ Right now tf-rescue is part of TWO_FACTOR - not WEBAUTHN
+    response = client.get("/tf-rescue", headers=headers)
+    options = response.json["response"]["recovery_options"]
+    assert "recovery_code" in options.keys()
+    assert "/mf-recovery" in options["recovery_code"]
+    """
+
+    response = client.post(
+        "/mf-recovery", data=dict(code=codes[0]), follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200

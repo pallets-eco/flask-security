@@ -60,10 +60,10 @@ def tf_select() -> "ResponseValue":
     # Ask user which MFA method they want to use.
     # This is used when a user has setup more than one type of 2FA.
     form_class = _security.two_factor_select_form
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     # This endpoint is unauthenticated - make sure we're in a valid state
     if not all(k in session for k in ["tf_user_id", "tf_select"]):
@@ -156,7 +156,7 @@ class TfPlugin:
     def create_blueprint(
         self, app: "flask.Flask", bp: "flask.Blueprint", state: "Security"
     ) -> None:
-        if cv("TWO_FACTOR", app):
+        if state.support_mfa:
             for impl in self._tf_impls.values():
                 impl.create_blueprint(app, bp, state)
             # Add our route for selecting between multiple active two-factor
@@ -194,7 +194,7 @@ class TfPlugin:
         across the second factor.
         """
         json_payload: t.Dict[str, t.Any]
-        if cv("TWO_FACTOR"):
+        if _security.support_mfa:
             tf_setup_methods = self.get_setup_tf_methods(user)
             if cv("TWO_FACTOR_REQUIRED") or len(tf_setup_methods) > 0:
                 tf_fresh = tf_verify_validity_token(user.fs_uniquifier)
@@ -227,7 +227,7 @@ class TfPlugin:
                             return redirect(url_for_security("tf_select"))
                         # Let's force app to go through tf-select just in case we want
                         # to do further validation... However, provide the choices
-                        # so they can just to a POST
+                        # so they can just do a POST
                         json_payload.update(
                             {
                                 "tf_select": True,
@@ -307,6 +307,20 @@ def tf_set_validity_token_cookie(response: "Response", token: str) -> "Response"
     return response
 
 
+def tf_check_state(allowed_states: t.List[str]) -> t.Optional["User"]:
+    if (
+        not all(k in session for k in ["tf_user_id", "tf_state"])
+        or session["tf_state"] not in allowed_states
+    ):
+        tf_clean_session()
+        return None
+
+    user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
+    if not user:
+        tf_clean_session()
+    return user
+
+
 def tf_illegal_state(form, redirect_to):
     m, c = get_message("TWO_FACTOR_PERMISSION_DENIED")
     if not _security._want_json(request):
@@ -330,3 +344,13 @@ def tf_clean_session():
             "tf_select",
         ]:
             session.pop(k, None)
+
+
+def create_recovery_codes(user: "User") -> t.List[str]:
+    # Create new recovery codes and store in user record.
+    # TODO - if app provides a key - use cryptography.fernet to encrypt into DB
+    new_codes = _security._totp_factory.generate_recovery_codes(
+        cv("MULTI_FACTOR_RECOVERY_CODES_N")
+    )
+    _datastore.mf_set_recovery_codes(user, new_codes)
+    return new_codes

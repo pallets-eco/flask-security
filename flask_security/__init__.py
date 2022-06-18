@@ -49,6 +49,8 @@ from .forms import (
     ResetPasswordForm,
     PasswordlessLoginForm,
     ConfirmRegisterForm,
+    MfRecoveryForm,
+    MfRecoveryCodesForm,
     SendConfirmationForm,
     TwoFactorRescueForm,
     TwoFactorSetupForm,

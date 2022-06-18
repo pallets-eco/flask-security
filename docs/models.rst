@@ -198,6 +198,19 @@ The `User` model needs the following additional fields:
 * ``fs_webauthn_user_handle`` (string, 64 bytes, unique).
   This is used as the `PublicKeyCredentialUserEntity` `id` value.
 
+Recovery Codes
+^^^^^^^^^^^^^^^
+If :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES` is set to ``True`` then
+the `User` model needs the following field:
+
+* ``mfa_recovery_codes`` (string, 1024 bytes, nullable)
+
+The length depends on how many codes are created :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_N`
+and how long each code is (default 14 bytes).
+
+A recovery code can be used in place of any configured second-factor authenticator
+(e.g. SMS, WebAuthn, ...).
+
 Custom User Payload
 ^^^^^^^^^^^^^^^^^^^
 

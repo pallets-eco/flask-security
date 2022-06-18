@@ -15,6 +15,7 @@ This is Version 3:
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.sql import func
 import sqlalchemy.types as types
 
@@ -63,8 +64,8 @@ class FsUserMixin(FsUserMixinV2):
     # Note max length 64 as specified in spec.
     fs_webauthn_user_handle = Column(String(64), unique=True)
 
-    # 2FA - one time recovery codes - comma separated.
-    tf_recovery_codes = Column(AsaList(1024), nullable=True)
+    # MFA - one time recovery codes - comma separated.
+    mf_recovery_codes = Column(MutableList.as_mutable(AsaList(1024)), nullable=True)
 
     # Change password to nullable so we can tell after registration whether
     # a user has a password or not.
@@ -88,7 +89,7 @@ class FsWebAuthnMixin(WebAuthnMixin):
     credential_id = Column(LargeBinary(1024), index=True, unique=True, nullable=False)
     public_key = Column(LargeBinary, nullable=False)
     sign_count = Column(Integer, default=0)
-    transports = Column(AsaList(255), nullable=True)
+    transports = Column(MutableList.as_mutable(AsaList(1024)), nullable=True)
 
     # a JSON string as returned from registration
     extensions = Column(String(255), nullable=True)

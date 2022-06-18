@@ -27,6 +27,7 @@ from tests.test_utils import (
     capture_flashes,
     get_session,
     logout,
+    reset_fresh,
 )
 
 pytestmark = pytest.mark.two_factor()
@@ -477,14 +478,34 @@ def test_two_factor_flag(app, client, get_message):
     data = dict(email="gal2@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
     assert b"Please enter your authentication code" in response.data
-    rescue_data = dict(help_setup="lost_device")
+    rescue_data = dict(help_setup="email")
     response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
     message = b"The code for authentication was sent to your email address"
     assert message in response.data
-    rescue_data = dict(help_setup="no_mail_access")
+    rescue_data = dict(help_setup="help")
     response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
     message = b"A mail was sent to us in order to reset your application account"
     assert message in response.data
+
+
+@pytest.mark.settings(two_factor_rescue_email=False)
+def test_no_rescue_email(app, client):
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    response = client.post(
+        "/login", json=dict(email="gal2@lp.com", password="password")
+    )
+    assert response.json["response"]["tf_required"]
+
+    response = client.get("/tf-rescue", headers=headers)
+    options = response.json["response"]["recovery_options"]
+    assert len(options.keys()) == 1
+    assert "help" in options.keys()
+
+    # make sure that even if post using email - we get an error
+    response = client.post("/tf-rescue", json=dict(help_setup="email"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["help_setup"][0] == "Not a valid choice."
 
 
 @pytest.mark.settings(two_factor_required=True)
@@ -539,7 +560,7 @@ def test_json(app, client):
     # Verify SMS sent
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
-    response = client.post("/tf-validate", json=dict(code=code), headers=headers)
+    response = client.post("/tf-validate", json=dict(code=code))
     assert response.status_code == 200
     # verify logged in
     response = client.get("/profile", follow_redirects=False)
@@ -548,7 +569,7 @@ def test_json(app, client):
 
     # Test that user not yet setup for 2FA gets correct response.
     data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login", json=data, headers=headers)
+    response = client.post("/login", json=data)
     assert response.json["response"]["tf_required"]
     assert response.json["response"]["tf_state"] == "setup_from_login"
 
@@ -559,7 +580,7 @@ def test_json(app, client):
 
     # Now try to setup
     data = dict(setup="sms", phone="+442083661177")
-    response = client.post("/tf-setup", json=data, headers=headers)
+    response = client.post("/tf-setup", json=data)
     assert response.status_code == 200
     assert response.json["response"]["tf_state"] == "validating_profile"
     assert response.json["response"]["tf_primary_method"] == "sms"
@@ -573,11 +594,24 @@ def test_json(app, client):
 
     # Verify tf is now setup and can directly get code
     data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login", json=data, headers=headers)
+    response = client.post("/login", json=data)
     assert response.json["response"]["tf_required"]
     assert response.json["response"]["tf_state"] == "ready"
+
+    # send bad code
+    response = client.post("/tf-validate", json=dict(code="whatsup"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["code"][0] == "Invalid code"
+
+    # Do a GET - should get recovery options
+    response = client.get("/tf-validate", headers=headers)
+    options = response.json["response"]["recovery_options"]
+    assert "email" in options.keys()
+    assert "/tf-rescue" in options["email"]
+
+    # now send correct code
     code = sms_sender.messages[0].split()[-1]
-    response = client.post("/tf-validate", json=dict(code=code), headers=headers)
+    response = client.post("/tf-validate", json=dict(code=code))
     assert response.status_code == 200
     # verify logged in
     response = client.get("/profile", follow_redirects=False)
@@ -595,24 +629,21 @@ def test_json(app, client):
 
 @pytest.mark.settings(two_factor_rescue_mail="helpme@myapp.com")
 def test_rescue_json(app, client):
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
-
-    # it's an error if not logged in.
-    rescue_data_json = dict(help_setup="lost_device")
+    # it's an error if not primary authenticated
+    rescue_data_json = dict(help_setup="help")
     response = client.post(
         "/tf-rescue",
         json=rescue_data_json,
-        headers=headers,
     )
     assert response.status_code == 400
 
     # check when two_factor_rescue function should appear
     data = dict(email="gal2@lp.com", password="password")
-    response = client.post("/login", json=data, headers=headers)
+    response = client.post("/login", json=data)
     assert response.json["response"]["tf_required"]
 
-    rescue_data = dict(help_setup="lost_device")
-    response = client.post("/tf-rescue", json=rescue_data, headers=headers)
+    rescue_data = dict(help_setup="email")
+    response = client.post("/tf-rescue", json=rescue_data)
     assert response.status_code == 200
     outbox = app.mail.outbox
 
@@ -620,16 +651,14 @@ def test_rescue_json(app, client):
     assert outbox[0].from_email == "no-reply@localhost"
     assert outbox[0].subject == "Two-factor Login"
     matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
-    response = client.post(
-        "/tf-validate", json=dict(code=matcher.group(1)), headers=headers
-    )
+    response = client.post("/tf-validate", json=dict(code=matcher.group(1)))
     assert response.status_code == 200
     logout(client)
 
     # Try rescue with no email (should send email to admin)
-    client.post("/login", json=data, headers=headers)
-    rescue_data = dict(help_setup="no_mail_access")
-    response = client.post("/tf-rescue", json=rescue_data, headers=headers)
+    client.post("/login", json=data)
+    rescue_data = dict(help_setup="help")
+    response = client.post("/tf-rescue", json=rescue_data)
     assert response.status_code == 200
     outbox = app.mail.outbox
 
@@ -1126,7 +1155,6 @@ def test_bad_sender(app, client, get_message):
     ) == get_message("FAILED_TO_SEND_CODE")
 
 
-@pytest.mark.registerable()
 def test_replace_send_code(app, get_message):
     # replace tf_send_code - and have it return an error to check that.
     from flask_sqlalchemy import SQLAlchemy
@@ -1167,7 +1195,7 @@ def test_replace_send_code(app, get_message):
         data = dict(email="trp@lp.com", password="password")
         response = client.post("/login", data=data, follow_redirects=True)
         assert b"Please enter your authentication code" in response.data
-        rescue_data = dict(help_setup="lost_device")
+        rescue_data = dict(help_setup="email")
         response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
         assert b"That didnt work out as we planned" in response.data
 
@@ -1317,8 +1345,195 @@ def test_no_sms(app, get_message):
         assert msg in response.data
 
         code = app.mail.outbox[0].body.split()[-1]
-        # sumbit right token and show appropriate response
+        # submit right token and show appropriate response
         response = client.post(
             "/tf-validate", data=dict(code=code), follow_redirects=True
         )
         assert b"You successfully changed your two-factor method" in response.data
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_json(app, client, get_message):
+    # Test recovery codes
+    # gal has two-factor already setup for 'sms'
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    tf_authenticate(app, client)
+
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 0
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    response = client.get("/mf-recovery-codes", headers=headers)
+    recodes = response.json["response"]["recovery_codes"]
+    assert len(recodes) == 5 and codes[0] == recodes[0]
+
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    assert not hasattr(response.json["response"], "recovery_codes")
+
+    # endpoint is for unauthenticated only
+    response = client.post("/mf-recovery", json=dict(code=codes[0]))
+    assert response.status_code == 400
+    logout(client)
+
+    response = client.post("/login", json=dict(email="gal@lp.com", password="password"))
+    assert response.json["response"]["tf_required"]
+
+    response = client.post("/mf-recovery", json=dict(code=codes[0]))
+    assert response.status_code == 200
+
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+    # logout and try again - first code shouldn't work again
+    logout(client)
+    response = client.post("/login", json=dict(email="gal@lp.com", password="password"))
+    assert response.json["response"]["tf_required"]
+
+    response = client.post("/mf-recovery", json=dict(code=codes[0]))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["code"][0].encode(
+        "utf-8"
+    ) == get_message("INVALID_RECOVERY_CODE")
+    response = client.post("/mf-recovery", json=dict(code=codes[1]))
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc(app, client, get_message):
+    # Test recovery codes
+    # gal has two-factor already setup for 'sms'
+    tf_authenticate(app, client)
+
+    response = client.post("/mf-recovery-codes")
+    rd = response.data.decode("utf-8")
+    codes = re.findall(r"[a-f,\d]{4}-[a-f,\d]{4}-[a-f,\d]{4}", rd)
+    assert len(codes) == 5
+
+    response = client.get("/mf-recovery-codes?show_codes=hi")
+    assert response.status_code == 200
+    assert b"Recovery Codes" in response.data
+    rd = response.data.decode("utf-8")
+    codes = re.findall(r"[a-f,\d]{4}-[a-f,\d]{4}-[a-f,\d]{4}", rd)
+    assert len(codes) == 5
+
+    # endpoint is for unauthenticated only
+    response = client.post(
+        "/mf-recovery", data=dict(code=codes[0]), follow_redirects=False
+    )
+    assert response.status_code == 302
+    logout(client)
+
+    response = client.post("/login", json=dict(email="gal@lp.com", password="password"))
+    assert response.json["response"]["tf_required"]
+
+    response = client.post(
+        "/mf-recovery", data=dict(code=codes[0]), follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+    # logout and try again - first code shouldn't work again
+    logout(client)
+    response = client.post("/login", data=dict(email="gal@lp.com", password="password"))
+
+    response = client.post("/mf-recovery", data=dict(code=codes[0]))
+    assert get_message("INVALID_RECOVERY_CODE") in response.data
+    response = client.post(
+        "/mf-recovery", data=dict(code=codes[1]), follow_redirects=True
+    )
+    assert response.status_code == 200
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_reset(app, client, get_message):
+    # test that reset_user_access, removes recovery codes
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    tf_authenticate(app, client)
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gal@lp.com")
+        app.security.datastore.reset_user_access(user)
+        app.security.datastore.commit()
+
+    client.post("/login", json=dict(email="gal@lp.com", password="password"))
+    response = client.get("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 0
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_bad_state(app, client, get_message):
+
+    response = client.post("/mf-recovery", json=dict(code="hi"))
+    assert response.status_code == 400
+    assert response.json["response"]["error"].encode("utf=8") == get_message(
+        "TWO_FACTOR_PERMISSION_DENIED"
+    )
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_rescue(app, client, get_message):
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    tf_authenticate(app, client)
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.json["response"]["tf_required"]
+
+    response = client.get("/tf-rescue")
+    assert b"Use previously downloaded recovery code" in response.data
+
+    response = client.get("/tf-rescue", headers=headers)
+    options = response.json["response"]["recovery_options"]
+    assert "recovery_code" in options.keys()
+    assert "/mf-recovery" in options["recovery_code"]
+
+    response = client.post(
+        "/tf-rescue", data=dict(help_setup="recovery_code"), follow_redirects=False
+    )
+    assert "/mf-recovery" in response.location
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_fresh(app, client):
+    # Make sure fetching recovery codes is protected with a freshness check.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    authenticate(client)
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.post("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 401
+    assert response.json["response"]["reauth_required"]
+
+    response = client.post("/verify", json=dict(password="password"))
+    assert response.status_code == 200
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5

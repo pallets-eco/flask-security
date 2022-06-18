@@ -326,6 +326,7 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
         tf_primary_method = StringField(max_length=255)
         tf_totp_secret = StringField(max_length=255)
         tf_phone_number = StringField(max_length=255)
+        mf_recovery_codes = ListField(required=False)
         us_totp_secrets = StringField()
         us_phone_number = StringField(max_length=255)
         last_login_ip = StringField(max_length=100)
@@ -416,6 +417,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
     from sqlalchemy.ext.declarative import declarative_base, declared_attr
+    from sqlalchemy.ext.mutable import MutableList
     from sqlalchemy.sql import func
     from sqlalchemy import (
         Boolean,
@@ -452,7 +454,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         )
         public_key = Column(LargeBinary, nullable=False)
         sign_count = Column(Integer, default=0)
-        transports = Column(AsaList(255), nullable=True)  # comma separated
+        transports = Column(MutableList.as_mutable(AsaList(255)), nullable=True)
 
         # a JSON string as returned from registration
         extensions = Column(String(255), nullable=True)
@@ -512,6 +514,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         tf_primary_method = Column(String(255), nullable=True)
         tf_totp_secret = Column(String(255), nullable=True)
         tf_phone_number = Column(String(255), nullable=True)
+        mf_recovery_codes = Column(MutableList.as_mutable(AsaList(1024)), nullable=True)
         us_totp_secrets = Column(Text, nullable=True)
         us_phone_number = Column(String(64), nullable=True)
         last_login_ip = Column(String(100))
@@ -624,6 +627,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
         tf_primary_method = TextField(null=True)
         tf_totp_secret = TextField(null=True)
         tf_phone_number = TextField(null=True)
+        mf_recovery_codes = AsaList(null=True)
         us_totp_secrets = TextField(null=True)
         us_phone_number = TextField(null=True)
         last_login_ip = TextField(null=True)

@@ -13,12 +13,13 @@ import typing as t
 from flask import current_app as app, redirect, request, session
 from werkzeug.datastructures import MultiDict
 
+from .forms import TwoFactorRescueForm
 from .proxies import _security, _datastore
 from .tf_plugin import TfPluginBase, tf_clean_session
 from .utils import (
     SmsSenderFactory,
     base_render_json,
-    config_value,
+    config_value as cv,
     do_flash,
     json_error_response,
     send_mail,
@@ -56,7 +57,7 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
     token_to_be_sent = _security._totp_factory.generate_totp_password(totp_secret)
     if method == "email" or method == "mail":
         send_mail(
-            config_value("EMAIL_SUBJECT_TWO_FACTOR"),
+            cv("EMAIL_SUBJECT_TWO_FACTOR"),
             user.email,
             "two_factor_instructions",
             user=user,
@@ -65,9 +66,9 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
         )
     elif method == "sms":
         msg = "Use this code to log in: %s" % token_to_be_sent
-        from_number = config_value("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
+        from_number = cv("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
         to_number = phone_number
-        sms_sender = SmsSenderFactory.createSender(config_value("SMS_SERVICE"))
+        sms_sender = SmsSenderFactory.createSender(cv("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=msg)
 
     else:
@@ -106,6 +107,28 @@ def complete_two_factor_process(user, primary_method, totp_secret, is_changing):
         dologin = True
     token = _security.two_factor_plugins.tf_complete(user, dologin)
     return completion_message, token
+
+
+def set_rescue_options(form: TwoFactorRescueForm, user: "User") -> t.Dict[str, str]:
+    # Based on config - set up options for rescue.
+    # Note that this modifies the passed in Form as well as returns
+    # a dict that can be returned as part of a JSON response.
+    recovery_options = dict(help=url_for_security("two_factor_rescue"))
+
+    if cv("TWO_FACTOR_RESCUE_EMAIL"):
+        recovery_options["email"] = url_for_security("two_factor_rescue")
+        form.help_setup.choices.append(("email", "Send code via email"))
+
+    if (
+        _security.support_mfa
+        and cv("MULTI_FACTOR_RECOVERY_CODES")
+        and _datastore.mf_get_recovery_codes(user)
+    ):
+        recovery_options["recovery_code"] = url_for_security("mf_recovery")
+        form.help_setup.choices.append(
+            ("recovery_code", "Use previously downloaded recovery code")
+        )
+    return recovery_options
 
 
 def tf_disable(user):

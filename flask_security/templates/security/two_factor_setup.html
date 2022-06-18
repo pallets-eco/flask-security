@@ -56,7 +56,7 @@
         {% endif %}
     </form>
     {% if security.webauthn and not chosen_method %}
-      <h3>WebAuthn</h3>
+      <h3>{{ _fsdomain("WebAuthn") }}</h3>
       <div class="fs-div">
         {{ _fsdomain("This application supports WebAuthn security keys.") }}
         <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</a>
@@ -71,6 +71,13 @@
           {{ render_field_with_errors(two_factor_verify_code_form.code) }}
           {{ render_field(two_factor_verify_code_form.submit) }}
       </form>
+    {% endif %}
+    {% if security.support_mfa and security.multi_factor_recovery_codes %}
+      <h3>{{ _fsdomain("Recovery Codes") }}</h3>
+      <div class="fs-div">
+        {{ _fsdomain("This application supports setting up recovery codes.") }}
+        <a href="{{ url_for_security('mf_recovery_codes') }}">{{ _fsdomain("You can set them up here.") }}</a>
+      </div>
     {% endif %}
     {% include "security/_menu.html" %}
 {% endblock %}

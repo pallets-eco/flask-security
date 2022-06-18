@@ -68,11 +68,14 @@ from .recoverable import (
 )
 from .registerable import register_user
 from .tf_plugin import (
+    create_recovery_codes,
+    tf_check_state,
     tf_illegal_state,
     tf_set_validity_token_cookie,
 )
 from .twofactor import (
     complete_two_factor_process,
+    set_rescue_options,
     tf_clean_session,
     tf_disable,
 )
@@ -877,11 +880,10 @@ def two_factor_token_validation():
     """
 
     form_class = _security.two_factor_verify_code_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     changing = current_user.is_authenticated
     if not changing:
@@ -907,9 +909,11 @@ def two_factor_token_validation():
             return tf_illegal_state(form, _security.login_url)
 
         if session["tf_state"] == "ready":
+            # normal login case
             pm = user.tf_primary_method
             totp_secret = user.tf_totp_secret
         else:
+            # initial setup case
             pm = session["tf_primary_method"]
             totp_secret = session["tf_totp_secret"]
     else:
@@ -949,11 +953,11 @@ def two_factor_token_validation():
             return base_render_json(form, additional=json_payload)
 
     # GET or not successful POST
-    if _security._want_json(request):
-        return base_render_json(form)
 
     # if we were trying to validate a new method
     if changing:
+        if _security._want_json(request):
+            return base_render_json(form)
         setup_form = _security.two_factor_setup_form(formdata=None)
 
         return _security.render_template(
@@ -968,6 +972,11 @@ def two_factor_token_validation():
     # if we were trying to validate an existing method
     else:
         rescue_form = _security.two_factor_rescue_form(formdata=None)
+        recovery_options = set_rescue_options(rescue_form, form.user)
+        if _security._want_json(request):
+            return base_render_json(
+                form, additional=dict(recovery_options=recovery_options)
+            )
         return _security.render_template(
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
@@ -990,32 +999,21 @@ def two_factor_rescue():
     """
 
     form_class = _security.two_factor_rescue_form
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
-
-    if (
-        not all(k in session for k in ["tf_user_id", "tf_state"])
-        or session["tf_state"] != "ready"
-    ):
-        tf_clean_session()
+    form.user = tf_check_state(["ready"])
+    if not form.user:
         return tf_illegal_state(form, _security.login_url)
 
-    user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
-    form.user = user
-    if not user:
-        tf_clean_session()
-        return tf_illegal_state(form, _security.login_url)
-
+    recovery_options = set_rescue_options(form, form.user)
     rproblem = ""
     if form.validate_on_submit():
-        problem = form.data["help_setup"]
-        rproblem = problem
-        # if the problem is that user can't access his device, w
-        # e send him code through mail
-        if problem == "lost_device":
+        raction = form.help_setup.data
+        rproblem = raction
+        if raction == "email":
             msg = form.user.tf_send_security_token(
                 method="email",
                 totp_secret=form.user.tf_totp_secret,
@@ -1028,29 +1026,118 @@ def two_factor_rescue():
                     return base_render_json(
                         form, include_user=False, error_status_code=500
                     )
+            # drop through to GET path
+        elif raction == "recovery_code":
+            return redirect(url_for_security("mf_recovery"))
+
         # send app provider a mail message regarding trouble
-        elif problem == "no_mail_access":
+        elif raction == "help":
             send_mail(
                 cv("EMAIL_SUBJECT_TWO_FACTOR_RESCUE"),
                 cv("TWO_FACTOR_RESCUE_MAIL"),
                 "two_factor_rescue",
                 user=form.user,
             )
+            # drop through to GET path
         else:
             return "", 404
 
     if _security._want_json(request):
-        return base_render_json(form, include_user=False)
+        return base_render_json(
+            form, include_user=False, additional=dict(recovery_options=recovery_options)
+        )
 
     code_form = _security.two_factor_verify_code_form(formdata=None)
     return _security.render_template(
         cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
         two_factor_rescue_form=form,
-        chosen_method=user.tf_primary_method,
+        chosen_method=form.user.tf_primary_method,
         rescue_mail=cv("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
         **_ctx("tf_token_validation"),
+    )
+
+
+@auth_required(
+    lambda: cv("API_ENABLED_METHODS"),
+    within=lambda: cv("FRESHNESS"),
+    grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
+)
+def mf_recovery_codes() -> "ResponseValue":
+    """
+    Create and download multi-factor recovery codes.
+    For forms we want the user to explicitly request to see the codes - so
+    the form has a show_codes submit button.
+    """
+    form_class = _security.mf_recovery_codes_form
+    form = form_class(formdata=None, meta=suppress_form_csrf())
+
+    if form.validate_on_submit():
+        # generate new codes
+        codes = create_recovery_codes(current_user)
+        after_this_request(view_commit)
+        if _security._want_json(request):
+            payload = dict(recovery_codes=codes)
+            return base_render_json(form, include_user=False, additional=payload)
+        return _security.render_template(
+            cv("MULTI_FACTOR_RECOVERY_CODES_TEMPLATE"),
+            mf_recovery_codes_form=form,
+            recovery_codes=codes,
+            **_ctx("mf_recovery_codes"),
+        )
+
+    codes = _datastore.mf_get_recovery_codes(current_user)
+    if _security._want_json(request):
+        return base_render_json(
+            form, include_user=False, additional=dict(recovery_codes=codes)
+        )
+    return _security.render_template(
+        cv("MULTI_FACTOR_RECOVERY_CODES_TEMPLATE"),
+        mf_recovery_codes_form=form,
+        recovery_codes=codes if request.args.get("show_codes", None) else [],
+        **_ctx("mf_recovery_codes"),
+    )
+
+
+@anonymous_user_required
+@unauth_csrf(fall_through=True)
+def mf_recovery():
+    """View for entering a recovery code.
+
+    User must have already provided valid username/password.
+    User must have already established 2FA
+
+    """
+    form_class = _security.mf_recovery_form
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
+
+    form.user = tf_check_state(["ready"])
+    if not form.user:
+        return tf_illegal_state(form, _security.login_url)
+
+    if form.validate_on_submit():
+        # Valid code - we want these to be one time - so remove it from list
+        _datastore.mf_delete_recovery_code(form.user, form.code.data)
+        after_this_request(view_commit)
+
+        # In the recovery case - don't set/offer validity token.
+        _security.two_factor_plugins.tf_complete(form.user, True)
+
+        if not _security._want_json(request):
+            return redirect(get_post_login_redirect())
+        else:
+            return base_render_json(form)
+
+    if _security._want_json(request):
+        return base_render_json(form, include_user=False)
+    return _security.render_template(
+        cv("MULTI_FACTOR_RECOVERY_TEMPLATE"),
+        mf_recovery_form=form,
+        **_ctx("mf_recovery"),
     )
 
 
@@ -1167,6 +1254,18 @@ def create_blueprint(app, state, import_name, json_encoder=None):
             methods=["GET", "POST"],
             endpoint="confirm_email",
         )(confirm_email)
+
+    if cv("MULTI_FACTOR_RECOVERY_CODES", app) and state.support_mfa:
+        bp.route(
+            state.multi_factor_recovery_codes_url,
+            methods=["GET", "POST"],
+            endpoint="mf_recovery_codes",
+        )(mf_recovery_codes)
+        bp.route(
+            state.multi_factor_recovery_url,
+            methods=["GET", "POST"],
+            endpoint="mf_recovery",
+        )(mf_recovery)
 
     if state.webauthn:
         bp.route(

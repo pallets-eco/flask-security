@@ -527,3 +527,35 @@ def test_webauthn_cascade(app, datastore):
         assert not cred
         cred = datastore.find_webauthn(b"2")
         assert not cred
+
+
+def test_mf_recovery_codes(app, datastore):
+    from tests.conftest import PonyUserDatastore
+
+    if isinstance(datastore, PonyUserDatastore):
+        skip("Pony not supported")
+    init_app_with_options(app, datastore)
+
+    with app.test_request_context("/"):
+        user = datastore.find_user(email="matt@lp.com")
+        assert hasattr(user, "mf_recovery_codes")
+
+        assert not datastore.mf_delete_recovery_code(user, "nothing yet")
+
+        datastore.mf_set_recovery_codes(user, ["r1", "r2", "r3"])
+        datastore.commit()
+
+        user = datastore.find_user(email="matt@lp.com")
+        codes = datastore.mf_get_recovery_codes(user)
+        assert codes == ["r1", "r2", "r3"]
+
+        rv = datastore.mf_delete_recovery_code(user, "r2")
+        assert rv
+        datastore.commit()
+
+        rv = datastore.mf_delete_recovery_code(user, "huh?")
+        assert not rv
+
+        user = datastore.find_user(email="matt@lp.com")
+        codes = datastore.mf_get_recovery_codes(user)
+        assert codes == ["r1", "r3"]

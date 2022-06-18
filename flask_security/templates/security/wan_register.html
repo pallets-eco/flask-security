@@ -71,5 +71,13 @@
         {{ render_field(wan_delete_form.submit) }}
       </form>
   {% endif %}
+  {% if security.support_mfa and security.multi_factor_recovery_codes %}
+    <hr>
+    <h2>{{ _fsdomain("Recovery Codes") }}</h2>
+    <div class="fs-div">
+      {{ _fsdomain("This application supports setting up recovery codes.") }}
+      <a href="{{ url_for_security('mf_recovery_codes') }}">{{ _fsdomain("You can set them up here.") }}</a>
+    </div>
+    {% endif %}
   {% include "security/_menu.html" %}
 {% endblock %}
