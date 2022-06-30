@@ -69,7 +69,7 @@ def test_confirmable_flag(app, clients, get_message):
     )
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
-    assert "user" in response.json["response"]
+    assert "user" not in response.json["response"]
     assert len(recorded_instructions_sent) == 1
 
     # Test ask for instructions with invalid email
@@ -534,3 +534,40 @@ def test_email_not_identity(app, client, get_message):
         follow_redirects=True,
     )
     assert b"<p>Welcome mary</p>" in response.data
+
+
+@pytest.mark.settings(return_generic_responses=True)
+def test_generic_response(app, client, get_message):
+    # Confirm matt - then an unknown email - both should get the same answer and
+    # JSON should return 200
+    recorded_instructions_sent = []
+
+    @confirm_instructions_sent.connect_via(app)
+    def on_instructions_sent(app, **kwargs):
+        recorded_instructions_sent.append(kwargs["token"])
+
+    response = client.post("/confirm", data=dict(email="matt@lp.com"))
+    assert len(recorded_instructions_sent) == 1
+    assert get_message("CONFIRMATION_REQUEST", email="matt@lp.com") in response.data
+    response = client.post("/confirm", json=dict(email="matt@lp.com"))
+    assert len(recorded_instructions_sent) == 2
+    assert response.status_code == 200
+
+    # actually confirm matt
+    token = recorded_instructions_sent[0]
+    response = client.get("/confirm/" + token, follow_redirects=True)
+    assert get_message("EMAIL_CONFIRMED") in response.data
+
+    # Try to confirm an unknown email - should get SAME message as real email.
+    response = client.post("/confirm", data=dict(email="mattwho@lp.com"))
+    assert len(recorded_instructions_sent) == 2
+    assert get_message("CONFIRMATION_REQUEST", email="mattwho@lp.com") in response.data
+    response = client.post("/confirm", json=dict(email="mattwho@lp.com"))
+    assert len(recorded_instructions_sent) == 2
+    assert response.status_code == 200
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+
+    # Try to confirm matt again - should ALSO get same response.
+    response = client.post("/confirm", json=dict(email="matt@lp.com"))
+    assert len(recorded_instructions_sent) == 2
+    assert response.status_code == 200

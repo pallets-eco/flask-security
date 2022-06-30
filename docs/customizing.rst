@@ -303,6 +303,10 @@ The following is a list of email templates:
 * `security/email/change_notice.html`
 * `security/email/welcome.html`
 * `security/email/welcome.txt`
+* `security/email/welcome_existing.html`
+* `security/email/welcome_existing.txt`
+* `security/email/welcome_existing_username.html`
+* `security/email/welcome_existing_username.txt`
 * `security/email/two_factor_instructions.html`
 * `security/email/two_factor_instructions.txt`
 * `security/email/two_factor_rescue.html`
@@ -338,33 +342,37 @@ to ``False`` will bypass sending of the email (they all default to ``True``).
 In most cases, in addition to an email being sent, a :ref:`Signal <signals_topic>` is sent.
 The table below summarizes all this:
 
-=============================   ================================   =============================================     ====================== ===============================
-**Template Name**               **Gate Config**                    **Subject Config**                                **Context Vars**       **Signal Sent**
------------------------------   --------------------------------   ---------------------------------------------     ---------------------- -------------------------------
-welcome                         SECURITY_SEND_REGISTER_EMAIL       SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_registered
-                                                                                                                     - confirmation_link
-                                                                                                                     - confirmation_token
-confirmation_instructions       N/A                                SECURITY_EMAIL_SUBJECT_CONFIRM                    - user                 confirm_instructions_sent
-                                                                                                                     - confirmation_link
-                                                                                                                     - confirmation_token
-login_instructions              N/A                                SECURITY_EMAIL_SUBJECT_PASSWORDLESS               - user                 login_instructions_sent
-                                                                                                                     - login_link
-                                                                                                                     - login_token
-reset_instructions              SEND_PASSWORD_RESET_EMAIL          SECURITY_EMAIL_SUBJECT_PASSWORD_RESET             - user                 reset_password_instructions_sent
-                                                                                                                     - reset_link
-                                                                                                                     - reset_token
-reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL   SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE            - user                 password_reset
+=============================   ==================================   =============================================     ====================== ===============================
+**Template Name**               **Gate Config**                      **Subject Config**                                **Context Vars**       **Signal Sent**
+-----------------------------   ----------------------------------   ---------------------------------------------     ---------------------- -------------------------------
+welcome                         SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_registered
+                                                                                                                       - confirmation_link
+                                                                                                                       - confirmation_token
+confirmation_instructions       N/A                                  SECURITY_EMAIL_SUBJECT_CONFIRM                    - user                 confirm_instructions_sent
+                                                                                                                       - confirmation_link
+                                                                                                                       - confirmation_token
+login_instructions              N/A                                  SECURITY_EMAIL_SUBJECT_PASSWORDLESS               - user                 login_instructions_sent
+                                                                                                                       - login_link
+                                                                                                                       - login_token
+reset_instructions              SEND_PASSWORD_RESET_EMAIL            SECURITY_EMAIL_SUBJECT_PASSWORD_RESET             - user                 reset_password_instructions_sent
+                                                                                                                       - reset_link
+                                                                                                                       - reset_token
+reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL     SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE            - user                 password_reset
 
-change_notice                   SEND_PASSWORD_CHANGE_EMAIL         SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE     - user                 password_changed
-two_factor_instructions         N/A                                SECURITY_EMAIL_SUBJECT_TWO_FACTOR                 - user                 tf_security_token_sent
-                                                                                                                     - token
-                                                                                                                     - username
-two_factor_rescue               N/A                                SECURITY_EMAIL_SUBJECT_TWO_FACTOR_RESCUE          - user                 N/A
-us_instructions                 N/A                                SECURITY_US_EMAIL_SUBJECT                         - user                 us_security_token_sent
-                                                                                                                     - login_token
-                                                                                                                     - login_link
-                                                                                                                     - username
-=============================   ================================   =============================================     ====================== ===============================
+change_notice                   SEND_PASSWORD_CHANGE_EMAIL           SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE     - user                 password_changed
+two_factor_instructions         N/A                                  SECURITY_EMAIL_SUBJECT_TWO_FACTOR                 - user                 tf_security_token_sent
+                                                                                                                       - token
+                                                                                                                       - username
+two_factor_rescue               N/A                                  SECURITY_EMAIL_SUBJECT_TWO_FACTOR_RESCUE          - user                 N/A
+us_instructions                 N/A                                  SECURITY_US_EMAIL_SUBJECT                         - user                 us_security_token_sent
+                                                                                                                       - login_token
+                                                                                                                       - login_link
+                                                                                                                       - username
+welcome_existing                SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_not_registered
+                                SECURITY_RETURN_GENERIC_RESPONSES                                                      - recovery_link
+welcome_existing_username       SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - email                user_not_registered
+                                SECURITY_RETURN_GENERIC_RESPONSES                                                      - username
+=============================   ==================================   =============================================     ====================== ===============================
 
 When sending an email, Flask-Security goes through the following steps:
 
@@ -375,7 +383,7 @@ When sending an email, Flask-Security goes through the following steps:
 
   #. Calls :meth:`.MailUtil.send_mail` with all the required parameters.
 
-The default implementation of ``MailUtil.send_mail`` uses Flask-Mail to create and send the message.
+The default implementation of ``MailUtil.send_mail`` uses flask-mailman to create and send the message.
 By providing your own implementation, you can use any available python email handling package.
 
 Email subjects are by default localized - see above section on Localization to learn how

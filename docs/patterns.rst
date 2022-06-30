@@ -115,6 +115,47 @@ and :func:`flask_security.password_breached_validator`.
 
 .. _5.1.1.2 Memorized Secret Verifiers: https://pages.nist.gov/800-63-3/sp800-63b.html#sec5
 
+
+.. _generic_responses:
+
+Generic Responses - Avoiding User Enumeration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+How an application responds to API requests that contain identity or authentication information
+can give would-be attackers insight into active users on the system. OWASP has a great `cheat-sheet`_ describing
+this and useful ways to avoid it. Flask-Security supports this by setting the
+:py:data:`SECURITY_RETURN_GENERIC_RESPONSES` configuration to ``True``. As documented in the cheat-sheet - this does
+come with some usability concerns. The following endpoints are affected:
+
+    * :py:data:`SECURITY_REGISTER_URL` - The same response will be returned whether the email (or username) is already in the
+      system or not. JSON requests will ALWAYS return 200. If :py:data:`SECURITY_CONFIRMABLE` is set (it should be!), the
+      `SECURITY_MSG_CONFIRM_REGISTRATION` message will be flashed for both new and existing email addresses. Detailed errors will still
+      be returned for things like insufficient password complexity, etc.. In the case of trying to register an existing email, an email will be sent to that email address
+      explaining that they are already registered and displaying the associated username (if any) and provide a hint on how to reset their
+      password if they forgot it. In the case of a new email but an already registered username, an email will be sent saying that the
+      user must try registering again with a different username.
+    * :py:data:`SECURITY_LOGIN_URL` - For any errors (unknown username, inactive account, bad password) the `SECURITY_MSG_GENERIC_AUTHN_FAILED`
+      message will be returned.
+    * :py:data:`SECURITY_RESET_URL` - In all cases the `SECURITY_MSG_PASSWORD_RESET_REQUEST` message will be flashed. For JSON
+      a 200 will always be returned (whether an email was sent or not).
+    * :py:data:`SECURITY_CONFIRM_URL` - In all cases the `SECURITY_MSG_CONFIRMATION_REQUEST` message will be flashed. For JSON
+      a 200 will always be returned (whether an email was sent or not).
+    * :py:data:`SECURITY_US_SIGNIN_SEND_CODE_URL` - The `SECURITY_MSG_GENERIC_US_SIGNIN` message will be flashed in all cases -
+      whether a selected method is setup for the user or not.
+    * :py:data:`SECURITY_US_SIGNIN_URL` - For any errors (unknown username, inactive account, bad passcode) the `SECURITY_MSG_GENERIC_AUTHN_FAILED`
+      message will be returned.
+    * :py:data:`SECURITY_US_VERIFY_LINK_URL` - For any errors (unknown username, inactive account, bad passcode) the `SECURITY_MSG_GENERIC_AUTHN_FAILED`
+      message will be returned.
+
+
+In the case of an application using a ``username`` as an identity it should be noted that it is possible for a bad-actor to enumerate usernames, albeit slowly,
+by parsing emails.
+
+Note also that :py:data:`SECURITY_REQUIRES_CONFIRMATION_ERROR_VIEW` is ignored in these cases. If your application is using WebAuthn, be sure
+to set :py:data:`SECURITY_WAN_ALLOW_USER_HINTS` to ``False``.
+
+
+.. _cheat-sheet: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages
+
 .. _csrftopic:
 
 CSRF

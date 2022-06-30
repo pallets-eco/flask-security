@@ -24,6 +24,7 @@ Features
 Fixes
 +++++
 - (:pr:`591`) Make the required zxcvbn complexity score configurable (mephi42)
+- (:issue:`585`) Provide option to prevent user enumeration.
 - (:issue:`531`) Get rid of Flask-Mail. Flask-Mailman is now the default preferred email package.
   Flask-Mail is still supported so there should be no backwards compatability issues.
 - (:issue:`597`) A delete option has been added to us-setup (form and view).
@@ -60,6 +61,8 @@ For unified signin:
 - ``SECURITY_US_VERIFY_SEND_CODE_URL`` and ``SECURITY_US_SIGNIN_SEND_CODE_URL`` endpoints are now POST only.
 - Empty passwords were always permitted when ``SECURITY_UNIFIED_SIGNIN`` was enabled - now an additional configuration
   variable ``SECURITY_PASSWORD_REQUIRED`` must be set to False.
+- ``SECURITY_US_VERIFY_SEND_CODE_URL`` and ``SECURITY_US_SIGNIN_SEND_CODE_URL`` used to send ``code_sent`` to the template.
+  Now they flash the ``SECURITY_MSG_CODE_HAS_BEEN_SENT`` message.
 
 Login:
 

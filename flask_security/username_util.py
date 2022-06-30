@@ -80,6 +80,9 @@ class UsernameUtil:
         Input is restricted/validated via a call to check_username.
         Return value is a tuple (msg, normalized_username). msg will be None if
         properly validated.
+
+        It is important that None be returned if data is an empty string since
+        otherwise DBs will complain since the field is unique/nullable.
         """
         import bleach
 

@@ -1,0 +1,16 @@
+{# This template receives the following context:
+
+  email - newly registered email
+  security - the Flask-Security configuration
+  username - existing username
+
+  This template is used when returning generic responses in the case of a
+  new email but an existing username. Note that this does effectively allow
+  for username enumeration.
+#}
+{{ _fsdomain('Hello %(email)s!', email=email) }}
+
+{{ _fsdomain('You attempted to register with a username "%(username)s" that is already associated with another account.',
+  username=username) }}
+
+{{ _fsdomain('Please restart the registration process with a different username.') }}

@@ -188,12 +188,10 @@ def unique_user_email(form, field):
     # Verify email not already in DB
     # Assumes field value already normalized - email_validator does this.
     uia_email = get_identity_attribute("email")
-    if (
-        _datastore.find_user(
-            case_insensitive=uia_email.get("case_insensitive", False), email=field.data
-        )
-        is not None
-    ):
+    form.existing_email_user = _datastore.find_user(
+        case_insensitive=uia_email.get("case_insensitive", False), email=field.data
+    )
+    if form.existing_email_user is not None:
         msg = get_message("EMAIL_ALREADY_ASSOCIATED", email=field.data)[0]
         raise ValidationError(msg)
 
@@ -209,13 +207,11 @@ def unique_username(form, field):
     # Verify username not already in DB
     # Assumes field value already normalized - username_validator does this.
     uia_username = get_identity_attribute("username")
-    if (
-        _datastore.find_user(
-            case_insensitive=uia_username.get("case_insensitive", False),
-            username=field.data,
-        )
-        is not None
-    ):
+    form.existing_username_user = _datastore.find_user(
+        case_insensitive=uia_username.get("case_insensitive", False),
+        username=field.data,
+    )
+    if form.existing_username_user is not None:
         msg = get_message("USERNAME_ALREADY_ASSOCIATED", username=field.data)[0]
         raise ValidationError(msg)
 
@@ -254,6 +250,38 @@ class Form(BaseForm):
         super().__init__(*args, **kwargs)
 
 
+def generic_message(
+    detailed_msg: str, generic_msg: str, **kwargs: t.Any
+) -> t.Tuple[str, str]:
+    if cv("RETURN_GENERIC_RESPONSES"):
+        m, c = get_message(generic_msg, **kwargs)
+    else:
+        m, c = get_message(detailed_msg, **kwargs)
+    return m, c
+
+
+def form_errors_munge(form: Form, fields: t.Dict[str, t.Dict[str, str]]) -> None:
+    """
+    To support OWASP best practice on unauthenticated endpoints to avoid
+    disclosing whether a user exists or not we need to return generic error messages.
+    Furthermore, WTForms really likes to place errors on the field itself - which is
+    a dead giveaway. We need to move errors from fields to the form.form_errors, and
+    replace then with generic msgs.
+    """
+    if not cv("RETURN_GENERIC_RESPONSES"):  # pragma: no cover
+        return
+
+    for fname, rinfo in fields.items():
+        field = getattr(form, fname)
+        if field.errors:
+            field.errors = []
+            # If they want to replace that message with a generic message and place
+            # it in the generic/form level errors - do that.
+            replace_msg = rinfo.get("replace_msg", None)
+            if replace_msg:
+                form.form_errors.append(get_message(replace_msg)[0])
+
+
 class UserEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
@@ -263,7 +291,6 @@ class UserEmailFormMixin:
 
 
 class UniqueEmailFormMixin:
-    # Used for register to make sure email isn't already taken
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
@@ -323,13 +350,13 @@ class CodeFormMixin:
 register_username_field = StringField(
     get_form_field_label("username"),
     render_kw={"autocomplete": "username"},
-    validators=[Optional(), username_validator, unique_username],
+    validators=[username_validator, unique_username],
 )
 
 login_username_field = StringField(
     get_form_field_label("username"),
     render_kw={"autocomplete": "username"},
-    validators=[Optional(), username_validator],
+    validators=[username_validator],
 )
 
 
@@ -428,8 +455,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
     """The default login form"""
 
     # email field - we don't use valid_user_email since for login
-    # we want to somewhat hide the difference between wrong password and
-    # unknown user.
+    # with username feature it is potentially optional.
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
@@ -461,6 +487,8 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         self.user: t.Optional["User"] = None
         # ifield can be set by subclasses to skip identity checks.
         self.ifield: t.Optional[Field] = None
+        # If True then user has authenticated so we can show detailed errors
+        self.user_authenticated = False
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
@@ -512,6 +540,10 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
+
+        # At this point the user has successfully authenticated - so it is fine
+        # to return detailed errors.
+        self.user_authenticated = True
         self.requires_confirmation = requires_confirmation(self.user)
         if self.requires_confirmation:
             self.ifield.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
@@ -546,25 +578,36 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
     """This form is used for registering when 'confirmable' is set.
     The only difference between this and the other RegisterForm is that
     this one doesn't require re-typing in the password...
+
+    We want to support OWASP best-practice around mitigating user enumeration.
+    To that end we run through the entire validation regardless - this allows us
+    to still return important bad-password messages.
+    In the case of an existing email or username - we set form.existing_xx so that
+    the view can decide how to match responses (e.g. json responses always return 200).
     """
 
     # Password optional when Unified Signin enabled.
     password = PasswordField(
         get_form_field_label("password"),
         render_kw={"autocomplete": "new-password"},
-        validators=[validators.Optional()],
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.existing_username_user = None
+        self.existing_email_user = None
+
     def validate(self, **kwargs: t.Any) -> bool:
+        failed = False
         if not super().validate(**kwargs):
-            return False
+            failed = True
 
         # whether a password is required is a config variable (PASSWORD_REQUIRED).
         # For unified signin there are many other ways to authenticate
         if cv("PASSWORD_REQUIRED") or not cv("UNIFIED_SIGNIN"):
             if not self.password.data or not self.password.data.strip():
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
-                return False
+                failed = True
 
         if self.password.data:
             # We do explicit validation here for passwords
@@ -583,8 +626,8 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
             )
             if pbad:
                 self.password.errors.extend(pbad)
-                return False
-        return True
+                failed = True
+        return not failed
 
 
 class RegisterForm(ConfirmRegisterForm, NextFormMixin):

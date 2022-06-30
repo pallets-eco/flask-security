@@ -160,7 +160,13 @@ def test_simple_signin(app, clients, get_message):
     assert get_message("US_SPECIFY_IDENTITY") in response.data
 
     # test disabled account
-    data = dict(identity="tiya@lp.com", chosen_method="email")
+    set_email(app, email="gal3@lp.com")
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="gal3@lp.com")
+        app.security.datastore.deactivate_user(user)
+        app.security.datastore.commit()
+
+    data = dict(identity="gal3@lp.com", chosen_method="email")
     response = clients.post("/us-signin/send-code", data=data, follow_redirects=True)
     assert b"Code has been sent" not in response.data
     assert get_message("DISABLED_ACCOUNT") in response.data
@@ -1592,6 +1598,16 @@ def test_bad_sender(app, client, get_message):
         "utf-8"
     ) == get_message("FAILED_TO_SEND_CODE")
 
+    # Test us-verify
+    data = dict(chosen_method="sms")
+    response = client.post("/us-verify/send-code", data=data)
+    assert get_message("FAILED_TO_SEND_CODE") in response.data
+    response = client.post("us-verify/send-code", json=data)
+    assert response.status_code == 500
+    assert response.json["response"]["errors"]["chosen_method"][0].encode(
+        "utf-8"
+    ) == get_message("FAILED_TO_SEND_CODE")
+
 
 @pytest.mark.registerable()
 def test_replace_send_code(app, get_message):
@@ -1934,3 +1950,82 @@ def test_setup_delete_json(app, client, get_message):
     assert not response.json["response"]["active_methods"]
     assert recorded[0] == "setup"
     assert recorded[1] == "delete"
+
+
+@pytest.mark.settings(return_generic_responses=True)
+def test_generic_response(app, client, get_message):
+
+    # test not-setup choice
+    data = dict(identity="matt@lp.com", chosen_method="email")
+    response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
+    assert get_message("GENERIC_US_SIGNIN") in response.data
+
+    # for JSON still return 200 as if everything is fine and a code was sent.
+    response = client.post("/us-signin/send-code", json=data)
+    assert response.status_code == 200
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+
+    # Correct method should return same thing
+    set_phone(app)
+    data = dict(identity="matt@lp.com", chosen_method="sms")
+    response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
+    assert get_message("GENERIC_US_SIGNIN") in response.data
+
+    # for JSON still return 200 as if everything is fine and a code was sent.
+    response = client.post("/us-signin/send-code", json=data)
+    assert response.status_code == 200
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+
+    # Unknown identity should return same thing
+    data = dict(identity="matt2@lp.com", chosen_method="email")
+    response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
+    assert get_message("GENERIC_US_SIGNIN") in response.data
+
+    # for JSON still return 200 as if everything is fine and a code was sent.
+    response = client.post("/us-signin/send-code", json=data)
+    assert response.status_code == 200
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+
+    #
+    # Now test us-signin itself
+    #
+    data = dict(identity="matt@lp.com", code="12345")
+    response = client.post("/us-signin", data=data)
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data
+
+    data = dict(identity="matt@lp.com", code="12345")
+    response = client.post("/us-signin", json=data)
+    assert response.status_code == 400
+    assert list(response.json["response"]["errors"].keys()) == ["null"]
+    assert len(response.json["response"]["errors"]["null"]) == 1
+    assert response.json["response"]["errors"]["null"][0].encode(
+        "utf-8"
+    ) == get_message("GENERIC_AUTHN_FAILED")
+
+    # same with unknown user
+    data = dict(identity="matt2@lp.com", code="12345")
+    response = client.post("/us-signin", data=data)
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data
+
+    data = dict(identity="matt2@lp.com", code="12345")
+    response = client.post("/us-signin", json=data)
+    assert response.status_code == 400
+    assert list(response.json["response"]["errors"].keys()) == ["null"]
+    assert len(response.json["response"]["errors"]["null"]) == 1
+    assert response.json["response"]["errors"]["null"][0].encode(
+        "utf-8"
+    ) == get_message("GENERIC_AUTHN_FAILED")
+
+    #
+    # Test /us-verify-link
+    #
+    response = client.get(
+        "us-verify-link?email=matt42@lp.com&code=12345", follow_redirects=True
+    )
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data
+
+    # Try bad code
+    response = client.get(
+        "us-verify-link?email=matt@lp.com&code=12345", follow_redirects=True
+    )
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data

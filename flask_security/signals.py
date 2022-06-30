@@ -5,7 +5,7 @@
     Flask-Security signals module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -16,6 +16,9 @@ signals = blinker.Namespace()
 user_authenticated = signals.signal("user-authenticated")
 
 user_registered = signals.signal("user-registered")
+
+# For cases of RETURN_GENERIC_RESPONSES with existing email/username
+user_not_registered = signals.signal("user-not-registered")
 
 user_confirmed = signals.signal("user-confirmed")
 
