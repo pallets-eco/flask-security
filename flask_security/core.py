@@ -635,7 +635,7 @@ def _get_login_manager(app, anonymous_user):
     lm = LoginManager()
     lm.anonymous_user = anonymous_user or AnonymousUser
     lm.localize_callback = localize_callback
-    lm.login_view = "%s.login" % cv("BLUEPRINT_NAME", app=app)
+    lm.login_view = f'{cv("BLUEPRINT_NAME", app=app)}.login'
     lm.user_loader(_user_loader)
     lm.request_loader(_request_loader)
 
@@ -665,8 +665,7 @@ def _get_pwd_context(app: "flask.Flask") -> CryptContext:
     if pw_hash not in schemes:
         allowed = ", ".join(schemes[:-1]) + " and " + schemes[-1]
         raise ValueError(
-            "Invalid password hashing scheme %r. Allowed values are %s"
-            % (pw_hash, allowed)
+            f"Invalid password hashing scheme {repr(pw_hash)}. Allowed values are {allowed}"
         )
     cc = CryptContext(
         schemes=schemes,

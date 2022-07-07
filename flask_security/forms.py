@@ -451,10 +451,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
             and not self.password.description
         ):
             html = Markup(
-                '<a href="{url}">{message}</a>'.format(
-                    url=url_for_security("forgot_password"),
-                    message=get_message("FORGOT_PASSWORD")[0],
-                )
+                f'<a href="{url_for_security("forgot_password")}">{get_message("FORGOT_PASSWORD")[0]}</a>'
             )
             self.password.description = html
         self.requires_confirmation: bool = False

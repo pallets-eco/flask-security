@@ -293,7 +293,7 @@ def get_hmac(password: SB) -> bytes:
         raise RuntimeError(
             "The configuration value `SECURITY_PASSWORD_SALT` must "
             "not be None when the value of `SECURITY_PASSWORD_HASH` is "
-            'set to "%s"' % config_value("PASSWORD_HASH")
+            f'set to "{config_value("PASSWORD_HASH")}"'
         )
 
     h = hmac.new(encode_string(salt), encode_string(password), hashlib.sha512)
@@ -456,7 +456,7 @@ def slash_url_suffix(url, suffix):
     (which is to be appended to a URL), depending on whether or not
     the URL ends with a slash."""
 
-    return url.endswith("/") and ("%s/" % suffix) or ("/%s" % suffix)
+    return url.endswith("/") and (f"{suffix}/") or ("/{suffix}")
 
 
 def transform_url(
@@ -683,11 +683,11 @@ def send_mail(subject, recipient, template, **context):
 
     body = None
     html = None
-    ctx = ("security/email", template)
+    template_path = f"security/email/{template}"
     if config_value("EMAIL_PLAINTEXT"):
-        body = _security.render_template("%s/%s.txt" % ctx, **context)
+        body = _security.render_template(f"{template_path}.txt", **context)
     if config_value("EMAIL_HTML"):
-        html = _security.render_template("%s/%s.html" % ctx, **context)
+        html = _security.render_template(f"{template_path}.html", **context)
 
     subject = localize_callback(subject)
 

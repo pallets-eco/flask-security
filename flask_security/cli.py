@@ -162,7 +162,7 @@ def roles_create(**kwargs):
     if "permissions" in kwargs and not hasattr(_datastore.role_model, "permissions"):
         raise click.UsageError("Role model does not support permissions")
     _datastore.create_role(**kwargs)
-    click.secho('Role "%(name)s" created successfully.' % kwargs, fg="green")
+    click.secho(f'Role "{kwargs["name"]}" created successfully.' % kwargs, fg="green")
 
 
 @roles.command("add")

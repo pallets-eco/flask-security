@@ -65,7 +65,7 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
             username=user.calc_username(),
         )
     elif method == "sms":
-        msg = "Use this code to log in: %s" % token_to_be_sent
+        msg = f"Use this code to log in: {token_to_be_sent}"
         from_number = cv("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
         to_number = phone_number
         sms_sender = SmsSenderFactory.createSender(cv("SMS_SERVICE"))
