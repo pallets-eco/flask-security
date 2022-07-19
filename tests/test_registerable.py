@@ -19,7 +19,7 @@ from flask_security.forms import (
     StringField,
     _default_field_labels,
 )
-from flask_security.signals import user_registered
+from flask_security.signals import user_registered, user_not_registered
 from flask_security.utils import localize_callback
 
 pytestmark = pytest.mark.registerable()
@@ -714,3 +714,139 @@ def test_legacy_style_login(app, sqlalchemy_datastore, get_message):
     # verify actually logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
+
+
+@pytest.mark.confirmable()
+@pytest.mark.settings(return_generic_responses=True, username_enable=True)
+def test_generic_response(app, client, get_message):
+    recorded = []
+
+    @user_not_registered.connect_via(app)
+    def on_user_registered(app, **kwargs):
+        recorded.append(kwargs)
+
+    # Register should not expose whether email/username is already in system.
+    # Should still return errors such as illegal password, ...
+    data = dict(
+        email="dude@lp.com",
+        username="dude",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert len(app.mail.outbox) == 1
+    assert len(recorded) == 0
+
+    # try again - should not get ANY error - but should get an email
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+    gr = app.mail.outbox[1]
+    assert "tried to register this email" in gr.body
+    assert "associated with it: dude" in gr.body
+    assert len(recorded) == 1
+    # test that signal sent.
+    nr = recorded[0]
+    assert nr["existing_email"]
+    assert nr["user"]
+    assert nr["form_data"]["email"] == "dude@lp.com"
+
+    # Forms should get generic response - even though email already registered.
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("CONFIRM_REGISTRATION", email="dude@lp.com") in response.data
+    assert len(app.mail.outbox) == 3
+    assert len(recorded) == 2
+
+    # Try same email with different username
+    response = client.post(
+        "/register",
+        data=dict(email="dude@lp.com", username="dude2", password="awesome sunset"),
+        follow_redirects=True,
+    )
+    assert get_message("CONFIRM_REGISTRATION", email="dude@lp.com") in response.data
+    assert len(app.mail.outbox) == 4
+    assert len(recorded) == 3
+    gr = app.mail.outbox[3]
+    assert "tried to register this email" in gr.body
+    assert "associated with it: dude" in gr.body
+
+    # Now test a new email with an existing username
+    response = client.post(
+        "/register",
+        data=dict(email="dude39@lp.com", username="dude", password="awesome sunset"),
+        follow_redirects=True,
+    )
+    assert get_message("CONFIRM_REGISTRATION", email="dude39@lp.com") in response.data
+    assert len(app.mail.outbox) == 5
+    assert len(recorded) == 4
+    gr = app.mail.outbox[4]
+    assert 'You attempted to register with a username "dude" that' in gr.body
+    # test that signal sent.
+    nr = recorded[3]
+    assert not nr["existing_email"]
+    assert not nr["user"]
+    assert nr["existing_username"]
+    assert nr["form_data"]["username"] == "dude"
+
+    # should still get detailed errors about e.g. bad password
+    data = dict(
+        email="dude@lp.com",
+        username="dude",
+        password="a",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["password"][0].encode() == get_message(
+        "PASSWORD_INVALID_LENGTH", length=8
+    )
+    data = dict(
+        email="dude@lp.com",
+        username="dd",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 400
+    assert response.json["response"]["errors"]["username"][0].encode() == get_message(
+        "USERNAME_INVALID_LENGTH", min=4, max=32
+    )
+
+
+@pytest.mark.recoverable()
+@pytest.mark.confirmable()
+@pytest.mark.settings(return_generic_responses=True, username_enable=True)
+def test_generic_response_recover(app, client, get_message):
+    # If user tries to re-register - response email should contain recovery url
+    recorded = []
+
+    @user_not_registered.connect_via(app)
+    def on_user_registered(app, **kwargs):
+        recorded.append(kwargs)
+
+    data = dict(
+        email="dude@lp.com",
+        username="dude",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert len(app.mail.outbox) == 1
+    assert len(recorded) == 0
+
+    # now same email - same or different username
+    data = dict(
+        email="dude@lp.com",
+        username="dude2",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert len(app.mail.outbox) == 2
+    gr = app.mail.outbox[1]
+    assert "/reset" in gr.body
+
+    assert len(recorded) == 1
+    # test that signal sent.
+    nr = recorded[0]
+    assert nr["existing_email"]
+    assert nr["user"]
+    assert nr["form_data"]["email"] == "dude@lp.com"

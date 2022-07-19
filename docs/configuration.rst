@@ -435,6 +435,13 @@ These configuration keys are used globally across all features.
 
     Default: ``False``.
 
+.. py:data:: SECURITY_RETURN_GENERIC_RESPONSES
+
+    If set to ``True`` Flask-Security will return generic responses to endpoints
+    that could be used to enumerate users. Please see :ref:`generic_responses`.
+
+    .. versionadded:: 5.0.0
+
 .. py:data:: SECURITY_BACKWARDS_COMPAT_UNAUTHN
 
     If set to ``True`` then the default behavior for authentication
@@ -1515,7 +1522,7 @@ Recovery Codes
     To enable this feature - set this to ``True``. Please see :ref:`models_topic` for
     required additions to your database models. This enables a user to generate and
     use a recovery code for two-factor authentication. This works for all two-factor
-    mechanisms - including webauthn. Note that these code are single use and
+    mechanisms - including WebAuthn. Note that these code are single use and
     the user should be advised to write them down and store in a safe place.
 
 .. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODES_N
@@ -1642,6 +1649,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_ALREADY_CONFIRMED``
 * ``SECURITY_MSG_API_ERROR``
 * ``SECURITY_MSG_ANONYMOUS_USER_REQUIRED``
+* ``SECURITY_MSG_CODE_HAS_BEEN_SENT``
 * ``SECURITY_MSG_CONFIRMATION_EXPIRED``
 * ``SECURITY_MSG_CONFIRMATION_REQUEST``
 * ``SECURITY_MSG_CONFIRMATION_REQUIRED``
@@ -1652,6 +1660,9 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_EMAIL_NOT_PROVIDED``
 * ``SECURITY_MSG_FAILED_TO_SEND_CODE``
 * ``SECURITY_MSG_FORGOT_PASSWORD``
+* ``SECURITY_MSG_GENERIC_AUTHN_FAILED``
+* ``SECURITY_MSG_GENERIC_RECOVERY``
+* ``SECURITY_MSG_GENERIC_US_SIGNIN``
 * ``SECURITY_MSG_IDENTITY_ALREADY_ASSOCIATED``
 * ``SECURITY_MSG_INVALID_CODE``
 * ``SECURITY_MSG_INVALID_CONFIRMATION_TOKEN``

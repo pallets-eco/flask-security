@@ -49,7 +49,14 @@ from wtforms import (
 
 from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
-from .forms import Form, Required, get_form_field_label, get_form_field_xlate
+from .forms import (
+    Form,
+    Required,
+    form_errors_munge,
+    generic_message,
+    get_form_field_label,
+    get_form_field_xlate,
+)
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import us_profile_changed, us_security_token_sent
@@ -377,12 +384,7 @@ def _send_code_helper(form, send_magic_link):
         phone_number=getattr(user, "us_phone_number", None),
         send_magic_link=send_magic_link,
     )
-    code_sent = True
-    if msg:
-        # send code didn't work
-        code_sent = False
-        form.chosen_method.errors.append(msg)
-    return code_sent, msg
+    return msg
 
 
 @anonymous_user_required
@@ -400,16 +402,23 @@ def us_signin_send_code() -> "ResponseValue":
     else:
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
+    form.submit.data = False
 
     code_methods = _compute_code_methods()
 
     if form.validate_on_submit():
-        code_sent, msg = _send_code_helper(form, True)
+        msg = _send_code_helper(form, True)
+        if msg:
+            form.chosen_method.errors.append(msg)
+
         if _security._want_json(request):
             # Not authenticated yet - so don't send any user info.
             return base_render_json(
-                form, include_user=False, error_status_code=500 if msg else 400
+                form, include_user=False, error_status_code=500 if msg else 200
             )
+
+        # Make sure same response as non-setup method below
+        do_flash(*generic_message("CODE_HAS_BEEN_SENT", "GENERIC_US_SIGNIN"))
 
         return _security.render_template(
             cv("US_SIGNIN_TEMPLATE"),
@@ -417,10 +426,18 @@ def us_signin_send_code() -> "ResponseValue":
             available_methods=cv("US_ENABLED_METHODS"),
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
-            code_sent=code_sent,
             skip_loginmenu=True,
             **_security._run_ctx_processor("us_signin")
         )
+    elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+        # TODO - this suppresses the error if they don't select ANY send code option.
+        rinfo: t.Dict[str, t.Dict[str, str]] = dict(
+            identity=dict(), passcode=dict(), chosen_method=dict()
+        )
+        form_errors_munge(form, rinfo)
+        if not _security._want_json(request):
+            # Make sure same response as successful code above.
+            do_flash(*get_message("GENERIC_US_SIGNIN"))
 
     # Here on failed validation
     if _security._want_json(request):
@@ -431,7 +448,11 @@ def us_signin_send_code() -> "ResponseValue":
         }
         return base_render_json(form, include_user=False, additional=payload)
 
-    if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
+    if (
+        form.requires_confirmation
+        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
+        and not cv("RETURN_GENERIC_RESPONSES")
+    ):
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
         return redirect(get_url(cv("REQUIRES_CONFIRMATION_ERROR_VIEW")))
 
@@ -457,24 +478,28 @@ def us_verify_send_code() -> "ResponseValue":
     else:
         form = form_class(meta=suppress_form_csrf())
     form.submit_send_code.data = True
+    form.submit.data = False
 
     code_methods = _compute_active_code_methods(current_user)
 
     if form.validate_on_submit():
-        code_sent, msg = _send_code_helper(form, False)
-        if _security._want_json(request):
-            # Not authenticated yet - so don't send any user info.
-            return base_render_json(
-                form, include_user=False, error_status_code=500 if msg else 400
-            )
+        msg = _send_code_helper(form, False)
+        if msg:
+            form.chosen_method.errors.append(msg)
 
+        if _security._want_json(request):
+            # no real reason to send user info?
+            return base_render_json(
+                form, include_user=False, error_status_code=500 if msg else 200
+            )
+        if not msg:
+            do_flash(*get_message("CODE_HAS_BEEN_SENT"))
         return _security.render_template(
             cv("US_VERIFY_TEMPLATE"),
             us_verify_form=form,
             available_methods=cv("US_ENABLED_METHODS"),
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
-            code_sent=code_sent,
             skip_login_menu=True,
             send_code_to=get_url(
                 _security.us_verify_send_code_url,
@@ -541,6 +566,7 @@ def us_signin() -> "ResponseValue":
     else:
         form = form_class(meta=suppress_form_csrf())
     form.submit.data = True
+    form.submit_send_code.data = False
 
     if form.validate_on_submit():
         # Check if multi-factor is required. Some (this is configurable) don't
@@ -559,6 +585,12 @@ def us_signin() -> "ResponseValue":
             return base_render_json(form, include_auth_token=True)
 
         return redirect(get_post_login_redirect())
+    elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+        rinfo = dict(
+            identity=dict(replace_msg="GENERIC_AUTHN_FAILED"),
+            passcode=dict(replace_msg="GENERIC_AUTHN_FAILED"),
+        )
+        form_errors_munge(form, rinfo)
 
     # Here on GET or failed POST validate
     code_methods = _compute_code_methods()
@@ -578,7 +610,11 @@ def us_signin() -> "ResponseValue":
     # On error - wipe code
     form.passcode.data = None
 
-    if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
+    if (
+        form.requires_confirmation
+        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
+        and not cv("RETURN_GENERIC_RESPONSES")
+    ):
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
         return redirect(get_url(cv("REQUIRES_CONFIRMATION_ERROR_VIEW")))
 
@@ -610,6 +646,7 @@ def us_verify() -> "ResponseValue":
     else:
         form = form_class(meta=suppress_form_csrf())
     form.submit.data = True
+    form.submit_send_code.data = False
 
     code_methods = _compute_active_code_methods(current_user)
 
@@ -654,6 +691,8 @@ def us_verify() -> "ResponseValue":
 def us_verify_link() -> "ResponseValue":
     """
     Used to verify a magic email link. GET only
+    Since this is just a URL - be careful not to disclose info like
+    whether email exists or not.
     """
     email = request.args.get("email", None)
     code = request.args.get("code", None)
@@ -667,9 +706,9 @@ def us_verify_link() -> "ResponseValue":
     user = _datastore.find_user(email=email)
     if not user or not user.active:
         if not user:
-            m, c = get_message("USER_DOES_NOT_EXIST")
+            m, c = generic_message("USER_DOES_NOT_EXIST", "GENERIC_AUTHN_FAILED")
         else:
-            m, c = get_message("DISABLED_ACCOUNT")
+            m, c = generic_message("DISABLED_ACCOUNT", "GENERIC_AUTHN_FAILED")
         if _security.redirect_behavior == "spa":
             return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
@@ -682,7 +721,7 @@ def us_verify_link() -> "ResponseValue":
         user=user,
         window=cv("US_TOKEN_VALIDITY"),
     ):
-        m, c = get_message("INVALID_CODE")
+        m, c = generic_message("INVALID_CODE", "GENERIC_AUTHN_FAILED")
         if _security.redirect_behavior == "spa":
             return redirect(
                 get_url(

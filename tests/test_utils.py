@@ -154,7 +154,7 @@ def create_users(app, ds, count=None):
         ("jess@lp.com", "jess", None, [], True, 678901, None),
         ("gal@lp.com", "gal", "password", ["admin"], True, 112233, "sms"),
         ("gal2@lp.com", "gal2", "password", ["admin"], True, 223311, "authenticator"),
-        ("gal3@lp.com", "gal3", "password", ["admin"], True, 331122, "mail"),
+        ("gal3@lp.com", "gal3", "password", ["admin"], True, 331122, "email"),
     ]
     count = count or len(users)
 

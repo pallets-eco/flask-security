@@ -268,6 +268,19 @@ sends the following signals.
    `form_data` is a dictionary representation of registration form's content
    received with the registration request.
 
+.. data:: user_not_registered
+
+    Sent when a user attempts to register, but is already registered. This is ONLY sent
+    when :py:data:`SECURITY_RETURN_GENERIC_RESPONSES` is enabled. It is passed the
+    following arguments:
+
+        * `user` - The existing user model
+        * `existing_email` - True if attempting to register an existing email
+        * `existing_username`- True if attempting to register an existing username
+        * `form_data` - the entire contents of the posted request form
+
+    .. versionadded:: 5.0.0
+
 .. data:: user_confirmed
 
    Sent when a user is confirmed. In addition to the app (which is the

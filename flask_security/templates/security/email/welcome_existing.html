@@ -1,0 +1,23 @@
+{# This template receives the following context:
+
+  user - the entire user model object
+  security - the Flask-Security configuration
+  recovery_link - forgot password link if enabled
+
+  This template is used when returning generic responses and don't/can't
+  provide detailed errors as part of form validation to avoid email/username
+  enumeration.
+#}
+<div>{{ _fsdomain('Hello %(email)s!', email=user.email) }}</div>
+
+<div>{{ _fsdomain('Someone (you?) tried to register this email - which is already in our system.') }}</div>
+
+{% if user.username %}
+<div>{{ _fsdomain('This account also has the following username associated with it: %(username)s.', username=user.username) }}</div>
+{% endif %}
+
+{% if recovery_link %}
+  <div>{{ _fsdomain('If you forgot your password you can reset it') }}
+  <a href="{{ recovery_link }}">{{ _fsdomain(' here.') }}</a>
+  </div>
+{% endif %}

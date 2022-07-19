@@ -582,7 +582,7 @@ def test_password_normalization(app, client, get_message):
     assert response.status_code == 200
     logout(client)
 
-    # make sure can log in with new password both normnalized or not
+    # make sure can log in with new password both normalized or not
     response = client.post(
         "/login",
         json=dict(email="matt@lp.com", password="HöheHöhe"),
@@ -601,3 +601,17 @@ def test_password_normalization(app, client, get_message):
     # verify actually logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
+
+
+@pytest.mark.settings(return_generic_responses=True)
+def test_generic_response(app, client, get_message):
+
+    # try unknown user
+    response = client.post("/reset", data=dict(email="whoami@test.com"))
+    assert (
+        get_message("PASSWORD_RESET_REQUEST", email="whoami@test.com") in response.data
+    )
+
+    response = client.post("/reset", json=dict(email="whoami@test.com"))
+    assert response.status_code == 200
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])

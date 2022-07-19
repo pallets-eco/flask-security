@@ -49,6 +49,7 @@ from .confirmable import (
     send_confirmation_instructions,
 )
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
+from .forms import form_errors_munge
 from .passwordless import login_token_status, send_login_instructions
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
@@ -66,7 +67,7 @@ from .recoverable import (
     send_reset_password_instructions,
     update_password,
 )
-from .registerable import register_user
+from .registerable import register_user, register_existing
 from .tf_plugin import (
     create_recovery_codes,
     tf_check_state,
@@ -92,6 +93,7 @@ from .utils import (
     get_post_verify_redirect,
     get_request_attr,
     get_url,
+    hash_password,
     json_error_response,
     login_user,
     logout_user,
@@ -187,6 +189,20 @@ def login() -> "ResponseValue":
         if _security._want_json(request):
             return base_render_json(form, include_auth_token=True)
         return redirect(get_post_login_redirect())
+
+    if (
+        request.method == "POST"
+        and cv("RETURN_GENERIC_RESPONSES")
+        and not form.user_authenticated
+    ):
+        # Validation failed - make sure all error messages are generic
+        fields_to_squash = dict(
+            email=dict(replace_msg="GENERIC_AUTHN_FAILED"),
+            password=dict(replace_msg="GENERIC_AUTHN_FAILED"),
+        )
+        if hasattr(form, "username"):
+            fields_to_squash["username"] = dict(replace_msg="GENERIC_AUTHN_FAILED")
+        form_errors_munge(form, fields_to_squash)
 
     if current_user.is_authenticated:
         form.user = current_user
@@ -313,6 +329,16 @@ def register() -> "ResponseValue":
 
         # Only include auth token if in fact user is permitted to login
         return base_render_json(form, include_auth_token=did_login)
+
+    # Here on GET or failed validate
+    if request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+        gr = register_existing(form)
+        if gr:
+            if _security._want_json(request):
+                return base_render_json(form)
+
+            return redirect(get_post_register_redirect())
+
     if _security._want_json(request):
         return base_render_json(form)
 
@@ -403,10 +429,20 @@ def send_confirmation():
     if form.validate_on_submit():
         send_confirmation_instructions(form.user)
         if not _security._want_json(request):
-            do_flash(*get_message("CONFIRMATION_REQUEST", email=form.user.email))
+            do_flash(*get_message("CONFIRMATION_REQUEST", email=form.email.data))
+
+    elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+        # Here on GET or failed validate
+        rinfo = dict(email=dict())
+        form_errors_munge(form, rinfo)  # by suppressing errors JSON should return 200
+
+        # Make look exactly like successful (e.g. real user) request
+        if not _security._want_json(request):
+            do_flash(*get_message("CONFIRMATION_REQUEST", email=form.email.data))
 
     if _security._want_json(request):
-        return base_render_json(form)
+        # Never include user info since this is an anonymous endpoint.
+        return base_render_json(form, include_user=False)
 
     return _security.render_template(
         cv("SEND_CONFIRMATION_TEMPLATE"),
@@ -505,12 +541,27 @@ def forgot_password():
     if form.validate_on_submit():
         send_reset_password_instructions(form.user)
         if not _security._want_json(request):
-            do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.user.email))
+            do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.email.data))
+
+    elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+        # Here on GET or failed validate
+        rinfo = dict(email=dict())
+        form_errors_munge(form, rinfo)  # by suppressing errors JSON should return 200
+
+        # Make look exactly like successful (e.g. real user) request
+        hash_password("not-a-password")  # reduce timing between successful and not.
+        if not _security._want_json(request):
+            do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.email.data))
 
     if _security._want_json(request):
+        # Never include user info since this is an anonymous endpoint.
         return base_render_json(form, include_user=False)
 
-    if form.requires_confirmation and _security.requires_confirmation_error_view:
+    if (
+        form.requires_confirmation
+        and _security.requires_confirmation_error_view
+        and not cv("RETURN_GENERIC_RESPONSES")
+    ):
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
         return redirect(
             get_url(

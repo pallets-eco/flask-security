@@ -43,6 +43,7 @@ from flask_security.signals import (
     us_security_token_sent,
     tf_security_token_sent,
     reset_password_instructions_sent,
+    user_not_registered,
     user_registered,
 )
 from flask_security.utils import hash_password, uia_email_mapper, uia_phone_mapper
@@ -104,8 +105,9 @@ def create_app():
     app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=1)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
     app.config["SECURITY_USERNAME_ENABLE"] = True
-    app.config["SECURITY_PASSWORD_REQUIRED"] = False
+    app.config["SECURITY_PASSWORD_REQUIRED"] = True
     app.config["SECURITY_MULTI_FACTOR_RECOVERY_CODES"] = True
+    app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = True
 
     class TestWebauthnUtil(WebauthnUtil):
         def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
@@ -220,6 +222,18 @@ def create_app():
     @user_registered.connect_via(app)
     def on_user_registered(myapp, user, confirm_token, **extra):
         flash(f"To confirm {user.email} - go to /confirm/{confirm_token}")
+
+    @user_not_registered.connect_via(app)
+    def on_user_not_registered(myapp, **extra):
+        if extra.get("existing_email"):
+            flash(f"Tried to register existing email: {extra['user'].email}")
+        elif extra.get("existing_username"):
+            flash(
+                f"Tried to register email: {extra['form_data'].email.data}"
+                f" with username: {extra['form_data'].username.data}"
+            )
+        else:
+            flash("Not registered response - but ??")
 
     @reset_password_instructions_sent.connect_via(app)
     def on_reset(myapp, user, token, **extra):

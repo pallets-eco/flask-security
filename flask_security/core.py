@@ -119,6 +119,7 @@ _default_config: t.Dict[str, t.Any] = {
     "URL_PREFIX": None,
     "SUBDOMAIN": None,
     "FLASH_MESSAGES": True,
+    "RETURN_GENERIC_RESPONSES": False,
     "I18N_DOMAIN": "flask_security",
     "I18N_DIRNAME": pkg_resources.resource_filename("flask_security", "translations"),
     "EMAIL_VALIDATOR_ARGS": None,
@@ -350,6 +351,21 @@ _default_config: t.Dict[str, t.Any] = {
 #: Default Flask-Security messages
 _default_messages = {
     "API_ERROR": (_("Input not appropriate for requested API"), "error"),
+    "GENERIC_AUTHN_FAILED": (
+        _("Authentication failed - identity or password/passcode invalid"),
+        "error",
+    ),
+    "GENERIC_RECOVERY": (
+        _(
+            "If that email address is in our system, "
+            "you will receive an email describing how to reset your password."
+        ),
+        "info",
+    ),
+    "GENERIC_US_SIGNIN": (
+        _("If that identity is in our system, you were sent a code."),
+        "info",
+    ),
     "UNAUTHORIZED": (_("You do not have permission to view this resource."), "error"),
     "UNAUTHENTICATED": (
         _("You are not authenticated. Please supply the correct credentials."),
@@ -458,6 +474,7 @@ _default_messages = {
         _("You can only access this endpoint when not logged in."),
         "error",
     ),
+    "CODE_HAS_BEEN_SENT": (_("Code has been sent."), "info"),
     "FAILED_TO_SEND_CODE": (_("Failed to send code. Please try again later"), "error"),
     "TWO_FACTOR_INVALID_TOKEN": (_("Invalid code"), "error"),
     "TWO_FACTOR_LOGIN_SUCCESSFUL": (_("Your code has been confirmed"), "success"),

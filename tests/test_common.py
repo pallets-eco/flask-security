@@ -4,7 +4,7 @@
 
     Test common functionality
 
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -164,6 +164,68 @@ def test_login_form_username(client):
     assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
     assert re.search(b'<input[^>]*autocomplete="username"[^>]*>', response.data)
     assert re.search(b'<input[^>]*autocomplete="current-password"[^>]*>', response.data)
+
+
+@pytest.mark.confirmable()
+@pytest.mark.settings(
+    return_generic_responses=True, requires_confirmation_error_view="/confirm"
+)
+def test_generic_response(app, client, get_message):
+    response = client.post(
+        "/login", data=dict(email="mattwho@lp.com", password="forgot")
+    )
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data
+    response = client.post("/login", data=dict(email="matt@lp.com", password="forgot"))
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data
+
+    response = client.post(
+        "/login", json=dict(email="mattwho@lp.com", password="forgot")
+    )
+    # make sure just 'null' key in errors.
+    assert list(response.json["response"]["errors"].keys()) == ["null"]
+    assert len(response.json["response"]["errors"]["null"]) == 1
+    assert response.json["response"]["errors"]["null"][0].encode(
+        "utf-8"
+    ) == get_message("GENERIC_AUTHN_FAILED")
+    response = client.post("/login", json=dict(email="matt@lp.com", password="forgot"))
+    assert response.json["response"]["errors"]["null"][0].encode(
+        "utf-8"
+    ) == get_message("GENERIC_AUTHN_FAILED")
+
+    # make sure don't get confirmation required
+    response = client.post(
+        "/login",
+        data=dict(email="mattwho@lp.com", password="password"),
+        follow_redirects=False,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(username_enable=True, return_generic_responses=True)
+def test_generic_response_username(app, client, get_message):
+    data = dict(
+        email="dude@lp.com",
+        username="dude",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/login", data=dict(username="dude2", password="awesome sunset")
+    )
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data
+
+    response = client.post("/login", json=dict(username="dude2", password="forgot"))
+    # make sure just 'null' key in errors.
+    assert list(response.json["response"]["errors"].keys()) == ["null"]
+    assert len(response.json["response"]["errors"]["null"]) == 1
+    assert response.json["response"]["errors"]["null"][0].encode(
+        "utf-8"
+    ) == get_message("GENERIC_AUTHN_FAILED")
 
 
 def test_unprovided_username(client, get_message):
