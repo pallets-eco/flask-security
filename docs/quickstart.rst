@@ -224,6 +224,7 @@ and models.py.
         id = Column(Integer(), primary_key=True)
         name = Column(String(80), unique=True)
         description = Column(String(255))
+        permissions = Column(String(255))
 
     class User(Base, UserMixin):
         __tablename__ = 'user'
