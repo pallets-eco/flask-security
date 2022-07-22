@@ -82,7 +82,6 @@ from .utils import (
     check_and_get_token_status,
     config_value as cv,
     do_flash,
-    json_error_response,
     get_message,
     get_post_login_redirect,
     get_post_verify_redirect,
@@ -497,8 +496,8 @@ def webauthn_register_response(token: str) -> "ResponseValue":
         m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_REGISTER_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
-            payload = json_error_response(errors=m)
-            return _security._render_json(payload, 400, None, None)
+            form.form_errors.append(m)
+            return base_render_json(form, include_user=False)
         do_flash(m, c)
         return redirect(url_for_security("wan_register"))
 
@@ -651,8 +650,8 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_SIGNIN_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
-            payload = json_error_response(errors=m)
-            return _security._render_json(payload, 400, None, None)
+            form.form_errors.append(m)
+            return base_render_json(form, include_user=False)
         do_flash(m, c)
         return redirect(url_for_security("wan_signin"))
 
@@ -815,8 +814,8 @@ def webauthn_verify_response(token: str) -> "ResponseValue":
         m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_SIGNIN_WITHIN"))
     if invalid or expired:
         if _security._want_json(request):
-            payload = json_error_response(errors=m)
-            return _security._render_json(payload, 400, None, None)
+            form.form_errors.append(m)
+            return base_render_json(form, include_user=False)
         do_flash(m, c)
         return redirect(url_for_security("wan_verify"))
 

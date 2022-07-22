@@ -946,7 +946,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UsSetupValidateJsonResponse"
         302:
-          description: Successfuly validated and persisted sign in method.
+          description: Successfully validated and persisted sign in method.
           headers:
             Location:
               description: |
@@ -1890,26 +1890,29 @@ components:
           properties:
             response:
               type: object
+              required: [ errors ]
               description: >
-                For form validation errors, the 'errors' key will be set with a list of errors per
-                invalid form input field. For non-form related errors, the 'error' key will be set
-                with a single (localized) error string.
+                For form validation errors, the 'field_errors' key will be set with a list of errors per
+                invalid form input field (i.e. a dict of 'field-name': list of error strings).
+                The 'errors' key will be a simple list of both form and non-form related
+                errors (all form errors will also be included here).
               properties:
-                errors:
+                field_errors:
                   type: object
                   description: >
                     Errors per input/form field
-                  properties:
-                    field-name:
-                      type: array
-                      items:
-                        type: string
-                        example: field validation error.
-                        description: Error message (localized)
-                error:
-                  type: string
-                  example: "Unauthenticated"
-                  description: Error message (localized)
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
+                      example: field validation error.
+                      description: Error message (localized)
+                errors:
+                  type: array
+                  items:
+                    type: string
+                    example: "Unauthenticated"
+                    description: Error message (localized)
     Verify:
       type: object
       required: [ password ]
@@ -1995,37 +1998,30 @@ components:
           type: boolean
         tf_validity_token:
           type: string
-          description: Code verifying the user has successfully verfied 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
+          description: Code verifying the user has successfully verified 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
     UsSigninJsonResponse:
-      type: object
-      description: >
-        The user successfully signed in. Note that depending on SECURITY_TWO_FACTOR and SECURITY_US_MFA_REQUIRED configuration variables, a second form of authentication might be required.
-      required: [meta, response]
-      properties:
-        meta:
-          type: object
-          required: [code]
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          description: >
+            The user successfully signed in. Note that depending on SECURITY_TWO_FACTOR and SECURITY_US_MFA_REQUIRED configuration variables, a second form of authentication might be required.
           properties:
-            code:
-              type: integer
-              example: 200
-              description: Http status code
-        response:
-          type: object
-          properties:
-            authentication_token:
-              type: string
-              description: >
-                Token to be used in future token-based API calls. Only returned if "include_auth_token" parameter is set.
-            tf_required:
-              type: boolean
-              description: If two-factor authentication is required for caller.
-            tf_state:
-              type: string
-              description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
-            tf_primary_method:
-              type: string
-              description: Which method was used to send code.
+            response:
+              type: object
+              properties:
+                authentication_token:
+                  type: string
+                  description: >
+                    Token to be used in future token-based API calls. Only returned if "include_auth_token" parameter is set.
+                tf_required:
+                  type: boolean
+                  description: If two-factor authentication is required for caller.
+                tf_state:
+                  type: string
+                  description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
+                tf_primary_method:
+                  type: string
+                  description: Which method was used to send code.
     UsSigninSendCode:
       type: object
       required: [identity, chosen_method]
@@ -2064,39 +2060,32 @@ components:
           type: string
           description: phone number (this will be normalized). Required if chosen_method == "sms".
     UsSetupJsonResponse:
-      type: object
-      required: [meta, response]
-      properties:
-        meta:
-          type: object
-          required: [code]
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
           properties:
-            code:
-              type: integer
-              example: 200
-              description: Http status code
-        response:
-          type: object
-          description: Response when setting up a new method. When deleting, nothing is returned.
-          properties:
-            chosen_method:
-              type: string
-              description: The chosen_method as passed into API.
-            phone:
-              type: string
-              description: The canonicalized phone number if setting up SMS
-            authr_key:
-              type: string
-              description: TOTP key for setting up authenticator (if chosen_method == 'authenticator')
-            authr_issuer:
-              type: string
-              description: Issuer as configured with TOTP_ISSUER (same as used in QRcode) (if chosen_method == 'authenticator')
-            authr_username:
-              type: string
-              description: Username (same as used in QRcode) (if chosen_method == 'authenticator')
-            state:
-              type: string
-              description: Opaque blob that must be pass to /us-setup/<state>. This is a signed, timed token.
+            response:
+              type: object
+              description: Response when setting up a new method. When deleting, nothing is returned.
+              properties:
+                chosen_method:
+                  type: string
+                  description: The chosen_method as passed into API.
+                phone:
+                  type: string
+                  description: The canonicalized phone number if setting up SMS
+                authr_key:
+                  type: string
+                  description: TOTP key for setting up authenticator (if chosen_method == 'authenticator')
+                authr_issuer:
+                  type: string
+                  description: Issuer as configured with TOTP_ISSUER (same as used in QRcode) (if chosen_method == 'authenticator')
+                authr_username:
+                  type: string
+                  description: Username (same as used in QRcode) (if chosen_method == 'authenticator')
+                state:
+                  type: string
+                  description: Opaque blob that must be pass to /us-setup/<state>. This is a signed, timed token.
     UsSetupValidateRequest:
       type: object
       required: [passcode]
@@ -2105,26 +2094,19 @@ components:
           type: string
           description: Code/Passcode as received from method being setup.
     UsSetupValidateJsonResponse:
-      type: object
-      required: [meta, response]
-      properties:
-        meta:
-          type: object
-          required: [code]
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
           properties:
-            code:
-              type: integer
-              example: 200
-              description: Http status code
-        response:
-          type: object
-          properties:
-            chosen_method:
-              type: string
-              description: The chosen_method as passed into API.
-            phone:
-              type: string
-              description: Phone number if set.
+            response:
+              type: object
+              properties:
+                chosen_method:
+                  type: string
+                  description: The chosen_method as passed into API.
+                phone:
+                  type: string
+                  description: Phone number if set.
     TfSetup:
       type: object
       required: [setup]
@@ -2140,39 +2122,32 @@ components:
           description: phone number (this will be validated for format). Required if setup == "sms".
           example: 650-555-1212
     TfSetupJsonResponse:
-      type: object
-      required: [meta, response]
-      properties:
-        meta:
-          type: object
-          required: [code]
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
           properties:
-            code:
-              type: integer
-              example: 200
-              description: Http status code
-        response:
-          type: object
-          properties:
-            tf_state:
-              type: string
-              description: >
-                Current state of Two Factor configuration. Not present when disabling 2FA. This will be set to 'validating_profile'
-                indicating the caller needs to call '/tf-validate' with the correct code.
-              example: validating_profile
-            tf_primary_method:
-              type: string
-              description: Current method being congfigured.
-              example: sms
-            tf_authr_key:
-              type: string
-              description: TOTP key for setting up authenticator (if tf_primary_method == 'authenticator')
-            tf_authr_issuer:
-              type: string
-              description: Issuer as configured with TOTP_ISSUER (same as used in QRcode) (if tf_primary_method == 'authenticator')
-            tf_authr_username:
-              type: string
-              description: Username (same as used in QRcode) (if tf_primary_method == 'authenticator')
+            response:
+              type: object
+              properties:
+                tf_state:
+                  type: string
+                  description: >
+                    Current state of Two Factor configuration. Not present when disabling 2FA. This will be set to 'validating_profile'
+                    indicating the caller needs to call '/tf-validate' with the correct code.
+                  example: validating_profile
+                tf_primary_method:
+                  type: string
+                  description: Current method being configured.
+                  example: sms
+                tf_authr_key:
+                  type: string
+                  description: TOTP key for setting up authenticator (if tf_primary_method == 'authenticator')
+                tf_authr_issuer:
+                  type: string
+                  description: Issuer as configured with TOTP_ISSUER (same as used in QRcode) (if tf_primary_method == 'authenticator')
+                tf_authr_username:
+                  type: string
+                  description: Username (same as used in QRcode) (if tf_primary_method == 'authenticator')
     TfValidateJsonResponse:
       type: object
       properties:

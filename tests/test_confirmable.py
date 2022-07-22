@@ -479,7 +479,7 @@ def test_two_factor_json(app, client, get_message):
     # make sure not logged in
     response = client.get("/profile", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
 
@@ -516,7 +516,7 @@ def test_email_not_identity(app, client, get_message):
         "/register", data=data, headers={"Accept": "application/json"}
     )
     assert response.status_code == 400
-    assert "is already associated" in response.json["response"]["errors"]["username"][0]
+    assert "is already associated" in response.json["response"]["errors"][0]
 
     # verify that email field not present
     response = client.get("/login")  # this one has a flash containing 'email confirmed'

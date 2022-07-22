@@ -334,7 +334,8 @@ def test_two_factor_flag(app, client, get_message):
     )
     assert response.status_code == 400
     assert (
-        response.json["response"]["errors"]["setup"][0] == "Marked method is not valid"
+        response.json["response"]["field_errors"]["setup"][0]
+        == "Marked method is not valid"
     )
 
     data = dict(setup="email")
@@ -505,7 +506,10 @@ def test_no_rescue_email(app, client):
     # make sure that even if post using email - we get an error
     response = client.post("/tf-rescue", json=dict(help_setup="email"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["help_setup"][0] == "Not a valid choice."
+    assert (
+        response.json["response"]["field_errors"]["help_setup"][0]
+        == "Not a valid choice."
+    )
 
 
 @pytest.mark.settings(two_factor_required=True)
@@ -601,7 +605,8 @@ def test_json(app, client):
     # send bad code
     response = client.post("/tf-validate", json=dict(code="whatsup"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["code"][0] == "Invalid code"
+    assert response.json["response"]["field_errors"]["code"][0] == "Invalid code"
+    assert response.json["response"]["errors"][0] == "Invalid code"
 
     # Do a GET - should get recovery options
     response = client.get("/tf-validate", headers=headers)
@@ -1138,7 +1143,7 @@ def test_bad_sender(app, client, get_message):
     data = dict(email="gal@lp.com", password="password")
     response = client.post("login", json=data, headers=headers)
     assert response.status_code == 500
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "FAILED_TO_SEND_CODE"
     )
 
@@ -1150,9 +1155,9 @@ def test_bad_sender(app, client, get_message):
 
     response = client.post("tf-setup", json=data, headers=headers)
     assert response.status_code == 500
-    assert response.json["response"]["errors"]["setup"][0].encode(
-        "utf-8"
-    ) == get_message("FAILED_TO_SEND_CODE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "FAILED_TO_SEND_CODE"
+    )
 
 
 def test_replace_send_code(app, get_message):
@@ -1203,7 +1208,9 @@ def test_replace_send_code(app, get_message):
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
         response = client.post("/tf-rescue", json=rescue_data, headers=headers)
         assert response.status_code == 500
-        assert response.json["response"]["errors"]["help_setup"][0] == "Failed Again"
+        assert (
+            response.json["response"]["field_errors"]["help_setup"][0] == "Failed Again"
+        )
 
 
 @pytest.mark.settings(freshness=timedelta(minutes=0))
@@ -1262,9 +1269,9 @@ def test_verify_json(app, client, get_message):
 
     response = client.post("verify", json=dict(password="notmine"), headers=headers)
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["password"][0].encode(
-        "utf-8"
-    ) == get_message("INVALID_PASSWORD")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_PASSWORD"
+    )
 
     response = client.post("verify", json=dict(password="password"), headers=headers)
     assert response.status_code == 200
@@ -1398,9 +1405,9 @@ def test_rc_json(app, client, get_message):
 
     response = client.post("/mf-recovery", json=dict(code=codes[0]))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["code"][0].encode(
-        "utf-8"
-    ) == get_message("INVALID_RECOVERY_CODE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_RECOVERY_CODE"
+    )
     response = client.post("/mf-recovery", json=dict(code=codes[1]))
     assert response.status_code == 200
 
@@ -1483,7 +1490,7 @@ def test_rc_bad_state(app, client, get_message):
 
     response = client.post("/mf-recovery", json=dict(code="hi"))
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf=8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
         "TWO_FACTOR_PERMISSION_DENIED"
     )
 

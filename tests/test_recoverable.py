@@ -167,9 +167,9 @@ def test_recoverable_json(app, client, get_message):
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 400
-        assert response.json["response"]["errors"]["email"][0].encode(
-            "utf-8"
-        ) == get_message("USER_DOES_NOT_EXIST")
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+            "USER_DOES_NOT_EXIST"
+        )
 
         # Test submitting a new password but leave out 'confirm'
         response = client.post(
@@ -178,9 +178,9 @@ def test_recoverable_json(app, client, get_message):
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 400
-        assert response.json["response"]["errors"]["password_confirm"][0].encode(
-            "utf-8"
-        ) == get_message("PASSWORD_NOT_PROVIDED")
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+            "PASSWORD_NOT_PROVIDED"
+        )
 
         # Test submitting a new password
         response = client.post(
@@ -225,7 +225,7 @@ def test_recoverable_json(app, client, get_message):
             json=dict(password="newpassword", password_confirm="newpassword"),
             headers={"Content-Type": "application/json"},
         )
-        assert response.json["response"]["error"].encode("utf-8") == get_message(
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
             "INVALID_RESET_PASSWORD_TOKEN"
         )
     assert len(flashes) == 0

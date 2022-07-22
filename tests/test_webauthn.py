@@ -377,9 +377,9 @@ def test_basic_json(app, clients, get_message):
     # post with no name
     response = clients.post("/wan-register", json=dict())
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["name"][0].encode(
-        "utf-8"
-    ) == get_message("WEBAUTHN_NAME_REQUIRED")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_NAME_REQUIRED"
+    )
 
     register_options, response_url = _register_start_json(clients, usage="first")
     assert register_options["rp"]["name"] == "My Flask App"
@@ -483,9 +483,9 @@ def test_usage(app, client, get_message):
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("WEBAUTHN_CREDENTIAL_WRONG_USAGE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_CREDENTIAL_WRONG_USAGE"
+    )
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
@@ -502,9 +502,9 @@ def test_constraints(app, clients, get_message):
     # register same name again
     response = clients.post("wan-register", json=dict(name="testr3"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["name"][0].encode(
-        "utf-8"
-    ) == get_message("WEBAUTHN_NAME_INUSE", name="testr3")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_NAME_INUSE", name="testr3"
+    )
 
     logout(clients)
 
@@ -518,9 +518,9 @@ def test_constraints(app, clients, get_message):
     register_options, response_url = _register_start_json(clients, name="testr4")
     response = clients.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("WEBAUTHN_CREDENTIAL_ID_INUSE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_CREDENTIAL_ID_INUSE"
+    )
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
@@ -531,27 +531,27 @@ def test_bad_data_register(app, client, get_message):
     # first try mangling json - should get API_ERROR
     response = client.post(response_url, json=dict(credential="hi there"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("API_ERROR")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
 
     # Now pass incorrect keys
     bad_register = copy.deepcopy(REG_DATA1)
     del bad_register["rawId"]
     response = client.post(response_url, json=dict(credential=json.dumps(bad_register)))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("API_ERROR")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
 
     # now muck with attestation - should get VERIFY ERROR
     bad_register = copy.deepcopy(REG_DATA1)
     bad_register["rawId"] = "unknown"
     response = client.post(response_url, json=dict(credential=json.dumps(bad_register)))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("WEBAUTHN_NO_VERIFY", cause="id and raw_id were not equivalent")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_NO_VERIFY", cause="id and raw_id were not equivalent"
+    )
 
     # same with forms
     with capture_flashes() as flashes:
@@ -579,18 +579,18 @@ def test_bad_data_signin(app, client, get_message):
     signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(response_url, json=dict(credential="hi there"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("API_ERROR")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
 
     # Now pass incorrect keys
     bad_signin = copy.deepcopy(SIGNIN_DATA1)
     del bad_signin["rawId"]
     response = client.post(response_url, json=dict(credential=json.dumps(bad_signin)))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("API_ERROR")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
 
     # now muck with attestation - should get VERIFY ERROR
     bad_signin = copy.deepcopy(SIGNIN_DATA1)
@@ -599,9 +599,7 @@ def test_bad_data_signin(app, client, get_message):
     )
     response = client.post(response_url, json=dict(credential=json.dumps(bad_signin)))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_NO_VERIFY", cause="Could not verify authentication signature"
     )
 
@@ -666,15 +664,15 @@ def test_delete_json(app, clients, get_message):
 
     response = clients.post("/wan-delete", json=dict())
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["name"][0].encode(
-        "utf=8"
-    ) == get_message("WEBAUTHN_NAME_REQUIRED")
+    assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
+        "WEBAUTHN_NAME_REQUIRED"
+    )
 
     response = clients.post("/wan-delete", json=dict(name="testr1"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["name"][0].encode(
-        "utf=8"
-    ) == get_message("WEBAUTHN_NAME_NOT_FOUND", name="testr1")
+    assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
+        "WEBAUTHN_NAME_NOT_FOUND", name="testr1"
+    )
 
     response = clients.post("/wan-delete", json=dict(name="testr3"))
     assert response.status_code == 200
@@ -716,9 +714,9 @@ def test_disabled_account(app, client, get_message):
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("DISABLED_ACCOUNT")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "DISABLED_ACCOUNT"
+    )
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
@@ -743,7 +741,7 @@ def test_unk_credid(app, client, get_message):
         json=dict(credential=json.dumps(bad_signin)),
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
+    assert response.json["response"]["field_errors"]["credential"][0].encode(
         "utf-8"
     ) == get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")
 
@@ -970,7 +968,7 @@ def test_register_timeout(app, client, get_message):
 
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_EXPIRED", within=app.config["SECURITY_WAN_REGISTER_WITHIN"]
     )
 
@@ -992,7 +990,7 @@ def test_signin_timeout(app, client, get_message):
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
     )
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_EXPIRED", within=app.config["SECURITY_WAN_SIGNIN_WITHIN"]
     )
 
@@ -1003,7 +1001,7 @@ def test_bad_token(app, client, get_message):
 
     response = client.post("/wan-register/not a token", json=dict())
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
     )
     # same w/o json
@@ -1019,7 +1017,7 @@ def test_bad_token(app, client, get_message):
     # Test wan-verify
     response = client.post("/wan-verify/not a token", json=dict())
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
     )
     # same w/o json
@@ -1037,7 +1035,7 @@ def test_bad_token(app, client, get_message):
 
     response = client.post("/wan-signin/not a token", json=dict())
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
     )
     # same w/o json
@@ -1222,7 +1220,7 @@ def test_user_handle(app, client, get_message):
     response = client.post(
         response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UH))
     )
-    assert response.json["response"]["errors"]["credential"][0].encode(
+    assert response.json["response"]["field_errors"]["credential"][0].encode(
         "utf-8"
     ) == get_message("WEBAUTHN_MISMATCH_USER_HANDLE")
 
@@ -1347,7 +1345,7 @@ def test_verify_timeout(app, client, get_message):
     response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
     response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
     assert response.status_code == 400
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_EXPIRED", within=app.config["SECURITY_WAN_SIGNIN_WITHIN"]
     )
 
@@ -1366,7 +1364,7 @@ def test_verify_validate_error(app, client, get_message):
         response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UH))
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
+    assert response.json["response"]["field_errors"]["credential"][0].encode(
         "utf-8"
     ) == get_message("WEBAUTHN_UNKNOWN_CREDENTIAL_ID")
 
@@ -1443,9 +1441,9 @@ def test_verify_usage_first_json(app, client, get_message):
         response_url, json=dict(credential=json.dumps(keys["secondary"]["signin"]))
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("WEBAUTHN_CREDENTIAL_WRONG_USAGE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_CREDENTIAL_WRONG_USAGE"
+    )
 
 
 @pytest.mark.settings(
@@ -1470,9 +1468,9 @@ def test_verify_usage_secondary_json(app, client, get_message):
         response_url, json=dict(credential=json.dumps(keys["first"]["signin"]))
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["credential"][0].encode(
-        "utf-8"
-    ) == get_message("WEBAUTHN_CREDENTIAL_WRONG_USAGE")
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_CREDENTIAL_WRONG_USAGE"
+    )
     response = client.post(
         response_url, json=dict(credential=json.dumps(keys["secondary"]["signin"]))
     )
@@ -1594,7 +1592,7 @@ def test_uv_required(client):
     assert response.status_code == 400
     assert (
         "User verification is required"
-        in response.json["response"]["errors"]["credential"][0]
+        in response.json["response"]["field_errors"]["credential"][0]
     )
 
     logout(client)

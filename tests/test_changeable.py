@@ -157,7 +157,7 @@ def test_changeable_flag(app, client, get_message):
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["new_password"] == [
+    assert response.json["response"]["field_errors"]["new_password"] == [
         "Password not provided"
     ]
 
@@ -469,7 +469,7 @@ def test_easy_password(app, client):
     response = __test_easy_password(client)
     assert response.status_code == 400
     # Response from zxcvbn
-    assert "Repeats like" in response.json["response"]["errors"]["new_password"][0]
+    assert "Repeats like" in response.json["response"]["errors"][0]
 
 
 @pytest.mark.settings(password_complexity_checker="zxcvbn", zxcvbn_minimum_score=0)
@@ -503,7 +503,7 @@ def test_my_validator(app, sqlalchemy_datastore):
     )
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400
-    assert "Are you crazy" in response.json["response"]["errors"]["new_password"][0]
+    assert "Are you crazy" in response.json["response"]["errors"][0]
 
 
 @pytest.mark.settings(password_length_min=12)

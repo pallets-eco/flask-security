@@ -285,7 +285,7 @@ def test_two_factor_json(app, client, get_message):
     # make sure not logged in
     response = client.get("/profile", headers={"accept": "application/json"})
     assert response.status_code == 401
-    assert response.json["response"]["error"].encode("utf-8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "UNAUTHENTICATED"
     )
 
@@ -349,7 +349,7 @@ def test_easy_password(app, sqlalchemy_datastore):
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 400
     # Response from zxcvbn
-    assert "Repeats like" in response.json["response"]["errors"]["password"][0]
+    assert "Repeats like" in response.json["response"]["errors"][0]
 
     # Test that username affects password selection
     data = dict(
@@ -366,7 +366,7 @@ def test_easy_password(app, sqlalchemy_datastore):
     # Response from zxcvbn
     assert (
         "Password not complex enough"
-        in response.json["response"]["errors"]["password"][0]
+        in response.json["response"]["field_errors"]["password"][0]
     )
 
 
@@ -498,7 +498,7 @@ def test_username(app, client, get_message):
     assert response.status_code == 400
     assert (
         get_message("INVALID_EMAIL_ADDRESS", username="dude")
-        == response.json["response"]["errors"]["email"][0].encode()
+        == response.json["response"]["errors"][0].encode()
     )
     # login using username
     response = client.post(
@@ -520,7 +520,7 @@ def test_username(app, client, get_message):
     assert response.status_code == 400
     assert (
         get_message("USER_DOES_NOT_EXIST")
-        == response.json["response"]["errors"]["null"][0].encode()
+        == response.json["response"]["field_errors"]["null"][0].encode()
     )
 
     # login using us-signin
@@ -544,7 +544,7 @@ def test_username(app, client, get_message):
     assert response.status_code == 400
     assert (
         get_message("USERNAME_ALREADY_ASSOCIATED", username="dude")
-        == response.json["response"]["errors"]["username"][0].encode()
+        == response.json["response"]["field_errors"]["username"][0].encode()
     )
 
 
@@ -583,20 +583,14 @@ def test_username_errors(app, client, get_message):
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
-    assert (
-        "Username must be at least"
-        in response.json["response"]["errors"]["username"][0]
-    )
+    assert "Username must be at least" in response.json["response"]["errors"][0]
 
     data["username"] = "howlongcanIbebeforeyoucomplainIsupposereallyreallylong"
     response = client.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
-    assert (
-        "Username must be at least"
-        in response.json["response"]["errors"]["username"][0]
-    )
+    assert "Username must be at least" in response.json["response"]["errors"][0]
 
     # try evil characters
     data["username"] = "hi <script>doing evil</script>"
@@ -606,7 +600,7 @@ def test_username_errors(app, client, get_message):
     assert response.status_code == 400
     assert (
         get_message("USERNAME_ILLEGAL_CHARACTERS")
-        == response.json["response"]["errors"]["username"][0].encode()
+        == response.json["response"]["field_errors"]["username"][0].encode()
     )
 
     # No spaces or punctuation
@@ -617,7 +611,7 @@ def test_username_errors(app, client, get_message):
     assert response.status_code == 400
     assert (
         get_message("USERNAME_DISALLOWED_CHARACTERS")
-        in response.json["response"]["errors"]["username"][0].encode()
+        in response.json["response"]["errors"][0].encode()
     )
 
     data["username"] = None
@@ -627,7 +621,7 @@ def test_username_errors(app, client, get_message):
     assert response.status_code == 400
     assert (
         get_message("USERNAME_NOT_PROVIDED")
-        == response.json["response"]["errors"]["username"][0].encode()
+        == response.json["response"]["errors"][0].encode()
     )
 
 
@@ -740,7 +734,9 @@ def test_generic_response(app, client, get_message):
     # try again - should not get ANY error - but should get an email
     response = client.post("/register", json=data)
     assert response.status_code == 200
-    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+    assert not any(
+        e in response.json["response"].keys() for e in ["errors", "field_errors"]
+    )
     gr = app.mail.outbox[1]
     assert "tried to register this email" in gr.body
     assert "associated with it: dude" in gr.body
@@ -796,7 +792,7 @@ def test_generic_response(app, client, get_message):
     )
     response = client.post("/register", json=data)
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["password"][0].encode() == get_message(
+    assert response.json["response"]["errors"][0].encode() == get_message(
         "PASSWORD_INVALID_LENGTH", length=8
     )
     data = dict(
@@ -806,7 +802,7 @@ def test_generic_response(app, client, get_message):
     )
     response = client.post("/register", json=data)
     assert response.status_code == 400
-    assert response.json["response"]["errors"]["username"][0].encode() == get_message(
+    assert response.json["response"]["errors"][0].encode() == get_message(
         "USERNAME_INVALID_LENGTH", min=4, max=32
     )
 

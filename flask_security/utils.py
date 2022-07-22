@@ -947,12 +947,12 @@ def base_render_json(
     This fills in the response and then calls :meth:`.Security.render_json`
     which can be overridden by the app.
     """
-    has_errors = len(form.errors) > 0
-
     user = form.user if hasattr(form, "user") else None
-    if has_errors:
+    if form.errors:
         code = error_status_code
-        payload = json_error_response(errors=form.errors)
+        # wtforms 3.0 introduces form-level errors - these show up as part of the
+        # errors dict with a key of 'None'
+        payload = json_error_response(field_errors=form.errors)
     else:
         code = 200
         payload = dict()
@@ -1015,17 +1015,36 @@ def default_want_json(req):
     return False
 
 
-def json_error_response(errors):
-    """Helper to create an error response that adheres to the openapi spec."""
-    if isinstance(errors, str):
-        # When the errors is a string, use the response/error/message format
-        response_json = dict(error=errors)
-    elif isinstance(errors, dict):
-        # When the errors is a dict, use the DefaultJsonErrorResponse
-        # (response/errors/name/messages) format
-        response_json = dict(errors=errors)
-    else:
-        raise TypeError("The errors argument should be either a str or dict.")
+def json_error_response(
+    errors: t.Optional[t.Union[str, list]] = None,
+    field_errors: t.Optional[t.Dict[str, list]] = None,
+) -> t.Dict[str, t.Any]:
+    """Helper to create an error response.
+
+    The "errors" key holds a simple list of errors - which is made up of any passed
+    errors (either a string or list) as well as the (localized) error msg from the
+    passed in form errors.
+
+    The "field_errors" key which is exactly what is returned from WTForms - namely
+    a dict of field-name: msg. For form-level errors (WTForms 3.0) the 'field-name' is
+    'None'
+    """
+    response_json: t.Dict[str, t.Union[list, t.Dict[str, list]]] = dict()
+    plain_errors = []
+    if errors:
+        if isinstance(errors, str):
+            plain_errors = [errors]
+        elif isinstance(errors, list):
+            plain_errors = errors
+        else:
+            raise TypeError("The errors argument should be either a str or list.")
+    if field_errors:
+        # This is default from WTForms - a dictionary of field name and list of errors
+        # we return that, as well as create a simple list of errors.
+        for e in field_errors.values():
+            plain_errors.extend(e)
+        response_json["field_errors"] = field_errors
+    response_json["errors"] = plain_errors
 
     return response_json
 

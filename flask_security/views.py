@@ -664,7 +664,8 @@ def reset_password(token):
 
     if invalid or expired:
         if _security._want_json(request):
-            return _security._render_json(json_error_response(m), 400, None, None)
+            form.form_errors.append(m)
+            return base_render_json(form, include_user=False)
         else:
             return redirect(url_for_security("forgot_password"))
 
