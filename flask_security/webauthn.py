@@ -448,6 +448,7 @@ def webauthn_register() -> "ResponseValue":
         )
 
     current_creds = []
+    cred: "WebAuthn"
     for cred in current_user.webauthn:
         cl = {
             "name": cred.name,
@@ -455,6 +456,12 @@ def webauthn_register() -> "ResponseValue":
             "transports": cred.transports,
             "lastuse": cred.lastuse_datetime.isoformat(),
             "usage": cred.usage,
+            "backup_state": cred.backup_state
+            if hasattr(cred, "backup_state")
+            else False,
+            "device_type": cred.device_type
+            if hasattr(cred, "device_type")
+            else "Unknown",
         }
         # TODO: i18n
         discoverable = "Unknown"
@@ -515,6 +522,14 @@ def webauthn_register_response(token: str) -> "ResponseValue":
             credential_id=form.registration_verification.credential_id,
             public_key=form.registration_verification.credential_public_key,
             sign_count=form.registration_verification.sign_count,
+            backup_state=getattr(
+                form.registration_verification, "credential_backed_up", False
+            ),
+            device_type=getattr(
+                form.registration_verification,
+                "credential_device_type",
+                "single_device",
+            ),
             transports=form.transports,
             extensions=form.extensions,
             usage=form.usage,
@@ -665,6 +680,12 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         after_this_request(view_commit)
         form.cred.lastuse_datetime = datetime.datetime.utcnow()
         form.cred.sign_count = form.authentication_verification.new_sign_count
+        form.cred.backup_state = getattr(
+            form.authentication_verification, "credential_backed_up", False
+        )
+        form.cred.device_type = getattr(
+            form.authentication_verification, "credential_device_type", "single_device"
+        )
         _datastore.put(form.cred)
 
         json_payload = {}
@@ -675,7 +696,6 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
                 after_this_request(
                     partial(tf_set_validity_token_cookie, token=tf_token)
                 )
-
         else:
             # Need Two-factor?:
             #   - Is it required?
