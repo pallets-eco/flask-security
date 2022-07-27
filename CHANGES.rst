@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.1.5
+-------------
+
+Released July 28, 2022
+
+Fixes
++++++
+- (:pr:`644`) Fix test and other failures with newer Flask-Login/Werkzeug versions.
+
 Version 4.1.4
 -------------
 
