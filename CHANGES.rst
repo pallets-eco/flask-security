@@ -123,6 +123,15 @@ If you are using Alembic the schema migration is easy::
 If you want to allow for empty passwords as part of registration then set :py:data:`SECURITY_PASSWORD_REQUIRED` to ``False``.
 In addition you need to change your DB schema to allow the ``password`` field to be nullable.
 
+Version 4.1.5
+-------------
+
+Released July 28, 2022
+
+Fixes
++++++
+- (:pr:`644`) Fix test and other failures with newer Flask-Login/Werkzeug versions.
+
 Version 4.1.4
 -------------
 

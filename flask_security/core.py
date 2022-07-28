@@ -18,7 +18,7 @@ import typing as t
 import warnings
 
 import pkg_resources
-from flask import _request_ctx_stack, current_app
+from flask import current_app, g
 from flask.json import JSONEncoder
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
@@ -90,6 +90,7 @@ from .utils import (
     get_identity_attribute,
     get_identity_attributes,
     get_message,
+    get_request_attr,
     localize_callback,
     set_request_attr,
     uia_email_mapper,
@@ -585,9 +586,20 @@ def _request_loader(request):
     # decorator @auth_token_required can call us.
     # N.B. we don't call current_user here since that in fact might try and LOAD
     # a user - which would call us again.
-    if all(hasattr(_request_ctx_stack.top, k) for k in ["fs_authn_via", "user"]):
-        if _request_ctx_stack.top.fs_authn_via == "token":
-            return _request_ctx_stack.top.user
+    if get_request_attr("fs_authn_via") == "token":
+        # Flask-Login 0.6.2 and post Flask 2.2
+        if hasattr(g, "_login_user"):
+            return g._login_user
+        else:  # pragma: no cover
+            # pre flask_login 0.6.2 and handle that flask 2.3 is deprecating
+            # _request_ctx_stack
+            try:
+                from flask import _request_ctx_stack
+
+                if hasattr(_request_ctx_stack.top, "user"):
+                    return _request_ctx_stack.top.user
+            except ImportError:
+                pass
 
     header_key = _security.token_authentication_header
     args_key = _security.token_authentication_key
@@ -634,6 +646,7 @@ def _identity_loader():
     if not isinstance(current_user._get_current_object(), AnonymousUserMixin):
         identity = Identity(current_user.fs_uniquifier)
         return identity
+    return None
 
 
 def _on_identity_loaded(sender, identity):
@@ -1408,8 +1421,6 @@ class Security:
             # This is only not registered if Flask-Babel isn't installed...
             if "_" not in app.jinja_env.globals:
                 current_app.jinja_env.globals["_"] = self.i18n_domain.gettext
-            # Register so other packages can reference our translations.
-            current_app.jinja_env.globals["_fsdomain"] = self.i18n_domain.gettext
 
         @app.before_first_request
         def _csrf_init():
@@ -1672,6 +1683,9 @@ class Security:
         if cv("WEBAUTHN", app=app):
             self._check_modules("webauthn", "WEBAUTHN")
 
+        # Register so other packages can reference our translations.
+        app.jinja_env.globals["_fsdomain"] = self.i18n_domain.gettext
+
         app.extensions["security"] = self
 
     def _check_modules(self, module, config_name):  # pragma: no cover
@@ -1835,8 +1849,8 @@ class Security:
 
     def _run_ctx_processor(self, endpoint: str) -> t.Dict[str, t.Any]:
         rv: t.Dict[str, t.Any] = {}
-        for g in ["global", endpoint]:
-            for fn in self._context_processors.setdefault(g, []):
+        for gl in ["global", endpoint]:
+            for fn in self._context_processors.setdefault(gl, []):
                 rv.update(fn())
         return rv
 

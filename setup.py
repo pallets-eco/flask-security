@@ -10,7 +10,7 @@ with open("flask_security/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 install_requires = [
-    "Flask>=2.0.0",
+    "Flask>=2.0.0,<2.3",
     "Flask-Login>=0.6.0",
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=1.0.0",
