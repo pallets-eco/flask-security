@@ -106,7 +106,7 @@ def app(request: pytest.FixtureRequest) -> "Flask":
             app.config["SECURITY_" + key.upper()] = value
 
     app.mail = Mail(app)  # type: ignore
-    app.json_encoder = JSONEncoder
+    app.json_encoder = JSONEncoder  # type: ignore
 
     # use babel marker to signify tests that need babel extension.
     babel = marker_getter("babel")

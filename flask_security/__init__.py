@@ -6,7 +6,7 @@
     security via Flask-Login, Flask-Principal, Flask-WTF, and passlib.
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2020 by J. Christopher Wagner.
+    :copyright: (c) 2019-2022 by J. Christopher Wagner.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -105,4 +105,4 @@ from .utils import (
     verify_and_update_password,
 )
 
-__version__ = "4.1.4"
+__version__ = "4.1.5"

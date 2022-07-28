@@ -23,7 +23,6 @@ import urllib.request
 import urllib.error
 
 from flask import (
-    _request_ctx_stack,
     after_this_request,
     current_app,
     flash,
@@ -80,12 +79,14 @@ def get_request_attr(name: str) -> t.Any:
     Returns None if attribute doesn't exist.
 
     .. versionadded:: 4.0.0
+    .. versionchanged:: 4.1.5
+        Use 'g' rather than request_ctx stack which is going away post Flask 2.2
     """
-    return getattr(_request_ctx_stack.top, name, None)
+    return getattr(g, name, None)
 
 
 def set_request_attr(name, value):
-    return setattr(_request_ctx_stack.top, name, value)
+    return setattr(g, name, value)
 
 
 """
@@ -512,7 +513,8 @@ def url_for_security(endpoint: str, **values: t.Union[str, bool]) -> str:
     :param _method: if provided this explicitly specifies an HTTP method.
     """
     endpoint = get_security_endpoint_name(endpoint)
-    return url_for(endpoint, **values)
+    # mypy is complaining about this - but I think it's wrong?
+    return url_for(endpoint, **values)  # type: ignore
 
 
 def validate_redirect_url(url: str) -> bool:
