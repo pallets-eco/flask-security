@@ -454,7 +454,6 @@ def test_no_email_sender(app, sqlalchemy_datastore):
     security.init_app(app, sqlalchemy_datastore)
 
     with app.app_context():
-        app.try_trigger_before_first_request_functions()
         user = TestUser("matt@lp.com")
         send_mail("Test Default Sender", user.email, "welcome", user=user)
         outbox = app.mail.outbox
@@ -478,7 +477,6 @@ def test_sender_tuple(app, sqlalchemy_datastore):
     security.init_app(app, sqlalchemy_datastore)
 
     with app.app_context():
-        app.try_trigger_before_first_request_functions()
         user = TestUser("matt@lp.com")
         send_mail("Test Tuple Sender", user.email, "welcome", user=user)
         outbox = app.mail.outbox
