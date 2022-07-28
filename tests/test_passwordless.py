@@ -213,6 +213,6 @@ def test_deprecated(app, sqlalchemy_datastore):
         warnings.simplefilter("always")
         security = Security()
         security.init_app(app, sqlalchemy_datastore)
-        assert len(w) == 1
+        assert len(w) == 1 or len(w) == 3  # @before_first_request Flask 2.2
         assert issubclass(w[-1].category, DeprecationWarning)
         assert "deprecated" in str(w[-1].message)

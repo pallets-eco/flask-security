@@ -14,7 +14,7 @@ import datetime
 from functools import wraps
 import typing as t
 
-from flask import Response, _request_ctx_stack, abort, current_app, g, redirect, request
+from flask import Response, abort, current_app, g, redirect, request
 from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from flask_wtf.csrf import CSRFError
@@ -154,7 +154,6 @@ def _check_token():
 
     if user and user.is_authenticated:
         app = current_app._get_current_object()
-        _request_ctx_stack.top.user = user
         identity_changed.send(app, identity=Identity(user.fs_uniquifier))
         return True
 
@@ -171,8 +170,8 @@ def _check_http_auth():
 
     if user and user.verify_and_update_password(auth.password):
         _security.datastore.commit()
+        _security.login_manager._update_request_context_with_user(user)
         app = current_app._get_current_object()
-        _request_ctx_stack.top.user = user
         identity_changed.send(app, identity=Identity(user.fs_uniquifier))
         return True
 
@@ -213,7 +212,7 @@ def handle_csrf(method: t.Optional[str]) -> None:
         if method in config_value("CSRF_PROTECT_MECHANISMS"):
             _csrf.protect()  # type: ignore
         else:
-            _request_ctx_stack.top.fs_ignore_csrf = True
+            set_request_attr("fs_ignore_csrf", True)
 
 
 def http_auth_required(realm: t.Any) -> DecoratedView:
@@ -444,7 +443,7 @@ def unauth_csrf(
                 config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
                 and not current_user.is_authenticated
             ):
-                _request_ctx_stack.top.fs_ignore_csrf = True
+                set_request_attr("fs_ignore_csrf", True)
             else:
                 try:
                     _csrf.protect()
