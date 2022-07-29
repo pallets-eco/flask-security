@@ -296,6 +296,8 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
         public_key = BinaryField(required=True)
         sign_count = IntField(default=0)
         transports = ListField(required=False)
+        backup_state = BooleanField(required=True)
+        device_type = StringField(max_length=64, required=True)
 
         # a JSON string as returned from registration
         extensions = StringField(max_length=255)
@@ -465,6 +467,8 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         # name is provided by user - we make sure is unique per user
         name = Column(String(64), nullable=False)
         usage = Column(String(64), nullable=False)
+        backup_state = Column(Boolean, nullable=False)  # Upcoming post V3 spec
+        device_type = Column(String(64), nullable=False)
 
         @declared_attr
         def myuser_id(cls):
@@ -651,6 +655,8 @@ def peewee_setup(request, app, tmpdir, realdburl):
         # name is provided by user - we make sure is unique per user
         name = TextField(null=False)
         usage = TextField(null=False)
+        backup_state = BooleanField()
+        device_type = TextField(null=False)
 
         # This creates a real column called user_id
         user = ForeignKeyField(User, backref="webauthn")
