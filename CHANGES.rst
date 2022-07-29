@@ -22,7 +22,7 @@ Features
 - (:issue:`256`) Add custom HTML attributes to improve user experience.
   This changed LoginForm quite a bit - please see backwards compatability concerns
   below. The default LoginForm and template should be the same as before.
-- (:pr:`xx`) The JSON errors response has been unified. Please see backwards
+- (:pr:`638`) The JSON errors response has been unified. Please see backwards
   compatibility concerns below.
 
 Fixes
