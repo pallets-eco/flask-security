@@ -1118,7 +1118,7 @@ class Security:
         ``password_validator`` removed in favor of the new ``password_util_cls``.
 
     .. deprecated:: 5.0.0
-        Passing in a LoginManager instance was removed in 5.0.0
+        Passing in a LoginManager instance.
     """
 
     def __init__(
@@ -1495,7 +1495,7 @@ class Security:
         if self.login_manager:
             warnings.warn(
                 "Replacing login_manager is deprecated in 5.0.0 and will be"
-                " removed in 5.0",
+                " removed in 5.1",
                 DeprecationWarning,
             )
         # login_manager is a bit strange - when we initialize it we are actually
