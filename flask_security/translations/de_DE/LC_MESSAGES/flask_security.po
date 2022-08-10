@@ -4,7 +4,7 @@
 # project.
 # Ingo Kleiber <ingo@kleiber.me>, 2017,
 # Erich Seifert <dev@erichseifert.de>, 2017.
-# Pascua Theus <pascua@identeco.de>, 2021
+# Pascua Theus <pascua@identeco.de>, 2021-2022
 #
 msgid ""
 msgstr ""
@@ -73,17 +73,17 @@ msgstr "Ungültige Eingabe für die angeforderte Ressource"
 
 #: flask_security/core.py:356
 msgid "Authentication failed - identity or password/passcode invalid"
-msgstr ""
+msgstr "Authentifizierung fehlgeschlagen – Identität oder Passwort/Passcode ungültig"
 
 #: flask_security/core.py:360
 msgid ""
 "If that email address is in our system, you will receive an email "
 "describing how to reset your password."
-msgstr ""
+msgstr "Wenn diese E-Mail-Adresse bei uns existiert, erhalten Sie eine E-Mail, in der beschrieben wird, wie Sie Ihr Passwort zurücksetzen können."
 
 #: flask_security/core.py:367
 msgid "If that identity is in our system, you were sent a code."
-msgstr ""
+msgstr "Wenn diese Identität bei uns existiert, wird Ihnen ein Code zugesandt."
 
 #: flask_security/core.py:370
 msgid "You do not have permission to view this resource."
@@ -143,7 +143,7 @@ msgstr "Weiterleitungen außerhalb der Domain sind verboten"
 
 #: flask_security/core.py:400
 msgid "Recovery code invalid"
-msgstr ""
+msgstr "Wiederherstellungscode ungültig"
 
 #: flask_security/core.py:402
 #, python-format
@@ -296,7 +296,7 @@ msgstr "Dieser Endpunkt ist nur für angemeldete Nutzer erlaubt."
 
 #: flask_security/core.py:478
 msgid "Code has been sent."
-msgstr ""
+msgstr "Code wurde gesendet."
 
 #: flask_security/core.py:479
 msgid "Failed to send code. Please try again later"
@@ -306,11 +306,11 @@ msgstr ""
 
 #: flask_security/core.py:481
 msgid "Your code has been confirmed"
-msgstr ""
+msgstr "Ihr Code wurde bestätigt."
 
 #: flask_security/core.py:483
 msgid "You successfully changed your two-factor method."
-msgstr "Zwei-Faktor-Methode wurde geändert"
+msgstr "Sie haben Ihre Zwei-Faktor-Methode erfolgreich geändert."
 
 #: flask_security/core.py:487
 msgid "You currently do not have permissions to access this page"
@@ -553,15 +553,15 @@ msgstr "Deaktiviere Zwei-Faktor-Authentisierung"
 
 #: flask_security/forms.py:835
 msgid "Show Recovery Codes"
-msgstr ""
+msgstr "Wiederherstellungscode anzeigen"
 
 #: flask_security/forms.py:837
 msgid "Generate New Recovery Codes"
-msgstr ""
+msgstr "Neue Wiederherstellungscodes erzeugen"
 
 #: flask_security/forms.py:851
 msgid "Recovery Code"
-msgstr ""
+msgstr "Wiederherstellungscode"
 
 #: flask_security/tf_plugin.py:50
 msgid "Available Second Factor Methods:"
@@ -593,7 +593,7 @@ msgstr "Richte weitere Single-User-Login-Option ein"
 
 #: flask_security/unified_signin.py:292
 msgid "Delete active sign in option"
-msgstr ""
+msgstr "Löschen der aktivierten Anmeldeoption"
 
 #: flask_security/webauthn.py:113 flask_security/webauthn.py:339
 msgid "Nickname"
@@ -657,7 +657,7 @@ msgstr "Passwort ändern"
 
 #: flask_security/templates/security/change_password.html:12
 msgid "You do not currently have a password - this will add one."
-msgstr ""
+msgstr "Sie haben noch kein Passwort – hier können Sie eines setzen."
 
 #: flask_security/templates/security/forgot_password.html:6
 msgid "Send password reset instructions"
@@ -665,7 +665,7 @@ msgstr "Anleitung zur Passwortzurücksetzung versenden"
 
 #: flask_security/templates/security/login_user.html:15
 msgid "or"
-msgstr ""
+msgstr "oder"
 
 #: flask_security/templates/security/login_user.html:27
 #: flask_security/templates/security/us_signin.html:28
@@ -679,19 +679,21 @@ msgstr "Anmelden mit WebAuthn"
 
 #: flask_security/templates/security/mf_recovery.html:6
 msgid "Enter Recovery Code"
-msgstr ""
+msgstr "Wiederherstellungscode eingeben"
 
 #: flask_security/templates/security/mf_recovery_codes.html:6
 #: flask_security/templates/security/two_factor_setup.html:76
 #: flask_security/templates/security/wan_register.html:76
 msgid "Recovery Codes"
-msgstr ""
+msgstr "Wiederherstellungscodes"
 
 #: flask_security/templates/security/mf_recovery_codes.html:14
 msgid ""
 "Be sure to copy these and store in a safe place. Each code can be used "
 "only once."
 msgstr ""
+"Kopieren Sie diese unbedingt und bewahren Sie die Codes an einem sicheren Ort auf. "
+"Jeder Code kann nur einmal verwendet werden."
 
 #: flask_security/templates/security/reset_password.html:6
 msgid "Reset password"
@@ -741,7 +743,7 @@ msgstr "An welche Telefonnummer sollen wir den Code senden?"
 
 #: flask_security/templates/security/two_factor_setup.html:59
 msgid "WebAuthn"
-msgstr ""
+msgstr "WebAuthn"
 
 #: flask_security/templates/security/two_factor_setup.html:61
 #: flask_security/templates/security/us_setup.html:102
@@ -758,7 +760,7 @@ msgstr "Sie können diese hier einrichten."
 #: flask_security/templates/security/two_factor_setup.html:78
 #: flask_security/templates/security/wan_register.html:78
 msgid "This application supports setting up recovery codes."
-msgstr ""
+msgstr "Diese Anwendung unterstützt die Einrichtung von Wiederherstellungscodes."
 
 #: flask_security/templates/security/two_factor_verify_code.html:6
 msgid "Two-factor Authentication"
@@ -795,7 +797,7 @@ msgstr "Keine Methode ausgewählt – keine Einrichtung erfolgt"
 
 #: flask_security/templates/security/us_setup.html:90
 msgid "Enter code here to complete setup"
-msgstr ""
+msgstr "Geben Sie den Code hier ein, um die Einrichtung abzuschließen"
 
 #: flask_security/templates/security/us_signin.html:16
 #: flask_security/templates/security/us_verify.html:13
@@ -939,40 +941,43 @@ msgstr "Die E-Mail-Adresse kann über den Link unten bestätigt werden:"
 #: flask_security/templates/security/email/welcome_existing_username.txt:11
 #, python-format
 msgid "Hello %(email)s!"
-msgstr ""
+msgstr "Hallo %(email)s!"
 
 #: flask_security/templates/security/email/welcome_existing.html:13
 #: flask_security/templates/security/email/welcome_existing.txt:13
 msgid ""
 "Someone (you?) tried to register this email - which is already in our "
 "system."
-msgstr ""
+msgstr "Jemand (Sie?) hat versucht sich mit dieser E-Mail, die bereits in unserem System ist, "
+"zu registrieren."
 
 #: flask_security/templates/security/email/welcome_existing.html:16
 #, python-format
 msgid ""
 "This account also has the following username associated with it: "
 "%(username)s."
-msgstr ""
+msgstr "Dieses Konto hat auch den folgenden Benutzernamen: %(username)s."
 
 #: flask_security/templates/security/email/welcome_existing.html:20
 msgid "If you forgot your password you can reset it"
-msgstr ""
+msgstr "Wenn Sie Ihr Passwort vergessen habne, können Sie es "
 
 #: flask_security/templates/security/email/welcome_existing.html:21
 msgid " here."
-msgstr ""
+msgstr "hier zurücksetzen."
 
 #: flask_security/templates/security/email/welcome_existing.txt:16
 #, python-format
 msgid ""
 "This account also has the following username associated with it: "
 "%(username)s"
-msgstr ""
+msgstr "Dieses Konto hat auch den folgenden Benutzernamen: %(username)s"
 
 #: flask_security/templates/security/email/welcome_existing.txt:20
 msgid "If you forgot your password you can reset it with the following link:"
 msgstr ""
+"Sollten Sie Ihr Passwort vergessen haben, können Sie es unter "
+"folgendem Link zurücksetzen:"
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
 #: flask_security/templates/security/email/welcome_existing_username.txt:13
@@ -981,11 +986,13 @@ msgid ""
 "You attempted to register with a username \"%(username)s\" that is "
 "already associated with another account."
 msgstr ""
+"Sie versuchten sich mit dem Benutzernamen \"%(username)s\" zu registrieren. "
+"Dieser ist bereits vergeben."
 
 #: flask_security/templates/security/email/welcome_existing_username.html:16
 #: flask_security/templates/security/email/welcome_existing_username.txt:16
 msgid "Please restart the registration process with a different username."
-msgstr ""
+msgstr "Bitte starten Sie den Registrierungsprozess mit einem anderen Benutzernamen erneut."
 
 #~ msgid "You successfully confirmed password"
 #~ msgstr ""
