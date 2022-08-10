@@ -201,7 +201,7 @@ Explicit fetch and send of csrf-token
 The current session CSRF token
 is returned on every JSON GET request (to a Flask-Security endpoint) as ``response['csrf_token`]``.
 For web applications that ARE served via flask, it is even easier to get the csrf-token -
-`<https://flask-wtf.readthedocs.io/en/stable/csrf.html>`_ gives some useful tips.
+`<https://flask-wtf.readthedocs.io/en/1.0.x/csrf/>`_ gives some useful tips.
 
 Armed with the csrf-token, the UI must include that in every mutating operation.
 Be careful NOT to include the csrf-token in non-mutating requests (such as GETs).
@@ -238,7 +238,7 @@ Note that we use the header name ``X-CSRF-Token`` as that is one of the default
 headers configured in Flask-WTF (*WTF_CSRF_HEADERS*)
 
 To protect your application's endpoints (that presumably are not using Flask forms),
-you need to enable CSRF as described in the FlaskWTF `documentation <https://flask-wtf.readthedocs.io/en/stable/csrf.html>`_: ::
+you need to enable CSRF as described in the FlaskWTF `documentation <https://flask-wtf.readthedocs.io/en/1.0.x/csrf/>`_: ::
 
     flask_wtf.CSRFProtect(app)
 
