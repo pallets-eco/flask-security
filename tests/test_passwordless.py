@@ -213,6 +213,4 @@ def test_deprecated(app, sqlalchemy_datastore):
         warnings.simplefilter("always")
         security = Security()
         security.init_app(app, sqlalchemy_datastore)
-        assert len(w) == 1
-        assert issubclass(w[-1].category, DeprecationWarning)
-        assert "deprecated" in str(w[-1].message)
+        assert any("passwordless feature" in str(m.message) for m in w)

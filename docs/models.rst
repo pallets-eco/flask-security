@@ -33,7 +33,7 @@ At the bare minimum your `User` and `Role` model should include the following fi
 
 * primary key
 * ``email`` (for most features - unique, non-nullable)
-* ``password`` (string)
+* ``password`` (string, nullable)
 * ``active`` (boolean, non-nullable)
 * ``fs_uniquifier`` (string, 64 bytes, unique, non-nullable)
 
@@ -145,6 +145,8 @@ The 'WebAuthn' model requires the following fields:
 * ``lastuse_datetime`` (datetime, non-nullable)
 * ``name`` (string, 64 bytes, non-nullable)
 * ``usage`` (string, 64 bytes, non-nullable)
+* ``backup_state`` (boolean, non-nullable)
+* ``device_type`` (string, 64 bytes, non-nullable) (The spec calls this ``Backup Eligibility``)
 
 There needs to be a bi-directional relationship between the WebAuthn record and
 the User record (since we need to look up the ``User`` based on a WebAuthn ``credential_id``.
@@ -203,10 +205,11 @@ Recovery Codes
 If :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES` is set to ``True`` then
 the `User` model needs the following field:
 
-* ``mfa_recovery_codes`` (string, 1024 bytes, nullable)
+* ``mfa_recovery_codes`` (list of string, nullable)
 
 The length depends on how many codes are created :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_N`
-and how long each code is (default 14 bytes).
+and how long each code is (default 14 bytes). Suggest 1024 bytes for datastores that use a single
+string column to hold the codes.
 
 A recovery code can be used in place of any configured second-factor authenticator
 (e.g. SMS, WebAuthn, ...).

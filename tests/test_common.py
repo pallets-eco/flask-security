@@ -880,24 +880,24 @@ def test_change_token_uniquifier(app):
         )
         ds.commit()
 
-        client_nc = app.test_client(use_cookies=False)
+    client_nc = app.test_client(use_cookies=False)
 
-        response = json_authenticate(client_nc)
-        token = response.json["response"]["user"]["authentication_token"]
-        verify_token(client_nc, token)
+    response = json_authenticate(client_nc)
+    token = response.json["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
 
-        # now change uniquifier
-        with app.test_request_context("/"):
-            user = app.security.datastore.find_user(email="matt@lp.com")
-            app.security.datastore.reset_user_access(user)
-            app.security.datastore.commit()
+    # now change uniquifier
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.reset_user_access(user)
+        app.security.datastore.commit()
 
-        verify_token(client_nc, token, status=401)
+    verify_token(client_nc, token, status=401)
 
-        # get new token and verify it works
-        response = json_authenticate(client_nc)
-        token = response.json["response"]["user"]["authentication_token"]
-        verify_token(client_nc, token)
+    # get new token and verify it works
+    response = json_authenticate(client_nc)
+    token = response.json["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
 
 
 def test_null_token_uniquifier(app):
@@ -944,24 +944,21 @@ def test_null_token_uniquifier(app):
         verify_token(client_nc, token)
 
 
-def test_token_query(in_app_context):
+def test_token_query(app, client_nc):
     # Verify that when authenticating with auth token (and not session)
     # that there is just one DB query to get user.
-    app = in_app_context
-    populate_data(app)
-    client_nc = app.test_client(use_cookies=False)
+    with app.app_context():
+        response = json_authenticate(client_nc)
+        token = response.json["response"]["user"]["authentication_token"]
+        assert get_num_queries(app.security.datastore) == 1
 
-    response = json_authenticate(client_nc)
-    token = response.json["response"]["user"]["authentication_token"]
-    current_nqueries = get_num_queries(app.security.datastore)
-
-    response = client_nc.get(
-        "/token",
-        headers={"Content-Type": "application/json", "Authentication-Token": token},
-    )
-    assert response.status_code == 200
-    end_nqueries = get_num_queries(app.security.datastore)
-    assert current_nqueries is None or end_nqueries == (current_nqueries + 1)
+    with app.app_context():
+        response = client_nc.get(
+            "/token",
+            headers={"Content-Type": "application/json", "Authentication-Token": token},
+        )
+        assert response.status_code == 200
+        assert get_num_queries(app.security.datastore) == 1
 
 
 def test_session_query(in_app_context):

@@ -13,7 +13,15 @@ This is Version 3:
     - Add support for 2FA recovery codes.
 """
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+)
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.sql import func
@@ -27,6 +35,8 @@ from flask_security import WebAuthnMixin
 
 
 class AsaList(types.TypeDecorator):
+    # SQL-like DBs don't have a List type - so do that here by converting to a comma
+    # separate string.
     impl = types.String
 
     def process_bind_param(self, value, dialect):
@@ -39,7 +49,7 @@ class AsaList(types.TypeDecorator):
     def process_result_value(self, value, dialect):
         if value:
             return value.split(",")
-        return value
+        return []
 
 
 class FsModels(FsModelsV2):
@@ -90,6 +100,8 @@ class FsWebAuthnMixin(WebAuthnMixin):
     public_key = Column(LargeBinary, nullable=False)
     sign_count = Column(Integer, default=0)
     transports = Column(MutableList.as_mutable(AsaList(1024)), nullable=True)
+    backup_state = Column(Boolean, nullable=False)  # Upcoming post V3 spec
+    device_type = Column(String(64), nullable=False)
 
     # a JSON string as returned from registration
     extensions = Column(String(255), nullable=True)

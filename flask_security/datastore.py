@@ -652,6 +652,8 @@ class UserDatastore:
         name: str,
         sign_count: int,
         usage: str,
+        device_type: str,
+        backup_state: bool,
         transports: t.Optional[t.List[str]] = None,
         extensions: t.Optional[str] = None,
         **kwargs: t.Any,
@@ -764,6 +766,8 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         name: str,
         sign_count: int,
         usage: str,
+        device_type: str,
+        backup_state: bool,
         transports: t.Optional[t.List[str]] = None,
         extensions: t.Optional[str] = None,
         **kwargs: t.Any,
@@ -777,6 +781,8 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
             name=name,
             sign_count=sign_count,
             usage=usage,
+            device_type=device_type,
+            backup_state=backup_state,
             transports=transports,
             extensions=extensions,
             lastuse_datetime=datetime.datetime.utcnow(),
@@ -887,6 +893,8 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         name: str,
         sign_count: int,
         usage: str,
+        device_type: str,
+        backup_state: bool,
         transports: t.Optional[t.List[str]] = None,
         extensions: t.Optional[str] = None,
         **kwargs: t.Any,
@@ -900,6 +908,8 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
             name=name,
             sign_count=sign_count,
             usage=usage,
+            device_type=device_type,
+            backup_state=backup_state,
             transports=transports,
             extensions=extensions,
             lastuse_datetime=datetime.datetime.utcnow(),
@@ -1018,6 +1028,8 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         name: str,
         sign_count: int,
         usage: str,
+        device_type: str,
+        backup_state: bool,
         transports: t.Optional[t.List[str]] = None,
         extensions: t.Optional[str] = None,
         **kwargs: t.Any,
@@ -1031,6 +1043,8 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
             name=name,
             sign_count=sign_count,
             usage=usage,
+            device_type=device_type,
+            backup_state=backup_state,
             transports=transports,
             extensions=extensions,
             lastuse_datetime=datetime.datetime.utcnow(),
@@ -1137,10 +1151,13 @@ if t.TYPE_CHECKING:  # pragma: no cover
 
     class WebAuthn(WebAuthnMixin):
         id: int
+        name: str
         credential_id: bytes
         public_key: bytes
         sign_count: int
         transports: t.Optional[t.List[str]]
+        backup_state: bool
+        device_type: str
         extensions: t.Optional[str]
         lastuse_datetime: datetime.datetime
         user_id: int

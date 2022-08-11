@@ -102,7 +102,7 @@ const transformNewAssertionForServer = (newAssertion) => {
 
     // Not all browsers support getTransports() (e.g. Firefox)
     let transports = null
-    if (newAssertion.response.hasOwnProperty('getTransports')) {
+    if ("getTransports" in newAssertion.response) {
       transports = newAssertion.response.getTransports()
     }
 

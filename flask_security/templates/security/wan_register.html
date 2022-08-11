@@ -53,10 +53,10 @@
 
   {% if registered_credentials %}
     <h3>{{ _fsdomain("Currently registered security keys:") }}</h3>
-    {% set listing = _fsdomain('Nickname: "%s" Usage: "%s" Transports: "%s" Discoverable: "%s" Last used on: %s') %}
+    {% set listing = _fsdomain('Nickname: "%s" Usage: "%s" Transports: "%s" Discoverable: "%s" Device Type: "%s" Backed up? "%s" Last used on: %s') %}
     <ul>
       {% for cred in registered_credentials %}
-        <li>{{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.lastuse)}}</li>
+        <li>{{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.device_type, cred.backup_state, cred.lastuse)}}</li>
       {% endfor %}
     </ul>
   {% endif %}
