@@ -211,7 +211,7 @@ and models.py.
     from sqlalchemy import create_engine
     from sqlalchemy.orm import relationship, backref
     from sqlalchemy import Boolean, DateTime, Column, Integer, \
-                           String, ForeignKey
+                        String, ForeignKey, UnicodeText
 
     class RolesUsers(Base):
         __tablename__ = 'roles_users'
@@ -224,6 +224,7 @@ and models.py.
         id = Column(Integer(), primary_key=True)
         name = Column(String(80), unique=True)
         description = Column(String(255))
+        permissions = Column(UnicodeText)
 
     class User(Base, UserMixin):
         __tablename__ = 'user'

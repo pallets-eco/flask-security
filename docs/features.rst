@@ -275,7 +275,7 @@ Run ``flask --help`` and look for users and roles.
 
 .. _Click: https://palletsprojects.com/p/click/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
-.. _Flask-WTF: https://flask-wtf.readthedocs.io/en/stable/csrf.html
+.. _Flask-WTF: https://flask-wtf.readthedocs.io/en/1.0.x/csrf/
 .. _alternative token: https://flask-login.readthedocs.io/en/latest/#alternative-tokens
 .. _Flask-Principal: https://pypi.org/project/Flask-Principal/
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection
