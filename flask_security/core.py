@@ -729,8 +729,7 @@ class RoleMixin:
     if t.TYPE_CHECKING:  # pragma: no cover
 
         def __init__(self):
-            # Depends on how the user creates the DB data model
-            self.permissions: t.Union[str, set, list, None]
+            self.permissions: t.Optional[t.List[str]]
 
     def __eq__(self, other):
         return self.name == other or self.name == getattr(other, "name", None)
@@ -745,71 +744,11 @@ class RoleMixin:
         """
         Return set of permissions associated with role.
 
-        Supports permissions being a comma separated string, an iterable, or a set
-        based on how the underlying DB model was built.
-
         .. versionadded:: 3.3.0
         """
-
-        # This set, list stuff wasn't completely implemented - since add/remove
-        # permissions don't actually accept them. And they aren't really
-        # deprecated since UserDatastore still calls them - they just aren't
-        # public. And the unit tests don't really test this stuff. sigh.
         if hasattr(self, "permissions") and self.permissions:
-            if isinstance(self.permissions, set):
-                return self.permissions
-            elif isinstance(self.permissions, list):
-                return set(self.permissions)
-            else:
-                # Assume this is a comma separated list
-                return set(self.permissions.split(","))
+            return set(self.permissions)
         return set()
-
-    def add_permissions(self, permissions: t.Union[set, list, str]) -> None:
-        """
-        Add one or more permissions to role.
-
-        :param permissions: a set, list, or single string.
-
-        .. versionadded:: 3.3.0
-
-        .. deprecated:: 3.4.4
-            Use :meth:`.UserDatastore.add_permissions_to_role`
-        """
-        if hasattr(self, "permissions"):
-            current_perms = self.get_permissions()
-            if isinstance(permissions, set):
-                perms = permissions
-            elif isinstance(permissions, list):
-                perms = set(permissions)
-            else:
-                perms = {permissions}
-            self.permissions = ",".join(current_perms.union(perms))
-        else:  # pragma: no cover
-            raise NotImplementedError("Role model doesn't have permissions")
-
-    def remove_permissions(self, permissions: t.Union[set, list, str]) -> None:
-        """
-        Remove one or more permissions from role.
-
-        :param permissions: a set, list, or single string.
-
-        .. versionadded:: 3.3.0
-
-        .. deprecated:: 3.4.4
-            Use :meth:`.UserDatastore.remove_permissions_from_role`
-        """
-        if hasattr(self, "permissions"):
-            current_perms = self.get_permissions()
-            if isinstance(permissions, set):
-                perms = permissions
-            elif isinstance(permissions, list):
-                perms = set(permissions)
-            else:
-                perms = {permissions}
-            self.permissions = ",".join(current_perms.difference(perms))
-        else:  # pragma: no cover
-            raise NotImplementedError("Role model doesn't have permissions")
 
 
 class UserMixin(BaseUserMixin):

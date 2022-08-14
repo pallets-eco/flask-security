@@ -137,7 +137,7 @@ def create_roles(ds):
     ]
     for role in roles:
         if hasattr(ds.role_model, "permissions") and role[1]:
-            ds.create_role(name=role[0], permissions=",".join(role[1]))
+            ds.create_role(name=role[0], permissions=role[1])
         else:
             ds.create_role(name=role[0])
     ds.commit()

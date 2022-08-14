@@ -220,6 +220,7 @@ def test_cli_addremove_role(script_info):
 def test_cli_addremove_permissions(script_info):
     """Test add/remove permissions."""
     runner = CliRunner()
+    app = script_info.load_app()
 
     result = runner.invoke(
         roles_create, ["superusers", "-d", "Test description"], obj=script_info
@@ -235,6 +236,11 @@ def test_cli_addremove_permissions(script_info):
     result = runner.invoke(
         roles_add_permissions, ["superusers", "read, write"], obj=script_info
     )
+
+    with app.app_context():
+        srole = app.security.datastore.find_role("superusers")
+        assert srole.get_permissions() == {"read", "write"}
+
     assert all(p in result.output for p in ["read", "write", "superusers"])
 
     # remove permission to non-existent role
@@ -253,6 +259,9 @@ def test_cli_addremove_permissions(script_info):
     )
     # remove permissions doesn't check if existing or not.
     assert all(p in result.output for p in ["read", "superusers"])
+    with app.app_context():
+        srole = app.security.datastore.find_role("superusers")
+        assert srole.get_permissions() == set()
 
 
 def test_cli_activate_deactivate(script_info):

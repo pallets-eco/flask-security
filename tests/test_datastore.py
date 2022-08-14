@@ -5,7 +5,7 @@
     Datastore tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -233,24 +233,8 @@ def test_create_user_with_roles_and_permissions(app, datastore):
         assert user.has_permission("write") is False
 
 
-def test_permissions_strings(app, datastore):
-    # Make sure spaces are squashed.
-    ds = datastore
-    if not hasattr(ds.role_model, "permissions"):
-        return
-    init_app_with_options(app, ds)
-
-    with app.app_context():
-        perms = "read, write "
-        ds.create_role(name="test1", permissions=perms)
-        ds.commit()
-
-        t1 = ds.find_role("test1")
-        assert {"read", "write"} == t1.get_permissions()
-
-
-def test_permissions_iter(app, datastore):
-    # Test permissions as an interable
+def test_permissions_types(app, datastore):
+    # Test permissions as a list, set, tuple, comma separated list
     ds = datastore
     if not hasattr(ds.role_model, "permissions"):
         return
@@ -263,6 +247,27 @@ def test_permissions_iter(app, datastore):
 
         t1 = ds.find_role("test1")
         assert {"read", "write"} == t1.get_permissions()
+
+        perms = {"read", "write"}
+        ds.create_role(name="test2", permissions=perms)
+        ds.commit()
+
+        t2 = ds.find_role("test2")
+        assert {"read", "write"} == t2.get_permissions()
+
+        perms = "read, write"
+        ds.create_role(name="test3", permissions=perms)
+        ds.commit()
+
+        t3 = ds.find_role("test3")
+        assert {"read", "write"} == t3.get_permissions()
+
+        perms = ("read", "write")
+        ds.create_role(name="test4", permissions=perms)
+        ds.commit()
+
+        t4 = ds.find_role("test4")
+        assert {"read", "write"} == t4.get_permissions()
 
 
 def test_modify_permissions(app, datastore):
@@ -313,7 +318,6 @@ def test_modify_permissions_multi(app, datastore):
     if not hasattr(ds.role_model, "permissions"):
         return
 
-    # N.B. right now only sqlalchemy has the extended RoleModel.
     init_app_with_options(app, ds)
 
     with app.app_context():
@@ -337,11 +341,12 @@ def test_modify_permissions_multi(app, datastore):
 
         # send in a set
         perms = {"read", "write"}
-        ds.create_role(name="test2", permissions=",".join(perms))
+        ds.create_role(name="test2", permissions=perms)
         ds.commit()
 
+        # add permissions using comma separate string
         t2 = ds.find_role("test2")
-        ds.add_permissions_to_role(t2, {"execute", "whatever"})
+        ds.add_permissions_to_role(t2, "execute, whatever")
         ds.commit()
 
         t2 = ds.find_role("test2")
@@ -351,29 +356,15 @@ def test_modify_permissions_multi(app, datastore):
         ds.commit()
         assert {"write", "execute"} == t2.get_permissions()
 
-
-def test_modify_permissions_unsupported(app, datastore):
-    from tests.conftest import PonyUserDatastore
-
-    ds = datastore
-    if hasattr(datastore.role_model, "permissions"):
-        # already tested this
-        return
-    if isinstance(datastore, PonyUserDatastore):
-        # sigh - Pony doesn't use RoleMixin.
-        return
-
-    init_app_with_options(app, ds)
-
-    with app.app_context():
-        ds.create_role(name="test3")
+        ds.remove_permissions_from_role(t2, "write, execute")
         ds.commit()
-        t3 = ds.find_role("test3")
+        assert t2.get_permissions() == set()
 
-        with raises(NotImplementedError):
-            t3.add_permissions("whatever")
-        with raises(NotImplementedError):
-            t3.remove_permissions("whatever")
+        # add permissions using a tuple
+        t2 = ds.find_role("test2")
+        ds.add_permissions_to_role(t2, ("execute2", "whatever2"))
+        ds.commit()
+        assert {"whatever2", "execute2"} == t2.get_permissions()
 
 
 def test_uuid(app, request, tmpdir, realdburl):

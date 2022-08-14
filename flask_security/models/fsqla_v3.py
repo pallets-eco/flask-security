@@ -37,7 +37,7 @@ from flask_security import WebAuthnMixin
 class AsaList(types.TypeDecorator):
     # SQL-like DBs don't have a List type - so do that here by converting to a comma
     # separate string.
-    impl = types.String
+    impl = types.UnicodeText
 
     def process_bind_param(self, value, dialect):
         # produce a string from an iterable
@@ -57,7 +57,9 @@ class FsModels(FsModelsV2):
 
 
 class FsRoleMixin(FsRoleMixinV2):
-    pass
+    permissions = Column(
+        MutableList.as_mutable(AsaList()), nullable=True  # type: ignore
+    )
 
 
 class FsUserMixin(FsUserMixinV2):
@@ -75,7 +77,7 @@ class FsUserMixin(FsUserMixinV2):
     fs_webauthn_user_handle = Column(String(64), unique=True)
 
     # MFA - one time recovery codes - comma separated.
-    mf_recovery_codes = Column(MutableList.as_mutable(AsaList(1024)), nullable=True)
+    mf_recovery_codes = Column(MutableList.as_mutable(AsaList()), nullable=True)
 
     # Change password to nullable so we can tell after registration whether
     # a user has a password or not.
@@ -99,7 +101,7 @@ class FsWebAuthnMixin(WebAuthnMixin):
     credential_id = Column(LargeBinary(1024), index=True, unique=True, nullable=False)
     public_key = Column(LargeBinary, nullable=False)
     sign_count = Column(Integer, default=0)
-    transports = Column(MutableList.as_mutable(AsaList(1024)), nullable=True)
+    transports = Column(MutableList.as_mutable(AsaList()), nullable=True)
     backup_state = Column(Boolean, nullable=False)  # Upcoming post V3 spec
     device_type = Column(String(64), nullable=False)
 
