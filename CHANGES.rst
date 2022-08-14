@@ -14,21 +14,23 @@ Features
 ++++++++
 - (:issue:`475`) Support for WebAuthn.
 - (:issue:`479`) Support Two-factor recovery codes.
+- (:issue:`585`) Provide option to prevent user enumeration (i.e. Generic Responses).
 - (:pr:`532`) Support for Python 3.10.
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn.
 - (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
-  Deprecate replacing login_manager so we can possibly vendor that in in the future.
+- (:pr:`568`) Deprecate replacing login_manager so we can possibly vendor that in in the future.
 - (:pr:`608`) Add Icelandic translations. (ofurkusi)
 - (:issue:`256`) Add custom HTML attributes to improve user experience.
   This changed LoginForm quite a bit - please see backwards compatability concerns
   below. The default LoginForm and template should be the same as before.
 - (:pr:`638`) The JSON errors response has been unified. Please see backwards
   compatibility concerns below.
+- (:pr:`xxx`) The previously deprecated methods RoleMixin.add_permissions and
+  RoleMixin.remove_permissions have been removed.
 
 Fixes
 +++++
 - (:pr:`591`) Make the required zxcvbn complexity score configurable. (mephi42)
-- (:issue:`585`) Provide option to prevent user enumeration (i.e. Generic Responses).
 - (:issue:`531`) Get rid of Flask-Mail. Flask-Mailman is now the default preferred email package.
   Flask-Mail is still supported so there should be no backwards compatability issues.
 - (:issue:`597`) A delete option has been added to us-setup (form and view).
@@ -101,6 +103,9 @@ Other:
   The key `field_errors` will contain the dict as specified by WTForms. Please note that starting with WTForms 3.0
   form-level errors are supported and show up in the dict with the field name/key of "none". There are no changes to non-error
   related JSON responses.
+- Permissions - The Role Model now stores permissions as a list, and requires that the underlying DB ORM map that to a supported
+  DB type. For SQLAlchemy, this is mapped to a comma separated string (as before). For Mongo, a ListField can be directly used. For
+  for SQLAlchemy DBs the Column type (UnicodeText) didn't change so no data migration should be required.
 
 For templates:
 
@@ -313,7 +318,7 @@ Fixed
   Flask-Babel (>=2.00), Flask-BabelEx, as well as no translation support. Please see backwards compatibility notes below.
 - (:pr:`352`) Fix issue with adding/deleting permissions - all mutating methods must be at the datastore layer so that
   db.put() can be called. Added :meth:`.UserDatastore.add_permissions_to_role` and :meth:`.UserDatastore.remove_permissions_from_role`.
-  The methods :meth:`.RoleMixin.add_permissions` and :meth:`.RoleMixin.remove_permissions` have been deprecated.
+  The methods `.RoleMixin.add_permissions` and `.RoleMixin.remove_permissions` have been deprecated.
 - (:issue:`395`) Provide ability to change table names for User and Role tables in the fsqla model.
 - (:issue:`338`) All sessions are invalidated when a user changes or resets their password. This is accomplished by
   changing the user's `fs_uniquifier`. The user is automatically re-logged in (and a new session

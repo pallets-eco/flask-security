@@ -227,13 +227,13 @@ class UserDatastore:
         return rv
 
     def add_permissions_to_role(
-        self, role: t.Union["Role", str], permissions: t.Union[set, list, str]
+        self, role: t.Union["Role", str], permissions: t.Union[set, list, tuple, str]
     ) -> bool:
         """Add one or more permissions to role.
 
         :param role: The role to modify. Can be a Role object or
             string role name
-        :param permissions: a set, list, or single string.
+        :param permissions: a set, list, tuple or comma separated string.
         :return: True if permissions added, False if role doesn't exist.
 
         Caller must commit to DB.
@@ -245,18 +245,24 @@ class UserDatastore:
         role_obj = self._prepare_role_modify_args(role)
         if role_obj:
             rv = True
-            role_obj.add_permissions(permissions)
+            current_perms = role_obj.get_permissions()
+            if isinstance(permissions, set) or isinstance(permissions, tuple):
+                permissions = list(permissions)
+            elif isinstance(permissions, str):
+                permissions = [p.strip() for p in permissions.split(",")]
+            # always give a list to DB - some (e.g. Mongo) only take list/tuple
+            role_obj.permissions = list(current_perms.union(set(permissions)))
             self.put(role_obj)
         return rv
 
     def remove_permissions_from_role(
-        self, role: t.Union["Role", str], permissions: t.Union[set, list, str]
+        self, role: t.Union["Role", str], permissions: t.Union[set, list, tuple, str]
     ) -> bool:
         """Remove one or more permissions from a role.
 
         :param role: The role to modify. Can be a Role object or
             string role name
-        :param permissions: a set, list, or single string.
+        :param permissions: a set, list, tuple or a comma separated string.
         :return: True if permissions removed, False if role doesn't exist.
 
         Caller must commit to DB.
@@ -268,7 +274,12 @@ class UserDatastore:
         role_obj = self._prepare_role_modify_args(role)
         if role_obj:
             rv = True
-            role_obj.remove_permissions(permissions)
+            current_perms = role_obj.get_permissions()
+            if isinstance(permissions, set) or isinstance(permissions, tuple):
+                permissions = list(permissions)
+            elif isinstance(permissions, str):
+                permissions = [p.strip() for p in permissions.split(",")]
+            role_obj.permissions = list(current_perms.difference(set(permissions)))
             self.put(role_obj)
         return rv
 
@@ -347,23 +358,22 @@ class UserDatastore:
         Supported params (depending on RoleModel):
 
         :kwparam name: Role name
-        :kwparam permissions: a comma delimited list of permissions, a set or a list.
-            These are user-defined strings that correspond to strings used with
+        :kwparam permissions: a list, set, tuple or comma separated string.
+            These are user-defined strings that correspond to args used with
             @permissions_required()
 
             .. versionadded:: 3.3.0
 
         """
 
-        # By default we just use raw DB model create - for permissions we want to
-        # be nicer and allow sending in a list or set or comma separated string.
+        # Usually we just use raw DB model create - for permissions we want to
+        # be nicer and allow sending in a list or set or a single string.
         if "permissions" in kwargs and hasattr(self.role_model, "permissions"):
             perms = kwargs["permissions"]
-            if isinstance(perms, list) or isinstance(perms, set):
-                perms = ",".join(perms)
+            if isinstance(perms, set) or isinstance(perms, tuple):
+                perms = list(perms)
             elif isinstance(perms, str):
-                # squash spaces.
-                perms = ",".join(p.strip() for p in perms.split(","))
+                perms = [p.strip() for p in perms.split(",")]
             kwargs["permissions"] = perms
 
         role = self.role_model(**kwargs)
@@ -1143,7 +1153,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         id: int
         name: str
         description: t.Optional[str]
-        permissions: t.Optional[t.Union[str, set, list]]
+        permissions: t.Optional[t.List[str]]
         update_datetime: datetime.datetime
 
         def __init__(self, **kwargs):

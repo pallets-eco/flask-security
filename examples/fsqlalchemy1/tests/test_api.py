@@ -2,13 +2,11 @@
 
 from fsqlalchemy1.app import Blog
 
-from .test_utils import create_fake_role, create_fake_user, set_current_user
+from .test_utils import create_fake_user, set_current_user
 
 
 def test_monitor_404(myapp):
-    user = create_fake_user(
-        myapp.user_cls, roles=create_fake_role(myapp.role_cls, "basic")
-    )
+    user = create_fake_user(myapp.user_cls, roles=myapp.role_cls(name="basic"))
     set_current_user(myapp.app, user)
 
     # This requires "monitor" role
@@ -20,9 +18,7 @@ def test_monitor_404(myapp):
 
 
 def test_blog_write(myapp):
-    user_role = create_fake_role(
-        myapp.role_cls, "user", permissions="user-read, user-write"
-    )
+    user_role = myapp.role_cls(name="user", permissions={"user-read", "user-write"})
     user = create_fake_user(myapp.user_cls, roles=user_role)
     set_current_user(myapp.app, user)
 

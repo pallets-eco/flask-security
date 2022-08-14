@@ -288,7 +288,7 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
     class Role(db.Document, RoleMixin):
         name = StringField(required=True, unique=True, max_length=80)
         description = StringField(max_length=255)
-        permissions = StringField(max_length=255)
+        permissions = ListField(required=False)
         meta = {"db_alias": db_name}
 
     class WebAuthn(db.Document, WebAuthnMixin):
@@ -430,7 +430,6 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         String,
         Text,
         ForeignKey,
-        UnicodeText,
     )
     from flask_security.models.fsqla_v3 import AsaList
 
@@ -456,7 +455,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         )
         public_key = Column(LargeBinary, nullable=False)
         sign_count = Column(Integer, default=0)
-        transports = Column(MutableList.as_mutable(AsaList(255)), nullable=True)
+        transports = Column(MutableList.as_mutable(AsaList()), nullable=True)
 
         # a JSON string as returned from registration
         extensions = Column(String(255), nullable=True)
@@ -496,7 +495,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         myroleid = Column(Integer(), primary_key=True)
         name = Column(String(80), unique=True)
         description = Column(String(255))
-        permissions = Column(UnicodeText, nullable=True)
+        permissions = Column(MutableList.as_mutable(AsaList()), nullable=True)
         update_datetime = Column(
             DateTime,
             nullable=False,
@@ -518,7 +517,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         tf_primary_method = Column(String(255), nullable=True)
         tf_totp_secret = Column(String(255), nullable=True)
         tf_phone_number = Column(String(255), nullable=True)
-        mf_recovery_codes = Column(MutableList.as_mutable(AsaList(1024)), nullable=True)
+        mf_recovery_codes = Column(MutableList.as_mutable(AsaList()), nullable=True)
         us_totp_secrets = Column(Text, nullable=True)
         us_phone_number = Column(String(64), nullable=True)
         last_login_ip = Column(String(100))
@@ -605,19 +604,20 @@ def peewee_setup(request, app, tmpdir, realdburl):
         field_type = "text"
 
         def db_value(self, value):
-            if value:
+            try:
                 return ",".join(value)
-            return value
+            except TypeError:
+                return value
 
         def python_value(self, value):
             if value:
                 return value.split(",")
-            return value
+            return []
 
     class Role(RoleMixin, db.Model):
         name = CharField(unique=True, max_length=80)
         description = TextField(null=True)
-        permissions = TextField(null=True)
+        permissions = AsaList(null=True)
 
     class User(UserMixin, db.Model):
         email = TextField(unique=True, null=False)

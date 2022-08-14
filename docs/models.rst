@@ -121,7 +121,7 @@ Permissions
 If you want to protect endpoints with permissions, and assign permissions to roles
 that are then assigned to users, the ``Role`` model requires:
 
-* ``permissions`` (UnicodeText)
+* ``permissions`` (list of string/UnicodeText, nullable)
 
 WebAuthn
 ^^^^^^^^
@@ -140,7 +140,7 @@ The 'WebAuthn' model requires the following fields:
 * ``credential_id`` (binary, 1024 bytes, indexed, non-nullable, unique)
 * ``public_key`` (binary, 1024 bytes, non-nullable)
 * ``sign_count`` (integer, default=0, non-nullable)
-* ``transports`` (list of string)
+* ``transports`` (list of string/UnicodeText, nullable)
 * ``extensions`` (string, 255 bytes)
 * ``lastuse_datetime`` (datetime, non-nullable)
 * ``name`` (string, 64 bytes, non-nullable)
@@ -205,11 +205,7 @@ Recovery Codes
 If :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES` is set to ``True`` then
 the `User` model needs the following field:
 
-* ``mfa_recovery_codes`` (list of string, nullable)
-
-The length depends on how many codes are created :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_N`
-and how long each code is (default 14 bytes). Suggest 1024 bytes for datastores that use a single
-string column to hold the codes.
+* ``mfa_recovery_codes`` (list of string/UnicodeText, nullable)
 
 A recovery code can be used in place of any configured second-factor authenticator
 (e.g. SMS, WebAuthn, ...).

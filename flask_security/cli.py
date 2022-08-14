@@ -5,7 +5,7 @@
     Command Line Interface for managing accounts and roles.
 
     :copyright: (c) 2016 by CERN.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner
+    :copyright: (c) 2019-2022 by J. Christopher Wagner
     :license: MIT, see LICENSE for more details.
 """
 
@@ -231,7 +231,8 @@ def roles_add_permissions(role, permissions):
     role = _datastore._prepare_role_modify_args(role)
     if role is None:
         raise click.UsageError("Cannot find role.")
-    if _datastore.add_permissions_to_role(role, permissions):
+    permlist = [s.strip() for s in permissions.split(",")]
+    if _datastore.add_permissions_to_role(role, permlist):
         click.secho(
             f'Permission(s) "{permissions}" added to role "{role.name}" successfully.',
             fg="green",
@@ -254,7 +255,8 @@ def roles_remove_permissions(role, permissions):
     role = _datastore._prepare_role_modify_args(role)
     if role is None:
         raise click.UsageError("Cannot find role.")
-    if _datastore.remove_permissions_from_role(role, permissions):
+    permlist = [s.strip() for s in permissions.split(",")]
+    if _datastore.remove_permissions_from_role(role, permlist):
         click.secho(
             f'Permission(s) "{permissions}" removed from role'
             f' "{role.name}" successfully.',
