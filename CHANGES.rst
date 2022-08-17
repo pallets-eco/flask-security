@@ -45,6 +45,13 @@ Fixes
   has been added (defaults to ``True``).
 - (:issue:`479`) A new configuration option :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL` has been added
   that allows disabling that feature - defaults to backwards compatible ``True``
+- (:pr:`xxx`) Flask has deprecated @before_first_request. This was used mostly in examples/quickstart.
+  These have been changed to use app.app_context() prior to running the app. FS itself used it in
+  2 places - to populate `_` in jinja globals if Babel wasn't initialized and to perform
+  various configuration sanity checks w.r.t. WTF CSRF. All FS templates have been converted
+  to use `_fsdomain` rather than ``_`` so FS no longer will populate ``_``. The configuration checks
+  have been moved to the end of Security::init_app() - so it is now imperative that `FlaskWTF::CSRFProtect()`
+  be called PRIOR to initializing Flask-Security.
 
 Backward Compatibility Concerns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,6 +113,7 @@ Other:
 - Permissions - The Role Model now stores permissions as a list, and requires that the underlying DB ORM map that to a supported
   DB type. For SQLAlchemy, this is mapped to a comma separated string (as before). For Mongo, a ListField can be directly used. For
   for SQLAlchemy DBs the Column type (UnicodeText) didn't change so no data migration should be required.
+- CSRF - As mentioned above, it is now required that `FlaskWTF::CSRFProtect()`, if used, must be called PRIOR to initializing Flask-Security.
 
 For templates:
 

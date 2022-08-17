@@ -100,15 +100,7 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    security = Security(app, user_datastore)
-
-    # Create a user to test with
-    @app.before_first_request
-    def create_user():
-        db.create_all()
-        if not user_datastore.find_user(email="test@me.com"):
-            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
-        db.session.commit()
+    app.security = Security(app, user_datastore)
 
     # Views
     @app.route("/")
@@ -117,6 +109,12 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
         return render_template_string("Hello {{ current_user.email }}")
 
     if __name__ == '__main__':
+        with app.app_context():
+            # Create User to test with
+            app.security.datastore.db.create_all()
+            if not app.security.datastore.find_user(email="test@me.com"):
+                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+            app.security.datastore.db.session.commit()
         app.run()
 
 .. _basic-sqlalchemy-application-with-session:
@@ -165,15 +163,7 @@ and models.py.
 
     # Setup Flask-Security
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
-    security = Security(app, user_datastore)
-
-    # Create a user to test with
-    @app.before_first_request
-    def create_user():
-        init_db()
-        if not user_datastore.find_user(email="test@me.com"):
-            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
-        db_session.commit()
+    app.security = Security(app, user_datastore)
 
     # Views
     @app.route("/")
@@ -182,6 +172,12 @@ and models.py.
         return render_template_string('Hello {{email}} !', email=current_user.email)
 
     if __name__ == '__main__':
+        with app.app_context():
+            # Create a user to test with
+            initdb()
+            if not app.security.datastore.find_user(email="test@me.com"):
+                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+            db_session.commit()
         app.run()
 
 - database.py ::
@@ -305,13 +301,7 @@ possible using MongoEngine:
 
     # Setup Flask-Security
     user_datastore = MongoEngineUserDatastore(db, User, Role)
-    security = Security(app, user_datastore)
-
-    # Create a user to test with
-    @app.before_first_request
-    def create_user():
-        if not user_datastore.find_user(email="test@me.com"):
-            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
+    app.security = Security(app, user_datastore)
 
     # Views
     @app.route("/")
@@ -320,6 +310,10 @@ possible using MongoEngine:
         return render_template_string("Hello {{ current_user.email }}")
 
     if __name__ == '__main__':
+        with app.app_context():
+            # Create a user to test with
+            if not app.security.datastore.find_user(email="test@me.com"):
+                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
         app.run()
 
 
@@ -335,7 +329,7 @@ Peewee Install requirements
 
     $ python3 -m venv pymyenv
     $ . pymyenv/bin/activate
-    $ pip install flask-security-too peewee bcrypt
+    $ pip install flask-security-too[common] peewee
 
 Peewee Application
 ~~~~~~~~~~~~~~~~~~
@@ -347,7 +341,7 @@ possible using Peewee:
 
     import os
 
-    from flask import Flask, render_template
+    from flask import Flask, render_template_string
     from playhouse.flask_utils import FlaskDB
     from peewee import *
     from flask_security import Security, PeeweeUserDatastore, \
@@ -399,24 +393,23 @@ possible using Peewee:
 
     # Setup Flask-Security
     user_datastore = PeeweeUserDatastore(db, User, Role, UserRoles)
-    security = Security(app, user_datastore)
-
-    # Create a user to test with
-    @app.before_first_request
-    def create_user():
-        for Model in (Role, User, UserRoles):
-            Model.drop_table(fail_silently=True)
-            Model.create_table(fail_silently=True)
-        if not user_datastore.find_user(email="test@me.com"):
-            user_datastore.create_user(email="test@me.com", password=hash_password("password"))
+    app.security = Security(app, user_datastore)
 
     # Views
     @app.route('/')
     @auth_required()
     def home():
-        return render_template('index.html')
+        return render_template_string("Hello {{ current_user.email }}")
 
     if __name__ == '__main__':
+        with app.app_context():
+            # Create a user to test with
+            for Model in (Role, User, UserRoles):
+                Model.drop_table(fail_silently=True)
+                Model.create_table(fail_silently=True)
+            if not app.security.datastore.find_user(email="test@me.com"):
+                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+
         app.run()
 
 

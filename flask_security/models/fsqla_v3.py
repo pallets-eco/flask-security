@@ -65,12 +65,18 @@ class FsRoleMixin(FsRoleMixinV2):
 class FsUserMixin(FsUserMixinV2):
     """User information"""
 
-    # List of WebAuthn registrations
-    @declared_attr
-    def webauthn(cls):
-        return FsModels.db.relationship(
-            "WebAuthn", backref="users", cascade="all, delete"
-        )
+    try:
+        import webauthn as webauthn_pkg
+
+        # List of WebAuthn registrations
+        @declared_attr
+        def webauthn(cls):
+            return FsModels.db.relationship(
+                "WebAuthn", backref="users", cascade="all, delete"
+            )
+
+    except ImportError:
+        pass
 
     # The user handle as required during registration.
     # Note max length 64 as specified in spec.

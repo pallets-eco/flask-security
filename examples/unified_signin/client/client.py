@@ -186,6 +186,7 @@ def runit():
         assert resp.status_code == 200
         jresp = resp.json()
         assert jresp["secret"] == "lush oranges"
+        logging.info("Success")
 
     except ApiException as exc:
         logging.error(f"{exc.get_msgs()}")

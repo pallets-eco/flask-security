@@ -1,5 +1,5 @@
 """
-Copyright 2020 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2020-2022 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 A simple example of server and client utilizing unified sign in and other
@@ -17,7 +17,6 @@ import os
 
 from flask import Flask
 from flask_babel import Babel
-from flask.json import JSONEncoder
 from flask_security import (
     Security,
     SmsSenderFactory,
@@ -148,21 +147,19 @@ def create_app():
     # Enable CSRF on all api endpoints.
     CSRFProtect(app)
     db.init_app(app)
-    app.json_encoder = JSONEncoder
     # Setup Flask-Security
-    Security(app, user_datastore)
+    app.security = Security(app, user_datastore)
 
     # Init our API
     from api import api
 
     app.register_blueprint(api, url_prefix="/api")
-
-    @app.before_first_request
-    def init_db():
-        db.create_all()
-
     return app
 
 
 if __name__ == "__main__":
-    create_app().run(port=5002)
+    myapp = create_app()
+    with myapp.app_context():
+        db.create_all()
+
+    myapp.run(port=5002)

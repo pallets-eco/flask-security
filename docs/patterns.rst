@@ -247,6 +247,10 @@ the default that is part of FlaskForm in that it will first look at the request 
 the csrf-token, and if it can't, it will check if the request has a header that is listed in *WTF_CSRF_HEADERS* and use that.
 Be aware that if you enable this it will ONLY work if you send the session cookie on each request.
 
+.. note::
+    It is IMPORTANT that you initialize/call ``CSRFProtect`` PRIOR to initializing Flask_Security.
+
+
 Using a Cookie
 --------------
 You can instruct Flask-Security to send a cookie that contains the csrf token. This can be very

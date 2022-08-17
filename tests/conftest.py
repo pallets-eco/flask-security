@@ -19,7 +19,6 @@ from urllib.parse import urlsplit
 import pytest
 from flask import Flask, Response, jsonify, render_template
 from flask import request as flask_request
-from flask.json import JSONEncoder
 from flask_mailman import Mail
 
 from flask_security import (
@@ -120,7 +119,6 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
             app.config["SECURITY_" + key.upper()] = value
 
     app.mail = Mail(app)  # type: ignore
-    app.json_encoder = JSONEncoder  # type: ignore
 
     # use babel marker to signify tests that need babel extension.
     babel = marker_getter("babel")
