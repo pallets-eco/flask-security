@@ -27,7 +27,7 @@ class MailUtil:
     Utility class providing methods for validating, normalizing and sending emails.
 
     This default class uses the email_validator package to handle validation and
-    normalization, and the flask_mailman package to send emails.
+    normalization, and the flask_mailman package (if initialized) to send emails.
 
     To provide your own implementation, pass in the class as ``mail_util_cls``
     at init time.  Your class will be instantiated once as part of app initialization.
@@ -53,7 +53,7 @@ class MailUtil:
         user: "User",
         **kwargs: t.Any,
     ) -> None:
-        """Send an email via the Flask-Mailman or Flask-Mail extension.
+        """Send an email via the Flask-Mailman or Flask-Mail or other mail extension.
 
         :param template: the Template name. The message has already been rendered
             however this might be useful to differentiate why the email is being sent.
@@ -68,7 +68,7 @@ class MailUtil:
         so we cast to str() here to force localization.
         """
 
-        try:
+        if current_app.extensions.get("mailman", None):
             from flask_mailman import EmailMultiAlternatives, Mail
 
             # Flask-Mailman doesn't appear to take a tuple - a bug has been filed
@@ -93,7 +93,7 @@ class MailUtil:
                     msg.attach_alternative(html, "text/html")
                 msg.send()
 
-        except ImportError:  # pragma: no cover
+        elif current_app.extensions.get("mail", None):  # pragma: no cover
             from flask_mail import Message
 
             # In Flask-Mail, sender can be a two element tuple -- (name, address)
@@ -107,6 +107,9 @@ class MailUtil:
 
             mail = current_app.extensions.get("mail")
             mail.send(msg)  # type: ignore
+
+        else:  # pragma: no cover
+            raise ValueError("No email extension configured")
 
     def normalize(self, email: str) -> str:
         """

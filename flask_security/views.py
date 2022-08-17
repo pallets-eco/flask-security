@@ -1123,7 +1123,10 @@ def mf_recovery_codes() -> "ResponseValue":
     the form has a show_codes submit button.
     """
     form_class = _security.mf_recovery_codes_form
-    form = form_class(formdata=None, meta=suppress_form_csrf())
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    form = form_class(formdata=form_data, meta=suppress_form_csrf())
 
     if form.validate_on_submit():
         # generate new codes

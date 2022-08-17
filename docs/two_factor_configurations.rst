@@ -34,7 +34,7 @@ possible using SQLAlchemy:
 ::
 
     import os
-    from flask import Flask, current_app, render_template
+    from flask import Flask, current_app, render_template_string
     from flask_sqlalchemy import SQLAlchemy
     from flask_security import Security, SQLAlchemyUserDatastore, \
         UserMixin, RoleMixin, auth_required
@@ -62,6 +62,11 @@ possible using SQLAlchemy:
     # Generate a good totp secret using: passlib.totp.generate_secret()
     app.config['SECURITY_TOTP_SECRETS'] = {"1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"}
     app.config['SECURITY_TOTP_ISSUER'] = "put_your_app_name"
+
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+    }
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Create database connection object
     db = SQLAlchemy(app)
@@ -93,25 +98,24 @@ possible using SQLAlchemy:
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    security = Security(app, user_datastore)
+    app.security = Security(app, user_datastore)
 
     mail = Mail(app)
-
-    # Create a user to test with
-    @app.before_first_request
-    def create_user():
-        db.create_all()
-        if not user_datastore.find_user(email='gal@lp.com'):
-            user_datastore.create_user(email='gal@lp.com', password='password', username='gal')
-        db.session.commit()
 
     # Views
     @app.route('/')
     @auth_required()
     def home():
-        return render_template('index.html')
+        return render_template_string("Hello {{ current_user.email }}")
 
     if __name__ == '__main__':
+        with app.app_context():
+            # Create a user to test with
+            db.create_all()
+            if not app.security.datastore.find_user(email='test@me.com'):
+                app.security.datastore.create_user(email='test@me.com', password='password')
+            db.session.commit()
+
         app.run()
 
 Adding SMS

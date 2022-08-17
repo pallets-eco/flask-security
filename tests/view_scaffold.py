@@ -28,7 +28,6 @@ import typing as t
 from flask import Flask, flash, render_template_string, request, session
 from flask_sqlalchemy import SQLAlchemy
 
-from flask.json import JSONEncoder
 from flask_security import (
     MailUtil,
     Security,
@@ -73,6 +72,9 @@ class FlashMailUtil(MailUtil):
         **kwargs: t.Any,
     ) -> None:
         flash(f"Email body: {body}")
+
+
+SET_LANG = False
 
 
 def create_app():
@@ -145,8 +147,6 @@ def create_app():
         if ev.startswith("SECURITY_") or ev.startswith("SQLALCHEMY_"):
             app.config[ev] = _find_bool(os.environ.get(ev))
 
-    app.json_encoder = JSONEncoder
-
     # Create database models and hook up.
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db = SQLAlchemy(app)
@@ -163,7 +163,7 @@ def create_app():
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
-    security = Security(
+    app.security = Security(
         app,
         user_datastore,
         webauthn_util_cls=TestWebauthnUtil,
@@ -188,6 +188,10 @@ def create_app():
         def get_locale():
             # For a given session - set lang based on first request.
             # Honor explicit url request first
+            global SET_LANG
+            if not SET_LANG:
+                session.pop("lang", None)
+                SET_LANG = True
             if "lang" not in session:
                 locale = request.args.get("lang", None)
                 if not locale:
@@ -197,19 +201,6 @@ def create_app():
                 if locale:
                     session["lang"] = locale
             return session.get("lang", None).replace("-", "_")
-
-    @app.before_first_request
-    def clear_lang():
-        session.pop("lang", None)
-
-    # Create a user to test with
-    @app.before_first_request
-    def create_user():
-        db.create_all()
-        test_acct = "test@test.com"
-        if not user_datastore.find_user(email=test_acct):
-            add_user(user_datastore, test_acct, "password", ["admin"])
-            print("Created User: {} with password {}".format(test_acct, "password"))
 
     @app.after_request
     def allow_absolute_redirect(r):
@@ -266,7 +257,7 @@ def create_app():
             {% include "security/_menu.html" %}
             """,
             email=current_user.email,
-            security=security,
+            security=app.security,
         )
 
     @app.route("/basicauth")
@@ -296,4 +287,13 @@ def add_user(ds, email, password, roles):
 
 
 if __name__ == "__main__":
-    create_app().run(port=5001)
+    myapp = create_app()
+
+    with myapp.app_context():
+        myapp.security.datastore.db.create_all()
+        test_acct = "test@test.com"
+        if not myapp.security.datastore.find_user(email=test_acct):
+            add_user(myapp.security.user_datastore, test_acct, "password", ["admin"])
+            print("Created User: {} with password {}".format(test_acct, "password"))
+
+    myapp.run(port=5001)

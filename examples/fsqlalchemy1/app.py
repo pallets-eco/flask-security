@@ -1,5 +1,5 @@
 """
-Copyright 2019-2021 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2019-2022 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 Very simple application.
@@ -16,7 +16,6 @@ PYTHONPATH=. SQLALCHEMY_DATABASE_URI="sqlite:////var/tmp/test.db" \
 import os
 
 from flask import Flask, abort, current_app, render_template_string
-from flask.json import JSONEncoder
 from flask_sqlalchemy import SQLAlchemy
 from flask_babel import Babel
 from flask_security import (
@@ -58,8 +57,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # automatically close idle connections.
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 
-app.json_encoder = JSONEncoder
-
 # Create database connection object
 db = SQLAlchemy(app)
 
@@ -96,38 +93,38 @@ app.blog_cls = Blog
 
 
 # Create users and roles (and first blog!)
-@app.before_first_request
 def create_users():
     if current_app.testing:
         return
-    db.create_all()
-    user_datastore.find_or_create_role(
+    security = current_app.security
+    security.datastore.db.create_all()
+    security.datastore.find_or_create_role(
         name="admin",
         permissions={"admin-read", "admin-write", "user-read", "user-write"},
     )
-    user_datastore.find_or_create_role(
+    security.datastore.find_or_create_role(
         name="monitor", permissions={"admin-read", "user-read"}
     )
-    user_datastore.find_or_create_role(
+    security.datastore.find_or_create_role(
         name="user", permissions={"user-read", "user-write"}
     )
-    user_datastore.find_or_create_role(name="reader", permissions={"user-read"})
+    security.datastore.find_or_create_role(name="reader", permissions={"user-read"})
 
-    if not user_datastore.find_user(email="admin@me.com"):
-        user_datastore.create_user(
+    if not security.datastore.find_user(email="admin@me.com"):
+        security.datastore.create_user(
             email="admin@me.com", password=hash_password("password"), roles=["admin"]
         )
-    if not user_datastore.find_user(email="ops@me.com"):
-        user_datastore.create_user(
+    if not security.datastore.find_user(email="ops@me.com"):
+        security.datastore.create_user(
             email="ops@me.com", password=hash_password("password"), roles=["monitor"]
         )
-    real_user = user_datastore.find_user(email="user@me.com")
+    real_user = security.datastore.find_user(email="user@me.com")
     if not real_user:
-        real_user = user_datastore.create_user(
+        real_user = security.datastore.create_user(
             email="user@me.com", password=hash_password("password"), roles=["user"]
         )
-    if not user_datastore.find_user(email="reader@me.com"):
-        user_datastore.create_user(
+    if not security.datastore.find_user(email="reader@me.com"):
+        security.datastore.create_user(
             email="reader@me.com", password=hash_password("password"), roles=["reader"]
         )
 
@@ -135,8 +132,8 @@ def create_users():
     blog = app.blog_cls(
         title="First Blog", text="my first blog is short", user=real_user
     )
-    db.session.add(blog)
-    db.session.commit()
+    security.datastore.db.session.add(blog)
+    security.datastore.db.session.commit()
     print(f"First blog id {blog.id}")
 
 
@@ -199,4 +196,6 @@ def list_my_blogs():
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        create_users()
     app.run(port=5003)

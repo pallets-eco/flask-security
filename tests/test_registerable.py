@@ -459,8 +459,6 @@ def test_form_error(app, client, get_message):
     from babel.support import LazyProxy
 
     with app.test_request_context("/register"):
-        # this is usually done @before_first_request
-        app.jinja_env.globals["_fsdomain"] = app.security.i18n_domain.gettext
         rform = ConfirmRegisterForm()
 
         rform.validate()
