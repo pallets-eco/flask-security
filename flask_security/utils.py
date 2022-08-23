@@ -31,7 +31,6 @@ from flask import (
     session,
     url_for,
 )
-from flask.json import JSONEncoder
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
 from flask_login import current_user
@@ -1049,22 +1048,6 @@ def json_error_response(
     response_json["errors"] = plain_errors
 
     return response_json
-
-
-class FsJsonEncoder(JSONEncoder):
-    """Flask-Security JSON encoder.
-    Extends Flask's JSONencoder to handle lazy-text.
-
-    .. versionadded:: 3.3.0
-    """
-
-    def default(self, obj):
-        from .babel import is_lazy_string
-
-        if is_lazy_string(obj):
-            return str(obj)
-        else:
-            return JSONEncoder.default(self, obj)
 
 
 def default_render_template(*args, **kwargs):

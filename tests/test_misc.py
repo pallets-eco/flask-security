@@ -354,6 +354,9 @@ def test_password_unicode_password_salt(client):
     assert b"Welcome matt@lp.com" in response.data
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*'unauthorized_handler' has been replaced.*:DeprecationWarning"
+)
 def test_set_unauthorized_handler(app, client):
     @app.security.unauthorized_handler
     def unauthorized():
@@ -1215,6 +1218,7 @@ def test_nodatastore(app):
         s.init_app(app)
 
 
+@pytest.mark.filterwarnings("ignore:.*Replacing login_manager.*:DeprecationWarning")
 def test_reuse_security_object(sqlalchemy_datastore):
     # See: https://github.com/Flask-Middleware/flask-security/issues/518
     # Let folks re-use the Security object (mostly for testing).

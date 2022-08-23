@@ -388,7 +388,8 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
         security_number = db.Column(db.Integer, unique=True)
 
         def get_security_payload(self):
-            # Make sure we still properly hook up to flask JSONEncoder
+            # Make sure we still properly hook up to flask's JSON extension
+            # which handles datetime
             return {"email": str(self.email), "last_update": self.update_datetime}
 
     with app.app_context():
@@ -538,7 +539,8 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
             return relationship("WebAuthn", backref="users", cascade="all, delete")
 
         def get_security_payload(self):
-            # Make sure we still properly hook up to flask JSONEncoder
+            # Make sure we still properly hook up to flask's JSON extension
+            # which handles datetime
             return {"email": str(self.email), "last_update": self.update_datetime}
 
     with app.app_context():

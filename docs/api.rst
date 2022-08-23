@@ -204,7 +204,6 @@ Security() instantiation.
 .. autoclass:: flask_security.Totp
   :members: get_last_counter, set_last_counter, generate_qrcode
 
-.. autoclass:: flask_security.FsJsonEncoder
 
 Forms
 -----

@@ -19,7 +19,6 @@ import warnings
 
 import pkg_resources
 from flask import current_app, g
-from flask.json import JSONEncoder
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
@@ -54,6 +53,7 @@ from .forms import (
     login_username_field,
     register_username_field,
 )
+from .json import setup_json
 from .mail_util import MailUtil
 from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
@@ -81,7 +81,6 @@ from .totp import Totp
 from .utils import _
 from .utils import config_value as cv
 from .utils import (
-    FsJsonEncoder,
     FsPermNeed,
     csrf_cookie_handler,
     default_render_template,
@@ -1001,8 +1000,6 @@ class Security:
     :param wan_verify_form: set form for using a webauthn key to verify authenticity
     :param anonymous_user: class to use for anonymous user
     :param login_manager: An subclass of LoginManager
-    :param json_encoder_cls: Class to use as blueprint.json_encoder.
-     Defaults to :class:`FsJsonEncoder`
     :param mail_util_cls: Class to use for sending emails. Defaults to :class:`MailUtil`
     :param password_util_cls: Class to use for password normalization/validation.
      Defaults to :class:`PasswordUtil`
@@ -1058,6 +1055,8 @@ class Security:
 
     .. deprecated:: 5.0.0
         Passing in a LoginManager instance.
+    .. deprecated:: 5.0.0
+        json_encoder_cls is no longer honored since Flask 2.2 has deprecated it.
     """
 
     def __init__(
@@ -1100,7 +1099,6 @@ class Security:
         wan_verify_form: t.Type[WebAuthnVerifyForm] = WebAuthnVerifyForm,
         anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
         login_manager: t.Optional["flask_login.LoginManager"] = None,
-        json_encoder_cls: t.Type[JSONEncoder] = FsJsonEncoder,
         mail_util_cls: t.Type["MailUtil"] = MailUtil,
         password_util_cls: t.Type["PasswordUtil"] = PasswordUtil,
         phone_util_cls: t.Type["PhoneUtil"] = PhoneUtil,
@@ -1148,7 +1146,6 @@ class Security:
         self.wan_delete_form = wan_delete_form
         self.wan_verify_form = wan_verify_form
         self.anonymous_user = anonymous_user
-        self.json_encoder_cls = json_encoder_cls
         self.login_manager = login_manager
         self.mail_util_cls = mail_util_cls
         self.password_util_cls = password_util_cls
@@ -1319,7 +1316,6 @@ class Security:
         # BC - Allow kwargs to overwrite/init other constructor attributes
         attr_names = [
             "anonymous_user",
-            "json_encoder_cls",
             "login_manager",
             "mail_util_cls",
             "password_util_cls",
@@ -1370,6 +1366,7 @@ class Security:
                 " removed in 5.1",
                 DeprecationWarning,
             )
+
         # login_manager is a bit strange - when we initialize it we are actually
         # initializing Flask-Login which will register itself as an extension on the
         # Flask object and set app.login_manager.
@@ -1463,10 +1460,9 @@ class Security:
             )
 
         # register our blueprint/endpoints
+        bp = None
         if self.register_blueprint:
-            bp = create_blueprint(
-                app, self, __name__, json_encoder=self.json_encoder_cls
-            )
+            bp = create_blueprint(app, self, __name__)
             self.two_factor_plugins.create_blueprint(app, bp, self)
             app.register_blueprint(bp)
             app.context_processor(_context_processor)
@@ -1561,6 +1557,9 @@ class Security:
         # Perform CSRF checks. Apps must initialize CSRFProtect PRIOR to
         # initializing us.
         self._csrf_init(app)
+
+        # register our JSON encoder extensions
+        setup_json(app, bp)
 
         app.extensions["security"] = self
 
@@ -1661,11 +1660,10 @@ class Security:
                 return make_response(jsonify(payload), code, headers)
 
         .. important::
-            Be aware the Flask's ``jsonify`` method will first look to see if a
-            ``json_encoder`` has been set on the blueprint corresponding to the current
-            request. If not then it looks for a ``json_encoder`` registered on the app;
-            and finally uses Flask's default JSONEncoder class. Flask-Security registers
-            :func:`FsJsonEncoder` as its blueprint json_encoder.
+            Note that this has nothing to do with how the response is serialized.
+            That is controlled by Flask and starting with Flask 2.2 that is managed
+            by sub-classing Flask::JSONProvider. Flask-Security does this to add
+            serializing lazy-strings.
 
 
         This can be used by applications to unify all their JSON API responses.
