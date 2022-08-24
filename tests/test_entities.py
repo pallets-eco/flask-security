@@ -5,6 +5,7 @@
     Entity tests
 """
 import inspect
+import pytest
 
 from sqlalchemy import Column
 from flask_security import AnonymousUser, RoleMixin, UserMixin
@@ -53,6 +54,7 @@ def get_user_attributes(cls):
     return [item for item in inspect.getmembers(cls) if item[0] not in boring]
 
 
+@pytest.mark.filterwarnings("ignore::sqlalchemy.exc.SAWarning")
 def test_fsqla_fields():
     # basic test to verify no one modified fsqla after shipping.
     # Not perfect since not checking relationships etc.

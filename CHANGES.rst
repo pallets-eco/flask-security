@@ -25,8 +25,10 @@ Features
   below. The default LoginForm and template should be the same as before.
 - (:pr:`638`) The JSON errors response has been unified. Please see backwards
   compatibility concerns below.
-- (:pr:`xxx`) The previously deprecated methods RoleMixin.add_permissions and
+- (:pr:`654`) The previously deprecated methods RoleMixin.add_permissions and
   RoleMixin.remove_permissions have been removed.
+- (:pr:`xxx`) The ability to pass in a json_encoder_cls as part of initialization has been removed
+  since Flask 2.2 has deprecated and replaced that functionality.
 
 Fixes
 +++++
@@ -45,7 +47,7 @@ Fixes
   has been added (defaults to ``True``).
 - (:issue:`479`) A new configuration option :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL` has been added
   that allows disabling that feature - defaults to backwards compatible ``True``
-- (:pr:`xxx`) Flask has deprecated @before_first_request. This was used mostly in examples/quickstart.
+- (:pr:`655`) Flask has deprecated @before_first_request. This was used mostly in examples/quickstart.
   These have been changed to use app.app_context() prior to running the app. FS itself used it in
   2 places - to populate `_` in jinja globals if Babel wasn't initialized and to perform
   various configuration sanity checks w.r.t. WTF CSRF. All FS templates have been converted
@@ -114,6 +116,8 @@ Other:
   DB type. For SQLAlchemy, this is mapped to a comma separated string (as before). For Mongo, a ListField can be directly used. For
   for SQLAlchemy DBs the Column type (UnicodeText) didn't change so no data migration should be required.
 - CSRF - As mentioned above, it is now required that `FlaskWTF::CSRFProtect()`, if used, must be called PRIOR to initializing Flask-Security.
+- json_encoder_cls - As mentioned above - Flask-Security initialization on longer accepts overriding the json_encoder class. If this is required,
+  update to Flask >=2.2 and implement Flask's JSONProvider interface.
 
 For templates:
 

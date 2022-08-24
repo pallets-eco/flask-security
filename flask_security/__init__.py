@@ -91,7 +91,6 @@ from .unified_signin import (
 )
 from .username_util import UsernameUtil
 from .utils import (
-    FsJsonEncoder,
     SmsSenderBaseClass,
     SmsSenderFactory,
     check_and_get_token_status,
