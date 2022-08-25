@@ -17,18 +17,30 @@ Features
 - (:issue:`585`) Provide option to prevent user enumeration (i.e. Generic Responses).
 - (:pr:`532`) Support for Python 3.10.
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn.
-- (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
-- (:pr:`568`) Deprecate replacing login_manager so we can possibly vendor that in in the future.
 - (:pr:`608`) Add Icelandic translations. (ofurkusi)
 - (:issue:`256`) Add custom HTML attributes to improve user experience.
   This changed LoginForm quite a bit - please see backwards compatability concerns
   below. The default LoginForm and template should be the same as before.
 - (:pr:`638`) The JSON errors response has been unified. Please see backwards
   compatibility concerns below.
+
+Deprecations
+++++++++++++
+- (:pr:`568`) Deprecate the old passwordless feature in favor of Unified Signin.
+- (:pr:`568`) Deprecate replacing login_manager so we can possibly vendor that in in the future.
 - (:pr:`654`) The previously deprecated methods RoleMixin.add_permissions and
   RoleMixin.remove_permissions have been removed.
-- (:pr:`xxx`) The ability to pass in a json_encoder_cls as part of initialization has been removed
+- (:pr:`657`) The ability to pass in a json_encoder_cls as part of initialization has been removed
   since Flask 2.2 has deprecated and replaced that functionality.
+- (:pr:`655`) Flask has deprecated @before_first_request. This was used mostly in examples/quickstart.
+  These have been changed to use app.app_context() prior to running the app. FS itself used it in
+  2 places - to populate `_` in jinja globals if Babel wasn't initialized and to perform
+  various configuration sanity checks w.r.t. WTF CSRF. All FS templates have been converted
+  to use `_fsdomain` rather than ``_`` so FS no longer will populate ``_``. The configuration checks
+  have been moved to the end of Security::init_app() - so it is now imperative that `FlaskWTF::CSRFProtect()`
+  be called PRIOR to initializing Flask-Security.
+- encrypt_password method has been removed. It has been deprecated since 2.0.2
+- get_token_status has been deprecated.
 
 Fixes
 +++++
@@ -47,13 +59,7 @@ Fixes
   has been added (defaults to ``True``).
 - (:issue:`479`) A new configuration option :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL` has been added
   that allows disabling that feature - defaults to backwards compatible ``True``
-- (:pr:`655`) Flask has deprecated @before_first_request. This was used mostly in examples/quickstart.
-  These have been changed to use app.app_context() prior to running the app. FS itself used it in
-  2 places - to populate `_` in jinja globals if Babel wasn't initialized and to perform
-  various configuration sanity checks w.r.t. WTF CSRF. All FS templates have been converted
-  to use `_fsdomain` rather than ``_`` so FS no longer will populate ``_``. The configuration checks
-  have been moved to the end of Security::init_app() - so it is now imperative that `FlaskWTF::CSRFProtect()`
-  be called PRIOR to initializing Flask-Security.
+
 
 Backward Compatibility Concerns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,7 +106,6 @@ Other:
 - Some fields have custom HTML attributes attached to them (e.g. autocomplete, type, etc). These are stored as part of the
   form in the ``render_kw`` attribute. This could cause some confusion if an app had its own templates and set different
   attributes.
-- encrypt_password method has been removed. It has been deprecated since 2.0.2
 - The keys for "/tf-rescue" select options have changed to be more 'action' oriented:
 
     - `lost_device` -> `email`
