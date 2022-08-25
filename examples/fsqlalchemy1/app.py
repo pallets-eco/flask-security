@@ -18,6 +18,7 @@ import os
 from flask import Flask, abort, current_app, render_template_string
 from flask_sqlalchemy import SQLAlchemy
 from flask_babel import Babel
+from sqlalchemy import Column, ForeignKey, Integer, Text, UnicodeText
 from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
@@ -74,10 +75,10 @@ class User(db.Model, fsqla.FsUserMixin):
 
 
 class Blog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("myuser.id"), nullable=False)
-    title = db.Column(db.Text)
-    text = db.Column(db.UnicodeText)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("myuser.id"), nullable=False)
+    title = Column(Text)
+    text = Column(UnicodeText)
 
 
 # Setup Flask-Security

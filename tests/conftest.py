@@ -328,7 +328,9 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
         tf_phone_number = StringField(max_length=255)
         mf_recovery_codes = ListField(required=False)
         us_totp_secrets = StringField()
-        us_phone_number = StringField(max_length=255)
+        us_phone_number = StringField(
+            max_length=255, unique=True, required=False, sparse=True
+        )
         last_login_ip = StringField(max_length=100)
         current_login_ip = StringField(max_length=100)
         login_count = IntField()
@@ -366,6 +368,7 @@ def sqlalchemy_datastore(request, app, tmpdir, realdburl):
 def sqlalchemy_setup(request, app, tmpdir, realdburl):
     pytest.importorskip("flask_sqlalchemy")
     from flask_sqlalchemy import SQLAlchemy
+    from sqlalchemy import Column, Integer
     from flask_security.models import fsqla_v3 as fsqla
 
     if realdburl:
@@ -385,7 +388,7 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
         pass
 
     class User(db.Model, fsqla.FsUserMixin):
-        security_number = db.Column(db.Integer, unique=True)
+        security_number = Column(Integer, unique=True)
 
         def get_security_payload(self):
             # Make sure we still properly hook up to flask's JSON extension
@@ -518,7 +521,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         tf_phone_number = Column(String(255), nullable=True)
         mf_recovery_codes = Column(MutableList.as_mutable(AsaList()), nullable=True)
         us_totp_secrets = Column(Text, nullable=True)
-        us_phone_number = Column(String(64), nullable=True)
+        us_phone_number = Column(String(64), nullable=True, unique=True)
         last_login_ip = Column(String(100))
         current_login_ip = Column(String(100))
         login_count = Column(Integer)
@@ -633,7 +636,7 @@ def peewee_setup(request, app, tmpdir, realdburl):
         tf_phone_number = TextField(null=True)
         mf_recovery_codes = AsaList(null=True)
         us_totp_secrets = TextField(null=True)
-        us_phone_number = TextField(null=True)
+        us_phone_number = TextField(null=True, unique=True)
         last_login_ip = TextField(null=True)
         current_login_ip = TextField(null=True)
         login_count = IntegerField(null=True)

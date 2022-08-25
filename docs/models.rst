@@ -100,7 +100,7 @@ additional fields:
 If you include 'sms' in :py:data:`SECURITY_US_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
-* ``us_phone_number`` (string)
+* ``us_phone_number`` (string, 64 bytes, nullable, unique)
 
 Separate Identity Domains
 ~~~~~~~~~~~~~~~~~~~~~~~~~

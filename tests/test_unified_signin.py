@@ -946,6 +946,41 @@ def test_setup_timeout(app, client, get_message):
     )
 
 
+@pytest.mark.settings(
+    us_enabled_methods=["email", "sms"],
+    user_identity_attributes=UIA_EMAIL_PHONE,
+)
+def test_unique_phone(app, client, get_message):
+    # Test that us_phone_number is properly validated to be unique
+    set_email(app, email="matt@lp.com")
+    us_authenticate(client, identity="matt@lp.com")
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    response = client.post(
+        "us-setup",
+        json=dict(chosen_method="sms", phone="650-555-1212"),
+    )
+    assert response.status_code == 200
+    state = response.json["response"]["state"]
+    assert state
+    code = sms_sender.messages[0].split()[-1].strip(".")
+    response = client.post("/us-setup/" + state, json=dict(passcode=code))
+    assert response.status_code == 200
+
+    logout(client)
+
+    set_email(app, email="joe@lp.com")
+    us_authenticate(client, identity="joe@lp.com")
+    response = client.post(
+        "us-setup",
+        json=dict(chosen_method="sms", phone="650-555-1212"),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode() == get_message(
+        "IDENTITY_ALREADY_ASSOCIATED", attr="us_phone_number", value="+16505551212"
+    )
+
+
 @pytest.mark.settings(freshness=timedelta(minutes=0))
 def test_verify(app, client, get_message):
     # Test setup when re-authenticate required
