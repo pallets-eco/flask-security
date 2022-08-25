@@ -325,6 +325,16 @@ class UnifiedSigninSetupForm(Form):
                 if msg:
                     self.phone.errors.append(msg)
                     return False
+                # As an identity attribute - it MUST be unique!
+                cphone = _security._phone_util.get_canonical_form(self.phone.data)
+                if _datastore.find_user(us_phone_number=cphone):
+                    msg = get_message(
+                        "IDENTITY_ALREADY_ASSOCIATED",
+                        attr="us_phone_number",
+                        value=cphone,
+                    )[0]
+                    self.phone.errors.append(msg)
+                    return False
         if self.delete_method.data:
             if self.delete_method.data not in _compute_active_methods(current_user):
                 self.delete_method.errors.append(

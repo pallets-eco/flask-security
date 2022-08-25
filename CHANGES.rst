@@ -16,8 +16,10 @@ Features
 - (:issue:`479`) Support Two-factor recovery codes.
 - (:issue:`585`) Provide option to prevent user enumeration (i.e. Generic Responses).
 - (:pr:`532`) Support for Python 3.10.
+- (:pr:`657`, :pr:`655`) Support for Flask >= 2.2.
 - (:pr:`540`) Improve Templates in support of JS required by WebAuthn.
 - (:pr:`608`) Add Icelandic translations. (ofurkusi)
+- (:pr:`650`) Update German translations. (sr-verde)
 - (:issue:`256`) Add custom HTML attributes to improve user experience.
   This changed LoginForm quite a bit - please see backwards compatability concerns
   below. The default LoginForm and template should be the same as before.
@@ -59,6 +61,7 @@ Fixes
   has been added (defaults to ``True``).
 - (:issue:`479`) A new configuration option :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL` has been added
   that allows disabling that feature - defaults to backwards compatible ``True``
+- (:issue:`658`) us_phone_number needs to be validated to be unique.
 
 
 Backward Compatibility Concerns
@@ -119,7 +122,7 @@ Other:
   related JSON responses.
 - Permissions - The Role Model now stores permissions as a list, and requires that the underlying DB ORM map that to a supported
   DB type. For SQLAlchemy, this is mapped to a comma separated string (as before). For Mongo, a ListField can be directly used. For
-  for SQLAlchemy DBs the Column type (UnicodeText) didn't change so no data migration should be required.
+  SQLAlchemy DBs the Column type (UnicodeText) didn't change so no data migration should be required.
 - CSRF - As mentioned above, it is now required that `FlaskWTF::CSRFProtect()`, if used, must be called PRIOR to initializing Flask-Security.
 - json_encoder_cls - As mentioned above - Flask-Security initialization on longer accepts overriding the json_encoder class. If this is required,
   update to Flask >=2.2 and implement Flask's JSONProvider interface.
@@ -139,7 +142,7 @@ To ease updates - Flask-Security will automatically create a fs_webauthn_user_ha
 upon first use for existing users.
 If you are using Alembic the schema migration is easy::
 
-    op.add_column('user', sa.Column('fs_webauthn_user_handle', sa.String(length=64), nullable=True))
+    op.add_column('user', sa.Column('fs_webauthn_user_handle', sa.String(length=64), nullable=True, unique=True))
 
 
 If you want to allow for empty passwords as part of registration then set :py:data:`SECURITY_PASSWORD_REQUIRED` to ``False``.
