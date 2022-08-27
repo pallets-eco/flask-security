@@ -41,11 +41,13 @@ from wtforms import (
     BooleanField,
     PasswordField,
     RadioField,
+    SelectMultipleField,
     StringField,
     SubmitField,
     TelField,
     validators,
 )
+from wtforms.widgets import CheckboxInput
 
 from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
@@ -109,6 +111,8 @@ def _compute_active_methods(user):
     active_methods = set(cv("US_ENABLED_METHODS")) & set(
         _datastore.us_get_totp_secrets(user).keys()
     )
+    if user.password:
+        active_methods = active_methods.union({"password"})
     return list(active_methods)
 
 
@@ -276,28 +280,30 @@ class UnifiedVerifyForm(_UnifiedPassCodeForm):
 class UnifiedSigninSetupForm(Form):
     """Setup form"""
 
+    setup_choices = [
+        ("email", get_form_field_label("email_method")),
+        (
+            "authenticator",
+            get_form_field_label("authapp_method"),
+        ),
+        ("sms", get_form_field_label("sms_method")),
+    ]
     chosen_method = RadioField(
         get_form_field_xlate(_("Setup additional sign in option")),
-        choices=[
-            ("email", get_form_field_label("email_method")),
-            (
-                "authenticator",
-                get_form_field_label("authapp_method"),
-            ),
-            ("sms", get_form_field_label("sms_method")),
-        ],
         validate_choice=False,
     )
-    delete_method = RadioField(
+    delete_choices = [
+        ("email", get_form_field_xlate("Delete email option")),
+        (
+            "authenticator",
+            get_form_field_xlate("Delete authenticator option"),
+        ),
+        ("sms", get_form_field_xlate("Delete SMS option")),
+    ]
+
+    delete_method = SelectMultipleField(
         get_form_field_xlate(_("Delete active sign in option")),
-        choices=[
-            ("email", get_form_field_xlate("Delete email option")),
-            (
-                "authenticator",
-                get_form_field_xlate("Delete authenticator option"),
-            ),
-            ("sms", get_form_field_xlate("Delete SMS option")),
-        ],
+        option_widget=CheckboxInput(),
         validate_choice=False,
     )
     phone = TelField(get_form_field_label("phone"))
@@ -336,7 +342,10 @@ class UnifiedSigninSetupForm(Form):
                     self.phone.errors.append(msg)
                     return False
         if self.delete_method.data:
-            if self.delete_method.data not in _compute_active_methods(current_user):
+            if not all(
+                m in _compute_active_methods(current_user)
+                for m in self.delete_method.data
+            ):
                 self.delete_method.errors.append(
                     get_message("US_METHOD_NOT_AVAILABLE")[0]
                 )
@@ -803,6 +812,12 @@ def us_setup() -> "ResponseValue":
 
     setup_methods = _compute_setup_methods()
     active_methods = _compute_active_methods(current_user)
+    form.chosen_method.choices = [
+        c for c in form.setup_choices if c[0] not in active_methods
+    ]
+    form.delete_method.choices = [
+        c for c in form.delete_choices if c[0] in active_methods
+    ]
 
     if form.validate_on_submit():
         qrcode_values = dict()
@@ -813,12 +828,20 @@ def us_setup() -> "ResponseValue":
 
         if delete_method:
             after_this_request(view_commit)
-            _datastore.us_reset(current_user, delete_method)
+            for m in delete_method:
+                _datastore.us_reset(current_user, m)
             active_methods = _compute_active_methods(current_user)
+            form.chosen_method.choices = [
+                c for c in form.setup_choices if c[0] not in active_methods
+            ]
+            form.delete_method.choices = [
+                c for c in form.delete_choices if c[0] in active_methods
+            ]
+            form.delete_method.data = None
             us_profile_changed.send(
                 app._get_current_object(),  # type: ignore
                 user=current_user,
-                method=delete_method,
+                methods=delete_method,
                 delete=True,
             )
 
@@ -888,6 +911,7 @@ def us_setup() -> "ResponseValue":
 
         if _security._want_json(request):
             return base_render_json(form, include_user=False, additional=json_response)
+        form.delete_method.data = None
         return _security.render_template(
             cv("US_SETUP_TEMPLATE"),
             available_methods=cv("US_ENABLED_METHODS"),
@@ -969,7 +993,7 @@ def us_setup_validate(token: str) -> "ResponseValue":
         us_profile_changed.send(
             app._get_current_object(),  # type: ignore
             user=current_user,
-            method=method,
+            methods=[method],
             delete=False,
         )
         if _security._want_json(request):

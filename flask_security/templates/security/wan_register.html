@@ -22,8 +22,13 @@
             name="wan_register_form" id="wan-register-form">
         {{ wan_register_form.hidden_tag() }}
         {{ render_field_with_errors(wan_register_form.name) }}
+        {# Default is just second factor #}
         {% if security.wan_allow_as_first_factor %}
-          {{ render_field_with_errors(wan_register_form.usage) }}
+          <div>
+          {% for subfield in wan_register_form.usage %}
+            {{ render_field_with_errors(subfield) }}
+          {% endfor %}
+          </div>
         {% endif %}
         {{ render_field(wan_register_form.submit) }}
     </form>

@@ -42,9 +42,7 @@
         <h3>{{ us_setup_form.chosen_method.label }}</h3>
         <div class="fs-div">
           {% for subfield in us_setup_form.chosen_method %}
-            {% if subfield.data in available_methods and subfield.data not in active_methods %}
-                {{ render_field_with_errors(subfield) }}
-            {% endif %}
+              {{ render_field_with_errors(subfield) }}
           {% endfor %}
           {{ render_field_errors(us_setup_form.chosen_method) }}
         </div>
@@ -54,13 +52,12 @@
             {{ render_field_with_errors(us_setup_form.phone) }}
           {% endif %}
         </div>
-        {% if active_methods %}
+        {% if us_setup_form.delete_method.choices and not state %}
+          {#  don't show delete if we're trying to validate a setup #}
           <h3>{{ us_setup_form.delete_method.label }}</h3>
           <div class="fs-div">
             {% for subfield in us_setup_form.delete_method %}
-              {% if subfield.data in active_methods %}
-                  {{ render_field_with_errors(subfield) }}
-              {% endif %}
+              {{ render_field_with_errors(subfield) }}
             {% endfor %}
             {{ render_field_errors(us_setup_form.delete_method) }}
           </div>
@@ -86,6 +83,7 @@
       {% endif %}
     </form>
     {% if state %}
+      {# Completing setup by entering code #}
       <hr class="fs-gap">
       <div class="fs-important">{{ _fsdomain("Enter code here to complete setup") }}</div>
       <form action="{{ url_for_security("us_setup_validate", token=state) }}" method="POST"

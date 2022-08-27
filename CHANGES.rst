@@ -87,6 +87,8 @@ For unified signin:
   variable ``SECURITY_PASSWORD_REQUIRED`` must be set to False.
 - ``SECURITY_US_VERIFY_SEND_CODE_URL`` and ``SECURITY_US_SIGNIN_SEND_CODE_URL`` used to send ``code_sent`` to the template.
   Now they flash the ``SECURITY_MSG_CODE_HAS_BEEN_SENT`` message.
+- With the addition of being able to delete a previously setup up sign in method, the signal `us_profile_changed` arguments
+  have changed. `method` is now `methods` and is a list, and a new argument `delete` is True if a sign in option was deleted.
 
 Login:
 

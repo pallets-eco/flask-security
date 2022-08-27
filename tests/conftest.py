@@ -101,11 +101,7 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     ]:
         app.config["SECURITY_" + opt.upper()] = opt in request.keywords
 
-    pytest_major = int(pytest.__version__.split(".")[0])
-    if pytest_major >= 4:
-        marker_getter = request.node.get_closest_marker
-    else:
-        marker_getter = request.keywords.get
+    marker_getter = request.node.get_closest_marker
 
     # Import webauthn, or skip test if webauthn isn't installed
     webauthn_test = marker_getter("webauthn")
@@ -117,6 +113,10 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     if settings is not None:
         for key, value in settings.kwargs.items():
             app.config["SECURITY_" + key.upper()] = value
+    settings = marker_getter("app_settings")
+    if settings is not None:
+        for key, value in settings.kwargs.items():
+            app.config[key.upper()] = value
 
     app.mail = Mail(app)  # type: ignore
 

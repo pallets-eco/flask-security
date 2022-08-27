@@ -293,7 +293,7 @@ if __name__ == "__main__":
         myapp.security.datastore.db.create_all()
         test_acct = "test@test.com"
         if not myapp.security.datastore.find_user(email=test_acct):
-            add_user(myapp.security.user_datastore, test_acct, "password", ["admin"])
+            add_user(myapp.security.datastore, test_acct, "password", ["admin"])
             print("Created User: {} with password {}".format(test_acct, "password"))
 
     myapp.run(port=5001)

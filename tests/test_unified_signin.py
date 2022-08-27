@@ -394,6 +394,10 @@ def test_us_passwordless(app, client, get_message):
         response = client.get(link, follow_redirects=True)
         assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
 
+    # check us-setup has 'email' but not password
+    response = client.get("/us-setup", json={})
+    assert response.json["response"]["active_methods"] == ["email"]
+
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
@@ -718,7 +722,7 @@ def test_setup(app, client, get_message):
     # Email should be in delete options since we just set that up.
     assert all(
         i in response.data
-        for i in [b"delete_method-0", b"chosen_method-1", b"chosen_method-2"]
+        for i in [b"delete_method-0", b"chosen_method-0", b"chosen_method-1"]
     )
 
     # test not supplying anything to do
@@ -797,9 +801,9 @@ def test_setup_email(app, client, get_message):
 def test_setup_json(app, client_nc, get_message):
     # This shows that by setting freshness to negative doesn't require session.
     @us_profile_changed.connect_via(app)
-    def pc(sender, user, method, delete, **kwargs):
+    def pc(sender, user, methods, delete, **kwargs):
         assert not delete
-        assert method == "sms"
+        assert methods == ["sms"]
         assert user.us_phone_number == "+16505551212"
 
     set_email(app)
@@ -813,7 +817,7 @@ def test_setup_json(app, client_nc, get_message):
     assert response.status_code == 200
     assert response.json["response"]["available_methods"] == ["email", "sms"]
     assert set(response.json["response"]["setup_methods"]) == {"email", "sms"}
-    assert response.json["response"]["active_methods"] == ["email"]
+    assert set(response.json["response"]["active_methods"]) == {"email", "password"}
 
     sms_sender = SmsSenderFactory.createSender("test")
     response = client_nc.post(
@@ -844,7 +848,11 @@ def test_setup_json(app, client_nc, get_message):
     # Verify sms in list of 'active' methods
     response = client_nc.get("/us-setup", headers=headers)
     assert response.status_code == 200
-    assert set(response.json["response"]["active_methods"]) == {"email", "sms"}
+    assert set(response.json["response"]["active_methods"]) == {
+        "email",
+        "sms",
+        "password",
+    }
 
     # now login with phone - send in different format than we set up with.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -1408,10 +1416,9 @@ def test_change_empty_password(app, client):
 
 
 @pytest.mark.registerable()
-@pytest.mark.changeable()
 @pytest.mark.settings(password_required=False)
 def test_empty_password(app, client, get_message):
-    # test that if no password - can't log in
+    # test that if no password - can't log in with empty password
     data = dict(email="trp@lp.com", password="")
     response = client.post("/register", data=data, follow_redirects=True)
     logout(client)
@@ -1913,7 +1920,7 @@ def test_setup_delete(app, client, get_message):
     # Email should be in delete options since we just set that up.
     assert all(
         i in response.data
-        for i in [b"delete_method-0", b"chosen_method-1", b"chosen_method-2"]
+        for i in [b"delete_method-0", b"chosen_method-0", b"chosen_method-1"]
     )
     response = client.post("us-setup", data=dict(delete_method="email"))
 
@@ -1934,8 +1941,8 @@ def test_setup_delete_json(app, client, get_message):
     recorded = []
 
     @us_profile_changed.connect_via(app)
-    def pc(sender, user, method, delete, **kwargs):
-        if method == "sms":
+    def pc(sender, user, methods, delete, **kwargs):
+        if "sms" in methods:
             if delete:
                 assert not user.us_phone_number
                 recorded.append("delete")
@@ -1954,7 +1961,7 @@ def test_setup_delete_json(app, client, get_message):
     assert response.status_code == 200
 
     response = client.get("us-setup", headers=headers)
-    assert not response.json["response"]["active_methods"]
+    assert response.json["response"]["active_methods"] == ["password"]
 
     response = client.post("us-setup", json=dict(delete_method="email"))
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
@@ -1982,15 +1989,43 @@ def test_setup_delete_json(app, client, get_message):
     # verify SMS in active methods
     response = client.get("/us-setup", headers=headers)
     assert response.status_code == 200
-    assert set(response.json["response"]["active_methods"]) == {"sms"}
+    assert set(response.json["response"]["active_methods"]) == {"sms", "password"}
 
     # delete SMS
     response = client.post("/us-setup", json=(dict(delete_method="sms")))
     assert response.status_code == 200
     response = client.get("/us-setup", headers=headers)
-    assert not response.json["response"]["active_methods"]
+    assert response.json["response"]["active_methods"] == ["password"]
     assert recorded[0] == "setup"
     assert recorded[1] == "delete"
+
+
+def test_setup_delete_multi_json(app, client, get_message):
+    recorded = []
+
+    @us_profile_changed.connect_via(app)
+    def pc(sender, user, methods, delete, **kwargs):
+        recorded.append((delete, methods))
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    set_email(app)
+    set_phone(app)
+    us_authenticate(client)
+    response = client.get("us-setup", headers=headers)
+    # Email and sms should be in delete options since we just set that up.
+    assert set(response.json["response"]["active_methods"]) == {
+        "sms",
+        "password",
+        "email",
+    }
+
+    response = client.post("us-setup", json=dict(delete_method=["email", "sms"]))
+    assert response.status_code == 200
+
+    response = client.get("us-setup", headers=headers)
+    assert response.json["response"]["active_methods"] == ["password"]
+    assert len(recorded) == 1
+    assert set(recorded[0][1]) == {"sms", "email"}
 
 
 @pytest.mark.settings(return_generic_responses=True)
