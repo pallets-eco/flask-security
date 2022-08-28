@@ -6,9 +6,9 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.0.0
 -------------
 
-Released TBD
+Released August 27. 2022
 
-**PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE**
+**PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE.**
 
 Features
 ++++++++
@@ -25,6 +25,9 @@ Features
   below. The default LoginForm and template should be the same as before.
 - (:pr:`638`) The JSON errors response has been unified. Please see backwards
   compatibility concerns below.
+- Updated all-inclusive data models (fsqla_v3). Add fields necessary for the new WebAuthn and
+  Two-Factor recovery codes features.
+  Changed `us_phone_number` to be unique (but not required). Changed `password` to be nullable.
 
 Deprecations
 ++++++++++++
