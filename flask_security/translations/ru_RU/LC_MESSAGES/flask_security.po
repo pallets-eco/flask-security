@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2022-07-29 08:42-0700\n"
+"POT-Creation-Date: 2022-08-27 17:22-0700\n"
 "PO-Revision-Date: 2022-04-10 23:19+0300\n"
 "Last-Translator: Ivan Fedorov <inbox@titaniumhocker.ru>\n"
 "Language: ru_RU\n"
@@ -20,11 +20,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.10.3\n"
 
-#: flask_security/core.py:250
+#: flask_security/core.py:249
 msgid "Login Required"
 msgstr "Требуется авторизация"
 
-#: flask_security/core.py:251
+#: flask_security/core.py:250
 #: flask_security/templates/security/email/two_factor_instructions.html:1
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:9
@@ -32,93 +32,93 @@ msgstr "Требуется авторизация"
 msgid "Welcome"
 msgstr "Добро пожаловать"
 
-#: flask_security/core.py:252
+#: flask_security/core.py:251
 msgid "Please confirm your email"
 msgstr "Пожалуйста, подтвердите свой адрес электронной почты"
 
-#: flask_security/core.py:253
+#: flask_security/core.py:252
 msgid "Login instructions"
 msgstr "Инструкция для входа"
 
-#: flask_security/core.py:254
+#: flask_security/core.py:253
 #: flask_security/templates/security/email/reset_notice.html:1
 #: flask_security/templates/security/email/reset_notice.txt:1
 msgid "Your password has been reset"
 msgstr "Ваш пароль был сброшен"
 
-#: flask_security/core.py:255
+#: flask_security/core.py:254
 msgid "Your password has been changed"
 msgstr "Ваш пароль был изменён"
 
-#: flask_security/core.py:256
+#: flask_security/core.py:255
 msgid "Password reset instructions"
 msgstr "Инструкции для восстановления пароля"
 
-#: flask_security/core.py:259
+#: flask_security/core.py:258
 msgid "Two-factor Login"
 msgstr "Двухфакторный вход"
 
-#: flask_security/core.py:260
+#: flask_security/core.py:259
 msgid "Two-factor Rescue"
 msgstr "Двухфакторное восстановление"
 
-#: flask_security/core.py:308
+#: flask_security/core.py:307
 msgid "Verification Code"
 msgstr "Код подтверждения"
 
-#: flask_security/core.py:354
+#: flask_security/core.py:353
 msgid "Input not appropriate for requested API"
 msgstr "Ввод некорректен для запрошенного API"
 
-#: flask_security/core.py:356
+#: flask_security/core.py:355
 msgid "Authentication failed - identity or password/passcode invalid"
 msgstr ""
 
-#: flask_security/core.py:360
+#: flask_security/core.py:359
 msgid ""
 "If that email address is in our system, you will receive an email "
 "describing how to reset your password."
 msgstr ""
 
-#: flask_security/core.py:367
+#: flask_security/core.py:366
 msgid "If that identity is in our system, you were sent a code."
 msgstr ""
 
-#: flask_security/core.py:370
+#: flask_security/core.py:369
 msgid "You do not have permission to view this resource."
 msgstr "У вас нет прав доступа к этому ресурсу."
 
-#: flask_security/core.py:372
+#: flask_security/core.py:371
 msgid "You are not authenticated. Please supply the correct credentials."
 msgstr "Вы не аутентифицированы. Пожалуйста, укажите корректные учетные данные."
 
-#: flask_security/core.py:376
+#: flask_security/core.py:375
 msgid "You must re-authenticate to access this endpoint"
 msgstr "Пожалуйста, войдите повторно чтобы получить доступ к этой странице"
 
-#: flask_security/core.py:380
+#: flask_security/core.py:379
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
 msgstr "Спасибо. Инструкция по подтверждению аккаунта отправлена на %(email)s."
 
-#: flask_security/core.py:383
+#: flask_security/core.py:382
 msgid "Thank you. Your email has been confirmed."
 msgstr "Спасибо. Ваш почтовый адрес был подтверждён."
 
-#: flask_security/core.py:384
+#: flask_security/core.py:383
 msgid "Your email has already been confirmed."
 msgstr "Ваш почтовый адрес уже подтверждён."
 
-#: flask_security/core.py:385
+#: flask_security/core.py:384
 msgid "Invalid confirmation token."
 msgstr "Неверный токен для подтверждения аккаунта."
 
-#: flask_security/core.py:387
+#: flask_security/core.py:386
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s уже привязан к другому аккаунту."
 
-#: flask_security/core.py:391
+#: flask_security/core.py:390
 #, python-format
 msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
@@ -127,28 +127,28 @@ msgstr ""
 "Идентификационный атрибут '%(attr)s' со значением '%(value)s' уже "
 "ассоциирован с учетной записью."
 
-#: flask_security/core.py:397
+#: flask_security/core.py:396
 msgid "Password does not match"
 msgstr "Пароль не подходит"
 
-#: flask_security/core.py:398
+#: flask_security/core.py:397
 msgid "Passwords do not match"
 msgstr "Пароли не совпадают"
 
-#: flask_security/core.py:399
+#: flask_security/core.py:398
 msgid "Redirections outside the domain are forbidden"
 msgstr "Перенаправления вне текущего домена запрещены"
 
-#: flask_security/core.py:400
+#: flask_security/core.py:399
 msgid "Recovery code invalid"
 msgstr ""
 
-#: flask_security/core.py:402
+#: flask_security/core.py:401
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr "Инструкция по восстановлению пароля отправлена на %(email)s."
 
-#: flask_security/core.py:406
+#: flask_security/core.py:405
 #, python-format
 msgid ""
 "You did not reset your password within %(within)s. New instructions have "
@@ -157,20 +157,20 @@ msgstr ""
 "Вы не восстановили пароль в течение %(within)s. Новая инструкция "
 "отправлена на %(email)s."
 
-#: flask_security/core.py:412
+#: flask_security/core.py:411
 msgid "Invalid reset password token."
 msgstr "Неверный токен для восстановления пароля."
 
-#: flask_security/core.py:413
+#: flask_security/core.py:412
 msgid "Email requires confirmation."
 msgstr "Почтовый адрес требует подтверждения."
 
-#: flask_security/core.py:415
+#: flask_security/core.py:414
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr "Инструкция по подтверждению аккаунта отправлена на %(email)s."
 
-#: flask_security/core.py:419
+#: flask_security/core.py:418
 #, python-format
 msgid ""
 "You did not confirm your email within %(within)s. New instructions to "
@@ -179,7 +179,7 @@ msgstr ""
 "Вы не подтвердили свой почтовый адрес в течение %(within)s. Новая "
 "инструкция по подтверждению отправлена на %(email)s."
 
-#: flask_security/core.py:427
+#: flask_security/core.py:426
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -188,159 +188,159 @@ msgstr ""
 "Вы не вошли в течение %(within)s. Новая инструкция по входу отправлена на"
 " %(email)s."
 
-#: flask_security/core.py:434
+#: flask_security/core.py:433
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr "Инструкция по входу отправлена на %(email)s."
 
-#: flask_security/core.py:437
+#: flask_security/core.py:436
 msgid "Invalid login token."
 msgstr "Неверный токен для входа."
 
-#: flask_security/core.py:438
+#: flask_security/core.py:437
 msgid "Account is disabled."
 msgstr "Аккаунт отключён."
 
-#: flask_security/core.py:439
+#: flask_security/core.py:438
 msgid "Email not provided"
 msgstr "Почтовый адрес не введён"
 
-#: flask_security/core.py:440
+#: flask_security/core.py:439
 msgid "Invalid email address"
 msgstr "Неверный почтовый адрес"
 
-#: flask_security/core.py:441 flask_security/core.py:480
+#: flask_security/core.py:440 flask_security/core.py:479
 msgid "Invalid code"
 msgstr "Код недействителен"
 
-#: flask_security/core.py:442
+#: flask_security/core.py:441
 msgid "Password not provided"
 msgstr "Пароль не введён"
 
-#: flask_security/core.py:444
+#: flask_security/core.py:443
 #, python-format
 msgid "Password must be at least %(length)s characters"
 msgstr "Пароль должен содержать не менее %(length)s символов"
 
-#: flask_security/core.py:447
+#: flask_security/core.py:446
 msgid "Password not complex enough"
 msgstr "Пароль недостаточно сложный"
 
-#: flask_security/core.py:448
+#: flask_security/core.py:447
 msgid "Password on breached list"
 msgstr "Пароль в списке скомпрометированных"
 
-#: flask_security/core.py:450
+#: flask_security/core.py:449
 msgid "Failed to contact breached passwords site"
 msgstr "Не удалось соединиться с сайтом скомпрометированных паролей"
 
-#: flask_security/core.py:453
+#: flask_security/core.py:452
 msgid "Phone number not valid e.g. missing country code"
 msgstr "Номер телефона некорректен, например отсутствует код страны"
 
-#: flask_security/core.py:454
+#: flask_security/core.py:453
 msgid "Specified user does not exist"
 msgstr "Указанный пользователь не существует"
 
-#: flask_security/core.py:455
+#: flask_security/core.py:454
 msgid "Invalid password"
 msgstr "Неверный пароль"
 
-#: flask_security/core.py:456
+#: flask_security/core.py:455
 msgid "Password or code submitted is not valid"
 msgstr "Предоставленный пароль или код недействительны"
 
-#: flask_security/core.py:457
+#: flask_security/core.py:456
 msgid "You have successfully logged in."
 msgstr "Вы вошли."
 
-#: flask_security/core.py:458
+#: flask_security/core.py:457
 msgid "Forgot password?"
 msgstr "Забыли пароль?"
 
-#: flask_security/core.py:460
+#: flask_security/core.py:459
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
 msgstr "Ваш пароль был восстановлен и вы автоматически вошли."
 
-#: flask_security/core.py:467
+#: flask_security/core.py:466
 msgid "Your new password must be different than your previous password."
 msgstr "Ваш новый пароль должен отличаться от предыдущего."
 
-#: flask_security/core.py:470
+#: flask_security/core.py:469
 msgid "You successfully changed your password."
 msgstr "Вы удачно сменили пароль."
 
-#: flask_security/core.py:471
+#: flask_security/core.py:470
 msgid "Please log in to access this page."
 msgstr "Пожалуйста, войдите чтобы получить доступ к этой странице."
 
-#: flask_security/core.py:472
+#: flask_security/core.py:471
 msgid "Please reauthenticate to access this page."
 msgstr "Пожалуйста, войдите заново чтобы получить доступ к этой странице."
 
-#: flask_security/core.py:473
+#: flask_security/core.py:472
 msgid "Reauthentication successful"
 msgstr "Повторный вход прошел успешно"
 
-#: flask_security/core.py:475
+#: flask_security/core.py:474
 msgid "You can only access this endpoint when not logged in."
 msgstr "Вы можете получить доступ к данной странице, только если не авторизованы."
 
-#: flask_security/core.py:478
+#: flask_security/core.py:477
 msgid "Code has been sent."
 msgstr ""
 
-#: flask_security/core.py:479
+#: flask_security/core.py:478
 msgid "Failed to send code. Please try again later"
 msgstr "Не удалось отправить код. Пожалуйста, попробуйте позже"
 
-#: flask_security/core.py:481
+#: flask_security/core.py:480
 msgid "Your code has been confirmed"
 msgstr ""
 
-#: flask_security/core.py:483
+#: flask_security/core.py:482
 msgid "You successfully changed your two-factor method."
 msgstr "Вы успешно изменили метод двухфакторной авторизации."
 
-#: flask_security/core.py:487
+#: flask_security/core.py:486
 msgid "You currently do not have permissions to access this page"
 msgstr "В настоящее время у вас нет доступа к данной странице"
 
-#: flask_security/core.py:490
+#: flask_security/core.py:489
 msgid "Marked method is not valid"
 msgstr "Отмеченный метод недействителен"
 
-#: flask_security/core.py:492
+#: flask_security/core.py:491
 msgid "You successfully disabled two factor authorization."
 msgstr "Вы успешно отключили двухфакторную авторизацию."
 
-#: flask_security/core.py:495
+#: flask_security/core.py:494
 msgid "Requested method is not valid"
 msgstr "Запрошенный метод недействителен"
 
-#: flask_security/core.py:497
+#: flask_security/core.py:496
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
 msgstr ""
 "Настройка должна быть завершена в течение %(within)s. Пожалуйста, начните"
 " заново."
 
-#: flask_security/core.py:500
+#: flask_security/core.py:499
 msgid "Unified sign in setup successful"
 msgstr "Настройка единого способа входа прошла успешно"
 
-#: flask_security/core.py:501
+#: flask_security/core.py:500
 msgid "You must specify a valid identity to sign in"
 msgstr "Вы должны указать действительный идентификатор для входа"
 
-#: flask_security/core.py:502
+#: flask_security/core.py:501
 #, python-format
 msgid "Use this code to sign in: %(code)s."
 msgstr "Используйте данный код для входа: %(code)s."
 
-#: flask_security/core.py:504
+#: flask_security/core.py:503
 #, python-format
 msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
@@ -349,78 +349,78 @@ msgstr ""
 "Имя пользователя должно содержать не менее %(min)d и не более %(max)d "
 "символов"
 
-#: flask_security/core.py:511
+#: flask_security/core.py:510
 msgid "Username contains illegal characters"
 msgstr "Имя пользователя содержит недопустимые символы"
 
-#: flask_security/core.py:515
+#: flask_security/core.py:514
 msgid "Username can contain only letters and numbers"
 msgstr "Имя пользователя может содержать только буквы и цифры"
 
-#: flask_security/core.py:518
+#: flask_security/core.py:517
 msgid "Username not provided"
 msgstr "Имя пользователя не предоставлено"
 
-#: flask_security/core.py:520
+#: flask_security/core.py:519
 #, python-format
 msgid "%(username)s is already associated with an account."
 msgstr "Имя пользователя %(username)s уже связано с учетной записью."
 
-#: flask_security/core.py:524
+#: flask_security/core.py:523
 #, python-format
 msgid "WebAuthn operation must be completed within %(within)s. Please start over."
 msgstr ""
 "Операция WebAuthn должна быть завершена в течение %(within)s. Пожалуйста,"
 " начните сначала."
 
-#: flask_security/core.py:528
+#: flask_security/core.py:527
 msgid "Nickname for new credential is required."
 msgstr "Требуется псевдоним для новых учетных данных."
 
-#: flask_security/core.py:532
+#: flask_security/core.py:531
 #, python-format
 msgid "%(name)s is already associated with a credential."
 msgstr "%(name)s уже связан с учетными данными."
 
-#: flask_security/core.py:536
+#: flask_security/core.py:535
 #, python-format
 msgid "%(name)s not registered with current user."
 msgstr "%(name)s не зарегистрирован с текущим пользователем."
 
-#: flask_security/core.py:540
+#: flask_security/core.py:539
 #, python-format
 msgid "Successfully deleted WebAuthn credential with name: %(name)s"
 msgstr "Учетные данные WebAuthn с именем %(name)s успешно удалены"
 
-#: flask_security/core.py:544
+#: flask_security/core.py:543
 #, python-format
 msgid "Successfully added WebAuthn credential with name: %(name)s"
 msgstr "Учетные данные WebAuthn с именем %(name)s успешно добавлены"
 
-#: flask_security/core.py:548
+#: flask_security/core.py:547
 msgid "WebAuthn credential id already registered."
 msgstr "Учетные данные WebAuthn уже зарегистрированы."
 
-#: flask_security/core.py:552
+#: flask_security/core.py:551
 msgid "Unregistered WebAuthn credential id."
 msgstr "Незарегистрированный идентификатор учетных данных WebAuthn."
 
-#: flask_security/core.py:556
+#: flask_security/core.py:555
 msgid "WebAuthn credential doesn't belong to any user."
 msgstr "Учетные данные WebAuthn не принадлежат ни одному из пользователей."
 
-#: flask_security/core.py:560
+#: flask_security/core.py:559
 #, python-format
 msgid "Could not verify WebAuthn credential: %(cause)s."
 msgstr "Не удалось проверить учетные данные WebAuthn: %(cause)s."
 
-#: flask_security/core.py:564
+#: flask_security/core.py:563
 msgid "Credential not registered for this use (first or secondary)"
 msgstr ""
 "Учетные данные не зарегистрированы для этого использования (первичное или"
 " вторичное)"
 
-#: flask_security/core.py:568
+#: flask_security/core.py:567
 msgid "Credential user handle didn't match"
 msgstr ""
 
@@ -567,27 +567,27 @@ msgstr "Доступные методы двухфакторной аутент�
 msgid "Select"
 msgstr "Выбрать"
 
-#: flask_security/unified_signin.py:150
+#: flask_security/unified_signin.py:154
 msgid "Code or Password"
 msgstr "Код или пароль"
 
-#: flask_security/unified_signin.py:157
+#: flask_security/unified_signin.py:161
 msgid "Available Methods"
 msgstr "Доступные методы"
 
-#: flask_security/unified_signin.py:159
+#: flask_security/unified_signin.py:163
 msgid "Via email"
 msgstr "По электронной почте"
 
-#: flask_security/unified_signin.py:160
+#: flask_security/unified_signin.py:164
 msgid "Via SMS"
 msgstr "По СМС"
 
-#: flask_security/unified_signin.py:280
+#: flask_security/unified_signin.py:292
 msgid "Setup additional sign in option"
 msgstr "Настроить дополнительный метод входа"
 
-#: flask_security/unified_signin.py:292
+#: flask_security/unified_signin.py:305
 msgid "Delete active sign in option"
 msgstr ""
 
@@ -679,7 +679,7 @@ msgstr ""
 
 #: flask_security/templates/security/mf_recovery_codes.html:6
 #: flask_security/templates/security/two_factor_setup.html:76
-#: flask_security/templates/security/wan_register.html:76
+#: flask_security/templates/security/wan_register.html:81
 msgid "Recovery Codes"
 msgstr ""
 
@@ -720,7 +720,7 @@ msgstr ""
 "почту"
 
 #: flask_security/templates/security/two_factor_setup.html:41
-#: flask_security/templates/security/us_setup.html:74
+#: flask_security/templates/security/us_setup.html:71
 msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
@@ -742,19 +742,19 @@ msgid "WebAuthn"
 msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:61
-#: flask_security/templates/security/us_setup.html:102
+#: flask_security/templates/security/us_setup.html:100
 msgid "This application supports WebAuthn security keys."
 msgstr "Данное приложение поддерживает ключи для WebAuthn."
 
 #: flask_security/templates/security/two_factor_setup.html:62
 #: flask_security/templates/security/two_factor_setup.html:79
-#: flask_security/templates/security/us_setup.html:103
-#: flask_security/templates/security/wan_register.html:79
+#: flask_security/templates/security/us_setup.html:101
+#: flask_security/templates/security/wan_register.html:84
 msgid "You can set them up here."
 msgstr "Вы можете настроить их здесь."
 
 #: flask_security/templates/security/two_factor_setup.html:78
-#: flask_security/templates/security/wan_register.html:78
+#: flask_security/templates/security/wan_register.html:83
 msgid "This application supports setting up recovery codes."
 msgstr ""
 
@@ -779,15 +779,15 @@ msgstr "Нам было отправлено письмо для сброса в
 msgid "Setup Unified Sign In"
 msgstr "Настроить единый вход"
 
-#: flask_security/templates/security/us_setup.html:77
+#: flask_security/templates/security/us_setup.html:74
 msgid "Passwordless QRCode"
 msgstr "Беспарольный QR код"
 
-#: flask_security/templates/security/us_setup.html:85
+#: flask_security/templates/security/us_setup.html:82
 msgid "No methods have been enabled - nothing to setup"
 msgstr "Ни один из методов не был включен - нечего настраивать"
 
-#: flask_security/templates/security/us_setup.html:90
+#: flask_security/templates/security/us_setup.html:88
 msgid "Enter code here to complete setup"
 msgstr ""
 
@@ -819,18 +819,18 @@ msgstr ""
 "Начните с предоставления уникального имени для вашего нового ключа "
 "безопасности:"
 
-#: flask_security/templates/security/wan_register.html:55
+#: flask_security/templates/security/wan_register.html:60
 msgid "Currently registered security keys:"
 msgstr "Зарегистрированные ключи безопасности:"
 
-#: flask_security/templates/security/wan_register.html:56
+#: flask_security/templates/security/wan_register.html:61
 #, python-format
 msgid ""
 "Nickname: \"%s\" Usage: \"%s\" Transports: \"%s\" Discoverable: \"%s\" "
 "Device Type: \"%s\" Backed up? \"%s\" Last used on: %s"
 msgstr ""
 
-#: flask_security/templates/security/wan_register.html:66
+#: flask_security/templates/security/wan_register.html:71
 msgid "Delete Existing WebAuthn Security Key"
 msgstr "Удалить существующий ключ безопасности WebAuthn"
 

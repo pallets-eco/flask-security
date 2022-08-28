@@ -11,6 +11,9 @@ a new version needs to be created.
 This is Version 3:
     - Add support for webauthn.
     - Add support for 2FA recovery codes.
+    - password can be null.
+    - us_phone_number must be unique.
+    - Add support for list types.
 """
 
 from sqlalchemy import (

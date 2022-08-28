@@ -82,7 +82,7 @@ can be protected by requiring a 'fresh' or recent authentication. Flask-Security
     - :py:data:`SECURITY_VERIFY_URL` and :py:data:`SECURITY_US_VERIFY_URL` endpoints that request the user to re-authenticate.
     - ``VerifyForm`` and ``UsVerifyForm`` forms that can be extended.
 
-Flask-Security itself uses this as part of securing the :ref:`unified-sign-in` and :ref:`two-factor` setup endpoints.
+Flask-Security itself uses this as part of securing the :ref:`unified-sign-in`, :ref:`two-factor`, and :ref:`webauthn` setup endpoints.
 
 .. _pass_validation_topic:
 
