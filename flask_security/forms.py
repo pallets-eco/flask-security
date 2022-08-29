@@ -712,7 +712,7 @@ class ChangePasswordForm(Form):
                 return False
 
             self.password.data = _security._password_util.normalize(self.password.data)
-            if not verify_password(current_user.password, self.password.data):
+            if not verify_password(self.password.data, current_user.password):
                 self.password.errors.append(get_message("INVALID_PASSWORD")[0])
                 return False
             if self.password.data == self.new_password.data:
