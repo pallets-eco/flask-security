@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.0.1
+-------------
+
+Released September 6, 2022
+
+Fixes
++++++
+- (:pr:`662`) Fix Change Password regression. (tysonholub)
+
 Version 5.0.0
 -------------
 
