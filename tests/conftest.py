@@ -16,6 +16,8 @@ import typing as t
 from datetime import datetime
 from urllib.parse import urlsplit
 
+from passlib.ifc import PasswordHash
+from passlib.registry import register_crypt_handler
 import pytest
 from flask import Flask, Response, jsonify, render_template
 from flask import request as flask_request
@@ -59,6 +61,34 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from flask.testing import FlaskClient
 
 
+class FastHash(PasswordHash):
+    """Our own 'hasher'. For testing
+    we want a fast hash, but a real one such that the provided password
+    and hash aren't the same (which is what happens when using plaintext).
+    """
+
+    name = "fasthash"
+    setting_kwds = ()
+    context_kwds = ()
+
+    @classmethod
+    def hash(cls, secret, **kwds):
+        return f"$fh$1${secret}"
+
+    @classmethod
+    def verify(cls, secret, stored_hash, **context_kwds):
+        new_hash = f"$fh$1${secret}"
+        return new_hash == stored_hash
+
+    @classmethod
+    def identify(cls, stored_hash):
+        return stored_hash.startswith("$fh$1$")
+
+    @classmethod
+    def using(cls, relaxed=False, **settings):
+        return type("fasthash2", (cls,), {})
+
+
 class SecurityFixture(Flask):
     security: Security
     mail: Mail
@@ -82,8 +112,11 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     app.config["SECURITY_PASSWORD_SALT"] = "salty"
-    # Make this plaintext for most tests - reduces unit test time by 50%
-    app.config["SECURITY_PASSWORD_HASH"] = "plaintext"
+    # Make this fasthash for most tests - reduces unit test time by 50%
+    app.config["SECURITY_PASSWORD_SCHEMES"] = ["fasthash", "argon2", "bcrypt"]
+    app.config["SECURITY_PASSWORD_HASH"] = "fasthash"
+    app.config["SECURITY_PASSWORD_SINGLE_HASH"] = True
+    register_crypt_handler(FastHash)
     # Make this hex_md5 for token tests
     app.config["SECURITY_HASHING_SCHEMES"] = ["hex_md5"]
     app.config["SECURITY_DEPRECATED_HASHING_SCHEMES"] = []
