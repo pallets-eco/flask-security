@@ -128,7 +128,9 @@ def test_missing_hash_salt_option(app, sqlalchemy_datastore):
 
 def test_verify_password_argon2(app, sqlalchemy_datastore):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"SECURITY_PASSWORD_HASH": "argon2"}
+        app,
+        sqlalchemy_datastore,
+        **{"SECURITY_PASSWORD_HASH": "argon2", "SECURITY_PASSWORD_SINGLE_HASH": False}
     )
     with app.app_context():
         hashed_pwd = hash_password("pass")
