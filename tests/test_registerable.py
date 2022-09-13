@@ -9,7 +9,7 @@ import pytest
 import re
 from flask import Flask
 import markupsafe
-from tests.test_utils import authenticate, check_xlation, json_authenticate, logout
+from tests.test_utils import authenticate, check_xlation, json_authenticate, logout, populate_data
 
 from flask_security import Security
 from flask_security.core import UserMixin
@@ -844,3 +844,36 @@ def test_generic_response_recover(app, client, get_message):
     assert nr["existing_email"]
     assert nr["user"]
     assert nr["form_data"]["email"] == "dude@lp.com"
+
+
+def test_register_using_multiple_clients_in_with_clause(sqlalchemy_app):
+
+    app = sqlalchemy_app()
+
+    populate_data(app)
+
+    with app.test_client() as first_client, app.test_client() as second_client:
+
+        response = first_client.post(
+            "/register",
+            json={
+                "email": "dude@lp.com",
+                "password": "awesome sunset"
+            },
+            headers={"Content-Type": "application/json"}
+        )
+
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+
+        response = second_client.post(
+            "/register",
+            json={
+                "email": "lad@lp.com",
+                "password": "awesome sunset"
+            },
+            headers={"Content-Type": "application/json"}
+        )
+
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
