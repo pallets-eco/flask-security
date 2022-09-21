@@ -850,6 +850,8 @@ def test_verifying_token_from_version_3x(in_app_context):
 
 
 def test_change_token_uniquifier(app):
+    pytest.importorskip("sqlalchemy")
+
     # make sure that existing token no longer works once we change the token uniquifier
     from sqlalchemy import Column, String
     from flask_sqlalchemy import SQLAlchemy
@@ -901,6 +903,8 @@ def test_change_token_uniquifier(app):
 
 
 def test_null_token_uniquifier(app):
+    pytest.importorskip("sqlalchemy")
+
     # If existing record has a null fs_token_uniquifier, should be set on first use.
     from sqlalchemy import Column, String
     from flask_sqlalchemy import SQLAlchemy

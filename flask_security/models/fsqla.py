@@ -22,10 +22,11 @@ from sqlalchemy import (
     ForeignKey,
 )
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from flask_security import RoleMixin, UserMixin
+from flask_security import AsaList, RoleMixin, UserMixin
 
 
 class FsModels:
@@ -70,7 +71,9 @@ class FsRoleMixin(RoleMixin):
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255))
     # A comma separated list of strings
-    permissions = Column(UnicodeText, nullable=True)  # type: ignore
+    permissions = Column(
+        MutableList.as_mutable(AsaList()), nullable=True  # type: ignore
+    )
     update_datetime = Column(
         type_=DateTime,
         nullable=False,

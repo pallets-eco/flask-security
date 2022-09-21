@@ -1,33 +1,47 @@
-# Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
+# Copyright 2019-2022 by J. Christopher Wagner (jwag). All rights reserved.
 
 from fsqlalchemy1.app import Blog
 
-from .test_utils import create_fake_user, set_current_user
+from .test_utils import set_current_user
 
 
 def test_monitor_404(myapp):
-    user = create_fake_user(myapp.user_cls, roles=myapp.role_cls(name="basic"))
-    set_current_user(myapp.app, user)
+    ds = myapp.security.datastore
+    with myapp.app_context():
+        ds.db.create_all()
+
+        r1 = ds.create_role(name="basic")
+        ds.create_user(email="unittest@me.com", password="password", roles=[r1])
+        ds.commit()
+
+    set_current_user(myapp, ds, "unittest@me.com")
 
     # This requires "monitor" role
-    resp = myapp.test_client.get(
+    resp = myapp.test_client().get(
         "/ops",
-        headers={myapp.app.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"]: "token"},
+        headers={myapp.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"]: "token"},
     )
     assert resp.status_code == 403
 
 
 def test_blog_write(myapp):
-    user_role = myapp.role_cls(name="user", permissions={"user-read", "user-write"})
-    user = create_fake_user(myapp.user_cls, roles=user_role)
-    set_current_user(myapp.app, user)
+    ds = myapp.security.datastore
+    with myapp.app_context():
+        ds.db.create_all()
 
-    b1 = Blog(id=1, text="hi blog", user=user)
-    myapp.mocks["blog_mock"].query.get.return_value = b1
+        r1 = ds.create_role(name="user", permissions={"user-read", "user-write"})
+        user = ds.create_user(email="unittest@me.com", password="password", roles=[r1])
+
+        b1 = Blog(id=1, text="hi blog", user=user)
+        ds.put(b1)
+        ds.commit()
+
+    set_current_user(myapp, ds, "unittest@me.com")
+
     # This requires "user-write" permission
-    resp = myapp.test_client.post(
+    resp = myapp.test_client().post(
         "/blog/1",
-        headers={myapp.app.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"]: "token"},
+        headers={myapp.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"]: "token"},
         data=dict({"text": "A new blog"}),
     )
     assert resp.status_code == 200

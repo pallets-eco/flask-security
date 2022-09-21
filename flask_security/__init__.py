@@ -23,6 +23,7 @@ from .core import (
 from .datastore import (
     UserDatastore,
     SQLAlchemyUserDatastore,
+    AsaList,
     MongoEngineUserDatastore,
     PeeweeUserDatastore,
     PonyUserDatastore,

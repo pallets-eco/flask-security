@@ -269,6 +269,15 @@ def test_permissions_types(app, datastore):
         t4 = ds.find_role("test4")
         assert {"read", "write"} == t4.get_permissions()
 
+        ds.create_role(
+            name="test5",
+            permissions={"read"},
+        )
+        ds.commit()
+
+        t5 = ds.find_role("test5")
+        assert {"read"} == t5.get_permissions()
+
 
 def test_modify_permissions(app, datastore):
     ds = datastore
@@ -369,6 +378,7 @@ def test_modify_permissions_multi(app, datastore):
 
 def test_uuid(app, request, tmpdir, realdburl):
     """Test that UUID extension of postgresql works as a primary id for users"""
+    importorskip("sqlalchemy")
     import uuid
     from flask_sqlalchemy import SQLAlchemy
     from sqlalchemy import Boolean, Column, DateTime, Integer, ForeignKey, String
@@ -556,3 +566,111 @@ def test_mf_recovery_codes(app, datastore):
         user = datastore.find_user(email="matt@lp.com")
         codes = datastore.mf_get_recovery_codes(user)
         assert codes == ["r1", "r3"]
+
+
+def test_permissions_fsqla_v2(app):
+    importorskip("sqlalchemy")
+    # Make sure folks with fsqla_v2 work with new AsList column type
+    from sqlalchemy import insert
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security
+    from flask_security import SQLAlchemyUserDatastore
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    db = SQLAlchemy(app)
+
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        pass
+
+    with app.app_context():
+        db.create_all()
+        meta_data = db.MetaData(bind=db.engine)
+        db.MetaData.reflect(meta_data)
+        role_table = meta_data.tables["role"]
+
+        # Start by manually creating a role in the 4.1.x style
+        stmt = insert(role_table).values(
+            name="r1", description="r1 v41", permissions="read,write"
+        )
+        with db.engine.connect() as conn:
+            conn.execute(stmt)
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        # Verify can read something written by 4.x
+        r1 = ds.find_role("r1")
+        assert r1.get_permissions() == {"read", "write"}
+
+        ds.create_role(name="test5", permissions={"read"})
+        ds.commit()
+
+        t5 = ds.find_role("test5")
+        assert {"read"} == t5.get_permissions()
+
+
+def test_permissions_41(request, app, realdburl):
+    importorskip("sqlalchemy")
+    # Check compatibility with 4.1 DB
+    from sqlalchemy import Column, insert
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v2 as fsqla
+    from flask_security import Security
+    from flask_security import SQLAlchemyUserDatastore
+    from tests.conftest import _setup_realdb, _teardown_realdb
+
+    if realdburl:
+        db_url, db_info = _setup_realdb(realdburl)
+        app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    else:
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+
+    def tear_down():
+        if realdburl:
+            db.drop_all()
+            _teardown_realdb(db_info)
+
+    request.addfinalizer(tear_down)
+
+    db = SQLAlchemy(app)
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        # permissions = Column(UnicodeText, nullable=True)  # type: ignore
+        from flask_security import AsaList
+        from sqlalchemy.ext.mutable import MutableList
+
+        # A comma separated list of strings
+        permissions = Column(
+            MutableList.as_mutable(AsaList()), nullable=True  # type: ignore
+        )
+
+    class User(db.Model, fsqla.FsUserMixin):
+        pass
+
+    with app.app_context():
+        db.create_all()
+        meta_data = db.MetaData(bind=db.engine)
+        db.MetaData.reflect(meta_data)
+        role_table = meta_data.tables["role"]
+
+        # Start by manually creating a role in the 4.1.x style
+        stmt = insert(role_table).values(
+            name="r1", description="r1 v41", permissions="read,write"
+        )
+        with db.engine.connect() as conn:
+            conn.execute(stmt)
+
+    ds = SQLAlchemyUserDatastore(db, User, Role)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        r1 = ds.find_role("r1")
+        assert r1.get_permissions() == {"read", "write"}

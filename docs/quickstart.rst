@@ -474,7 +474,7 @@ in 2 ways:
 * Complete app with in-memory/temporary DB (with little or no mocking).
 
 Look in the `Flask-Security repo`_ *examples* directory for actual code that implements the
-first approach.
+second approach which is much simpler and with an in-memory DB fairly fast.
 
 You also might want to set the following configurations in your conftest.py:
 

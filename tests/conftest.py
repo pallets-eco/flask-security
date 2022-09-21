@@ -466,7 +466,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         Text,
         ForeignKey,
     )
-    from flask_security.models.fsqla_v3 import AsaList
+    from flask_security import AsaList
 
     f, path = tempfile.mkstemp(
         prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)

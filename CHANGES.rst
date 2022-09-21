@@ -3,6 +3,17 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.0.2
+-------------
+
+Released September x, 2022
+
+Fixes
++++++
+- (:issue:`673`) Role permissions backwards compatibility bug. For SQL based datastores
+  that use Flask-Security's models.fsqla_vx - there should be NO issues. If you declare
+  your own models - please see the 5.0.0 releases notes for required change.
+
 Version 5.0.1
 -------------
 
@@ -47,10 +58,11 @@ Deprecations
 - (:pr:`657`) The ability to pass in a json_encoder_cls as part of initialization has been removed
   since Flask 2.2 has deprecated and replaced that functionality.
 - (:pr:`655`) Flask has deprecated @before_first_request. This was used mostly in examples/quickstart.
-  These have been changed to use app.app_context() prior to running the app. FS itself used it in
+  These have been changed to use app.app_context() prior to running the app. Flask-Security itself used it in
   2 places - to populate `_` in jinja globals if Babel wasn't initialized and to perform
-  various configuration sanity checks w.r.t. WTF CSRF. All FS templates have been converted
-  to use `_fsdomain` rather than ``_`` so FS no longer will populate ``_``. The configuration checks
+  various configuration sanity checks w.r.t. WTF CSRF. All Flask-Security templates have been converted
+  to use `_fsdomain` rather than ``_`` so Flask-Security no longer sets ``_`` into jinja2 globals.
+  The configuration checks
   have been moved to the end of Security::init_app() - so it is now imperative that `FlaskWTF::CSRFProtect()`
   be called PRIOR to initializing Flask-Security.
 - encrypt_password method has been removed. It has been deprecated since 2.0.2
@@ -134,9 +146,20 @@ Other:
   The key `field_errors` will contain the dict as specified by WTForms. Please note that starting with WTForms 3.0
   form-level errors are supported and show up in the dict with the field name/key of "none". There are no changes to non-error
   related JSON responses.
-- Permissions - The Role Model now stores permissions as a list, and requires that the underlying DB ORM map that to a supported
-  DB type. For SQLAlchemy, this is mapped to a comma separated string (as before). For Mongo, a ListField can be directly used. For
-  SQLAlchemy DBs the Column type (UnicodeText) didn't change so no data migration should be required.
+- Permissions **THIS IS A BREAKING CHANGE**. The Role Model now stores permissions as a list, and requires that the underlying DB ORM map that to a supported
+  DB type. For SQLAlchemy, this is mapped to a comma separated string (as before). For
+  SQLAlchemy DBs the underlying Column type (UnicodeText) didn't change so no data migration should be required.
+  However, the ORM Column type did change and requires the following change to your model::
+
+    from flask_security import AsaList
+    from sqlalchemy.ext.mutable import MutableList
+    class Role(Base, RoleMixin):
+        ...
+        permissions = Column(MutableList.as_mutable(AsaList()), nullable=True)
+        ...
+
+  If your application makes use of Flask-Security's models.fsqla_vX classes - no changes are required.
+  For Mongo, a ListField can be directly used.
 - CSRF - As mentioned above, it is now required that `FlaskWTF::CSRFProtect()`, if used, must be called PRIOR to initializing Flask-Security.
 - json_encoder_cls - As mentioned above - Flask-Security initialization on longer accepts overriding the json_encoder class. If this is required,
   update to Flask >=2.2 and implement Flask's JSONProvider interface.

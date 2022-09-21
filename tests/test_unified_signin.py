@@ -1659,6 +1659,8 @@ def test_bad_sender(app, client, get_message):
 
 @pytest.mark.registerable()
 def test_replace_send_code(app, get_message):
+    pytest.importorskip("sqlalchemy")
+
     from flask_sqlalchemy import SQLAlchemy
     from flask_security.models import fsqla_v2 as fsqla
     from flask_security import Security, us_send_security_token
