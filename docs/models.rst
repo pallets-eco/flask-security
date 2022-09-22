@@ -121,7 +121,7 @@ Permissions
 If you want to protect endpoints with permissions, and assign permissions to roles
 that are then assigned to users, the ``Role`` model requires:
 
-* ``permissions`` (list of string/UnicodeText, nullable)
+* ``permissions`` (list of UnicodeText, nullable)
 
 WebAuthn
 ^^^^^^^^

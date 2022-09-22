@@ -28,31 +28,12 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.sql import func
-import sqlalchemy.types as types
 
 
 from .fsqla_v2 import FsModels as FsModelsV2
 from .fsqla_v2 import FsUserMixin as FsUserMixinV2
 from .fsqla_v2 import FsRoleMixin as FsRoleMixinV2
-from flask_security import WebAuthnMixin
-
-
-class AsaList(types.TypeDecorator):
-    # SQL-like DBs don't have a List type - so do that here by converting to a comma
-    # separate string.
-    impl = types.UnicodeText
-
-    def process_bind_param(self, value, dialect):
-        # produce a string from an iterable
-        try:
-            return ",".join(value)
-        except TypeError:
-            return value
-
-    def process_result_value(self, value, dialect):
-        if value:
-            return value.split(",")
-        return []
+from flask_security import AsaList, WebAuthnMixin
 
 
 class FsModels(FsModelsV2):
@@ -60,9 +41,7 @@ class FsModels(FsModelsV2):
 
 
 class FsRoleMixin(FsRoleMixinV2):
-    permissions = Column(
-        MutableList.as_mutable(AsaList()), nullable=True  # type: ignore
-    )
+    pass
 
 
 class FsUserMixin(FsUserMixinV2):
