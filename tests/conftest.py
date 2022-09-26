@@ -410,6 +410,10 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
+    # In Flask-SQLAlchemy >= 3.0.0 queries are no longer logged automatically,
+    # even in debug or testing mode.
+    app.config["SQLALCHEMY_RECORD_QUERIES"] = True
+
     db = SQLAlchemy(app)
 
     fsqla.FsModels.set_db_info(db)

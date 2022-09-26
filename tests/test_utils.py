@@ -201,9 +201,14 @@ def get_num_queries(datastore):
     return None if datastore doesn't support this.
     """
     if is_sqlalchemy(datastore):
-        from flask_sqlalchemy import get_debug_queries
+        try:
+            # Flask-SQLAlachemy >= 3.0.0
+            from flask_sqlalchemy.record_queries import get_recorded_queries
+        except ImportError:
+            # Flask-SQLAlchemy < 3.0.0
+            from flask_sqlalchemy import get_debug_queries as get_recorded_queries
 
-        return len(get_debug_queries())
+        return len(get_recorded_queries())
     return None
 
 
