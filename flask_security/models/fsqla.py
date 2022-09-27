@@ -117,7 +117,9 @@ class FsUserMixin(UserMixin):
         return FsModels.db.relationship(
             "Role",
             secondary=FsModels.roles_users,
-            backref=FsModels.db.backref("users", lazy="dynamic"),
+            backref=FsModels.db.backref(
+                "users", lazy="dynamic", cascade_backrefs=False
+            ),
         )
 
     create_datetime = Column(type_=DateTime, nullable=False, server_default=func.now())
