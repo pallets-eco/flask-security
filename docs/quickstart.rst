@@ -174,7 +174,7 @@ and models.py.
     if __name__ == '__main__':
         with app.app_context():
             # Create a user to test with
-            initdb()
+            init_db()
             if not app.security.datastore.find_user(email="test@me.com"):
                 app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
             db_session.commit()
