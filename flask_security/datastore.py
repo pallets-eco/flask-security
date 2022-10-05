@@ -15,11 +15,6 @@ import uuid
 
 from .utils import config_value as cv
 
-try:
-    from sqlalchemy import select as sa_select
-except ImportError:
-    sa_select = None  # type: ignore
-
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask_sqlalchemy
     import flask_mongoengine
@@ -771,7 +766,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
     ) -> t.Union["User", None]:
         from sqlalchemy import func as alchemyFn
 
-        query = sa_select(self.user_model)
+        query = self.user_model.query
         if cv("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
 
@@ -787,23 +782,17 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
             subquery = alchemyFn.lower(
                 getattr(self.user_model, attr)
             ) == alchemyFn.lower(identifier)
-            query = query.filter(subquery).limit(1)
+            return query.filter(subquery).first()
         else:
-            query = query.filter_by(**kwargs).limit(1)
-
-        return self.db.session.execute(query).unique().scalar()
+            return query.filter_by(**kwargs).first()
 
     def find_role(self, role: str) -> t.Union["Role", None]:
-        query = sa_select(self.role_model).filter_by(name=role).limit(1)
-        return self.db.session.execute(query).scalar()
+        return self.role_model.query.filter_by(name=role).first()  # type: ignore
 
     def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
-        query = (
-            sa_select(self.webauthn_model)
-            .filter_by(credential_id=credential_id)
-            .limit(1)
-        )
-        return self.db.session.execute(query).scalar()
+        return self.webauthn_model.query.filter_by(  # type: ignore
+            credential_id=credential_id
+        ).first()
 
     def create_webauthn(
         self,
