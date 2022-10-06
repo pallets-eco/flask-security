@@ -437,8 +437,9 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
     def tear_down():
         if realdburl:
-            db.drop_all()
-            _teardown_realdb(db_info)
+            with app.app_context():
+                db.drop_all()
+                _teardown_realdb(db_info)
 
     request.addfinalizer(tear_down)
 
