@@ -457,8 +457,14 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
     """
     pytest.importorskip("sqlalchemy")
     from sqlalchemy import create_engine
-    from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
-    from sqlalchemy.ext.declarative import declarative_base, declared_attr
+    from sqlalchemy.orm import (
+        scoped_session,
+        sessionmaker,
+        relationship,
+        backref,
+        declarative_base,
+    )
+    from sqlalchemy.ext.declarative import declared_attr
     from sqlalchemy.ext.mutable import MutableList
     from sqlalchemy.sql import func
     from sqlalchemy import (
@@ -566,7 +572,9 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
         active = Column(Boolean())
         confirmed_at = Column(DateTime())
         roles = relationship(
-            "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")
+            "Role",
+            secondary="roles_users",
+            backref=backref("users", lazy="dynamic", cascade_backrefs=False),
         )
         update_datetime = Column(
             DateTime,

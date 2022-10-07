@@ -591,8 +591,8 @@ def test_permissions_fsqla_v2(app):
 
     with app.app_context():
         db.create_all()
-        meta_data = db.MetaData(bind=db.engine)
-        db.MetaData.reflect(meta_data)
+        meta_data = db.MetaData()
+        meta_data.reflect(db.engine)
         role_table = meta_data.tables["role"]
 
         # Start by manually creating a role in the 4.1.x style
@@ -600,7 +600,8 @@ def test_permissions_fsqla_v2(app):
             name="r1", description="r1 v41", permissions="read,write"
         )
         with db.engine.connect() as conn:
-            conn.execute(stmt)
+            with conn.begin():
+                conn.execute(stmt)
 
     ds = SQLAlchemyUserDatastore(db, User, Role)
     app.security = Security(app, datastore=ds)
@@ -659,8 +660,8 @@ def test_permissions_41(request, app, realdburl):
 
     with app.app_context():
         db.create_all()
-        meta_data = db.MetaData(bind=db.engine)
-        db.MetaData.reflect(meta_data)
+        meta_data = db.MetaData()
+        meta_data.reflect(db.engine)
         role_table = meta_data.tables["role"]
 
         # Start by manually creating a role in the 4.1.x style
@@ -668,7 +669,8 @@ def test_permissions_41(request, app, realdburl):
             name="r1", description="r1 v41", permissions="read,write"
         )
         with db.engine.connect() as conn:
-            conn.execute(stmt)
+            with conn.begin():
+                conn.execute(stmt)
 
     ds = SQLAlchemyUserDatastore(db, User, Role)
     app.security = Security(app, datastore=ds)
