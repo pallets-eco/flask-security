@@ -75,6 +75,15 @@ def json_logout(client, token, endpoint=None):
     )
 
 
+def get_csrf_token(client):
+    response = client.get(
+        "/login",
+        data={},
+        headers={"Accept": "application/json"},
+    )
+    return response.json["response"]["csrf_token"]
+
+
 def get_session(response):
     """Return session cookie contents.
     This a base64 encoded json.

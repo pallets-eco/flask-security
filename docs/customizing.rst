@@ -90,8 +90,9 @@ Forms
 -----
 
 All forms can be overridden. For each form used, you can specify a
-replacement class. This allows you to add extra fields to the
-register form or override validators::
+replacement class. This allows you to add extra fields to any
+form or override validators. For example it is often desired to add additional
+personal information fields to the registration form::
 
     from flask_security import RegisterForm
     from wtforms import StringField
@@ -152,6 +153,43 @@ The following is a list of all the available form overrides:
 .. tip::
     Changing/extending the form class won't directly change how it is displayed.
     You need to ALSO provide your own template and explicitly add the new fields you want displayed.
+
+.. _form_instantiation:
+
+Controlling Form Instantiation
+++++++++++++++++++++++++++++++
+This is an advanced concept! Please see :meth:`.Security.set_form_info` and
+:class:`.FormInfo`.
+
+This is an example of providing your own form instantiator using the 'form clone' pattern.
+In this example we are injecting an external `service` into the form for use in validation::
+
+    from flask_security import FormInfo
+
+    class MyLoginForm(LoginForm):
+        def __init__(self, *args, service=None, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.myservice = service
+
+        def instantiator(self, form_name, form_cls, *args, **kwargs):
+            return MyLoginForm(*args, service=self.myservice, **kwargs)
+
+        def validate(self, **kwargs: t.Any) -> bool:
+            if not super().validate(**kwargs):  # pragma: no cover
+                return False
+            if not self.myservice(self.email.data):
+                self.email.errors.append("Not happening")
+                return False
+            return True
+
+    # A silly service that only allows 'matt'' log in!
+    def login_checker(email):
+        return True if email == "matt@lp.com" else False
+
+    with app.test_request_context():
+        # Flask-WTForms require a request context.
+        fi = MyLoginForm(formdata=None, service=login_checker)
+    app.security.set_form_info("login_form", FormInfo(fi.instantiator))
 
 .. _custom_login_form:
 

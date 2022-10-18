@@ -208,8 +208,8 @@ def test_init_app_kwargs_override_constructor_kwargs(app, datastore):
     )
     security.init_app(app, login_form=InitLoginForm)
 
-    assert security.login_form == InitLoginForm
-    assert security.register_form == ConRegisterForm
+    assert security.forms["login_form"].cls == InitLoginForm
+    assert security.forms["register_form"].cls == ConRegisterForm
 
 
 def test_create_user_with_roles_and_permissions(app, datastore):

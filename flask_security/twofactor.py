@@ -11,9 +11,8 @@
 import typing as t
 
 from flask import current_app as app, redirect, request, session
-from werkzeug.datastructures import MultiDict
 
-from .forms import TwoFactorRescueForm
+from .forms import DummyForm, TwoFactorRescueForm
 from .proxies import _security, _datastore
 from .tf_plugin import TfPluginBase, tf_clean_session
 from .utils import (
@@ -206,6 +205,6 @@ class CodeTfPlugin(TfPluginBase):
                 return redirect(url_for_security("two_factor_token_validation"))
 
         # JSON response - Fake up a form - doesn't really matter which.
-        form = _security.login_form(MultiDict([]))
+        form = DummyForm(formdata=None)
         form.user = user
         return base_render_json(form, include_user=False, additional=json_payload)

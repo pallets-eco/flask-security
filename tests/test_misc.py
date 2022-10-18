@@ -28,6 +28,7 @@ from tests.test_utils import (
     capture_flashes,
     capture_reset_password_requests,
     check_xlation,
+    get_csrf_token,
     init_app_with_options,
     json_authenticate,
     logout,
@@ -394,6 +395,109 @@ def test_custom_forms_via_config(app, sqlalchemy_datastore):
 
     response = client.get("/register")
     assert b"My Register Email Address Field" in response.data
+
+
+def test_custom_form_instantiator(app, client, get_message):
+    # Test application form instantiation.
+    # This is using the form factory pattern.
+    # Note in this case - Flask-Security doesn't even know the form class name.
+    from flask_security import FormInfo
+
+    class FormInstantiator:
+        def __init__(self, myservice):
+            self.myservice = myservice
+
+        def instantiator(self, form_name, form_cls, *args, **kwargs):
+            if form_name == "login_form":
+                return MyLoginForm(*args, service=self.myservice, **kwargs)
+            raise ValueError("Unknown Form")
+
+    class MyLoginForm(LoginForm):
+        def __init__(self, *args, service=None, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.myservice = service
+
+        def validate(self, **kwargs: t.Any) -> bool:
+            if not super().validate(**kwargs):  # pragma: no cover
+                return False
+            if not self.myservice(self.email.data):
+                self.email.errors.append("Not happening")
+                return False
+            return True
+
+    def login_checker(email):
+        return True if email == "matt@lp.com" else False
+
+    fi = FormInstantiator(login_checker)
+    app.security.set_form_info("login_form", FormInfo(fi.instantiator))
+
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+    logout(client)
+
+    # Try a normally legit user - but our service denies it
+    response = authenticate(client, email="joe@lp.com")
+    assert b"Not happening" in response.data
+
+
+def test_custom_form_instantiator2(app, client, get_message):
+    # Test application form instantiation.
+    # This is using the form clone pattern.
+    # Note in this case - Flask-Security doesn't even know the form class name.
+    app.config["WTF_CSRF_ENABLED"] = True
+    from flask_security import FormInfo
+
+    class MyLoginForm(LoginForm):
+        def __init__(self, *args, service=None, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.myservice = service
+
+        def instantiator(self, form_name, form_cls, *args, **kwargs):
+            return MyLoginForm(*args, service=self.myservice, **kwargs)
+
+        def validate(self, **kwargs: t.Any) -> bool:
+            if not super().validate(**kwargs):  # pragma: no cover
+                return False
+            if not self.myservice(self.email.data):
+                self.email.errors.append("Not happening")
+                return False
+            return True
+
+    def login_checker(email):
+        return True if email == "matt@lp.com" else False
+
+    with app.test_request_context():
+        fi = MyLoginForm(formdata=None, service=login_checker)
+    app.security.set_form_info("login_form", FormInfo(fi.instantiator))
+
+    csrf_token = get_csrf_token(client)
+    response = client.post(
+        "/login",
+        data=dict(email="matt@lp.com", password="password", csrf_token=csrf_token),
+        follow_redirects=True,
+    )
+    assert b"Welcome matt@lp.com" in response.data
+    logout(client)
+
+    # Try a normally legit user - but our service denies it
+    csrf_token = get_csrf_token(client)
+    response = client.post(
+        "/login",
+        data=dict(email="joe@lp.com", password="password", csrf_token=csrf_token),
+    )
+    assert b"Not happening" in response.data
+
+
+def test_custom_form_setting(app, sqlalchemy_datastore):
+    from flask_security import FormInfo
+
+    security = Security(app=app, datastore=sqlalchemy_datastore)
+    with pytest.raises(ValueError) as vex:
+        security.set_form_info("mylogin_form", FormInfo())
+    assert "Unknown form name mylogin_form" == str(vex.value)
+    with pytest.raises(ValueError) as vex:
+        security.set_form_info("login_form", FormInfo())
+    assert "form class must be provided" in str(vex.value)
 
 
 def test_form_required(app, sqlalchemy_datastore):

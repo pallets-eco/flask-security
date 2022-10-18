@@ -275,12 +275,9 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     def revert_forms():
         # Some forms/tests have dynamic fields - be sure to revert them.
         if hasattr(app, "security"):
-            if hasattr(app.security.login_form, "username"):
-                del app.security.login_form.username
-            if hasattr(app.security.register_form, "username"):
-                del app.security.register_form.username
-            if hasattr(app.security.confirm_register_form, "username"):
-                del app.security.confirm_register_form.username
+            for form_name in ["login_form", "register_form", "confirm_register_form"]:
+                if hasattr(app.security.forms[form_name].cls, "username"):
+                    del app.security.forms[form_name].cls.username
 
     request.addfinalizer(revert_forms)
     return app
