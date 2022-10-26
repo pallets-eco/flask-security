@@ -36,7 +36,6 @@ import typing as t
 from flask import current_app as app
 from flask import after_this_request, request, session
 from flask_login import current_user
-from werkzeug.datastructures import MultiDict
 from wtforms import (
     BooleanField,
     PasswordField,
@@ -54,6 +53,8 @@ from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
     Form,
     Required,
+    build_form_from_request,
+    build_form,
     form_errors_munge,
     generic_message,
     get_form_field_label,
@@ -80,7 +81,6 @@ from .utils import (
     lookup_identity,
     propagate_next,
     send_mail,
-    suppress_form_csrf,
     url_for_security,
     view_commit,
 )
@@ -414,12 +414,7 @@ def us_signin_send_code() -> "ResponseValue":
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a method request to send a code.
     """
-    form_class = _security.us_signin_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("us_signin_form")
     form.submit_send_code.data = True
     form.submit.data = False
 
@@ -490,12 +485,7 @@ def us_verify_send_code() -> "ResponseValue":
     """
     Send code during verify. POST only.
     """
-    form_class = _security.us_verify_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("us_verify_form")
     form.submit_send_code.data = True
     form.submit.data = False
 
@@ -575,15 +565,7 @@ def us_signin() -> "ResponseValue":
         else:
             return redirect(get_post_login_redirect())
 
-    form_class = _security.us_signin_form
-
-    if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("us_signin_form")
     form.submit.data = True
     form.submit_send_code.data = False
 
@@ -655,15 +637,7 @@ def us_verify() -> "ResponseValue":
     will have filled in ?next=xxx - which we want to carefully not lose as we
     go through these steps.
     """
-    form_class = _security.us_verify_form
-
-    if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("us_verify_form")
     form.submit.data = True
     form.submit_send_code.data = False
 
@@ -701,7 +675,7 @@ def us_verify() -> "ResponseValue":
             qparams={"next": propagate_next(request.url)},
         ),
         has_webauthn_verify_credential=webauthn_available,
-        wan_verify_form=_security.wan_verify_form(formdata=None),
+        wan_verify_form=build_form("wan_verify_form"),
         **_security._run_ctx_processor("us_verify")
     )
 
@@ -800,15 +774,7 @@ def us_setup() -> "ResponseValue":
     use a timed signed token to pass along state.
     GET - retrieve current info (json) or form.
     """
-    form_class = _security.us_setup_form
-
-    if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("us_setup_form")
 
     setup_methods = _compute_setup_methods()
     active_methods = _compute_active_methods(current_user)
@@ -920,7 +886,7 @@ def us_setup() -> "ResponseValue":
             code_sent=form.chosen_method.data in _compute_code_methods(),
             chosen_method=form.chosen_method.data,
             us_setup_form=form,
-            us_setup_validate_form=_security.us_setup_validate_form(formdata=None),
+            us_setup_validate_form=build_form("us_setup_validate_form"),
             **qrcode_values,
             state=state_token,
             **_security._run_ctx_processor("us_setup")
@@ -959,13 +925,7 @@ def us_setup_validate(token: str) -> "ResponseValue":
     The token is the state variable which is signed and timed
     and contains all the state that once confirmed will be stored in the user record.
     """
-
-    form_class = _security.us_setup_validate_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("us_setup_validate_form")
 
     expired, invalid, state = check_and_get_token_status(
         token, "us_setup", get_within_delta("US_SETUP_WITHIN")

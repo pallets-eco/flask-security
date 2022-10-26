@@ -42,7 +42,6 @@ from wtforms import ValidationError
 from itsdangerous import BadSignature, SignatureExpired
 from werkzeug import __version__ as werkzeug_version
 from werkzeug.local import LocalProxy
-from werkzeug.datastructures import MultiDict
 
 from .quart_compat import best, get_quart_status
 from .proxies import _security, _datastore, _pwd_context, _hashing_context
@@ -114,7 +113,9 @@ def find_csrf_field_name():
     overridable.
     We take the field name from the login_form as set by the configuration.
     """
-    form = _security.login_form(MultiDict([]))
+    from .forms import DummyForm
+
+    form = DummyForm(formdata=None)
     if hasattr(form.meta, "csrf_field_name"):
         return form.meta.csrf_field_name
     return None
@@ -1063,9 +1064,6 @@ def default_render_template(*args, **kwargs):
 
 
 class SmsSenderBaseClass(metaclass=abc.ABCMeta):
-    def __init__(self, *args, **kwargs):
-        pass
-
     @abc.abstractmethod
     def send_sms(
         self, from_number: str, to_number: str, msg: str

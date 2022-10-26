@@ -18,6 +18,7 @@ from .core import (
     UserMixin,
     WebAuthnMixin,
     AnonymousUser,
+    FormInfo,
     current_user,
 )
 from .datastore import (
@@ -43,6 +44,7 @@ from .decorators import (
     unauth_csrf,
 )
 from .forms import (
+    Form,
     ChangePasswordForm,
     ForgotPasswordForm,
     LoginForm,
@@ -127,4 +129,4 @@ from .webauthn import (
 )
 from .webauthn_util import WebauthnUtil
 
-__version__ = "5.0.2"
+__version__ = "5.1.0"

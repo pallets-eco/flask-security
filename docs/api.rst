@@ -233,6 +233,8 @@ Forms
 .. autoclass:: flask_security.WebAuthnSigninResponseForm
 .. autoclass:: flask_security.WebAuthnDeleteForm
 .. autoclass:: flask_security.WebAuthnVerifyForm
+.. autoclass:: flask_security.Form
+.. autoclass:: flask_security.FormInfo
 
 .. _signals_topic:
 
