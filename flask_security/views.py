@@ -40,7 +40,6 @@ from flask import (
     session,
 )
 from flask_login import current_user
-from werkzeug.datastructures import ImmutableMultiDict, MultiDict
 
 from .changeable import change_user_password
 from .confirmable import (
@@ -49,7 +48,7 @@ from .confirmable import (
     send_confirmation_instructions,
 )
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
-from .forms import form_errors_munge
+from .forms import DummyForm, build_form_from_request, build_form, form_errors_munge
 from .passwordless import login_token_status, send_login_instructions
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
@@ -99,7 +98,6 @@ from .utils import (
     logout_user,
     send_mail,
     slash_url_suffix,
-    suppress_form_csrf,
     url_for_security,
     view_commit,
 )
@@ -163,16 +161,7 @@ def login() -> "ResponseValue":
         else:
             return redirect(get_url(cv("POST_LOGIN_VIEW")))
 
-    form_class = _security.login_form
-
-    if request.is_json:
-        # Allow GET, so we can return csrf_token for pre-login.
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(MultiDict([]), meta=suppress_form_csrf())
-    else:
-        form = form_class(request.form, meta=suppress_form_csrf())
+    form = build_form_from_request("login_form")
 
     if form.validate_on_submit():
         assert form.user is not None
@@ -235,14 +224,9 @@ def login() -> "ResponseValue":
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def verify():
     """View function which handles a reauthentication request."""
-    form_class = _security.verify_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
-
+    form = build_form_from_request("verify_form")
     form.user = current_user
+
     if form.validate_on_submit():
         # form may have called verify_and_update_password()
         after_this_request(view_commit)
@@ -266,7 +250,7 @@ def verify():
         cv("VERIFY_TEMPLATE"),
         verify_form=form,
         has_webauthn_verify_credential=webauthn_available,
-        wan_verify_form=_security.wan_verify_form(formdata=None),
+        wan_verify_form=build_form("wan_verify_form"),
         **_ctx("verify"),
     )
 
@@ -294,16 +278,11 @@ def register() -> "ResponseValue":
     # make sense if you can't reset your password but in modern (2020) UX models
     # don't ask twice.
     if _security.confirmable or request.is_json:
-        form_class = _security.confirm_register_form
+        form_name = "confirm_register_form"
     else:
-        form_class = _security.register_form
+        form_name = "register_form"
+    form = build_form_from_request(form_name)
 
-    if request.is_json:
-        form_data: ImmutableMultiDict = ImmutableMultiDict(request.get_json())
-    else:
-        form_data = request.form
-
-    form = form_class(form_data, meta=suppress_form_csrf())
     if form.validate_on_submit():
         after_this_request(view_commit)
         did_login = False
@@ -352,13 +331,7 @@ def register() -> "ResponseValue":
 @unauth_csrf(fall_through=True)
 def send_login():
     """View function that sends login instructions for passwordless login"""
-
-    form_class = _security.passwordless_login_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("passwordless_login_form")
 
     if form.validate_on_submit():
         send_login_instructions(form.user)
@@ -418,13 +391,7 @@ def token_login(token):
 @unauth_csrf(fall_through=True)
 def send_confirmation():
     """View function which sends confirmation instructions."""
-
-    form_class = _security.send_confirmation_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("send_confirmation_form")
 
     if form.validate_on_submit():
         send_confirmation_instructions(form.user)
@@ -530,13 +497,7 @@ def confirm_email(token):
 @unauth_csrf(fall_through=True)
 def forgot_password():
     """View function that handles a forgotten password request."""
-
-    form_class = _security.forgot_password_form
-
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("forgot_password_form")
 
     if form.validate_on_submit():
         send_reset_password_instructions(form.user)
@@ -597,11 +558,7 @@ def reset_password(token):
     """
 
     expired, invalid, user = reset_password_token_status(token)
-    form_class = _security.reset_password_form
-    if request.is_json:
-        form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("reset_password_form")
     form.user = user
 
     if request.method == "GET":
@@ -678,9 +635,9 @@ def reset_password(token):
         # two factor not required - just login
         login_user(user, authn_via=["reset"])
         if _security._want_json(request):
-            login_form = _security.login_form(formdata=None)
-            login_form.user = user
-            return base_render_json(login_form, include_auth_token=True)
+            dummy_form = DummyForm(formdata=None)
+            dummy_form.user = user
+            return base_render_json(dummy_form, include_auth_token=True)
         else:
             do_flash(*get_message("PASSWORD_RESET"))
             return redirect(
@@ -702,12 +659,7 @@ def reset_password(token):
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def change_password():
     """View function which handles a change password request."""
-
-    form_class = _security.change_password_form
-    form_data = None
-    if request.content_length:
-        form_data = MultiDict(request.get_json()) if request.is_json else request.form
-    form = form_class(formdata=form_data, meta=suppress_form_csrf())
+    form = build_form_from_request("change_password_form")
 
     if not current_user.password:
         # This is case where user registered w/o a password - since we can't
@@ -768,15 +720,7 @@ def two_factor_setup():
     state via the session as part of login to show a) who and b) that they successfully
     authenticated.
     """
-    form_class = _security.two_factor_setup_form
-
-    if request.is_json:
-        if request.content_length:
-            form = form_class(MultiDict(request.get_json()), meta=suppress_form_csrf())
-        else:
-            form = form_class(formdata=None, meta=suppress_form_csrf())
-    else:
-        form = form_class(meta=suppress_form_csrf())
+    form = build_form_from_request("two_factor_setup_form")
 
     if not current_user.is_authenticated:
         # This is the initial login case
@@ -877,7 +821,7 @@ def two_factor_setup():
                 authr_username=authr_setup_values["username"],
                 authr_issuer=authr_setup_values["issuer"],
             )
-        code_form = _security.two_factor_verify_code_form(formdata=None)
+        code_form = build_form("two_factor_verify_code_form")
         if not _security._want_json(request):
             return _security.render_template(
                 cv("TWO_FACTOR_SETUP_TEMPLATE"),
@@ -907,7 +851,7 @@ def two_factor_setup():
         }
         return base_render_json(form, include_user=False, additional=json_response)
 
-    code_form = _security.two_factor_verify_code_form(formdata=None)
+    code_form = build_form("two_factor_verify_code_form")
     return _security.render_template(
         cv("TWO_FACTOR_SETUP_TEMPLATE"),
         two_factor_setup_form=form,
@@ -930,12 +874,7 @@ def two_factor_token_validation():
     2) validating after CHANGE/ENABLE 2FA. In this case user logged in/authenticated
 
     """
-
-    form_class = _security.two_factor_verify_code_form
-    form_data = None
-    if request.content_length:
-        form_data = MultiDict(request.get_json()) if request.is_json else request.form
-    form = form_class(formdata=form_data, meta=suppress_form_csrf())
+    form = build_form_from_request("two_factor_verify_code_form")
 
     changing = current_user.is_authenticated
     if not changing:
@@ -1010,7 +949,7 @@ def two_factor_token_validation():
     if changing:
         if _security._want_json(request):
             return base_render_json(form)
-        setup_form = _security.two_factor_setup_form(formdata=None)
+        setup_form = build_form("two_factor_setup_form")
 
         return _security.render_template(
             cv("TWO_FACTOR_SETUP_TEMPLATE"),
@@ -1023,7 +962,7 @@ def two_factor_token_validation():
 
     # if we were trying to validate an existing method
     else:
-        rescue_form = _security.two_factor_rescue_form(formdata=None)
+        rescue_form = build_form("two_factor_rescue_form")
         recovery_options = set_rescue_options(rescue_form, form.user)
         if _security._want_json(request):
             return base_render_json(
@@ -1049,12 +988,7 @@ def two_factor_rescue():
     User must have already established 2FA
 
     """
-
-    form_class = _security.two_factor_rescue_form
-    form_data = None
-    if request.content_length:
-        form_data = MultiDict(request.get_json()) if request.is_json else request.form
-    form = form_class(formdata=form_data, meta=suppress_form_csrf())
+    form = build_form_from_request("two_factor_rescue_form")
 
     form.user = tf_check_state(["ready"])
     if not form.user:
@@ -1099,7 +1033,7 @@ def two_factor_rescue():
             form, include_user=False, additional=dict(recovery_options=recovery_options)
         )
 
-    code_form = _security.two_factor_verify_code_form(formdata=None)
+    code_form = build_form("two_factor_verify_code_form")
     return _security.render_template(
         cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
@@ -1122,11 +1056,7 @@ def mf_recovery_codes() -> "ResponseValue":
     For forms we want the user to explicitly request to see the codes - so
     the form has a show_codes submit button.
     """
-    form_class = _security.mf_recovery_codes_form
-    form_data = None
-    if request.content_length:
-        form_data = MultiDict(request.get_json()) if request.is_json else request.form
-    form = form_class(formdata=form_data, meta=suppress_form_csrf())
+    form = build_form_from_request("mf_recovery_codes_form")
 
     if form.validate_on_submit():
         # generate new codes
@@ -1164,12 +1094,7 @@ def mf_recovery():
     User must have already established 2FA
 
     """
-    form_class = _security.mf_recovery_form
-    form_data = None
-    if request.content_length:
-        form_data = MultiDict(request.get_json()) if request.is_json else request.form
-    form = form_class(formdata=form_data, meta=suppress_form_csrf())
-
+    form = build_form_from_request("mf_recovery_form")
     form.user = tf_check_state(["ready"])
     if not form.user:
         return tf_illegal_state(form, _security.login_url)

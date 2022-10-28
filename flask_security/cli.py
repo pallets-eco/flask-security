@@ -14,11 +14,11 @@ import functools
 
 import click
 from flask import current_app
-from werkzeug.datastructures import MultiDict
 from werkzeug.local import LocalProxy
 from .quart_compat import get_quart_status
 
 from .changeable import admin_change_password
+from .forms import build_form
 from .utils import (
     lookup_identity,
     get_identity_attributes,
@@ -128,7 +128,7 @@ def users_create(attributes, password, active):
         kwargs[attr] = attrarg
     kwargs.update(**{"password": password})
 
-    form = _security.confirm_register_form(MultiDict(kwargs), meta={"csrf": False})
+    form = build_form("confirm_register_form", meta={"csrf": False}, **kwargs)
 
     if form.validate():
         # We don't use the form directly to provide values so that this CLI can actually
@@ -343,7 +343,7 @@ def users_change_password(user, password):
         raise click.UsageError("User not found.")
 
     kwargs = {"password": password, "password_confirm": password}
-    form = _security.reset_password_form(MultiDict(kwargs), meta={"csrf": False})
+    form = build_form("reset_password_form", meta={"csrf": False}, **kwargs)
 
     if form.validate():
         # validation will normalize password

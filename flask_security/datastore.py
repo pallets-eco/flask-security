@@ -855,7 +855,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
 
         SQLAlchemyUserDatastore.__init__(
             self,
-            PretendFlaskSQLAlchemyDb(session),
+            PretendFlaskSQLAlchemyDb(session),  # type: ignore
             user_model,
             role_model,
             webauthn_model,

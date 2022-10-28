@@ -12,6 +12,7 @@
 """
 
 from datetime import datetime, timedelta
+from dataclasses import dataclass
 import importlib
 import re
 import typing as t
@@ -38,6 +39,7 @@ from .forms import (
     ChangePasswordForm,
     ConfirmRegisterForm,
     ForgotPasswordForm,
+    Form,
     LoginForm,
     MfRecoveryForm,
     MfRecoveryCodesForm,
@@ -568,6 +570,40 @@ _default_messages = {
         "error",
     ),
 }
+
+
+def _default_form_instantiator(
+    name: str, cls: t.Type[Form], *args: t.Any, **kwargs: t.Dict[str, t.Any]
+) -> Form:
+    return cls(*args, **kwargs)
+
+
+@dataclass
+class FormInfo:
+    """
+    Each view form has a name - assigned by Flask-Security.
+    As part of every request, the form is instantiated using (usually) request.form or
+    request.json.
+    The default instantiator simply uses the class constructor - however
+    applications can provide their OWN instantiator which can do pretty much anything
+    as long as it returns an instantiated form. The 'cls' argument is optional since
+    the instantiator COULD be form specific.
+
+    The instantiator callable will always be called from a flask request context
+    and receive the following arguments::
+
+        (name, form_cls_name (optional), **kwargs)
+
+    kwargs will always have `formdata` and often will have `meta`. All kwargs
+    must be passed to the underlying form constructor.
+
+    See :py:meth:`flask_security.Security.set_form_info`
+
+    .. versionadded:: 5.x.x
+    """
+
+    instantiator: t.Callable[..., Form] = _default_form_instantiator
+    cls: t.Optional[t.Type[Form]] = None
 
 
 def _user_loader(user_id):
@@ -1120,31 +1156,6 @@ class Security:
         self.app = app
         self._datastore = datastore
         self._register_blueprint = register_blueprint
-        self.login_form = login_form
-        self.verify_form = verify_form
-        self.confirm_register_form = confirm_register_form
-        self.register_form = register_form
-        self.forgot_password_form = forgot_password_form
-        self.reset_password_form = reset_password_form
-        self.change_password_form = change_password_form
-        self.send_confirmation_form = send_confirmation_form
-        self.passwordless_login_form = passwordless_login_form
-        self.two_factor_verify_code_form = two_factor_verify_code_form
-        self.two_factor_setup_form = two_factor_setup_form
-        self.two_factor_rescue_form = two_factor_rescue_form
-        self.two_factor_select_form = two_factor_select_form
-        self.mf_recovery_codes_form = mf_recovery_codes_form
-        self.mf_recovery_form = mf_recovery_form
-        self.us_signin_form = us_signin_form
-        self.us_setup_form = us_setup_form
-        self.us_setup_validate_form = us_setup_validate_form
-        self.us_verify_form = us_verify_form
-        self.wan_register_form = wan_register_form
-        self.wan_register_response_form = wan_register_response_form
-        self.wan_signin_form = wan_signin_form
-        self.wan_signin_response_form = wan_signin_response_form
-        self.wan_delete_form = wan_delete_form
-        self.wan_verify_form = wan_verify_form
         self.anonymous_user = anonymous_user
         self.login_manager = login_manager
         self.mail_util_cls = mail_util_cls
@@ -1154,6 +1165,36 @@ class Security:
         self.totp_cls = totp_cls
         self.username_util_cls = username_util_cls
         self.webauthn_util_cls = webauthn_util_cls
+
+        # Forms - we create a list from constructor.
+        # BC - in init_app we will allow override of class.
+        self.forms = {
+            "login_form": FormInfo(cls=login_form),
+            "verify_form": FormInfo(cls=verify_form),
+            "confirm_register_form": FormInfo(cls=confirm_register_form),
+            "register_form": FormInfo(cls=register_form),
+            "forgot_password_form": FormInfo(cls=forgot_password_form),
+            "reset_password_form": FormInfo(cls=reset_password_form),
+            "change_password_form": FormInfo(cls=change_password_form),
+            "send_confirmation_form": FormInfo(cls=send_confirmation_form),
+            "passwordless_login_form": FormInfo(cls=passwordless_login_form),
+            "two_factor_verify_code_form": FormInfo(cls=two_factor_verify_code_form),
+            "two_factor_setup_form": FormInfo(cls=two_factor_setup_form),
+            "two_factor_rescue_form": FormInfo(cls=two_factor_rescue_form),
+            "two_factor_select_form": FormInfo(cls=two_factor_select_form),
+            "mf_recovery_codes_form": FormInfo(cls=mf_recovery_codes_form),
+            "mf_recovery_form": FormInfo(cls=mf_recovery_form),
+            "us_signin_form": FormInfo(cls=us_signin_form),
+            "us_setup_form": FormInfo(cls=us_setup_form),
+            "us_setup_validate_form": FormInfo(cls=us_setup_validate_form),
+            "us_verify_form": FormInfo(cls=us_verify_form),
+            "wan_register_form": FormInfo(cls=wan_register_form),
+            "wan_register_response_form": FormInfo(cls=wan_register_response_form),
+            "wan_signin_form": FormInfo(cls=wan_signin_form),
+            "wan_signin_response_form": FormInfo(cls=wan_signin_response_form),
+            "wan_delete_form": FormInfo(cls=wan_delete_form),
+            "wan_verify_form": FormInfo(cls=wan_verify_form),
+        }
 
         # Attributes not settable from init.
         self._unauthn_handler: t.Callable[
@@ -1276,7 +1317,7 @@ class Security:
 
         # Override default forms
         # BC - kwarg value here overrides init/constructor time
-        # BC - we allow forms to be set as config items
+        # BC - we allow forms to be set from config
         # Can't wait for assignment expressions.
         form_names = [
             "login_form",
@@ -1306,12 +1347,11 @@ class Security:
             "wan_verify_form",
         ]
         for form_name in form_names:
-            if kwargs.get(form_name, None):
-                setattr(self, form_name, kwargs.get(form_name))
-            elif app.config.get(f"SECURITY_{form_name.upper()}", None):
-                setattr(
-                    self, form_name, app.config.get(f"SECURITY_{form_name.upper()}")
-                )
+            form_cls = kwargs.get(
+                form_name, app.config.get(f"SECURITY_{form_name.upper()}", None)
+            )
+            if form_cls:
+                self.forms[form_name].cls = form_cls
 
         # BC - Allow kwargs to overwrite/init other constructor attributes
         attr_names = [
@@ -1407,17 +1447,17 @@ class Security:
                 self.datastore.user_model, "username"
             ):  # pragma: no cover
                 raise ValueError(
-                    "User model must contain username if"
+                    "User model must contain 'username' if"
                     " SECURITY_USERNAME_ENABLE is True"
                 )
             # if they want USERNAME_ENABLE - then they better not have defined
             # username in their own forms
             if any(
-                hasattr(f, "username")
+                hasattr(self.forms[f].cls, "username")
                 for f in [
-                    self.register_form,
-                    self.confirm_register_form,
-                    self.login_form,
+                    "register_form",
+                    "confirm_register_form",
+                    "login_form",
                 ]
             ):  # pragma: no cover
                 raise ValueError(
@@ -1442,12 +1482,15 @@ class Security:
                 self.user_identity_attributes = uias
 
             # Add dynamic fields - probably overkill to check if these are our forms.
-            if issubclass(self.register_form, RegisterFormMixin):
-                self.register_form.username = register_username_field
-            if issubclass(self.confirm_register_form, RegisterFormMixin):
-                self.confirm_register_form.username = register_username_field
-            if issubclass(self.login_form, LoginForm):
-                self.login_form.username = login_username_field
+            fcls = self.forms["register_form"].cls
+            if fcls and issubclass(fcls, RegisterFormMixin):
+                fcls.username = register_username_field
+            fcls = self.forms["confirm_register_form"].cls
+            if fcls and issubclass(fcls, RegisterFormMixin):
+                fcls.username = register_username_field
+            fcls = self.forms["login_form"].cls
+            if fcls and issubclass(fcls, LoginForm):
+                fcls.username = login_username_field
 
         # initialize two-factor plugins. Note that each implementation likely
         # has its own feature flag which will control whether it is active or not.
@@ -1634,6 +1677,44 @@ class Security:
             app.after_request(csrf_cookie_handler)
             # Add configured header to WTF_CSRF_HEADERS
             app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER", app=app))
+
+    def set_form_info(self, name: str, form_info: FormInfo) -> None:
+        """Set form instantiation info.
+
+        :param name: Name of form.
+        :param form_info: see :py:class:`FormInfo`
+
+        .. admonition:: Advanced
+
+           Forms (which are all FlaskForms) are instantiated at the start of each
+           request. Normally this is done as part of a view by simply calling the
+           form class constructor - Flask-WTForms handles filling it in from
+           various request attributes.
+
+           The form classes themselves can be extended (e.g. to add or change fields)
+           and the derived class can be set at `Security` constructor time,
+           `init_app` time, or using this method.
+
+           This default implementation is suitable for most applications.
+
+           Some application might want to control the instantiation of forms, for
+           example to be able to inject additional validation services.
+           Using this method, a callable `instantiator` can be set that Flask-Security
+           will call to return a properly instantiated form.
+
+           .. danger::
+            Do not perform any validation as part of instantiation - many views have
+            a bunch of logic PRIOR to calling the form validator.
+
+            .. versionadded:: 5.x.x
+        """
+        if name not in self.forms.keys():
+            raise ValueError(f"Unknown form name {name}")
+        if form_info.instantiator == _default_form_instantiator and not form_info.cls:
+            raise ValueError(
+                "If default form instantiator is used, a form class must be provided"
+            )
+        self.forms[name] = form_info
 
     def render_json(
         self,

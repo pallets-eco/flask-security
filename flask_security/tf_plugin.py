@@ -13,10 +13,10 @@
 import typing as t
 
 from flask import request, redirect, session
-from werkzeug.datastructures import MultiDict
 
 from .decorators import unauth_csrf
 from .forms import (
+    build_form_from_request,
     get_form_field_xlate,
     Form,
     RadioField,
@@ -34,7 +34,6 @@ from .utils import (
     get_url,
     login_user,
     simple_render_json,
-    suppress_form_csrf,
     url_for_security,
 )
 
@@ -58,11 +57,7 @@ class TwoFactorSelectForm(Form):
 def tf_select() -> "ResponseValue":
     # Ask user which MFA method they want to use.
     # This is used when a user has setup more than one type of 2FA.
-    form_class = _security.two_factor_select_form
-    form_data = None
-    if request.content_length:
-        form_data = MultiDict(request.get_json()) if request.is_json else request.form
-    form = form_class(formdata=form_data, meta=suppress_form_csrf())
+    form = build_form_from_request("two_factor_select_form")
 
     # This endpoint is unauthenticated - make sure we're in a valid state
     if not all(k in session for k in ["tf_user_id", "tf_select"]):

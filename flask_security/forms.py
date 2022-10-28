@@ -30,6 +30,7 @@ from wtforms import (
     validators,
 )
 
+from werkzeug.datastructures import MultiDict
 from wtforms.validators import Optional, StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
@@ -44,6 +45,7 @@ from .utils import (
     get_message,
     hash_password,
     localize_callback,
+    suppress_form_csrf,
     url_for_security,
     validate_redirect_url,
     verify_password,
@@ -245,7 +247,7 @@ def unique_identity_attribute(form, field):
 
 class Form(BaseForm):
     def __init__(self, *args, **kwargs):
-        if current_app.testing:
+        if current_app and current_app.testing:
             self.TIME_LIMIT = None
         super().__init__(*args, **kwargs)
 
@@ -398,7 +400,7 @@ class SendConfirmationForm(Form, UserEmailFormMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user: "User" = None  # set by valid_user_email
-        if request.method == "GET":
+        if request and request.method == "GET":
             self.email.data = request.args.get("email", None)
 
     def validate(self, **kwargs: t.Any) -> bool:
@@ -469,13 +471,10 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.next.data:
+        if request and not self.next.data:
             self.next.data = request.args.get("next", "")
         self.remember.default = cv("DEFAULT_REMEMBER_ME")
-        if (
-            current_app.extensions["security"].recoverable
-            and not self.password.description
-        ):
+        if _security.recoverable and not self.password.description:
             html = Markup(
                 '<a href="{url}">{message}</a>'.format(
                     url=url_for_security("forgot_password"),
@@ -866,3 +865,29 @@ class MfRecoveryForm(Form):
             self.code.errors.append(get_message("INVALID_RECOVERY_CODE")[0])
             return False
         return True
+
+
+class DummyForm(Form):
+    """A dummy form for json responses"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user: "User" = None
+
+
+def build_form_from_request(form_name):
+    # helper function for views
+    form_data = None
+    if request.content_length:
+        form_data = MultiDict(request.get_json()) if request.is_json else request.form
+    return build_form(form_name, formdata=form_data, meta=suppress_form_csrf())
+
+
+def build_form(form_name, **kwargs):
+    # helper function for views
+    kwargs.setdefault("formdata", None)
+    return _security.forms[form_name].instantiator(
+        form_name,
+        _security.forms[form_name].cls,
+        **kwargs,
+    )

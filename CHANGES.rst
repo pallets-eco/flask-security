@@ -3,6 +3,28 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.1.0
+-------------
+
+Released TBD
+
+Features
+++++++++
+
+- (:issue:`667`) Expose form instantiation. See :ref:`form_instantiation`.
+
+Fixes
++++++
+
+- (:pr:`678`) Fixes for Flask-SQLAlchemy 3.0.0. (jrast)
+- (:pr:`680`) Fixes for sqlalchemy 2.0.0 (jrast)
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+
+- Each form class used to be set as an attribute on the Security object. With
+  the new form instantiation model, they no longer are.
+
 Version 5.0.2
 -------------
 
