@@ -699,7 +699,7 @@ def send_mail(subject, recipient, template, **context):
         sender = sender._get_current_object()
 
     _security._mail_util.send_mail(
-        template, subject, recipient, sender, body, html, context.get("user", None)
+        template, subject, recipient, sender, body, html, **context
     )
 
 

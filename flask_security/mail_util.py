@@ -50,7 +50,6 @@ class MailUtil:
         sender: t.Union[str, tuple],
         body: str,
         html: t.Optional[str],
-        user: "User",
         **kwargs: t.Any,
     ) -> None:
         """Send an email via the Flask-Mailman or Flask-Mail or other mail extension.
@@ -62,7 +61,7 @@ class MailUtil:
         :param sender: who to send email as (see :py:data:`SECURITY_EMAIL_SENDER`)
         :param body: the rendered body (text)
         :param html: the rendered body (html)
-        :param user: the user model
+        :param kwargs: keyword arguments including the User model, confirmation link, reset password link, etc.
 
         It is possible that sender is a lazy_string for localization (unlikely but..)
         so we cast to str() here to force localization.
