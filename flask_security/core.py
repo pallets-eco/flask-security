@@ -299,7 +299,7 @@ _default_config: t.Dict[str, t.Any] = {
     "US_VERIFY_URL": "/us-verify",
     "US_VERIFY_SEND_CODE_URL": "/us-verify/send-code",
     "US_VERIFY_LINK_URL": "/us-verify-link",
-    "US_POST_SETUP_VIEW": "/us-setup",
+    "US_POST_SETUP_VIEW": ".us_setup",  # endpoint or URL
     "US_SIGNIN_TEMPLATE": "security/us_signin.html",
     "US_SETUP_TEMPLATE": "security/us_setup.html",
     "US_VERIFY_TEMPLATE": "security/us_verify.html",
@@ -329,7 +329,7 @@ _default_config: t.Dict[str, t.Any] = {
     "USERNAME_NORMALIZE_FORM": "NFKD",
     "WEBAUTHN": False,
     "WAN_CHALLENGE_BYTES": None,  # uses system default
-    "WAN_POST_REGISTER_VIEW": "/wan-register",
+    "WAN_POST_REGISTER_VIEW": ".wan_register",  # endpoint or URL
     "WAN_RP_NAME": "My Flask App",
     "WAN_SALT": "wan-salt",
     "WAN_REGISTER_TIMEOUT": 60000,  # milliseconds

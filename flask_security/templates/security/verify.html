@@ -1,10 +1,10 @@
 {% extends "security/base.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, prop_next %}
 
 {% block content %}
     {% include "security/_messages.html" %}
     <h1>{{ _fsdomain("Please Reauthenticate") }}</h1>
-    <form action="{{ url_for_security("verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
+    <form action="{{ url_for_security("verify") }}{{ prop_next() }}" method="POST"
           name="verify_form">
         {{ verify_form.hidden_tag() }}
         {{ render_field_with_errors(verify_form.password) }}
@@ -13,7 +13,7 @@
    {% if has_webauthn_verify_credential %}
       <hr class="fs-gap">
       <h2>Use a WebAuthn Security Key to Reauthenticate</h2>
-      <form action="{{ url_for_security("wan_verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
+      <form action="{{ url_for_security("wan_verify") }}{{ prop_next() }}" method="POST"
         name="wan_verify_form">
           {{ wan_verify_form.hidden_tag() }}
           {{ render_field(wan_verify_form.submit) }}

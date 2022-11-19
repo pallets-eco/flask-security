@@ -26,6 +26,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     get_existing_session,
+    get_form_action,
     json_authenticate,
     logout,
     reset_fresh,
@@ -199,21 +200,15 @@ def setup_tf(client):
 SmsSenderFactory.senders["test"] = SmsTestSender
 
 
-def _register_start(client, name="testr1", usage="secondary"):
-    response = client.post("wan-register", data=dict(name=name, usage=usage))
+def _register_start(client, name="testr1", usage="secondary", endpoint="wan-register"):
+    response = client.post(endpoint, data=dict(name=name, usage=usage))
     matcher = re.match(
         r".*handleRegister\(\'(.*)\'\).*",
         response.data.decode("utf-8"),
         re.IGNORECASE | re.DOTALL,
     )
     register_options = json.loads(matcher.group(1))
-
-    action_matcher = re.match(
-        r'.*<form action="([^\s]*)".*',
-        response.data.decode("utf-8"),
-        re.IGNORECASE | re.DOTALL,
-    )
-    response_url = action_matcher.group(1)
+    response_url = get_form_action(response)
     return register_options, response_url
 
 
@@ -258,13 +253,7 @@ def _signin_start(
         re.IGNORECASE | re.DOTALL,
     )
     signin_options = json.loads(matcher.group(1))
-
-    action_matcher = re.match(
-        r'.*<form action="([^\s]*)".*',
-        response.data.decode("utf-8"),
-        re.IGNORECASE | re.DOTALL,
-    )
-    response_url = action_matcher.group(1)
+    response_url = get_form_action(response)
     return signin_options, response_url
 
 
@@ -1648,3 +1637,36 @@ def test_mf(client):
     # verify actually logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
+
+
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, url_prefix="/auth")
+def test_login_next(app, client, get_message):
+    # Test that ?next=/xx is propagated through login/wan-signin templates as well as
+    # views.
+    # Also - use a different blueprint prefix - we rarely test that....
+    authenticate(client, endpoint="/auth/login")
+    register_options, response_url = _register_start(
+        client, name="testr3", usage="first", endpoint="/auth/wan-register"
+    )
+    response = client.post(
+        response_url, data=dict(credential=json.dumps(REG_DATA1)), follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert get_message("WEBAUTHN_REGISTER_SUCCESSFUL", name="testr3") in response.data
+    logout(client, endpoint="/auth/logout")
+
+    response = client.get("profile", follow_redirects=True)
+    assert "?next=%2Fprofile" in response.request.url
+    # pull webauthn form action out of login_form - should have ?next=...
+    webauthn_url = get_form_action(response, 1)
+
+    signin_options, response_url = _signin_start(
+        client, "matt@lp.com", endpoint=webauthn_url
+    )
+    response = client.post(
+        response_url,
+        data=dict(credential=json.dumps(SIGNIN_DATA1)),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Profile Page" in response.data

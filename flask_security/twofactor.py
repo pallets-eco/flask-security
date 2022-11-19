@@ -21,6 +21,7 @@ from .utils import (
     config_value as cv,
     do_flash,
     json_error_response,
+    propagate_next,
     send_mail,
     url_for_security,
 )
@@ -79,6 +80,7 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
         user=user,
         method=method,
         token=token_to_be_sent,
+        login_token=token_to_be_sent,
         phone_number=phone_number,
     )
 
@@ -202,7 +204,11 @@ class CodeTfPlugin(TfPluginBase):
                         return _security._render_json(payload, 500, None, None)
 
             if not _security._want_json(request):
-                return redirect(url_for_security("two_factor_token_validation"))
+                return redirect(
+                    url_for_security(
+                        "two_factor_token_validation", next=propagate_next(request.url)
+                    )
+                )
 
         # JSON response - Fake up a form - doesn't really matter which.
         form = DummyForm(formdata=None)

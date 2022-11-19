@@ -424,9 +424,7 @@ def do_flash(message: str, category: str) -> None:
         flash(message, category)
 
 
-def get_url(
-    endpoint_or_url: t.Optional[str], qparams: t.Optional[t.Dict[str, str]] = None
-) -> t.Optional[str]:
+def get_url(endpoint_or_url: str, qparams: t.Optional[t.Dict[str, str]] = None) -> str:
     """Returns a URL if a valid endpoint is found. Otherwise, returns the
     provided value.
 
@@ -434,8 +432,6 @@ def get_url(
     :param qparams: additional query params to add to end of url
     :return: URL
     """
-    if not endpoint_or_url:
-        return endpoint_or_url
     try:
         return transform_url(url_for(endpoint_or_url), qparams)
     except Exception:
@@ -462,8 +458,8 @@ def slash_url_suffix(url, suffix):
 
 
 def transform_url(
-    url: t.Optional[str], qparams: t.Optional[t.Dict[str, str]] = None, **kwargs: str
-) -> t.Optional[str]:
+    url: str, qparams: t.Optional[t.Dict[str, str]] = None, **kwargs: str
+) -> str:
     """Modify url
 
     :param url: url to transform (can be relative)
@@ -473,8 +469,6 @@ def transform_url(
 
     .. versionadded:: 3.2.0
     """
-    if not url:
-        return url
     link_parse = urlsplit(url)
     if qparams:
         current_query = dict(parse_qsl(link_parse.query))
@@ -487,7 +481,7 @@ def get_security_endpoint_name(endpoint):
     return f"{_security.blueprint_name}.{endpoint}"
 
 
-def url_for_security(endpoint: str, **values: t.Union[str, bool]) -> str:
+def url_for_security(endpoint: str, **values: t.Any) -> str:
     """Return a URL for the security blueprint
 
     :param endpoint: the endpoint of the URL (name of the function)
@@ -556,9 +550,18 @@ def validate_redirect_url(url: str) -> bool:
 
 
 def get_post_action_redirect(config_key: str, declared: t.Optional[str] = None) -> str:
+    # All this nonsense due to mypy
+    arg_next_url = None
+    arg_next = request.args.get("next", None)
+    if arg_next:
+        arg_next_url = get_url(arg_next)
+    form_next_url = None
+    form_next = request.form.get("next", None)
+    if form_next:
+        form_next_url = get_url(form_next)
     urls = [
-        get_url(request.args.get("next", None)),
-        get_url(request.form.get("next", None)),
+        arg_next_url,
+        form_next_url,
         find_redirect(config_key),
     ]
     if declared:
@@ -590,11 +593,15 @@ def find_redirect(key: str) -> t.Optional[str]:
 
     :param key: The session or application configuration key to search for
     """
-    rv = (
-        get_url(session.pop(key.lower(), None))
-        or get_url(current_app.config[key.upper()] or None)
-        or current_app.config.get("APPLICATION_ROOT", "/")
-    )
+    session_value = session.pop(key.lower(), None)
+    session_url = None
+    if session_value:
+        session_url = get_url(session_value)
+    app_value = current_app.config[key.upper()]
+    app_url = None
+    if app_value:
+        app_url = get_url(app_value)
+    rv = session_url or app_url or current_app.config.get("APPLICATION_ROOT", "/")
     return rv
 
 
@@ -1032,8 +1039,8 @@ def json_error_response(
     """Helper to create an error response.
 
     The "errors" key holds a simple list of errors - which is made up of any passed
-    errors (either a string or list) as well as the (localized) error msg from the
-    passed in form errors.
+    errors (either a string or list) as well as the (localized) error msgs from the
+    passed in field_errors.
 
     The "field_errors" key which is exactly what is returned from WTForms - namely
     a dict of field-name: msg. For form-level errors (WTForms 3.0) the 'field-name' is

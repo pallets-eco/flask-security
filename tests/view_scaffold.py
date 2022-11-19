@@ -110,6 +110,7 @@ def create_app():
     app.config["SECURITY_PASSWORD_REQUIRED"] = True
     app.config["SECURITY_MULTI_FACTOR_RECOVERY_CODES"] = True
     app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = True
+    # app.config["SECURITY_URL_PREFIX"] = "/fs"
 
     class TestWebauthnUtil(WebauthnUtil):
         def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:

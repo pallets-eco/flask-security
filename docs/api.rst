@@ -337,7 +337,7 @@ sends the following signals.
 .. data:: tf_security_token_sent
 
     Sent when a two factor security/access code is sent. In addition to the app
-    (which is the sender), it is passed `user`, `method`, and `token` arguments.
+    (which is the sender), it is passed `user`, `method`, `login_token` and `token` (deprecated) arguments.
 
     .. versionadded:: 3.3.0
 
