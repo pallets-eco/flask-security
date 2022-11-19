@@ -21,6 +21,7 @@ from flask_security import uia_email_mapper
 from tests.test_utils import (
     authenticate,
     get_auth_token_version_3x,
+    get_form_action,
     get_num_queries,
     hash_password,
     json_authenticate,
@@ -72,6 +73,19 @@ def test_authenticate_with_invalid_malformed_next(client, get_message):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=http:///google.com", data=data)
     assert get_message("INVALID_REDIRECT") in response.data
+
+
+def test_login_template_next(client):
+    # Test that our login template propagates next.
+    response = client.get("/profile", follow_redirects=True)
+    assert "?next=%2Fprofile" in response.request.url
+    login_url = get_form_action(response)
+    response = client.post(
+        login_url,
+        data=dict(email="matt@lp.com", password="password"),
+        follow_redirects=True,
+    )
+    assert b"Profile Page" in response.data
 
 
 def test_authenticate_with_subdomain_next(app, client, get_message):

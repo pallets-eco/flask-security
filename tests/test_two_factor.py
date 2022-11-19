@@ -25,6 +25,8 @@ from tests.test_utils import (
     SmsTestSender,
     authenticate,
     capture_flashes,
+    capture_send_code_requests,
+    get_form_action,
     get_session,
     logout,
     reset_fresh,
@@ -1215,6 +1217,20 @@ def test_replace_send_code(app, get_message):
         )
 
 
+def test_propagate_next(app, client):
+    # verify we propagate the ?next param all the way through a two-factor login
+    with capture_send_code_requests() as codes:
+        data = dict(email="gal@lp.com", password="password")
+        response = client.post("/login?next=/im-in", data=data, follow_redirects=True)
+        assert "?next=%2Fim-in" in response.request.url
+        # grab URL from form to show that our template propagates ?next
+        verify_url = get_form_action(response)
+        response = client.post(
+            verify_url, data=dict(code=codes[0]["login_token"]), follow_redirects=False
+        )
+        assert "/im-in" in response.location
+
+
 @pytest.mark.settings(freshness=timedelta(minutes=0))
 def test_verify(app, client, get_message):
     # Test setup when re-authenticate required
@@ -1227,12 +1243,8 @@ def test_verify(app, client, get_message):
     # This call should require re-verify
     authenticate(client)
     response = client.get("tf-setup", follow_redirects=True)
-    form_response = response.data.decode("utf-8")
     assert get_message("REAUTHENTICATION_REQUIRED") in response.data
-    matcher = re.match(
-        r'.*form action="([^"]*)".*', form_response, re.IGNORECASE | re.DOTALL
-    )
-    verify_password_url = matcher.group(1)
+    verify_password_url = get_form_action(response)
 
     # Send wrong password
     response = client.post(

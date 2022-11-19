@@ -79,7 +79,6 @@ from .utils import (
     json_error_response,
     login_user,
     lookup_identity,
-    propagate_next,
     send_mail,
     url_for_security,
     view_commit,
@@ -510,10 +509,6 @@ def us_verify_send_code() -> "ResponseValue":
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             skip_login_menu=True,
-            send_code_to=get_url(
-                _security.us_verify_send_code_url,
-                qparams={"next": propagate_next(request.url)},
-            ),
             **_security._run_ctx_processor("us_verify")
         )
 
@@ -527,10 +522,6 @@ def us_verify_send_code() -> "ResponseValue":
         available_methods=cv("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_login_menu=True,
-        send_code_to=get_url(
-            _security.us_verify_send_code_url,
-            qparams={"next": propagate_next(request.url)},
-        ),
         **_security._run_ctx_processor("us_verify")
     )
 
@@ -670,10 +661,6 @@ def us_verify() -> "ResponseValue":
         us_verify_form=form,
         code_methods=code_methods,
         skip_login_menu=True,
-        send_code_to=get_url(
-            cv("US_VERIFY_SEND_CODE_URL"),
-            qparams={"next": propagate_next(request.url)},
-        ),
         has_webauthn_verify_credential=webauthn_available,
         wan_verify_form=build_form("wan_verify_form"),
         **_security._run_ctx_processor("us_verify")

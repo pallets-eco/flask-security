@@ -39,3 +39,7 @@
     </div>
   {% endif %}
 {% endmacro %}
+
+{% macro prop_next() -%}
+  {% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}
+{%- endmacro %}

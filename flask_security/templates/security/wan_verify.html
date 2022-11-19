@@ -1,5 +1,14 @@
+{#
+  This template receives the following pieces of context in addition to the form:
+
+  wan_verify_form -
+  wan_signin_response_form -
+  skip_login_menu - True
+  Any other context provided by the "wan_verify" context processer.
+#}
+
 {% extends "security/base.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, prop_next %}
 
 {% block head_scripts %}
   {{ super() }}
@@ -12,13 +21,13 @@
   {% include "security/_messages.html" %}
   <h1>{{ _fsdomain("Please Re-Authenticate Using Your WebAuthn Security Key") }}</h1>
   {% if not credential_options %}
-    <form action="{{ url_for_security("wan_verify") }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
+    <form action="{{ url_for_security("wan_verify") }}{{ prop_next() }}" method="POST"
           name="wan_verify_form">
         {{ wan_verify_form.hidden_tag() }}
         {{ render_field(wan_verify_form.submit) }}
     </form>
   {% else %}
-    <form action="{{ url_for_security("wan_verify_response", token=wan_state) }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}" method="POST"
+    <form action="{{ url_for_security("wan_verify_response", token=wan_state) }}{{ prop_next() }}" method="POST"
           name="wan_signin_response_form" id="wan-signin-response-form">
       {{ wan_signin_response_form.hidden_tag() }}
       <div id="wan-errors"></div>

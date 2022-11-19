@@ -14,7 +14,7 @@ import typing as t
 from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
 
-from flask_security import Security, SmsSenderBaseClass
+from flask_security import Security, SmsSenderBaseClass, UserMixin
 from flask_security.datastore import (
     SQLAlchemyUserDatastore,
     SQLAlchemySessionUserDatastore,
@@ -22,7 +22,9 @@ from flask_security.datastore import (
 from flask_security.signals import (
     login_instructions_sent,
     reset_password_instructions_sent,
+    tf_security_token_sent,
     user_registered,
+    us_security_token_sent,
 )
 from flask_security.utils import hash_data, hash_password
 
@@ -122,6 +124,17 @@ def reset_fresh(client, within):
         sess["fs_paa"] = old_paa
         sess.pop("fs_gexp", None)
     return old_paa
+
+
+def get_form_action(response, ordinal=0):
+    # Return the URL that the form WOULD post to - this is useful to check
+    # how our templates actually work (e.g. propagation of 'next')
+    matcher = re.findall(
+        r'(?:<form action|formaction)="(\S*)"',
+        response.data.decode("utf-8"),
+        re.IGNORECASE | re.DOTALL,
+    )
+    return matcher[ordinal]
 
 
 def check_xlation(app, locale):
@@ -318,6 +331,27 @@ def capture_flashes():
         yield flashes
     finally:
         message_flashed.disconnect(_on)
+
+
+@contextmanager
+def capture_send_code_requests():
+    # Easy way to get token/code required for code logins
+    # either second factor or us_signin
+    login_requests = []
+
+    def _on(app, **data):
+        assert all(v in data for v in ["user", "method", "login_token"])
+        assert isinstance(data["user"], UserMixin)
+        login_requests.append(data)
+
+    us_security_token_sent.connect(_on)
+    tf_security_token_sent.connect(_on)
+
+    try:
+        yield login_requests
+    finally:
+        us_security_token_sent.disconnect(_on)
+        tf_security_token_sent.disconnect(_on)
 
 
 def get_auth_token_version_3x(app, user):

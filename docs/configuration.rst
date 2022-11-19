@@ -679,6 +679,7 @@ Login/Logout
 
     Specifies the default view to redirect to after a user logs in. This value can be set to a URL
     or an endpoint name. Defaults to the Flask config ``APPLICATION_ROOT`` value which itself defaults to ``"/"``.
+    Note that if the request URL or form has a ``next`` parameter, that will take precedence.
 
     Default: ``APPLICATION_ROOT``.
 
@@ -686,6 +687,7 @@ Login/Logout
 
     Specifies the default view to redirect to after a user logs out. This value can be set to a URL
     or an endpoint name. Defaults to the Flask config ``APPLICATION_ROOT`` value which itself defaults to ``"/"``.
+    Note that if the request URL or form has a ``next`` parameter, that will take precedence.
 
     Default: ``APPLICATION_ROOT``.
 
@@ -761,6 +763,7 @@ Registerable
     Specifies the view to redirect to after a user successfully registers.
     This value can be set to a URL or an endpoint name. If this value is
     ``None``, the user is redirected to the value of ``SECURITY_POST_LOGIN_VIEW``.
+    Note that if the request URL or form has a ``next`` parameter, that will take precedence.
 
     Default: ``None``.
 .. py:data:: SECURITY_REGISTER_URL
@@ -1240,7 +1243,7 @@ Unified Signin
     Specifies the view to redirect to after a user successfully setups an authentication method (non-json).
     This value can be set to a URL or an endpoint name.
 
-    Default: ``"/us-setup"``
+    Default: ``.us-setup"``
 
 .. py:data:: SECURITY_US_SIGNIN_TEMPLATE
 
@@ -1413,7 +1416,7 @@ WebAuthn
     Specifies the view to redirect to after a user successfully registers a new WebAuthn key (non-json).
     This value can be set to a URL or an endpoint name.
 
-    Default: ``"/wan-register"``
+    Default: ``".wan-register"``
 
 .. py:data:: SECURITY_WAN_REGISTER_TEMPLATE
 

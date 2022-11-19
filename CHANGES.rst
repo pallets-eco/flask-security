@@ -18,6 +18,11 @@ Fixes
 
 - (:pr:`678`) Fixes for Flask-SQLAlchemy 3.0.0. (jrast)
 - (:pr:`680`) Fixes for sqlalchemy 2.0.0 (jrast)
+- (:issue:`697`) Webauthn and Unified signin features now properly take into
+  account blueprint prefixes.
+- (:issue:`699`) Properly propagate `?next=/xx` - the verify, webauthn, and unified
+  signin endpoints, that had multiple redirects, needed fixes.
+- (:pr:`696`) Add Hungarian translations (xQwexx)
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

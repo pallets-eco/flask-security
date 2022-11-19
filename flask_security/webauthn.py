@@ -95,7 +95,6 @@ from .utils import (
     get_within_delta,
     login_user,
     lookup_identity,
-    propagate_next,
     simple_render_json,
     url_for_security,
     view_commit,
@@ -787,10 +786,6 @@ def webauthn_verify() -> "ResponseValue":
         wan_verify_form=form,
         wan_signin_response_form=build_form("wan_signin_response_form"),
         skip_login_menu=True,
-        response_to=get_url(
-            cv("WAN_VERIFY_URL"),
-            qparams={"next": propagate_next(request.url)},
-        ),
         **_security._run_ctx_processor("wan_verify")
     )
 
