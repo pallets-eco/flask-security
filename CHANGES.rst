@@ -12,6 +12,7 @@ Features
 ++++++++
 
 - (:issue:`667`) Expose form instantiation. See :ref:`form_instantiation`.
+- (:issue:`693`) Option to encrypt recovery codes at rest.
 
 Fixes
 +++++

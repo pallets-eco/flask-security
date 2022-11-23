@@ -828,45 +828,6 @@ class TwoFactorRescueForm(Form):
     submit = SubmitField(get_form_field_label("submit"))
 
 
-class MfRecoveryCodesForm(Form):
-    """Generate and fetch recovery codes"""
-
-    show_codes = SubmitField(get_form_field_xlate(_("Show Recovery Codes")))
-    generate_new_codes = SubmitField(
-        get_form_field_xlate(_("Generate New Recovery Codes"))
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def validate(self, **kwargs: t.Any) -> bool:
-        if not super().validate(**kwargs):  # pragma: no cover
-            return False
-        return True
-
-
-class MfRecoveryForm(Form):
-    code = StringField(
-        get_form_field_xlate(_("Recovery Code")),
-        validators=[Required()],
-    )
-    submit = SubmitField(get_form_field_label("submitcode"))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # filled by view
-        self.user: "User" = None
-
-    def validate(self, **kwargs: t.Any) -> bool:
-        if not super().validate(**kwargs):  # pragma: no cover
-            return False
-        codes = _datastore.mf_get_recovery_codes(self.user)
-        if self.code.data not in codes:
-            self.code.errors.append(get_message("INVALID_RECOVERY_CODE")[0])
-            return False
-        return True
-
-
 class DummyForm(Form):
     """A dummy form for json responses"""
 

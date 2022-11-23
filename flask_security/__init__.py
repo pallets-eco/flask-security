@@ -52,8 +52,6 @@ from .forms import (
     ResetPasswordForm,
     PasswordlessLoginForm,
     ConfirmRegisterForm,
-    MfRecoveryForm,
-    MfRecoveryCodesForm,
     SendConfirmationForm,
     TwoFactorRescueForm,
     TwoFactorSetupForm,
@@ -64,6 +62,11 @@ from .forms import (
 from .mail_util import MailUtil
 from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
+from .recovery_codes import (
+    MfRecoveryCodesUtil,
+    MfRecoveryForm,
+    MfRecoveryCodesForm,
+)
 from .signals import (
     confirm_instructions_sent,
     login_instructions_sent,

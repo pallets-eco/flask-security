@@ -193,6 +193,10 @@ Security() instantiation.
   :members:
   :special-members: __init__
 
+.. autoclass:: flask_security.MfRecoveryCodesUtil
+  :members:
+  :special-members: __init__
+
 .. autoclass:: flask_security.UsernameUtil
   :members:
   :special-members: __init__

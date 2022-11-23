@@ -41,8 +41,6 @@ from .forms import (
     ForgotPasswordForm,
     Form,
     LoginForm,
-    MfRecoveryForm,
-    MfRecoveryCodesForm,
     PasswordlessLoginForm,
     RegisterForm,
     RegisterFormMixin,
@@ -60,6 +58,11 @@ from .mail_util import MailUtil
 from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
 from .proxies import _security
+from .recovery_codes import (
+    MfRecoveryForm,
+    MfRecoveryCodesForm,
+    MfRecoveryCodesUtil,
+)
 from .tf_plugin import TfPlugin, TwoFactorSelectForm
 from .twofactor import tf_send_security_token
 from .unified_signin import (
@@ -231,6 +234,8 @@ _default_config: t.Dict[str, t.Any] = {
     "MULTI_FACTOR_RECOVERY_CODES_TEMPLATE": "security/mf_recovery_codes.html",
     "MULTI_FACTOR_RECOVERY_URL": "/mf-recovery",
     "MULTI_FACTOR_RECOVERY_TEMPLATE": "security/mf_recovery.html",
+    "MULTI_FACTOR_RECOVERY_CODES_KEYS": None,
+    "MULTI_FACTOR_RECOVERY_CODE_TTL": None,
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "5 days",
     "LOGIN_WITHOUT_CONFIRMATION": False,
@@ -1046,6 +1051,8 @@ class Security:
     :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
     :param username_util_cls: Class to use for normalizing and validating usernames.
         Defaults to :class:`UsernameUtil`
+    :param mf_recovery_codes_util_cls: Class for generating, checking, encrypting
+        and decrypting recovery codes. Defaults to :class:`MfRecoveryCodesUtil`
 
     .. tip::
         Be sure that all your configuration values have been set PRIOR to
@@ -1083,6 +1090,8 @@ class Security:
     .. versionadded:: 5.0.0
         Added support for multi-factor recovery codes ``mf_recovery_codes_form``,
         ``mf_recovery_form``.
+    .. versionadded:: 5.1.0
+        ``mf_recovery_codes_util_cls``.
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
@@ -1142,6 +1151,7 @@ class Security:
         totp_cls: t.Type["Totp"] = Totp,
         username_util_cls: t.Type["UsernameUtil"] = UsernameUtil,
         webauthn_util_cls: t.Type["WebauthnUtil"] = WebauthnUtil,
+        mf_recovery_codes_util_cls: t.Type["MfRecoveryCodesUtil"] = MfRecoveryCodesUtil,
         **kwargs: t.Any,
     ):
 
@@ -1165,6 +1175,7 @@ class Security:
         self.totp_cls = totp_cls
         self.username_util_cls = username_util_cls
         self.webauthn_util_cls = webauthn_util_cls
+        self.mf_recovery_codes_util_cls = mf_recovery_codes_util_cls
 
         # Forms - we create a list from constructor.
         # BC - in init_app we will allow override of class.
@@ -1238,6 +1249,7 @@ class Security:
         self._redirect_validate_re: re.Pattern
         self._totp_factory: "Totp"
         self._username_util: UsernameUtil
+        self._mf_recovery_codes_util: MfRecoveryCodesUtil
 
         # We add forms, config etc as attributes - which of course mypy knows
         # nothing about. Add necessary attributes here to keep mypy happy
@@ -1396,6 +1408,7 @@ class Security:
         self._password_util = self.password_util_cls(app)
         self._username_util = self.username_util_cls(app)
         self._webauthn_util = self.webauthn_util_cls(app)
+        self._mf_recovery_codes_util = self.mf_recovery_codes_util_cls(app)
         rvre = cv("REDIRECT_VALIDATE_RE", app=app)
         if rvre:
             self._redirect_validate_re = re.compile(rvre)

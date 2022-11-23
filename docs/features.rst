@@ -111,7 +111,7 @@ Please read :ref:`2fa_theory_of_operation` for more details.
 The Two-factor feature offers the ability for a user to 'rescue' themselves if
 they lose track of their secondary factor device. Rescue options include sending
 a one time code via email, send an email to the application admin, and using a previously
-generated and downloaded one-time code.
+generated and downloaded one-time code (see :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`).
 
 .. _unified-sign-in:
 
