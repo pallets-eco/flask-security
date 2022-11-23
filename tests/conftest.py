@@ -141,6 +141,10 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     if webauthn_test is not None:
         pytest.importorskip("webauthn")
 
+    mfa_test = marker_getter("two_factor") or marker_getter("unified_signin")
+    if mfa_test is not None:
+        pytest.importorskip("cryptography")
+
     # Override config settings as requested for this test
     settings = marker_getter("settings")
     if settings is not None:

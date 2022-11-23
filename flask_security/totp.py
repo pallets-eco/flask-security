@@ -157,7 +157,7 @@ class Totp:
             raise
 
     def generate_recovery_codes(self, number: int) -> t.List[str]:
-        """Generate a set of secure passwords - used a 2FA recovery codes.
+        """Generate a set of secure passwords - used for 2FA recovery codes.
             # this is nice for english - but not for others
             return genphrase(entropy="fair", wordset="eff_short", sep="-",
              returns=number)

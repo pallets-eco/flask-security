@@ -122,7 +122,7 @@ class TfPluginBase:  # pragma no cover
         authenticated, and required a second method of authentication.
         This method returns the necessary information for the user UI to continue.
         For forms, this is usually a redirect to a secondary sign in form. For JSON
-        it is just a payload that describes that the user has to do next.
+        it is just a payload that describes what the user has to do next.
         """
         raise NotImplementedError
 
@@ -339,13 +339,3 @@ def tf_clean_session():
             "tf_select",
         ]:
             session.pop(k, None)
-
-
-def create_recovery_codes(user: "User") -> t.List[str]:
-    # Create new recovery codes and store in user record.
-    # TODO - if app provides a key - use cryptography.fernet to encrypt into DB
-    new_codes = _security._totp_factory.generate_recovery_codes(
-        cv("MULTI_FACTOR_RECOVERY_CODES_N")
-    )
-    _datastore.mf_set_recovery_codes(user, new_codes)
-    return new_codes

@@ -548,7 +548,7 @@ def test_mf_recovery_codes(app, datastore):
         user = datastore.find_user(email="matt@lp.com")
         assert hasattr(user, "mf_recovery_codes")
 
-        assert not datastore.mf_delete_recovery_code(user, "nothing yet")
+        assert not datastore.mf_delete_recovery_code(user, 0)
 
         datastore.mf_set_recovery_codes(user, ["r1", "r2", "r3"])
         datastore.commit()
@@ -557,11 +557,11 @@ def test_mf_recovery_codes(app, datastore):
         codes = datastore.mf_get_recovery_codes(user)
         assert codes == ["r1", "r2", "r3"]
 
-        rv = datastore.mf_delete_recovery_code(user, "r2")
+        rv = datastore.mf_delete_recovery_code(user, 1)
         assert rv
         datastore.commit()
 
-        rv = datastore.mf_delete_recovery_code(user, "huh?")
+        rv = datastore.mf_delete_recovery_code(user, 4)
         assert not rv
 
         user = datastore.find_user(email="matt@lp.com")

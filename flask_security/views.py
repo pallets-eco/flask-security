@@ -67,8 +67,8 @@ from .recoverable import (
     update_password,
 )
 from .registerable import register_user, register_existing
+from .recovery_codes import mf_recovery, mf_recovery_codes
 from .tf_plugin import (
-    create_recovery_codes,
     tf_check_state,
     tf_illegal_state,
     tf_set_validity_token_cookie,
@@ -1042,82 +1042,6 @@ def two_factor_rescue():
         rescue_mail=cv("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
         **_ctx("tf_token_validation"),
-    )
-
-
-@auth_required(
-    lambda: cv("API_ENABLED_METHODS"),
-    within=lambda: cv("FRESHNESS"),
-    grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
-)
-def mf_recovery_codes() -> "ResponseValue":
-    """
-    Create and download multi-factor recovery codes.
-    For forms we want the user to explicitly request to see the codes - so
-    the form has a show_codes submit button.
-    """
-    form = build_form_from_request("mf_recovery_codes_form")
-
-    if form.validate_on_submit():
-        # generate new codes
-        codes = create_recovery_codes(current_user)
-        after_this_request(view_commit)
-        if _security._want_json(request):
-            payload = dict(recovery_codes=codes)
-            return base_render_json(form, include_user=False, additional=payload)
-        return _security.render_template(
-            cv("MULTI_FACTOR_RECOVERY_CODES_TEMPLATE"),
-            mf_recovery_codes_form=form,
-            recovery_codes=codes,
-            **_ctx("mf_recovery_codes"),
-        )
-
-    codes = _datastore.mf_get_recovery_codes(current_user)
-    if _security._want_json(request):
-        return base_render_json(
-            form, include_user=False, additional=dict(recovery_codes=codes)
-        )
-    return _security.render_template(
-        cv("MULTI_FACTOR_RECOVERY_CODES_TEMPLATE"),
-        mf_recovery_codes_form=form,
-        recovery_codes=codes if request.args.get("show_codes", None) else [],
-        **_ctx("mf_recovery_codes"),
-    )
-
-
-@anonymous_user_required
-@unauth_csrf(fall_through=True)
-def mf_recovery():
-    """View for entering a recovery code.
-
-    User must have already provided valid username/password.
-    User must have already established 2FA
-
-    """
-    form = build_form_from_request("mf_recovery_form")
-    form.user = tf_check_state(["ready"])
-    if not form.user:
-        return tf_illegal_state(form, _security.login_url)
-
-    if form.validate_on_submit():
-        # Valid code - we want these to be one time - so remove it from list
-        _datastore.mf_delete_recovery_code(form.user, form.code.data)
-        after_this_request(view_commit)
-
-        # In the recovery case - don't set/offer validity token.
-        _security.two_factor_plugins.tf_complete(form.user, True)
-
-        if not _security._want_json(request):
-            return redirect(get_post_login_redirect())
-        else:
-            return base_render_json(form)
-
-    if _security._want_json(request):
-        return base_render_json(form, include_user=False)
-    return _security.render_template(
-        cv("MULTI_FACTOR_RECOVERY_TEMPLATE"),
-        mf_recovery_form=form,
-        **_ctx("mf_recovery"),
     )
 
 
