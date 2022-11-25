@@ -120,8 +120,9 @@ def test_tf_select_json(app, client, get_message):
 
 
 @pytest.mark.two_factor()
+@pytest.mark.settings(url_prefix="/api")
 def test_tf_select_auth(app, client, get_message):
     # /tf-select is an unauthenticated endpoint - make sure only allowable in correct
     # state.
-    response = client.get("/tf-select", follow_redirects=False)
-    assert "/login" in response.location
+    response = client.get("/api/tf-select", follow_redirects=False)
+    assert "/api/login" in response.location

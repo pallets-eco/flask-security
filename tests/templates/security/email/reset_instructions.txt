@@ -11,4 +11,4 @@
 Link:{{ reset_link }}
 Email:{{ user.email }}
 Token:{{ reset_token }}
-ConfirmUrl:{{ security.confirm_url }}
+RegisterBlueprint:{{ security.register_blueprint }}

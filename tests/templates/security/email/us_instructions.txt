@@ -9,5 +9,5 @@
 Link:{{ login_link }}
 Email:{{ user.email }}
 Token:{{ login_token }}
-ConfirmUrl:{{ security.confirm_url }}
+RegisterBlueprint:{{ security.register_blueprint }}
 Username:{{ username }}

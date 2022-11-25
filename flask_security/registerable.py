@@ -25,6 +25,9 @@ from .utils import (
     url_for_security,
 )
 
+if t.TYPE_CHECKING:
+    from .forms import ConfirmRegisterForm
+
 
 def register_user(registration_form):
     """
@@ -72,7 +75,7 @@ def register_user(registration_form):
     return user
 
 
-def register_existing(form):
+def register_existing(form: "ConfirmRegisterForm") -> bool:
     """
     In the case of generic responses we want to mitigate any possible
     email/username enumeration.
@@ -119,7 +122,7 @@ def register_existing(form):
 
     if form.existing_email_user:
         user_not_registered.send(
-            app._get_current_object(),
+            app._get_current_object(),  # type: ignore
             user=form.existing_email_user,
             existing_email=True,
             existing_username=form.existing_username_user is not None,
@@ -143,7 +146,7 @@ def register_existing(form):
         # Note that we send email to NEW email - so it is possible for a bad-actor
         # to enumerate usernames (slowly).
         user_not_registered.send(
-            app._get_current_object(),
+            app._get_current_object(),  # type:ignore
             user=None,
             existing_email=False,
             existing_username=True,

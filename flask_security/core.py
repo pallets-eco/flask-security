@@ -188,6 +188,7 @@ _default_config: t.Dict[str, t.Any] = {
     "RESET_VIEW": None,
     "LOGIN_ERROR_VIEW": None,
     "REQUIRES_CONFIRMATION_ERROR_VIEW": None,
+    "TWO_FACTOR_ERROR_VIEW": ".login",
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
     "REDIRECT_ALLOW_SUBDOMAINS": False,
@@ -768,7 +769,7 @@ class RoleMixin:
 
     if t.TYPE_CHECKING:  # pragma: no cover
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.permissions: t.Optional[t.List[str]]
 
     def __eq__(self, other):
@@ -1255,7 +1256,7 @@ class Security:
         # nothing about. Add necessary attributes here to keep mypy happy
         self.trackable: bool = False
         self.confirmable: bool = False
-        self.registrable: bool = False
+        self.registerable: bool = False
         self.changeable: bool = False
         self.recoverable: bool = False
         self.two_factor: bool = False
@@ -1264,15 +1265,14 @@ class Security:
         self.webauthn: bool = False
 
         # Redirect URLs
-        self.login_url: str = ""
         self.login_error_view: str = ""
-        self.us_verify_send_code_url: str = ""
         self.post_change_view: str = ""
         self.post_login_view: str = ""
         self.post_reset_view: str = ""
         self.reset_view: str = ""
         self.reset_error_view: str = ""
         self.requires_confirmation_error_view: str = ""
+        self.two_factor_error_view: str = ""
         self.post_confirm_view: str = ""
         self.confirm_error_view: str = ""
 
@@ -1381,7 +1381,10 @@ class Security:
 
         # set all (SECURITY) config items as attributes (minus the SECURITY_ prefix)
         for key, value in get_config(app).items():
-            setattr(self, key.lower(), value)
+            # need to start getting rid of this - especially things like *_URL which
+            # should never be referenced
+            if not key.endswith("_URL"):
+                setattr(self, key.lower(), value)
 
         identity_loaded.connect_via(app)(_on_identity_loaded)
 

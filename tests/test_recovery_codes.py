@@ -149,14 +149,20 @@ def test_rc_reset(app, client, get_message):
     assert len(codes) == 0
 
 
-@pytest.mark.settings(multi_factor_recovery_codes=True)
+@pytest.mark.settings(multi_factor_recovery_codes=True, url_prefix="/api")
 def test_rc_bad_state(app, client, get_message):
 
-    response = client.post("/mf-recovery", json=dict(code="hi"))
+    response = client.post("/api/mf-recovery", json=dict(code="hi"))
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
         "TWO_FACTOR_PERMISSION_DENIED"
     )
+
+    response = client.post(
+        "/api/mf-recovery", data=dict(code="hi"), follow_redirects=False
+    )
+    assert response.status_code == 302
+    assert "/api/login" in response.location
 
 
 @pytest.mark.settings(multi_factor_recovery_codes=True)

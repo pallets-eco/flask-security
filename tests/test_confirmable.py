@@ -156,7 +156,7 @@ def test_confirmation_template(app, client, get_message):
         assert matcher[1].split(":")[1] == "mary@lp.com"
         assert matcher[2].split(":")[1] == registrations[0]["confirm_token"]
         assert matcher[2].split(":")[1] == registrations[0]["confirmation_token"]
-        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+        assert matcher[3].split(":")[1] == "True"  # register_blueprint
 
         # check confirmation email
         matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
@@ -165,7 +165,7 @@ def test_confirmation_template(app, client, get_message):
         assert matcher[2].split(":")[1] == recorded_tokens_sent[0]
         token = matcher[2].split(":")[1]
         assert token == recorded_tokens_sent[0]
-        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+        assert matcher[3].split(":")[1] == "True"  # register_blueprint
 
         # check link
         _, link = matcher[0].split(":", 1)

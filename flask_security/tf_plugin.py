@@ -63,13 +63,13 @@ def tf_select() -> "ResponseValue":
     if not all(k in session for k in ["tf_user_id", "tf_select"]):
         # illegal call on this endpoint
         tf_clean_session()
-        return tf_illegal_state(form, _security.login_url)
+        return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
     user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
     if not user:  # pragma no cover
         # hard to imagine - someone deletes the user while they are logging in.
         tf_clean_session()
-        return tf_illegal_state(form, _security.login_url)
+        return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
     setup_methods = _security.two_factor_plugins.get_setup_tf_methods(user)
     form.which.choices = setup_methods
@@ -85,7 +85,7 @@ def tf_select() -> "ResponseValue":
             # and now, they deleted a second factor (which they would have to do
             # in another window).
             tf_clean_session()
-            return tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
         return response
 
     if _security._want_json(request):
@@ -135,7 +135,7 @@ class TfPlugin:
     app. See TfPluginBase for what a new implementation must provide.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._tf_impls: t.Dict[str, "TfPluginBase"] = {}
 
     def register_tf_impl(

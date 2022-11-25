@@ -397,15 +397,16 @@ class SendConfirmationForm(Form, UserEmailFormMixin):
 
     submit = SubmitField(get_form_field_label("send_confirmation"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: "User" = None  # set by valid_user_email
+        self.user: t.Optional["User"] = None  # set by valid_user_email
         if request and request.method == "GET":
             self.email.data = request.args.get("email", None)
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
+        assert self.user is not None
         if self.user.confirmed_at is not None:
             self.email.errors.append(get_message("ALREADY_CONFIRMED")[0])
             return False
@@ -417,14 +418,15 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
 
     submit = SubmitField(get_form_field_label("recover_password"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.requires_confirmation = False
-        self.user: "User" = None  # set by valid_user_email
+        self.requires_confirmation: bool = False
+        self.user: t.Optional["User"] = None  # set by valid_user_email
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
+        assert self.user is not None
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
@@ -440,13 +442,14 @@ class PasswordlessLoginForm(Form, UserEmailFormMixin):
 
     submit = SubmitField(get_form_field_label("send_login_link"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: "User" = None  # set by valid_user_email
+        self.user: t.Optional["User"] = None  # set by valid_user_email
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
+        assert self.user is not None
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
@@ -469,7 +472,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(get_form_field_label("login"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
         if request and not self.next.data:
             self.next.data = request.args.get("next", "")
@@ -558,9 +561,9 @@ class VerifyForm(Form, PasswordFormMixin):
 
     submit = SubmitField(get_form_field_label("verify_password"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, user: "User", **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: "User" = None  # set by view
+        self.user: "User" = user
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
@@ -779,13 +782,13 @@ class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
 
     submit = SubmitField(get_form_field_label("submitcode"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
         # These are set by view.
         self.window: int = 0
         self.primary_method: str = ""
         self.tf_totp_secret: str = ""
-        self.user: "User" = None
+        self.user: t.Optional["User"] = None  # set by view
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
@@ -803,6 +806,7 @@ class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
             return False
 
         # verify entered code with user's totp secret
+        assert self.user is not None
         if not _security._totp_factory.verify_totp(
             token=self.code.data,
             totp_secret=self.tf_totp_secret,
@@ -831,17 +835,19 @@ class TwoFactorRescueForm(Form):
 class DummyForm(Form):
     """A dummy form for json responses"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: "User" = None
+        self.user: t.Optional["User"] = kwargs.get("user", None)
 
 
-def build_form_from_request(form_name):
+def build_form_from_request(form_name: str, **kwargs: t.Dict[str, t.Any]) -> Form:
     # helper function for views
     form_data = None
     if request.content_length:
         form_data = MultiDict(request.get_json()) if request.is_json else request.form
-    return build_form(form_name, formdata=form_data, meta=suppress_form_csrf())
+    return build_form(
+        form_name, formdata=form_data, meta=suppress_form_csrf(), **kwargs
+    )
 
 
 def build_form(form_name, **kwargs):

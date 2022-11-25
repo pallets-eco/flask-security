@@ -144,14 +144,15 @@ class MfRecoveryForm(Form):
     )
     submit = SubmitField(get_form_field_label("submitcode"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
         # filled by view
-        self.user: "User" = None
+        self.user: t.Optional["User"] = None
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
             return False
+        assert self.user is not None
         if not _security._mf_recovery_codes_util.check_recovery_code(
             self.user, self.code.data
         ):
@@ -212,7 +213,7 @@ def mf_recovery():
     form = build_form_from_request("mf_recovery_form")
     form.user = tf_check_state(["ready"])
     if not form.user:
-        return tf_illegal_state(form, _security.login_url)
+        return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
     if form.validate_on_submit():
         # Valid code - we want these to be one time - so remove it from list

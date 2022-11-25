@@ -387,7 +387,7 @@ def test_us_passwordless(app, client, get_message):
         token = matcher[2].split(":")[1]
         assert token == requests[0]["token"]  # deprecated
         assert token == requests[0]["login_token"]
-        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+        assert matcher[3].split(":")[1] == "True"  # register_blueprint
         assert matcher[4].split(":")[1] == "nopasswd-dude@lp.com"
 
         # check link

@@ -245,7 +245,7 @@ def test_recoverable_template(app, client, get_message):
         # should be 4 - link, email, token, config item
         assert matcher[1].split(":")[1] == "joe@lp.com"
         assert matcher[2].split(":")[1] == resets[0]["reset_token"]
-        assert matcher[3].split(":")[1] == app.config["SECURITY_CONFIRM_URL"]
+        assert matcher[3].split(":")[1] == "True"  # register_blueprint
 
         # check link
         link = matcher[0].split(":", 1)[1]

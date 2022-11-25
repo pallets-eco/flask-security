@@ -23,7 +23,9 @@ Fixes
   account blueprint prefixes.
 - (:issue:`699`) Properly propagate `?next=/xx` - the verify, webauthn, and unified
   signin endpoints, that had multiple redirects, needed fixes.
-- (:pr:`696`) Add Hungarian translations (xQwexx)
+- (:pr:`696`) Add Hungarian translations. (xQwexx)
+- (:issue:`701`) Two factor redirects ignore url_prefix. Added a `SECURITY_TWO_FACTOR_ERROR_VIEW`
+  configuration option.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

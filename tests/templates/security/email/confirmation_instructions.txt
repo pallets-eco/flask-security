@@ -8,4 +8,4 @@
 Link:{{ confirmation_link }}
 Email:{{ user.email }}
 Token:{{ confirmation_token }}
-ConfirmUrl:{{ security.confirm_url }}
+RegisterBlueprint:{{ security.register_blueprint }}

@@ -224,8 +224,7 @@ def login() -> "ResponseValue":
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def verify():
     """View function which handles a reauthentication request."""
-    form = build_form_from_request("verify_form")
-    form.user = current_user
+    form = build_form_from_request("verify_form", user=current_user)
 
     if form.validate_on_submit():
         # form may have called verify_and_update_password()
@@ -486,9 +485,7 @@ def confirm_email(token):
     return redirect(
         get_url(_security.post_confirm_view)
         or get_url(
-            _security.post_login_view
-            if cv("AUTO_LOGIN_AFTER_CONFIRM")
-            else _security.login_url
+            _security.post_login_view if cv("AUTO_LOGIN_AFTER_CONFIRM") else ".login"
         )
     )
 
@@ -730,12 +727,12 @@ def two_factor_setup():
         ] not in ["setup_from_login", "validating_profile"]:
             # illegal call on this endpoint
             tf_clean_session()
-            return tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
         user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
         if not user:
             tf_clean_session()
-            return tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
     else:
         # Caller is changing their TFA profile. This requires a 'fresh' authentication
@@ -891,13 +888,13 @@ def two_factor_token_validation():
         ):
             # illegal call on this endpoint
             tf_clean_session()
-            return tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
         user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
         form.user = user
         if not user:
             tf_clean_session()
-            return tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
         if session["tf_state"] == "ready":
             # normal login case
@@ -916,7 +913,7 @@ def two_factor_token_validation():
             tf_clean_session()
             # logout since this seems like attack-ish/logic error
             logout_user()
-            return tf_illegal_state(form, _security.login_url)
+            return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
         pm = session["tf_primary_method"]
         totp_secret = session["tf_totp_secret"]
         form.user = current_user
@@ -992,7 +989,7 @@ def two_factor_rescue():
 
     form.user = tf_check_state(["ready"])
     if not form.user:
-        return tf_illegal_state(form, _security.login_url)
+        return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
     recovery_options = set_rescue_options(form, form.user)
     rproblem = ""
@@ -1057,150 +1054,169 @@ def create_blueprint(app, state, import_name):
     )
 
     if state.logout_methods is not None:
-        bp.route(state.logout_url, methods=state.logout_methods, endpoint="logout")(
-            logout
-        )
-
-    if state.passwordless:
-        bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(send_login)
         bp.route(
-            state.login_url + slash_url_suffix(state.login_url, "<token>"),
+            cv("LOGOUT_URL", app=app), methods=state.logout_methods, endpoint="logout"
+        )(logout)
+
+    login_url = cv("LOGIN_URL", app=app)
+    if state.passwordless:
+        bp.route(login_url, methods=["GET", "POST"], endpoint="login")(send_login)
+        bp.route(
+            login_url + slash_url_suffix(login_url, "<token>"),
             endpoint="token_login",
         )(token_login)
     elif cv("US_SIGNIN_REPLACES_LOGIN", app=app):
-        bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(us_signin)
+        bp.route(login_url, methods=["GET", "POST"], endpoint="login")(us_signin)
 
     else:
-        bp.route(state.login_url, methods=["GET", "POST"], endpoint="login")(login)
+        bp.route(login_url, methods=["GET", "POST"], endpoint="login")(login)
 
     if cv("FRESHNESS", app=app).total_seconds() >= 0:
-        bp.route(state.verify_url, methods=["GET", "POST"], endpoint="verify")(verify)
+        bp.route(cv("VERIFY_URL", app=app), methods=["GET", "POST"], endpoint="verify")(
+            verify
+        )
 
     if state.unified_signin:
-        bp.route(state.us_signin_url, methods=["GET", "POST"], endpoint="us_signin")(
+        us_signin_url = cv("US_SIGNIN_URL", app=app)
+        us_signin_send_code_url = cv("US_SIGNIN_SEND_CODE_URL", app=app)
+        us_setup_url = cv("US_SETUP_URL", app=app)
+        us_verify_url = cv("US_VERIFY_URL", app=app)
+        us_verify_send_code_url = cv("US_VERIFY_SEND_CODE_URL", app=app)
+        us_verify_link_url = cv("US_VERIFY_LINK_URL", app=app)
+        bp.route(us_signin_url, methods=["GET", "POST"], endpoint="us_signin")(
             us_signin
         )
         bp.route(
-            state.us_signin_send_code_url,
+            us_signin_send_code_url,
             methods=["POST"],
             endpoint="us_signin_send_code",
         )(us_signin_send_code)
-        bp.route(state.us_setup_url, methods=["GET", "POST"], endpoint="us_setup")(
-            us_setup
-        )
+
+        bp.route(us_setup_url, methods=["GET", "POST"], endpoint="us_setup")(us_setup)
         bp.route(
-            state.us_setup_url + slash_url_suffix(state.us_setup_url, "<token>"),
+            us_setup_url + slash_url_suffix(us_setup_url, "<token>"),
             methods=["GET", "POST"],
             endpoint="us_setup_validate",
         )(us_setup_validate)
 
         # Freshness verification
         if cv("FRESHNESS", app=app).total_seconds() >= 0:
+            bp.route(us_verify_url, methods=["GET", "POST"], endpoint="us_verify")(
+                us_verify
+            )
             bp.route(
-                state.us_verify_url, methods=["GET", "POST"], endpoint="us_verify"
-            )(us_verify)
-            bp.route(
-                state.us_verify_send_code_url,
+                us_verify_send_code_url,
                 methods=["POST"],
                 endpoint="us_verify_send_code",
             )(us_verify_send_code)
 
-        bp.route(state.us_verify_link_url, methods=["GET"], endpoint="us_verify_link")(
+        bp.route(us_verify_link_url, methods=["GET"], endpoint="us_verify_link")(
             us_verify_link
         )
 
     if state.two_factor:
-        tf_token_validation = "two_factor_token_validation"
+        two_factor_setup_url = cv("TWO_FACTOR_SETUP_URL", app=app)
+        two_factor_token_validation_url = cv("TWO_FACTOR_TOKEN_VALIDATION_URL", app=app)
+        two_factor_rescue_url = cv("TWO_FACTOR_RESCUE_URL", app=app)
         bp.route(
-            state.two_factor_setup_url,
+            two_factor_setup_url,
             methods=["GET", "POST"],
             endpoint="two_factor_setup",
         )(two_factor_setup)
         bp.route(
-            state.two_factor_token_validation_url,
+            two_factor_token_validation_url,
             methods=["GET", "POST"],
-            endpoint=tf_token_validation,
+            endpoint="two_factor_token_validation",
         )(two_factor_token_validation)
         bp.route(
-            state.two_factor_rescue_url,
+            two_factor_rescue_url,
             methods=["GET", "POST"],
             endpoint="two_factor_rescue",
         )(two_factor_rescue)
 
     if state.registerable:
-        bp.route(state.register_url, methods=["GET", "POST"], endpoint="register")(
-            register
-        )
+        bp.route(
+            cv("REGISTER_URL", app=app), methods=["GET", "POST"], endpoint="register"
+        )(register)
 
     if state.recoverable:
-        bp.route(state.reset_url, methods=["GET", "POST"], endpoint="forgot_password")(
+        reset_url = cv("RESET_URL", app=app)
+        bp.route(reset_url, methods=["GET", "POST"], endpoint="forgot_password")(
             forgot_password
         )
         bp.route(
-            state.reset_url + slash_url_suffix(state.reset_url, "<token>"),
+            reset_url + slash_url_suffix(reset_url, "<token>"),
             methods=["GET", "POST"],
             endpoint="reset_password",
         )(reset_password)
 
     if state.changeable:
-        bp.route(state.change_url, methods=["GET", "POST"], endpoint="change_password")(
-            change_password
-        )
+        bp.route(
+            cv("CHANGE_URL", app=app),
+            methods=["GET", "POST"],
+            endpoint="change_password",
+        )(change_password)
 
     if state.confirmable:
+        confirm_url = cv("CONFIRM_URL", app=app)
+        bp.route(confirm_url, methods=["GET", "POST"], endpoint="send_confirmation")(
+            send_confirmation
+        )
         bp.route(
-            state.confirm_url, methods=["GET", "POST"], endpoint="send_confirmation"
-        )(send_confirmation)
-        bp.route(
-            state.confirm_url + slash_url_suffix(state.confirm_url, "<token>"),
+            confirm_url + slash_url_suffix(confirm_url, "<token>"),
             methods=["GET", "POST"],
             endpoint="confirm_email",
         )(confirm_email)
 
     if cv("MULTI_FACTOR_RECOVERY_CODES", app) and state.support_mfa:
+        multi_factor_recovery_codes_url = cv("MULTI_FACTOR_RECOVERY_CODES_URL", app=app)
+        multi_factor_recovery_url = cv("MULTI_FACTOR_RECOVERY_URL", app=app)
         bp.route(
-            state.multi_factor_recovery_codes_url,
+            multi_factor_recovery_codes_url,
             methods=["GET", "POST"],
             endpoint="mf_recovery_codes",
         )(mf_recovery_codes)
         bp.route(
-            state.multi_factor_recovery_url,
+            multi_factor_recovery_url,
             methods=["GET", "POST"],
             endpoint="mf_recovery",
         )(mf_recovery)
 
     if state.webauthn:
+        wan_register_url = cv("WAN_REGISTER_URL", app=app)
+        wan_signin_url = cv("WAN_SIGNIN_URL", app=app)
+        wan_delete_url = cv("WAN_DELETE_URL", app=app)
+        wan_verify_url = cv("WAN_VERIFY_URL", app=app)
         bp.route(
-            state.wan_register_url,
+            wan_register_url,
             methods=["GET", "POST"],
             endpoint="wan_register",
         )(webauthn_register)
         bp.route(
-            state.wan_register_url
-            + slash_url_suffix(state.wan_register_url, "<token>"),
+            wan_register_url + slash_url_suffix(wan_register_url, "<token>"),
             methods=["POST"],
             endpoint="wan_register_response",
         )(webauthn_register_response)
-        bp.route(state.wan_signin_url, methods=["GET", "POST"], endpoint="wan_signin")(
+
+        bp.route(wan_signin_url, methods=["GET", "POST"], endpoint="wan_signin")(
             webauthn_signin
         )
         bp.route(
-            state.wan_signin_url + slash_url_suffix(state.wan_signin_url, "<token>"),
+            wan_signin_url + slash_url_suffix(wan_signin_url, "<token>"),
             methods=["POST"],
             endpoint="wan_signin_response",
         )(webauthn_signin_response)
-        bp.route(state.wan_delete_url, methods=["GET", "POST"], endpoint="wan_delete")(
+        bp.route(wan_delete_url, methods=["GET", "POST"], endpoint="wan_delete")(
             webauthn_delete
         )
         if cv("FRESHNESS", app=app).total_seconds() >= 0 and cv(
             "WAN_ALLOW_AS_VERIFY", app=app
         ):
+            bp.route(wan_verify_url, methods=["GET", "POST"], endpoint="wan_verify")(
+                webauthn_verify
+            )
             bp.route(
-                state.wan_verify_url, methods=["GET", "POST"], endpoint="wan_verify"
-            )(webauthn_verify)
-            bp.route(
-                state.wan_verify_url
-                + slash_url_suffix(state.wan_verify_url, "<token>"),
+                wan_verify_url + slash_url_suffix(wan_verify_url, "<token>"),
                 methods=["POST"],
                 endpoint="wan_verify_response",
             )(webauthn_verify_response)

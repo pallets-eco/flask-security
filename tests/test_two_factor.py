@@ -277,6 +277,36 @@ def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
     )
 
 
+@pytest.mark.settings(two_factor_required=True, url_prefix="/api")
+def test_two_factor_illegal_state(app, client, get_message):
+
+    # trying to pick method without doing earlier stage
+    data = dict(setup="email")
+
+    with capture_flashes() as flashes:
+        response = client.post("/api/tf-setup", data=data)
+        assert response.status_code == 302
+        assert "/api/login" in response.location
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "TWO_FACTOR_PERMISSION_DENIED"
+    )
+
+    # try validate code
+    response = client.post(
+        "/api/tf-validate", data=dict(code=b"333"), follow_redirects=False
+    )
+    assert response.status_code == 302
+    assert "/api/login" in response.location
+
+    # try rescue
+    response = client.post(
+        "/api/tf-rescue", data=dict(help_setup="lost_device"), follow_redirects=False
+    )
+    assert response.status_code == 302
+    assert "/api/login" in response.location
+
+
 @pytest.mark.settings(two_factor_required=True)
 def test_two_factor_flag(app, client, get_message):
     # trying to verify code without going through two-factor

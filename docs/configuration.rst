@@ -1129,6 +1129,16 @@ Configuration related to the two-factor authentication feature.
 
     .. versionadded:: 5.0.0
 
+.. py:data:: SECURITY_TWO_FACTOR_ERROR_VIEW
+
+    Specifies a URL or endpoint to redirect to if the system detects that
+    a two-factor endpoint is being accessed without the proper state. For example
+    if ``tf-validate`` is accessed but the caller hasn't yet successfully passed the
+    primary authentication.
+
+    Default: ``".login"``
+
+    .. versionadded:: 5.1.0
 
 .. py:data:: SECURITY_TWO_FACTOR_SELECT_TEMPLATE
 
