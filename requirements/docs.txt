@@ -1,3 +1,5 @@
 Pallets-Sphinx-Themes~=2.0
 Sphinx~=5.3
 sphinx-issues==3.0.1
+# Lock packaging until pallets-sphinx-themes gets updated.
+packaging==21.3

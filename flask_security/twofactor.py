@@ -21,7 +21,6 @@ from .utils import (
     config_value as cv,
     do_flash,
     json_error_response,
-    propagate_next,
     send_mail,
     url_for_security,
 )
@@ -159,7 +158,7 @@ class CodeTfPlugin(TfPluginBase):
         return []
 
     def tf_login(
-        self, user: "User", json_payload: t.Dict[str, t.Any]
+        self, user: "User", json_payload: t.Dict[str, t.Any], next_loc: t.Optional[str]
     ) -> "ResponseValue":
         """Helper for two-factor authentication login
 
@@ -204,10 +203,9 @@ class CodeTfPlugin(TfPluginBase):
                         return _security._render_json(payload, 500, None, None)
 
             if not _security._want_json(request):
+                values = dict(next=next_loc) if next_loc else dict()
                 return redirect(
-                    url_for_security(
-                        "two_factor_token_validation", next=propagate_next(request.url)
-                    )
+                    url_for_security("two_factor_token_validation", **values)
                 )
 
         # JSON response - Fake up a form - doesn't really matter which.

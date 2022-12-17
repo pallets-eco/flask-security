@@ -257,23 +257,26 @@ def _signin_start(
     return signin_options, response_url
 
 
-def _signin_start_json(client, identity=None, remember=False):
+def _signin_start_json(client, identity=None, remember=False, endpoint="wan-signin"):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     response = client.post(
-        "wan-signin", headers=headers, json=dict(identity=identity, remember=remember)
+        endpoint, headers=headers, json=dict(identity=identity, remember=remember)
     )
     signin_options = response.json["response"]["credential_options"]
     response_url = f'wan-signin/{response.json["response"]["wan_state"]}'
     return signin_options, response_url, response.json
 
 
-def wan_signin(client, identity, signin_data):
+def wan_signin(client, identity, signin_data, wan_signin_url):
     # perform complete sign in - useful for tests outside this module.
-    signin_options, response_url, _ = _signin_start_json(client, identity)
+    signin_options, response_url = _signin_start(
+        client, identity, endpoint=wan_signin_url
+    )
     response = client.post(
         response_url,
-        json=dict(credential=json.dumps(signin_data)),
+        data=dict(credential=json.dumps(signin_data)),
+        follow_redirects=True,
     )
     assert response.status_code == 200
     return response
@@ -785,7 +788,7 @@ def test_tf(app, client, get_message):
     assert response.status_code == 200
     assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
     # we should have a wan key available
-    assert b'action="/wan-signin"' in response.data
+    assert b'action="/wan-signin' in response.data
 
     # verify NOT logged in
     response = client.get("/profile", follow_redirects=False)

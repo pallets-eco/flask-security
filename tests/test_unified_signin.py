@@ -28,6 +28,7 @@ from tests.test_utils import (
     get_form_action,
     logout,
     reset_fresh,
+    setup_tf_sms,
 )
 from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
@@ -2114,3 +2115,30 @@ def test_propagate_next(app, client):
         data = dict(identity="matt@lp.com", passcode=codes[0]["login_token"])
         response = client.post(signin_url, data=data, follow_redirects=False)
         assert "/profile" in response.location
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(url_prefix="/auth", us_signin_replaces_login=True)
+def test_propagate_next_tf(app, client):
+    # test next is propagated with a second factor
+    response = client.post(
+        "/auth/login", json=dict(identity="matt@lp.com", passcode="password")
+    )
+    sms_sender = setup_tf_sms(client, url_prefix=app.config["SECURITY_URL_PREFIX"])
+    logout(client, endpoint="/auth/logout")
+
+    response = client.get("/profile", follow_redirects=True)
+    assert "?next=%2Fprofile" in response.request.url
+    signin_url = get_form_action(response, 0)
+    response = client.post(
+        signin_url,
+        data=dict(identity="matt@lp.com", passcode="password"),
+        follow_redirects=True,
+    )
+    sendcode_url = get_form_action(response, 0)
+    response = client.post(
+        sendcode_url,
+        data=dict(code=sms_sender.messages[0].split()[-1]),
+        follow_redirects=True,
+    )
+    assert b"Profile Page" in response.data
