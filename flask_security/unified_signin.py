@@ -79,6 +79,7 @@ from .utils import (
     json_error_response,
     login_user,
     lookup_identity,
+    propagate_next,
     send_mail,
     url_for_security,
     view_commit,
@@ -413,7 +414,7 @@ def us_signin_send_code() -> "ResponseValue":
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a method request to send a code.
     """
-    form = build_form_from_request("us_signin_form")
+    form: UnifiedSigninForm = build_form_from_request("us_signin_form")
     form.submit_send_code.data = True
     form.submit.data = False
 
@@ -484,7 +485,7 @@ def us_verify_send_code() -> "ResponseValue":
     """
     Send code during verify. POST only.
     """
-    form = build_form_from_request("us_verify_form")
+    form: UnifiedVerifyForm = build_form_from_request("us_verify_form")
     form.submit_send_code.data = True
     form.submit.data = False
 
@@ -556,7 +557,7 @@ def us_signin() -> "ResponseValue":
         else:
             return redirect(get_post_login_redirect())
 
-    form = build_form_from_request("us_signin_form")
+    form: UnifiedSigninForm = build_form_from_request("us_signin_form")
     form.submit.data = True
     form.submit_send_code.data = False
 
@@ -566,7 +567,10 @@ def us_signin() -> "ResponseValue":
         remember_me = form.remember.data if "remember" in form else None
         if form.authn_via in cv("US_MFA_REQUIRED"):
             response = _security.two_factor_plugins.tf_enter(
-                form.user, remember_me, form.authn_via
+                form.user,
+                remember_me,
+                form.authn_via,
+                next_loc=propagate_next(request.url),
             )
             if response:
                 return response
@@ -628,7 +632,7 @@ def us_verify() -> "ResponseValue":
     will have filled in ?next=xxx - which we want to carefully not lose as we
     go through these steps.
     """
-    form = build_form_from_request("us_verify_form")
+    form: UnifiedVerifyForm = build_form_from_request("us_verify_form")
     form.submit.data = True
     form.submit_send_code.data = False
 
@@ -729,7 +733,9 @@ def us_verify_link() -> "ResponseValue":
                     qparams=user.get_redirect_qparams({"tf_required": 1}),
                 )
             )
-        response = _security.two_factor_plugins.tf_enter(user, False, "email")
+        response = _security.two_factor_plugins.tf_enter(
+            user, False, "email", next_loc=propagate_next(request.url)
+        )
         if response:
             return response
 
@@ -761,7 +767,7 @@ def us_setup() -> "ResponseValue":
     use a timed signed token to pass along state.
     GET - retrieve current info (json) or form.
     """
-    form = build_form_from_request("us_setup_form")
+    form: UnifiedSigninSetupForm = build_form_from_request("us_setup_form")
 
     setup_methods = _compute_setup_methods()
     active_methods = _compute_active_methods(current_user)
@@ -912,7 +918,9 @@ def us_setup_validate(token: str) -> "ResponseValue":
     The token is the state variable which is signed and timed
     and contains all the state that once confirmed will be stored in the user record.
     """
-    form = build_form_from_request("us_setup_validate_form")
+    form: UnifiedSigninSetupValidateForm = build_form_from_request(
+        "us_setup_validate_form"
+    )
 
     expired, invalid, state = check_and_get_token_status(
         token, "us_setup", get_within_delta("US_SETUP_WITHIN")

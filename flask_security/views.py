@@ -96,6 +96,7 @@ from .utils import (
     json_error_response,
     login_user,
     logout_user,
+    propagate_next,
     send_mail,
     slash_url_suffix,
     url_for_security,
@@ -167,7 +168,7 @@ def login() -> "ResponseValue":
         assert form.user is not None
         remember_me = form.remember.data if "remember" in form else None
         response = _security.two_factor_plugins.tf_enter(
-            form.user, remember_me, "password"
+            form.user, remember_me, "password", next_loc=propagate_next(request.url)
         )
         if response:
             return response
@@ -294,7 +295,7 @@ def register() -> "ResponseValue":
         # signin - we adhere to historic behavior.
         if not _security.confirmable or cv("LOGIN_WITHOUT_CONFIRMATION"):
             response = _security.two_factor_plugins.tf_enter(
-                form.user, False, "register"
+                form.user, False, "register", next_loc=propagate_next(request.url)
             )
             if response:
                 return response
@@ -469,7 +470,9 @@ def confirm_email(token):
             # and you have the LOGIN_WITH_CONFIRMATION flag since in that case
             # you can be logged in and doing stuff - but another person could
             # get the email.
-            response = _security.two_factor_plugins.tf_enter(user, False, "confirm")
+            response = _security.two_factor_plugins.tf_enter(
+                user, False, "confirm", next_loc=propagate_next(request.url)
+            )
             if response:
                 return response
             login_user(user, authn_via=["confirm"])
@@ -626,7 +629,9 @@ def reset_password(token):
     if form.validate_on_submit():
         after_this_request(view_commit)
         update_password(user, form.password.data)
-        response = _security.two_factor_plugins.tf_enter(form.user, False, "reset")
+        response = _security.two_factor_plugins.tf_enter(
+            form.user, False, "reset", next_loc=propagate_next(request.url)
+        )
         if response:
             return response
         # two factor not required - just login

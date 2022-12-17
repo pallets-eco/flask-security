@@ -33,6 +33,7 @@ from .utils import (
     get_within_delta,
     get_url,
     login_user,
+    propagate_next,
     simple_render_json,
     url_for_security,
 )
@@ -79,7 +80,9 @@ def tf_select() -> "ResponseValue":
         tf_impl = _security.two_factor_plugins.method_to_impl(user, form.which.data)
         if tf_impl:
             json_payload = {"tf_required": True}
-            response = tf_impl.tf_login(user, json_payload)
+            response = tf_impl.tf_login(
+                user, json_payload, next_loc=propagate_next(request.url)
+            )
         if not response:  # pragma no cover
             # This really can't happen unless between the time the started logging in
             # and now, they deleted a second factor (which they would have to do
@@ -115,7 +118,7 @@ class TfPluginBase:  # pragma no cover
         raise NotImplementedError
 
     def tf_login(
-        self, user: "User", json_payload: t.Dict[str, t.Any]
+        self, user: "User", json_payload: t.Dict[str, t.Any], next_loc: t.Optional[str]
     ) -> "ResponseValue":
         """
         Called from first/primary authenticated views if the user successfully
@@ -179,7 +182,11 @@ class TfPlugin:
         return methods
 
     def tf_enter(
-        self, user: "User", remember_me: bool, primary_authn_via: str
+        self,
+        user: "User",
+        remember_me: bool,
+        primary_authn_via: str,
+        next_loc: t.Optional[str],
     ) -> t.Optional["ResponseValue"]:
         """Check if two-factor is required and if so, start the process.
         Must be called in a request context.
@@ -206,7 +213,9 @@ class TfPlugin:
                     # as part of initial login.
                     if len(tf_setup_methods) == 0:
                         # only initial two-factor implementation supports this
-                        return self._tf_impls["code"].tf_login(user, json_payload)
+                        return self._tf_impls["code"].tf_login(
+                            user, json_payload, next_loc
+                        )
                     elif len(tf_setup_methods) == 1:
                         # method_to_impl can't return None here since we just
                         # got the methods up above.
@@ -214,11 +223,12 @@ class TfPlugin:
                             TfPluginBase,
                             self.method_to_impl(user, t.cast(str, tf_setup_methods[0])),
                         )
-                        return impl.tf_login(user, json_payload)
+                        return impl.tf_login(user, json_payload, next_loc)
                     else:
                         session["tf_select"] = True
                         if not _security._want_json(request):
-                            return redirect(url_for_security("tf_select"))
+                            values = dict(next=next_loc) if next_loc else dict()
+                            return redirect(url_for_security("tf_select", **values))
                         # Let's force app to go through tf-select just in case we want
                         # to do further validation... However, provide the choices
                         # so they can just do a POST

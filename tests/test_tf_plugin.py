@@ -12,22 +12,17 @@ import json
 import pytest
 
 from tests.test_utils import (
-    SmsTestSender,
+    get_form_action,
     get_session,
     get_existing_session,
     logout,
-)
-from flask_security import (
-    SmsSenderFactory,
+    setup_tf_sms,
 )
 
 from tests.test_two_factor import tf_in_session
-from tests.test_webauthn import HackWebauthnUtil, wan_signin, setup_tf, reg_2_keys
+from tests.test_webauthn import HackWebauthnUtil, wan_signin, reg_2_keys
 
 pytest.importorskip("webauthn")
-
-
-SmsSenderFactory.senders["test"] = SmsTestSender
 
 
 @pytest.mark.webauthn()
@@ -36,27 +31,30 @@ SmsSenderFactory.senders["test"] = SmsTestSender
 def test_tf_select(app, client, get_message):
     # Test basic select mechanism when more than one 2FA has been setup
     wankeys = reg_2_keys(client)  # add a webauthn 2FA key (authenticates)
-    sms_sender = setup_tf(client)
+    sms_sender = setup_tf_sms(client)
     logout(client)
 
     # since we have 2 2FA methods configured - we should get the tf-select form
+    # also - test that we correctly propagate 'next' all the way through
     response = client.post(
-        "/login",
+        "/login?next=/profile",
         data=dict(email="matt@lp.com", password="password"),
         follow_redirects=True,
     )
     assert b"Select Two Factor Method" in response.data
+    tf_select_url = get_form_action(response)
     response = client.post(
-        "/tf-select", data=dict(which="webauthn"), follow_redirects=True
+        tf_select_url, data=dict(which="webauthn"), follow_redirects=True
     )
     assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
+    wan_signin_url = get_form_action(response)
+    assert "/wan-signin?next=/profile" == wan_signin_url
 
-    response = wan_signin(client, "matt@lp.com", wankeys["secondary"]["signin"])
-    assert not tf_in_session(get_session(response))
-
-    # verify actually logged in
-    response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    response = wan_signin(
+        client, "matt@lp.com", wankeys["secondary"]["signin"], wan_signin_url
+    )
+    assert not tf_in_session(get_existing_session(client))
+    assert b"Profile Page" in response.data
 
     # now do other 2FA
     logout(client)
@@ -87,7 +85,7 @@ def test_tf_select_json(app, client, get_message):
     # Test basic select mechanism when more than one 2FA has been setup
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     wankeys = reg_2_keys(client)  # add a webauthn 2FA key (authenticates)
-    setup_tf(client)
+    setup_tf_sms(client)
     logout(client)
 
     # since we have 2 2FA methods configured - we should get the tf-select form

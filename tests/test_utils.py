@@ -14,7 +14,7 @@ import typing as t
 from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
 
-from flask_security import Security, SmsSenderBaseClass, UserMixin
+from flask_security import Security, SmsSenderBaseClass, SmsSenderFactory, UserMixin
 from flask_security.datastore import (
     SQLAlchemyUserDatastore,
     SQLAlchemySessionUserDatastore,
@@ -103,6 +103,22 @@ def get_session(response):
                 )
                 val = serializer.loads_unsafe(encoded_cookie)
                 return val[1]
+
+
+def setup_tf_sms(client, url_prefix=None):
+    # Simple setup of SMS as a second factor and return the sender so caller
+    # can get codes.
+    SmsSenderFactory.senders["test"] = SmsTestSender
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="+442083661188")
+    response = client.post("/".join(filter(None, (url_prefix, "tf-setup"))), json=data)
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+    response = client.post(
+        "/".join(filter(None, (url_prefix, "tf-validate"))), json=dict(code=code)
+    )
+    assert response.status_code == 200
+    return sms_sender
 
 
 def get_existing_session(client):

@@ -17,8 +17,8 @@ from tests.test_utils import (
     authenticate,
     logout,
     reset_fresh,
+    setup_tf_sms,
 )
-from tests.test_webauthn import setup_tf
 
 pytestmark = pytest.mark.two_factor()
 
@@ -309,7 +309,7 @@ def test_rc_json_encrypted_multi(app, client, get_message):
     response = client.post(
         "/login", json=dict(email="matt@lp.com", password="password")
     )
-    setup_tf(client)
+    setup_tf_sms(client)
     response = client.post("/mf-recovery-codes", headers=headers)
     matt_codes = response.json["response"]["recovery_codes"]
     logout(client)
