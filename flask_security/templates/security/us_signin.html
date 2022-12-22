@@ -33,5 +33,17 @@
       </form>
     </div>
   {% endif %}
+  {% if security.oauthglue %}
+    <hr class="fs-gap">
+    <h2>{{ _fsdomain("Use Social Oauth to Sign In") }}</h2>
+    {% for provider in security.oauthglue.provider_names %}
+      <div class="fs-gap">
+        <form method="POST" id={{ provider }}-form name={{ provider }}_form>
+          <input id={{ provider }} name={{ provider }} type="submit" value="{{ _fsdomain('Sign in with ')~provider }}"
+            formaction="{{ url_for_security('oauthstart', name=provider) }}{{ prop_next() }}">
+        </form>
+      </div>
+    {% endfor %}
+  {% endif %}
   {% include "security/_menu.html" %}
 {% endblock %}

@@ -27,6 +27,7 @@ Flask application. They include:
 11. Login tracking (optional)
 12. JSON/Ajax Support
 13. WebAuthn Support (optional)
+14. Use 'social'/Oauth for authentication (e.g. google, github, ..) (optional)
 
 Many of these features are made possible by integrating various Flask extensions
 and libraries. They include:
@@ -39,6 +40,7 @@ and libraries. They include:
 * `passlib <https://pypi.org/project/passlib/>`_
 * `QRCode <https://pypi.org/project/qrcode/>`_
 * `webauthn <https://pypi.org/project/webauthn/>`_
+* `authlib <https://pypi.org/project/Authlib/>`_
 
 Additionally, it assumes you'll be using a common library for your database
 connections and model definitions. Flask-Security supports the following Flask

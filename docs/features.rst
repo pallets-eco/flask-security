@@ -273,6 +273,23 @@ registered. They can be completely disabled or their names can be changed.
 Run ``flask --help`` and look for users and roles.
 
 
+Social/Oauth authentication
+----------------------------
+Flask-Security provides a thin layer which integrates authlib with Flask-Security
+views and features (such as two-factor authentication). Flask-Security is shipped
+with support for github and google - others can be added by the application.
+
+See :py:class:`flask_security.OAuthGlue`
+
+Please note - this is for authentication only, and the authenticating user must
+already be a registered user in your application. Once authenticated, all further
+authorization uses Flask-Security role/permission mechanisms.
+
+See `Flask OAuth Client <https://docs.authlib.org/en/latest/client/flask.html>`_
+for details. Note in particular, that you must setup and provide provider specific
+information - and most importantly - XX_CLIENT_ID and XX_CLIENT_SECRET should be
+specified as environment variables.
+
 .. _Click: https://palletsprojects.com/p/click/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
 .. _Flask-WTF: https://flask-wtf.readthedocs.io/en/1.0.x/csrf/
