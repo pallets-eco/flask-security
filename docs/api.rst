@@ -175,6 +175,9 @@ Utils
 .. autoclass:: flask_security.SmsSenderFactory
   :members: createSender
 
+.. autoclass:: flask_security.OAuthGlue
+  :members:
+
 
 Extendable Classes
 ------------------

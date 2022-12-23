@@ -141,6 +141,10 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     if webauthn_test is not None:
         pytest.importorskip("webauthn")
 
+    oauthlib_test = marker_getter("oauth")
+    if oauthlib_test is not None:
+        pytest.importorskip("authlib")
+
     mfa_test = marker_getter("two_factor") or marker_getter("unified_signin")
     if mfa_test is not None:
         pytest.importorskip("cryptography")

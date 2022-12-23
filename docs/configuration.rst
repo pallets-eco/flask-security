@@ -218,8 +218,8 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_REDIRECT_BEHAVIOR
 
-    Passwordless login, confirmation, and reset password have GET endpoints that validate
-    the passed token and redirect to an action form.
+    Passwordless login, confirmation, reset password, unified signin, and oauth signin
+    have GET endpoints that validate the passed token and redirect to an action form.
     For Single-Page-Applications style UIs which need to control their own internal URL routing these redirects
     need to not contain forms, but contain relevant information as query parameters.
     Setting this to ``spa`` will enable that behavior.
@@ -1368,9 +1368,14 @@ This feature is DEPRECATED as of 5.0.0. Please use unified signin feature instea
 
 .. py:data:: SECURITY_LOGIN_ERROR_VIEW
 
-    Specifies the view/URL to redirect to after a GET passwordless link or GET
-    unified sign in magic link when there is an error.
-    This is only valid if ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``.
+    Specifies the view/URL to redirect to after the following login/authentication errors:
+
+    * GET passwordless link where the link is expired/incorrect
+    * GET unified sign in magic link when there is an error.
+    * GET on oauthresponse where there was an OAuth protocol error.
+    * GET on oauthresponse where the returned identity isn't registered.
+
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``spa``.
     Query params in the redirect will contain the error.
 
     Default: ``None``.
@@ -1590,6 +1595,33 @@ Additional relevant configuration variables:
     * :py:data:`SECURITY_TOTP_SECRETS` - TOTP/passlib is used to generate the codes.
     * :py:data:`SECURITY_TOTP_ISSUER`
 
+Social Oauth
+-------------
+    .. versionadded:: 5.1.0
+
+.. py:data:: SECURITY_OAUTH_ENABLE
+
+    To enable using external Oauth providers - set this to ``True``.
+
+.. py:data:: SECURITY_OAUTH_BUILTIN_PROVIDERS
+
+    A list of built-in providers to register.
+
+    Default: ``["google", "github"]``
+
+.. py:data:: SECURITY_OAUTH_START_URL
+
+    Endpoint for starting an Oauth authentication operation.
+
+    Default: ``"/login/oauthstart"``
+
+.. py:data:: SECURITY_OAUTH_RESPONSE_URL
+
+    Endpoint used as Oauth redirect.
+
+    Default: ``"/login/oauthresponse"``
+
+
 Feature Flags
 -------------
 All feature flags. By default all are 'False'/not enabled.
@@ -1604,6 +1636,7 @@ All feature flags. By default all are 'False'/not enabled.
 * :py:data:`SECURITY_UNIFIED_SIGNIN`
 * :py:data:`SECURITY_WEBAUTHN`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
+* :py:data:`SECURITY_OAUTH_ENABLE`
 
 URLs and Views
 --------------
@@ -1618,6 +1651,8 @@ A list of all URLs and Views:
 * ``SECURITY_CONFIRM_URL``
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_URL`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_URL`
+* :py:data:`SECURITY_OAUTH_START_URL`
+* :py:data:`SECURITY_OAUTH_RESPONSE_URL`
 * :py:data:`SECURITY_TWO_FACTOR_SELECT_URL`
 * :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
 * :py:data:`SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL`
@@ -1696,6 +1731,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_GENERIC_RECOVERY``
 * ``SECURITY_MSG_GENERIC_US_SIGNIN``
 * ``SECURITY_MSG_IDENTITY_ALREADY_ASSOCIATED``
+* ``SECURITY_MSG_IDENTITY_NOT_REGISTERED``
 * ``SECURITY_MSG_INVALID_CODE``
 * ``SECURITY_MSG_INVALID_CONFIRMATION_TOKEN``
 * ``SECURITY_MSG_INVALID_EMAIL_ADDRESS``
@@ -1708,6 +1744,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_LOGIN``
 * ``SECURITY_MSG_LOGIN_EMAIL_SENT``
 * ``SECURITY_MSG_LOGIN_EXPIRED``
+* ``SECURITY_MSG_OAUTH_HANDSHAKE_ERROR``
 * ``SECURITY_MSG_PASSWORDLESS_LOGIN_SUCCESSFUL``
 * ``SECURITY_MSG_PASSWORD_BREACHED``
 * ``SECURITY_MSG_PASSWORD_BREACHED_SITE_ERROR``

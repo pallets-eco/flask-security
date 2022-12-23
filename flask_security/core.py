@@ -57,6 +57,7 @@ from .json import setup_json
 from .mail_util import MailUtil
 from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
+from .oauth_glue import OAuthGlue
 from .proxies import _security
 from .recovery_codes import (
     MfRecoveryForm,
@@ -109,6 +110,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Request
     from flask.typing import ResponseValue
     import flask_login.mixins
+    from authlib.integrations.flask_client import OAuth
     from .datastore import Role, User, UserDatastore
 
 
@@ -237,6 +239,10 @@ _default_config: t.Dict[str, t.Any] = {
     "MULTI_FACTOR_RECOVERY_TEMPLATE": "security/mf_recovery.html",
     "MULTI_FACTOR_RECOVERY_CODES_KEYS": None,
     "MULTI_FACTOR_RECOVERY_CODE_TTL": None,
+    "OAUTH_ENABLE": False,
+    "OAUTH_BUILTIN_PROVIDERS": ["github", "google"],
+    "OAUTH_START_URL": "/login/oauthstart",
+    "OAUTH_RESPONSE_URL": "/login/oauthresponse",
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "5 days",
     "LOGIN_WITHOUT_CONFIRMATION": False,
@@ -398,6 +404,17 @@ _default_messages = {
         _(
             "Identity attribute '%(attr)s' with value '%(value)s' is already"
             " associated with an account."
+        ),
+        "error",
+    ),
+    "IDENTITY_NOT_REGISTERED": (
+        _("Identity %(id)s not registered"),
+        "error",
+    ),
+    "OAUTH_HANDSHAKE_ERROR": (
+        _(
+            "An error occurred while communicating with the Oauth provider. "
+            "Please try again."
         ),
         "error",
     ),
@@ -1054,6 +1071,7 @@ class Security:
         Defaults to :class:`UsernameUtil`
     :param mf_recovery_codes_util_cls: Class for generating, checking, encrypting
         and decrypting recovery codes. Defaults to :class:`MfRecoveryCodesUtil`
+    :param oauth: An instance of authlib.integrations.flask_client.OAuth
 
     .. tip::
         Be sure that all your configuration values have been set PRIOR to
@@ -1092,7 +1110,7 @@ class Security:
         Added support for multi-factor recovery codes ``mf_recovery_codes_form``,
         ``mf_recovery_form``.
     .. versionadded:: 5.1.0
-        ``mf_recovery_codes_util_cls``.
+        ``mf_recovery_codes_util_cls``, ``oauth``
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
@@ -1153,6 +1171,7 @@ class Security:
         username_util_cls: t.Type["UsernameUtil"] = UsernameUtil,
         webauthn_util_cls: t.Type["WebauthnUtil"] = WebauthnUtil,
         mf_recovery_codes_util_cls: t.Type["MfRecoveryCodesUtil"] = MfRecoveryCodesUtil,
+        oauth: t.Optional["OAuth"] = None,
         **kwargs: t.Any,
     ):
 
@@ -1177,6 +1196,7 @@ class Security:
         self.username_util_cls = username_util_cls
         self.webauthn_util_cls = webauthn_util_cls
         self.mf_recovery_codes_util_cls = mf_recovery_codes_util_cls
+        self._oauth = oauth
 
         # Forms - we create a list from constructor.
         # BC - in init_app we will allow override of class.
@@ -1243,6 +1263,7 @@ class Security:
         self.datastore: "UserDatastore"
         self.register_blueprint: bool
         self.two_factor_plugins: TfPlugin
+        self.oauthglue: t.Optional[OAuthGlue] = None
 
         self._mail_util: MailUtil
         self._phone_util: PhoneUtil
@@ -1518,11 +1539,16 @@ class Security:
                 app, name, getattr(module, class_name)
             )
 
+        if cv("OAUTH_ENABLE", app=app):
+            self.oauthglue = OAuthGlue(app, self._oauth)
+
         # register our blueprint/endpoints
         bp = None
         if self.register_blueprint:
             bp = create_blueprint(app, self, __name__)
             self.two_factor_plugins.create_blueprint(app, bp, self)
+            if self.oauthglue:
+                self.oauthglue._create_blueprint(app, bp)
             app.register_blueprint(bp)
             app.context_processor(_context_processor)
 

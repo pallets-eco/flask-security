@@ -1749,7 +1749,7 @@ paths:
           description: User successfully re-authenticated or error in validation when using form based request.
           headers:
             Location:
-              description: <
+              description: >
                 Redirect to ``next`` or ``SECURITY_POST_VERIFY_VIEW`` (on success)
                 or ``SECURITY_WAN_VERIFY_URL`` on validation failure.
               schema:
@@ -1760,6 +1760,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /login/oauthstart/{name}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          description: provider name as registered with OAuth (e.g. 'github')
+    post:
+      summary: Start a 'social'/Oauth authentication exchange.
+      responses:
+        302:
+          description: >
+            Redirect to OAuth provider. The redirect URL will pass along, if provided,
+            the value of the `next` query argument.
+  /login/oauthresponse/{name}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          description: provider name as registered with OAuth (e.g. 'github')
+    get:
+      summary: Response from OAuth provider.
+      responses:
+        302:
+          description: >
+            Caller will be redirected based on whether successful or not and whether
+            __SECURITY_REDIRECT_BEHAVIOR__ == 'spa'.
+          headers:
+            Location:
+              description: |
+                On spa-success: SECURITY_POST_LOGIN_VIEW?identity={identity}&email={email}
+
+                On spa-oauth-error: SECURITY_LOGIN_ERROR_VIEW?error={msg}
+
+                On spa-unknown-user: SECURITY_LOGIN_ERROR_VIEW?error={msg}
+
+                On form-success: `next` or SECURITY_POST_LOGIN_VIEW
+              schema:
+                type: string
+
 
 components:
   schemas:

@@ -22,7 +22,6 @@ import pytest
 from tests.test_two_factor import tf_in_session
 from tests.test_utils import (
     FakeSerializer,
-    SmsTestSender,
     authenticate,
     capture_flashes,
     get_existing_session,
@@ -30,10 +29,10 @@ from tests.test_utils import (
     json_authenticate,
     logout,
     reset_fresh,
+    setup_tf_sms,
 )
 
 from flask_security import (
-    SmsSenderFactory,
     WebauthnUtil,
     user_authenticated,
     wan_registered,
@@ -184,20 +183,6 @@ class HackWebauthnUtil(WebauthnUtil):
     def origin(self):
         # This is from view_scaffold
         return "http://localhost:5001"
-
-
-def setup_tf(client):
-    sms_sender = SmsSenderFactory.createSender("test")
-    data = dict(setup="sms", phone="+442083661188")
-    client.post("/tf-setup", json=data)
-    assert sms_sender.get_count() == 1
-    code = sms_sender.messages[0].split()[-1]
-    response = client.post("/tf-validate", json=dict(code=code))
-    assert response.status_code == 200
-    return sms_sender
-
-
-SmsSenderFactory.senders["test"] = SmsTestSender
 
 
 def _register_start(client, name="testr1", usage="secondary", endpoint="wan-register"):
@@ -1108,7 +1093,7 @@ def test_alt_tf(app, client, get_message):
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     assert response.status_code == 200
 
-    sms_sender = setup_tf(client)
+    sms_sender = setup_tf_sms(client)
     logout(client)
 
     # sign in using webauthn key
@@ -1137,7 +1122,7 @@ def test_all_in_one(app, client, get_message):
     register_options, response_url = _register_start_json(client, usage="first")
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
     assert response.status_code == 200
-    setup_tf(client)
+    setup_tf_sms(client)
 
     logout(client)
     signin_options, response_url, rjson = _signin_start_json(client, "matt@lp.com")
@@ -1160,7 +1145,7 @@ def test_all_in_one_not_allowed(app, client, get_message):
     register_options, response_url = _register_start_json(client, usage="first")
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
     assert response.status_code == 200
-    setup_tf(client)
+    setup_tf_sms(client)
     logout(client)
 
     app.config["SECURITY_WAN_ALLOW_AS_MULTI_FACTOR"] = False

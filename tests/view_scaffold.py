@@ -91,7 +91,9 @@ def create_app():
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = True
     app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
-    app.config["SESSION_COOKIE_SAMESITE"] = "strict"
+    # 'strict' causes redirect after oauth to fail since session cookie not sent
+    # this just happens on first 'register' with e.g. github
+    # app.config["SESSION_COOKIE_SAMESITE"] = "strict"
     app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
         {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
         {"us_phone_number": {"mapper": uia_phone_mapper}},
@@ -110,6 +112,9 @@ def create_app():
     app.config["SECURITY_PASSWORD_REQUIRED"] = True
     app.config["SECURITY_MULTI_FACTOR_RECOVERY_CODES"] = True
     app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = True
+    # enable oauth - note that this assumes that app is passes XXX_CLIENT_ID and
+    # XXX_CLIENT_SECRET as environment variables.
+    app.config["SECURITY_OAUTH_ENABLE"] = True
     # app.config["SECURITY_URL_PREFIX"] = "/fs"
 
     class TestWebauthnUtil(WebauthnUtil):
@@ -143,9 +148,13 @@ def create_app():
     if os.environ.get("SETTINGS"):
         # Load settings from a file pointed to by SETTINGS
         app.config.from_envvar("SETTINGS")
-    # Allow any SECURITY_ config to be set in environment.
+    # Allow any SECURITY_, SQLALCHEMY, Authlib config to be set in environment.
     for ev in os.environ:
-        if ev.startswith("SECURITY_") or ev.startswith("SQLALCHEMY_"):
+        if (
+            ev.startswith("SECURITY_")
+            or ev.startswith("SQLALCHEMY_")
+            or "_CLIENT_" in ev
+        ):
             app.config[ev] = _find_bool(os.environ.get(ev))
 
     # Create database models and hook up.

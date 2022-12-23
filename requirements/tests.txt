@@ -7,7 +7,7 @@ Flask-Principal
 peewee
 Flask-SQLAlchemy
 argon2_cffi
-authlib
+authlib>=1.1.0
 bcrypt
 bleach
 check-manifest
@@ -25,6 +25,8 @@ pytest-cache
 pytest-cov
 pytest
 qrcode
+# authlib requires requests
+requests
 sqlalchemy
 sqlalchemy-utils
 webauthn>=1.6.0;python_version>='3.8'
