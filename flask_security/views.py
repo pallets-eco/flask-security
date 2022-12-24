@@ -1056,6 +1056,8 @@ def create_blueprint(app, state, import_name):
         url_prefix=state.url_prefix,
         subdomain=state.subdomain,
         template_folder="templates",
+        static_folder=cv("STATIC_FOLDER", app),
+        static_url_path=cv("STATIC_FOLDER_URL", app),
     )
 
     if state.logout_methods is not None:

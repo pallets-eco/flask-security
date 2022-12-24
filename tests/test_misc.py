@@ -1345,3 +1345,17 @@ def test_reuse_security_object(sqlalchemy_datastore):
 
     security.init_app(app)
     assert hasattr(app, "login_manager")
+
+
+@pytest.mark.settings(static_folder_url="/mystatic/fs")
+def test_static_url(app, sqlalchemy_datastore):
+    from flask_security import url_for_security
+    from flask import url_for
+
+    init_app_with_options(app, sqlalchemy_datastore)
+    with app.test_request_context("http://localhost:5001/login"):
+        static_url = url_for_security("static", filename="js/webauthn.js")
+        assert static_url == "/mystatic/fs/js/webauthn.js"
+
+        static_url = url_for(".static", filename="js/webauthn.js")
+        assert static_url == "/mystatic/fs/js/webauthn.js"

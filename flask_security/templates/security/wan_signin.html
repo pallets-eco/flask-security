@@ -7,9 +7,9 @@
 
 {% block head_scripts %}
   {{ super() }}
-  <script src="{{ url_for('static', filename='js/webauthn.js') }}"
+  <script src="{{ url_for('.static', filename='js/webauthn.js') }}"
           xmlns="http://www.w3.org/1999/html"></script>
-  <script src="{{ url_for('static', filename='js/base64.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/base64.js') }}"></script>
 {% endblock head_scripts %}
 
 {% block content %}
@@ -20,7 +20,7 @@
     <h1>{{ _fsdomain("Use Your WebAuthn Security Key as a Second Factor") }}</h1>
   {% endif %}
   {% if not credential_options %}
-    <form action="{{ url_for_security("wan_signin") }}{{ prop_next() }}" method="POST"
+    <form action="{{ url_for_security('wan_signin') }}{{ prop_next() }}" method="POST"
           name="wan_signin_form" id="wan-signin-form">
       {{ wan_signin_form.hidden_tag() }}
       {% if not is_secondary %}
@@ -31,7 +31,7 @@
       {{ render_field(wan_signin_form.submit) }}
     </form>
   {% else %}
-    <form action="{{ url_for_security("wan_signin_response", token=wan_state) }}{{ prop_next() }}" method="POST"
+    <form action="{{ url_for_security('wan_signin_response', token=wan_state) }}{{ prop_next() }}" method="POST"
           name="wan_signin_response_form" id="wan-signin-response-form">
       {{ wan_signin_response_form.hidden_tag() }}
       {{ render_field_errors(wan_signin_form.remember) }}

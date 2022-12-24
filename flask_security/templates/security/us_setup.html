@@ -26,7 +26,7 @@
 {% block content %}
     {% include "security/_messages.html" %}
     <h1>{{ _fsdomain("Setup Unified Sign In") }}</h1>
-    <form action="{{ url_for_security("us_setup") }}" method="POST"
+    <form action="{{ url_for_security('us_setup') }}" method="POST"
           name="us_setup_form">
       {{ us_setup_form.hidden_tag() }}
       {{ render_form_errors(us_setup_form) }}
@@ -71,7 +71,7 @@
               {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving codes:") }}
             </div>
             <div>
-              <img alt="{{ _fsdomain("Passwordless QRCode") }}" id="qrcode" src="{{ authr_qrcode }}">
+              <img alt="{{ _fsdomain('Passwordless QRCode') }}" id="qrcode" src="{{ authr_qrcode }}">
             </div>
             <div>
               {{ authr_key }}
@@ -86,7 +86,7 @@
       {# Completing setup by entering code #}
       <hr class="fs-gap">
       <div class="fs-important">{{ _fsdomain("Enter code here to complete setup") }}</div>
-      <form action="{{ url_for_security("us_setup_validate", token=state) }}" method="POST"
+      <form action="{{ url_for_security('us_setup_validate', token=state) }}" method="POST"
           name="us_setup_validate_form">
         {{ us_setup_validate_form.hidden_tag() }}
         {{ render_field_with_errors(us_setup_validate_form.passcode) }}

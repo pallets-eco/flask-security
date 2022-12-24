@@ -124,6 +124,8 @@ _default_config: t.Dict[str, t.Any] = {
     "CLI_ROLES_NAME": "roles",
     "CLI_USERS_NAME": "users",
     "URL_PREFIX": None,
+    "STATIC_FOLDER": "static",
+    "STATIC_FOLDER_URL": "/fs-static",
     "SUBDOMAIN": None,
     "FLASH_MESSAGES": True,
     "RETURN_GENERIC_RESPONSES": False,
