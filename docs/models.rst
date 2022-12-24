@@ -205,7 +205,7 @@ Recovery Codes
 If :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES` is set to ``True`` then
 the `User` model needs the following field:
 
-* ``mfa_recovery_codes`` (list of string/UnicodeText, nullable)
+* ``mf_recovery_codes`` (list of string/UnicodeText, nullable)
 
 A recovery code can be used in place of any configured second-factor authenticator
 (e.g. SMS, WebAuthn, ...).

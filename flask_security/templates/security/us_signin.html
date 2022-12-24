@@ -4,7 +4,7 @@
 {% block content %}
     {% include "security/_messages.html" %}
     <h1>{{ _fsdomain("Sign In") }}</h1>
-      <form action="{{ url_for_security("us_signin") }}{{ prop_next() }}" method="POST"
+      <form action="{{ url_for_security('us_signin') }}{{ prop_next() }}" method="POST"
           name="us_signin_form">
       {{ us_signin_form.hidden_tag() }}
       {{ render_form_errors(us_signin_form) }}
@@ -29,7 +29,7 @@
     <div>
       <form method="GET" id="wan-signin-form" name="wan_signin_form">
         <input id="wan_signin" name="wan_signin" type="submit" value="{{ _fsdomain('Sign in with WebAuthn') }}"
-          formaction="{{ url_for_security("wan_signin") }}{{ prop_next() }}">
+          formaction="{{ url_for_security('wan_signin') }}{{ prop_next() }}">
       </form>
     </div>
   {% endif %}

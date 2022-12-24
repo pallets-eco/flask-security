@@ -79,9 +79,7 @@ SET_LANG = False
 
 def create_app():
     # Use real templates - not test templates...
-    app = Flask(
-        "view_scaffold", template_folder="../", static_folder="../flask_security/static"
-    )
+    app = Flask("view_scaffold", template_folder="../")
     app.config["DEBUG"] = True
     # SECRET_KEY generated using: secrets.token_urlsafe()
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"

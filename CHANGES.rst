@@ -13,7 +13,7 @@ Features
 
 - (:issue:`667`) Expose form instantiation. See :ref:`form_instantiation`.
 - (:issue:`693`) Option to encrypt recovery codes at rest.
-- (:pr:`xxx`) Support for authentication via 'social' oauth.
+- (:pr:`716`) Support for authentication via 'social' oauth.
 
 Fixes
 +++++
@@ -27,6 +27,10 @@ Fixes
 - (:pr:`696`) Add Hungarian translations. (xQwexx)
 - (:issue:`701`) Two factor redirects ignore url_prefix. Added a `SECURITY_TWO_FACTOR_ERROR_VIEW`
   configuration option.
+- (:issue:`704`) Add configurations for static folder/URL and make sure templates reference
+  blueprint relative static folder.
+- (:issue:`709`) Make (some) templates look better by using single quotes instead of
+  double quotes.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

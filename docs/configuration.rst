@@ -25,6 +25,23 @@ These configuration keys are used globally across all features.
 
     Default: ``None``.
 
+.. py:data:: SECURITY_STATIC_FOLDER
+
+    Specifies the folder name for static files (webauthn).
+
+    Default: ``"static"``.
+
+    .. versionadded:: 5.1.0
+
+.. py:data:: SECURITY_STATIC_FOLDER_URL
+
+    Specifies the URL for static files used by Flask-Security (webauthn).
+    See Flask documentation https://flask.palletsprojects.com/en/latest/blueprints/#static-files
+
+    Default: ``"/fs-static"``.
+
+    .. versionadded:: 5.1.0
+
 .. py:data:: SECURITY_SUBDOMAIN
 
     Specifies the subdomain for the Flask-Security blueprint. If your authenticated
@@ -1582,11 +1599,15 @@ Recovery Codes
 
     Default: ``None`` - recovery codes will NOT be encrypted on disk
 
+    .. versionadded:: 5.1.0
+
 .. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODE_TTL
 
     An integer passed to decrypt specifying the maximum age of the code.
 
     Default: ``None`` - no TTL will be enforced.
+
+    .. versionadded:: 5.1.0
 
 Additional relevant configuration variables:
 
