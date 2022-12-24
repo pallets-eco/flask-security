@@ -440,7 +440,7 @@ the basic application code in the previous section::
 
 To learn more about the various Flask-Mailman settings to configure it to
 work with your particular email server configuration, please see the
-`Flask-Mailman documentation <https://www.waynerv.com/flask-mailman/>`_.
+`Flask-Mailman documentation <https://waynerv.github.io/flask-mailman/>`_.
 
 .. _proxy-configuration:
 
