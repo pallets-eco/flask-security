@@ -9,3 +9,4 @@ Link:{{ confirmation_link }}
 Email:{{ user.email }}
 Token:{{ confirmation_token }}
 RegisterBlueprint:{{ security.register_blueprint }}
+ExtraContext:{{ foo }}
