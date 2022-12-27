@@ -438,6 +438,7 @@ def get_url(endpoint_or_url: str, qparams: t.Optional[t.Dict[str, str]] = None) 
         # This is an external URL (no endpoint defined in app)
         # For (mostly) testing - allow changing/adding the url - for example
         # add a different host:port for cases where the UI is running
+        # add a different host:port for cases where the UI is running
         # separately.
         if config_value("REDIRECT_HOST"):
             url = transform_url(
@@ -706,7 +707,13 @@ def send_mail(subject, recipient, template, **context):
         sender = sender._get_current_object()
 
     _security._mail_util.send_mail(
-        template, subject, recipient, sender, body, html, context.get("user", None)
+        template,
+        subject,
+        recipient,
+        sender,
+        body,
+        html,
+        **context,
     )
 
 

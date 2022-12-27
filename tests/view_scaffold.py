@@ -47,9 +47,6 @@ from flask_security.signals import (
 )
 from flask_security.utils import hash_password, uia_email_mapper, uia_phone_mapper
 
-if t.TYPE_CHECKING:  # pragma: no cover
-    from flask_security.datastore import User
-
 
 def _find_bool(v):
     if str(v).lower() in ["true"]:
@@ -68,7 +65,6 @@ class FlashMailUtil(MailUtil):
         sender: t.Union[str, tuple],
         body: str,
         html: t.Optional[str],
-        user: "User",
         **kwargs: t.Any,
     ) -> None:
         flash(f"Email body: {body}")

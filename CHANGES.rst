@@ -31,6 +31,7 @@ Fixes
   blueprint relative static folder.
 - (:issue:`709`) Make (some) templates look better by using single quotes instead of
   double quotes.
+- (:issue:`690`) Send entire context to MailUtil::send_mail (patrickyan)
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

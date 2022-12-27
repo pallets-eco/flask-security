@@ -591,6 +591,32 @@ def test_sender_tuple(app, sqlalchemy_datastore):
         assert outbox[0].from_email == "Test User <test@testme.com>"
 
 
+def test_send_mail_context(app, sqlalchemy_datastore):
+    """Test full context sent to MailUtil/send_mail"""
+    app.config["MAIL_DEFAULT_SENDER"] = "test@testme.com"
+    app.security = Security()
+    app.security.init_app(app, sqlalchemy_datastore)
+
+    class TestUser:
+        def __init__(self, email):
+            self.email = email
+
+    @app.security.mail_context_processor
+    def mail():
+        return {"foo": "bar-mail"}
+
+    with app.app_context():
+        user = TestUser("matt@lp.com")
+        send_mail("Test Default Sender", user.email, "welcome", user=user)
+        outbox = app.mail.outbox
+        assert 1 == len(outbox)
+        assert "test@testme.com" == outbox[0].from_email
+        matcher = re.match(
+            r".*ExtraContext:(\S+).*", outbox[0].body, re.IGNORECASE | re.DOTALL
+        )
+        assert matcher.group(1) == "bar-mail"
+
+
 @pytest.mark.babel()
 def test_xlation(app, client):
     app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
