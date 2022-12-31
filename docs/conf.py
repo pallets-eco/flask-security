@@ -143,6 +143,10 @@ html_context = {
             "Issue Tracker",
             "https://github.com/Flask-Middleware/flask-security/issues/",
         ),
+        ProjectLink(
+            "Changes",
+            "https://flask-security-too.readthedocs.io/en/stable/changelog.html",
+        ),
     ]
 }
 

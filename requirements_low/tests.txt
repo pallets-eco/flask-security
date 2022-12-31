@@ -1,5 +1,5 @@
 # Lowest supported versions
-Flask==2.0.0
+Flask==2.1.0
 Flask-SQLAlchemy==2.5.0
 Flask-Babel==2.0.0
 Flask-Mailman==0.3.0
@@ -29,5 +29,5 @@ sqlalchemy-utils==0.37.4
 # These 2 come from webauthn requirements
 cryptography==36.0.1
 webauthn==1.5.0;python_version>='3.8'
-werkzeug==2.0.0
+werkzeug==2.1.0
 zxcvbn==4.4.28
