@@ -51,7 +51,15 @@ Goals
   bundling in support for common use cases.
 * Follow the `Pallets <https://github.com/pallets>`_ lead on supported versions, documentation
   standards and any other guidelines for extensions that they come up with.
-* Any other great ideas.
+* Continue to add newer authentication/authorization standards:
+    * 'Social Auth' integrated (using authlib) (5.1)
+    * WebAuthn support (5.0)
+    * Two-Factor recovery codes (5.0)
+    * First-class support for username as identity (4.1)
+    * Support for fresheness decorator to ensure sensitive operations have new authentication (4.0)
+    * Support for email normalization and validation (4.0)
+    * Unified signin (username, phone, passwordless) feature (3.4)
+
 
 Contributing
 ++++++++++++

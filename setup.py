@@ -10,12 +10,12 @@ with open("flask_security/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 install_requires = [
-    "Flask>=2.0.0,<2.3",
+    "Flask>=2.1.0,<2.3",
     "Flask-Login>=0.6.0",
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=1.0.0",
     "email-validator>=1.1.1",
-    "itsdangerous>=2.0.0",
+    "itsdangerous>=2.1.0",
     "passlib>=1.7.4",
     "blinker>=1.4",
     "wtforms>=3.0.0",  # for form-level errors
@@ -59,6 +59,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Development Status :: 5 - Production/Stable",
