@@ -44,12 +44,17 @@ class Role(db.Model, fsqla.FsRoleMixin):
 
 class User(db.Model, fsqla.FsUserMixin):
     __tablename__ = "myuser"
-    blogs = db.relationship("Blog", backref="user", lazy="dynamic")
+    blogs: db.Mapped[list["Blog"]] = db.relationship(
+        "Blog", back_populates="user", lazy="dynamic", cascade_backrefs=False
+    )
 
 
 class Blog(db.Model):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("myuser.id"), nullable=False)
+    user: db.Mapped["User"] = db.relationship(
+        "User", back_populates="blogs", cascade_backrefs=False
+    )
     title = Column(Text)
     text = Column(UnicodeText)
 
@@ -126,7 +131,7 @@ def create_app():
     @permissions_required("user-write")
     def update_blog(bid):
         # Yes caller has write permission - but do they OWN this blog?
-        blog = current_app.blog_cls.query.get(bid)
+        blog = current_app.blog_cls.query.filter_by(id=bid).first()
         if not blog:
             abort(404)
         if current_user != blog.user:
