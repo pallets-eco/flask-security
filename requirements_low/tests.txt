@@ -4,7 +4,8 @@ Flask-SQLAlchemy==2.5.0
 Flask-Babel==2.0.0
 Flask-Mailman==0.3.0
 Flask-Mongoengine==1.0.0
-Flask-Login==0.5.0
+Flask-Login==0.6.0
+Flask-WTF==1.0.1
 peewee==3.11.2
 argon2_cffi==20.1.0
 authlib==1.1.0
@@ -13,7 +14,7 @@ bcrypt==3.2.0
 bleach==3.2.2
 python-dateutil==2.8.2
 jinja2==3.0.0
-itsdangerous==2.0.0
+itsdangerous==2.1.0
 markupsafe==2.0.1
 mongoengine==0.23.1
 mongomock==3.22.0
