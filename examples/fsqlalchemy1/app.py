@@ -14,6 +14,7 @@ PYTHONPATH=. SQLALCHEMY_DATABASE_URI="sqlite:////var/tmp/test.db" \
 """
 
 import os
+import typing as t
 
 from flask import Flask, abort, current_app, render_template_string
 from flask_sqlalchemy import SQLAlchemy
@@ -44,7 +45,7 @@ class Role(db.Model, fsqla.FsRoleMixin):
 
 class User(db.Model, fsqla.FsUserMixin):
     __tablename__ = "myuser"
-    blogs: db.Mapped[list["Blog"]] = db.relationship(
+    blogs: db.Mapped[t.List["Blog"]] = db.relationship(
         "Blog", back_populates="user", lazy="dynamic", cascade_backrefs=False
     )
 

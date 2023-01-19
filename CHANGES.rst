@@ -32,6 +32,7 @@ Fixes
 - (:issue:`709`) Make (some) templates look better by using single quotes instead of
   double quotes.
 - (:issue:`690`) Send entire context to MailUtil::send_mail (patrickyan)
+- (:pr:`xxx`) Support for Flask-Babel 3.0.0
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -197,7 +198,7 @@ Other:
   If your application makes use of Flask-Security's models.fsqla_vX classes - no changes are required.
   For Mongo, a ListField can be directly used.
 - CSRF - As mentioned above, it is now required that `FlaskWTF::CSRFProtect()`, if used, must be called PRIOR to initializing Flask-Security.
-- json_encoder_cls - As mentioned above - Flask-Security initialization on longer accepts overriding the json_encoder class. If this is required,
+- json_encoder_cls - As mentioned above - Flask-Security initialization no longer accepts overriding the json_encoder class. If this is required,
   update to Flask >=2.2 and implement Flask's JSONProvider interface.
 
 For templates:
