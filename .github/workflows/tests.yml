@@ -29,8 +29,10 @@ jobs:
           - {python: '3.9', tox: 'py39-low'}
           - {python: '3.10', tox: 'py310-release'}
           - {python: '3.10', tox: 'py310-low'}
-          - {python: 'pypy-3.8', tox: 'pypy38-release'}
-          - {python: 'pypy-3.8', tox: 'pypy38-low'}
+          - {python: '3.11', tox: 'py311-release'}
+          - {python: '3.11', tox: 'py311-low'}
+          - {python: 'pypy-3.9', tox: 'pypy39-release'}
+          - {python: 'pypy-3.9', tox: 'pypy39-low'}
 
     steps:
       - uses: actions/checkout@v2

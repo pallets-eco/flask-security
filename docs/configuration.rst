@@ -1157,6 +1157,15 @@ Configuration related to the two-factor authentication feature.
 
     .. versionadded:: 5.1.0
 
+.. py:data:: SECURITY_TWO_FACTOR_POST_SETUP_VIEW
+
+    Specifies the view to redirect to after a user successfully setups a two-factor method (non-json).
+    This value can be set to a URL or an endpoint name.
+
+    Default: ``".two_factor_setup"``
+
+    .. versionadded:: 5.1.0
+
 .. py:data:: SECURITY_TWO_FACTOR_SELECT_TEMPLATE
 
     Specifies the path to the template for the select method page for the two-factor authentication process.
@@ -1231,7 +1240,8 @@ Unified Signin
 .. py:data:: SECURITY_US_SIGNIN_SEND_CODE_URL
 
     Endpoint that given an identity, and a previously setup authentication method, will
-    generate and return a one time code. This isn't necessary when using an authenticator app.
+    generate and return a one time code. This isn't necessary when using an authenticator
+    app.
 
     Default: ``"/us-signin/send-code"``
 
@@ -1270,7 +1280,7 @@ Unified Signin
     Specifies the view to redirect to after a user successfully setups an authentication method (non-json).
     This value can be set to a URL or an endpoint name.
 
-    Default: ``.us-setup"``
+    Default: ``".us-setup"``
 
 .. py:data:: SECURITY_US_SIGNIN_TEMPLATE
 
@@ -1564,7 +1574,7 @@ Recovery Codes
 
     How many recovery codes to generate.
 
-    Default:: 5
+    Default:: ``5``
 
 .. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODES_URL
 
@@ -1678,6 +1688,8 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
 * :py:data:`SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL`
 * :py:data:`SECURITY_TWO_FACTOR_RESCUE_URL`
+* :py:data:`SECURITY_TWO_FACTOR_ERROR_VIEW`
+* :py:data:`SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
 * ``SECURITY_POST_LOGIN_VIEW``
 * ``SECURITY_POST_LOGOUT_VIEW``
 * ``SECURITY_CONFIRM_ERROR_VIEW``

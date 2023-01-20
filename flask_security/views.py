@@ -5,7 +5,7 @@
     Flask-Security views module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     CSRF is tricky. By default all our forms have CSRF protection built in via
@@ -48,7 +48,15 @@ from .confirmable import (
     send_confirmation_instructions,
 )
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
-from .forms import DummyForm, build_form_from_request, build_form, form_errors_munge
+from .forms import (
+    DummyForm,
+    build_form_from_request,
+    build_form,
+    form_errors_munge,
+    TwoFactorVerifyCodeForm,
+    TwoFactorSetupForm,
+    TwoFactorRescueForm,
+)
 from .passwordless import login_token_status, send_login_instructions
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
@@ -722,7 +730,7 @@ def two_factor_setup():
     state via the session as part of login to show a) who and b) that they successfully
     authenticated.
     """
-    form = build_form_from_request("two_factor_setup_form")
+    form = t.cast(TwoFactorSetupForm, build_form_from_request("two_factor_setup_form"))
 
     if not current_user.is_authenticated:
         # This is the initial login case
@@ -876,7 +884,9 @@ def two_factor_token_validation():
     2) validating after CHANGE/ENABLE 2FA. In this case user logged in/authenticated
 
     """
-    form = build_form_from_request("two_factor_verify_code_form")
+    form = t.cast(
+        TwoFactorVerifyCodeForm, build_form_from_request("two_factor_verify_code_form")
+    )
 
     changing = current_user.is_authenticated
     if not changing:
@@ -937,7 +947,10 @@ def two_factor_token_validation():
             if token:
                 after_this_request(partial(tf_set_validity_token_cookie, token=token))
             do_flash(*get_message(completion_message))
-            return redirect(get_post_login_redirect())
+            if changing:
+                return redirect(get_url(cv("TWO_FACTOR_POST_SETUP_VIEW")))
+            else:
+                return redirect(get_post_login_redirect())
 
         else:
             json_payload = {}
@@ -990,7 +1003,9 @@ def two_factor_rescue():
     User must have already established 2FA
 
     """
-    form = build_form_from_request("two_factor_rescue_form")
+    form = t.cast(
+        TwoFactorRescueForm, build_form_from_request("two_factor_rescue_form")
+    )
 
     form.user = tf_check_state(["ready"])
     if not form.user:
