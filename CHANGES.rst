@@ -32,13 +32,18 @@ Fixes
 - (:issue:`709`) Make (some) templates look better by using single quotes instead of
   double quotes.
 - (:issue:`690`) Send entire context to MailUtil::send_mail (patrickyan)
-- (:pr:`xxx`) Support for Flask-Babel 3.0.0
+- (:pr:`728`) Support for Flask-Babel 3.0.0
+- (:issue:`692`) Add configuration option `SECURITY_TWO_FACTOR_POST_SETUP_VIEW` which
+  is redirected to upon successful change of a two factor method.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 
 - Each form class used to be set as an attribute on the Security object. With
   the new form instantiation model, they no longer are.
+- After a successful update/change of a two-factor method, the user was redirected to
+  `SECURITY_POST_LOGIN_VIEW`. Now it redirects to `SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
+  which defaults to `".two_factor_setup"`.
 
 Version 5.0.2
 -------------

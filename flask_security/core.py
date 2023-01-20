@@ -7,7 +7,7 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
     :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -178,6 +178,8 @@ _default_config: t.Dict[str, t.Any] = {
     "TWO_FACTOR_TOKEN_VALIDATION_URL": "/tf-validate",
     "TWO_FACTOR_RESCUE_URL": "/tf-rescue",
     "TWO_FACTOR_SELECT_URL": "/tf-select",
+    "TWO_FACTOR_POST_SETUP_VIEW": ".two_factor_setup",  # endpoint or URL
+    "TWO_FACTOR_ERROR_VIEW": ".login",
     "LOGOUT_METHODS": ["GET", "POST"],
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
@@ -192,7 +194,6 @@ _default_config: t.Dict[str, t.Any] = {
     "RESET_VIEW": None,
     "LOGIN_ERROR_VIEW": None,
     "REQUIRES_CONFIRMATION_ERROR_VIEW": None,
-    "TWO_FACTOR_ERROR_VIEW": ".login",
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
     "REDIRECT_ALLOW_SUBDOMAINS": False,
