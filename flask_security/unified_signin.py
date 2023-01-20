@@ -918,8 +918,9 @@ def us_setup_validate(token: str) -> "ResponseValue":
     The token is the state variable which is signed and timed
     and contains all the state that once confirmed will be stored in the user record.
     """
-    form: UnifiedSigninSetupValidateForm = build_form_from_request(
-        "us_setup_validate_form"
+    form = t.cast(
+        UnifiedSigninSetupValidateForm,
+        build_form_from_request("us_setup_validate_form"),
     )
 
     expired, invalid, state = check_and_get_token_status(

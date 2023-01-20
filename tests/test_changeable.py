@@ -315,10 +315,10 @@ def test_auth_uniquifier(app):
         assert response.status_code == 200
 
 
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 @pytest.mark.babel()
 def test_xlation(app, client, get_message_local):
     # Test form and email translation
-    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
     authenticate(client)

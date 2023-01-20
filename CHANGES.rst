@@ -32,12 +32,18 @@ Fixes
 - (:issue:`709`) Make (some) templates look better by using single quotes instead of
   double quotes.
 - (:issue:`690`) Send entire context to MailUtil::send_mail (patrickyan)
+- (:pr:`728`) Support for Flask-Babel 3.0.0
+- (:issue:`692`) Add configuration option `SECURITY_TWO_FACTOR_POST_SETUP_VIEW` which
+  is redirected to upon successful change of a two factor method.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 
 - Each form class used to be set as an attribute on the Security object. With
   the new form instantiation model, they no longer are.
+- After a successful update/change of a two-factor method, the user was redirected to
+  `SECURITY_POST_LOGIN_VIEW`. Now it redirects to `SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
+  which defaults to `".two_factor_setup"`.
 
 Version 5.0.2
 -------------
@@ -197,7 +203,7 @@ Other:
   If your application makes use of Flask-Security's models.fsqla_vX classes - no changes are required.
   For Mongo, a ListField can be directly used.
 - CSRF - As mentioned above, it is now required that `FlaskWTF::CSRFProtect()`, if used, must be called PRIOR to initializing Flask-Security.
-- json_encoder_cls - As mentioned above - Flask-Security initialization on longer accepts overriding the json_encoder class. If this is required,
+- json_encoder_cls - As mentioned above - Flask-Security initialization no longer accepts overriding the json_encoder class. If this is required,
   update to Flask >=2.2 and implement Flask's JSONProvider interface.
 
 For templates:

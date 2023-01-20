@@ -188,7 +188,6 @@ def create_app():
 
     if babel:
 
-        @babel.localeselector
         def get_locale():
             # For a given session - set lang based on first request.
             # Honor explicit url request first
@@ -205,6 +204,8 @@ def create_app():
                 if locale:
                     session["lang"] = locale
             return session.get("lang", None).replace("-", "_")
+
+        babel.locale_selector = get_locale
 
     @app.after_request
     def allow_absolute_redirect(r):

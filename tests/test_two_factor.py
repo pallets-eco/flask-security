@@ -799,6 +799,7 @@ def test_opt_in(app, client, get_message):
     # Validate token - this should complete 2FA setup
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed" in response.data
+    assert response.history[0].location == "/tf-setup"
 
     # Upon completion, session cookie shouldnt have any two factor stuff in it.
     session = get_session(response)
@@ -1402,3 +1403,19 @@ def test_no_sms(app, get_message):
             "/tf-validate", data=dict(code=code), follow_redirects=True
         )
         assert b"You successfully changed your two-factor method" in response.data
+
+
+@pytest.mark.settings(two_factor_post_setup_view="/post_setup_view")
+def test_post_setup_redirect(app, client):
+    authenticate(client, "jill@lp.com")
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="+442083661177")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"To Which Phone Number Should We Send Code To" in response.data
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+
+    # Validate token - this should complete 2FA setup
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=False)
+    assert response.location == "/post_setup_view"
