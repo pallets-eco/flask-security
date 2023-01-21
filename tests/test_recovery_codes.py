@@ -4,7 +4,7 @@
 
     recovery code tests
 
-    :copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -81,6 +81,10 @@ def test_rc(app, client, get_message):
     # Test recovery codes
     # gal has two-factor already setup for 'sms'
     tf_authenticate(app, client)
+
+    response = client.get("/mf-recovery-codes?show_codes=hi")
+    assert response.status_code == 200
+    assert get_message("NO_RECOVERY_CODES_SETUP") in response.data
 
     response = client.post("/mf-recovery-codes")
     rd = response.data.decode("utf-8")

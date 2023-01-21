@@ -94,7 +94,6 @@ at first use if null.
 
 Two-factor Authentication
 ----------------------------------------
-**This feature is in Beta - mostly due to it being brand new and little to no production soak time**
 
 Two-factor authentication is enabled by generating time-based one time passwords
 (Tokens). The tokens are generated using the users `totp secret`_, which is unique
@@ -259,6 +258,7 @@ JSON is supported for the following operations:
 * Two-factor login requests
 * Change two-factor method requests
 * WebAuthn registration and signin requests
+* Two-Factor recovery code requests
 
 In addition, Single-Page-Applications (like those built with Vue, Angular, and
 React) are supported via customizable redirect links.
@@ -273,9 +273,9 @@ registered. They can be completely disabled or their names can be changed.
 Run ``flask --help`` and look for users and roles.
 
 
-Social/Oauth authentication
+Social/Oauth Authentication
 ----------------------------
-Flask-Security provides a thin layer which integrates authlib with Flask-Security
+Flask-Security provides a thin layer which integrates `authlib`_ with Flask-Security
 views and features (such as two-factor authentication). Flask-Security is shipped
 with support for github and google - others can be added by the application.
 
@@ -302,3 +302,4 @@ specified as environment variables.
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/
 .. _Wikipedia: https://en.wikipedia.org/wiki/Multi-factor_authentication
 .. _Microsoft's: https://docs.microsoft.com/en-us/azure/active-directory/user-help/user-help-auth-app-overview
+.. _authlib: https://authlib.org/
