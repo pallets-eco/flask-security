@@ -4,7 +4,7 @@
 
     Flask-Security Recovery Codes Module
 
-    :copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import typing as t
@@ -121,6 +121,7 @@ class MfRecoveryCodesUtil:
 class MfRecoveryCodesForm(Form):
     """Generate and fetch recovery codes"""
 
+    # show_codes is a GET option., generate_new_codes is a POST option
     show_codes = SubmitField(get_form_field_xlate(_("Show Recovery Codes")))
     generate_new_codes = SubmitField(
         get_form_field_xlate(_("Generate New Recovery Codes"))
@@ -172,7 +173,9 @@ def mf_recovery_codes() -> "ResponseValue":
     For forms, we want the user to explicitly request to see the codes - so
     the form has a show_codes submit button.
     """
-    form = build_form_from_request("mf_recovery_codes_form")
+    form = t.cast(
+        MfRecoveryCodesForm, build_form_from_request("mf_recovery_codes_form")
+    )
 
     if form.validate_on_submit():
         # generate new codes
@@ -193,10 +196,14 @@ def mf_recovery_codes() -> "ResponseValue":
         return base_render_json(
             form, include_user=False, additional=dict(recovery_codes=codes)
         )
+    show_codes = request.args.get("show_codes", False)
+    if show_codes and not codes:
+        form.show_codes.errors = []
+        form.show_codes.errors.append(get_message("NO_RECOVERY_CODES_SETUP")[0])
     return _security.render_template(
         cv("MULTI_FACTOR_RECOVERY_CODES_TEMPLATE"),
         mf_recovery_codes_form=form,
-        recovery_codes=codes if request.args.get("show_codes", None) else [],
+        recovery_codes=codes if show_codes else [],
         **_security._run_ctx_processor("mf_recovery_codes"),
     )
 

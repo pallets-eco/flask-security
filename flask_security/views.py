@@ -868,6 +868,7 @@ def two_factor_setup():
         two_factor_verify_code_form=code_form,
         choices=choices,
         chosen_method=form.setup.data,
+        primary_method=getattr(user, "tf_primary_method", "None"),
         two_factor_required=cv("TWO_FACTOR_REQUIRED"),
         **_ctx("tf_setup"),
     )

@@ -4,6 +4,7 @@
   On GET:
     choices: Value of SECURITY_TWO_FACTOR_ENABLED_METHODS (with possible addition of 'delete'
     two_factor_required: Value of SECURITY_TWO_FACTOR_REQUIRED
+    primary_method: if a two-factor method has already been set up.
   On successful POST:
     chosen_method: which 2FA method was chosen (e.g. sms, authenticator)
     choices: Value of SECURITY_TWO_FACTOR_ENABLED_METHODS
@@ -24,6 +25,8 @@
     <h3>{{ _fsdomain("In addition to your username and password, you'll need to use a code.") }}</h3>
     <form action="{{ url_for_security('two_factor_setup') }}" method="POST" name="two_factor_setup_form">
         {{ two_factor_setup_form.hidden_tag() }}
+        <div class="fs-div">{{ _fsdomain("Currently setup two-factor method: %(method)s", method=primary_method) }}</div>
+        <div class="fs-gap"></div>
         {% for subfield in two_factor_setup_form.setup %}
             {% if subfield.data in choices %}
                 {{ render_field_with_errors(subfield) }}

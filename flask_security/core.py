@@ -425,6 +425,7 @@ _default_messages = {
     "RETYPE_PASSWORD_MISMATCH": (_("Passwords do not match"), "error"),
     "INVALID_REDIRECT": (_("Redirections outside the domain are forbidden"), "error"),
     "INVALID_RECOVERY_CODE": (_("Recovery code invalid"), "error"),
+    "NO_RECOVERY_CODES_SETUP": (_("No recovery codes generated yet"), "info"),
     "PASSWORD_RESET_REQUEST": (
         _("Instructions to reset your password have been sent to %(email)s."),
         "info",
@@ -625,7 +626,7 @@ class FormInfo:
 
     See :py:meth:`flask_security.Security.set_form_info`
 
-    .. versionadded:: 5.x.x
+    .. versionadded:: 5.1.0
     """
 
     instantiator: t.Callable[..., Form] = _default_form_instantiator
