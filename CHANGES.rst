@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.1.0
 -------------
 
-Released TBD
+Released January 23, 2023
 
 Features
 ++++++++
@@ -35,6 +35,8 @@ Fixes
 - (:pr:`728`) Support for Flask-Babel 3.0.0
 - (:issue:`692`) Add configuration option `SECURITY_TWO_FACTOR_POST_SETUP_VIEW` which
   is redirected to upon successful change of a two factor method.
+- (:pr:`xxx`) The ability to pass in a LoginManager instance which was deprecated in
+  5.0 has been removed.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

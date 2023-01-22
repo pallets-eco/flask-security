@@ -5,7 +5,7 @@
     Flask-Security decorators module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -237,7 +237,7 @@ def http_auth_required(realm: t.Any) -> DecoratedView:
                 return _security._unauthorized_callback()
             else:
                 r = _security.default_http_auth_realm if callable(realm) else realm
-                h = {"WWW-Authenticate": 'Basic realm="%s"' % r}
+                h = {"WWW-Authenticate": f'Basic realm="{r}"'}
                 return _security._unauthn_handler(["basic"], h)
 
         return wrapper
@@ -274,7 +274,7 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
 def auth_required(
     *auth_methods: t.Union[str, t.Callable[[], t.List[str]], None],
     within: t.Union[int, float, t.Callable[[], datetime.timedelta]] = -1,
-    grace: t.Optional[t.Union[int, float, t.Callable[[], datetime.timedelta]]] = None
+    grace: t.Optional[t.Union[int, float, t.Callable[[], datetime.timedelta]]] = None,
 ) -> DecoratedView:
     """
     Decorator that protects endpoints through multiple mechanisms.
@@ -376,7 +376,7 @@ def auth_required(
             h = {}
             if "basic" in ams:
                 r = _security.default_http_auth_realm
-                h["WWW-Authenticate"] = 'Basic realm="%s"' % r
+                h["WWW-Authenticate"] = f'Basic realm="{r}"'
             mechanisms = [
                 (method, login_mechanisms.get(method))
                 for method in mechanisms_order

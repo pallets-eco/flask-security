@@ -277,7 +277,8 @@ Social/Oauth Authentication
 ----------------------------
 Flask-Security provides a thin layer which integrates `authlib`_ with Flask-Security
 views and features (such as two-factor authentication). Flask-Security is shipped
-with support for github and google - others can be added by the application.
+with support for github and google - others can be added by the application (see `loginpass`_
+for many examples).
 
 See :py:class:`flask_security.OAuthGlue`
 
@@ -303,3 +304,4 @@ specified as environment variables.
 .. _Wikipedia: https://en.wikipedia.org/wiki/Multi-factor_authentication
 .. _Microsoft's: https://docs.microsoft.com/en-us/azure/active-directory/user-help/user-help-auth-app-overview
 .. _authlib: https://authlib.org/
+.. _loginpass: https://github.com/authlib/loginpass
