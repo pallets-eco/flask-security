@@ -50,8 +50,8 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorRescueForm,
     VerifyForm,
+    get_register_username_field,
     login_username_field,
-    register_username_field,
 )
 from .json import setup_json
 from .mail_util import MailUtil
@@ -1502,10 +1502,10 @@ class Security:
             # Add dynamic fields - probably overkill to check if these are our forms.
             fcls = self.forms["register_form"].cls
             if fcls and issubclass(fcls, RegisterFormMixin):
-                fcls.username = register_username_field
+                fcls.username = get_register_username_field(app)
             fcls = self.forms["confirm_register_form"].cls
             if fcls and issubclass(fcls, RegisterFormMixin):
-                fcls.username = register_username_field
+                fcls.username = get_register_username_field(app)
             fcls = self.forms["login_form"].cls
             if fcls and issubclass(fcls, LoginForm):
                 fcls.username = login_username_field
@@ -1616,6 +1616,9 @@ class Security:
 
         if cv("WEBAUTHN", app=app):
             self._check_modules("webauthn", "WEBAUTHN")
+
+        if cv("USERNAME_ENABLE", app=app):
+            self._check_modules("bleach", "USERNAME_ENABLE")
 
         # Register so other packages can reference our translations.
         app.jinja_env.globals["_fsdomain"] = self.i18n_domain.gettext

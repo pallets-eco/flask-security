@@ -349,11 +349,21 @@ class CodeFormMixin:
     )
 
 
-register_username_field = StringField(
-    get_form_field_label("username"),
-    render_kw={"autocomplete": "username"},
-    validators=[username_validator, unique_username],
-)
+def get_register_username_field(app):
+    if cv("USERNAME_REQUIRED", app=app):
+        validators = [
+            Required(message="USERNAME_NOT_PROVIDED"),
+            username_validator,
+            unique_username,
+        ]
+    else:
+        validators = [username_validator, unique_username]
+    return StringField(
+        get_form_field_label("username"),
+        render_kw={"autocomplete": "username"},
+        validators=validators,
+    )
+
 
 login_username_field = StringField(
     get_form_field_label("username"),

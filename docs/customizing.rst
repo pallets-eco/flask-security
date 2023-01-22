@@ -195,9 +195,11 @@ In this example we are injecting an external `service` into the form for use in 
 
 Customizing the Login Form
 ++++++++++++++++++++++++++
-This is an example of how to modify the registration and login form to add a username
-attribute (mimicking legacy Flask-Security behavior). Note that Flask-Security now has
-built-in support for username so this is unnecessary::
+This is an example of how to modify the registration and login form to add support for
+a single input field to accept both email and username (mimicking legacy Flask-Security behavior).
+Flask-Security supports username as a configuration option so this is not strictly needed
+any more, however, Flask-Security's LoginForm uses 2 different input fields (so that
+appropriate input attributes can be set)::
 
     from flask_security import (
             RegisterForm,

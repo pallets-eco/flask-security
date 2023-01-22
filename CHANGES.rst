@@ -14,6 +14,7 @@ Features
 - (:issue:`667`) Expose form instantiation. See :ref:`form_instantiation`.
 - (:issue:`693`) Option to encrypt recovery codes at rest.
 - (:pr:`716`) Support for authentication via 'social' oauth.
+- (:pr:`721`) Support for Python 3.11
 
 Fixes
 +++++
@@ -35,8 +36,11 @@ Fixes
 - (:pr:`728`) Support for Flask-Babel 3.0.0
 - (:issue:`692`) Add configuration option `SECURITY_TWO_FACTOR_POST_SETUP_VIEW` which
   is redirected to upon successful change of a two factor method.
-- (:pr:`xxx`) The ability to pass in a LoginManager instance which was deprecated in
+- (:pr:`733`) The ability to pass in a LoginManager instance which was deprecated in
   5.0 has been removed.
+- (:issue:`732`) If `SECURITY_USERNAME_REQUIRED` was ``True`` then users couldn't login
+  with just an email.
+- (:issue:`734`) If `SECURITY_USERNAME_ENABLE` is set, bleach is a requirement.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
