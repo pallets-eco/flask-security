@@ -454,8 +454,7 @@ def slash_url_suffix(url, suffix):
     """Adds a slash either to the beginning or the end of a suffix
     (which is to be appended to a URL), depending on whether or not
     the URL ends with a slash."""
-
-    return url.endswith("/") and ("%s/" % suffix) or ("/%s" % suffix)
+    return url.endswith("/") and f"{suffix}/" or f"/{suffix}"
 
 
 def transform_url(
@@ -694,11 +693,11 @@ def send_mail(subject, recipient, template, **context):
 
     body = None
     html = None
-    ctx = ("security/email", template)
+    template_path = f"security/email/{template}"
     if config_value("EMAIL_PLAINTEXT"):
-        body = _security.render_template("%s/%s.txt" % ctx, **context)
+        body = _security.render_template(f"{template_path}.txt", **context)
     if config_value("EMAIL_HTML"):
-        html = _security.render_template("%s/%s.html" % ctx, **context)
+        html = _security.render_template(f"{template_path}.html", **context)
 
     subject = localize_callback(subject)
 

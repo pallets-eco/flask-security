@@ -479,10 +479,8 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         self.remember.default = cv("DEFAULT_REMEMBER_ME")
         if _security.recoverable and not self.password.description:
             html = Markup(
-                '<a href="{url}">{message}</a>'.format(
-                    url=url_for_security("forgot_password"),
-                    message=get_message("FORGOT_PASSWORD")[0],
-                )
+                f'<a href="{url_for_security("forgot_password")}">'
+                f'{get_message("FORGOT_PASSWORD")[0]}</a>'
             )
             self.password.description = html
         self.requires_confirmation: bool = False

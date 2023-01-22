@@ -727,7 +727,7 @@ def _get_login_manager(app, anonymous_user):
     lm = LoginManager()
     lm.anonymous_user = anonymous_user or AnonymousUser
     lm.localize_callback = localize_callback
-    lm.login_view = "%s.login" % cv("BLUEPRINT_NAME", app=app)
+    lm.login_view = f'{cv("BLUEPRINT_NAME", app=app)}.login'
     lm.user_loader(_user_loader)
     lm.request_loader(_request_loader)
 
@@ -757,8 +757,7 @@ def _get_pwd_context(app: "flask.Flask") -> CryptContext:
     if pw_hash not in schemes:
         allowed = ", ".join(schemes[:-1]) + " and " + schemes[-1]
         raise ValueError(
-            "Invalid password hashing scheme %r. Allowed values are %s"
-            % (pw_hash, allowed)
+            f"Invalid password hashing scheme {pw_hash}. Allowed values are {allowed}"
         )
     cc = CryptContext(
         schemes=schemes,
@@ -1062,7 +1061,6 @@ class Security:
     :param wan_delete_form: set form for deleting a webauthn security key
     :param wan_verify_form: set form for using a webauthn key to verify authenticity
     :param anonymous_user: class to use for anonymous user
-    :param login_manager: An subclass of LoginManager
     :param mail_util_cls: Class to use for sending emails. Defaults to :class:`MailUtil`
     :param password_util_cls: Class to use for password normalization/validation.
      Defaults to :class:`PasswordUtil`
@@ -1166,7 +1164,6 @@ class Security:
         wan_delete_form: t.Type[WebAuthnDeleteForm] = WebAuthnDeleteForm,
         wan_verify_form: t.Type[WebAuthnVerifyForm] = WebAuthnVerifyForm,
         anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
-        login_manager: t.Optional["flask_login.LoginManager"] = None,
         mail_util_cls: t.Type["MailUtil"] = MailUtil,
         password_util_cls: t.Type["PasswordUtil"] = PasswordUtil,
         phone_util_cls: t.Type["PhoneUtil"] = PhoneUtil,
@@ -1191,7 +1188,6 @@ class Security:
         self._datastore = datastore
         self._register_blueprint = register_blueprint
         self.anonymous_user = anonymous_user
-        self.login_manager = login_manager
         self.mail_util_cls = mail_util_cls
         self.password_util_cls = password_util_cls
         self.phone_util_cls = phone_util_cls
@@ -1269,6 +1265,7 @@ class Security:
         self.two_factor_plugins: TfPlugin
         self.oauthglue: t.Optional[OAuthGlue] = None
 
+        self.login_manager: "flask_login.LoginManager"
         self._mail_util: MailUtil
         self._phone_util: PhoneUtil
         self._password_util: PasswordUtil
@@ -1393,7 +1390,6 @@ class Security:
         # BC - Allow kwargs to overwrite/init other constructor attributes
         attr_names = [
             "anonymous_user",
-            "login_manager",
             "mail_util_cls",
             "password_util_cls",
             "phone_util_cls",
@@ -1431,6 +1427,7 @@ class Security:
                     " must have one and only one key."
                 )
 
+        self.login_manager = _get_login_manager(app, self.anonymous_user)
         self._phone_util = self.phone_util_cls(app)
         self._mail_util = self.mail_util_cls(app)
         self._password_util = self.password_util_cls(app)
@@ -1440,26 +1437,6 @@ class Security:
         rvre = cv("REDIRECT_VALIDATE_RE", app=app)
         if rvre:
             self._redirect_validate_re = re.compile(rvre)
-
-        if self.login_manager:
-            warnings.warn(
-                "Replacing login_manager is deprecated in 5.0.0 and will be"
-                " removed in 5.1",
-                DeprecationWarning,
-            )
-
-        # login_manager is a bit strange - when we initialize it we are actually
-        # initializing Flask-Login which will register itself as an extension on the
-        # Flask object and set app.login_manager.
-        # We allow apps to provide their own and pass it in as part of the constructor.
-        # While not best practice there are users who reuse
-        # the Security object on different apps (e.g. for testing).
-        # We also support the case where we replace the Security object on an existing
-        # app (we do this in test_misc).
-        # We need to re-initialize Flask-Login if the app doesn't have it yet.
-        if not hasattr(app, "login_manager") or not self.login_manager:
-            # This is the 99% case - just let us manage Flask-Login
-            self.login_manager = _get_login_manager(app, self.anonymous_user)
 
         self.remember_token_serializer = _get_serializer(app, "remember")
         self.login_serializer = _get_serializer(app, "login")
