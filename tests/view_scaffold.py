@@ -103,9 +103,9 @@ def create_app():
     app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=1)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
     app.config["SECURITY_USERNAME_ENABLE"] = True
+    app.config["SECURITY_USERNAME_REQUIRED"] = True
     app.config["SECURITY_PASSWORD_REQUIRED"] = True
-    app.config["SECURITY_MULTI_FACTOR_RECOVERY_CODES"] = True
-    app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = True
+    app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = False
     # enable oauth - note that this assumes that app is passes XXX_CLIENT_ID and
     # XXX_CLIENT_SECRET as environment variables.
     app.config["SECURITY_OAUTH_ENABLE"] = True
@@ -136,6 +136,7 @@ def create_app():
         "two_factor",
         "unified_signin",
         "webauthn",
+        "multi_factor_recovery_codes",
     ]:
         app.config["SECURITY_" + opt.upper()] = True
 

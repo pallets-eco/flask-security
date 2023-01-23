@@ -180,6 +180,16 @@ def test_login_form_username(client):
     assert re.search(b'<input[^>]*autocomplete="current-password"[^>]*>', response.data)
 
 
+@pytest.mark.settings(username_enable=True, username_required=True)
+def test_login_form_username_required(client):
+    # If username required - we should still be able to login with email alone
+    # given default user_identity_attributes
+    response = client.post(
+        "/login", data=dict(email="matt@lp.com", password="password")
+    )
+    assert response.location == "/"
+
+
 @pytest.mark.confirmable()
 @pytest.mark.settings(
     return_generic_responses=True, requires_confirmation_error_view="/confirm"

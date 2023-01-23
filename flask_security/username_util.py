@@ -87,9 +87,6 @@ class UsernameUtil:
         import bleach
 
         if not username:
-            # Allow empty username unless specifically required.
-            if cv("USERNAME_REQUIRED"):
-                return get_message("USERNAME_NOT_PROVIDED")[0], None
             return None, None
         uclean = bleach.clean(username.strip(), strip=True)
         if uclean != username:
