@@ -1,6 +1,15 @@
 Security Patterns
 =================
 
+.. danger::
+    Be aware that starting in Flask 2.2.0, they recommend extensions store context information
+    on ``g`` which is the application context. Prior to this many extensions (including
+    Flask-Security and Flask-Login) stored things like user credential information on the
+    request context. These are now stored on ``g`` i.e. the application context. It is imperative
+    that applications not mistakenly push their own application context and forget to pop it - in that
+    case Flask won't push a new application context nor will it pop it at the end of the request - thus
+    credential information could leak from one user request to another.
+
 Authentication and Authorization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Flask-Security provides a set of authentication decorators:

@@ -41,6 +41,7 @@ Fixes
 - (:issue:`732`) If `SECURITY_USERNAME_REQUIRED` was ``True`` then users couldn't login
   with just an email.
 - (:issue:`734`) If `SECURITY_USERNAME_ENABLE` is set, bleach is a requirement.
+- (:pr:`xxx`) The default_unauthz_handler now takes a function name, not the function!
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -50,6 +51,8 @@ Backwards Compatibility Concerns
 - After a successful update/change of a two-factor method, the user was redirected to
   `SECURITY_POST_LOGIN_VIEW`. Now it redirects to `SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
   which defaults to `".two_factor_setup"`.
+- The :meth:`.Security.unauthz_handler` now takes a function name - not the function -
+  which never made sense.
 
 Version 5.0.2
 -------------

@@ -115,7 +115,7 @@ def default_reauthn_handler(within, grace):
     return redirect(redirect_url)
 
 
-def default_unauthz_handler(func, params):
+def default_unauthz_handler(func_name, params):
     unauthz_message, unauthz_message_type = get_message("UNAUTHORIZED")
     if _security._want_json(request):
         payload = json_error_response(errors=unauthz_message)
@@ -482,7 +482,9 @@ def roles_required(*roles: str) -> DecoratedView:
                     if _security._unauthorized_callback:
                         # Backwards compat - deprecated
                         return _security._unauthorized_callback()
-                    return _security._unauthz_handler(roles_required, list(roles))
+                    return _security._unauthz_handler(
+                        roles_required.__name__, list(roles)
+                    )
             return fn(*args, **kwargs)
 
         return decorated_view
@@ -514,7 +516,7 @@ def roles_accepted(*roles: str) -> DecoratedView:
             if _security._unauthorized_callback:
                 # Backwards compat - deprecated
                 return _security._unauthorized_callback()
-            return _security._unauthz_handler(roles_accepted, list(roles))
+            return _security._unauthz_handler(roles_accepted.__name__, list(roles))
 
         return decorated_view
 
@@ -550,7 +552,7 @@ def permissions_required(*fsperms: str) -> DecoratedView:
                         # Backwards compat - deprecated
                         return _security._unauthorized_callback()
                     return _security._unauthz_handler(
-                        permissions_required, list(fsperms)
+                        permissions_required.__name__, list(fsperms)
                     )
 
             return fn(*args, **kwargs)
@@ -588,7 +590,9 @@ def permissions_accepted(*fsperms: str) -> DecoratedView:
             if _security._unauthorized_callback:
                 # Backwards compat - deprecated
                 return _security._unauthorized_callback()
-            return _security._unauthz_handler(permissions_accepted, list(fsperms))
+            return _security._unauthz_handler(
+                permissions_accepted.__name__, list(fsperms)
+            )
 
         return decorated_view
 

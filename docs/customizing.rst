@@ -536,9 +536,9 @@ The decision on whether to return JSON is based on:
 Redirects
 ---------
 Flask-Security uses redirects frequently (when using forms), and most of the redirect
-destinations are configurable. When FS initiates a redirect it always (mostly) flashes a message
-that provides some context. In addition, FS - both in its views and default templates attempt to propagate
-any `next` query param and in fact, an existing `?next=/xx` with override most of the configuration redirect URLs.
+destinations are configurable. When Flask-Security initiates a redirect it always (mostly) flashes a message
+that provides some context. In addition, Flask-Security - both in its views and default templates attempt to propagate
+any `next` query param and in fact, an existing `?next=/xx` will override most of the configuration redirect URLs.
 
 As a complex example consider an unauthenticated user accessing a `@auth_required` endpoint, and the user has
 two-factor authentication set up.:
@@ -550,4 +550,5 @@ two-factor authentication set up.:
     * The two_factor_validation_form/template also pulls any `?next=/xx` and appends to the form action.
     * When the `tf-validate` form is submitted it will do a POST("/tf-validate?next=/protected").
     * Assuming a correct code, the user is authenticated and is redirected. That redirection first
-      looks for a 'next' in the request.args then in request.form and finally will use the value of `SECURITY_POST_LOGIN_VIEW`
+      looks for a 'next' in the request.args then in request.form and finally will use the value of `SECURITY_POST_LOGIN_VIEW`.
+      In this example it will find the ``next=/protected`` in the request.args and redirect to ``/protected``.
