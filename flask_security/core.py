@@ -1071,6 +1071,8 @@ class Security:
     :param totp_cls: Class to use as TOTP factory. Defaults to :class:`Totp`
     :param username_util_cls: Class to use for normalizing and validating usernames.
         Defaults to :class:`UsernameUtil`
+    :param webauthn_util_cls: Class to use for customizing WebAuthn registration
+        and signin. Defaults to :class:`WebauthnUtil`
     :param mf_recovery_codes_util_cls: Class for generating, checking, encrypting
         and decrypting recovery codes. Defaults to :class:`MfRecoveryCodesUtil`
     :param oauth: An instance of authlib.integrations.flask_client.OAuth
@@ -1120,7 +1122,7 @@ class Security:
         ``password_validator`` removed in favor of the new ``password_util_cls``.
 
     .. deprecated:: 5.0.0
-        Passing in a LoginManager instance.
+        Passing in a LoginManager instance. Removed in 5.1.0
     .. deprecated:: 5.0.0
         json_encoder_cls is no longer honored since Flask 2.2 has deprecated it.
     """
@@ -1236,7 +1238,7 @@ class Security:
             [timedelta, timedelta], "ResponseValue"
         ] = default_reauthn_handler
         self._unauthz_handler: t.Callable[
-            [t.Callable[[t.Any], t.Any], t.Optional[t.List[str]]], "ResponseValue"
+            [str, t.Optional[t.List[str]]], "ResponseValue"
         ] = default_unauthz_handler
         self._unauthorized_callback: t.Optional[t.Callable[[], "ResponseValue"]] = None
         self._render_json: t.Callable[
@@ -1732,7 +1734,7 @@ class Security:
             Do not perform any validation as part of instantiation - many views have
             a bunch of logic PRIOR to calling the form validator.
 
-            .. versionadded:: 5.x.x
+            .. versionadded:: 5.1.0
         """
         if name not in self.forms.keys():
             raise ValueError(f"Unknown form name {name}")
@@ -1797,9 +1799,7 @@ class Security:
 
     def unauthz_handler(
         self,
-        cb: t.Callable[
-            [t.Callable[[t.Any], t.Any], t.Optional[t.List[str]]], "ResponseValue"
-        ],
+        cb: t.Callable[[str, t.Optional[t.List[str]]], "ResponseValue"],
     ) -> None:
         """
         Callback for failed authorization.
@@ -1809,7 +1809,7 @@ class Security:
 
         :param cb: Callback function with signature (func, params)
 
-            :func: the decorator function (e.g. roles_required)
+            :func_name: the decorator function name (e.g. 'roles_required')
             :params: list of what (if any) was passed to the decorator.
 
         Should return a Response or something Flask can create a Response from.
@@ -1820,6 +1820,9 @@ class Security:
         message.
 
         .. versionadded:: 3.3.0
+
+        .. versionchanged:: 5.1.0
+            Pass in the function name, not the function!
         """
         self._unauthz_handler = cb
 

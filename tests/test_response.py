@@ -126,11 +126,9 @@ def test_default_unauthz_myjson(app, client):
 
 def test_my_unauthz_handler(app, client):
     @app.security.unauthz_handler
-    def my_unauthz(func, params):
+    def my_unauthz(func_name, params):
         return (
-            jsonify(
-                dict(myresponse={"func": func.__name__, "params": params}, code=403)
-            ),
+            jsonify(dict(myresponse={"func": func_name, "params": params}, code=403)),
             403,
         )
 
