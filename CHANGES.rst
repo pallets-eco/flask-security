@@ -12,7 +12,7 @@ Features
 ++++++++
 
 - (:issue:`667`) Expose form instantiation. See :ref:`form_instantiation`.
-- (:issue:`693`) Option to encrypt recovery codes at rest.
+- (:issue:`693`) Option to encrypt recovery codes.
 - (:pr:`716`) Support for authentication via 'social' oauth.
 - (:pr:`721`) Support for Python 3.11
 
@@ -26,7 +26,7 @@ Fixes
 - (:issue:`699`) Properly propagate `?next=/xx` - the verify, webauthn, and unified
   signin endpoints, that had multiple redirects, needed fixes.
 - (:pr:`696`) Add Hungarian translations. (xQwexx)
-- (:issue:`701`) Two factor redirects ignore url_prefix. Added a `SECURITY_TWO_FACTOR_ERROR_VIEW`
+- (:issue:`701`) Two factor redirects ignored url_prefix. Added a :py:data:`SECURITY_TWO_FACTOR_ERROR_VIEW`
   configuration option.
 - (:issue:`704`) Add configurations for static folder/URL and make sure templates reference
   blueprint relative static folder.
@@ -34,14 +34,14 @@ Fixes
   double quotes.
 - (:issue:`690`) Send entire context to MailUtil::send_mail (patrickyan)
 - (:pr:`728`) Support for Flask-Babel 3.0.0
-- (:issue:`692`) Add configuration option `SECURITY_TWO_FACTOR_POST_SETUP_VIEW` which
+- (:issue:`692`) Add configuration option :py:data:`SECURITY_TWO_FACTOR_POST_SETUP_VIEW` which
   is redirected to upon successful change of a two factor method.
 - (:pr:`733`) The ability to pass in a LoginManager instance which was deprecated in
   5.0 has been removed.
-- (:issue:`732`) If `SECURITY_USERNAME_REQUIRED` was ``True`` then users couldn't login
+- (:issue:`732`) If :py:data:`SECURITY_USERNAME_REQUIRED` was ``True`` then users couldn't login
   with just an email.
-- (:issue:`734`) If `SECURITY_USERNAME_ENABLE` is set, bleach is a requirement.
-- (:pr:`xxx`) The default_unauthz_handler now takes a function name, not the function!
+- (:issue:`734`) If :py:data:`SECURITY_USERNAME_ENABLE` is set, bleach is a requirement.
+- (:pr:`736`) The unauthz_handler now takes a function name, not the function!
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -49,7 +49,7 @@ Backwards Compatibility Concerns
 - Each form class used to be set as an attribute on the Security object. With
   the new form instantiation model, they no longer are.
 - After a successful update/change of a two-factor method, the user was redirected to
-  `SECURITY_POST_LOGIN_VIEW`. Now it redirects to `SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
+  :py:data:`SECURITY_POST_LOGIN_VIEW`. Now it redirects to :py:data:`SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
   which defaults to `".two_factor_setup"`.
 - The :meth:`.Security.unauthz_handler` now takes a function name - not the function -
   which never made sense.

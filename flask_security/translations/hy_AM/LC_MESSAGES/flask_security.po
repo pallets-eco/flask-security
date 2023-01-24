@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2023-01-21 11:58-0800\n"
+"POT-Creation-Date: 2023-01-23 15:51-0800\n"
 "PO-Revision-Date: 2020-12-01 11:47+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hy_AM\n"
@@ -550,7 +550,7 @@ msgstr ""
 msgid "Set up using SMS"
 msgstr "Կարգավորեք օգտագործելով SMS"
 
-#: flask_security/forms.py:745
+#: flask_security/forms.py:753
 msgid "Disable two factor authentication"
 msgstr ""
 
