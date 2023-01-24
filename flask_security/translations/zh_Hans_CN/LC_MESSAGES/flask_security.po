@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-01-21 11:58-0800\n"
+"POT-Creation-Date: 2023-01-23 15:51-0800\n"
 "PO-Revision-Date: 2018-08-02 19:55+0800\n"
 "Last-Translator: SteinKuo <guoming054@gmail.com>\n"
 "Language: zh_CN\n"
@@ -541,7 +541,7 @@ msgstr "设置一个认证的app（例如：google、lastpass、authy）"
 msgid "Set up using SMS"
 msgstr "用SMS进行设置\""
 
-#: flask_security/forms.py:745
+#: flask_security/forms.py:753
 msgid "Disable two factor authentication"
 msgstr ""
 

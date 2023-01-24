@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security-Too 4.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-01-21 11:58-0800\n"
+"POT-Creation-Date: 2023-01-23 15:51-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Michael Bosch <michael@lonelyviking.com>\n"
 "Language: af_ZA\n"
@@ -549,7 +549,7 @@ msgstr "Stel op deur midde van verifikasie toep (bv. google, lastpass, authy)"
 msgid "Set up using SMS"
 msgstr "Stel op deur midde van SMS"
 
-#: flask_security/forms.py:745
+#: flask_security/forms.py:753
 msgid "Disable two factor authentication"
 msgstr ""
 
