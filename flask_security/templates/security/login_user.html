@@ -2,8 +2,8 @@
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors, prop_next %}
 
 {% block content %}
-{% include "security/_messages.html" %}
-<h1>{{ _fsdomain('Login') }}</h1>
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain('Login') }}</h1>
   <form action="{{ url_for_security('login') }}{{ prop_next() }}" method="post" name="login_user_form">
     {{ login_user_form.hidden_tag() }}
     {{ render_form_errors(login_user_form) }}
@@ -17,7 +17,8 @@
       {{ render_field_with_errors(login_user_form.username) }}
     {% endif %}
     <div class="fs-gap">
-      {{ render_field_with_errors(login_user_form.password) }}</div>
+      {{ render_field_with_errors(login_user_form.password) }}
+    </div>
     {{ render_field_with_errors(login_user_form.remember) }}
     {{ render_field_errors(login_user_form.csrf_token) }}
     {{ render_field(login_user_form.submit) }}
@@ -27,8 +28,7 @@
     <h2>{{ _fsdomain("Use WebAuthn to Sign In") }}</h2>
     <div>
       <form method="get" id="wan-signin-form" name="wan_signin_form">
-        <input id="wan_signin" name="wan_signin" type="submit" value="{{ _fsdomain('Sign in with WebAuthn') }}"
-          formaction="{{ url_for_security('wan_signin') }}{{ prop_next() }}">
+        <input id="wan_signin" name="wan_signin" type="submit" value="{{ _fsdomain('Sign in with WebAuthn') }}" formaction="{{ url_for_security('wan_signin') }}{{ prop_next() }}">
       </form>
     </div>
   {% endif %}
@@ -37,12 +37,11 @@
     <h2>{{ _fsdomain("Use Social Oauth to Sign In") }}</h2>
     {% for provider in security.oauthglue.provider_names %}
       <div class="fs-gap">
-        <form method="post" id={{ provider }}-form name={{ provider }}_form>
-          <input id={{ provider }} name={{ provider }} type="submit" value="{{ _fsdomain('Sign in with ')~provider }}"
-            formaction="{{ url_for_security('oauthstart', name=provider) }}{{ prop_next() }}">
+        <form method="post" id="{{ provider }}"-form name="{{ provider }}"_form>
+          <input id="{{ provider }}" name="{{ provider }}" type="submit" value="{{ _fsdomain('Sign in with ')~provider }}" formaction="{{ url_for_security('oauthstart', name=provider) }}{{ prop_next() }}">
         </form>
       </div>
     {% endfor %}
   {% endif %}
-{% include "security/_menu.html" %}
-{% endblock %}
+  {% include "security/_menu.html" %}
+{% endblock content %}
