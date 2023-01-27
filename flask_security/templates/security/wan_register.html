@@ -18,7 +18,7 @@
   {% if not credential_options %}
     {# Initial form to get CreateOptions #}
     <div>{{ _fsdomain("Start by providing a unique name for your new security key:") }}</div>
-    <form action="{{ url_for_security('wan_register') }}" method="POST"
+    <form action="{{ url_for_security('wan_register') }}" method="post"
             name="wan_register_form" id="wan-register-form">
         {{ wan_register_form.hidden_tag() }}
         {{ render_field_with_errors(wan_register_form.name) }}
@@ -33,7 +33,7 @@
         {{ render_field(wan_register_form.submit) }}
     </form>
   {% else %}
-    <form action="{{ url_for_security('wan_register_response', token=wan_state) }}" method="POST"
+    <form action="{{ url_for_security('wan_register_response', token=wan_state) }}" method="post"
           name="wan_register_response_form" id="wan-register-response-form">
       {{ wan_register_response_form.hidden_tag() }}
       <div id="wan-errors"></div>
@@ -69,7 +69,7 @@
   {% if wan_delete_form %}
     <hr>
     <h2>{{ _fsdomain("Delete Existing WebAuthn Security Key") }}</h2>
-      <form action="{{ url_for_security('wan_delete') }}" method="POST"
+      <form action="{{ url_for_security('wan_delete') }}" method="post"
             name="wan_delete_form">
         {{ wan_delete_form.hidden_tag() }}
         {{ render_field_with_errors(wan_delete_form.name) }}
