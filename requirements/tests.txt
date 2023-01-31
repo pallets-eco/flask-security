@@ -13,6 +13,7 @@ bleach
 check-manifest
 coverage
 cryptography
+djlint
 python-dateutil
 mongoengine
 mongomock

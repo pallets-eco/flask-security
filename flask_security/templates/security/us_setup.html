@@ -24,82 +24,75 @@
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors %}
 
 {% block content %}
-    {% include "security/_messages.html" %}
-    <h1>{{ _fsdomain("Setup Unified Sign In") }}</h1>
-    <form action="{{ url_for_security('us_setup') }}" method="POST"
-          name="us_setup_form">
-      {{ us_setup_form.hidden_tag() }}
-      {{ render_form_errors(us_setup_form) }}
-      {% if setup_methods %}
-        <div class="fs-div">{{ _fsdomain("Currently active sign in options:") }}<em>
-        {% if active_methods %}
-          {{ ", ".join(active_methods) }}
-        {% else %}
-          None.
-        {% endif %}
-        </em></div>
-
-        <h3>{{ us_setup_form.chosen_method.label }}</h3>
-        <div class="fs-div">
-          {% for subfield in us_setup_form.chosen_method %}
-              {{ render_field_with_errors(subfield) }}
-          {% endfor %}
-          {{ render_field_errors(us_setup_form.chosen_method) }}
-        </div>
-
-        <div class="fs-div">
-          {% if "sms" in available_methods and "sms" not in active_methods %}
-            {{ render_field_with_errors(us_setup_form.phone) }}
-          {% endif %}
-        </div>
-        {% if us_setup_form.delete_method.choices and not state %}
-          {#  don't show delete if we're trying to validate a setup #}
-          <h3>{{ us_setup_form.delete_method.label }}</h3>
-          <div class="fs-div">
-            {% for subfield in us_setup_form.delete_method %}
-              {{ render_field_with_errors(subfield) }}
-            {% endfor %}
-            {{ render_field_errors(us_setup_form.delete_method) }}
-          </div>
-        {% endif %}
-        <div class="fs-gap">{{ render_field(us_setup_form.submit) }}</div>
-
-        {% if chosen_method == "authenticator" %}
-          <hr>
-          <div class="fs-center">
-            <div>
-              {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving codes:") }}
-            </div>
-            <div>
-              <img alt="{{ _fsdomain('Passwordless QRCode') }}" id="qrcode" src="{{ authr_qrcode }}">
-            </div>
-            <div>
-              {{ authr_key }}
-            </div>
-          </div>
-        {% endif %}
-      {% else %}
-        <h3>{{ _fsdomain("No methods have been enabled - nothing to setup") }}</h3>
-      {% endif %}
-    </form>
-    {% if state %}
-      {# Completing setup by entering code #}
-      <hr class="fs-gap">
-      <div class="fs-important">{{ _fsdomain("Enter code here to complete setup") }}</div>
-      <form action="{{ url_for_security('us_setup_validate', token=state) }}" method="POST"
-          name="us_setup_validate_form">
-        {{ us_setup_validate_form.hidden_tag() }}
-        {{ render_field_with_errors(us_setup_validate_form.passcode) }}
-        <div class="fs-gap">{{ render_field(us_setup_validate_form.submit) }}</div>
-      </form>
-    {% endif %}
-    {% if security.webauthn %}
-      <hr class="fs-gap">
-      <h2>WebAuthn</h2>
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain("Setup Unified Sign In") }}</h1>
+  <form action="{{ url_for_security('us_setup') }}" method="post" name="us_setup_form">
+    {{ us_setup_form.hidden_tag() }}
+    {{ render_form_errors(us_setup_form) }}
+    {% if setup_methods %}
       <div class="fs-div">
-        {{ _fsdomain("This application supports WebAuthn security keys.") }}
-        <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</a>
+        {{ _fsdomain("Currently active sign in options:") }}
+        <em>
+          {% if active_methods %}
+            {{ ", ".join(active_methods) }}
+          {% else %}
+            None.
+          {% endif %}
+        </em>
       </div>
+      <h3>{{ us_setup_form.chosen_method.label }}</h3>
+      <div class="fs-div">
+        {% for subfield in us_setup_form.chosen_method %}{{ render_field_with_errors(subfield) }}{% endfor %}
+        {{ render_field_errors(us_setup_form.chosen_method) }}
+      </div>
+      <div class="fs-div">
+        {% if "sms" in available_methods and "sms" not in active_methods %}
+          {{ render_field_with_errors(us_setup_form.phone) }}
+        {% endif %}
+      </div>
+      {% if us_setup_form.delete_method.choices and not state %}
+        {#  don't show delete if we're trying to validate a setup #}
+        <h3>{{ us_setup_form.delete_method.label }}</h3>
+        <div class="fs-div">
+          {% for subfield in us_setup_form.delete_method %}{{ render_field_with_errors(subfield) }}{% endfor %}
+          {{ render_field_errors(us_setup_form.delete_method) }}
+        </div>
+      {% endif %}
+      <div class="fs-gap">{{ render_field(us_setup_form.submit) }}</div>
+      {% if chosen_method == "authenticator" %}
+        <hr>
+        <div class="fs-center">
+          <div>
+            {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving codes:") }}
+          </div>
+          <div>
+            <img alt="{{ _fsdomain('Passwordless QRCode') }}" id="qrcode" src="{{ authr_qrcode }}">
+            {# TODO: add width and heigth attrs #}%}
+          </div>
+          <div>{{ authr_key }}</div>
+        </div>
+      {% endif %}
+    {% else %}
+      <h3>{{ _fsdomain("No methods have been enabled - nothing to setup") }}</h3>
     {% endif %}
-    {% include "security/_menu.html" %}
-{% endblock %}
+  </form>
+  {% if state %}
+    {# Completing setup by entering code #}
+    <hr class="fs-gap">
+    <div class="fs-important">{{ _fsdomain("Enter code here to complete setup") }}</div>
+    <form action="{{ url_for_security('us_setup_validate', token=state) }}" method="post" name="us_setup_validate_form">
+      {{ us_setup_validate_form.hidden_tag() }}
+      {{ render_field_with_errors(us_setup_validate_form.passcode) }}
+      <div class="fs-gap">{{ render_field(us_setup_validate_form.submit) }}</div>
+    </form>
+  {% endif %}
+  {% if security.webauthn %}
+    <hr class="fs-gap">
+    <h2>WebAuthn</h2>
+    <div class="fs-div">
+      {{ _fsdomain("This application supports WebAuthn security keys.") }}
+      <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</a>
+    </div>
+  {% endif %}
+  {% include "security/_menu.html" %}
+{% endblock content %}

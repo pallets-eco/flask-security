@@ -7,8 +7,7 @@
 
 {% block head_scripts %}
   {{ super() }}
-  <script src="{{ url_for('.static', filename='js/webauthn.js') }}"
-          xmlns="http://www.w3.org/1999/html"></script>
+  <script src="{{ url_for('.static', filename='js/webauthn.js') }}" xmlns="http://www.w3.org/1999/html"></script>
   <script src="{{ url_for('.static', filename='js/base64.js') }}"></script>
 {% endblock head_scripts %}
 
@@ -18,63 +17,58 @@
   {% if not credential_options %}
     {# Initial form to get CreateOptions #}
     <div>{{ _fsdomain("Start by providing a unique name for your new security key:") }}</div>
-    <form action="{{ url_for_security('wan_register') }}" method="POST"
-            name="wan_register_form" id="wan-register-form">
-        {{ wan_register_form.hidden_tag() }}
-        {{ render_field_with_errors(wan_register_form.name) }}
-        {# Default is just second factor #}
-        {% if security.wan_allow_as_first_factor %}
-          <div>
-          {% for subfield in wan_register_form.usage %}
-            {{ render_field_with_errors(subfield) }}
-          {% endfor %}
-          </div>
-        {% endif %}
-        {{ render_field(wan_register_form.submit) }}
+    <form action="{{ url_for_security('wan_register') }}" method="post" name="wan_register_form" id="wan-register-form">
+      {{ wan_register_form.hidden_tag() }}
+      {{ render_field_with_errors(wan_register_form.name) }}
+      {# Default is just second factor #}
+      {% if security.wan_allow_as_first_factor %}
+        <div>
+          {% for subfield in wan_register_form.usage %}{{ render_field_with_errors(subfield) }}{% endfor %}
+        </div>
+      {% endif %}
+      {{ render_field(wan_register_form.submit) }}
     </form>
   {% else %}
-    <form action="{{ url_for_security('wan_register_response', token=wan_state) }}" method="POST"
-          name="wan_register_response_form" id="wan-register-response-form">
+    <form action="{{ url_for_security('wan_register_response', token=wan_state) }}" method="post" name="wan_register_response_form" id="wan-register-response-form">
       {{ wan_register_response_form.hidden_tag() }}
       <div id="wan-errors"></div>
     </form>
-      <script type="text/javascript">
-        handleRegister('{{ credential_options|safe }}')
-          .then((result) => {
-            if (result.error_msg) {
-              const error_element = document.getElementById("wan-errors")
-              error_element.innerHTML = `<em>${result.error_msg}</em`
-            } else {
-              document.getElementById("credential").value = result.credential
-              {# We auto-submit this form - there is a Submit button on the
-                 form we could use - but there really isn't any reason to force the
-                 user to click yet another button
-               #}
-              document.forms["wan-register-response-form"].submit()
-            }
-          })
-      </script>
+    <script type="text/javascript">
+      handleRegister('{{ credential_options|safe }}')
+        .then((result) => {
+          if (result.error_msg) {
+            const error_element = document.getElementById("wan-errors");
+            error_element.innerHTML = `<em>${result.error_msg}</em>`;
+          } else {
+            document.getElementById("credential").value = result.credential;
+            {# We auto-submit this form - there is a Submit button on the
+                form we could use - but there really isn't any reason to force the
+                user to click yet another button
+            #}
+            document.forms["wan-register-response-form"].submit();
+          }
+        });
+    </script>
   {% endif %}
-
   {% if registered_credentials %}
     <h3>{{ _fsdomain("Currently registered security keys:") }}</h3>
     {% set listing = _fsdomain('Nickname: "%s" Usage: "%s" Transports: "%s" Discoverable: "%s" Device Type: "%s" Backed up? "%s" Last used on: %s') %}
     <ul>
       {% for cred in registered_credentials %}
-        <li>{{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.device_type, cred.backup_state, cred.lastuse)}}</li>
+        <li>
+          {{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.device_type, cred.backup_state, cred.lastuse) }}
+        </li>
       {% endfor %}
     </ul>
   {% endif %}
-
   {% if wan_delete_form %}
     <hr>
     <h2>{{ _fsdomain("Delete Existing WebAuthn Security Key") }}</h2>
-      <form action="{{ url_for_security('wan_delete') }}" method="POST"
-            name="wan_delete_form">
-        {{ wan_delete_form.hidden_tag() }}
-        {{ render_field_with_errors(wan_delete_form.name) }}
-        {{ render_field(wan_delete_form.submit) }}
-      </form>
+    <form action="{{ url_for_security('wan_delete') }}" method="post" name="wan_delete_form">
+      {{ wan_delete_form.hidden_tag() }}
+      {{ render_field_with_errors(wan_delete_form.name) }}
+      {{ render_field(wan_delete_form.submit) }}
+    </form>
   {% endif %}
   {% if security.support_mfa and security.multi_factor_recovery_codes %}
     <hr>
@@ -83,6 +77,6 @@
       {{ _fsdomain("This application supports setting up recovery codes.") }}
       <a href="{{ url_for_security('mf_recovery_codes') }}">{{ _fsdomain("You can set them up here.") }}</a>
     </div>
-    {% endif %}
+  {% endif %}
   {% include "security/_menu.html" %}
-{% endblock %}
+{% endblock content %}

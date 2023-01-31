@@ -1,4 +1,6 @@
 <p>{{ _fsdomain('Your password has been changed.') }}</p>
 {% if security.recoverable %}
-<p>{{ _fsdomain('If you did not change your password,') }} <a href="{{ url_for_security('forgot_password', _external=True) }}">{{ _fsdomain('click here to reset it') }}</a>.</p>
+  <p>
+    {{ _fsdomain('If you did not change your password,') }} <a href="{{ url_for_security('forgot_password', _external=True) }}">{{ _fsdomain('click here to reset it') }}</a>.
+  </p>
 {% endif %}
