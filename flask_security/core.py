@@ -1470,20 +1470,6 @@ class Security:
                     "User model must contain 'username' if"
                     " SECURITY_USERNAME_ENABLE is True"
                 )
-            # if they want USERNAME_ENABLE - then they better not have defined
-            # username in their own forms
-            if any(
-                hasattr(self.forms[f].cls, "username")
-                for f in [
-                    "register_form",
-                    "confirm_register_form",
-                    "login_form",
-                ]
-            ):  # pragma: no cover
-                raise ValueError(
-                    "Your login_form or register_form has a"
-                    " 'username' attribute already"
-                )
             # if not already listed in user identity attributes, add it at the end
             uialist = []
             for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):
