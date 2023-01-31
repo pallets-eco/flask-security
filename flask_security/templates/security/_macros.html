@@ -3,9 +3,7 @@
     {{ field.label }} {{ field(**kwargs)|safe }}
     {% if field.errors %}
       <ul>
-        {% for error in field.errors %}
-          <li class="fs-error-msg">{{ error }}</li>
-        {% endfor %}
+        {% for error in field.errors %}<li class="fs-error-msg">{{ error }}</li>{% endfor %}
       </ul>
     {% endif %}
   </div>
@@ -19,9 +17,7 @@
   <div class="fs-div" id="{{ field.id if field else 'fs-field' }}">
     {% if field and field.errors %}
       <ul>
-        {% for error in field.errors %}
-          <li class="fs-error-msg">{{ error }}</li>
-        {% endfor %}
+        {% for error in field.errors %}<li class="fs-error-msg">{{ error }}</li>{% endfor %}
       </ul>
     {% endif %}
   </div>
@@ -32,9 +28,7 @@
   {% if form.form_errors %}
     <div class="fs-div" id="fs-form-errors">
       <ul>
-        {% for error in form.form_errors %}
-          <li class="fs-error-msg">{{ error }}</li>
-        {% endfor %}
+        {% for error in form.form_errors %}<li class="fs-error-msg">{{ error }}</li>{% endfor %}
       </ul>
     </div>
   {% endif %}

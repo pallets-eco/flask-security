@@ -28,9 +28,7 @@
     <div class="fs-div">{{ _fsdomain("Currently setup two-factor method: %(method)s", method=primary_method) }}</div>
     <hr class="fs-gap">
     {% for subfield in two_factor_setup_form.setup %}
-      {% if subfield.data in choices %}
-        {{ render_field_with_errors(subfield) }}
-      {% endif %}
+      {% if subfield.data in choices %}{{ render_field_with_errors(subfield) }}{% endif %}
     {% endfor %}
     {{ render_field_errors(two_factor_setup_form.setup) }}
     {{ render_field(two_factor_setup_form.submit) }}
@@ -44,11 +42,10 @@
           {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving codes:") }}
         </div>
         <div>
-          <img alt="{{ _fsdomain('Two factor authentication code') }}" id="qrcode" src="{{ authr_qrcode }}"> {# TODO: add width and heigth attrs #}%}
+          <img alt="{{ _fsdomain('Two factor authentication code') }}" id="qrcode" src="{{ authr_qrcode }}">
+          {# TODO: add width and heigth attrs #}%}
         </div>
-        <div>
-          {{ authr_key }}
-        </div>
+        <div>{{ authr_key }}</div>
       </div>
     {% endif %}
     {% if chosen_method=="sms" and chosen_method in choices %}

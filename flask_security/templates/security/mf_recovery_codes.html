@@ -6,9 +6,7 @@
   <h1>{{ _fsdomain("Recovery Codes") }}</h1>
   {% if recovery_codes %}
     <ul>
-      {% for rc in recovery_codes %}
-        <li class="fs-div">{{ rc }}</li>
-      {% endfor %}
+      {% for rc in recovery_codes %}<li class="fs-div">{{ rc }}</li>{% endfor %}
     </ul>
     <div class="fs-important">
       {{ _fsdomain("Be sure to copy these and store in a safe place. Each code can be used only once.") }}

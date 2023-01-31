@@ -40,15 +40,11 @@
           {% endif %}
         </em>
       </div>
-
       <h3>{{ us_setup_form.chosen_method.label }}</h3>
       <div class="fs-div">
-        {% for subfield in us_setup_form.chosen_method %}
-          {{ render_field_with_errors(subfield) }}
-        {% endfor %}
+        {% for subfield in us_setup_form.chosen_method %}{{ render_field_with_errors(subfield) }}{% endfor %}
         {{ render_field_errors(us_setup_form.chosen_method) }}
       </div>
-
       <div class="fs-div">
         {% if "sms" in available_methods and "sms" not in active_methods %}
           {{ render_field_with_errors(us_setup_form.phone) }}
@@ -58,14 +54,11 @@
         {#  don't show delete if we're trying to validate a setup #}
         <h3>{{ us_setup_form.delete_method.label }}</h3>
         <div class="fs-div">
-          {% for subfield in us_setup_form.delete_method %}
-            {{ render_field_with_errors(subfield) }}
-          {% endfor %}
+          {% for subfield in us_setup_form.delete_method %}{{ render_field_with_errors(subfield) }}{% endfor %}
           {{ render_field_errors(us_setup_form.delete_method) }}
         </div>
       {% endif %}
       <div class="fs-gap">{{ render_field(us_setup_form.submit) }}</div>
-
       {% if chosen_method == "authenticator" %}
         <hr>
         <div class="fs-center">
@@ -73,11 +66,10 @@
             {{ _fsdomain("Open an authenticator app on your device and scan the following QRcode (or enter the code below manually) to start receiving codes:") }}
           </div>
           <div>
-            <img alt="{{ _fsdomain('Passwordless QRCode') }}" id="qrcode" src="{{ authr_qrcode }}"> {# TODO: add width and heigth attrs #}%}
+            <img alt="{{ _fsdomain('Passwordless QRCode') }}" id="qrcode" src="{{ authr_qrcode }}">
+            {# TODO: add width and heigth attrs #}%}
           </div>
-          <div>
-            {{ authr_key }}
-          </div>
+          <div>{{ authr_key }}</div>
         </div>
       {% endif %}
     {% else %}

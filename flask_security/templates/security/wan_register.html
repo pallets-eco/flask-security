@@ -6,9 +6,9 @@
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
 
 {% block head_scripts %}
-{{ super() }}
-<script src="{{ url_for('.static', filename='js/webauthn.js') }}" xmlns="http://www.w3.org/1999/html"></script>
-<script src="{{ url_for('.static', filename='js/base64.js') }}"></script>
+  {{ super() }}
+  <script src="{{ url_for('.static', filename='js/webauthn.js') }}" xmlns="http://www.w3.org/1999/html"></script>
+  <script src="{{ url_for('.static', filename='js/base64.js') }}"></script>
 {% endblock head_scripts %}
 
 {% block content %}
@@ -23,9 +23,7 @@
       {# Default is just second factor #}
       {% if security.wan_allow_as_first_factor %}
         <div>
-          {% for subfield in wan_register_form.usage %}
-            {{ render_field_with_errors(subfield) }}
-          {% endfor %}
+          {% for subfield in wan_register_form.usage %}{{ render_field_with_errors(subfield) }}{% endfor %}
         </div>
       {% endif %}
       {{ render_field(wan_register_form.submit) }}
@@ -52,17 +50,17 @@
         });
     </script>
   {% endif %}
-
   {% if registered_credentials %}
     <h3>{{ _fsdomain("Currently registered security keys:") }}</h3>
     {% set listing = _fsdomain('Nickname: "%s" Usage: "%s" Transports: "%s" Discoverable: "%s" Device Type: "%s" Backed up? "%s" Last used on: %s') %}
     <ul>
       {% for cred in registered_credentials %}
-        <li>{{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.device_type, cred.backup_state, cred.lastuse) }}</li>
+        <li>
+          {{ listing|format(cred.name, cred.usage, cred.transports|join(", "), cred.discoverable, cred.device_type, cred.backup_state, cred.lastuse) }}
+        </li>
       {% endfor %}
     </ul>
   {% endif %}
-
   {% if wan_delete_form %}
     <hr>
     <h2>{{ _fsdomain("Delete Existing WebAuthn Security Key") }}</h2>
@@ -79,6 +77,6 @@
       {{ _fsdomain("This application supports setting up recovery codes.") }}
       <a href="{{ url_for_security('mf_recovery_codes') }}">{{ _fsdomain("You can set them up here.") }}</a>
     </div>
-    {% endif %}
+  {% endif %}
   {% include "security/_menu.html" %}
 {% endblock content %}

@@ -9,8 +9,7 @@
   for username enumeration.
 #}
 <div>{{ _fsdomain('Hello %(email)s!', email=email) }}</div>
-
-<div>{{ _fsdomain('You attempted to register with a username "%(username)s" that is already associated with another account.',
-  username=username) }}</div>
-
+<div>
+  {{ _fsdomain('You attempted to register with a username "%(username)s" that is already associated with another account.', username=username) }}
+</div>
 <div>{{ _fsdomain('Please restart the registration process with a different username.') }}</div>
