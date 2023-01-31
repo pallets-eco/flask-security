@@ -5,7 +5,7 @@
     Lots of tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -1387,3 +1387,32 @@ def test_static_url(app, sqlalchemy_datastore):
 
         static_url = url_for(".static", filename="js/webauthn.js")
         assert static_url == "/mystatic/fs/js/webauthn.js"
+
+
+def test_multi_app(app, sqlalchemy_datastore):
+    # test that 2 different app with 2 different FS
+    # with USERNAME_ENABLE which dynamically changes the class definition
+    app = Flask(__name__)
+    app.response_class = Response
+    app.debug = True
+    app.config["SECRET_KEY"] = "secret"
+    app.config["TESTING"] = True
+    app.config["SECURITY_USERNAME_ENABLE"] = True
+
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+    assert hasattr(security.forms["register_form"].cls, "username")
+    assert "username" in security.user_identity_attributes[1].keys()
+
+    app = Flask(__name__)
+    app.response_class = Response
+    app.debug = True
+    app.config["SECRET_KEY"] = "secret"
+    app.config["TESTING"] = True
+    app.config["SECURITY_USERNAME_ENABLE"] = True
+
+    security2 = Security(datastore=sqlalchemy_datastore)
+    security2.init_app(app)
+
+    assert hasattr(security2.forms["register_form"].cls, "username")
+    assert "username" in security2.user_identity_attributes[1].keys()

@@ -3,6 +3,20 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.1.1
+-------------
+
+Released TBD
+
+Fixes
++++++
+
+- (:issue:`740`) Fix 2 Flask apps in same thread with USERNAME_ENABLE set.
+  There was a too aggressive config check.
+- (:pr:`739`) Update Russian translations. (ademaro)
+- (:pr:`743`) Run all templates through a linter. (ademaro)
+- (:pr:`744`) Errors with SQLAlchemy 2.0 (sqlalchemy-utils isn't ready).
+
 Version 5.1.0
 -------------
 
