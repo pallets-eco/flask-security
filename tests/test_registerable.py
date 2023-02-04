@@ -37,7 +37,6 @@ def test_registerable_flag(clients, app, get_message):
     # Test registering is successful, sends email, and fires signal
     @user_registered.connect_via(app)
     def on_user_registered(app, **kwargs):
-
         assert isinstance(app, Flask)
         assert isinstance(kwargs["user"], UserMixin)
         assert kwargs["confirm_token"] is None
@@ -302,7 +301,6 @@ def test_form_data_is_passed_to_user_registered_signal(app, sqlalchemy_datastore
 
     @user_registered.connect_via(app)
     def on_user_registered(app, **kwargs):
-
         assert isinstance(app, Flask)
         assert isinstance(kwargs["user"], UserMixin)
         assert kwargs["confirm_token"] is None

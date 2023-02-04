@@ -605,7 +605,6 @@ def test_password_normalization(app, client, get_message):
 
 @pytest.mark.settings(return_generic_responses=True)
 def test_generic_response(app, client, get_message):
-
     # try unknown user
     response = client.post("/reset", data=dict(email="whoami@test.com"))
     assert (

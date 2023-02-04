@@ -511,7 +511,6 @@ def webauthn_register_response(token: str) -> "ResponseValue":
     form.usage = state["usage"]
     form.user_verification = state["user_verification"]
     if form.validate_on_submit():
-
         # store away successful registration
         after_this_request(view_commit)
         _datastore.create_webauthn(

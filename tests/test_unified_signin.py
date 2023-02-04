@@ -249,7 +249,6 @@ def test_simple_signin_json(app, client_nc, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     with capture_flashes() as flashes:
-
         response = client_nc.get("/us-signin", headers=headers)
         jresponse = response.json["response"]
         assert (
@@ -2012,7 +2011,6 @@ def test_setup_delete_multi_json(app, client, get_message):
 
 @pytest.mark.settings(return_generic_responses=True)
 def test_generic_response(app, client, get_message):
-
     # test not-setup choice
     data = dict(identity="matt@lp.com", chosen_method="email")
     response = client.post("/us-signin/send-code", data=data, follow_redirects=True)

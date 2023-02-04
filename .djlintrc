@@ -1,5 +1,5 @@
 {
-    "ignore": "H017,H025,H030,H031",
+    "ignore": "H005,H006,H017,H025,H030,H031",
     "extension": "html",
     "indent": "2",
     "profile": "jinja",
