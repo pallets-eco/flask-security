@@ -641,7 +641,6 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
 
 
 class RegisterForm(ConfirmRegisterForm, NextFormMixin):
-
     # Password optional when Unified Signin enabled.
     password_confirm = PasswordField(
         get_form_field_label("retype_password"),

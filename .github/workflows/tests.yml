@@ -35,21 +35,18 @@ jobs:
           - {python: 'pypy-3.9', tox: 'pypy39-low'}
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
       - name: update pip
         run: |
           pip install -U wheel setuptools
           python -m pip install -U pip
-      - name: get pip cache dir
-        id: pip-cache
-        run: echo "::set-output name=dir::$(pip cache dir)"
       - name: cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: ${{ steps.pip-cache.outputs.dir }}
+          path: ~/.cache/pip
           key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}-${{ hashFiles('requirements_low/*.txt') }}
       - name: run tests
         run: |
@@ -59,8 +56,8 @@ jobs:
   other:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v2
-        - uses: actions/setup-python@v2
+        - uses: actions/checkout@v3
+        - uses: actions/setup-python@v4
           with:
             python-version: "3.9"
         - name: update pip
@@ -74,8 +71,8 @@ jobs:
   cov:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v2
-        - uses: actions/setup-python@v2
+        - uses: actions/checkout@v3
+        - uses: actions/setup-python@v4
           with:
             python-version: "3.9"
         - name: update pip
@@ -87,7 +84,7 @@ jobs:
             pip install tox coverage
             tox -e coverage
         - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v2
+          uses: codecov/codecov-action@v3
           with:
             fail_ci_if_error: false
             verbose: true
@@ -109,21 +106,18 @@ jobs:
             --health-timeout 5s
             --health-retries 5
       steps:
-        - uses: actions/checkout@v2
-        - uses: actions/setup-python@v2
+        - uses: actions/checkout@v3
+        - uses: actions/setup-python@v4
           with:
             python-version: "3.9"
         - name: update pip
           run: |
             pip install -U wheel setuptools
             python -m pip install -U pip
-        - name: get pip cache dir
-          id: pip-cache
-          run: echo "::set-output name=dir::$(pip cache dir)"
         - name: cache pip
-          uses: actions/cache@v2
+          uses: actions/cache@v3
           with:
-            path: ${{ steps.pip-cache.outputs.dir }}
+            path: ~/.cache/pip
             key: pip-${{ runner.os }}-${{ hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
         - name: Postgres
           run: |

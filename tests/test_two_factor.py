@@ -264,7 +264,6 @@ def test_tf_reset_invalidates_cookie(app, client):
 
 @pytest.mark.settings(two_factor_required=True)
 def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
-
     # trying to pick method without doing earlier stage
     data = dict(setup="email")
 
@@ -279,7 +278,6 @@ def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
 
 @pytest.mark.settings(two_factor_required=True, url_prefix="/api")
 def test_two_factor_illegal_state(app, client, get_message):
-
     # trying to pick method without doing earlier stage
     data = dict(setup="email")
 

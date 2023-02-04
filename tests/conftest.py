@@ -752,7 +752,6 @@ def pony_datastore(request, app, tmpdir, realdburl):
 
 
 def pony_setup(request, app, tmpdir, realdburl):
-
     pytest.importorskip("pony")
     from pony.orm import Database, Optional, Required, Set
     from pony.orm.core import SetInstance

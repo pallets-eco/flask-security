@@ -155,7 +155,6 @@ def test_rc_reset(app, client, get_message):
 
 @pytest.mark.settings(multi_factor_recovery_codes=True, url_prefix="/api")
 def test_rc_bad_state(app, client, get_message):
-
     response = client.post("/api/mf-recovery", json=dict(code="hi"))
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf=8") == get_message(

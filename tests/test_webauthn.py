@@ -937,7 +937,6 @@ def test_tf_validity_window_json(app, client, get_message):
     webauthn_util_cls=HackWebauthnUtil, wan_register_within="1 seconds"
 )
 def test_register_timeout(app, client, get_message):
-
     authenticate(client)
 
     app.security.wan_serializer = FakeSerializer(1.0)
@@ -952,7 +951,6 @@ def test_register_timeout(app, client, get_message):
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_signin_within="2 seconds")
 def test_signin_timeout(app, client, get_message):
-
     authenticate(client)
 
     register_options, response_url = _register_start_json(client, name="testr3")

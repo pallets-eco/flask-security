@@ -9,10 +9,10 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: "3.9"
       - name: update pip
         run: |
           pip install -U wheel setuptools twine
@@ -22,7 +22,7 @@ jobs:
           pip install tox
           tox -e makedist
       - name: Publish
-        uses: pypa/gh-action-pypi-publish@v1.4.1
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{secrets.PYPI_API_TOKEN}}
