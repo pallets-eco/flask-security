@@ -28,7 +28,7 @@ requests
 sqlalchemy==1.4.15
 sqlalchemy-utils==0.37.4
 # These 2 come from webauthn requirements
-cryptography==37.0.1
+cryptography==39.0.1
 webauthn==1.5.0;python_version>='3.8'
 werkzeug==2.1.0
 zxcvbn==4.4.28
