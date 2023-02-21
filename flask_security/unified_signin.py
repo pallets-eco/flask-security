@@ -716,7 +716,9 @@ def us_verify_link() -> "ResponseValue":
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
-    tf_setup_methods = _security.two_factor_plugins.get_setup_tf_methods(user)
+    tf_setup_methods = []
+    if cv("TWO_FACTOR"):
+        tf_setup_methods = _security.two_factor_plugins.get_setup_tf_methods(user)
     if (
         cv("TWO_FACTOR")
         and "email" in cv("US_MFA_REQUIRED")
