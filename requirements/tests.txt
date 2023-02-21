@@ -28,8 +28,7 @@ pytest
 qrcode
 # authlib requires requests
 requests
-# sqlalchemy_utils hasn't caught up with sqlalchemy 2.0
-sqlalchemy<2.0.0
+sqlalchemy
 sqlalchemy-utils
 webauthn>=1.6.0;python_version>='3.8'
 werkzeug
