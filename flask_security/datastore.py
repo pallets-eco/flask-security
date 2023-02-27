@@ -765,7 +765,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         if cv("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
             from sqlalchemy.orm import joinedload
 
-            query = query.options(joinedload(self.user_model.roles))
+            query = query.options(joinedload(self.user_model.roles))  # type: ignore
 
         if case_insensitive:
             # While it is of course possible to pass in multiple keys to filter on

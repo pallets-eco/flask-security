@@ -144,13 +144,15 @@ class OAuthGlue:
     using app.security.oauthglue.register_provider().
 
     See `Flask OAuth Client <https://docs.authlib.org/en/latest/client/flask.html>`_
+
+    .. versionadded:: 5.1.0
     """
 
     def __init__(self, app: "flask.Flask", oauthapp: t.Optional["OAuth"] = None):
         if not oauthapp:
             oauthapp = OAuth(app)
         self.oauth = oauthapp
-        self.providers: t.Dict[str, t.Dict[str, "CbType"]] = dict()
+        self.providers: t.Dict[str, t.Dict[str, CbType]] = dict()
         if cv("OAUTH_BUILTIN_PROVIDERS", app=app):
             for provider in cv("OAUTH_BUILTIN_PROVIDERS", app=app):
                 if provider == "github":
@@ -198,7 +200,7 @@ class OAuthGlue:
         self,
         name: str,
         registration_info: t.Optional[t.Dict[str, t.Any]],
-        fetch_identity_cb: "CbType",
+        fetch_identity_cb: CbType,
     ) -> None:
         """Add a provider to the list.
 
