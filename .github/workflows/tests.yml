@@ -64,10 +64,14 @@ jobs:
           run: |
             pip install -U wheel setuptools
             python -m pip install -U pip
-        - name: Style, docs, mypy, nobabel, nowebauthn, noauthlib
+        - name: Style, docs, mypy
           run: |
             pip install tox
-            tox -e style -e docs -e nobabel -e mypy -e nowebauthn -e noauthlib
+            tox -e style,docs,mypy
+        - name: nobabel, nowebauthn, noauthlib
+          run: |
+            pip install tox
+            tox -e nobabel,nowebauthn,noauthlib
   cov:
       runs-on: ubuntu-latest
       steps:

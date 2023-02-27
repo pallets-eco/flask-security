@@ -731,6 +731,7 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
     warnings.warn(
         "'get_token_status' is deprecated - use check_and_get_token_status instead",
         DeprecationWarning,
+        stacklevel=2,
     )
     serializer = getattr(_security, serializer + "_serializer")
     max_age = get_max_age(max_age)

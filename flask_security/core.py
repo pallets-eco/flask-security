@@ -1184,6 +1184,7 @@ class Security:
             warnings.warn(
                 "kwargs passed to the constructor are now ignored",
                 DeprecationWarning,
+                stacklevel=4,
             )
         self.app = app
         self._datastore = datastore
@@ -1460,6 +1461,7 @@ class Security:
                 " and will be removed in the future. Please use the Unified Signin"
                 " feature instead.",
                 DeprecationWarning,
+                stacklevel=2,
             )
         if cv("USERNAME_ENABLE", app):
             if hasattr(self.datastore, "user_model") and not hasattr(
@@ -1554,7 +1556,8 @@ class Security:
                 warnings.warn(
                     "'sms' was enabled in SECURITY_US_ENABLED_METHODS;"
                     " however 'us_phone_number' not configured in"
-                    " SECURITY_USER_IDENTITY_ATTRIBUTES"
+                    " SECURITY_USER_IDENTITY_ATTRIBUTES",
+                    stacklevel=2,
                 )
         if cv("TWO_FACTOR", app=app):
             alt_auth = True
@@ -1869,6 +1872,7 @@ class Security:
             "'unauthorized_handler' has been replaced with"
             " 'unauthz_handler' and 'unauthn_handler'",
             DeprecationWarning,
+            stacklevel=2,
         )
         self._unauthorized_callback = cb
 
