@@ -108,14 +108,15 @@ possible using SQLAlchemy:
     def home():
         return render_template_string("Hello {{ current_user.email }}")
 
-    if __name__ == '__main__':
-        with app.app_context():
-            # Create a user to test with
-            db.create_all()
-            if not app.security.datastore.find_user(email='test@me.com'):
-                app.security.datastore.create_user(email='test@me.com', password='password')
-            db.session.commit()
+    # one time setup
+    with app.app_context():
+        # Create a user to test with
+        db.create_all()
+        if not app.security.datastore.find_user(email='test@me.com'):
+            app.security.datastore.create_user(email='test@me.com', password='password')
+        db.session.commit()
 
+    if __name__ == '__main__':
         app.run()
 
 Adding SMS

@@ -15,7 +15,9 @@ Fixes
   There was a too aggressive config check.
 - (:pr:`739`) Update Russian translations. (ademaro)
 - (:pr:`743`) Run all templates through a linter. (ademaro)
-- (:pr:`744`) Errors with SQLAlchemy 2.0 (sqlalchemy-utils isn't ready).
+- (:pr:`757`) Fix json/flask backwards compatibility hack.
+- (:issue:`759`) Fix quickstarts - make sure they run using `flask run`
+- (:pr:`755`) Fix unified signup when two-factor not enabled. (sebdroid)
 
 Version 5.1.0
 -------------
