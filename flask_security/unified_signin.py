@@ -140,8 +140,8 @@ class _UnifiedPassCodeForm(Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs):
+        if not super().validate(**kwargs):
             return False
         if not self.user:
             # This is sign-in case.
@@ -224,9 +224,9 @@ class UnifiedSigninForm(_UnifiedPassCodeForm):
         self.remember.default = cv("DEFAULT_REMEMBER_ME")
         self.requires_confirmation = False
 
-    def validate(self):
+    def validate(self, **kwargs):
         self.user = None
-        if not super().validate():
+        if not super().validate(**kwargs):
             return False
 
         if self.submit.data:
@@ -246,9 +246,9 @@ class UnifiedVerifyForm(_UnifiedPassCodeForm):
 
     user = None
 
-    def validate(self):
+    def validate(self, **kwargs):
         self.user = current_user
-        if not super().validate():
+        if not super().validate(**kwargs):
             return False
         return True
 
@@ -273,8 +273,8 @@ class UnifiedSigninSetupForm(Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs):
+        if not super().validate(**kwargs):
             return False
         if self.chosen_method.data not in cv("US_ENABLED_METHODS"):
             self.chosen_method.errors.append(get_message("US_METHOD_NOT_AVAILABLE")[0])
@@ -302,8 +302,8 @@ class UnifiedSigninSetupValidateForm(Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, **kwargs):
+        if not super().validate(**kwargs):
             return False
 
         if not _security._totp_factory.verify_totp(
