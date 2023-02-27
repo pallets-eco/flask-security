@@ -14,7 +14,7 @@ There are some complete (but simple) examples available in the *examples* direct
 
 .. note::
     The default ``SECURITY_PASSWORD_HASH`` is "bcrypt" - so be sure to install bcrypt.
-    If you opt for a different hash e.g. "argon2" you will need to install e.g. `argon_cffi`_.
+    If you opt for a different hash e.g. "argon2" you will need to install the appropriate package e.g. `argon_cffi`_.
 .. danger::
    The examples below place secrets in source files. Never do this for your application
    especially if your source code is placed in a public repo. How you pass in secrets
@@ -108,14 +108,24 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     def home():
         return render_template_string("Hello {{ current_user.email }}")
 
+    # one time setup
+    with app.app_context():
+        # Create User to test with
+        db.create_all()
+        if not app.security.datastore.find_user(email="test@me.com"):
+            app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+        db.session.commit()
+
     if __name__ == '__main__':
-        with app.app_context():
-            # Create User to test with
-            app.security.datastore.db.create_all()
-            if not app.security.datastore.find_user(email="test@me.com"):
-                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
-            app.security.datastore.db.session.commit()
         app.run()
+
+You can run this either with::
+
+    flask run
+
+or::
+
+    python app.py
 
 .. _basic-sqlalchemy-application-with-session:
 
@@ -171,13 +181,16 @@ and models.py.
     def home():
         return render_template_string('Hello {{email}} !', email=current_user.email)
 
+    # one time setup
+    with app.app_context():
+        # Create a user to test with
+        init_db()
+        if not app.security.datastore.find_user(email="test@me.com"):
+            app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+        db_session.commit()
+
     if __name__ == '__main__':
-        with app.app_context():
-            # Create a user to test with
-            init_db()
-            if not app.security.datastore.find_user(email="test@me.com"):
-                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
-            db_session.commit()
+        # run application (can also use flask run)
         app.run()
 
 - database.py ::
@@ -204,7 +217,6 @@ and models.py.
 
     from database import Base
     from flask_security import UserMixin, RoleMixin
-    from sqlalchemy import create_engine
     from sqlalchemy.orm import relationship, backref
     from sqlalchemy import Boolean, DateTime, Column, Integer, \
                         String, ForeignKey, UnicodeText
@@ -239,6 +251,14 @@ and models.py.
         roles = relationship('Role', secondary='roles_users',
                              backref=backref('users', lazy='dynamic'))
 
+You can run this either with::
+
+    flask run
+
+or::
+
+    python app.py
+
 .. _basic-mongoengine-application:
 
 Basic MongoEngine Application
@@ -257,7 +277,8 @@ MongoEngine Application
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 The following code sample illustrates how to get started as quickly as
-possible using MongoEngine:
+possible using MongoEngine (of course you have to install and start up a
+local MongoDB instance):
 
 ::
 
@@ -309,11 +330,14 @@ possible using MongoEngine:
     def home():
         return render_template_string("Hello {{ current_user.email }}")
 
+    # one time setup
+    with app.app_context():
+        # Create a user to test with
+        if not app.security.datastore.find_user(email="test@me.com"):
+            app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+
     if __name__ == '__main__':
-        with app.app_context():
-            # Create a user to test with
-            if not app.security.datastore.find_user(email="test@me.com"):
-                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+        # run application (can also use flask run)
         app.run()
 
 
@@ -401,15 +425,16 @@ possible using Peewee:
     def home():
         return render_template_string("Hello {{ current_user.email }}")
 
-    if __name__ == '__main__':
-        with app.app_context():
-            # Create a user to test with
-            for Model in (Role, User, UserRoles):
-                Model.drop_table(fail_silently=True)
-                Model.create_table(fail_silently=True)
-            if not app.security.datastore.find_user(email="test@me.com"):
-                app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+    # one time setup
+    with app.app_context():
+        # Create a user to test with
+        for Model in (Role, User, UserRoles):
+            Model.drop_table(fail_silently=True)
+            Model.create_table(fail_silently=True)
+        if not app.security.datastore.find_user(email="test@me.com"):
+            app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
 
+    if __name__ == '__main__':
         app.run()
 
 
