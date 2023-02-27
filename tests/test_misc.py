@@ -648,7 +648,6 @@ def test_zxcvbn_xlate(app):
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
 @pytest.mark.settings(password_check_breached="strict")
 def test_breached(app, sqlalchemy_datastore):
-
     # partial response from: https://api.pwnedpasswords.com/range/07003
     pwned_response = b"AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
 AFD8AA47E6FD782ADDC11D89744769F7354:2\r\n\
@@ -677,7 +676,6 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
     password_complexity_checker="zxcvbn",
 )
 def test_breached_cnt(app, sqlalchemy_datastore):
-
     # partial response from: https://api.pwnedpasswords.com/range/07003
     pwned_response = b"AF5A73CD3CBCFDCD12B0B68CB7930F3E888:2\r\n\
 AFD8AA47E6FD782ADDC11D89744769F7354:2\r\n\

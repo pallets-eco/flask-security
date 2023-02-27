@@ -45,7 +45,6 @@ class MpValidateCsrf:
 
     @staticmethod
     def mp_validate_csrf(data, secret_key=None, time_limit=None, token_key=None):
-
         try:
             REAL_VALIDATE_CSRF(data, secret_key, time_limit, token_key)
             MpValidateCsrf.success += 1
@@ -281,7 +280,6 @@ def test_cp_login_json_no_session(app, client_nc):
 
     # This shouldn't log in - and will return 400
     with mp_validate_csrf() as mp:
-
         data = dict(email="matt@lp.com", password="password", remember="y")
         response = client_nc.post(
             "/login",

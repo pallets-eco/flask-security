@@ -509,7 +509,6 @@ def us_signin() -> "ResponseValue":
     form.submit.data = True
 
     if form.validate_on_submit():
-
         # Require multi-factor is it is enabled, and the method
         # we authenticated with requires it and either user has requested MFA or it is
         # required.
@@ -527,7 +526,6 @@ def us_signin() -> "ResponseValue":
             )
             if cv("TWO_FACTOR_REQUIRED") or is_tf_setup(form.user):
                 if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
-
                     return tf_login(
                         form.user,
                         remember=remember_me,

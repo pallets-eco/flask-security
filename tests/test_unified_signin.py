@@ -229,7 +229,6 @@ def test_simple_signin_json(app, client_nc, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     with capture_flashes() as flashes:
-
         response = client_nc.get("/us-signin", headers=headers)
         jresponse = response.json["response"]
         assert (

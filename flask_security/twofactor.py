@@ -228,7 +228,6 @@ def tf_verify_validility_token(token, fs_uniquifier):
     expired, invalid, uniquifier = tf_validity_token_status(token)
 
     if expired or invalid or (fs_uniquifier != uniquifier):
-
         return False
 
     return True

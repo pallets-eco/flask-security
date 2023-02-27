@@ -1009,7 +1009,6 @@ class Security:
         username_util_cls: t.Type["UsernameUtil"] = UsernameUtil,
         **kwargs: t.Any,
     ):
-
         # to be nice and hopefully avoid backwards compat issues - we still accept
         # kwargs - but we don't do anything with them. If caller sends in some -
         # output a deprecation warning

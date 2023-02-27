@@ -175,7 +175,6 @@ def login() -> "ResponseValue":
 
             if cv("TWO_FACTOR_REQUIRED") or (is_tf_setup(form.user)):
                 if cv("TWO_FACTOR_ALWAYS_VALIDATE") or (not tf_validity_token_is_valid):
-
                     return tf_login(
                         form.user, remember=remember_me, primary_authn_via="password"
                     )
