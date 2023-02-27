@@ -617,7 +617,7 @@ class RoleMixin:
 
     if t.TYPE_CHECKING:  # pragma: no cover
 
-        def __init__(self):
+        def __init__(self) -> None:
             # Depends on how the user creates the DB data model
             self.permissions: t.Union[str, set, list, None]
 
@@ -1016,6 +1016,7 @@ class Security:
             warnings.warn(
                 "kwargs passed to the constructor are now ignored",
                 DeprecationWarning,
+                stacklevel=2,
             )
         self.app = app
         self._datastore = datastore
@@ -1405,7 +1406,8 @@ class Security:
                 warnings.warn(
                     "'sms' was enabled in SECURITY_US_ENABLED_METHODS;"
                     " however 'us_phone_number' not configured in"
-                    " SECURITY_USER_IDENTITY_ATTRIBUTES"
+                    " SECURITY_USER_IDENTITY_ATTRIBUTES",
+                    stacklevel=2,
                 )
         if cv("TWO_FACTOR", app=app):
             multi_factor = True
@@ -1600,6 +1602,7 @@ class Security:
             "'unauthorized_handler' has been replaced with"
             " 'unauthz_handler' and 'unauthn_handler'",
             DeprecationWarning,
+            stacklevel=2,
         )
         self._unauthorized_callback = cb
 

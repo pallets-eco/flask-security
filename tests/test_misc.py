@@ -421,9 +421,9 @@ def test_form_required_local_message(app, sqlalchemy_datastore):
     assert b"Key" not in response.data
 
 
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 def test_without_babel(app, client):
     # Test if babel modules exist but we don't init babel - things still work
-    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     response = client.get("/login")
     assert response.status_code == 200
 
@@ -470,9 +470,9 @@ def test_sender_tuple(app, sqlalchemy_datastore):
             assert "Test User <test@testme.com>" == outbox[0].sender
 
 
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 @pytest.mark.babel()
 def test_xlation(app, client):
-    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
     response = client.get("/login")
@@ -484,6 +484,7 @@ def test_xlation(app, client):
 
 
 @pytest.mark.babel()
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 def test_myxlation(app, sqlalchemy_datastore, pytestconfig):
     # Test changing a single MSG and having an additional translation dir
     # Flask-BabelEx doesn't support lists of directories..
@@ -502,7 +503,6 @@ def test_myxlation(app, sqlalchemy_datastore, pytestconfig):
         app, sqlalchemy_datastore, **{"SECURITY_I18N_DIRNAME": i18n_dirname}
     )
 
-    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
     app.config["SECURITY_MSG_INVALID_PASSWORD"] = ("Password no-worky", "error")
@@ -513,8 +513,8 @@ def test_myxlation(app, sqlalchemy_datastore, pytestconfig):
 
 
 @pytest.mark.babel()
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 def test_form_labels(app, sqlalchemy_datastore):
-    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     app.security = Security()
     app.security.init_app(app, sqlalchemy_datastore)
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
@@ -540,6 +540,7 @@ def test_form_labels(app, sqlalchemy_datastore):
 
 
 @pytest.mark.babel()
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 def test_wtform_xlation(app, sqlalchemy_datastore):
     # Make sure wtform xlations work
     class MyLoginForm(LoginForm):
@@ -547,7 +548,6 @@ def test_wtform_xlation(app, sqlalchemy_datastore):
             "FixedLength", validators=[DataRequired(), Length(3, 3)]
         )
 
-    app.config["BABEL_DEFAULT_LOCALE"] = "fr_FR"
     app.security = Security()
     app.security.init_app(app, datastore=sqlalchemy_datastore, login_form=MyLoginForm)
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
@@ -577,7 +577,6 @@ def test_per_request_xlate(app, client):
 
     babel = app.extensions["babel"]
 
-    @babel.localeselector
     def get_locale():
         # For a given session - set lang based on first request.
         # Honor explicit url request first
@@ -588,6 +587,9 @@ def test_per_request_xlate(app, client):
             if locale:
                 session["lang"] = locale
         return session.get("lang", None).replace("-", "_")
+
+    babel.locale_selector_func = get_locale
+    babel.locale_selector = get_locale  # Flask-Babel >= 3.0.0
 
     response = client.get("/login", headers=[("Accept-Language", "fr")])
     assert b'<label for="password">Mot de passe</label>' in response.data

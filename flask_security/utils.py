@@ -358,7 +358,9 @@ def encrypt_password(password):  # pragma: no cover
     :param password: The plaintext password to encrypt
     """
     warnings.warn(
-        "Please use hash_password instead of encrypt_password.", DeprecationWarning
+        "Please use hash_password instead of encrypt_password.",
+        DeprecationWarning,
+        stacklevel=2,
     )
     return hash_password(password)
 

@@ -12,6 +12,7 @@ a new version needs to be created.
 """
 
 import datetime
+from typing import cast
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -22,7 +23,6 @@ from sqlalchemy import (
     ForeignKey,
 )
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from flask_security import RoleMixin, UserMixin
@@ -80,7 +80,7 @@ class FsUserMixin(UserMixin):
     # Username is important since shouldn't expose email to other users in most cases.
     username = Column(String(255))
     password = Column(String(255), nullable=False)
-    active = Column(Boolean(), nullable=False)
+    active = cast(bool, Column(Boolean(), nullable=False))
 
     # Flask-Security user identifier
     fs_uniquifier = Column(String(64), unique=True, nullable=False)
@@ -116,55 +116,3 @@ class FsUserMixin(UserMixin):
         server_default=func.now(),
         onupdate=datetime.datetime.utcnow,
     )
-
-
-"""
-These are placeholders - not current used
-"""
-
-
-class FsOauth2ClientMixin:
-    """Oauth2 client"""
-
-    id = Column(String(64), primary_key=True)
-
-    @declared_attr
-    def user_id(cls):
-        return Column(
-            Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False
-        )
-
-    @declared_attr
-    def user(cls):
-        return relationship("User")
-
-    grant_type = Column(String(32), nullable=False)
-    scopes = Column(UnicodeText(), default="")
-    response_type = Column(UnicodeText, nullable=False, default="")
-    redirect_uris = Column(UnicodeText())
-
-
-class FsTokenMixin:
-    """(Bearer) Tokens that have been given out"""
-
-    id = Column(Integer, primary_key=True)
-
-    @declared_attr
-    def client_id(cls):
-        return Column(
-            Integer, ForeignKey("oauth2_client.id", ondelete="CASCADE"), nullable=False
-        )
-
-    # client = relationship("fs_oauth2_client")
-    @declared_attr
-    def user_id(cls):
-        return Column(
-            Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False
-        )
-
-    scopes = Column(UnicodeText(), default="")
-    revoked = Column(Boolean(), nullable=False, default=False)
-    access_token = Column(String(100), unique=True, nullable=False)
-    refresh_token = Column(String(100), unique=True)
-    issued_at = Column(type_=DateTime, nullable=False, server_default=func.now())
-    expires_at = Column(DateTime())

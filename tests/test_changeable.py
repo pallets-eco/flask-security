@@ -305,6 +305,7 @@ def test_auth_uniquifier(app):
         assert response.status_code == 200
 
 
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 @pytest.mark.babel()
 def test_xlation(app, client, get_message_local):
     # Test form and email translation

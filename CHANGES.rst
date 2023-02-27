@@ -3,6 +3,16 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 4.1.6
+-------------
+
+Released February 28, 2023
+
+Fixes
++++++
+- (:pr:`762`) Fixes for new versions of Flask, SQLAlchemy, WTForms, mypy, babel, etc.
+  Remove testing for python 3.6 and pypy3.6, add testing for python 3.10 and pypy 3.9
+
 Version 4.1.5
 -------------
 
