@@ -950,7 +950,6 @@ def test_auth_token_decorator(in_app_context):
     client_nc = app.test_client(use_cookies=False)
 
     with app.test_request_context("/"):
-
         user = app.security.datastore.find_user(email="matt@lp.com")
         token = get_auth_token_version_3x(app, user)
 

@@ -358,7 +358,9 @@ def encrypt_password(password):  # pragma: no cover
     :param password: The plaintext password to encrypt
     """
     warnings.warn(
-        "Please use hash_password instead of encrypt_password.", DeprecationWarning
+        "Please use hash_password instead of encrypt_password.",
+        DeprecationWarning,
+        stacklevel=2,
     )
     return hash_password(password)
 
@@ -1065,9 +1067,6 @@ def default_render_template(*args, **kwargs):
 
 
 class SmsSenderBaseClass(metaclass=abc.ABCMeta):
-    def __init__(self, *args, **kwargs):
-        pass
-
     @abc.abstractmethod
     def send_sms(
         self, from_number: str, to_number: str, msg: str

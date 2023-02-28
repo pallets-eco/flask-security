@@ -114,6 +114,7 @@ def test_cli_createuser_errors(script_info):
     assert "Email not provided" in result.output
 
 
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
 @pytest.mark.babel()
 def test_cli_locale(script_info):
     # Flask_BabelEx required a request context - and click just has an app context.

@@ -104,6 +104,10 @@ def app(request: pytest.FixtureRequest) -> "Flask":
     if settings is not None:
         for key, value in settings.kwargs.items():
             app.config["SECURITY_" + key.upper()] = value
+    settings = marker_getter("app_settings")
+    if settings is not None:
+        for key, value in settings.kwargs.items():
+            app.config[key.upper()] = value
 
     app.mail = Mail(app)  # type: ignore
     app.json_encoder = JSONEncoder  # type: ignore
@@ -322,6 +326,10 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
+    # In Flask-SQLAlchemy >= 3.0.0 queries are no longer logged automatically,
+    # even in debug or testing mode.
+    app.config["SQLALCHEMY_RECORD_QUERIES"] = True
+
     db = SQLAlchemy(app)
 
     fsqla.FsModels.set_db_info(db)
@@ -343,8 +351,9 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
     def tear_down():
         if realdburl:
-            db.drop_all()
-            _teardown_realdb(db_info)
+            with app.app_context():
+                db.drop_all()
+                _teardown_realdb(db_info)
 
     request.addfinalizer(tear_down)
 
@@ -555,7 +564,6 @@ def pony_datastore(request, app, tmpdir, realdburl):
 
 
 def pony_setup(request, app, tmpdir, realdburl):
-
     pytest.importorskip("pony")
     from pony.orm import Database, Optional, Required, Set
     from pony.orm.core import SetInstance

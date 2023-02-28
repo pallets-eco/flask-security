@@ -21,16 +21,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: '3.6', tox: 'py36-release'}
-          - {python: '3.6', tox: 'py36-low'}
           - {python: '3.7', tox: 'py37-release'}
           - {python: '3.7', tox: 'py37-low'}
           - {python: '3.8', tox: 'py38-release'}
           - {python: '3.8', tox: 'py38-low'}
           - {python: '3.9', tox: 'py39-release'}
           - {python: '3.9', tox: 'py39-low'}
-          - {python: 'pypy3', tox: 'pypy3-release'}
-          - {python: 'pypy3', tox: 'pypy3-low'}
+          - {python: '3.10', tox: 'py310-release' }
+          - {python: '3.10', tox: 'py310-low' }
+          - {python: 'pypy-3.9', tox: 'pypy39-release'}
+          - {python: 'pypy-3.9', tox: 'pypy39-low'}
 
     steps:
       - uses: actions/checkout@v2
@@ -71,7 +71,7 @@ jobs:
         - name: Style, docs, mypy, nobabel
           run: |
             pip install tox
-            tox -e style -e docs -e nobabel -e mypy
+            tox -e style,docs,nobabel,mypy
         - name: Coverage
           run: |
             pip install tox coverage
