@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.1.1
 -------------
 
-Released TBD
+Released March 1, 2023
 
 Fixes
 +++++
@@ -18,6 +18,7 @@ Fixes
 - (:pr:`757`) Fix json/flask backwards compatibility hack.
 - (:issue:`759`) Fix quickstarts - make sure they run using `flask run`
 - (:pr:`755`) Fix unified signup when two-factor not enabled. (sebdroid)
+- (:pr:`763`) Add dependency on setuptools (pkg_resources). (hroncok)
 
 Version 5.1.0
 -------------

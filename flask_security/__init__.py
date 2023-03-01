@@ -6,7 +6,7 @@
     security via Flask-Login, Flask-Principal, Flask-WTF, and passlib.
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner.
+    :copyright: (c) 2019-2023 by J. Christopher Wagner.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -81,6 +81,7 @@ from .signals import (
     user_authenticated,
     user_confirmed,
     user_registered,
+    user_not_registered,
     us_security_token_sent,
     us_profile_changed,
     wan_deleted,

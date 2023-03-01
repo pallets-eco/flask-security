@@ -1,18 +1,18 @@
 """
     Flask-Security JSON extensions.
 
-    :copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     Pieces of this code liberally copied from flask-mongoengine.
 """
 from flask import __version__ as flask_version
+from pkg_resources import parse_version
 
 
 def use_json_provider() -> bool:
     """Split Flask before 2.2.0 and after, to use/not use JSON provider approach."""
-    version = list(flask_version.split("."))
-    return int(version[0]) > 2 or (int(version[0]) == 2 and int(version[1]) > 1)
+    return parse_version(flask_version) >= parse_version("2.2.0")
 
 
 def _use_encoder(superclass):  # pragma: no cover
@@ -61,9 +61,8 @@ def setup_json(app, bp=None):
         # (app.json_encoder is always set)
         # (If they do, then Flask 2.2.x won't use json_provider at all)
         # Of course if they do this AFTER we're initialized all bets are off.
-        version = list(flask_version.split("."))
-        if int(version[0]) == 2 and int(version[1]) == 2:
-            if app._json_encoder:
+        if parse_version(flask_version) >= parse_version("2.2.0"):
+            if getattr(app, "_json_encoder", None):
                 app.json_encoder = _use_encoder(app.json_encoder)
 
     elif bp:  # pragma: no cover
