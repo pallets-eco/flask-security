@@ -19,6 +19,7 @@ install_requires = [
     "passlib>=1.7.4",
     "blinker>=1.4",
     "wtforms>=3.0.0",  # for form-level errors
+    "setuptools",  # for pkg_resources
 ]
 
 packages = find_packages(exclude=["tests"])
