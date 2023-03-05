@@ -314,12 +314,24 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
     db_name = "flask_security_test"
     app.config["MONGODB_SETTINGS"] = {
         "db": db_name,
-        "host": realmongodburl if realmongodburl else "mongomock://localhost",
+        "host": realmongodburl if realmongodburl else "mongodb://localhost",
         "port": 27017,
         "alias": db_name,
     }
+    if realmongodburl:
+        db = MongoEngine(app)
+    else:
+        # mongoengine 0.27 requires setting mongo_client_class
+        import mongomock
 
-    db = MongoEngine(app)
+        try:
+            app.config["MONGODB_SETTINGS"]["host"] = "mongomock://localhost"
+            db = MongoEngine(app)
+        except Exception:
+            # new way
+            app.config["MONGODB_SETTINGS"]["host"] = "mongodb://localhost"
+            app.config["MONGODB_SETTINGS"]["mongo_client_class"] = mongomock.MongoClient
+            db = MongoEngine(app)
 
     class Role(db.Document, RoleMixin):
         name = StringField(required=True, unique=True, max_length=80)
