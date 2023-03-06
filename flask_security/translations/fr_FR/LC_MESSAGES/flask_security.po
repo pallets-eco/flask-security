@@ -895,7 +895,7 @@ msgstr ""
 #: flask_security/templates/security/email/confirmation_instructions.html:8
 #: flask_security/templates/security/email/confirmation_instructions.txt:8
 msgid "Please confirm your email through the link below:"
-msgstr "Merci de confirmer votre adresse email via le lien ci-dessous&thinsp;:"
+msgstr "Merci de confirmer votre adresse email via le lien ci-dessous:"
 
 #: flask_security/templates/security/email/confirmation_instructions.html:10
 #: flask_security/templates/security/email/welcome.html:13
@@ -908,12 +908,12 @@ msgstr "Confirmer mon compte"
 #: flask_security/templates/security/email/welcome.txt:8
 #, python-format
 msgid "Welcome %(email)s!"
-msgstr "Bienvenue %(email)s&thinsp;!"
+msgstr "Bienvenue %(email)s!"
 
 #: flask_security/templates/security/email/login_instructions.html:3
 #: flask_security/templates/security/email/login_instructions.txt:3
 msgid "You can log into your account through the link below:"
-msgstr "Vous pouvez vous connecter via le lien ci-dessous&thinsp;:"
+msgstr "Vous pouvez vous connecter via le lien ci-dessous:"
 
 #: flask_security/templates/security/email/login_instructions.html:5
 msgid "Login now"
@@ -952,7 +952,7 @@ msgstr ""
 msgid "You can confirm your email through the link below:"
 msgstr ""
 "Vous pouvez confirmer votre votre adresse email via le lien ci-"
-"dessous&thinsp;:"
+"dessous:"
 
 #: flask_security/templates/security/email/welcome_existing.html:11
 #: flask_security/templates/security/email/welcome_existing.txt:11
