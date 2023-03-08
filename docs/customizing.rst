@@ -438,7 +438,7 @@ This is supported by providing your own implementation of the :class:`.MailUtil`
     from flask_security import MailUtil
     class MyMailUtil(MailUtil):
 
-        def send_mail(self, template, subject, recipient, sender, body, html, user, **kwargs):
+        def send_mail(self, template, subject, recipient, sender, body, html, **kwargs):
             send_flask_mail.delay(
                 subject=subject,
                 from_email=sender,
