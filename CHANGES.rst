@@ -3,6 +3,19 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.1.2
+-------------
+
+Released TBD
+
+Fixes
++++++
+
+- (:issue:`771`) Hungarian translations not working.
+- (:pr:`769`) Fix documentation for send_mail. (gg)
+- (:pr:`768`) Fix for latest mongoengine and mongomock.
+- (:pr:`766`) Fix inappropriate use of &thinsp& in French translations. (maxdup)
+
 Version 5.1.1
 -------------
 
