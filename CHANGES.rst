@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.1.2
 -------------
 
-Released TBD
+Released March 12, 2023
 
 Fixes
 +++++
@@ -15,6 +15,7 @@ Fixes
 - (:pr:`769`) Fix documentation for send_mail. (gg)
 - (:pr:`768`) Fix for latest mongoengine and mongomock.
 - (:pr:`766`) Fix inappropriate use of &thinsp& in French translations. (maxdup)
+- (:pr:`773`) Improve documentation around subclassing forms.
 
 Version 5.1.1
 -------------
