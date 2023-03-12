@@ -842,3 +842,43 @@ def test_generic_response_recover(app, client, get_message):
     assert nr["existing_email"]
     assert nr["user"]
     assert nr["form_data"]["email"] == "dude@lp.com"
+
+
+def test_subclass(app, sqlalchemy_datastore):
+    # Test/show how to use multiple inheritance to override individual form fields.
+    from wtforms import PasswordField, ValidationError
+    from wtforms.validators import DataRequired
+    from flask_security.forms import get_form_field_label
+
+    def password_validator(form, field):
+        if field.data.startswith("PASS"):
+            raise ValidationError("Really - don't start a password with PASS")
+
+    class NewPasswordFormMixinEx:
+        password = PasswordField(
+            get_form_field_label("password"),
+            validators=[
+                DataRequired(message="PASSWORD_NOT_PROVIDED"),
+                password_validator,
+            ],
+        )
+
+    class MyRegisterForm(NewPasswordFormMixinEx, ConfirmRegisterForm):
+        pass
+
+    app.config["SECURITY_CONFIRM_REGISTER_FORM"] = MyRegisterForm
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+
+    client = app.test_client()
+
+    data = dict(
+        email="dude@lp.com",
+        password="PASSmattmatt",
+        password_confirm="PASSmattmatt",
+    )
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert "Really - don't start" in response.json["response"]["errors"][0]

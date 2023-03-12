@@ -122,6 +122,33 @@ be passed if the model looks like::
     various views to no longer function. Many fields have complex (and not
     publicly exposed) validators that have side effects.
 
+.. warning::
+    It is important to ALWAYS subclass the base Flask-Security form and not
+    attempt to just redefine the class. This is due to the validation method
+    of many of the forms performs critical additional validation AND will change
+    or add values to the form as a side-effect. See below for how to do this.
+
+If you need to override an existing field in a form (to override/add validators),
+and you want to define a re-usable validator - use multiple inheritance - be extremely
+careful about the order of the inherited classes::
+
+    from wtforms import PasswordField, ValidationError
+    from wtforms.validators import DataRequired
+
+    def password_validator(form, field):
+        if field.data.startswith("PASS"):
+            raise ValidationError("Really - don't start a password with PASS")
+
+    class NewPasswordFormMixinEx:
+        password = PasswordField("password",
+                                 validators=[DataRequired(message="PASSWORD_NOT_PROVIDED"),
+                                             password_validator])
+
+    class MyRegisterForm(NewPasswordFormMixinEx, ConfirmRegisterForm):
+        pass
+
+    app.config["SECURITY_CONFIRM_REGISTER_FORM"] = MyRegisterForm
+
 The following is a list of all the available form overrides:
 
 * ``login_form``: Login form
@@ -536,8 +563,9 @@ The decision on whether to return JSON is based on:
 Redirects
 ---------
 Flask-Security uses redirects frequently (when using forms), and most of the redirect
-destinations are configurable. When Flask-Security initiates a redirect it always (mostly) flashes a message
-that provides some context. In addition, Flask-Security - both in its views and default templates attempt to propagate
+destinations are configurable. When Flask-Security initiates a redirect it (almost) always flashes a message
+that provides some context for the user.
+In addition, Flask-Security - both in its views and default templates, attempts to propagate
 any `next` query param and in fact, an existing `?next=/xx` will override most of the configuration redirect URLs.
 
 As a complex example consider an unauthenticated user accessing a `@auth_required` endpoint, and the user has
