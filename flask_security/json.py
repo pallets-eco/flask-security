@@ -6,7 +6,10 @@
 
     Pieces of this code liberally copied from flask-mongoengine.
 """
-from flask import __version__ as flask_version
+try:
+    from flask import __version__ as flask_version
+except:
+    flask_version="2.2.3" #add fakeversion for quarts
 from pkg_resources import parse_version
 
 
