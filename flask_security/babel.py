@@ -4,7 +4,7 @@
 
     I18N support for Flask-Security.
 
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     As of Flask-Babel 2.0.0 - it supports the Flask-BabelEx Domain extension - and it
@@ -14,6 +14,11 @@
 """
 
 # flake8: noqa: F811
+
+from collections.abc import Iterable
+import atexit
+from contextlib import ExitStack
+from importlib_resources import files, as_file
 
 import typing as t
 
@@ -71,10 +76,28 @@ if not t.TYPE_CHECKING:
 
         class FsDomain(_domain_cls):
             def __init__(self, app):
+                # By default, we use our packaged translations. However, we have to allow
+                # for app to add translation directories or completely override ours.
+                # Grabbing the packaged translations is a bit complex - so we use
+                # the keyword 'builtin' to mean ours.
+                cfdir = cv("I18N_DIRNAME", app=app)
+                if cfdir == "builtin" or (
+                    isinstance(cfdir, Iterable) and "builtin" in cfdir
+                ):
+                    fm = ExitStack()
+                    atexit.register(fm.close)
+                    ref = files("flask_security") / "translations"
+                    path = fm.enter_context(as_file(ref))
+                    if cfdir == "builtin":
+                        dirs = [str(path)]
+                    else:
+                        dirs = [d if d != "builtin" else str(path) for d in cfdir]
+                else:
+                    dirs = cfdir
                 super().__init__(
                     **{
                         "domain": cv("I18N_DOMAIN", app=app),
-                        _dir_keyword: cv("I18N_DIRNAME", app=app),
+                        _dir_keyword: dirs,
                     }
                 )
 

@@ -62,9 +62,10 @@ These configuration keys are used globally across all features.
 
     Specifies the directory containing the ``MO`` files used for translations.
     When using flask-babel this can also be a list of directory names - this
-    enables application to override a subset of messages if desired.
+    enables application to override a subset of messages if desired. The
+    default ``builtin`` uses translations shipped with Flask-Security.
 
-    Default: ``[PATH_LIB]/flask_security/translations``.
+    Default: ``builtin``.
 
 .. py:data:: SECURITY_PASSWORD_HASH
 

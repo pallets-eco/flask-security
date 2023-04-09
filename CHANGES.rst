@@ -3,6 +3,18 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version Next
+------------
+
+Released TBD
+
+Fixes
++++++
+
+- (:issue:`764`) Remove old Werkzeug compatibility check.
+- (:issue:`777`) Compatibility with Quart.
+- (:pr:`xx`) Remove dependence on pkg_resources / setuptools (use importlib_resources package)
+
 Version 5.1.2
 -------------
 
