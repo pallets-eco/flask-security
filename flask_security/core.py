@@ -18,7 +18,6 @@ import re
 import typing as t
 import warnings
 
-import pkg_resources
 from flask import current_app, g
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
@@ -130,7 +129,7 @@ _default_config: t.Dict[str, t.Any] = {
     "FLASH_MESSAGES": True,
     "RETURN_GENERIC_RESPONSES": False,
     "I18N_DOMAIN": "flask_security",
-    "I18N_DIRNAME": pkg_resources.resource_filename("flask_security", "translations"),
+    "I18N_DIRNAME": "builtin",
     "EMAIL_VALIDATOR_ARGS": None,
     "PASSWORD_HASH": "bcrypt",
     "PASSWORD_SALT": None,
@@ -1404,8 +1403,7 @@ class Security:
 
         # set all (SECURITY) config items as attributes (minus the SECURITY_ prefix)
         for key, value in get_config(app).items():
-            # need to start getting rid of this - especially things like *_URL which
-            # should never be referenced
+            # need to start getting rid of this - very confusing.
             if not key.endswith("_URL"):
                 setattr(self, key.lower(), value)
 

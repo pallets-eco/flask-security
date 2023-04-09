@@ -6,13 +6,6 @@
 
     Pieces of this code liberally copied from flask-mongoengine.
 """
-from flask import __version__ as flask_version
-from pkg_resources import parse_version
-
-
-def use_json_provider() -> bool:
-    """Split Flask before 2.2.0 and after, to use/not use JSON provider approach."""
-    return parse_version(flask_version) >= parse_version("2.2.0")
 
 
 def _use_encoder(superclass):  # pragma: no cover
@@ -51,7 +44,8 @@ def _use_provider(superclass):
 
 def setup_json(app, bp=None):
     # Called at init_app time.
-    if use_json_provider():
+    if hasattr(app, "json_provider_class"):
+        # Flask >= 2.2
         app.json_provider_class = _use_provider(app.json_provider_class)
         app.json = app.json_provider_class(app)
         # a bit if a hack - if a package (e.g. flask-mongoengine) hasn't
@@ -61,9 +55,8 @@ def setup_json(app, bp=None):
         # (app.json_encoder is always set)
         # (If they do, then Flask 2.2.x won't use json_provider at all)
         # Of course if they do this AFTER we're initialized all bets are off.
-        if parse_version(flask_version) >= parse_version("2.2.0"):
-            if getattr(app, "_json_encoder", None):
-                app.json_encoder = _use_encoder(app.json_encoder)
+        if getattr(app, "_json_encoder", None):
+            app.json_encoder = _use_encoder(app.json_encoder)
 
     elif bp:  # pragma: no cover
         bp.json_encoder = _use_encoder(app.json_encoder)

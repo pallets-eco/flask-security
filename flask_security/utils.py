@@ -5,7 +5,7 @@
     Flask-Security utils module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import abc
@@ -14,7 +14,6 @@ import datetime
 from functools import partial
 import hashlib
 import hmac
-from pkg_resources import parse_version
 import time
 import typing as t
 from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
@@ -40,7 +39,6 @@ from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
 from flask_wtf import csrf
 from wtforms import ValidationError
 from itsdangerous import BadSignature, SignatureExpired
-from werkzeug import __version__ as werkzeug_version
 from werkzeug.local import LocalProxy
 
 from .quart_compat import best, get_quart_status
@@ -926,10 +924,7 @@ def csrf_cookie_handler(response: "Response") -> "Response":
 
     if op == "clear":
         # Alas delete_cookie only accepts some of the keywords set_cookie does
-        # and Werkzeug didn't accept samesite, secure, httponly until 2.0
         allowed = ["path", "domain", "secure", "httponly", "samesite"]
-        if parse_version(werkzeug_version) < parse_version("2.0.0"):  # pragma: no cover
-            allowed = ["path", "domain"]
         args = {k: csrf_cookie.get(k) for k in allowed if k in csrf_cookie}
         response.delete_cookie(csrf_cookie_name, **args)
         session.pop("fs_cc")

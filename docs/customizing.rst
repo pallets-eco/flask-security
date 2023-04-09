@@ -319,7 +319,7 @@ and/or a specific translation). Adding the following to your app::
 
     app.config["SECURITY_MSG_INVALID_PASSWORD"] = ("Password no-worky", "error")
 
-Will change the default message in english.
+will change the default message in english.
 
 .. tip::
     The string messages themselves are a 'key' into the translation .po/.mo files.
@@ -344,7 +344,7 @@ Then compile it with::
 
 Finally add your translations directory to your configuration::
 
-    app.config["SECURITY_I18N_DIRNAME"] = [pkg_resources.resource_filename("flask_security", "translations"), "translations"]
+    app.config["SECURITY_I18N_DIRNAME"] = ["builtin", "translations"]
 
 .. note::
     This only works when using Flask-Babel since Flask-BabelEx doesn't support a list of translation directories.

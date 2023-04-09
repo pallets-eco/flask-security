@@ -19,7 +19,7 @@ repos:
     -   id: pyupgrade
         args: [--py37-plus]
 -   repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
     -   id: black
 -   repo: https://github.com/pycqa/flake8
@@ -30,7 +30,7 @@ repos:
           - flake8-bugbear
           - flake8-implicit-str-concat
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.19.16
+    rev: v1.19.17
     hooks:
       - id: djlint-jinja
         files: "\\.html"
