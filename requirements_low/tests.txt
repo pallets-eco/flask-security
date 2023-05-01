@@ -1,5 +1,5 @@
 # Lowest supported versions
-Flask==2.1.0
+Flask==2.3.2
 Flask-SQLAlchemy==2.5.0
 Flask-Babel==2.0.0
 Flask-Mailman==0.3.0
