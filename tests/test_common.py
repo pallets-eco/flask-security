@@ -4,14 +4,13 @@
 
     Test common functionality
 
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
 import base64
 import json
 import re
-from http.cookiejar import Cookie
 import pytest
 
 from flask import Blueprint
@@ -78,7 +77,7 @@ def test_authenticate_with_invalid_malformed_next(client, get_message):
 def test_login_template_next(client):
     # Test that our login template propagates next.
     response = client.get("/profile", follow_redirects=True)
-    assert "?next=%2Fprofile" in response.request.url
+    assert "?next=/profile" in response.request.url
     login_url = get_form_action(response)
     response = client.post(
         login_url,
@@ -744,33 +743,13 @@ def test_user_deleted_during_session_reverts_to_anonymous_user(app, client):
 
 def test_remember_token(client):
     response = authenticate(client, follow_redirects=False)
-    client.cookie_jar.clear_session_cookies()
+    client.delete_cookie("session")
     response = client.get("/profile")
     assert b"profile" in response.data
 
 
 def test_request_loader_does_not_fail_with_invalid_token(client):
-    c = Cookie(
-        version=0,
-        name="remember_token",
-        value="None",
-        port=None,
-        port_specified=False,
-        domain="www.example.com",
-        domain_specified=False,
-        domain_initial_dot=False,
-        path="/",
-        path_specified=True,
-        secure=False,
-        expires=None,
-        discard=True,
-        comment=None,
-        comment_url=None,
-        rest={"HttpOnly": None},
-        rfc2109=False,
-    )
-
-    client.cookie_jar.set_cookie(c)
+    client.set_cookie("remember_token")
     response = client.get("/")
     assert b"BadSignature" not in response.data
 

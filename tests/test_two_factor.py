@@ -88,10 +88,7 @@ def tf_in_session(session):
 @pytest.mark.settings(two_factor_always_validate=False)
 def test_always_validate(app, client):
     tf_authenticate(app, client, remember=True)
-    cookie = next(
-        (cookie for cookie in client.cookie_jar if cookie.name == "tf_validity"), None
-    )
-    assert cookie is not None
+    assert client.get_cookie("tf_validity")
 
     logout(client)
 
@@ -106,7 +103,7 @@ def test_always_validate(app, client):
     assert b"Please enter your authentication code" in response.data
 
     # make sure the cookie doesn't affect the JSON request
-    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    client.delete_cookie("tf_validity")
     # Test JSON
     token = tf_authenticate(app, client, json=True, remember=True)
     logout(client)
@@ -207,7 +204,7 @@ def test_change_uniquifier_invalidates_cookie(app, client):
 
     assert b"Please enter your authentication code" in response.data
 
-    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    client.delete_cookie("tf_validity")
     # Test JSON
     token = tf_authenticate(app, client, json=True, remember=True)
     logout(client)
@@ -242,7 +239,7 @@ def test_tf_reset_invalidates_cookie(app, client):
 
     assert b"Two-factor authentication adds an extra layer of security" in response.data
 
-    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    client.delete_cookie("tf_validity")
     # Test JSON
     token = tf_authenticate(app, client, json=True, remember=True, validate=False)
     logout(client)
@@ -440,7 +437,7 @@ def test_two_factor_flag(app, client, get_message):
     logout(client)
 
     # Test login with remember_token
-    assert "remember_token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("remember_token")
     data = dict(email="gal@lp.com", password="password", remember=True)
     response = client.post(
         "/login",
@@ -455,12 +452,7 @@ def test_two_factor_flag(app, client, get_message):
     assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
 
     # Verify that the remember token is properly set
-    found = False
-    for cookie in client.cookie_jar:
-        if cookie.name == "remember_token":
-            found = True
-            assert cookie.path == "/"
-    assert found
+    assert client.get_cookie("remember_token")
 
     response = logout(client)
     # Verify that logout clears session info
@@ -1251,7 +1243,7 @@ def test_propagate_next(app, client):
     with capture_send_code_requests() as codes:
         data = dict(email="gal@lp.com", password="password")
         response = client.post("/login?next=/im-in", data=data, follow_redirects=True)
-        assert "?next=%2Fim-in" in response.request.url
+        assert "?next=/im-in" in response.request.url
         # grab URL from form to show that our template propagates ?next
         verify_url = get_form_action(response)
         response = client.post(
@@ -1265,7 +1257,7 @@ def test_verify(app, client, get_message):
     # Test setup when re-authenticate required
     authenticate(client)
     response = client.get("tf-setup", follow_redirects=False)
-    assert "/verify?next=http%3A%2F%2Flocalhost%2Ftf-setup" in response.location
+    assert "/verify?next=http://localhost/tf-setup" in response.location
     logout(client)
 
     # Now try again - follow redirects to get to verify form

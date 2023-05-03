@@ -839,7 +839,7 @@ def test_tf_json(app, client, get_message):
 def test_tf_validity_window(app, client, get_message):
     # Test with a two-factor validity setting - we don't get re-prompted.
     authenticate(client)
-    assert "tf_validity" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("tf_validity")
     register_options, response_url = _register_start_json(client)
     client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     logout(client)
@@ -875,7 +875,7 @@ def test_tf_validity_window(app, client, get_message):
     signin_options, response_url = _signin_start(client, "matt@lp.com")
     response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
     assert response.status_code == 200
-    assert "tf_validity" in [c.name for c in client.cookie_jar]
+    assert client.get_cookie("tf_validity")
     logout(client)
 
     # since we did specify 'remember' previously - should not require 2FA
@@ -916,7 +916,7 @@ def test_tf_validity_window_json(app, client, get_message):
     logout(client)
 
     # make sure the cookie doesn't affect the JSON request
-    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    client.delete_cookie("tf_validity")
 
     # Sign in again - shouldn't require 2FA
     response = client.post(
@@ -1293,7 +1293,7 @@ def test_verify(app, client, get_message):
 
     old_paa = reset_fresh(client, app.config["SECURITY_FRESHNESS"])
     response = client.get("fresh")
-    assert "/verify?next=http%3A%2F%2Flocalhost%2Ffresh" in response.location
+    assert "/verify?next=http://localhost/fresh" in response.location
     signin_options, response_url = _signin_start(
         client, endpoint="wan-verify?next=/fresh"
     )
@@ -1463,7 +1463,7 @@ def test_remember_token(client):
     assert response.status_code == 200
     logout(client)
 
-    assert "remember_token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("remember_token")
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -1477,8 +1477,8 @@ def test_remember_token(client):
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1), remember=True),
     )
-    assert "remember_token" in [c.name for c in client.cookie_jar]
-    client.cookie_jar.clear_session_cookies()
+    assert client.get_cookie("remember_token")
+    client.delete_cookie("session")
     response = client.get("/profile")
     assert b"profile" in response.data
 
@@ -1494,7 +1494,7 @@ def test_remember_token_tf(client):
     assert response.status_code == 200
     logout(client)
 
-    assert "remember_token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("remember_token")
 
     # login again - should require MFA
     response = client.post(
@@ -1512,8 +1512,8 @@ def test_remember_token_tf(client):
         response_url,
         json=dict(credential=json.dumps(SIGNIN_DATA1), remember=True),
     )
-    assert "remember_token" in [c.name for c in client.cookie_jar]
-    client.cookie_jar.clear_session_cookies()
+    assert client.get_cookie("remember_token")
+    client.delete_cookie("session")
     response = client.get("/profile")
     assert b"profile" in response.data
 
@@ -1642,7 +1642,7 @@ def test_login_next(app, client, get_message):
     logout(client, endpoint="/auth/logout")
 
     response = client.get("profile", follow_redirects=True)
-    assert "?next=%2Fprofile" in response.request.url
+    assert "?next=/profile" in response.request.url
     # pull webauthn form action out of login_form - should have ?next=...
     webauthn_url = get_form_action(response, 1)
 

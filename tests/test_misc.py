@@ -984,9 +984,7 @@ def test_authn_freshness(
     with capture_flashes() as flashes:
         response = client.get("/myspecialview", follow_redirects=False)
         assert response.status_code == 302
-        assert (
-            "/verify?next=http%3A%2F%2Flocalhost%2Fmyspecialview" in response.location
-        )
+        assert "/verify?next=http://localhost/myspecialview" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "REAUTHENTICATION_REQUIRED"
@@ -1066,7 +1064,7 @@ def test_default_authn_bp(app, client):
     reset_fresh(client, within=timedelta(minutes=1))
     response = client.get("/myview", follow_redirects=False)
     assert response.status_code == 302
-    assert "/myprefix/verify?next=http%3A%2F%2Flocalhost%2Fmyview" in response.location
+    assert "/myprefix/verify?next=http://localhost/myview" in response.location
 
 
 def test_authn_freshness_grace(app, client, get_message):
@@ -1108,7 +1106,7 @@ def test_authn_freshness_nc(app, client_nc, get_message):
     # This should fail - should be a redirect
     response = client_nc.get("/myview", headers=h, follow_redirects=False)
     assert response.status_code == 302
-    assert "/verify?next=http%3A%2F%2Flocalhost%2Fmyview" in response.location
+    assert "/verify?next=http://localhost/myview" in response.location
 
 
 def test_verify_fresh(app, client, get_message):
@@ -1216,14 +1214,6 @@ def test_verify_next(app, client, get_message):
         follow_redirects=False,
     )
     assert response.location == "http://localhost/mynext"
-
-    response = client.post(
-        "/auth/?next=http%3A%2F%2F127.0.0.1%3A5000%2Fdashboard%2Fsettings%2F",
-        data=dict(password="password"),
-        follow_redirects=False,
-        base_url="http://127.0.0.1:5000",
-    )
-    assert response.location == "http://127.0.0.1:5000/dashboard/settings/"
 
 
 @pytest.mark.webauthn()

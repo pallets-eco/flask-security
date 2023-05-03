@@ -4,7 +4,7 @@
 
     Unified signin tests
 
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -193,14 +193,14 @@ def test_simple_signin(app, clients, get_message):
     assert get_message("INVALID_PASSWORD_CODE") in response.data
 
     # Correct code
-    assert "remember_token" not in [c.name for c in clients.cookie_jar]
-    assert "session" not in [c.name for c in clients.cookie_jar]
+    assert not clients.get_cookie("remember_token")
+    assert not clients.get_cookie("session")
     response = clients.post(
         "/us-signin",
         data=dict(identity="matt@lp.com", passcode=requests[0]["token"]),
         follow_redirects=False,
     )
-    assert "remember_token" not in [c.name for c in clients.cookie_jar]
+    assert not clients.get_cookie("remember_token")
     assert "email" in auths[0][1]
 
     response = clients.get("/profile", follow_redirects=False)
@@ -228,14 +228,14 @@ def test_simple_signin(app, clients, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert "remember_token" in [c.name for c in clients.cookie_jar]
+    assert clients.get_cookie("remember_token")
     assert "sms" in auths[1][1]
 
     response = clients.get("/profile", follow_redirects=False)
     assert response.status_code == 200
 
     logout(clients)
-    assert "remember_token" not in [c.name for c in clients.cookie_jar]
+    assert not clients.get_cookie("remember_token")
 
 
 def test_simple_signin_json(app, client_nc, get_message):
@@ -990,7 +990,7 @@ def test_verify(app, client, get_message):
     us_authenticate(client)
     response = client.get("us-setup", follow_redirects=False)
     verify_url = response.location
-    assert "/us-verify?next=http%3A%2F%2Flocalhost%2Fus-setup" in verify_url
+    assert "/us-verify?next=http://localhost/us-setup" in verify_url
     logout(client)
     us_authenticate(client)
 
@@ -1441,7 +1441,7 @@ def test_regular_login(app, client, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert "remember_token" in [c.name for c in client.cookie_jar]
+    assert client.get_cookie("remember_token")
     assert "password" in auths[0][1]
 
     response = client.get("/profile", follow_redirects=False)
@@ -1819,11 +1819,7 @@ def test_us_tf_validity(app, client, get_message):
         "/us-signin", json=data, headers={"Content-Type": "application/json"}
     )
     assert b'"code": 200' in response.data
-    cookie = next(
-        (cookie for cookie in client.cookie_jar if cookie.name == "tf_validity"), None
-    )
-    assert cookie is not None
-
+    assert client.get_cookie("tf_validity")
     logout(client)
 
     data = dict(identity="gal2@lp.com", passcode="password")
@@ -1831,7 +1827,7 @@ def test_us_tf_validity(app, client, get_message):
     assert b"Please enter your authentication code" in response.data
 
     # clear the cookie to make sure it's not picking it up with json.
-    client.cookie_jar.clear("localhost.local", "/", "tf_validity")
+    client.delete("tf_validity")
 
     token = us_tf_authenticate(app, client, remember=True, json=True)
     logout(client)
@@ -2104,7 +2100,7 @@ def test_propagate_next(app, client):
     set_phone(app)
     with capture_send_code_requests() as codes:
         response = client.get("profile", follow_redirects=True)
-        assert "?next=%2Fprofile" in response.request.url
+        assert "?next=/profile" in response.request.url
         signin_url = get_form_action(response, 0)
         sendcode_url = get_form_action(response, 1)
         response = client.post(
@@ -2126,7 +2122,7 @@ def test_propagate_next_tf(app, client):
     logout(client, endpoint="/auth/logout")
 
     response = client.get("/profile", follow_redirects=True)
-    assert "?next=%2Fprofile" in response.request.url
+    assert "?next=/profile" in response.request.url
     signin_url = get_form_action(response, 0)
     response = client.post(
         signin_url,

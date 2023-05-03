@@ -122,9 +122,7 @@ def setup_tf_sms(client, url_prefix=None):
 
 
 def get_existing_session(client):
-    cookie = next(
-        (cookie for cookie in client.cookie_jar if cookie.name == "session"), None
-    )
+    cookie = client.get_cookie("session")
     if cookie:
         serializer = URLSafeTimedSerializer("secret", serializer=TaggedJSONSerializer())
         val = serializer.loads_unsafe(cookie.value)

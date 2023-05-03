@@ -4,7 +4,7 @@
 
     Changeable tests
 
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -224,8 +224,8 @@ def test_change_updates_remember(app, client):
     response = client.get("/profile", follow_redirects=True)
     assert b"Profile Page" in response.data
 
-    assert "remember_token" in [c.name for c in client.cookie_jar]
-    client.cookie_jar.clear_session_cookies()
+    assert client.get_cookie("remember_token")
+    client.delete_cookie("session")
     response = client.get("/profile", follow_redirects=True)
     assert b"Profile Page" in response.data
 

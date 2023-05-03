@@ -4,7 +4,7 @@
 
     CSRF tests
 
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 from contextlib import contextmanager
@@ -434,19 +434,12 @@ def test_csrf_cookie(app, sqlalchemy_datastore):
 
     client = app.test_client()
     json_login(client)
-    found = False
-    for cookie in client.cookie_jar:
-        if cookie.name == "XSRF-Token":
-            found = True
-            assert cookie.path == "/"
-            # Alas http.cookiejar doesn't support samesite...
-            # assert cookie.samesite == "Strict"
-    assert found
+    assert client.get_cookie("XSRF-Token")
 
     # Make sure cleared on logout
     response = client.post("/logout", content_type="application/json")
     assert response.status_code == 200
-    assert "XSRF-Token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("XSRF-Token")
 
 
 @pytest.mark.settings(CSRF_COOKIE={"key": "XSRF-Token"})
@@ -468,18 +461,18 @@ def test_cp_with_token_cookie(app, sqlalchemy_datastore):
         new_password="battery staple",
         new_password_confirm="battery staple",
     )
-    csrf_token = [c.value for c in client.cookie_jar if c.name == "XSRF-Token"][0]
+    csrf_token = client.get_cookie("XSRF-Token")
     with mp_validate_csrf() as mp:
         response = client.post(
             "/change",
             content_type="application/json",
             json=data,
-            headers={"X-XSRF-Token": csrf_token},
+            headers={"X-XSRF-Token": csrf_token.value},
         )
         assert response.status_code == 200
     assert mp.success == 1 and mp.failure == 0
     json_logout(client)
-    assert "XSRF-Token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("XSRF-Token")
 
 
 @pytest.mark.settings(CSRF_COOKIE_NAME="XSRF-Token", csrf_ignore_unauth_endpoints=True)
@@ -504,26 +497,24 @@ def test_cp_with_token_cookie_expire(app, sqlalchemy_datastore):
         new_password="battery staple",
         new_password_confirm="battery staple",
     )
-    csrf_token = [c.value for c in client.cookie_jar if c.name == "XSRF-Token"][0]
+    csrf_token = client.get_cookie("XSRF-Token")
     with mp_validate_csrf() as mp:
         response = client.post(
             "/change",
             content_type="application/json",
             json=data,
-            headers={"X-XSRF-Token": csrf_token},
+            headers={"X-XSRF-Token": csrf_token.value},
         )
         assert response.status_code == 400
         assert b"expired" in response.data
 
         # Should have gotten a new CSRF cookie value
-        new_csrf_token = [c.value for c in client.cookie_jar if c.name == "XSRF-Token"][
-            0
-        ]
-        assert csrf_token != new_csrf_token
+        new_csrf_token = client.get_cookie("XSRF-Token")
+        assert csrf_token.value != new_csrf_token.value
     # 2 failures since the utils:csrf_cookie_handler will check
     assert mp.success == 0 and mp.failure == 2
     json_logout(client)
-    assert "XSRF-Token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("XSRF-Token")
 
 
 @pytest.mark.settings(
@@ -548,10 +539,10 @@ def test_cp_with_token_cookie_refresh(app, sqlalchemy_datastore):
         new_password_confirm="battery staple",
     )
 
-    csrf_cookie = [c for c in client.cookie_jar if c.name == "XSRF-Token"][0]
+    csrf_cookie = client.get_cookie("XSRF-Token")
     with mp_validate_csrf() as mp:
         # Delete cookie - we should always get a new one
-        client.delete_cookie(csrf_cookie.domain, csrf_cookie.name)
+        client.delete_cookie("XSRF-Token")
         response = client.post(
             "/change",
             content_type="application/json",
@@ -559,20 +550,18 @@ def test_cp_with_token_cookie_refresh(app, sqlalchemy_datastore):
             headers={"X-XSRF-Token": csrf_cookie.value},
         )
         assert response.status_code == 200
-        csrf_cookie = [c for c in client.cookie_jar if c.name == "XSRF-Token"][0]
-        assert csrf_cookie
+        assert client.get_cookie("XSRF-Token")
     assert mp.success == 1 and mp.failure == 0
 
     # delete cookie again, do a 'GET' - the REFRESH_COOKIE_ON_EACH_REQUEST should
     # send us a new one
-    client.delete_cookie(csrf_cookie.domain, csrf_cookie.name)
+    client.delete_cookie("XSRF-Token")
     response = client.get("/change")
     assert response.status_code == 200
-    csrf_cookie = [c for c in client.cookie_jar if c.name == "XSRF-Token"][0]
-    assert csrf_cookie
+    assert client.get_cookie("XSRF-Token")
 
     json_logout(client)
-    assert "XSRF-Token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("XSRF-Token")
 
 
 @pytest.mark.settings(CSRF_COOKIE_NAME="XSRF-Token")
@@ -589,20 +578,22 @@ def test_remember_login_csrf_cookie(app, sqlalchemy_datastore):
     # Login with remember_token generation
     json_login(client, use_header=True, remember=True)
 
-    csrf_cookie = [c for c in client.cookie_jar if c.name == "XSRF-Token"][0]
-    session_cookie = [c for c in client.cookie_jar if c.name == "session"][0]
+    # csrf_cookie = [c for c in client.cookie_jar if c.name == "XSRF-Token"][0]
+    # session_cookie = [c for c in client.cookie_jar if c.name == "session"][0]
     # Delete session and csrf cookie - we should always get new ones
-    client.delete_cookie(csrf_cookie.domain, csrf_cookie.name)
-    client.delete_cookie(session_cookie.domain, session_cookie.name)
+    # client.delete_cookie(csrf_cookie.domain, csrf_cookie.name)
+    # client.delete_cookie(session_cookie.domain, session_cookie.name)
+    client.delete_cookie("XSRF-Token")
+    client.delete_cookie("session")
 
     # Do a simple get request with the remember_token cookie present
-    assert "remember_token" in [c.name for c in client.cookie_jar]
+    assert client.get_cookie("remember_token")
     response = client.get("/profile")
     assert response.status_code == 200
-    assert "session" in [c.name for c in client.cookie_jar]
-    assert "XSRF-Token" in [c.name for c in client.cookie_jar]
+    assert client.get_cookie("session")
+    assert client.get_cookie("XSRF-Token")
     # Logout and check that everything cleans up nicely
     json_logout(client)
-    assert "remember_token" not in [c.name for c in client.cookie_jar]
-    assert "session" not in [c.name for c in client.cookie_jar]
-    assert "XSRF-Token" not in [c.name for c in client.cookie_jar]
+    assert not client.get_cookie("remember_token")
+    assert not client.get_cookie("session")
+    assert not client.get_cookie("XSRF-Token")

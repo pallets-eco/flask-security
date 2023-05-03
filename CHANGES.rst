@@ -3,17 +3,23 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
-Version Next
-------------
+Version 5.2.0
+-------------
 
-Released TBD
+Released May xx, 2023
+
+Note: Due to rapid deprecation and removal of APIs from the Pallets team,
+maintaining the testing of back versions of various packages is taking too
+much time and effort. In this release only current versions of the various
+dependent packages are being tested.
 
 Fixes
 +++++
 
 - (:issue:`764`) Remove old Werkzeug compatibility check.
 - (:issue:`777`) Compatibility with Quart.
-- (:pr:`xx`) Remove dependence on pkg_resources / setuptools (use importlib_resources package)
+- (:pr:`780`) Remove dependence on pkg_resources / setuptools (use importlib_resources package)
+- (:pr:`xx`) Fix tests to work with latest Werkzeug/Flask. Update requirements_low to match current releases.
 
 Version 5.1.2
 -------------

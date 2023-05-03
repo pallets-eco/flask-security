@@ -18,3 +18,4 @@ passlib
 blinker
 email-validator
 itsdangerous
+importlib_resources>=5.10.0

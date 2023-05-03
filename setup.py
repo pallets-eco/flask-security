@@ -10,14 +10,13 @@ with open("flask_security/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 install_requires = [
-    "Flask>=2.1.0",
-    "Flask-Login>=0.6.0",
+    # flask dependencies include werkzeug, jinja2, itsdangerous, click, blinker
+    "Flask>=2.3.0",
+    "Flask-Login>=0.6.2",
     "Flask-Principal>=0.4.0",
-    "Flask-WTF>=1.0.0",
+    "Flask-WTF>=1.1.1",
     "email-validator>=1.1.1",
-    "itsdangerous>=2.1.0",
     "passlib>=1.7.4",
-    "blinker>=1.4",
     "wtforms>=3.0.0",  # for form-level errors
     "importlib_resources>=5.10.0",
 ]
