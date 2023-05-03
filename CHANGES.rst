@@ -20,6 +20,7 @@ Fixes
 - (:issue:`777`) Compatibility with Quart.
 - (:pr:`780`) Remove dependence on pkg_resources / setuptools (use importlib_resources package)
 - (:pr:`xx`) Fix tests to work with latest Werkzeug/Flask. Update requirements_low to match current releases.
+- (:pr:`xx`) Drop support for Python 3.7
 
 Version 5.1.2
 -------------

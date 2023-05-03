@@ -21,8 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: '3.7', tox: 'py37-release'}
-          - {python: '3.7', tox: 'py37-low'}
           - {python: '3.8', tox: 'py38-release'}
           - {python: '3.8', tox: 'py38-low'}
           - {python: '3.9', tox: 'py39-release'}
