@@ -1,4 +1,4 @@
-Pallets-Sphinx-Themes~=2.0
+Pallets-Sphinx-Themes~=2.1
 Sphinx~=7.0
 sphinx-issues==3.0.1
 packaging
