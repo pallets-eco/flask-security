@@ -17,7 +17,7 @@ These configuration keys are used globally across all features.
 
     Specifies the name for the Flask-Security blueprint.
 
-    Default: ``security``.
+    Default: ``"security"``.
 
 .. py:data:: SECURITY_URL_PREFIX
 
@@ -57,7 +57,7 @@ These configuration keys are used globally across all features.
 
     Specifies the name for domain used for translations.
 
-    Default: ``flask_security``.
+    Default: ``"flask_security"``.
 .. py:data:: SECURITY_I18N_DIRNAME
 
     Specifies the directory containing the ``MO`` files used for translations.
@@ -65,7 +65,11 @@ These configuration keys are used globally across all features.
     enables application to override a subset of messages if desired. The
     default ``builtin`` uses translations shipped with Flask-Security.
 
-    Default: ``builtin``.
+    Default: ``"builtin"``.
+
+    .. versionchanged:: 5.2.0
+        "builtin" is a special name which will be interpreted as the ``translations``
+        directory within the installation of Flask-Security.
 
 .. py:data:: SECURITY_PASSWORD_HASH
 
@@ -73,7 +77,7 @@ These configuration keys are used globally across all features.
     Recommended values for production systems are ``bcrypt``, ``argon2``, ``sha512_crypt``, or
     ``pbkdf2_sha512``. Some algorithms require the installation  of a backend package (e.g. `bcrypt`_, `argon2`_).
 
-    Default:``bcrypt``.
+    Default: ``"bcrypt"``.
 
 .. py:data:: SECURITY_PASSWORD_SCHEMES
 
@@ -109,12 +113,12 @@ These configuration keys are used globally across all features.
     List of algorithms used for encrypting/hashing sensitive data within a token
     (Such as is sent with confirmation or reset password).
 
-    Default: ``sha256_crypt``.
+    Default: ``["sha256_crypt", "hex_md5"]``.
 .. py:data:: SECURITY_DEPRECATED_HASHING_SCHEMES
 
     List of deprecated algorithms used for creating and validating tokens.
 
-    Default: ``hex_md5``.
+    Default: ``["hex_md5"]``.
 
 .. py:data:: SECURITY_PASSWORD_HASH_OPTIONS
 
@@ -134,7 +138,7 @@ These configuration keys are used globally across all features.
 
     Minimum required length for passwords.
 
-    Default: 8
+    Default: ``8``
 
     .. versionadded:: 3.4.0
 .. py:data:: SECURITY_PASSWORD_COMPLEXITY_CHECKER
@@ -178,7 +182,7 @@ These configuration keys are used globally across all features.
     the NIST requirement: `5.1.1.2 Memorized Secret Verifiers`_.
     Normalization is performed using the Python unicodedata.normalize() method.
 
-    Default: "NFKD"
+    Default: ``"NFKD"``
 
     .. versionadded:: 4.0.0
 
@@ -200,13 +204,13 @@ These configuration keys are used globally across all features.
 
     Specifies the query string parameter to read when using token authentication.
 
-    Default: ``auth_token``.
+    Default: ``"auth_token"``.
 
 .. py:data:: SECURITY_TOKEN_AUTHENTICATION_HEADER
 
     Specifies the HTTP header to read when using token authentication.
 
-    Default: ``Authentication-Token``.
+    Default: ``"Authentication-Token"``.
 
 .. py:data:: SECURITY_TOKEN_MAX_AGE
 
@@ -351,7 +355,7 @@ These configuration keys are used globally across all features.
     The HTTP Header name that will contain the CSRF token. ``X-XSRF-Token``
     is used by packages such as `axios`_.
 
-    Default: ``X-XSRF-Token``.
+    Default: ``"X-XSRF-Token"``.
 
 .. py:data:: SECURITY_CSRF_COOKIE_REFRESH_EACH_REQUEST
 
@@ -534,7 +538,7 @@ These are used by the Two-Factor and Unified Signin features.
     unified sign in. All other phone numbers will require a region prefix to
     be accepted.
 
-    Default: ``US``
+    Default: ``"US"``
 
     .. versionadded:: 3.4.0
 
@@ -645,13 +649,13 @@ Core - rarely need changing
 
     Specifies the name for the command managing users. Disable by setting ``False``.
 
-    Default: ``users``.
+    Default: ``"users"``.
 
 .. py:data:: SECURITY_CLI_ROLES_NAME
 
     Specifies the name for the command managing roles. Disable by setting ``False``.
 
-    Default: ``roles``.
+    Default: ``"roles"``.
 
 .. py:data:: SECURITY_JOIN_USER_ROLES
 
@@ -770,12 +774,12 @@ Registerable
 
     Sets the subject for the confirmation email.
 
-    Default: ``"Welcome"``.
+    Default: ``_("Welcome")``.
 .. py:data:: SECURITY_REGISTER_USER_TEMPLATE
 
     Specifies the path to the template for the user registration page.
 
-    Default: ``security/register_user.html``.
+    Default: ``"security/register_user.html"``.
 .. py:data:: SECURITY_POST_REGISTER_VIEW
 
     Specifies the view to redirect to after a user successfully registers.
@@ -858,7 +862,7 @@ Confirmable
     Specifies the amount of time a user has before their confirmation
     link expires. Always pluralize the time unit for this value.
 
-    Default: ``5 days``.
+    Default: ``"5 days"``.
 .. py:data:: SECURITY_CONFIRM_URL
 
     Specifies the email confirmation URL.
@@ -868,12 +872,12 @@ Confirmable
 
     Specifies the path to the template for the resend confirmation instructions page.
 
-    Default: ``security/send_confirmation.html``.
+    Default: ``"security/send_confirmation.html"``.
 .. py:data:: SECURITY_EMAIL_SUBJECT_CONFIRM
 
     Sets the subject for the email confirmation message.
 
-    Default: ``Please confirm your email``.
+    Default: ``_("Please confirm your email")``.
 .. py:data:: SECURITY_CONFIRM_ERROR_VIEW
 
     Specifies the view to redirect to if a confirmation error occurs.
@@ -939,7 +943,7 @@ Configuration variables for the ``SECURITY_CHANGEABLE`` feature:
 
     Specifies the path to the template for the change password page.
 
-    Default: ``security/change_password.html``.
+    Default: ``"security/change_password.html"``.
 
 .. py:data:: SECURITY_SEND_PASSWORD_CHANGE_EMAIL
 
@@ -951,7 +955,7 @@ Configuration variables for the ``SECURITY_CHANGEABLE`` feature:
 
     Sets the subject for the password change notice.
 
-    Default: ``Your password has been changed``.
+    Default: ``_("Your password has been changed")``.
 
 Recoverable
 -----------
@@ -972,13 +976,13 @@ Recoverable
 
     Specifies the path to the template for the reset password page.
 
-    Default: ``security/reset_password.html``.
+    Default: ``"security/reset_password.html"``.
 
 .. py:data:: SECURITY_FORGOT_PASSWORD_TEMPLATE
 
     Specifies the path to the template for the forgot password page.
 
-    Default: ``security/forgot_password.html``.
+    Default: ``"security/forgot_password.html"``.
 
 .. py:data:: SECURITY_POST_RESET_VIEW
 
@@ -1009,7 +1013,7 @@ Recoverable
     Specifies the amount of time a user has before their password reset link expires.
     Always pluralize the time unit for this value.
 
-    Default: ``5 days``.
+    Default: ``"5 days"``.
 
 .. py:data:: SECURITY_SEND_PASSWORD_RESET_EMAIL
 
@@ -1029,13 +1033,13 @@ Recoverable
 
     Sets the subject for the password reset email.
 
-    Default: ``Password reset instructions``.
+    Default: ``_("Password reset instructions")``.
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE
 
     Sets subject for the password notice.
 
-    Default: ``Your password has been reset``.
+    Default: ``_("Your password has been reset")``.
 
 Two-Factor
 -----------
@@ -1098,28 +1102,28 @@ Configuration related to the two-factor authentication feature.
     Specifies the email address users send mail to when they can't complete the
     two-factor authentication login.
 
-    Default: ``no-reply@localhost``.
+    Default: ``"no-reply@localhost"``.
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_TWO_FACTOR
 
     Sets the subject for the two factor feature.
 
-    Default: ``Two-factor Login``
+    Default: ``_("Two-factor Login")``
 .. py:data:: SECURITY_EMAIL_SUBJECT_TWO_FACTOR_RESCUE
 
     Sets the subject for the two factor help function.
 
-    Default: ``Two-factor Rescue``
+    Default: ``_("Two-factor Rescue")``
 .. py:data:: SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE
 
     Specifies the path to the template for the verify code page for the two-factor authentication process.
 
-    Default: ``security/two_factor_verify_code.html``.
+    Default: ``"security/two_factor_verify_code.html"``.
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_TEMPLATE
 
     Specifies the path to the template for the setup page for the two factor authentication process.
 
-    Default: ``security/two_factor_setup.html``.
+    Default: ``"security/two_factor_setup.html"``.
 
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_URL
 
@@ -1172,7 +1176,7 @@ Configuration related to the two-factor authentication feature.
     Specifies the path to the template for the select method page for the two-factor authentication process.
     This is used when more than one two-factor method has been setup (e.g. SMS and Webauthn).
 
-    Default: ``security/two_factor_select.html``.
+    Default: ``"security/two_factor_select.html"``.
 
     .. versionadded:: 5.0.0
 
@@ -1188,7 +1192,7 @@ Configuration related to the two-factor authentication feature.
 
     Specifies the expiration of the two factor validity cookie and verification of the token.
 
-    Default: ``30 Days``.
+    Default: ``"30 Days"``.
 
 
 .. py:data:: SECURITY_TWO_FACTOR_VALIDITY_COOKIE
@@ -1333,7 +1337,7 @@ Unified Signin
     Specifies the amount of time a user has before their setup
     token expires. Always pluralize the time unit for this value.
 
-    Default: "30 minutes"
+    Default: ``"30 minutes"``
 
 .. py:data:: SECURITY_US_SIGNIN_REPLACES_LOGIN
 
@@ -1379,20 +1383,20 @@ This feature is DEPRECATED as of 5.0.0. Please use unified signin feature instea
     Specifies the path to the template for the send login instructions page for
     passwordless logins.
 
-    Default:``security/send_login.html``.
+    Default:``"security/send_login.html"``.
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_PASSWORDLESS
 
     Sets the subject for the passwordless feature.
 
-    Default: ``Login instructions``.
+    Default: ``_("Login instructions")``.
 
 .. py:data:: SECURITY_LOGIN_WITHIN
 
     Specifies the amount of time a user has before a login link expires.
     Always pluralize the time unit for this value.
 
-    Default: ``1 days``.
+    Default: ``"1 days"``.
 
 .. py:data:: SECURITY_LOGIN_ERROR_VIEW
 
@@ -1550,7 +1554,7 @@ WebAuthn
     If list is empty or ``None`` WebAuthn keys aren't allowed. This also means that the
             :py:data:``SECURITY_WAN_VERIFY`` endpoint won't be registered.
 
-    Default:: ``["first", "secondary"]``
+    Default: ``["first", "secondary"]``
 
 
 Additional relevant configuration variables:
@@ -1778,7 +1782,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_LOGIN``
 * ``SECURITY_MSG_LOGIN_EMAIL_SENT``
 * ``SECURITY_MSG_LOGIN_EXPIRED``
-* ``SECURITY_NO_RECOVERY_CODES_SETUP``
+* ``SECURITY_MSG_NO_RECOVERY_CODES_SETUP``
 * ``SECURITY_MSG_OAUTH_HANDSHAKE_ERROR``
 * ``SECURITY_MSG_PASSWORDLESS_LOGIN_SUCCESSFUL``
 * ``SECURITY_MSG_PASSWORD_BREACHED``

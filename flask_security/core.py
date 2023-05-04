@@ -648,19 +648,7 @@ def _request_loader(request):
     # N.B. we don't call current_user here since that in fact might try and LOAD
     # a user - which would call us again.
     if get_request_attr("fs_authn_via") == "token":
-        # Flask-Login 0.6.2 and post Flask 2.2
-        if hasattr(g, "_login_user"):
-            return g._login_user
-        else:  # pragma: no cover
-            # pre flask_login 0.6.2 and handle that flask 2.3 is deprecating
-            # _request_ctx_stack
-            try:
-                from flask import _request_ctx_stack
-
-                if hasattr(_request_ctx_stack.top, "user"):
-                    return _request_ctx_stack.top.user
-            except ImportError:
-                pass
+        return g._login_user
 
     header_key = _security.token_authentication_header
     args_key = _security.token_authentication_key

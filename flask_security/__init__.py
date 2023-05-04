@@ -134,4 +134,4 @@ from .webauthn import (
 )
 from .webauthn_util import WebauthnUtil
 
-__version__ = "5.1.2"
+__version__ = "5.2.0"
