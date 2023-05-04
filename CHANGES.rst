@@ -19,8 +19,19 @@ Fixes
 - (:issue:`764`) Remove old Werkzeug compatibility check.
 - (:issue:`777`) Compatibility with Quart.
 - (:pr:`780`) Remove dependence on pkg_resources / setuptools (use importlib_resources package)
-- (:pr:`xx`) Fix tests to work with latest Werkzeug/Flask. Update requirements_low to match current releases.
-- (:pr:`xx`) Drop support for Python 3.7
+- (:pr:`792`) Fix tests to work with latest Werkzeug/Flask. Update requirements_low to match current releases.
+- (:pr:`792`) Drop support for Python 3.7
+
+Known Issues
+++++++++++++
+
+- Flask-mongoengine hasn't released in a while and currently will not work with latest Flask and Flask-Security-Too
+  (this is due to the JSONEncoder being deprecated and removed).
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+- The removal of pkg_resources required changing the config variable :py:data:`SECURITY_I18N_DIRNAME`.
+  If your application modified or extended this configuration variable, a small change will be required.
 
 Version 5.1.2
 -------------

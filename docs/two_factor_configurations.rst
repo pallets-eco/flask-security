@@ -189,14 +189,14 @@ Rescue
 Life happens - if the user doesn't have their mobile devices (SMS) or authenticator app, then they can use the ``/tf-rescue`` endpoint to
 see possible recovery options. Flask-Security supports the following:
 
-    - Have a one-time code sent to their email.
+    - Have a one-time code sent to their email (if :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL` is set to ``True``).
     - Send an email to the application administrators.
     - Use a previously setup one-time recovery code (see :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`)
 
 Validity
 ++++++++
 Sometimes it can be preferable to enter the 2FA code once a day/week/month, especially if a user logs in and out of a website multiple times.  This allows the
-security of a two factor authentication but with a slightly better user experience.  This can be achieved by setting ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` to ``False``,
+security of a two factor authentication but with a slightly better user experience.  This can be achieved by setting :py:data:`SECURITY_TWO_FACTOR_ALWAYS_VALIDATE` to ``False``,
 and clicking the 'Remember' button on the login form. Once the two factor code is validated, a cookie is set to allow skipping the validation step.  The cookie is named
 ``tf_validity`` and contains the signed token containing the user's ``fs_uniquifier``.  The cookie and token are both set to expire after the time delta given in
-``SECURITY_TWO_FACTOR_LOGIN_VALIDITY``.  Note that setting ``SECURITY_TWO_FACTOR_LOGIN_VALIDITY`` to 0 is equivalent to ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` being ``True``.
+:py:data:`SECURITY_TWO_FACTOR_LOGIN_VALIDITY`.  Note that setting ``SECURITY_TWO_FACTOR_LOGIN_VALIDITY`` to 0 is equivalent to ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` being ``True``.
