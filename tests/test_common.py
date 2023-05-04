@@ -527,6 +527,14 @@ def test_token_auth_via_header_invalid_token(client):
     assert response.status_code == 401
 
 
+def test_token_auth_invalid_for_session_auth(client):
+    response = json_authenticate(client)
+    token = response.json["response"]["user"]["authentication_token"]
+    headers = {"Authentication-Token": token}
+    response = client.get("/session", headers=headers)
+    assert response.status_code == 401    
+
+
 def test_http_auth(client):
     # browsers expect 401 response with WWW-Authenticate header - which will prompt
     # them to pop up a login form.
