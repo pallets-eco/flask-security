@@ -150,6 +150,20 @@ def _check_token():
     return False
 
 
+def _check_session(self):
+    user_id = session.get("_user_id")
+    if user_id is None or self._security.login_manager._user_callback is None:
+        return False
+
+    user = self._security.login_manager._user_callback(user_id)
+    if user and not user.active:
+        return False
+
+    app = current_app._get_current_object()
+    identity_changed.send(app, identity=Identity(user.fs_uniquifier))
+    return True
+
+
 def _check_http_auth():
     auth = request.authorization or BasicAuth(username=None, password=None)
     if not auth.username:
@@ -332,7 +346,7 @@ def auth_required(
 
     login_mechanisms = {
         "token": lambda: _check_token(),
-        "session": lambda: current_user.is_authenticated,
+        "session": lambda: _check_session(),
         "basic": lambda: _check_http_auth(),
     }
     mechanisms_order = ["token", "session", "basic"]
