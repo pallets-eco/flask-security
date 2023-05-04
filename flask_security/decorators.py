@@ -14,7 +14,7 @@ import datetime
 from functools import wraps
 import typing as t
 
-from flask import Response, abort, current_app, g, redirect, request
+from flask import Response, abort, current_app, g, redirect, request, session
 from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from flask_wtf.csrf import CSRFError
@@ -32,6 +32,7 @@ from .utils import (
     check_and_update_authn_fresh,
     json_error_response,
     set_request_attr,
+    get_request_attr,
     url_for_security,
 )
 
@@ -151,11 +152,18 @@ def _check_token():
 
 
 def _check_session():
-    user_id = session.get("_user_id")
-    if user_id is None or self._security.login_manager._user_callback is None:
-        return False
-
-    user = self._security.login_manager._user_callback(user_id)
+    user = None
+    if get_request_attr("fs_authn_via") == 'session' and hasattr(g, "_login_user"):
+        user = g._login_user
+        if user.is_anonymous:
+            user = None
+    
+    if user is None:
+        user_id = session.get("_user_id")
+        if user_id is None or self._security.login_manager._user_callback is None:
+            return False
+        user = self._security.login_manager._user_callback(user_id)
+    
     if user and not user.active:
         return False
 
