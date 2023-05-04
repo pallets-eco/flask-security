@@ -150,7 +150,7 @@ def _check_token():
     return False
 
 
-def _check_session(self):
+def _check_session():
     user_id = session.get("_user_id")
     if user_id is None or self._security.login_manager._user_callback is None:
         return False
