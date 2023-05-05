@@ -152,23 +152,21 @@ def _check_token():
 
 
 def _check_session():
+    user_id = session.get("_user_id", None)
+    if user_id is None:
+        return False
+
     user = None
     if get_request_attr("fs_authn_via") == 'session' and hasattr(g, "_login_user"):
         user = g._login_user
-        if user.is_anonymous:
-            user = None
-    
-    if user is None:
-        user_id = session.get("_user_id")
-        if user_id is None or self._security.login_manager._user_callback is None:
-            return False
-        user = self._security.login_manager._user_callback(user_id)
-    
-    if user and not user.active:
-        return False
 
-    app = current_app._get_current_object()
-    identity_changed.send(app, identity=Identity(user.fs_uniquifier))
+    if user is None:
+        if _security.login_manager._user_callback is None:
+            return False
+        user = _security.login_manager._user_callback(user_id)
+
+    if user is None or not user.active:
+        return False
     return True
 
 

@@ -13,9 +13,11 @@ import json
 import re
 import pytest
 
-from flask import Blueprint
+from flask import Blueprint, g
 
 from flask_security import uia_email_mapper
+from flask_security.decorators import auth_required
+from flask_principal import identity_loaded, identity_changed
 
 from tests.test_utils import (
     authenticate,
@@ -528,11 +530,14 @@ def test_token_auth_via_header_invalid_token(client):
 
 
 def test_token_auth_invalid_for_session_auth(client):
+    # when user is loaded from token data, session authentication should fail.
     response = json_authenticate(client)
     token = response.json["response"]["user"]["authentication_token"]
-    headers = {"Authentication-Token": token}
+    # logout so session doesn't contain valid user details
+    logout(client)
+    headers = {"Authentication-Token": token, "Accept": "application/json"}
     response = client.get("/session", headers=headers)
-    assert response.status_code == 401    
+    assert response.status_code == 401
 
 
 def test_http_auth(client):
@@ -747,6 +752,28 @@ def test_user_deleted_during_session_reverts_to_anonymous_user(app, client):
 
     response = client.get("/")
     assert b"Hello matt@lp.com" not in response.data
+
+
+def test_session_loads_identity(app, client):
+
+    @app.route('/identity_check')
+    @auth_required('session')
+    def id_check():
+        if hasattr(g, 'identity'):
+            identity = g.identity
+            assert hasattr(identity, 'loader_called')
+            assert identity.loader_called
+        return 'Success'
+
+
+    json_authenticate(client)
+
+    # add identity loader after authentication to only fire it for session-authentication next `get` call
+    @identity_loaded.connect_via(app)
+    def identity_loaded_check(sender, identity):
+        identity.loader_called = True
+
+    client.get("/identity_check")
 
 
 def test_remember_token(client):

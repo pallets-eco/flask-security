@@ -205,7 +205,7 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
         return render_template("index.html", content="HTTP Authentication")
 
     @app.route("/session")
-    @http_auth_required('session')
+    @auth_required('session')
     def session():
         return "Session Authentication"
 
