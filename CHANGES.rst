@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.2.0
 -------------
 
-Released May xx, 2023
+Released May 6, 2023
 
 Note: Due to rapid deprecation and removal of APIs from the Pallets team,
 maintaining the testing of back versions of various packages is taking too
