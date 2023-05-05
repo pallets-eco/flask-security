@@ -112,7 +112,7 @@ Then in a browser navigate to::
 Edit - it is a WYSIWYG editor and will show you errors. Once you save (as yaml) you
 need to look at what it will render as::
 
-    $ python setup.py build_sphinx
+    $ sphinx-build docs docs/_build/html
     $ http-server -p 8081
 
 Then in your browser navigate to::
