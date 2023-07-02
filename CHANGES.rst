@@ -3,6 +3,23 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.3.0
+-------------
+
+Released TBD
+
+Fixes
+++++++
+
+- (:pr:`xxx`) Webauthn Updates to handling of transport.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+
+- To align with the W3C WebAuthn Level2 and 3 spec - transports are now part of the registration response.
+  This has been changed BOTH in the server code (using py_webauth data structures) as well as the sample
+  javascript code. If an application has their own javascript front end code - it might need to be changed.
+
 Version 5.2.0
 -------------
 

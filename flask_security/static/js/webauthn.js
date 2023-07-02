@@ -110,9 +110,8 @@ const transformNewAssertionForServer = (newAssertion) => {
         id: newAssertion.id,
         rawId: b64enc(rawId),
         type: newAssertion.type,
-        response: {"attestationObject": b64enc(attObj), "clientDataJSON": b64enc(clientDataJSON)},
+        response: {"attestationObject": b64enc(attObj), "clientDataJSON": b64enc(clientDataJSON), "transports": transports},
         extensions: JSON.stringify(registrationClientExtensions),
-        transports: transports,
     }
 }
 

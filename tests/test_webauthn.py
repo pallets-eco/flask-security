@@ -4,7 +4,7 @@
 
     WebAuthn tests
 
-    :copyright: (c) 2021-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2021-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -60,9 +60,9 @@ REG_DATA1 = {
         "FEybDVYMnN5UTNGUmVXUlRVVjlyVUVWcVZqVmhNbVF3UVhCbVlYUmpjRk"
         "V4WVZoRWJWRlFidyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6NT"
         "AwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+        "transports": ["usb"],
     },
     "extensions": '{"credProps": {}}',
-    "transports": ["usb"],
 }
 SIGNIN_DATA1 = {
     "id": "wUUqNOjY35dcT-vpikZpZx-T91NjIe4PqrV8j7jYPOc",
@@ -94,9 +94,9 @@ REG_DATA2 = {
         "YzIxRFEybDVYMnN5UTNGUmVXUlRVVjlyVUVWcVZqVmhNbVF3UV"
         "hCbVlYUmpjRkV4WVZoRWJWRlFidyIsIm9yaWdpbiI6Imh0dHA6L"
         "y9sb2NhbGhvc3Q6NTAwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+        "transports": ["nfc", "usb"],
     },
     "extensions": '{"credProps": {"rk": True}}',
-    "transports": ["nfc", "usb"],
 }
 
 # This has user_verification=True - i.e. a multi-factor capable key
@@ -115,9 +115,9 @@ REG_DATA_UV = {
         "xRFEybDVYMnN5UTNGUmVXUlRVVjlyVUVWcVZqVmhNbVF3UVhCbVlY"
         "UmpjRkV4WVZoRWJWRlFidyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2Nhb"
         "Ghvc3Q6NTAwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+        "transports": ["nfc", "usb"],
     },
     "extensions": '{"credProps":{"rk":true}}',
-    "transports": ["nfc", "usb"],
 }
 
 SIGNIN_DATA_UV = {
@@ -154,9 +154,9 @@ REG_DATA_UH = {
         "yVUVWcVZqVmhNbVF3UVhCbVlYUmpjRkV4WVZoRWJWRlFidyIsIm9yaWdpbi"
         "I6Imh0dHA6Ly9sb2NhbGhvc3"
         "Q6NTAwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+        "transports": ["nfc", "usb"],
     },
     "extensions": '{"credProps":{"rk": true}}"',
-    "transports": ["nfc", "usb"],
 }
 SIGNIN_DATA_UH = {
     "id": "rHb1OXVM--dgGcWg0u3cfomyc-Tu4l4kK8GjVkS8bms-foXmBAlWHyTzuhgGgCnx",
