@@ -4,7 +4,7 @@
 
     Flask-Security WebAuthn module
 
-    :copyright: (c) 2021-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2021-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
@@ -156,7 +156,7 @@ class WebAuthnRegisterResponseForm(Form):
     user_verification: bool
     # this is returned to caller (not part of the client form)
     registration_verification: "VerifiedRegistration"
-    transports: t.List[str] = []
+    transports: t.List["AuthenticatorTransport"] = []
     extensions: str
 
     def validate(self, **kwargs: t.Any) -> bool:
@@ -193,15 +193,13 @@ class WebAuthnRegisterResponseForm(Form):
             )
             return False
 
-        # Alas py_webauthn doesn't support extensions nor transports yet
+        self.transports = (
+            reg_cred.response.transports if reg_cred.response.transports else []
+        )
+        # Alas py_webauthn doesn't support extensions
         response_full = json.loads(self.credential.data)
         # TODO - verify this is JSON (created with JSON.stringify)
         self.extensions = response_full.get("extensions", None)
-        self.transports = (
-            [tr for tr in response_full["transports"]]
-            if response_full.get("transports", None)
-            else []
-        )
         return True
 
 
@@ -386,7 +384,9 @@ def webauthn_register() -> "ResponseValue":
     """
     payload: t.Dict[str, t.Any]
 
-    form: WebAuthnRegisterForm = build_form_from_request("wan_register_form")
+    form: WebAuthnRegisterForm = t.cast(
+        WebAuthnRegisterForm, build_form_from_request("wan_register_form")
+    )
 
     if form.validate_on_submit():
         challenge = _security._webauthn_util.generate_challenge(
@@ -488,8 +488,9 @@ def webauthn_register() -> "ResponseValue":
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def webauthn_register_response(token: str) -> "ResponseValue":
     """Response from browser."""
-    form: WebAuthnRegisterResponseForm = build_form_from_request(
-        "wan_register_response_form"
+    form: WebAuthnRegisterResponseForm = t.cast(
+        WebAuthnRegisterResponseForm,
+        build_form_from_request("wan_register_response_form"),
     )
 
     expired, invalid, state = check_and_get_token_status(
@@ -527,7 +528,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
                 "credential_device_type",
                 "single_device",
             ),
-            transports=form.transports,
+            transports=list(form.transports),
             extensions=form.extensions,
             usage=form.usage,
         )
@@ -597,7 +598,7 @@ def webauthn_signin() -> "ResponseValue":
     else:
         abort(404)
 
-    form: WebAuthnSigninForm = build_form_from_request("wan_signin_form")
+    form = t.cast(WebAuthnSigninForm, build_form_from_request("wan_signin_form"))
     form.is_secondary = is_secondary
     if form.validate_on_submit():
         o_json, state_token = _signin_common(
@@ -643,8 +644,8 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         "tf_state"
     ] in ["ready"]
 
-    form: WebAuthnSigninResponseForm = build_form_from_request(
-        "wan_signin_response_form"
+    form = t.cast(
+        WebAuthnSigninResponseForm, build_form_from_request("wan_signin_response_form")
     )
 
     expired, invalid, state = check_and_get_token_status(
@@ -738,7 +739,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
 )
 def webauthn_delete() -> "ResponseValue":
     """Deletes an existing registered credential."""
-    form: WebAuthnDeleteForm = build_form_from_request("wan_delete_form")
+    form = t.cast(WebAuthnDeleteForm, build_form_from_request("wan_delete_form"))
 
     if form.validate_on_submit():
         # validate made sure form.name.data exists.
@@ -771,7 +772,7 @@ def webauthn_verify() -> "ResponseValue":
     will have filled in ?next=xxx - which we want to carefully not lose as we
     go through these steps.
     """
-    form: WebAuthnVerifyForm = build_form_from_request("wan_verify_form")
+    form = t.cast(WebAuthnVerifyForm, build_form_from_request("wan_verify_form"))
 
     if form.validate_on_submit():
         o_json, state_token = _signin_common(form.user, cv("WAN_ALLOW_AS_VERIFY"))
@@ -801,8 +802,8 @@ def webauthn_verify() -> "ResponseValue":
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def webauthn_verify_response(token: str) -> "ResponseValue":
-    form: WebAuthnSigninResponseForm = build_form_from_request(
-        "wan_signin_response_form"
+    form = t.cast(
+        WebAuthnSigninResponseForm, build_form_from_request("wan_signin_response_form")
     )
 
     expired, invalid, state = check_and_get_token_status(
