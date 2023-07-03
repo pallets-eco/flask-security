@@ -31,6 +31,6 @@ requests
 sqlalchemy
 sqlalchemy-utils
 webauthn
-pydantic<2.0
+pydantic<3.0
 werkzeug
 zxcvbn
