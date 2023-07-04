@@ -182,6 +182,10 @@ the User record (since we need to look up the ``User`` based on a WebAuthn ``cre
 
         webauthn = ListField(ReferenceField(WebAuthn, reverse_delete_rule=PULL), default=[])
 
+    To make sure all WebAuthn objects are deleted if the User is deleted:
+
+        User.register_delete_rule(WebAuthn, "user", CASCADE)
+
 
 **For peewee**::
 

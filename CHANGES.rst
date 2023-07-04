@@ -12,6 +12,8 @@ Fixes
 ++++++
 
 - (:pr:`xxx`) Webauthn Updates to handling of transport.
+- (:pr:`xxx`) Fix MongoDB support by eliminating dependency on flask-mongoengine.
+  Improve MongoDB quickstart.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

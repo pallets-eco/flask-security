@@ -122,7 +122,9 @@ def test_confirmable_flag(app, clients, get_message):
     with app.app_context():
         app.security.datastore.delete(user)
         app.security.datastore.commit()
-        if hasattr(app.security.datastore.db, "close_db"):
+        if hasattr(app.security.datastore.db, "close_db") and callable(
+            app.security.datastore.db.close_db
+        ):
             app.security.datastore.db.close_db(None)
 
     response = clients.get("/confirm/" + token, follow_redirects=True)

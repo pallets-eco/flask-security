@@ -3,7 +3,6 @@ Flask==2.3.2
 Flask-SQLAlchemy==3.0.3
 Flask-Babel==3.1.0
 Flask-Mailman==0.3.0
-Flask-Mongoengine==1.0.0
 Flask-Login==0.6.2
 Flask-WTF==1.1.1
 peewee==3.16.2
