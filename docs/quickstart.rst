@@ -157,7 +157,7 @@ and models.py.
 
     from flask import Flask, render_template_string
     from flask_security import Security, current_user, auth_required, hash_password, \
-         SQLAlchemySessionUserDatastore
+         SQLAlchemySessionUserDatastore, permissions_accepted
     from database import db_session, init_db
     from models import User, Role
 
@@ -170,6 +170,8 @@ and models.py.
     # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
     # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
+    # Don't worry if email has findable domain
+    app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
 
     # Setup Flask-Security
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)
@@ -179,14 +181,25 @@ and models.py.
     @app.route("/")
     @auth_required()
     def home():
-        return render_template_string('Hello {{email}} !', email=current_user.email)
+        return render_template_string('Hello {{current_user.email}}!')
+
+    @app.route("/user")
+    @auth_required()
+    @permissions_accepted("user-read")
+    def user_home():
+        return render_template_string("Hello {{ current_user.email }} you are a user!")
 
     # one time setup
     with app.app_context():
-        # Create a user to test with
         init_db()
+        # Create a user and role to test with
+        app.security.datastore.find_or_create_role(
+            name="user", permissions={"user-read", "user-write"}
+        )
+        db_session.commit()
         if not app.security.datastore.find_user(email="test@me.com"):
-            app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+            app.security.datastore.create_user(email="test@me.com",
+            password=hash_password("password"), roles=["user"])
         db_session.commit()
 
     if __name__ == '__main__':
@@ -216,10 +229,11 @@ and models.py.
 - models.py ::
 
     from database import Base
-    from flask_security import UserMixin, RoleMixin
+    from flask_security import UserMixin, RoleMixin, AsAlist
     from sqlalchemy.orm import relationship, backref
+    from sqlalchemy.ext.mutable import MutableList
     from sqlalchemy import Boolean, DateTime, Column, Integer, \
-                        String, ForeignKey, UnicodeText
+                        String, ForeignKey
 
     class RolesUsers(Base):
         __tablename__ = 'roles_users'
@@ -232,7 +246,7 @@ and models.py.
         id = Column(Integer(), primary_key=True)
         name = Column(String(80), unique=True)
         description = Column(String(255))
-        permissions = Column(UnicodeText)
+        permissions = Column(MutableList.as_mutable(AsaList()), nullable=True)
 
     class User(Base, UserMixin):
         __tablename__ = 'user'
@@ -246,7 +260,7 @@ and models.py.
         current_login_ip = Column(String(100))
         login_count = Column(Integer)
         active = Column(Boolean())
-        fs_uniquifier = Column(String(255), unique=True, nullable=False)
+        fs_uniquifier = Column(String(64), unique=True, nullable=False)
         confirmed_at = Column(DateTime())
         roles = relationship('Role', secondary='roles_users',
                              backref=backref('users', lazy='dynamic'))
