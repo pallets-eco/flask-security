@@ -11,9 +11,10 @@ Released TBD
 Fixes
 ++++++
 
-- (:pr:`xxx`) Webauthn Updates to handling of transport.
-- (:pr:`xxx`) Fix MongoDB support by eliminating dependency on flask-mongoengine.
+- (:pr:`807`) Webauthn Updates to handling of transport.
+- (:pr:`809`) Fix MongoDB support by eliminating dependency on flask-mongoengine.
   Improve MongoDB quickstart.
+- (:issue:`801`) Fix Quickstart for SQLAlchemy with scoped session.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
