@@ -99,7 +99,7 @@ exclude_patterns = ["_build"]
 nitpicky = True
 nitpick_ignore = [
     ("py:attr", "LoginManager.unauthorized"),
-    ("py:class", "flask_mongoengine.MongoEngine"),
+    ("py:class", "mongoengine.connection"),
     ("py:class", "ResponseValue"),
     ("py:class", "function"),
     ("py:class", "AuthenticatorSelectionCriteria"),

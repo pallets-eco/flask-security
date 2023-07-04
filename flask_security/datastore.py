@@ -5,7 +5,7 @@
     This module contains an user datastore classes.
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import datetime
@@ -17,7 +17,7 @@ from .utils import config_value as cv
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask_sqlalchemy
-    import flask_mongoengine
+    import mongoengine
     import sqlalchemy.orm.scoping
 
 
@@ -863,7 +863,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
 class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
     """A UserDatastore implementation that assumes the
     use of
-    `Flask-MongoEngine <https://pypi.python.org/pypi/flask-mongoengine/>`_
+    `MongoEngine <https://pypi.org/project/mongoengine/>`_
     for datastore transactions.
 
     :param db:
@@ -874,7 +874,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
 
     def __init__(
         self,
-        db: "flask_mongoengine.MongoEngine",
+        db: "mongoengine.connection",
         user_model: t.Type["User"],
         role_model: t.Type["Role"],
         webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,

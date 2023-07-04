@@ -374,7 +374,9 @@ def test_basic_json(app, clients, get_message):
             cred.lastuse_datetime = fake_dt
             app.security.datastore.put(cred)
         app.security.datastore.commit()
-        if hasattr(app.security.datastore.db, "close_db"):
+        if hasattr(app.security.datastore.db, "close_db") and callable(
+            app.security.datastore.db.close_db
+        ):
             app.security.datastore.db.close_db(None)
 
     response = clients.get("/wan-register", headers=headers)

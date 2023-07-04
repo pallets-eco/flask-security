@@ -271,7 +271,7 @@ MongoEngine Install requirements
 
     $ python3 -m venv pymyenv
     $ . pymyenv/bin/activate
-    $ pip install flask-security-too[common] flask-mongoengine
+    $ pip install flask-security-too[common] mongoengine
 
 MongoEngine Application
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -285,9 +285,18 @@ local MongoDB instance):
     import os
 
     from flask import Flask, render_template_string
-    from flask_mongoengine import MongoEngine
+    from mongoengine import Document, connect
+    from mongoengine.fields import (
+        BinaryField,
+        BooleanField,
+        DateTimeField,
+        IntField,
+        ListField,
+        ReferenceField,
+        StringField,
+    )
     from flask_security import Security, MongoEngineUserDatastore, \
-        UserMixin, RoleMixin, auth_required, hash_password
+        UserMixin, RoleMixin, auth_required, hash_password, permissions_accepted
 
     # Create app
     app = Flask(__name__)
@@ -298,27 +307,27 @@ local MongoDB instance):
     # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
     # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
-
-    # MongoDB Config
-    app.config['MONGODB_DB'] = 'mydatabase'
-    app.config['MONGODB_HOST'] = 'localhost'
-    app.config['MONGODB_PORT'] = 27017
+    # Don't worry if email has findable domain
+    app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
 
     # Create database connection object
-    db = MongoEngine(app)
+    db_name = "mydatabase"
+    db = connect(alias=db_name, db=db_name, host="mongodb://localhost", port=27017)
 
-    class Role(db.Document, RoleMixin):
-        name = db.StringField(max_length=80, unique=True)
-        description = db.StringField(max_length=255)
-        permissions = db.StringField(max_length=255)
+    class Role(Document, RoleMixin):
+        name = StringField(max_length=80, unique=True)
+        description = StringField(max_length=255)
+        permissions = ListField(required=False)
+        meta = {"db_alias": db_name}
 
-    class User(db.Document, UserMixin):
-        email = db.StringField(max_length=255, unique=True)
-        password = db.StringField(max_length=255)
-        active = db.BooleanField(default=True)
-        fs_uniquifier = db.StringField(max_length=64, unique=True)
-        confirmed_at = db.DateTimeField()
-        roles = db.ListField(db.ReferenceField(Role), default=[])
+    class User(Document, UserMixin):
+        email = StringField(max_length=255, unique=True)
+        password = StringField(max_length=255)
+        active = BooleanField(default=True)
+        fs_uniquifier = StringField(max_length=64, unique=True)
+        confirmed_at = DateTimeField()
+        roles = ListField(ReferenceField(Role), default=[])
+        meta = {"db_alias": db_name}
 
     # Setup Flask-Security
     user_datastore = MongoEngineUserDatastore(db, User, Role)
@@ -330,11 +339,21 @@ local MongoDB instance):
     def home():
         return render_template_string("Hello {{ current_user.email }}")
 
+    @app.route("/user")
+    @auth_required()
+    @permissions_accepted("user-read")
+    def user_home():
+        return render_template_string("Hello {{ current_user.email }} you are a user!")
+
     # one time setup
     with app.app_context():
-        # Create a user to test with
+        # Create a user and role to test with
+        app.security.datastore.find_or_create_role(
+            name="user", permissions={"user-read", "user-write"}
+        )
         if not app.security.datastore.find_user(email="test@me.com"):
-            app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+            app.security.datastore.create_user(email="test@me.com",
+            password=hash_password("password"), roles=["user"])
 
     if __name__ == '__main__':
         # run application (can also use flask run)

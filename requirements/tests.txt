@@ -2,7 +2,6 @@ Flask-Babel
 Babel
 Flask-Login
 Flask-Mailman
-Flask-Mongoengine
 Flask-Principal
 peewee
 Flask-SQLAlchemy

@@ -298,8 +298,9 @@ def mongoengine_datastore(request, app, tmpdir, realmongodburl):
 
 def mongoengine_setup(request, app, tmpdir, realmongodburl):
     # To run against a realdb: mongod --dbpath <somewhere>
-    pytest.importorskip("flask_mongoengine")
-    from flask_mongoengine import MongoEngine
+    import pymongo
+    import mongomock
+    from mongoengine import Document, connect
     from mongoengine.fields import (
         BinaryField,
         BooleanField,
@@ -312,34 +313,23 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
     from mongoengine import PULL, CASCADE, disconnect_all
 
     db_name = "flask_security_test"
-    app.config["MONGODB_SETTINGS"] = {
-        "db": db_name,
-        "host": realmongodburl if realmongodburl else "mongodb://localhost",
-        "port": 27017,
-        "alias": db_name,
-    }
-    if realmongodburl:
-        db = MongoEngine(app)
-    else:
-        # mongoengine 0.27 requires setting mongo_client_class
-        import mongomock
+    db_host = realmongodburl if realmongodburl else "mongodb://localhost"
+    db_client_class = pymongo.MongoClient if realmongodburl else mongomock.MongoClient
+    db = connect(
+        alias=db_name,
+        db=db_name,
+        host=db_host,
+        port=27017,
+        mongo_client_class=db_client_class,
+    )
 
-        try:
-            app.config["MONGODB_SETTINGS"]["host"] = "mongomock://localhost"
-            db = MongoEngine(app)
-        except Exception:
-            # new way
-            app.config["MONGODB_SETTINGS"]["host"] = "mongodb://localhost"
-            app.config["MONGODB_SETTINGS"]["mongo_client_class"] = mongomock.MongoClient
-            db = MongoEngine(app)
-
-    class Role(db.Document, RoleMixin):
+    class Role(Document, RoleMixin):
         name = StringField(required=True, unique=True, max_length=80)
         description = StringField(max_length=255)
         permissions = ListField(required=False)
         meta = {"db_alias": db_name}
 
-    class WebAuthn(db.Document, WebAuthnMixin):
+    class WebAuthn(Document, WebAuthnMixin):
         credential_id = BinaryField(primary_key=True, max_bytes=1024, required=True)
         public_key = BinaryField(required=True)
         sign_count = IntField(default=0)
@@ -364,7 +354,7 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
             """
             return dict(id=self.user.id)
 
-    class User(db.Document, UserMixin):
+    class User(Document, UserMixin):
         email = StringField(unique=True, max_length=255)
         fs_uniquifier = StringField(unique=True, max_length=64, required=True)
         fs_webauthn_user_handle = StringField(unique=True, max_length=64)
@@ -395,14 +385,14 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
         def get_security_payload(self):
             return {"email": str(self.email)}
 
-    db.Document.register_delete_rule(WebAuthn, "user", CASCADE)
+    User.register_delete_rule(WebAuthn, "user", CASCADE)
 
     def tear_down():
         with app.app_context():
             User.drop_collection()
             Role.drop_collection()
             WebAuthn.drop_collection()
-            db.connection.drop_database(db_name)
+            db.drop_database(db_name)
             disconnect_all()
 
     request.addfinalizer(tear_down)
