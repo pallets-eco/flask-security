@@ -19,16 +19,11 @@ mongoengine==0.27.0
 mongomock==4.1.2
 pony==0.7.16;python_version<'3.11'
 phonenumberslite==8.13.11
-# issue with pyopenssl requiring very new cryptography
-pyopenssl==23.1.1
 qrcode==7.4.2
 # authlib requires requests
 requests
 sqlalchemy==2.0.12
 sqlalchemy-utils==0.41.1
-# These 2 come from webauthn requirements
-cryptography==40.0.2
-webauthn==1.8.0;python_version>='3.8'
-pydantic<2.0
+webauthn==1.9.0
 werkzeug==2.3.3
 zxcvbn==4.4.28

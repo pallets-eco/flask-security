@@ -220,11 +220,16 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_EMAIL_VALIDATOR_ARGS
 
-    Email address are validated using the `email_validator`_ package. Its methods
-    have some configurable options - these can be set here and will be passed in.
+    Email address are validated and normalized via the ``mail_util_cls`` which
+    defaults to :class:`.MailUtil`. That uses the `email_validator`_ package whose methods
+    have configurable options - these can be set here and will be passed in.
     For example setting this to: ``{"check_deliverability": False}`` is useful
     when unit testing if the emails are fake.
 
+    ``mail_util_cls`` has 2 methods - ``normalize`` and ``validate``. Both
+    ensure the passed value is a valid email address, and returns a normalized
+    version. ``validate`` additionally, by default, verifies that the email
+    address can likely actually receive an email.
 
     Default: ``None``, meaning use the defaults from email_validator package.
 

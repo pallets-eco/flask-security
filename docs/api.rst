@@ -169,6 +169,8 @@ Utils
 
 .. autofunction:: flask_security.tf_send_security_token
 
+.. autoclass:: flask_security.AsaList
+
 .. autoclass:: flask_security.SmsSenderBaseClass
   :members: send_sms
 

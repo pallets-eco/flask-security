@@ -39,8 +39,14 @@ try:
     import sqlalchemy.types as types
 
     class AsaList(types.TypeDecorator):
-        # SQL-like DBs don't have a List type - so do that here by converting to a comma
-        # separate string.
+        """
+        SQL-like DBs don't have a List type - so do that here by converting to a comma
+        separate string.
+        For SQLAlchemy-based datastores, this can be used as::
+
+            Column(MutableList.as_mutable(AsaList()), nullable=True)
+        """
+
         impl = types.UnicodeText
 
         def process_bind_param(self, value, dialect):
@@ -58,6 +64,14 @@ try:
 except ImportError:  # pragma: no cover
 
     class AsaList:  # type: ignore
+        """
+        SQL-like DBs don't have a List type - so do that here by converting to a comma
+        separate string.
+        For SQLAlchemy-based datastores, this can be used as::
+
+            Column(MutableList.as_mutable(AsaList()), nullable=True)
+        """
+
         pass
 
 

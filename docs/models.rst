@@ -49,13 +49,16 @@ Additional Functionality
 ------------------------
 
 Depending on the application's configuration, additional fields may need to be
-added to your `User` model.
+added to your database models. Note some fields are specified as 'list of string'
+the ORM you are using is responsible for translating the list of string to a suitable
+DB data type. For standard SQL-like databases, Flask-Security provides a utility
+method :class:`.AsaList`.
 
 Confirmable
 ^^^^^^^^^^^
 
 If you enable account confirmation by setting your application's
-`SECURITY_CONFIRMABLE` configuration value to `True`, your `User` model will
+:py:data:`SECURITY_CONFIRMABLE` configuration value to `True`, your `User` model will
 require the following additional field:
 
 * ``confirmed_at`` (datetime)
@@ -63,7 +66,7 @@ require the following additional field:
 Trackable
 ^^^^^^^^^
 
-If you enable user tracking by setting your application's `SECURITY_TRACKABLE`
+If you enable user tracking by setting your application's :py:data:`SECURITY_TRACKABLE`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
@@ -76,14 +79,14 @@ additional fields:
 Two_Factor
 ^^^^^^^^^^
 
-If you enable two-factor by setting your application's `SECURITY_TWO_FACTOR`
+If you enable two-factor by setting your application's :py:data:`SECURITY_TWO_FACTOR`
 configuration value to `True`, your `User` model will require the following
 additional fields:
 
 * ``tf_totp_secret`` (string, 255 bytes, nullable)
 * ``tf_primary_method`` (string)
 
-If you include 'sms' in `SECURITY_TWO_FACTOR_ENABLED_METHODS`, your `User` model
+If you include 'sms' in :py:data:`SECURITY_TWO_FACTOR_ENABLED_METHODS`, your `User` model
 will require the following additional field:
 
 * ``tf_phone_number`` (string, 128 bytes, nullable)

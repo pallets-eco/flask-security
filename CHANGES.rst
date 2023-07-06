@@ -15,6 +15,7 @@ Fixes
 - (:pr:`809`) Fix MongoDB support by eliminating dependency on flask-mongoengine.
   Improve MongoDB quickstart.
 - (:issue:`801`) Fix Quickstart for SQLAlchemy with scoped session.
+- (:issue:`806`) Login no longer, by default, check for email deliverability.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

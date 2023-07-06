@@ -42,6 +42,7 @@ from flask_security.forms import (
     ChangePasswordForm,
     ConfirmRegisterForm,
     EmailField,
+    EmailValidation,
     ForgotPasswordForm,
     LoginForm,
     PasswordField,
@@ -52,7 +53,6 @@ from flask_security.forms import (
     SendConfirmationForm,
     StringField,
     email_required,
-    email_validator,
     valid_user_email,
 )
 from flask_security import auth_required, roles_required
@@ -124,7 +124,7 @@ def test_basic_custom_forms(app, sqlalchemy_datastore):
     class MyForgotPasswordForm(ForgotPasswordForm):
         email = EmailField(
             "My Forgot Email Address Field",
-            validators=[email_required, email_validator, valid_user_email],
+            validators=[email_required, EmailValidation(verify=True), valid_user_email],
         )
 
     class MyResetPasswordForm(ResetPasswordForm):
@@ -1419,3 +1419,28 @@ def test_multi_app(app, sqlalchemy_datastore):
 
     assert hasattr(security2.forms["register_form"].cls, "username")
     assert "username" in security2.user_identity_attributes[1].keys()
+
+
+@pytest.mark.registerable()
+def test_login_email_whatever(app, client, get_message):
+    # login, by default, shouldn't verify email address is deliverable..
+    # register etc can/should do that.
+    app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": True}
+
+    # register should fail since non-deliverable TLD
+    data = dict(
+        email="dude@me.mytld",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_EMAIL_ADDRESS"
+    )
+
+    # login should work since we are just checking for identity
+    response = client.post(
+        "/login", data=dict(email="matt@lp.com", password="password")
+    )
+    assert response.status_code == 302
+    assert "/" in response.location

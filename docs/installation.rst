@@ -38,11 +38,11 @@ Your application will also need a database backend:
 * Sqlite is supported out of the box.
 * For PostgreSQL install `psycopg2`_.
 * For MySQL install `pymysql`_.
-* For MongoDB install `Flask-Mongoengine`_.
+* For MongoDB install `Mongoengine`_.
 
 For additional details on configuring your database engine connector - refer to `sqlalchemy_engine`_
 
 .. _psycopg2: https://pypi.org/project/psycopg2/
 .. _pymysql: https://pypi.org/project/PyMySQL/
-.. _Flask-Mongoengine: https://pypi.org/project/flask-mongoengine/
+.. _Mongoengine: https://pypi.org/project/mongoengine/
 .. _sqlalchemy_engine: https://docs.sqlalchemy.org/en/14/core/engines.html
