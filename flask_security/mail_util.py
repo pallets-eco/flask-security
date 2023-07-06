@@ -4,7 +4,7 @@
 
     Utility class providing methods for validating, normalizing and sending emails.
 
-    :copyright: (c) 2020-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     While this default implementation uses Flask-Mailman - we want to make sure that
@@ -111,14 +111,23 @@ class MailUtil:
 
     def normalize(self, email: str) -> str:
         """
-        Given an input email - return a normalized version.
+        Given an input email - return a normalized version or raises ValueError
+        if field value isn't syntactically valid.
+
+        This is called for forms that use email as an identity to be looked up.
+
         Must be called in app context and uses :py:data:`SECURITY_EMAIL_VALIDATOR_ARGS`
         config variable to pass any relevant arguments to
         email_validator.validate_email() method.
 
-        Will throw email_validator.EmailNotValidError if email isn't even valid.
+        This defaults to NOT checking for deliverability (i.e. DNS checks).
+
+        Will throw email_validator.EmailNotValidError (ValueError)
+        if email isn't syntactically valid.
         """
-        validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
+        validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {
+            "check_deliverability": False
+        }
         valid = email_validator.validate_email(email, **validator_args)
         return valid.email
 
@@ -126,6 +135,12 @@ class MailUtil:
         """
         Validate the given email.
         If valid, the normalized version is returned.
+        This is used by forms/views that require an email that likely can have an
+        actual email sent to it.
+
+        Must be called in app context and uses :py:data:`SECURITY_EMAIL_VALIDATOR_ARGS`
+        config variable to pass any relevant arguments to
+        email_validator.validate_email() method.
 
         ValueError is thrown if not valid.
         """

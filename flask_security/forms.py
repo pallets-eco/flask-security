@@ -6,7 +6,7 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -134,14 +134,24 @@ class Length(ValidatorMixin, validators.Length):
 class EmailValidation:
     """Simple interface to email_validator.
     N.B. Side-effect - if valid email, the field.data is set to the normalized value.
+
+    The 'verify' keyword informs the validator to perform checks to be more sure
+    that the email can actually receive an email. Set to False - validation is done
+    to normalize and use for identity purposes.
     """
+
+    def __init__(self, *args, **kwargs):
+        self.verify = kwargs.get("verify", False)
 
     def __call__(self, form, field):
         if field.data is None:  # pragma: no cover
             raise ValidationError(get_message("EMAIL_NOT_PROVIDED")[0])
 
         try:
-            field.data = _security._mail_util.validate(field.data)
+            if self.verify:
+                field.data = _security._mail_util.validate(field.data)
+            else:
+                field.data = _security._mail_util.normalize(field.data)
         except ValueError:
             msg = get_message("INVALID_EMAIL_ADDRESS")[0]
             # we stop further validators if email isn't valid.
@@ -152,7 +162,6 @@ class EmailValidation:
 
 
 email_required = Required(message="EMAIL_NOT_PROVIDED")
-email_validator = EmailValidation()
 password_required = Required(message="PASSWORD_NOT_PROVIDED")
 
 
@@ -288,7 +297,7 @@ class UserEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, email_validator, valid_user_email],
+        validators=[email_required, EmailValidation(verify=True), valid_user_email],
     )
 
 
@@ -296,7 +305,7 @@ class UniqueEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, email_validator, unique_user_email],
+        validators=[email_required, EmailValidation(verify=True), unique_user_email],
     )
 
 
@@ -447,8 +456,14 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
         return True
 
 
-class PasswordlessLoginForm(Form, UserEmailFormMixin):
+class PasswordlessLoginForm(Form):
     """The passwordless login form"""
+
+    email = EmailField(
+        get_form_field_label("email"),
+        render_kw={"autocomplete": "email"},
+        validators=[email_required, EmailValidation(verify=False), valid_user_email],
+    )
 
     submit = SubmitField(get_form_field_label("send_login_link"))
 
@@ -474,7 +489,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[Optional(), email_validator],
+        validators=[Optional(), EmailValidation(verify=False)],
     )
 
     # username is added dynamically based on USERNAME_ENABLED.
