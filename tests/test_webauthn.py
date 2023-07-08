@@ -1212,15 +1212,15 @@ def test_user_handle(app, client, get_message):
             .decode("utf-8")
             .replace("=", "")
         )
-        upd_signin_data = copy.deepcopy(SIGNIN_DATA_UH)
-        upd_signin_data["response"]["userHandle"] = b64_user_handle
-        signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
-        response = client.post(
-            response_url, json=dict(credential=json.dumps(upd_signin_data))
-        )
-        # verify actually logged in
-        response = client.get("/profile", headers={"accept": "application/json"})
-        assert response.status_code == 200
+    upd_signin_data = copy.deepcopy(SIGNIN_DATA_UH)
+    upd_signin_data["response"]["userHandle"] = b64_user_handle
+    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
+    response = client.post(
+        response_url, json=dict(credential=json.dumps(upd_signin_data))
+    )
+    # verify actually logged in
+    response = client.get("/profile", headers={"accept": "application/json"})
+    assert response.status_code == 200
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)

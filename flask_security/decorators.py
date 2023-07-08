@@ -14,7 +14,7 @@ import datetime
 from functools import wraps
 import typing as t
 
-from flask import Response, abort, current_app, g, redirect, request, session
+from flask import Response, abort, current_app, g, redirect, request
 from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from flask_wtf.csrf import CSRFError
@@ -152,20 +152,20 @@ def _check_token():
 
 
 def _check_session():
-    user_id = session.get("_user_id", None)
-    if user_id is None:
+    """
+    Note that flask_login will have already run _load_user (due to someone referencing
+    current_user proxy). This will have called our _user_loader or _request_loader
+    already.
+    This method needs to determine whether the authenticated user was authenticated
+    due to _user_loader or _request_loader and return True for the former.
+    This routine makes sure that if an endpoint is decorated with just allowing
+    'session' that token authentication won't return True (even though the user
+    is in fact correctly authenticated). There are certainly endpoints that need to
+    be web browser/session only (often those that in fact return tokens!).
+    """
+    if not current_user.is_authenticated:
         return False
-
-    user = None
-    if get_request_attr("fs_authn_via") == 'session' and hasattr(g, "_login_user"):
-        user = g._login_user
-
-    if user is None:
-        if _security.login_manager._user_callback is None:
-            return False
-        user = _security.login_manager._user_callback(user_id)
-
-    if user is None or not user.active:
+    if get_request_attr("fs_authn_via") != "session":
         return False
     return True
 

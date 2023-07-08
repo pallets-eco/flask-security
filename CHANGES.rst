@@ -16,6 +16,8 @@ Fixes
   Improve MongoDB quickstart.
 - (:issue:`801`) Fix Quickstart for SQLAlchemy with scoped session.
 - (:issue:`806`) Login no longer, by default, check for email deliverability.
+- (:issue:`791`) Token authentication is accepted on endpoints which only allow
+  'session' as authentication-method. (N247S)
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

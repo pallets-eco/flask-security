@@ -17,7 +17,7 @@ from flask import Blueprint, g
 
 from flask_security import uia_email_mapper
 from flask_security.decorators import auth_required
-from flask_principal import identity_loaded, identity_changed
+from flask_principal import identity_loaded
 
 from tests.test_utils import (
     authenticate,
@@ -755,25 +755,25 @@ def test_user_deleted_during_session_reverts_to_anonymous_user(app, client):
 
 
 def test_session_loads_identity(app, client):
-
-    @app.route('/identity_check')
-    @auth_required('session')
+    @app.route("/identity_check")
+    @auth_required("session")
     def id_check():
-        if hasattr(g, 'identity'):
+        if hasattr(g, "identity"):
             identity = g.identity
-            assert hasattr(identity, 'loader_called')
+            assert hasattr(identity, "loader_called")
             assert identity.loader_called
-        return 'Success'
-
+        return "Success"
 
     json_authenticate(client)
 
-    # add identity loader after authentication to only fire it for session-authentication next `get` call
+    # add identity loader after authentication to only fire it for
+    # session-authentication next `get` call
     @identity_loaded.connect_via(app)
     def identity_loaded_check(sender, identity):
         identity.loader_called = True
 
-    client.get("/identity_check")
+    response = client.get("/identity_check")
+    assert b"Success" == response.data
 
 
 def test_remember_token(client):
