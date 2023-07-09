@@ -204,6 +204,11 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
         assert get_request_attr("fs_authn_via") == "basic"
         return render_template("index.html", content="HTTP Authentication")
 
+    @app.route("/session")
+    @auth_required("session")
+    def session():
+        return "Session Authentication"
+
     @app.route("/token", methods=["GET", "POST"])
     @auth_token_required
     def token():

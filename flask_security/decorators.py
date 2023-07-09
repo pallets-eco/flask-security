@@ -32,6 +32,7 @@ from .utils import (
     check_and_update_authn_fresh,
     json_error_response,
     set_request_attr,
+    get_request_attr,
     url_for_security,
 )
 
@@ -148,6 +149,25 @@ def _check_token():
         return True
 
     return False
+
+
+def _check_session():
+    """
+    Note that flask_login will have already run _load_user (due to someone referencing
+    current_user proxy). This will have called our _user_loader or _request_loader
+    already.
+    This method needs to determine whether the authenticated user was authenticated
+    due to _user_loader or _request_loader and return True for the former.
+    This routine makes sure that if an endpoint is decorated with just allowing
+    'session' that token authentication won't return True (even though the user
+    is in fact correctly authenticated). There are certainly endpoints that need to
+    be web browser/session only (often those that in fact return tokens!).
+    """
+    if not current_user.is_authenticated:
+        return False
+    if get_request_attr("fs_authn_via") != "session":
+        return False
+    return True
 
 
 def _check_http_auth():
@@ -332,7 +352,7 @@ def auth_required(
 
     login_mechanisms = {
         "token": lambda: _check_token(),
-        "session": lambda: current_user.is_authenticated,
+        "session": lambda: _check_session(),
         "basic": lambda: _check_http_auth(),
     }
     mechanisms_order = ["token", "session", "basic"]
