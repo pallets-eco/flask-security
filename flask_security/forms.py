@@ -277,7 +277,7 @@ def form_errors_munge(form: Form, fields: t.Dict[str, t.Dict[str, str]]) -> None
     disclosing whether a user exists or not we need to return generic error messages.
     Furthermore, WTForms really likes to place errors on the field itself - which is
     a dead giveaway. We need to move errors from fields to the form.form_errors, and
-    replace then with generic msgs.
+    (optionally) replace then with generic msgs.
     """
     if not cv("RETURN_GENERIC_RESPONSES"):  # pragma: no cover
         return

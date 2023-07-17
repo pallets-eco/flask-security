@@ -1,0 +1,5 @@
+{% include "security/_messages.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors %}
+{{ render_field_with_errors(send_confirmation_form.email) }}
+{{ render_field_with_errors(send_confirmation_form.recaptcha) }}
+{{ render_form_errors(send_confirmation_form) }}

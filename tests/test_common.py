@@ -21,6 +21,7 @@ from flask_principal import identity_loaded
 
 from tests.test_utils import (
     authenticate,
+    capture_flashes,
     get_auth_token_version_3x,
     get_form_action,
     get_num_queries,
@@ -218,12 +219,14 @@ def test_generic_response(app, client, get_message):
     )
 
     # make sure don't get confirmation required
-    response = client.post(
-        "/login",
-        data=dict(email="mattwho@lp.com", password="password"),
-        follow_redirects=False,
-    )
-    assert response.status_code == 200
+    with capture_flashes() as flashes:
+        response = client.post(
+            "/login",
+            data=dict(email="mattwho@lp.com", password="password"),
+            follow_redirects=False,
+        )
+        assert response.status_code == 200
+    assert len(flashes) == 0
 
 
 @pytest.mark.registerable()
