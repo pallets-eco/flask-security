@@ -146,8 +146,12 @@ come with some usability concerns. The following endpoints are affected:
       message will be returned.
     * :py:data:`SECURITY_RESET_URL` - In all cases the `SECURITY_MSG_PASSWORD_RESET_REQUEST` message will be flashed. For JSON
       a 200 will always be returned (whether an email was sent or not).
+      ``Note``: If the application overrides the form and adds an additional field (e.g. `captcha`) and that field has
+      a validation error, a normal form error response will be returned (and JSON will return a 400).
     * :py:data:`SECURITY_CONFIRM_URL` - In all cases the `SECURITY_MSG_CONFIRMATION_REQUEST` message will be flashed. For JSON
       a 200 will always be returned (whether an email was sent or not).
+      ``Note``: If the application overrides the form and adds an additional field (e.g. `captcha`) and that field has
+      a validation error, a normal form error response will be returned (and JSON will return a 400).
     * :py:data:`SECURITY_US_SIGNIN_SEND_CODE_URL` - The `SECURITY_MSG_GENERIC_US_SIGNIN` message will be flashed in all cases -
       whether a selected method is setup for the user or not.
     * :py:data:`SECURITY_US_SIGNIN_URL` - For any errors (unknown username, inactive account, bad passcode) the `SECURITY_MSG_GENERIC_AUTHN_FAILED`
@@ -283,7 +287,7 @@ any changes to your UI and just need the following configuration::
 
 Angular's `httpClient`_ also supports this.
 
-For React based project you are free to choose your http client. It bundles fetch though. Retrieving the token is easy::
+For React based projects you are free to choose your http client (`fetch` is bundled by default). Retrieving the token is easy::
 
     fetch(url, {
       credentials: 'include',
@@ -294,7 +298,7 @@ For React based project you are free to choose your http client. It bundles fetc
       }
     });
 
-Sending the token on every, mutating, request is something that you should implement yourself. As an example an API call to an API
+Sending the token on every mutating request is something that you should implement yourself. As an example an API call to an API
 endpoint that does CSRF validation::
 
     function addUser(details) {

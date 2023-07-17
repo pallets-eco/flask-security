@@ -50,9 +50,12 @@ from .confirmable import (
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
     DummyForm,
+    ForgotPasswordForm,
+    LoginForm,
     build_form_from_request,
     build_form,
     form_errors_munge,
+    SendConfirmationForm,
     TwoFactorVerifyCodeForm,
     TwoFactorSetupForm,
     TwoFactorRescueForm,
@@ -153,8 +156,9 @@ def login() -> "ResponseValue":
     access user info and csrf-token.
     For POST - redirects to POST_LOGIN_VIEW (forms) or returns 400 (json).
     """
+    form = t.cast(LoginForm, build_form_from_request("login_form"))
 
-    if current_user.is_authenticated and request.method == "POST":
+    if current_user.is_authenticated:
         # Just redirect current_user to POST_LOGIN_VIEW.
         # While its tempting to try to logout the current user and login the
         # new requested user - that simply doesn't work with CSRF.
@@ -163,14 +167,16 @@ def login() -> "ResponseValue":
         # 'next' - which can cause infinite redirect loops
         # (see test_common::test_authenticated_loop)
         if _security._want_json(request):
-            payload = json_error_response(
-                errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
-            )
-            return _security._render_json(payload, 400, None, None)
+            if request.method == "POST":
+                payload = json_error_response(
+                    errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
+                )
+                return _security._render_json(payload, 400, None, None)
+            else:
+                form.user = current_user
+                return base_render_json(form)
         else:
             return redirect(get_url(cv("POST_LOGIN_VIEW")))
-
-    form = build_form_from_request("login_form")
 
     if form.validate_on_submit():
         assert form.user is not None
@@ -188,12 +194,8 @@ def login() -> "ResponseValue":
             return base_render_json(form, include_auth_token=True)
         return redirect(get_post_login_redirect())
 
-    if (
-        request.method == "POST"
-        and cv("RETURN_GENERIC_RESPONSES")
-        and not form.user_authenticated
-    ):
-        # Validation failed - make sure all error messages are generic
+    if request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+        # Validation failed - make sure PII error messages are generic
         fields_to_squash = dict(
             email=dict(replace_msg="GENERIC_AUTHN_FAILED"),
             password=dict(replace_msg="GENERIC_AUTHN_FAILED"),
@@ -202,19 +204,18 @@ def login() -> "ResponseValue":
             fields_to_squash["username"] = dict(replace_msg="GENERIC_AUTHN_FAILED")
         form_errors_munge(form, fields_to_squash)
 
-    if current_user.is_authenticated:
-        form.user = current_user
-        if _security._want_json(request):
-            return base_render_json(form)
-        return redirect(get_url(cv("POST_LOGIN_VIEW")))
-
     if _security._want_json(request):
         payload = {
             "identity_attributes": get_identity_attributes(),
         }
         return base_render_json(form, additional=payload)
 
-    if form.requires_confirmation and cv("REQUIRES_CONFIRMATION_ERROR_VIEW"):
+    if (
+        form.requires_confirmation
+        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
+        and not cv("RETURN_GENERIC_RESPONSES")
+    ):
+        assert form.user_authenticated
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
         return redirect(
             get_url(
@@ -398,8 +399,10 @@ def token_login(token):
 
 @unauth_csrf(fall_through=True)
 def send_confirmation():
-    """View function which sends confirmation instructions."""
-    form = build_form_from_request("send_confirmation_form")
+    """View function which sends confirmation instructions (/confirm)."""
+    form = t.cast(
+        SendConfirmationForm, build_form_from_request("send_confirmation_form")
+    )
 
     if form.validate_on_submit():
         send_confirmation_instructions(form.user)
@@ -410,10 +413,12 @@ def send_confirmation():
         # Here on GET or failed validate
         rinfo = dict(email=dict())
         form_errors_munge(form, rinfo)  # by suppressing errors JSON should return 200
-
-        # Make look exactly like successful (e.g. real user) request
-        if not _security._want_json(request):
-            do_flash(*get_message("CONFIRMATION_REQUEST", email=form.email.data))
+        # Check for other errors - for default form - there aren't additional fields
+        # but applications might add some (e.g. recaptcha)
+        if not form.errors:
+            # Make look exactly like successful (e.g. real user) request
+            if not _security._want_json(request):
+                do_flash(*get_message("CONFIRMATION_REQUEST", email=form.email.data))
 
     if _security._want_json(request):
         # Never include user info since this is an anonymous endpoint.
@@ -504,8 +509,8 @@ def confirm_email(token):
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def forgot_password():
-    """View function that handles a forgotten password request."""
-    form = build_form_from_request("forgot_password_form")
+    """View function that handles a forgotten password request (/reset)."""
+    form = t.cast(ForgotPasswordForm, build_form_from_request("forgot_password_form"))
 
     if form.validate_on_submit():
         send_reset_password_instructions(form.user)
@@ -513,14 +518,17 @@ def forgot_password():
             do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.email.data))
 
     elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
-        # Here on GET or failed validate
+        # Here on failed validate (POST) and want generic responses
         rinfo = dict(email=dict())
         form_errors_munge(form, rinfo)  # by suppressing errors JSON should return 200
-
-        # Make look exactly like successful (e.g. real user) request
-        hash_password("not-a-password")  # reduce timing between successful and not.
-        if not _security._want_json(request):
-            do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.email.data))
+        # Check for other errors - for default form - there aren't additional fields
+        # but applications might add some (e.g. recaptcha)
+        if not form.errors:
+            # No OTHER errors on form.
+            # Make look exactly like successful (e.g. real user) request
+            hash_password("not-a-password")  # reduce timing between successful and not.
+            if not _security._want_json(request):
+                do_flash(*get_message("PASSWORD_RESET_REQUEST", email=form.email.data))
 
     if _security._want_json(request):
         # Never include user info since this is an anonymous endpoint.

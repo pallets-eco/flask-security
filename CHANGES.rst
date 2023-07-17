@@ -8,6 +8,9 @@ Version 5.3.0
 
 Released TBD
 
+This is a minor version bump due to the (possible) incompatibility w.r.t.
+WebAuthn.
+
 Fixes
 ++++++
 
@@ -18,6 +21,7 @@ Fixes
 - (:issue:`806`) Login no longer, by default, check for email deliverability.
 - (:issue:`791`) Token authentication is accepted on endpoints which only allow
   'session' as authentication-method. (N247S)
+- (:issue:`814`) /reset and /confirm and GENERIC_RESPONSES and addtional form args don't mix.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

@@ -11,16 +11,20 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
+from wtforms.fields import StringField
+from wtforms.validators import Length
 
-from flask_security.core import UserMixin
+from flask_security.core import Security, UserMixin
 from flask_security.confirmable import generate_confirmation_token
 from flask_security.signals import confirm_instructions_sent, user_confirmed
+from flask_security.forms import SendConfirmationForm
 
 from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_registrations,
     logout,
+    populate_data,
 )
 
 pytestmark = pytest.mark.confirmable()
@@ -573,3 +577,64 @@ def test_generic_response(app, client, get_message):
     response = client.post("/confirm", json=dict(email="matt@lp.com"))
     assert len(recorded_instructions_sent) == 2
     assert response.status_code == 200
+
+
+def test_generic_with_extra(app, sqlalchemy_datastore):
+    # If application adds a field, make sure we properly return errors
+    # even if 'RETURN_GENERIC_RESPONSES' is set.
+    class MySendConfirmationForm(SendConfirmationForm):
+        recaptcha = StringField("Recaptcha", validators=[Length(min=5)])
+
+    app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = True
+    app.config["SECURITY_SEND_CONFIRMATION_TEMPLATE"] = "generic_confirm.html"
+    app.security = Security(
+        app,
+        datastore=sqlalchemy_datastore,
+        send_confirmation_form=MySendConfirmationForm,
+    )
+
+    populate_data(app)
+    client = app.test_client()
+
+    # Test valid user but invalid additional form field
+    # We should get a form error for the extra (invalid) field, no flash
+    bad_data = dict(email="joe@lp.com", recaptcha="1234")
+    good_data = dict(email="joe@lp.com", recaptcha="123456")
+
+    with capture_flashes() as flashes:
+        response = client.post("/confirm", data=bad_data)
+        assert b"Field must be at least 5" in response.data
+    assert len(flashes) == 0
+    with capture_flashes() as flashes:
+        response = client.post("/confirm", data=good_data)
+    assert len(flashes) == 1
+
+    # JSON
+    with capture_flashes() as flashes:
+        response = client.post("/confirm", json=bad_data)
+        assert response.status_code == 400
+        assert (
+            "Field must be at least 5"
+            in response.json["response"]["field_errors"]["recaptcha"][0]
+        )
+    assert len(flashes) == 0
+    with capture_flashes() as flashes:
+        response = client.post("/confirm", json=good_data)
+        assert response.status_code == 200
+    assert len(flashes) == 0
+
+    # Try bad email AND bad recaptcha
+    bad_data = dict(email="joe44-lp.com", recaptcha="1234")
+    with capture_flashes() as flashes:
+        response = client.post("/confirm", data=bad_data)
+        assert b"Field must be at least 5" in response.data
+    assert len(flashes) == 0
+    with capture_flashes() as flashes:
+        response = client.post("/confirm", json=bad_data)
+        assert response.status_code == 400
+        assert (
+            "Field must be at least 5"
+            in response.json["response"]["field_errors"]["recaptcha"][0]
+        )
+        assert len(response.json["response"]["errors"]) == 1
+    assert len(flashes) == 0
