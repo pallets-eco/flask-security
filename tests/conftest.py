@@ -232,6 +232,10 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     def post_confirm():
         return render_template("index.html", content="Post Confirm")
 
+    @app.route("/post_reset")
+    def post_reset():
+        return render_template("index.html", content="Post Reset")
+
     @app.route("/admin")
     @roles_required("admin")
     def admin():

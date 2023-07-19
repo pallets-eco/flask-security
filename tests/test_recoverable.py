@@ -63,6 +63,8 @@ def test_recoverable_flag(app, clients, get_message):
     # Test view for reset token
     response = clients.get("/reset/" + token)
     assert b"<h1>Reset password</h1>" in response.data
+    # OWASP recommends setting this
+    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
 
     # Test submitting a new password but leave out confirm
     response = clients.post(
@@ -78,7 +80,7 @@ def test_recoverable_flag(app, clients, get_message):
         follow_redirects=True,
     )
 
-    assert get_message("PASSWORD_RESET") in response.data
+    assert get_message("PASSWORD_RESET_NO_LOGIN") in response.data
     assert len(recorded_resets) == 1
 
     logout(clients)
@@ -167,7 +169,6 @@ def test_recoverable_json(app, client, get_message):
         response = client.post(
             "/reset",
             json=dict(email="whoknows@lp.com"),
-            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 400
         assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
@@ -177,7 +178,7 @@ def test_recoverable_json(app, client, get_message):
         # Test submitting a new password but leave out 'confirm'
         response = client.post(
             "/reset/" + token,
-            data='{"password": "newpassword"}',
+            json=dict(password="newpassword"),
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 400
@@ -189,12 +190,8 @@ def test_recoverable_json(app, client, get_message):
         response = client.post(
             "/reset/" + token + "?include_auth_token",
             json=dict(password="awesome sunset", password_confirm="awesome sunset"),
-            headers={"Content-Type": "application/json"},
         )
-        assert all(
-            k in response.json["response"]["user"]
-            for k in ["email", "authentication_token"]
-        )
+        assert not response.json["response"]
         assert len(recorded_resets) == 1
 
         # reset automatically logs user in
@@ -269,7 +266,6 @@ def test_recover_invalidates_session(app, client):
         response = client.post(
             "/reset",
             json=dict(email="matt@lp.com"),
-            headers={"Content-Type": "application/json"},
         )
         assert response.headers["Content-Type"] == "application/json"
 
@@ -280,12 +276,8 @@ def test_recover_invalidates_session(app, client):
     response = client.post(
         "/reset/" + token + "?include_auth_token",
         json=dict(password="awesome sunset", password_confirm="awesome sunset"),
-        headers={"Content-Type": "application/json"},
     )
-    assert all(
-        k in response.json["response"]["user"]
-        for k in ["email", "authentication_token"]
-    )
+    assert response.status_code == 200
 
     # try to access protected endpoint with old session - shouldn't work
     response = other_client.get("/profile")
@@ -394,7 +386,7 @@ def test_used_reset_token(client, get_message):
         follow_redirects=True,
     )
 
-    assert get_message("PASSWORD_RESET") in response.data
+    assert get_message("PASSWORD_RESET_NO_LOGIN") in response.data
 
     logout(client)
 
@@ -422,7 +414,7 @@ def test_reset_passwordless_user(client, get_message):
         follow_redirects=True,
     )
 
-    assert get_message("PASSWORD_RESET") in response.data
+    assert get_message("PASSWORD_RESET_NO_LOGIN") in response.data
 
 
 @pytest.mark.settings(reset_url="/custom_reset")
@@ -461,7 +453,6 @@ def test_spa_get(app, client):
         response = client.post(
             "/reset",
             json=dict(email="joe@lp.com"),
-            headers={"Content-Type": "application/json"},
         )
         assert response.headers["Content-Type"] == "application/json"
         assert "user" not in response.json["response"]
@@ -469,11 +460,14 @@ def test_spa_get(app, client):
 
     response = client.get("/reset/" + token)
     assert response.status_code == 302
+    # OWASP recommends setting this
+    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
     assert "/reset-redirect" == split.path
     qparams = dict(parse_qsl(split.query))
-    assert qparams["email"] == "joe@lp.com"
+    # we shouldn't be showing PII
+    assert "email" not in qparams
     assert qparams["token"] == token
 
 
@@ -503,7 +497,10 @@ def test_spa_get_bad_token(app, client, get_message):
         assert "localhost:8081" == split.netloc
         assert "/reset-error" == split.path
         qparams = dict(parse_qsl(split.query))
-        assert all(k in qparams for k in ["email", "error", "identity"])
+        # on error - no PII should be returned.
+        assert "error" in qparams
+        assert "identity" not in qparams
+        assert "email" not in qparams
 
         msg = get_message(
             "PASSWORD_RESET_EXPIRED", within="1 milliseconds", email="joe@lp.com"
@@ -678,3 +675,58 @@ def test_generic_with_extra(app, sqlalchemy_datastore):
         )
         assert len(response.json["response"]["errors"]) == 1
     assert len(flashes) == 0
+
+
+@pytest.mark.filterwarnings("ignore")
+@pytest.mark.settings(auto_login_after_reset=True, post_reset_view="/post_reset")
+def test_auto_login(client, get_message):
+    # test backwards compat flag (not OWASP recommended)
+    with capture_reset_password_requests() as requests:
+        response = client.post(
+            "/reset", data=dict(email="joe@lp.com"), follow_redirects=True
+        )
+    assert response.status_code == 200
+    token = requests[0]["token"]
+
+    # Test submitting a new password
+    with capture_flashes() as flashes:
+        response = client.post(
+            "/reset/" + token,
+            data=dict(password="awesome sunset", password_confirm="awesome sunset"),
+            follow_redirects=True,
+        )
+        assert b"Post Reset" in response.data
+    assert len(flashes) == 1
+    assert get_message("PASSWORD_RESET") == flashes[0]["message"].encode("utf-8")
+
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200
+
+
+@pytest.mark.filterwarnings("ignore")
+@pytest.mark.settings(auto_login_after_reset=True)
+def test_auto_login_json(client, get_message):
+    # test backwards compat flag (not OWASP recommended)
+    with capture_reset_password_requests() as requests:
+        response = client.post(
+            "/reset",
+            json=dict(email="joe@lp.com"),
+        )
+        assert response.headers["Content-Type"] == "application/json"
+
+    assert response.status_code == 200
+    token = requests[0]["token"]
+
+    # Test submitting a new password
+    response = client.post(
+        "/reset/" + token + "?include_auth_token",
+        json=dict(password="awesome sunset", password_confirm="awesome sunset"),
+    )
+    assert all(
+        k in response.json["response"]["user"]
+        for k in ["email", "authentication_token"]
+    )
+    # verify actually logged in
+    response = client.get("/profile", follow_redirects=False)
+    assert response.status_code == 200

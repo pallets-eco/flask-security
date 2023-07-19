@@ -55,6 +55,7 @@ from .forms import (
     build_form_from_request,
     build_form,
     form_errors_munge,
+    ResetPasswordForm,
     SendConfirmationForm,
     TwoFactorVerifyCodeForm,
     TwoFactorSetupForm,
@@ -557,7 +558,7 @@ def forgot_password():
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
 def reset_password(token):
-    """View function that handles a reset password request.
+    """View function that handles a reset password request (/reset/<token>).
 
     This is usually called via GET as part of an email link and redirects to
     a reset-password form
@@ -567,100 +568,100 @@ def reset_password(token):
     the 'forgot-password' form.
 
     In the case of non-form based configuration:
-    For GET normal case - redirect to RESET_VIEW?token={token}&email={email}
-    For GET invalid case - redirect to RESET_ERROR_VIEW?error={error}&email={email}
+    For GET normal case - redirect to RESET_VIEW?token={token}
+    For GET invalid case - redirect to RESET_ERROR_VIEW?error={error}
     For POST normal/successful case - return 200 with new authentication token
-    For POST error case return 400 with form.errors
+    For POST error case return 400
     """
 
     expired, invalid, user = reset_password_token_status(token)
-    form = build_form_from_request("reset_password_form")
+    form = t.cast(ResetPasswordForm, build_form_from_request("reset_password_form"))
     form.user = user
 
     if request.method == "GET":
-        if not user or invalid:
-            m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
+        if not user or invalid or expired:
+            if expired:
+                m, c = get_message(
+                    "PASSWORD_RESET_EXPIRED",
+                    within=cv("RESET_PASSWORD_WITHIN"),
+                )
+            else:
+                m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
             if _security.redirect_behavior == "spa":
                 return redirect(get_url(_security.reset_error_view, qparams={c: m}))
             do_flash(m, c)
             return redirect(url_for_security("forgot_password"))
-        if expired:
-            send_reset_password_instructions(user)
-            m, c = get_message(
-                "PASSWORD_RESET_EXPIRED",
-                email=user.email,
-                within=_security.reset_password_within,
-            )
-            if _security.redirect_behavior == "spa":
-                return redirect(
-                    get_url(
-                        _security.reset_error_view,
-                        qparams=user.get_redirect_qparams({c: m}),
-                    )
-                )
-            do_flash(m, c)
-            return redirect(url_for_security("forgot_password"))
 
         # All good - for SPA - redirect to the ``reset_view``
+        # Still - don't include PII such as identity and email if someone
+        # intercepts link they still won't necessarily know the login identity
+        # (even though they can change the password!).
+        # OWASP recommends setting no-referrer for requests with tokens.
         if _security.redirect_behavior == "spa":
-            return redirect(
-                get_url(
-                    _security.reset_view,
-                    qparams=user.get_redirect_qparams({"token": token}),
-                )
+            return (
+                redirect(
+                    get_url(
+                        _security.reset_view,
+                        qparams={"token": token},
+                    )
+                ),
+                {"Referrer-Policy": "no-referrer"},
             )
         # for forms - render the reset password form
-        return _security.render_template(
-            cv("RESET_PASSWORD_TEMPLATE"),
-            reset_password_form=form,
-            reset_password_token=token,
-            **_ctx("reset_password"),
+        return (
+            _security.render_template(
+                cv("RESET_PASSWORD_TEMPLATE"),
+                reset_password_form=form,
+                reset_password_token=token,
+                **_ctx("reset_password"),
+            ),
+            {"Referrer-Policy": "no-referrer"},
         )
 
     # This is the POST case.
-    m = None
-    if not user or invalid:
-        invalid = True
-        m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
-        if not _security._want_json(request):
-            do_flash(m, c)
+    if not user or invalid or expired:
+        if expired:
+            m, c = get_message(
+                "PASSWORD_RESET_EXPIRED", within=cv("RESET_PASSWORD_WITHIN")
+            )
+        else:
+            m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
 
-    if expired:
-        send_reset_password_instructions(user)
-        m, c = get_message(
-            "PASSWORD_RESET_EXPIRED",
-            email=user.email,
-            within=_security.reset_password_within,
-        )
-        if not _security._want_json(request):
-            do_flash(m, c)
-
-    if invalid or expired:
         if _security._want_json(request):
             form.form_errors.append(m)
             return base_render_json(form, include_user=False)
         else:
+            do_flash(m, c)
             return redirect(url_for_security("forgot_password"))
 
     if form.validate_on_submit():
         after_this_request(view_commit)
         update_password(user, form.password.data)
-        response = _security.two_factor_plugins.tf_enter(
-            form.user, False, "reset", next_loc=propagate_next(request.url)
-        )
-        if response:
-            return response
-        # two factor not required - just login
-        login_user(user, authn_via=["reset"])
-        if _security._want_json(request):
-            dummy_form = DummyForm(formdata=None)
-            dummy_form.user = user
-            return base_render_json(dummy_form, include_auth_token=True)
-        else:
-            do_flash(*get_message("PASSWORD_RESET"))
-            return redirect(
-                get_url(_security.post_reset_view) or get_url(_security.post_login_view)
+        if cv("AUTO_LOGIN_AFTER_RESET"):
+            # backwards compat - really shouldn't do this according to OWASP
+            response = _security.two_factor_plugins.tf_enter(
+                form.user, False, "reset", next_loc=propagate_next(request.url)
             )
+            if response:
+                return response
+            # two factor not required - just login
+            login_user(user, authn_via=["reset"])
+            if _security._want_json(request):
+                dummy_form = DummyForm(formdata=None)
+                dummy_form.user = user
+                return base_render_json(dummy_form, include_auth_token=True)
+            else:
+                do_flash(*get_message("PASSWORD_RESET"))
+                return redirect(
+                    get_url(_security.post_reset_view)
+                    or get_url(_security.post_login_view)
+                )
+        else:
+            if _security._want_json(request):
+                return _security._render_json({}, 200, None, None)
+            else:
+                do_flash(*get_message("PASSWORD_RESET_NO_LOGIN"))
+                return redirect(get_url(_security.post_reset_view) or get_url(".login"))
 
     # validation failure case - for forms - we try again including the token
     # for non-forms -  we just return errors and assume caller remembers token.

@@ -857,8 +857,9 @@ def test_opt_out_json(app, client):
     assert response.status_code == 200
 
 
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.recoverable()
-@pytest.mark.settings(two_factor_required=True)
+@pytest.mark.settings(two_factor_required=True, auto_login_after_reset=True)
 def test_recoverable(app, client, get_message):
     # make sure 'forgot password' doesn't bypass 2FA.
     # 'gal@lp.com' already setup for SMS

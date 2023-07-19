@@ -42,13 +42,14 @@ An example configuration::
     SECURITY_CONFIRMABLE = True
     SECURITY_REGISTERABLE = True
     SECURITY_UNIFIED_SIGNIN = True
+    SECURITY_WEBAUTHN = True
 
     # These need to be defined to handle redirects
     # As defined in the API documentation - they will receive the relevant context
     SECURITY_POST_CONFIRM_VIEW = "/confirmed"
     SECURITY_CONFIRM_ERROR_VIEW = "/confirm-error"
     SECURITY_RESET_VIEW = "/reset-password"
-    SECURITY_RESET_ERROR_VIEW = "/reset-password"
+    SECURITY_RESET_ERROR_VIEW = "/reset-password-error"
     SECURITY_REDIRECT_BEHAVIOR = "spa"
 
     # CSRF protection is critical for all session-based browser UIs

@@ -993,22 +993,38 @@ Recoverable
 
     Specifies the view to redirect to after a user successfully resets their password.
     This value can be set to a URL or an endpoint name. If this
-    value is ``None``, the user is redirected  to the value of ``SECURITY_POST_LOGIN_VIEW``.
+    value is ``None``, the user is redirected to the value of ``.login`` if
+    :py:data:`SECURITY_AUTO_LOGIN_AFTER_RESET` is ``False`` or :py:data:`SECURITY_POST_LOGIN_VIEW`
+    if ``True``
 
     Default: ``None``.
 
 .. py:data:: SECURITY_RESET_VIEW
 
     Specifies the view/URL to redirect to after a GET reset-password link.
-    This is only valid if ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``.
-    Query params in the redirect will contain the ``token`` and ``email``.
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``spa``.
+    Query params in the redirect will contain the ``token``.
 
     Default: ``None``.
+
+.. py:data:: SECURITY_AUTO_LOGIN_AFTER_RESET
+
+    If ``False`` then on successful reset the user will be required to signin again.
+    Note that the reset token is not valid after being used once.
+    If ``True``, then the user corresponding to the
+    reset token will be automatically signed in. Note: auto-login is contrary
+    to OWASP best security practices. This option is for backwards compatibility
+    and is deprecated.
+
+    Default: ``False``.
+
+    .. versionadded:: 5.3.0
+    .. deprecated:: 5.3.0
 
 .. py:data:: SECURITY_RESET_ERROR_VIEW
 
     Specifies the view/URL to redirect to after a GET reset-password link when there is an error.
-    This is only valid if ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``.
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``spa``.
     Query params in the redirect will contain the error.
 
     Default: ``None``.
@@ -1018,7 +1034,7 @@ Recoverable
     Specifies the amount of time a user has before their password reset link expires.
     Always pluralize the time unit for this value.
 
-    Default: ``"5 days"``.
+    Default: ``"1 days"``.
 
 .. py:data:: SECURITY_SEND_PASSWORD_RESET_EMAIL
 
@@ -1667,13 +1683,13 @@ Feature Flags
 -------------
 All feature flags. By default all are 'False'/not enabled.
 
-* ``SECURITY_CONFIRMABLE``
-* ``SECURITY_REGISTERABLE``
-* ``SECURITY_RECOVERABLE``
-* ``SECURITY_TRACKABLE``
-* ``SECURITY_PASSWORDLESS``
-* ``SECURITY_CHANGEABLE``
-* ``SECURITY_TWO_FACTOR``
+* :py:data:`SECURITY_CONFIRMABLE`
+* :py:data:`SECURITY_REGISTERABLE`
+* :py:data:`SECURITY_RECOVERABLE`
+* :py:data:`SECURITY_TRACKABLE`
+* :py:data:`SECURITY_PASSWORDLESS`
+* :py:data:`SECURITY_CHANGEABLE`
+* :py:data:`SECURITY_TWO_FACTOR`
 * :py:data:`SECURITY_UNIFIED_SIGNIN`
 * :py:data:`SECURITY_WEBAUTHN`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
@@ -1683,13 +1699,13 @@ URLs and Views
 --------------
 A list of all URLs and Views:
 
-* ``SECURITY_LOGIN_URL``
-* ``SECURITY_LOGOUT_URL``
+* :py:data:`SECURITY_LOGIN_URL`
+* :py:data:`SECURITY_LOGOUT_URL`
 * :py:data:`SECURITY_VERIFY_URL`
-* ``SECURITY_REGISTER_URL``
-* ``SECURITY_RESET_URL``
-* ``SECURITY_CHANGE_URL``
-* ``SECURITY_CONFIRM_URL``
+* :py:data:`SECURITY_REGISTER_URL`
+* :py:data:`SECURITY_RESET_URL`
+* :py:data:`SECURITY_CHANGE_URL`
+* :py:data:`SECURITY_CONFIRM_URL`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_URL`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_URL`
 * :py:data:`SECURITY_OAUTH_START_URL`
@@ -1700,17 +1716,17 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_TWO_FACTOR_RESCUE_URL`
 * :py:data:`SECURITY_TWO_FACTOR_ERROR_VIEW`
 * :py:data:`SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
-* ``SECURITY_POST_LOGIN_VIEW``
-* ``SECURITY_POST_LOGOUT_VIEW``
-* ``SECURITY_CONFIRM_ERROR_VIEW``
-* ``SECURITY_POST_REGISTER_VIEW``
-* ``SECURITY_POST_CONFIRM_VIEW``
-* ``SECURITY_POST_RESET_VIEW``
-* ``SECURITY_POST_CHANGE_VIEW``
-* ``SECURITY_UNAUTHORIZED_VIEW``
-* ``SECURITY_RESET_VIEW``
-* ``SECURITY_RESET_ERROR_VIEW``
-* ``SECURITY_LOGIN_ERROR_VIEW``
+* :py:data:`SECURITY_POST_LOGIN_VIEW`
+* :py:data:`SECURITY_POST_LOGOUT_VIEW`
+* :py:data:`SECURITY_CONFIRM_ERROR_VIEW`
+* :py:data:`SECURITY_POST_REGISTER_VIEW`
+* :py:data:`SECURITY_POST_CONFIRM_VIEW`
+* :py:data:`SECURITY_POST_RESET_VIEW`
+* :py:data:`SECURITY_POST_CHANGE_VIEW`
+* :py:data:`SECURITY_UNAUTHORIZED_VIEW`
+* :py:data:`SECURITY_RESET_VIEW`
+* :py:data:`SECURITY_RESET_ERROR_VIEW`
+* :py:data:`SECURITY_LOGIN_ERROR_VIEW`
 * :py:data:`SECURITY_US_SIGNIN_URL`
 * :py:data:`SECURITY_US_SETUP_URL`
 * :py:data:`SECURITY_US_SIGNIN_SEND_CODE_URL`
@@ -1800,6 +1816,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_PASSWORD_REQUIRED``
 * ``SECURITY_MSG_PASSWORD_RESET``
 * ``SECURITY_MSG_PASSWORD_RESET_EXPIRED``
+* ``SECURITY_MSG_PASSWORD_RESET_NO_LOGIN``
 * ``SECURITY_MSG_PASSWORD_RESET_REQUEST``
 * ``SECURITY_MSG_PASSWORD_TOO_SIMPLE``
 * ``SECURITY_MSG_PHONE_INVALID``

@@ -1332,7 +1332,7 @@ def test_can_add_password(app, client, get_message):
         follow_redirects=True,
     )
 
-    assert get_message("PASSWORD_RESET") in response.data
+    assert get_message("PASSWORD_RESET_NO_LOGIN") in response.data
 
     # authenticate with new password using standard/old login endpoint.
     response = authenticate(
