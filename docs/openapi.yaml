@@ -596,7 +596,7 @@ paths:
               description: |
                 On spa-success: SECURITY_POST_CONFIRM_VIEW?identity={identity}&email={email}&{level}={msg}
 
-                On spa-error-expired: SECURITY_CONFIRM_ERROR_VIEW?error={msg}&identity={identity}&email={email}
+                On spa-error-expired: SECURITY_CONFIRM_ERROR_VIEW?error={msg}
 
                 On spa-error-invalid-token: SECURITY_CONFIRM_ERROR_VIEW?error={msg}
 
@@ -604,7 +604,7 @@ paths:
                                  SECURITY_POST_LOGIN_VIEW
 
                 On form-success (no auto-login): SECURITY_POST_CONFIRM_VIEW or
-                                 SECURITY_LOGIN_URL
+                                 ".login"
 
                 On form-error-expired: SECURITY_CONFIRM_ERROR_VIEW or
                                        SECURITY_CONFIRM_URL

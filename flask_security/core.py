@@ -441,11 +441,7 @@ _default_messages = {
         "info",
     ),
     "CONFIRMATION_EXPIRED": (
-        _(
-            "You did not confirm your email within %(within)s. "
-            "New instructions to confirm your email have been sent "
-            "to %(email)s."
-        ),
+        _("You did not confirm your email within %(within)s. "),
         "error",
     ),
     "LOGIN_EXPIRED": (

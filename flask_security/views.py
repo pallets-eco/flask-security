@@ -433,12 +433,18 @@ def send_confirmation():
 
 
 def confirm_email(token):
-    """View function which handles a email confirmation request."""
+    """View function which handles an email confirmation request."""
 
     expired, invalid, user = confirm_email_token_status(token)
 
-    if not user or invalid:
-        m, c = get_message("INVALID_CONFIRMATION_TOKEN")
+    if not user or invalid or expired:
+        if expired:
+            m, c = get_message(
+                "CONFIRMATION_EXPIRED",
+                within=cv("CONFIRM_EMAIL_WITHIN"),
+            )
+        else:
+            m, c = get_message("INVALID_CONFIRMATION_TOKEN")
         if _security.redirect_behavior == "spa":
             return redirect(get_url(_security.confirm_error_view, qparams={c: m}))
         do_flash(m, c)
@@ -449,61 +455,70 @@ def confirm_email(token):
 
     already_confirmed = user.confirmed_at is not None
 
-    if expired or already_confirmed:
-        if already_confirmed:
-            m, c = get_message("ALREADY_CONFIRMED")
-        else:
-            send_confirmation_instructions(user)
-            m, c = get_message(
-                "CONFIRMATION_EXPIRED",
-                email=user.email,
-                within=_security.confirm_email_within,
-            )
+    if already_confirmed:
+        m, c = get_message("ALREADY_CONFIRMED")
 
         if _security.redirect_behavior == "spa":
-            return redirect(
-                get_url(
-                    _security.confirm_error_view,
-                    qparams=user.get_redirect_qparams({c: m}),
-                )
+            # No reason to expose identity info to anyone who has the link
+            return (
+                redirect(
+                    get_url(
+                        _security.confirm_error_view,
+                        qparams={c: m},
+                    )
+                ),
+                {"Referrer-Policy": "no-referrer"},
             )
 
         do_flash(m, c)
-        return redirect(
-            get_url(_security.confirm_error_view)
-            or url_for_security("send_confirmation")
+        return (
+            redirect(
+                get_url(_security.confirm_error_view)
+                or url_for_security("send_confirmation")
+            ),
+            {"Referrer-Policy": "no-referrer"},
         )
 
     confirm_user(user)
     after_this_request(view_commit)
+    m, c = get_message("EMAIL_CONFIRMED")
 
     if user != current_user:
         logout_user()
         if cv("AUTO_LOGIN_AFTER_CONFIRM"):
             # N.B. this is a (small) security risk if email went to wrong place.
-            # and you have the LOGIN_WITH_CONFIRMATION flag since in that case
+            # and you have the LOGIN_WITHOUT_CONFIRMATION flag since in that case
             # you can be logged in and doing stuff - but another person could
             # get the email.
             response = _security.two_factor_plugins.tf_enter(
                 user, False, "confirm", next_loc=propagate_next(request.url)
             )
             if response:
-                return response
+                do_flash(m, c)
+                return response, {"Referrer-Policy": "no-referrer"}
             login_user(user, authn_via=["confirm"])
 
-    m, c = get_message("EMAIL_CONFIRMED")
     if _security.redirect_behavior == "spa":
-        return redirect(
-            get_url(
-                _security.post_confirm_view, qparams=user.get_redirect_qparams({c: m})
-            )
+        return (
+            redirect(
+                get_url(
+                    _security.post_confirm_view,
+                    qparams=user.get_redirect_qparams({c: m}),
+                )
+            ),
+            {"Referrer-Policy": "no-referrer"},
         )
     do_flash(m, c)
-    return redirect(
-        get_url(_security.post_confirm_view)
-        or get_url(
-            _security.post_login_view if cv("AUTO_LOGIN_AFTER_CONFIRM") else ".login"
-        )
+    return (
+        redirect(
+            get_url(_security.post_confirm_view)
+            or get_url(
+                _security.post_login_view
+                if cv("AUTO_LOGIN_AFTER_CONFIRM")
+                else ".login"
+            )
+        ),
+        {"Referrer-Policy": "no-referrer"},
     )
 
 

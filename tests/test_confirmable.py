@@ -15,7 +15,6 @@ from wtforms.fields import StringField
 from wtforms.validators import Length
 
 from flask_security.core import Security, UserMixin
-from flask_security.confirmable import generate_confirmation_token
 from flask_security.signals import confirm_instructions_sent, user_confirmed
 from flask_security.forms import SendConfirmationForm
 
@@ -87,22 +86,14 @@ def test_confirmable_flag(app, clients, get_message):
 
     # Test confirm
     token = registrations[0]["confirm_token"]
-    response = clients.get("/confirm/" + token, follow_redirects=True)
-    assert get_message("EMAIL_CONFIRMED") in response.data
+    response = clients.get("/confirm/" + token, follow_redirects=False)
     assert len(recorded_confirms) == 1
+    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
+    response = clients.get(response.location)
+    assert get_message("EMAIL_CONFIRMED") in response.data
 
     # Test already confirmed
     response = clients.get("/confirm/" + token, follow_redirects=True)
-    assert get_message("ALREADY_CONFIRMED") in response.data
-    assert len(recorded_instructions_sent) == 2
-
-    # Test already confirmed and expired token
-    app.config["SECURITY_CONFIRM_EMAIL_WITHIN"] = "-1 days"
-    with app.test_request_context("/"):
-        email = registrations[0]["email"]
-        user = app.security.datastore.find_user(email=email)
-        expired_token = generate_confirmation_token(user)
-    response = clients.get("/confirm/" + expired_token, follow_redirects=True)
     assert get_message("ALREADY_CONFIRMED") in response.data
     assert len(recorded_instructions_sent) == 2
 
@@ -358,8 +349,9 @@ def test_confirm_redirect_to_post_confirm(client, get_message):
 
     token = registrations[0]["confirm_token"]
 
-    response = client.get("/confirm/" + token, follow_redirects=True)
-    assert b"Post Confirm" in response.data
+    response = client.get("/confirm/" + token, follow_redirects=False)
+    assert "/post_confirm" in response.location
+    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
 
 
 @pytest.mark.registerable()
@@ -367,8 +359,9 @@ def test_confirm_redirect_to_post_confirm(client, get_message):
     redirect_host="localhost:8081",
     redirect_behavior="spa",
     post_confirm_view="/confirm-redirect",
+    confirm_error_view="/confirm-error",
 )
-def test_spa_get(app, client):
+def test_spa_get(app, client, get_message):
     """
     Test 'single-page-application' style redirects
     This uses json only.
@@ -390,6 +383,17 @@ def test_spa_get(app, client):
         assert "/confirm-redirect" == split.path
         qparams = dict(parse_qsl(split.query))
         assert qparams["email"] == "dude@lp.com"
+        assert response.headers.get("Referrer-Policy", None) == "no-referrer"
+
+        response = client.get("/confirm/" + token)
+        split = urlsplit(response.headers["Location"])
+        qparams = dict(parse_qsl(split.query))
+        assert response.status_code == 302
+        assert "/confirm-error" in response.location
+        assert "email" not in qparams
+        assert get_message("ALREADY_CONFIRMED") in qparams["info"].encode("utf-8")
+        assert response.headers.get("Referrer-Policy", None) == "no-referrer"
+
     # Arguably for json we shouldn't have any - this is buried in register_user
     # but really shouldn't be.
     assert len(flashes) == 1
@@ -421,12 +425,10 @@ def test_spa_get_bad_token(app, client, get_message):
         assert "localhost:8081" == split.netloc
         assert "/confirm-error" == split.path
         qparams = dict(parse_qsl(split.query))
-        assert all(k in qparams for k in ["email", "error", "identity"])
-        assert qparams["identity"] == "dude@lp.com"
+        assert "email" not in qparams
+        assert "identity" not in qparams
 
-        msg = get_message(
-            "CONFIRMATION_EXPIRED", within="1 milliseconds", email="dude@lp.com"
-        )
+        msg = get_message("CONFIRMATION_EXPIRED", within="1 milliseconds")
         assert msg == qparams["error"].encode("utf-8")
 
         # Test mangled token
