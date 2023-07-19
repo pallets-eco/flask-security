@@ -9,7 +9,7 @@ Version 5.3.0
 Released TBD
 
 This is a minor version bump due to the (possible) incompatibility w.r.t.
-WebAuthn.
+WebAuthn, and changes to /reset.
 
 Fixes
 ++++++
@@ -21,7 +21,8 @@ Fixes
 - (:issue:`806`) Login no longer, by default, check for email deliverability.
 - (:issue:`791`) Token authentication is accepted on endpoints which only allow
   'session' as authentication-method. (N247S)
-- (:issue:`814`) /reset and /confirm and GENERIC_RESPONSES and addtional form args don't mix.
+- (:issue:`814`) /reset and /confirm and GENERIC_RESPONSES and additional form args don't mix.
+- (:issue:`281`) Reset password can be exploited and other OWASP improvements.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -29,6 +30,19 @@ Backwards Compatibility Concerns
 - To align with the W3C WebAuthn Level2 and 3 spec - transports are now part of the registration response.
   This has been changed BOTH in the server code (using py_webauth data structures) as well as the sample
   javascript code. If an application has their own javascript front end code - it might need to be changed.
+- Reset password was changed to improve OWASP compliance and reduce possible exploitation:
+
+    - A new email (with new token) is no longer sent upon expired token. Users must restart
+      the reset password process.
+    - The user is no longer automatically logged in upon successful password reset. For
+      backwards compatibility :py:data:`SECURITY_AUTO_LOGIN_AFTER_RESET` can be set to ``True``.
+      Note that this compatibility feature is deprecated and will be removed in a future release.
+    - Identity information (identity, email) is no longer sent as part of the URL redirect
+      query params.
+    - The SECURITY_MSG_PASSWORD_RESET_EXPIRED message no longer contains the user's identity/email.
+    - The default for :py:data:`SECURITY_RESET_PASSWORD_WITHIN` has been changed from `5 days` to `1 days`.
+    - The response to GET /reset/<token> sets the HTTP header `Referrer-Policy` to `no-referrer` as suggested
+      by OWASP.
 
 Version 5.2.0
 -------------

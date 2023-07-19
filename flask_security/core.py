@@ -246,9 +246,10 @@ _default_config: t.Dict[str, t.Any] = {
     "OAUTH_START_URL": "/login/oauthstart",
     "OAUTH_RESPONSE_URL": "/login/oauthresponse",
     "CONFIRM_EMAIL_WITHIN": "5 days",
-    "RESET_PASSWORD_WITHIN": "5 days",
+    "RESET_PASSWORD_WITHIN": "1 days",
     "LOGIN_WITHOUT_CONFIRMATION": False,
     "AUTO_LOGIN_AFTER_CONFIRM": True,
+    "AUTO_LOGIN_AFTER_RESET": False,
     "EMAIL_SENDER": LocalProxy(
         lambda: current_app.config.get("MAIL_DEFAULT_SENDER", "no-reply@localhost")
     ),
@@ -430,10 +431,7 @@ _default_messages = {
         "info",
     ),
     "PASSWORD_RESET_EXPIRED": (
-        _(
-            "You did not reset your password within %(within)s. "
-            "New instructions have been sent to %(email)s."
-        ),
+        _("You did not reset your password within %(within)s. "),
         "error",
     ),
     "INVALID_RESET_PASSWORD_TOKEN": (_("Invalid reset password token."), "error"),
@@ -487,6 +485,13 @@ _default_messages = {
         _(
             "You successfully reset your password and you have been logged in "
             "automatically."
+        ),
+        "success",
+    ),
+    "PASSWORD_RESET_NO_LOGIN": (
+        _(
+            "You successfully reset your password."
+            " Please authenticate using your new password."
         ),
         "success",
     ),
@@ -1446,6 +1451,13 @@ class Security:
                 "The passwordless feature was deprecated in Version 5.0.0"
                 " and will be removed in the future. Please use the Unified Signin"
                 " feature instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if cv("AUTO_LOGIN_AFTER_RESET", app=app):
+            warnings.warn(
+                "The auto-login after successful password reset functionality"
+                "has been deprecated and will be removed in a future release.",
                 DeprecationWarning,
                 stacklevel=2,
             )

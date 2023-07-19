@@ -190,9 +190,9 @@ Password Reset/Recovery
 
 Password reset and recovery is available for when a user forgets their
 password. Flask-Security sends an email to the user with a link to a view which
-allows them to reset their password. Once the password is reset they are automatically
-logged in and can use the new password from then on. Password reset links can
-be configured to expire after a specified amount of time.
+allows them to reset their password. Once the password is reset they are redirected to
+the login page where they need to authenticate using the new password.
+Password reset links can be configured to expire after a specified amount of time.
 
 As with password change - this will update the the user's ``fs_uniquifier`` attribute
 which will invalidate all existing sessions AND (by default) all authentication tokens.

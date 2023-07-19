@@ -24,7 +24,7 @@ info:
 paths:
   /login:
     get:
-      summary: Retrieve login form and/or user information
+      summary: GET login form and/or user information
       responses:
         200:
           description: >
@@ -111,7 +111,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /login(passwordless):
     get:
-      summary: Return passwordless login form
+      summary: GET passwordless login form
       responses:
         200:
           description: Passwordless login form
@@ -216,7 +216,7 @@ paths:
                         description: Http status code
   /verify:
     get:
-      summary: Basic re-authentication.
+      summary: GET Basic re-authentication form
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
         this endpoint will be called to request an already signed in user to re-authenticate.
@@ -279,7 +279,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /register:
     get:
-      summary: Return register form
+      summary: GET register form
       responses:
         200:
           description: Register form
@@ -342,7 +342,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /change:
     get:
-      summary: Return change password form
+      summary: GET change password form
       responses:
         200:
           description: change password form
@@ -408,7 +408,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /reset:
     get:
-      summary: Return reset password form
+      summary: GET reset password form
       responses:
         200:
           description: Reset password form
@@ -482,9 +482,9 @@ paths:
           headers:
             Location:
               description: |
-                On spa-success: SECURITY_RESET_VIEW?token={token}&identity={identity}&email={email}
+                On spa-success: SECURITY_RESET_VIEW?token={token}
 
-                On spa-error-expired: SECURITY_RESET_ERROR_VIEW?error={msg}&identity={identity}&email={email}
+                On spa-error-expired: SECURITY_RESET_ERROR_VIEW?error={msg}
 
                 On spa-error-invalid-token: SECURITY_RESET_ERROR_VIEW?error={msg}
 
@@ -493,8 +493,6 @@ paths:
                 type: string
     post:
       summary: Reset password
-      parameters:
-        - $ref: "#/components/parameters/include_auth_token"
       requestBody:
         required: true
         content:
@@ -515,14 +513,14 @@ paths:
                 example: render_template(SECURITY_RESET_PASSWORD_TEMPLATE) with error values
             application/json:
               schema:
-                $ref: "#/components/schemas/JsonResponseWithToken"
+                $ref: "#/components/schemas/BaseJsonResponse"
         302:
           description: Password has been reset or validation error (non-json)
           headers:
             Location:
               description: |
                 On success: redirect(SECURITY_POST_RESET_VIEW) or
-                    redirect(SECURITY_POST_LOGIN_VIEW)
+                    redirect(".login")
 
                 On invalid/expired token: redirect(SECURITY_FORGOT_PASSWORD)
               schema:
@@ -535,7 +533,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /confirm:
     get:
-      summary: Return send confirmation form
+      summary: GET send confirmation form
       responses:
         200:
           description: Confirmation form
@@ -617,7 +615,7 @@ paths:
                 type: string
   /us-signin:
     get:
-      summary: Unified Sign In.
+      summary: GET Unified Sign In form
       responses:
         200:
           description: Sign in form
@@ -639,7 +637,7 @@ paths:
                     type: string
                     description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
     post:
-      summary: Unified Sign In.
+      summary: Unified Sign In
       parameters:
         - $ref: "#/components/parameters/include_auth_token"
       requestBody:
@@ -721,7 +719,7 @@ paths:
 
   /us-verify:
     get:
-      summary: Unified sign in re-authentication.
+      summary: GET Unified sign in re-authentication form/information
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
         this endpoint will be called to request an already signed in user to re-authenticate.
@@ -832,7 +830,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /us-setup:
     get:
-      summary: Unified sign in setup passcode options.
+      summary: GET Unified sign in setup passcode options.
       responses:
         200:
           description: Setup form
@@ -1006,7 +1004,7 @@ paths:
 
   /tf-setup:
     get:
-      summary: Two-factor authentication setup.
+      summary: GET Two-factor authentication setup form/information
       responses:
         200:
           description: Setup form
@@ -1082,7 +1080,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /tf-validate:
     get:
-      summary: Retrieve form based on current two-factor state.
+      summary: GET current two-factor state form
       responses:
         200:
           description: Code validation
@@ -1350,7 +1348,7 @@ paths:
 
   /mf-recovery:
     get:
-      summary: Get recovery code form.
+      summary: GET recovery code form.
       description: >
         If a user has two-factor authentication enabled, they can generate and
         use a recovery code if they lose or otherwise can't use their second factor
@@ -1406,7 +1404,7 @@ paths:
 
   /wan-register:
     get:
-      summary: Register a new WebAuthn key - Step 1
+      summary: GET Register WebAuthn form
       responses:
         200:
           description: Register WebAuthn form
@@ -1519,7 +1517,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /wan-signin:
     get:
-      summary: Sign in using a WebAuthn key - Step 1
+      summary: GET WebAuthn sign in form
       responses:
         200:
           description: Sign in with WebAuthn form
@@ -1627,7 +1625,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /wan-delete:
     get:
-      summary: Delete an existing WebAuthn key
+      summary: GET Delete WebAuthn key form
       responses:
         200:
           description: Delete an existing WebAuthn Key
@@ -1678,7 +1676,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /wan-verify:
     get:
-      summary: Re-authenticate using a WebAuthn Key.
+      summary: GET Re-authenticate using WebAuthn form
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
         this endpoint can be used to re-authenticate with a previously registered WebAuthn Key.
