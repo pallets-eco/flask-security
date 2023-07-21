@@ -23,7 +23,7 @@ def test_verify_password_bcrypt_double_hash(app, sqlalchemy_datastore):
             "SECURITY_PASSWORD_HASH": "bcrypt",
             "SECURITY_PASSWORD_SALT": "salty",
             "SECURITY_PASSWORD_SINGLE_HASH": False,
-        }
+        },
     )
     with app.app_context():
         assert verify_password("pass", hash_password("pass"))
@@ -37,7 +37,7 @@ def test_verify_password_bcrypt_single_hash(app, sqlalchemy_datastore):
             "SECURITY_PASSWORD_HASH": "bcrypt",
             "SECURITY_PASSWORD_SALT": None,
             "SECURITY_PASSWORD_SINGLE_HASH": True,
-        }
+        },
     )
     with app.app_context():
         assert verify_password("pass", hash_password("pass"))
@@ -57,7 +57,7 @@ def test_verify_password_single_hash_list(app, sqlalchemy_datastore):
                 "django_pbkdf2_sha256",
                 "plaintext",
             ],
-        }
+        },
     )
     with app.app_context():
         # double hash
@@ -76,7 +76,7 @@ def test_verify_password_backward_compatibility(app, sqlalchemy_datastore):
             "SECURITY_PASSWORD_HASH": "bcrypt",
             "SECURITY_PASSWORD_SINGLE_HASH": False,
             "SECURITY_PASSWORD_SCHEMES": ["bcrypt", "plaintext"],
-        }
+        },
     )
     with app.app_context():
         # double hash
@@ -94,7 +94,7 @@ def test_verify_password_bcrypt_rounds_too_low(app, sqlalchemy_datastore):
                 "SECURITY_PASSWORD_HASH": "bcrypt",
                 "SECURITY_PASSWORD_SALT": "salty",
                 "SECURITY_PASSWORD_HASH_OPTIONS": {"bcrypt": {"rounds": 3}},
-            }
+            },
         )
     assert all(s in str(exc_msg.value) for s in ["rounds", "too low"])
 
@@ -107,7 +107,7 @@ def test_login_with_bcrypt_enabled(app, sqlalchemy_datastore):
             "SECURITY_PASSWORD_HASH": "bcrypt",
             "SECURITY_PASSWORD_SALT": "salty",
             "SECURITY_PASSWORD_SINGLE_HASH": False,
-        }
+        },
     )
     response = authenticate(app.test_client(), follow_redirects=True)
     assert b"Home Page" in response.data
@@ -122,7 +122,7 @@ def test_missing_hash_salt_option(app, sqlalchemy_datastore):
                 "SECURITY_PASSWORD_HASH": "bcrypt",
                 "SECURITY_PASSWORD_SALT": None,
                 "SECURITY_PASSWORD_SINGLE_HASH": False,
-            }
+            },
         )
 
 
@@ -130,7 +130,7 @@ def test_verify_password_argon2(app, sqlalchemy_datastore):
     init_app_with_options(
         app,
         sqlalchemy_datastore,
-        **{"SECURITY_PASSWORD_HASH": "argon2", "SECURITY_PASSWORD_SINGLE_HASH": False}
+        **{"SECURITY_PASSWORD_HASH": "argon2", "SECURITY_PASSWORD_SINGLE_HASH": False},
     )
     with app.app_context():
         hashed_pwd = hash_password("pass")
@@ -152,7 +152,7 @@ def test_verify_password_argon2_opts(app, sqlalchemy_datastore):
                 "argon2__salt_size": 16,
                 "argon2__hash_len": 16,
             },
-        }
+        },
     )
     with app.app_context():
         hashed_pwd = hash_password("pass")
@@ -169,7 +169,7 @@ def test_bcrypt_speed(app, sqlalchemy_datastore):
             "SECURITY_PASSWORD_HASH": "bcrypt",
             "SECURITY_PASSWORD_SALT": "salty",
             "SECURITY_PASSWORD_SINGLE_HASH": False,
-        }
+        },
     )
     with app.app_context():
         print(timeit.timeit(lambda: hash_password("pass"), number=100))
@@ -183,7 +183,7 @@ def test_argon2_speed(app, sqlalchemy_datastore):
         **{
             "SECURITY_PASSWORD_HASH": "argon2",
             "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {"argon2__rounds": 10},
-        }
+        },
     )
     with app.app_context():
         print(

@@ -1,7 +1,8 @@
 -r docs.txt
 -r tests.txt
 mypy
-wheel
+build
+check-wheel-contents
 psycopg2
 pymysql
 pre-commit

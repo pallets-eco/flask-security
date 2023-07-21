@@ -39,13 +39,12 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: update pip
         run: |
-          pip install -U wheel setuptools
           python -m pip install -U pip
       - name: cache pip
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}-${{ hashFiles('requirements_low/*.txt') }}
+          key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
       - name: run tests
         run: |
           pip install tox
@@ -60,7 +59,6 @@ jobs:
             python-version: "3.9"
         - name: update pip
           run: |
-            pip install -U wheel setuptools
             python -m pip install -U pip
         - name: Style, docs, mypy
           run: |
@@ -79,7 +77,6 @@ jobs:
             python-version: "3.9"
         - name: update pip
           run: |
-            pip install -U wheel setuptools
             python -m pip install -U pip
         - name: Coverage
           run: |
@@ -114,13 +111,12 @@ jobs:
             python-version: "3.9"
         - name: update pip
           run: |
-            pip install -U wheel setuptools
             python -m pip install -U pip
         - name: cache pip
           uses: actions/cache@v3
           with:
             path: ~/.cache/pip
-            key: pip-${{ runner.os }}-${{ hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
+            key: pip-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
         - name: Postgres
           run: |
             pip install tox

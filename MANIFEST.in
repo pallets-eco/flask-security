@@ -9,6 +9,7 @@ include pytest.ini
 include tox.ini
 include requirements/*.txt
 include flask_security/py.typed
+graft examples
 graft docs
 graft flask_security/templates
 graft flask_security/translations
@@ -20,5 +21,4 @@ recursive-exclude tests/.pytest_cache *
 exclude .coverage tests/.coverage
 prune docs/_build
 prune scripts
-prune examples
 global-exclude *.pyc

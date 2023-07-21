@@ -76,7 +76,8 @@ these steps:
   #. When done, verify unit tests, syntax etc. all pass::
 
         $ pip install -r requirements/tests.txt
-        $ python setup.py build_sphinx compile_catalog
+        $ sphinx-build docs docs/_build/html
+        $ tox -e compile_catalog
         $ pytest tests
         $ pre-commit run --all-files
 
@@ -130,9 +131,9 @@ Updating Translations
 If you change any translatable strings (such as new messages, modified forms, etc.)
 you need to re-generate the translations::
 
-    $ python setup.py extract_messages
-    $ python setup.py update_catalog
-    $ python setup.py compile_catalog
+    $ tox -e extract_messages
+    $ tox -e update_catalog
+    $ tox -e compile_catalog
 
 Testing
 -------

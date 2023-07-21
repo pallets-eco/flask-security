@@ -441,7 +441,7 @@ def us_signin_send_code() -> "ResponseValue":
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             skip_loginmenu=True,
-            **_security._run_ctx_processor("us_signin")
+            **_security._run_ctx_processor("us_signin"),
         )
     elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
         # TODO - this suppresses the error if they don't select ANY send code option.
@@ -476,7 +476,7 @@ def us_signin_send_code() -> "ResponseValue":
         available_methods=cv("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_loginmenu=True,
-        **_security._run_ctx_processor("us_signin")
+        **_security._run_ctx_processor("us_signin"),
     )
 
 
@@ -510,7 +510,7 @@ def us_verify_send_code() -> "ResponseValue":
             code_methods=code_methods,
             chosen_method=form.chosen_method.data,
             skip_login_menu=True,
-            **_security._run_ctx_processor("us_verify")
+            **_security._run_ctx_processor("us_verify"),
         )
 
     # Here on failed validation
@@ -523,7 +523,7 @@ def us_verify_send_code() -> "ResponseValue":
         available_methods=cv("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_login_menu=True,
-        **_security._run_ctx_processor("us_verify")
+        **_security._run_ctx_processor("us_verify"),
     )
 
 
@@ -620,7 +620,7 @@ def us_signin() -> "ResponseValue":
         available_methods=cv("US_ENABLED_METHODS"),
         code_methods=code_methods,
         skip_login_menu=True,
-        **_security._run_ctx_processor("us_signin")
+        **_security._run_ctx_processor("us_signin"),
     )
 
 
@@ -667,7 +667,7 @@ def us_verify() -> "ResponseValue":
         skip_login_menu=True,
         has_webauthn_verify_credential=webauthn_available,
         wan_verify_form=build_form("wan_verify_form"),
-        **_security._run_ctx_processor("us_verify")
+        **_security._run_ctx_processor("us_verify"),
     )
 
 
@@ -843,7 +843,7 @@ def us_setup() -> "ResponseValue":
                     active_methods=active_methods,
                     setup_methods=setup_methods,
                     us_setup_form=form,
-                    **_security._run_ctx_processor("us_setup")
+                    **_security._run_ctx_processor("us_setup"),
                 )
 
             state_token = _security.us_setup_serializer.dumps(state)
@@ -884,7 +884,7 @@ def us_setup() -> "ResponseValue":
             us_setup_validate_form=build_form("us_setup_validate_form"),
             **qrcode_values,
             state=state_token,
-            **_security._run_ctx_processor("us_setup")
+            **_security._run_ctx_processor("us_setup"),
         )
 
     # Get here on initial new setup (GET)
@@ -909,7 +909,7 @@ def us_setup() -> "ResponseValue":
         active_methods=active_methods,
         setup_methods=setup_methods,
         us_setup_form=form,
-        **_security._run_ctx_processor("us_setup")
+        **_security._run_ctx_processor("us_setup"),
     )
 
 

@@ -445,7 +445,7 @@ def webauthn_register() -> "ResponseValue":
             wan_register_response_form=build_form("wan_register_response_form"),
             wan_state=state_token,
             credential_options=json.dumps(co_json),
-            **_security._run_ctx_processor("wan_register")
+            **_security._run_ctx_processor("wan_register"),
         )
 
     current_creds = []
@@ -481,7 +481,7 @@ def webauthn_register() -> "ResponseValue":
         wan_register_form=form,
         wan_delete_form=build_form("wan_delete_form"),
         registered_credentials=current_creds,
-        **_security._run_ctx_processor("wan_register")
+        **_security._run_ctx_processor("wan_register"),
     )
 
 
@@ -624,7 +624,7 @@ def webauthn_signin() -> "ResponseValue":
             wan_state=state_token,
             credential_options=json.dumps(o_json),
             is_secondary=is_secondary,
-            **_security._run_ctx_processor("wan_signin")
+            **_security._run_ctx_processor("wan_signin"),
         )
 
     if _security._want_json(request):
@@ -634,7 +634,7 @@ def webauthn_signin() -> "ResponseValue":
         wan_signin_form=form,
         wan_signin_response_form=build_form("wan_signin_response_form"),
         is_secondary=is_secondary,
-        **_security._run_ctx_processor("wan_signin")
+        **_security._run_ctx_processor("wan_signin"),
     )
 
 
@@ -786,7 +786,7 @@ def webauthn_verify() -> "ResponseValue":
             wan_signin_response_form=build_form("wan_signin_response_form"),
             wan_state=state_token,
             credential_options=json.dumps(o_json),
-            **_security._run_ctx_processor("wan_verify")
+            **_security._run_ctx_processor("wan_verify"),
         )
 
     if _security._want_json(request):
@@ -796,7 +796,7 @@ def webauthn_verify() -> "ResponseValue":
         wan_verify_form=form,
         wan_signin_response_form=build_form("wan_signin_response_form"),
         skip_login_menu=True,
-        **_security._run_ctx_processor("wan_verify")
+        **_security._run_ctx_processor("wan_verify"),
     )
 
 
