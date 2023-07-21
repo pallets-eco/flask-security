@@ -15,7 +15,6 @@ jobs:
           python-version: "3.9"
       - name: update pip
         run: |
-          pip install -U wheel setuptools twine
           python -m pip install -U pip
       - name: Create dist
         run: |

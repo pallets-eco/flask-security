@@ -23,7 +23,8 @@ Fixes
   'session' as authentication-method. (N247S)
 - (:issue:`814`) /reset and /confirm and GENERIC_RESPONSES and additional form args don't mix.
 - (:issue:`281`) Reset password can be exploited and other OWASP improvements.
-- (:pr:`xxx`) Confirmation can be exploited and other OWASP improvements.
+- (:pr:`817`) Confirmation can be exploited and other OWASP improvements.
+- (:pr:`xxx`) Convert to pyproject.toml, build, remove setup.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

@@ -266,7 +266,7 @@ def test_passwordless_and_two_factor_configuration_mismatch(app, sqlalchemy_data
         init_app_with_options(
             app,
             sqlalchemy_datastore,
-            **{"SECURITY_TWO_FACTOR": True, "SECURITY_TWO_FACTOR_ENABLED_METHODS": []}
+            **{"SECURITY_TWO_FACTOR": True, "SECURITY_TWO_FACTOR_ENABLED_METHODS": []},
         )
 
 
@@ -294,7 +294,7 @@ def test_change_hash_type(app, sqlalchemy_datastore):
             "SECURITY_PASSWORD_HASH": "plaintext",
             "SECURITY_PASSWORD_SALT": None,
             "SECURITY_PASSWORD_SCHEMES": ["bcrypt", "plaintext"],
-        }
+        },
     )
 
     app.config["SECURITY_PASSWORD_HASH"] = "bcrypt"
@@ -1308,7 +1308,7 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
             "APPLICATION_ROOT": "/root",
             "SECURITY_POST_LOGIN_VIEW": "/post_login",
             "SECURITY_POST_LOGOUT_VIEW": "/post_logout",
-        }
+        },
     )
     client = app.test_client()
 
