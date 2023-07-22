@@ -49,6 +49,20 @@ def json_authenticate(client, email="matt@lp.com", password="password", endpoint
     return client.post(ep, content_type="application/json", data=data)
 
 
+def is_authenticated(client, get_message):
+    # Return True is 'client' is authenticated.
+    # Return False is not
+    # Raise ValueError not certain...
+    response = client.get("/profile", headers={"accept": "application/json"})
+    if response.status_code == 200:
+        return True
+    if response.status_code == 401 and response.json["response"]["errors"][0].encode(
+        "utf-8"
+    ) == get_message("UNAUTHENTICATED"):
+        return False
+    raise ValueError("Failed to figure out if authenticated")
+
+
 def verify_token(client_nc, token, status=None):
     # Use passed auth token in API that requires auth and verify status.
     # Pass in a client_nc to get valid results.

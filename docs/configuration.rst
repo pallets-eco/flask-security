@@ -901,12 +901,13 @@ Confirmable
     Default: ``None``.
 .. py:data:: SECURITY_AUTO_LOGIN_AFTER_CONFIRM
 
-    If ``False`` then on confirmation  the user will be required to login again.
+    If ``True``, then the user corresponding to the confirmation token will be automatically signed in.
+    If ``False`` (the default) then the user will be requires to authenticate using the usual mechanism(s).
     Note that the confirmation token is not valid after being used once.
-    If ``True``, then the user corresponding to the
-    confirmation token will be automatically logged in.
 
-    Default: ``True``.
+    Default: ``False``.
+
+    .. deprecated:: 5.3.0
 .. py:data:: SECURITY_LOGIN_WITHOUT_CONFIRMATION
 
     Specifies if a user may login before confirming their email when
@@ -916,8 +917,7 @@ Confirmable
 .. py:data:: SECURITY_REQUIRES_CONFIRMATION_ERROR_VIEW
 
     Specifies a redirect page if the users tries to login, reset password or us-signin with an unconfirmed account.
-    If an URL endpoint is specified, flashes an error messages and passes user email as an argument.
-    For us-signin, no argument is specified: it simply flashes the error message and redirects.
+    If an URL endpoint is specified, flashes an error messages and redirects.
     Default behavior is to reload the form with an error message without redirecting to an other page.
 
     Default: ``None``.

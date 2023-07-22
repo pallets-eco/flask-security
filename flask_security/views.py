@@ -433,7 +433,10 @@ def send_confirmation():
 
 
 def confirm_email(token):
-    """View function which handles an email confirmation request."""
+    """
+    View function which handles an email confirmation request.
+    This is always a GET from an email - so for 'spa' must always redirect.
+    """
 
     expired, invalid, user = confirm_email_token_status(token)
 
@@ -454,7 +457,6 @@ def confirm_email(token):
         )
 
     already_confirmed = user.confirmed_at is not None
-
     if already_confirmed:
         m, c = get_message("ALREADY_CONFIRMED")
 
@@ -483,6 +485,8 @@ def confirm_email(token):
     after_this_request(view_commit)
     m, c = get_message("EMAIL_CONFIRMED")
 
+    # ? The only case where user is logged in already would be if
+    # LOGIN_WITHOUT_CONFIRMATION
     if user != current_user:
         logout_user()
         if cv("AUTO_LOGIN_AFTER_CONFIRM"):
@@ -490,6 +494,7 @@ def confirm_email(token):
             # and you have the LOGIN_WITHOUT_CONFIRMATION flag since in that case
             # you can be logged in and doing stuff - but another person could
             # get the email.
+            # Note also this goes against OWASP recommendations.
             response = _security.two_factor_plugins.tf_enter(
                 user, False, "confirm", next_loc=propagate_next(request.url)
             )

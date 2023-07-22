@@ -248,7 +248,7 @@ _default_config: t.Dict[str, t.Any] = {
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "1 days",
     "LOGIN_WITHOUT_CONFIRMATION": False,
-    "AUTO_LOGIN_AFTER_CONFIRM": True,
+    "AUTO_LOGIN_AFTER_CONFIRM": False,
     "AUTO_LOGIN_AFTER_RESET": False,
     "EMAIL_SENDER": LocalProxy(
         lambda: current_app.config.get("MAIL_DEFAULT_SENDER", "no-reply@localhost")
@@ -1453,6 +1453,13 @@ class Security:
         if cv("AUTO_LOGIN_AFTER_RESET", app=app):
             warnings.warn(
                 "The auto-login after successful password reset functionality"
+                "has been deprecated and will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if cv("AUTO_LOGIN_AFTER_CONFIRM", app=app):
+            warnings.warn(
+                "The auto-login after successful confirmation functionality"
                 "has been deprecated and will be removed in a future release.",
                 DeprecationWarning,
                 stacklevel=2,
