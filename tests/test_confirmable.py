@@ -22,6 +22,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_registrations,
+    is_authenticated,
     logout,
     populate_data,
 )
@@ -91,6 +92,8 @@ def test_confirmable_flag(app, clients, get_message):
     assert response.headers.get("Referrer-Policy", None) == "no-referrer"
     response = clients.get(response.location)
     assert get_message("EMAIL_CONFIRMED") in response.data
+    # make sure not logged in
+    assert not is_authenticated(clients, get_message)
 
     # Test already confirmed
     response = clients.get("/confirm/" + token, follow_redirects=True)
@@ -98,8 +101,6 @@ def test_confirmable_flag(app, clients, get_message):
     assert len(recorded_instructions_sent) == 2
 
     # Test already confirmed when asking for confirmation instructions
-    logout(clients)
-
     response = clients.get("/confirm")
     assert response.status_code == 200
 
@@ -290,25 +291,34 @@ def test_confirmation_different_user_when_logged_in_no_auto(client, get_message)
 @pytest.mark.registerable()
 @pytest.mark.settings(login_without_confirmation=True)
 def test_confirmation_different_user_when_logged_in(client, get_message):
+    # with default no-auto-login - first user should get logged out and second
+    # should be properly confirmed (but not logged in)
     e1 = "dude@lp.com"
     e2 = "lady@lp.com"
 
     with capture_registrations() as registrations:
         for e in e1, e2:
             data = dict(email=e, password="awesome sunset", next="")
-            client.post("/register", data=data)
+            response = client.post("/register", data=data)
+            assert is_authenticated(client, get_message)
             logout(client)
 
     token1 = registrations[0]["confirm_token"]
     token2 = registrations[1]["confirm_token"]
 
-    client.get("/confirm/" + token1, follow_redirects=True)
-    logout(client)
-    authenticate(client, email=e1)
+    response = client.get("/confirm/" + token1, follow_redirects=False)
+    assert "/login" in response.location
+    authenticate(client, email=e1, password="awesome sunset")
+    assert is_authenticated(client, get_message)
 
     response = client.get("/confirm/" + token2, follow_redirects=True)
     assert get_message("EMAIL_CONFIRMED") in response.data
-    assert b"Welcome lady@lp.com" in response.data
+
+    # first user should have been logged out
+    assert not is_authenticated(client, get_message)
+
+    authenticate(client, email=e2, password="awesome sunset")
+    assert is_authenticated(client, get_message)
 
 
 @pytest.mark.registerable()
@@ -451,10 +461,11 @@ def test_spa_get_bad_token(app, client, get_message):
     assert len(flashes) == 1
 
 
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.two_factor()
 @pytest.mark.registerable()
-@pytest.mark.settings(two_factor_required=True)
-def test_two_factor(app, client):
+@pytest.mark.settings(two_factor_required=True, auto_login_after_confirm=True)
+def test_two_factor(app, client, get_message):
     """If two-factor is enabled, the confirm shouldn't login, but start the
     2-factor setup.
     """
@@ -462,19 +473,17 @@ def test_two_factor(app, client):
         data = dict(email="mary@lp.com", password="password", next="")
         client.post("/register", data=data, follow_redirects=True)
 
-    # make sure not logged in
-    response = client.get("/profile")
-    assert response.status_code == 302
-    assert "/login?next=%2Fprofile" in response.location
+    assert not is_authenticated(client, get_message)
 
     token = registrations[0]["confirm_token"]
     response = client.get("/confirm/" + token, follow_redirects=False)
     assert "tf-setup" in response.location
 
 
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.two_factor()
 @pytest.mark.registerable()
-@pytest.mark.settings(two_factor_required=True)
+@pytest.mark.settings(two_factor_required=True, auto_login_after_confirm=True)
 def test_two_factor_json(app, client, get_message):
     with capture_registrations() as registrations:
         data = dict(email="dude@lp.com", password="password")
@@ -484,12 +493,7 @@ def test_two_factor_json(app, client, get_message):
         assert len(response.json["response"]) == 2
         assert all(k in response.json["response"] for k in ["csrf_token", "user"])
 
-    # make sure not logged in
-    response = client.get("/profile", headers={"accept": "application/json"})
-    assert response.status_code == 401
-    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
-        "UNAUTHENTICATED"
-    )
+    assert not is_authenticated(client, get_message)
 
     token = registrations[0]["confirm_token"]
     response = client.get("/confirm/" + token, headers={"Accept": "application/json"})
@@ -514,9 +518,7 @@ def test_email_not_identity(app, client, get_message):
     token = registrations[0]["confirm_token"]
     response = client.get("/confirm/" + token, headers={"Accept": "application/json"})
     assert response.status_code == 302
-    assert "/" in response.location
-
-    logout(client)
+    assert not is_authenticated(client, get_message)
 
     # check that username must be unique
     data = dict(email="mary4@lp.com", username="mary", password="awesome sunset")

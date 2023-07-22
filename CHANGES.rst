@@ -24,7 +24,7 @@ Fixes
 - (:issue:`814`) /reset and /confirm and GENERIC_RESPONSES and additional form args don't mix.
 - (:issue:`281`) Reset password can be exploited and other OWASP improvements.
 - (:pr:`817`) Confirmation can be exploited and other OWASP improvements.
-- (:pr:`xxx`) Convert to pyproject.toml, build, remove setup.
+- (:pr:`819`) Convert to pyproject.toml, build, remove setup.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -51,6 +51,9 @@ Backwards Compatibility Concerns
       the confirmation process.
     - Identity information (identity, email) is no longer sent as part of the URL redirect
       query params.
+    - The :py:data:`SECURITY_AUTO_LOGIN_AFTER_CONFIRM` configuration variable now defaults to ``False`` - meaning
+      after a successful email confirmation, the user must still sign in using the usual mechanisms. This is to
+      align better with OWASP best practices. Setting it to ``True`` will restore prior behavior.
     - The SECURITY_MSG_CONFIRMATION_EXPIRED message no longer contains the user's identity/email.
     - The response to GET /reset/<token> sets the HTTP header `Referrer-Policy` to `no-referrer` as suggested
       by OWASP.

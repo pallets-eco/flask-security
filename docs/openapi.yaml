@@ -584,8 +584,8 @@ paths:
         This is the result of getting a confirmation token and is usually
         the result of clicking the link from a confirmation email.
         This ALWAYS results in a 302 redirect.
-        By default (unless __SECURITY_AUTO_LOGIN_AFTER_CONFIRM__ == False), the user
-        denoted by the token is logged in as a side-effect.
+        By default (unless __SECURITY_AUTO_LOGIN_AFTER_CONFIRM__ == True), the user
+        denoted by the token must authenticate using normal mechanisms.
       responses:
         302:
           description: >

@@ -26,6 +26,7 @@ from tests.test_utils import (
     capture_flashes,
     capture_reset_password_requests,
     get_form_action,
+    is_authenticated,
     logout,
     reset_fresh,
     setup_tf_sms,
@@ -203,12 +204,10 @@ def test_simple_signin(app, clients, get_message):
     assert not clients.get_cookie("remember_token")
     assert "email" in auths[0][1]
 
-    response = clients.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    assert is_authenticated(clients, get_message)
 
     logout(clients)
-    response = clients.get("/profile", follow_redirects=False)
-    assert "/login?next=%2Fprofile" in response.location
+    assert not is_authenticated(clients, get_message)
 
     # login via SMS
     sms_sender = SmsSenderFactory.createSender("test")
@@ -231,8 +230,7 @@ def test_simple_signin(app, clients, get_message):
     assert clients.get_cookie("remember_token")
     assert "sms" in auths[1][1]
 
-    response = clients.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    assert is_authenticated(clients, get_message)
 
     logout(clients)
     assert not clients.get_cookie("remember_token")
@@ -294,8 +292,7 @@ def test_simple_signin_json(app, client_nc, get_message):
         assert "email" in auths[0][1]
 
         logout(client_nc)
-        response = client_nc.get("/profile", headers=headers, follow_redirects=False)
-        assert response.status_code == 401
+        assert not is_authenticated(client_nc, get_message)
 
         # login via SMS
         sms_sender = SmsSenderFactory.createSender("test")
@@ -459,9 +456,8 @@ def test_us_passwordless_confirm_json(app, client, get_message):
     outbox = app.mail.outbox
     matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
     link = matcher[0].split(":", 1)[1]
-    response = client.get(link, headers=headers, follow_redirects=True)
-    assert get_message("EMAIL_CONFIRMED") in response.data
-    logout(client)
+    response = client.get(link, headers=headers, follow_redirects=False)
+    assert response.location == "/login"
 
     # should be able to authenticate now.
     response = client.post(
@@ -644,8 +640,7 @@ def test_verify_link(app, client, get_message):
     assert "email" in auths[0][1]
 
     # verify logged in
-    response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
 
 
 @pytest.mark.settings(
@@ -712,8 +707,7 @@ def test_verify_link_spa(app, client, get_message):
     qparams = dict(parse_qsl(split.query))
     assert qparams["email"] == "matt@lp.com"
 
-    response = client.get("/profile", headers=headers)
-    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
 
 
 def test_setup(app, client, get_message):
@@ -1308,8 +1302,7 @@ def test_confirmable(app, client, get_message):
     assert get_message("CONFIRMATION_REQUIRED") in response.data
 
     # Verify not authenticated
-    response = client.get("/profile", follow_redirects=False)
-    assert "/login?next=%2Fprofile" in response.location
+    assert not is_authenticated(client, get_message)
 
 
 @pytest.mark.registerable()
@@ -1443,9 +1436,7 @@ def test_regular_login(app, client, get_message):
     assert response.status_code == 200
     assert client.get_cookie("remember_token")
     assert "password" in auths[0][1]
-
-    response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
 
 
 @pytest.mark.settings(
@@ -1591,8 +1582,7 @@ def test_tf_not(app, client, get_message):
     # assert "sms" in auths[1][1]
 
     # Verify authenticated
-    response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
 
 
 @pytest.mark.settings(sms_service="bad")
@@ -1840,11 +1830,7 @@ def test_us_tf_validity(app, client, get_message):
     )
     assert response.status_code == 200
     # verify logged in
-    response = client.get("/profile", follow_redirects=False)
-
-    assert response.status_code == 200
-    assert b"Welcome gal@lp.com" in response.data
-
+    assert is_authenticated(client, get_message)
     logout(client)
 
     data["identity"] = "gal2@lp.com"

@@ -42,7 +42,6 @@ An example configuration::
     SECURITY_CONFIRMABLE = True
     SECURITY_REGISTERABLE = True
     SECURITY_UNIFIED_SIGNIN = True
-    SECURITY_WEBAUTHN = True
 
     # These need to be defined to handle redirects
     # As defined in the API documentation - they will receive the relevant context
