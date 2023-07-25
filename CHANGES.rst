@@ -8,8 +8,8 @@ Version 5.3.0
 
 Released TBD
 
-This is a minor version bump due to the (possible) incompatibility w.r.t.
-WebAuthn, and changes to /reset.
+This is a minor version bump due to some small backwards incompatible changes to
+WebAuthn, recoverability (/reset), confirmation (/confirm) and the two factor validity feature.
 
 Fixes
 ++++++
@@ -18,13 +18,15 @@ Fixes
 - (:pr:`809`) Fix MongoDB support by eliminating dependency on flask-mongoengine.
   Improve MongoDB quickstart.
 - (:issue:`801`) Fix Quickstart for SQLAlchemy with scoped session.
-- (:issue:`806`) Login no longer, by default, check for email deliverability.
-- (:issue:`791`) Token authentication is accepted on endpoints which only allow
+- (:issue:`806`) Login no longer, by default, checks for email deliverability.
+- (:issue:`791`) Token authentication is no longer accepted on endpoints which only allow
   'session' as authentication-method. (N247S)
 - (:issue:`814`) /reset and /confirm and GENERIC_RESPONSES and additional form args don't mix.
 - (:issue:`281`) Reset password can be exploited and other OWASP improvements.
 - (:pr:`817`) Confirmation can be exploited and other OWASP improvements.
 - (:pr:`819`) Convert to pyproject.toml, build, remove setup.
+- (:pr:`xxx`) the tf_validity feature now ONLY sets a cookie - and the token is no longer
+  returned as part of a JSON response.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -32,7 +34,10 @@ Backwards Compatibility Concerns
 - To align with the W3C WebAuthn Level2 and 3 spec - transports are now part of the registration response.
   This has been changed BOTH in the server code (using py_webauth data structures) as well as the sample
   javascript code. If an application has their own javascript front end code - it might need to be changed.
-- Reset password was changed to improve adhere to OWASP recommendations and reduce possible exploitation:
+- The tf_validity feature :py:data`SECURITY_TWO_FACTOR_ALWAYS_VALIDATE` used to set a cookie if the request was
+  form based, and return the token as part of a JSON response. Now, this feature is ONLY cookie based and the token
+  is no longer returned as part of any response.
+- Reset password was changed to adhere to OWASP recommendations and reduce possible exploitation:
 
     - A new email (with new token) is no longer sent upon expired token. Users must restart
       the reset password process.

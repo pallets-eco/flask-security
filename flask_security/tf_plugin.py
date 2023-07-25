@@ -282,11 +282,7 @@ def tf_verify_validity_token(fs_uniquifier: str) -> bool:
 
     :param fs_uniquifier: The ``fs_uniquifier`` of the submitting user.
     """
-    if request.is_json and request.content_length:
-        token = request.get_json().get("tf_validity_token", None)  # type: ignore
-    else:
-        token = request.cookies.get("tf_validity", default=None)
-
+    token = request.cookies.get("tf_validity", default=None)
     if token is None:
         return False
 
@@ -307,7 +303,9 @@ def tf_set_validity_token_cookie(response: "Response", token: str) -> "Response"
     cookie_kwargs = cv("TWO_FACTOR_VALIDITY_COOKIE")
     max_age = int(get_within_delta("TWO_FACTOR_LOGIN_VALIDITY").total_seconds())
     response.set_cookie("tf_validity", value=token, max_age=max_age, **cookie_kwargs)
-
+    # This is likely overkill since so far we only return this on a POST which is
+    # unlikely to be cached.
+    response.vary.add("Cookie")
     return response
 
 

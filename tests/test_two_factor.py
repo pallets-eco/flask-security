@@ -28,6 +28,7 @@ from tests.test_utils import (
     capture_send_code_requests,
     get_form_action,
     get_session,
+    is_authenticated,
     logout,
 )
 
@@ -59,15 +60,12 @@ def tf_authenticate(app, client, json=False, validate=True, remember=False):
             response = client.post(
                 "/tf-validate",
                 json=dict(code=code),
-                headers={"Content-Type": "application/json"},
             )
-            assert b'"code": 200' in response.data
-            return response.json["response"].get("tf_validity_token", None)
+            assert response.status_code == 200
         else:
             response = client.post(
                 "/tf-validate", data=dict(code=code), follow_redirects=True
             )
-
             assert response.status_code == 200
 
 
@@ -86,7 +84,7 @@ def tf_in_session(session):
 
 
 @pytest.mark.settings(two_factor_always_validate=False)
-def test_always_validate(app, client):
+def test_always_validate(app, client, get_message):
     tf_authenticate(app, client, remember=True)
     assert client.get_cookie("tf_validity")
 
@@ -104,21 +102,19 @@ def test_always_validate(app, client):
 
     # make sure the cookie doesn't affect the JSON request
     client.delete_cookie("tf_validity")
-    # Test JSON
-    token = tf_authenticate(app, client, json=True, remember=True)
+    # Test JSON (this authenticates gal@lp.com)
+    tf_authenticate(app, client, json=True, remember=True)
     logout(client)
-    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+
+    data = dict(email="gal@lp.com", password="password")
     response = client.post(
         "/login",
         json=data,
         follow_redirects=True,
-        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
     # verify logged in
-    response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
-
+    is_authenticated(client, get_message)
     logout(client)
 
     data["email"] = "gal2@lp.com"
@@ -126,7 +122,6 @@ def test_always_validate(app, client):
         "/login",
         json=data,
         follow_redirects=True,
-        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
     assert response.json["response"]["tf_required"]
@@ -144,11 +139,11 @@ def test_do_not_remember_tf_validity(app, client):
     assert b"Please enter your authentication code" in response.data
 
     # Test JSON
-    token = tf_authenticate(app, client, json=True)
+    tf_authenticate(app, client, json=True)
     logout(client)
-    assert token is None
+    assert not client.get_cookie("tf_validity")
 
-    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    data = dict(email="gal@lp.com", password="password")
     response = client.post(
         "/login",
         json=data,
@@ -175,9 +170,9 @@ def test_tf_expired_cookie(app, client):
     assert b"Please enter your authentication code" in response.data
 
     # Test JSON
-    token = tf_authenticate(app, client, json=True, remember=True)
+    tf_authenticate(app, client, json=True, remember=True)
     logout(client)
-    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    data = dict(email="gal@lp.com", password="password")
     response = client.post(
         "/login",
         json=data,
@@ -206,13 +201,13 @@ def test_change_uniquifier_invalidates_cookie(app, client):
 
     client.delete_cookie("tf_validity")
     # Test JSON
-    token = tf_authenticate(app, client, json=True, remember=True)
+    tf_authenticate(app, client, json=True, remember=True)
     logout(client)
     with app.app_context():
         user = app.security.datastore.find_user(email="gal@lp.com")
         app.security.datastore.set_uniquifier(user)
         app.security.datastore.commit()
-    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    data = dict(email="gal@lp.com", password="password")
     response = client.post(
         "/login",
         json=data,
@@ -241,13 +236,13 @@ def test_tf_reset_invalidates_cookie(app, client):
 
     client.delete_cookie("tf_validity")
     # Test JSON
-    token = tf_authenticate(app, client, json=True, remember=True, validate=False)
+    tf_authenticate(app, client, json=True, remember=True, validate=False)
     logout(client)
     with app.app_context():
         user = app.security.datastore.find_user(email="gal@lp.com")
         app.security.datastore.reset_user_access(user)
         app.security.datastore.commit()
-    data = dict(email="gal@lp.com", password="password", tf_validity_token=token)
+    data = dict(email="gal@lp.com", password="password")
     response = client.post(
         "/login",
         json=data,

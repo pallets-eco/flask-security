@@ -117,12 +117,10 @@ def us_tf_authenticate(app, client, json=False, validate=True, remember=False):
                 headers={"Content-Type": "application/json"},
             )
             assert b'"code": 200' in response.data
-            return response.json["response"].get("tf_validity_token", None)
         else:
             response = client.post(
                 "/tf-validate", data=dict(code=code), follow_redirects=True
             )
-
             assert response.status_code == 200
 
 
@@ -1803,37 +1801,22 @@ def test_totp_generation(app, client, get_message):
 )
 def test_us_tf_validity(app, client, get_message):
     us_tf_authenticate(app, client, remember=True)
-    logout(client)
-    data = dict(identity="gal@lp.com", passcode="password")
-    response = client.post(
-        "/us-signin", json=data, headers={"Content-Type": "application/json"}
-    )
-    assert b'"code": 200' in response.data
     assert client.get_cookie("tf_validity")
+    logout(client)
+    # logout does NOT remove this cookie
+    assert client.get_cookie("tf_validity")
+
+    # This time shouldn't require code
+    data = dict(identity="gal@lp.com", passcode="password")
+    response = client.post("/us-signin", json=data)
+    assert response.json["meta"]["code"] == 200
+    assert is_authenticated(client, get_message)
     logout(client)
 
     data = dict(identity="gal2@lp.com", passcode="password")
     response = client.post("/us-signin", data=data, follow_redirects=True)
     assert b"Please enter your authentication code" in response.data
 
-    # clear the cookie to make sure it's not picking it up with json.
-    client.delete("tf_validity")
-
-    token = us_tf_authenticate(app, client, remember=True, json=True)
-    logout(client)
-    data = dict(identity="gal@lp.com", passcode="password", tf_validity_token=token)
-    response = client.post(
-        "/us-signin",
-        json=data,
-        follow_redirects=True,
-        headers={"Content-Type": "application/json"},
-    )
-    assert response.status_code == 200
-    # verify logged in
-    assert is_authenticated(client, get_message)
-    logout(client)
-
-    data["identity"] = "gal2@lp.com"
     response = client.post(
         "/us-signin",
         json=data,

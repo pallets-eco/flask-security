@@ -686,7 +686,6 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         if is_secondary:
             tf_token = _security.two_factor_plugins.tf_complete(form.user, True)
             if tf_token:
-                json_payload["tf_validity_token"] = tf_token
                 after_this_request(
                     partial(tf_set_validity_token_cookie, token=tf_token)
                 )

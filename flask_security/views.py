@@ -972,10 +972,10 @@ def two_factor_token_validation():
         )
 
         after_this_request(view_commit)
+        if token:
+            after_this_request(partial(tf_set_validity_token_cookie, token=token))
 
         if not _security._want_json(request):
-            if token:
-                after_this_request(partial(tf_set_validity_token_cookie, token=token))
             do_flash(*get_message(completion_message))
             if changing:
                 return redirect(get_url(cv("TWO_FACTOR_POST_SETUP_VIEW")))
@@ -983,10 +983,7 @@ def two_factor_token_validation():
                 return redirect(get_post_login_redirect())
 
         else:
-            json_payload = {}
-            if token:
-                json_payload["tf_validity_token"] = token
-            return base_render_json(form, additional=json_payload)
+            return base_render_json(form)
 
     # GET or not successful POST
 
