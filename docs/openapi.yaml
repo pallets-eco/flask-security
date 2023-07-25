@@ -1818,9 +1818,6 @@ components:
           type: boolean
           description: >
             If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
-        tf_validity_token:
-          type: string
-          description: Code verifying the user has successfully verified 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
     LoginJsonResponse:
       type: object
       description: >
@@ -2037,9 +2034,6 @@ components:
           description: password or code
         remember:
           type: boolean
-        tf_validity_token:
-          type: string
-          description: Code verifying the user has successfully verified 2FA in the past. If verified, the user is able to skip validation of the second factor. Only used when SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False.
     UsSigninJsonResponse:
       allOf:
         - $ref: '#/components/schemas/BaseJsonResponse'
@@ -2199,10 +2193,6 @@ components:
         csrf_token:
           type: string
           description: Session CSRF token
-        tf_validity_token:
-          type: string
-          description: A timed token that verifies that the user has successfully completed 2FA. Only sent if SECURITY_TWO_FACTOR_ALWAYS_VALIDATE is False and remember_me (from /login POST) is True
-
     WanRegister:
       type: object
       required: [ name, usage ]

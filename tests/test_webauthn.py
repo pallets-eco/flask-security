@@ -900,7 +900,8 @@ def test_tf_validity_window(app, client, get_message):
 )
 def test_tf_validity_window_json(app, client, get_message):
     # Test with a two-factor validity setting - we don't get re-prompted.
-    response = json_authenticate(client)
+    # This also relies on the tf_validity_cookie
+    json_authenticate(client)
     register_options, response_url = _register_start_json(client)
     client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
     logout(client)
@@ -914,11 +915,7 @@ def test_tf_validity_window_json(app, client, get_message):
     signin_options, response_url = _signin_start(client, "matt@lp.com")
     response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
     assert response.status_code == 200
-    tf_token = response.json["response"]["tf_validity_token"]
     logout(client)
-
-    # make sure the cookie doesn't affect the JSON request
-    client.delete_cookie("tf_validity")
 
     # Sign in again - shouldn't require 2FA
     response = client.post(
@@ -927,7 +924,6 @@ def test_tf_validity_window_json(app, client, get_message):
             email="matt@lp.com",
             password="password",
             remember=True,
-            tf_validity_token=tf_token,
         ),
     )
     assert response.status_code == 200

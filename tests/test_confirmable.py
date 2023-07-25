@@ -462,6 +462,22 @@ def test_spa_get_bad_token(app, client, get_message):
 
 
 @pytest.mark.filterwarnings("ignore")
+@pytest.mark.registerable()
+@pytest.mark.settings(auto_login_after_confirm=True, post_login_view="/postlogin")
+def test_auto_login(app, client, get_message):
+    with capture_registrations() as registrations:
+        data = dict(email="mary@lp.com", password="password", next="")
+        client.post("/register", data=data, follow_redirects=True)
+
+    assert not is_authenticated(client, get_message)
+
+    token = registrations[0]["confirm_token"]
+    response = client.get("/confirm/" + token, follow_redirects=False)
+    assert "/postlogin" == response.location
+    assert is_authenticated(client, get_message)
+
+
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.two_factor()
 @pytest.mark.registerable()
 @pytest.mark.settings(two_factor_required=True, auto_login_after_confirm=True)
