@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-07-20 14:29-0700\n"
+"POT-Creation-Date: 2023-07-26 08:24-0700\n"
 "PO-Revision-Date: 2017-03-23 14:04+0100\n"
 "Last-Translator: Leonhard Printz <leonhardprintz@protonmail.ch>\n"
 "Language: da_DK\n"
@@ -615,7 +615,7 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: flask_security/webauthn.py:913
+#: flask_security/webauthn.py:912
 msgid "webauthn"
 msgstr ""
 

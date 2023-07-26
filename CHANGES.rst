@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.3.0
 -------------
 
-Released July xxx, 2023
+Released July 27, 2023
 
 This is a minor version bump due to some small backwards incompatible changes to
 WebAuthn, recoverability (/reset), confirmation (/confirm) and the two factor validity feature.
@@ -24,11 +24,11 @@ Fixes
 - (:issue:`814`) /reset and /confirm and GENERIC_RESPONSES and additional form args don't mix.
 - (:issue:`281`) Reset password can be exploited and other OWASP improvements.
 - (:pr:`817`) Confirmation can be exploited and other OWASP improvements.
-- (:pr:`819`) Convert to pyproject.toml, build, remove setup.
+- (:pr:`819`) Convert to pyproject.toml, build, remove setup.py/.cfg.
 - (:pr:`823`) the tf_validity feature now ONLY sets a cookie - and the token is no longer
   returned as part of a JSON response.
 - (:pr:`825`) Fix login/unified signin templates to properly send CSRF token. Add more tests.
-- (:pr:`xxx`) Improve Social Oauth example code.
+- (:pr:`826`) Improve Social Oauth example code.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
