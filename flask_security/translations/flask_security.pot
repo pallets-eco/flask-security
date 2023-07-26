@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 5.3.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2023-07-20 14:29-0700\n"
+"POT-Creation-Date: 2023-07-26 08:24-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -608,7 +608,7 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: flask_security/webauthn.py:913
+#: flask_security/webauthn.py:912
 msgid "webauthn"
 msgstr ""
 
