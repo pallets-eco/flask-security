@@ -25,8 +25,9 @@ Fixes
 - (:issue:`281`) Reset password can be exploited and other OWASP improvements.
 - (:pr:`817`) Confirmation can be exploited and other OWASP improvements.
 - (:pr:`819`) Convert to pyproject.toml, build, remove setup.
-- (:pr:`xxx`) the tf_validity feature now ONLY sets a cookie - and the token is no longer
+- (:pr:`823`) the tf_validity feature now ONLY sets a cookie - and the token is no longer
   returned as part of a JSON response.
+- (:pr:`xxx`) Fix login/unified signin templates to properly send CSRF token. Add more tests.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

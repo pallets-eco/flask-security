@@ -1,10 +1,10 @@
 """
-    utils
-    ~~~~~
+    test_utils
+    ~~~~~~~~~~
 
     Test utils
 
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 from contextlib import contextmanager
@@ -42,11 +42,11 @@ def authenticate(
 
 
 def json_authenticate(client, email="matt@lp.com", password="password", endpoint=None):
-    data = f'{{"email": "{email}", "password": "{password}"}}'
+    data = dict(email=email, password=password)
 
     # Get auth token always
     ep = endpoint or "/login?include_auth_token"
-    return client.post(ep, content_type="application/json", data=data)
+    return client.post(ep, content_type="application/json", json=data)
 
 
 def is_authenticated(client, get_message):
@@ -165,6 +165,19 @@ def get_form_action(response, ordinal=0):
     return matcher[ordinal]
 
 
+def get_form_input(response, field_id):
+    # return value of field with the id == field_id or None if not found
+    rex = f'<input id="{field_id}"[^>]*value="([^"]*)">'
+    matcher = re.findall(
+        rex,
+        response.data.decode("utf-8"),
+        re.IGNORECASE | re.DOTALL,
+    )
+    if matcher:
+        return matcher[0]
+    return None
+
+
 def check_xlation(app, locale):
     """Return True if locale is loaded"""
     with app.test_request_context():
@@ -251,12 +264,7 @@ def get_num_queries(datastore):
     return None if datastore doesn't support this.
     """
     if is_sqlalchemy(datastore):
-        try:
-            # Flask-SQLAlachemy >= 3.0.0
-            from flask_sqlalchemy.record_queries import get_recorded_queries
-        except ImportError:
-            # Flask-SQLAlchemy < 3.0.0
-            from flask_sqlalchemy import get_debug_queries as get_recorded_queries
+        from flask_sqlalchemy.record_queries import get_recorded_queries
 
         return len(get_recorded_queries())
     return None
