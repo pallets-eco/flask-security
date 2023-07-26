@@ -4,6 +4,11 @@ Copyright 2020-2023 by J. Christopher Wagner (jwag). All rights reserved.
 
 A simple example of utilizing Flask-Security's oauth glue layer.
 
+In addition, this example uses unified signin to allow for passwordless registration.
+So users can log in only via social auth OR an email link.
+
+This example also sets up and required CSRF protection for all endpoints.
+
 In order to be self contained, to support things like email confirmation and
 unified sign in with email, we hack a Mail handler that flashes the contents of emails.
 
@@ -64,7 +69,6 @@ def create_app():
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
     # PASSWORD_SALT secrets.SystemRandom().getrandbits(128)
     app.config["SECURITY_PASSWORD_SALT"] = "156043940537155509276282232127182067465"
-
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
@@ -77,11 +81,14 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
-    for opt in [
-        "registerable",
-    ]:
-        app.config["SECURITY_" + opt.upper()] = True
+    # Turn on Oauth glue (github only), passwordless registration (with email link)
+    app.config["SECURITY_REGISTERABLE"] = True
     app.config["SECURITY_OAUTH_ENABLE"] = True
+    app.config["SECURITY_UNIFIED_SIGNIN"] = True
+    app.config["SECURITY_PASSWORD_REQUIRED"] = False
+    app.config["SECURITY_US_SIGNIN_REPLACES_LOGIN"] = True
+    app.config["SECURITY_US_ENABLED_METHODS"] = ["email"]
+    app.config["SECURITY_OAUTH_BUILTIN_PROVIDERS"] = ["github"]
 
     if os.environ.get("SETTINGS"):
         # Load settings from a file pointed to by SETTINGS
