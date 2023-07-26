@@ -291,6 +291,9 @@ for details. Note in particular, that you must setup and provide provider specif
 information - and most importantly - XX_CLIENT_ID and XX_CLIENT_SECRET should be
 specified as environment variables.
 
+A very simple example of configuring social auth with Flask-Security is available
+in the `examples` directory.
+
 .. _Click: https://palletsprojects.com/p/click/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
 .. _Flask-WTF: https://flask-wtf.readthedocs.io/en/1.0.x/csrf/

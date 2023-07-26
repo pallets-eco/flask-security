@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.3.0
 -------------
 
-Released TBD
+Released July xxx, 2023
 
 This is a minor version bump due to some small backwards incompatible changes to
 WebAuthn, recoverability (/reset), confirmation (/confirm) and the two factor validity feature.
@@ -27,13 +27,14 @@ Fixes
 - (:pr:`819`) Convert to pyproject.toml, build, remove setup.
 - (:pr:`823`) the tf_validity feature now ONLY sets a cookie - and the token is no longer
   returned as part of a JSON response.
-- (:pr:`xxx`) Fix login/unified signin templates to properly send CSRF token. Add more tests.
+- (:pr:`825`) Fix login/unified signin templates to properly send CSRF token. Add more tests.
+- (:pr:`xxx`) Improve Social Oauth example code.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 
 - To align with the W3C WebAuthn Level2 and 3 spec - transports are now part of the registration response.
-  This has been changed BOTH in the server code (using py_webauth data structures) as well as the sample
+  This has been changed BOTH in the server code (using webauthn data structures) as well as the sample
   javascript code. If an application has their own javascript front end code - it might need to be changed.
 - The tf_validity feature :py:data`SECURITY_TWO_FACTOR_ALWAYS_VALIDATE` used to set a cookie if the request was
   form based, and return the token as part of a JSON response. Now, this feature is ONLY cookie based and the token
