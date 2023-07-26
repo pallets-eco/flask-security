@@ -4,7 +4,7 @@
 
     Class and methods to glue our login path with authlib for to support 'social' auth.
 
-    :copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -23,6 +23,7 @@ except ImportError:  # pragma: no cover
 
 from flask import abort, after_this_request, redirect, request
 
+from .decorators import unauth_csrf
 from .proxies import _security
 from .utils import (
     config_value as cv,
@@ -73,6 +74,7 @@ def google_fetch_identity(
     return "email", profile["email"]
 
 
+@unauth_csrf()
 def oauthstart(name: str) -> "ResponseValue":
     """View to start an oauth authentication.
     Name is a pre-registered oauth provider.

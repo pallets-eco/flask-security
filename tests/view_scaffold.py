@@ -1,4 +1,4 @@
-# :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -27,6 +27,7 @@ import typing as t
 
 from flask import Flask, flash, render_template_string, request, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import CSRFProtect
 
 from flask_security import (
     MailUtil,
@@ -152,6 +153,7 @@ def create_app():
         ):
             app.config[ev] = _find_bool(os.environ.get(ev))
 
+    CSRFProtect(app)
     # Create database models and hook up.
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db = SQLAlchemy(app)

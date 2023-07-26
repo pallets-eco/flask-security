@@ -4,7 +4,7 @@
 
     Oauth glue tests - oauthglue is a very thin shim between FS and authlib
 
-    :copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -13,10 +13,13 @@ import urllib.parse
 from urllib.parse import parse_qsl, urlsplit
 
 from flask import redirect
+from flask_wtf import CSRFProtect
 
 from tests.test_utils import (
     authenticate,
+    get_csrf_token,
     get_form_action,
+    get_form_input,
     init_app_with_options,
     logout,
     setup_tf_sms,
@@ -69,15 +72,24 @@ class MockOAuth:
 
 
 @pytest.mark.settings(oauth_enable=True, post_login_view="/post_login")
+@pytest.mark.app_settings(wtf_csrf_enabled=True)
 def test_github(app, sqlalchemy_datastore, get_message):
+    CSRFProtect(app)
     init_app_with_options(
         app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
     )
     client = app.test_client()
     response = client.get("/login")
     github_url = get_form_action(response, 1)
+    csrf_token = get_form_input(response, field_id="github_csrf_token")
 
+    # make sure required CSRF
     response = client.post(github_url, follow_redirects=False)
+    assert "The CSRF token is missing"
+
+    response = client.post(
+        github_url, data=dict(csrf_token=csrf_token), follow_redirects=False
+    )
     assert "/whatever" in response.location
 
     response = client.get("/login/oauthresponse/github", follow_redirects=False)
@@ -86,6 +98,23 @@ def test_github(app, sqlalchemy_datastore, get_message):
     # verify logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
+
+
+@pytest.mark.settings(
+    oauth_enable=True, post_login_view="/post_login", csrf_ignore_unauth_endpoints=True
+)
+@pytest.mark.app_settings(wtf_csrf_enabled=True, wtf_csrf_check_default=False)
+def test_github_nocsrf(app, sqlalchemy_datastore, get_message):
+    # Test if ignore_unauth_endpoints is true - doesn't require CSRF
+    CSRFProtect(app)
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    response = client.get("/login")
+    github_url = get_form_action(response, 1)
+    response = client.post(github_url, follow_redirects=False)
+    assert "/whatever" in response.location
 
 
 @pytest.mark.settings(oauth_enable=True, post_login_view="/post_login")
@@ -188,14 +217,20 @@ def test_tf(app, sqlalchemy_datastore, get_message):
     redirect_behavior="spa",
     login_error_view="/login-error",
     post_login_view="/post-login",
+    csrf_ignore_unauth_endpoints=False,
 )
+@pytest.mark.app_settings(wtf_csrf_enabled=True)
 def test_spa(app, sqlalchemy_datastore, get_message):
+    CSRFProtect(app)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     init_app_with_options(
         app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
     )
     client = app.test_client()
+    csrf_token = get_csrf_token(client)
+    headers["X-CSRF-Token"] = csrf_token
+
     response = client.post("/login/oauthstart/github", headers=headers)
     assert "/whatever" in response.location
     redirect_url = urllib.parse.urlsplit(urllib.parse.unquote(response.location))
