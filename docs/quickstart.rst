@@ -229,7 +229,7 @@ and models.py.
 - models.py ::
 
     from database import Base
-    from flask_security import UserMixin, RoleMixin, AsAlist
+    from flask_security import UserMixin, RoleMixin, AsaList
     from sqlalchemy.orm import relationship, backref
     from sqlalchemy.ext.mutable import MutableList
     from sqlalchemy import Boolean, DateTime, Column, Integer, \
