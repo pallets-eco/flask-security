@@ -104,7 +104,7 @@ class MongoEngineDatastore(Datastore):
         model.delete()
 
     def update(self, model, **update_ops):
-        return model.modify(**update_ops, upsert=False)
+        model.update(**update_ops, upsert=False)
 
 
 class PeeweeDatastore(Datastore):
@@ -117,7 +117,6 @@ class PeeweeDatastore(Datastore):
 
     def update(self, model, **update_ops):
         model.save(force_insert=False, only=list(update_ops.keys()))
-        return model
 
 
 def with_pony_session(f):
