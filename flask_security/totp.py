@@ -12,7 +12,7 @@ import io
 import typing as t
 
 from passlib.totp import TOTP, TokenError, TotpMatch
-from passlib.pwd import genword
+
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from .datastore import User
@@ -164,6 +164,8 @@ class Totp:
 
         .. versionadded:: 5.0.0
         """
+        from passlib.pwd import genword
+
         pwds = genword(length=12, charset="hex", returns=number)
         # make this a bit easier to type - 3 sets of 4 characters
         spwds = []

@@ -32,6 +32,9 @@ class MockDatastore(UserDatastore):
     def delete(self, model):
         pass
 
+    def update(self, model, **update_ops):
+        pass
+
 
 def test_unimplemented_datastore_methods():
     datastore = Datastore(None)

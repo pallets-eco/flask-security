@@ -822,7 +822,7 @@ def two_factor_setup():
         )
         if new_phone:
             user.tf_phone_number = new_phone
-            _datastore.put(user)
+            _datastore.update(user, tf_phone_number=user.tf_phone_number)
             after_this_request(view_commit)
 
         # This form is sort of bizarre - for SMS and authenticator

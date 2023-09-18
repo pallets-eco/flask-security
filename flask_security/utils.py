@@ -160,7 +160,14 @@ def login_user(
         user.current_login_ip = new_current_ip
         user.login_count = user.login_count + 1 if user.login_count else 1
 
-        _datastore.put(user)
+        _datastore.update(
+            user,
+            last_login_at=user.last_login_at,
+            current_login_at=user.current_login_at,
+            last_login_ip=user.last_login_ip,
+            current_login_ip=user.current_login_ip,
+            login_count=user.login_count,
+        )
 
     session["fs_cc"] = "set"  # CSRF cookie
     session["fs_paa"] = time.time()  # Primary authentication at - timestamp
@@ -343,7 +350,7 @@ def verify_and_update_password(password: SB, user: "User") -> bool:
 
     if verified and _pwd_context.needs_update(user.password):
         user.password = hash_password(password)
-        _datastore.put(user)
+        _datastore.update(user, password=user.password)
     return verified
 
 

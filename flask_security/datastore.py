@@ -34,6 +34,9 @@ class Datastore:
     def delete(self, model):
         raise NotImplementedError
 
+    def update(self, model, **update_ops):
+        raise NotImplementedError
+
 
 try:
     import sqlalchemy.types as types
@@ -86,6 +89,11 @@ class SQLAlchemyDatastore(Datastore):
     def delete(self, model):
         self.db.session.delete(model)
 
+    def update(self, model, **update_ops):
+        for field, value in update_ops.items():
+            setattr(model, field, value)
+        self.db.session.commit()
+
 
 class MongoEngineDatastore(Datastore):
     def put(self, model):
@@ -95,6 +103,9 @@ class MongoEngineDatastore(Datastore):
     def delete(self, model):
         model.delete()
 
+    def update(self, model, **update_ops):
+        return model.modify(**update_ops, upsert=False)
+
 
 class PeeweeDatastore(Datastore):
     def put(self, model):
@@ -103,6 +114,10 @@ class PeeweeDatastore(Datastore):
 
     def delete(self, model):
         model.delete_instance(recursive=True)
+
+    def update(self, model, **update_ops):
+        model.save(force_insert=False, only=list(update_ops.keys()))
+        return model
 
 
 def with_pony_session(f):
@@ -160,6 +175,12 @@ class PonyDatastore(Datastore):
     def delete(self, model):
         model.delete()
 
+    @with_pony_session
+    def update(self, model, **update_ops):
+        for field, value in update_ops.items():
+            setattr(model, field, value)
+        self.db.commit()
+
 
 class UserDatastore:
     """Abstracted user datastore.
@@ -196,6 +217,9 @@ class UserDatastore:
             pass
 
         def put(self, model):
+            pass
+
+        def update(self, model, **update_ops):
             pass
 
     def _prepare_role_modify_args(
@@ -245,7 +269,7 @@ class UserDatastore:
             raise ValueError(f"Role: {role} doesn't exist")
         if role_obj not in user.roles:
             user.roles.append(role_obj)
-            self.put(user)
+            self.update(user, roles=user.roles)
             return True
         return False
 
@@ -263,7 +287,7 @@ class UserDatastore:
         if role_obj in user.roles:
             rv = True
             user.roles.remove(role_obj)
-            self.put(user)
+            self.update(user, roles=user.roles)
         return rv
 
     def add_permissions_to_role(
@@ -292,7 +316,7 @@ class UserDatastore:
                 permissions = [p.strip() for p in permissions.split(",")]
             # always give a list to DB - some (e.g. Mongo) only take list/tuple
             role_obj.permissions = list(current_perms.union(set(permissions)))
-            self.put(role_obj)
+            self.update(role_obj, permissions=role_obj.permissions)
         return rv
 
     def remove_permissions_from_role(
@@ -320,13 +344,13 @@ class UserDatastore:
             elif isinstance(permissions, str):
                 permissions = [p.strip() for p in permissions.split(",")]
             role_obj.permissions = list(current_perms.difference(set(permissions)))
-            self.put(role_obj)
+            self.update(role_obj, permissions=role_obj.permissions)
         return rv
 
     def toggle_active(self, user: "User") -> bool:
         """Toggles a user's active status. Always returns True."""
         user.active = not user.active
-        self.put(user)
+        self.update(user, active=user.active)
         return True
 
     def deactivate_user(self, user: "User") -> bool:
@@ -340,7 +364,7 @@ class UserDatastore:
         """
         if user.active:
             user.active = False
-            self.put(user)
+            self.update(user, active=user.active)
             return True
         return False
 
@@ -351,7 +375,7 @@ class UserDatastore:
         """
         if not user.active:
             user.active = True
-            self.put(user)
+            self.update(user, active=user.active)
             return True
         return False
 
@@ -370,7 +394,7 @@ class UserDatastore:
         if not uniquifier:
             uniquifier = uuid.uuid4().hex
         user.fs_uniquifier = uniquifier
-        self.put(user)
+        self.update(user, fs_uniquifier=user.fs_uniquifier)
 
     def set_token_uniquifier(
         self, user: "User", uniquifier: t.Union[str, None] = None
@@ -390,7 +414,7 @@ class UserDatastore:
             uniquifier = uuid.uuid4().hex
         if hasattr(user, "fs_token_uniquifier"):
             user.fs_token_uniquifier = uniquifier
-            self.put(user)
+            self.update(user, fs_token_uniquifier=user.fs_token_uniquifier)
 
     def create_role(self, **kwargs: t.Any) -> "Role":
         """
@@ -537,19 +561,18 @@ class UserDatastore:
 
         .. versionadded: 3.4.1
         """
-
-        changed = False
+        update = {}
         if user.tf_primary_method != primary_method:
             user.tf_primary_method = primary_method
-            changed = True
+            update["tf_primary_method"] = user.tf_primary_method
         if totp_secret and user.tf_totp_secret != totp_secret:
             user.tf_totp_secret = totp_secret
-            changed = True
+            update["tf_totp_secret"] = user.tf_totp_secret
         if phone and user.tf_phone_number != phone:
             user.tf_phone_number = phone
-            changed = True
-        if changed:
-            self.put(user)
+            update["tf_phone_number"] = user.tf_phone_number
+        if update:
+            self.update(user, **update)
 
     def tf_reset(self, user: "User") -> None:
         """Disable two-factor auth for user.
@@ -559,7 +582,12 @@ class UserDatastore:
         user.tf_primary_method = None
         user.tf_totp_secret = None
         user.tf_phone_number = None
-        self.put(user)
+        self.update(
+            user,
+            tf_primary_method=user.tf_primary_method,
+            tf_totp_secret=user.tf_totp_secret,
+            tf_phone_number=user.tf_phone_number,
+        )
 
     def mf_set_recovery_codes(self, user: "User", rcs: t.Optional[t.List[str]]) -> None:
         """Set MF recovery codes into user record.
@@ -568,7 +596,7 @@ class UserDatastore:
         .. versionadded: 5.0.0
         """
         user.mf_recovery_codes = rcs
-        self.put(user)
+        self.update(user, mf_recovery_codes=user.mf_recovery_codes)
 
     def mf_get_recovery_codes(self, user: "User") -> t.List[str]:
         codes = getattr(user, "mf_recovery_codes", [])
@@ -586,7 +614,7 @@ class UserDatastore:
             return False
         try:
             user.mf_recovery_codes.pop(idx)
-            self.put(user)
+            self.update(user, mf_recovery_codes=user.mf_recovery_codes)
             return True
         except IndexError:
             return False
@@ -612,7 +640,7 @@ class UserDatastore:
         .. versionadded:: 3.4.0
         """
         user.us_totp_secrets = json.dumps(secrets) if secrets else None
-        self.put(user)  # type: ignore
+        self.update(user, us_totp_secrets=user.us_totp_secrets)  # type: ignore
 
     def us_set(
         self,
@@ -640,7 +668,7 @@ class UserDatastore:
             self.us_put_totp_secrets(user, totp_secrets)
         if phone and user.us_phone_number != phone:
             user.us_phone_number = phone
-            self.put(user)
+            self.update(user, us_phone_number=user.us_phone_number)
 
     def us_reset(self, user: "User", method: t.Optional[str] = None) -> None:
         """Disable unified sign in for user.
@@ -657,14 +685,14 @@ class UserDatastore:
             # delete all
             self.us_put_totp_secrets(user, None)
             user.us_phone_number = None
-            self.put(user)
+            self.update(user, us_phone_number=user.us_phone_number)
         else:
             totp_secrets = self.us_get_totp_secrets(user)
             del totp_secrets[method]
             self.us_put_totp_secrets(user, totp_secrets)
             if method == "sms":
                 user.us_phone_number = None
-                self.put(user)
+                self.update(user, us_phone_number=user.us_phone_number)
 
     def us_setup_email(self, user: "User") -> bool:
         # setup email (if allowed) for user for unified sign in.
@@ -687,7 +715,7 @@ class UserDatastore:
         if not user_handle:
             user_handle = uuid.uuid4().hex
         user.fs_webauthn_user_handle = user_handle
-        self.put(user)
+        self.update(user, fs_webauthn_user_handle=user.fs_webauthn_user_handle)
 
     def create_webauthn(
         self,

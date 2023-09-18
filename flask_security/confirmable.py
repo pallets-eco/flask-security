@@ -94,6 +94,6 @@ def confirm_user(user):
     if user.confirmed_at is not None:
         return False
     user.confirmed_at = _security.datetime_factory()
-    _datastore.put(user)
+    _datastore.update(user, confirmed_at=user.confirmed_at)
     user_confirmed.send(app._get_current_object(), user=user)
     return True

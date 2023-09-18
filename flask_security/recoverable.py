@@ -107,6 +107,6 @@ def update_password(user, password):
     user.password = hash_password(password)
     # Change uniquifier - this will cause ALL sessions to be invalidated.
     _datastore.set_uniquifier(user)
-    _datastore.put(user)
+    _datastore.update(user, password=user.password)
     send_password_reset_notice(user)
     password_reset.send(app._get_current_object(), user=user)
