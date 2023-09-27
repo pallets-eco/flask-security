@@ -1177,20 +1177,20 @@ def test_reset(app, client):
 
 
 @pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
-def test_user_handle(app, client, get_message):
+def test_user_handle(app, clients, get_message):
     """Test that we fail signin if user_handle doesn't match.
     Since we generated the SIGNIN_DATA_OH from view_scaffold - the user_handle
     has no way of matching.
     """
-    authenticate(client)
-    register_options, response_url = _register_start_json(client, usage="first")
-    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UH)))
+    authenticate(clients)
+    register_options, response_url = _register_start_json(clients, usage="first")
+    response = clients.post(response_url, json=dict(credential=json.dumps(REG_DATA_UH)))
     assert response.status_code == 200
 
     # verify can't sign in
-    logout(client)
-    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
-    response = client.post(
+    logout(clients)
+    signin_options, response_url, _ = _signin_start_json(clients, "matt@lp.com")
+    response = clients.post(
         response_url, json=dict(credential=json.dumps(SIGNIN_DATA_UH))
     )
     assert response.json["response"]["field_errors"]["credential"][0].encode(
@@ -1210,12 +1210,12 @@ def test_user_handle(app, client, get_message):
         )
     upd_signin_data = copy.deepcopy(SIGNIN_DATA_UH)
     upd_signin_data["response"]["userHandle"] = b64_user_handle
-    signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
-    response = client.post(
+    signin_options, response_url, _ = _signin_start_json(clients, "matt@lp.com")
+    response = clients.post(
         response_url, json=dict(credential=json.dumps(upd_signin_data))
     )
     # verify actually logged in
-    response = client.get("/profile", headers={"accept": "application/json"})
+    response = clients.get("/profile", headers={"accept": "application/json"})
     assert response.status_code == 200
 
 
