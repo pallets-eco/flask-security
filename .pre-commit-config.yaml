@@ -14,23 +14,23 @@ repos:
     -   id: check-merge-conflict
     -   id: fix-byte-order-marker
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.9.0
+    rev: v3.13.0
     hooks:
     -   id: pyupgrade
         args: [--py38-plus]
 -   repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.9.1
     hooks:
     -   id: black
 -   repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies:
           - flake8-bugbear
           - flake8-implicit-str-concat
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.32.1
+    rev: v1.34.0
     hooks:
       - id: djlint-jinja
         files: "\\.html"

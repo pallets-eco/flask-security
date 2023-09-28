@@ -29,6 +29,6 @@ qrcode
 requests
 sqlalchemy
 sqlalchemy-utils
-webauthn
+webauthn==1.9.0
 werkzeug
 zxcvbn
