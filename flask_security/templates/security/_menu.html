@@ -9,22 +9,22 @@
       </li>
       {% if security.changeable %}
         <li>
-          <a href="{{ url_for_security('change_password') }}">{{ _fsdomain("Change Password") }}
+          <a href="{{ url_for_security('change_password') }}">{{ _fsdomain("Change Password") }}</a>
         </li>
       {% endif %}
       {% if security.two_factor %}
         <li>
-          <a href="{{ url_for_security('two_factor_setup') }}">{{ _fsdomain("Two Factor Setup") }}
+          <a href="{{ url_for_security('two_factor_setup') }}">{{ _fsdomain("Two Factor Setup") }}</a>
         </li>
       {% endif %}
       {% if security.unified_signin %}
         <li>
-          <a href="{{ url_for_security('us_setup') }}">{{ _fsdomain("Unified Signin Setup") }}
+          <a href="{{ url_for_security('us_setup') }}">{{ _fsdomain("Unified Signin Setup") }}</a>
         </li>
       {% endif %}
       {% if security.webauthn %}
         <li>
-          <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("WebAuthn Setup") }}
+          <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("WebAuthn Setup") }}</a>
         </li>
       {% endif %}
     {% else %}
