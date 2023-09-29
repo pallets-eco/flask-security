@@ -3,6 +3,22 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.3.1
+-------------
+
+Released October XX, 2023
+
+Please Note: py_webauthn is pinned to 1.9.0 until the issue with user_handle
+is resolved.
+
+Fixes
+++++++
+
+- (:issue:`829`) Revert change in 5.3.0 that added a Referrer-Policy header.
+- (:issue:`826`) Fix error in quickstart (codycollier)
+- (:pr:`835`) Update Armenian translations (amkrtchyan-tmp)
+- (:pr:`831`) Update German translations. (sr-verde)
+
 Version 5.3.0
 -------------
 
@@ -51,7 +67,7 @@ Backwards Compatibility Concerns
     - The SECURITY_MSG_PASSWORD_RESET_EXPIRED message no longer contains the user's identity/email.
     - The default for :py:data:`SECURITY_RESET_PASSWORD_WITHIN` has been changed from `5 days` to `1 days`.
     - The response to GET /reset/<token> sets the HTTP header `Referrer-Policy` to `no-referrer` as suggested
-      by OWASP.
+      by OWASP. *PLEASE NOTE: this was backed out in 5.3.1*
 - Confirm email was changed to adhere to OWASP recommendations and reduce possible exploitation:
 
     - A new email (with new token) is no longer sent upon expired token. Users must restart
@@ -63,7 +79,7 @@ Backwards Compatibility Concerns
       align better with OWASP best practices. Setting it to ``True`` will restore prior behavior.
     - The SECURITY_MSG_CONFIRMATION_EXPIRED message no longer contains the user's identity/email.
     - The response to GET /reset/<token> sets the HTTP header `Referrer-Policy` to `no-referrer` as suggested
-      by OWASP.
+      by OWASP. *PLEASE NOTE: this was backed out in 5.3.1*
 
 Version 5.2.0
 -------------
@@ -200,7 +216,7 @@ Fixes
 Version 5.0.0
 -------------
 
-Released August 27. 2022
+Released August 27, 2022
 
 **PLEASE READ CHANGE NOTES CAREFULLY - THERE ARE LIKELY REQUIRED CHANGES YOU WILL HAVE TO MAKE.**
 
