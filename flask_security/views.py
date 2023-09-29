@@ -462,23 +462,17 @@ def confirm_email(token):
 
         if _security.redirect_behavior == "spa":
             # No reason to expose identity info to anyone who has the link
-            return (
-                redirect(
-                    get_url(
-                        _security.confirm_error_view,
-                        qparams={c: m},
-                    )
-                ),
-                {"Referrer-Policy": "no-referrer"},
+            return redirect(
+                get_url(
+                    _security.confirm_error_view,
+                    qparams={c: m},
+                )
             )
 
         do_flash(m, c)
-        return (
-            redirect(
-                get_url(_security.confirm_error_view)
-                or url_for_security("send_confirmation")
-            ),
-            {"Referrer-Policy": "no-referrer"},
+        return redirect(
+            get_url(_security.confirm_error_view)
+            or url_for_security("send_confirmation")
         )
 
     confirm_user(user)
@@ -500,30 +494,22 @@ def confirm_email(token):
             )
             if response:
                 do_flash(m, c)
-                return response, {"Referrer-Policy": "no-referrer"}
+                return response
             login_user(user, authn_via=["confirm"])
 
     if _security.redirect_behavior == "spa":
-        return (
-            redirect(
-                get_url(
-                    _security.post_confirm_view,
-                    qparams=user.get_redirect_qparams({c: m}),
-                )
-            ),
-            {"Referrer-Policy": "no-referrer"},
+        return redirect(
+            get_url(
+                _security.post_confirm_view,
+                qparams=user.get_redirect_qparams({c: m}),
+            )
         )
     do_flash(m, c)
-    return (
-        redirect(
-            get_url(_security.post_confirm_view)
-            or get_url(
-                _security.post_login_view
-                if cv("AUTO_LOGIN_AFTER_CONFIRM")
-                else ".login"
-            )
-        ),
-        {"Referrer-Policy": "no-referrer"},
+    return redirect(
+        get_url(_security.post_confirm_view)
+        or get_url(
+            _security.post_login_view if cv("AUTO_LOGIN_AFTER_CONFIRM") else ".login"
+        )
     )
 
 
@@ -616,26 +602,19 @@ def reset_password(token):
         # Still - don't include PII such as identity and email if someone
         # intercepts link they still won't necessarily know the login identity
         # (even though they can change the password!).
-        # OWASP recommends setting no-referrer for requests with tokens.
         if _security.redirect_behavior == "spa":
-            return (
-                redirect(
-                    get_url(
-                        _security.reset_view,
-                        qparams={"token": token},
-                    )
-                ),
-                {"Referrer-Policy": "no-referrer"},
+            return redirect(
+                get_url(
+                    _security.reset_view,
+                    qparams={"token": token},
+                )
             )
         # for forms - render the reset password form
-        return (
-            _security.render_template(
-                cv("RESET_PASSWORD_TEMPLATE"),
-                reset_password_form=form,
-                reset_password_token=token,
-                **_ctx("reset_password"),
-            ),
-            {"Referrer-Policy": "no-referrer"},
+        return _security.render_template(
+            cv("RESET_PASSWORD_TEMPLATE"),
+            reset_password_form=form,
+            reset_password_token=token,
+            **_ctx("reset_password"),
         )
 
     # This is the POST case.

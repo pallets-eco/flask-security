@@ -63,8 +63,6 @@ def test_recoverable_flag(app, clients, get_message):
     # Test view for reset token
     response = clients.get("/reset/" + token)
     assert b"<h1>Reset password</h1>" in response.data
-    # OWASP recommends setting this
-    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
 
     # Test submitting a new password but leave out confirm
     response = clients.post(
@@ -460,8 +458,6 @@ def test_spa_get(app, client):
 
     response = client.get("/reset/" + token)
     assert response.status_code == 302
-    # OWASP recommends setting this
-    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
     assert "/reset-redirect" == split.path

@@ -89,7 +89,6 @@ def test_confirmable_flag(app, clients, get_message):
     token = registrations[0]["confirm_token"]
     response = clients.get("/confirm/" + token, follow_redirects=False)
     assert len(recorded_confirms) == 1
-    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
     response = clients.get(response.location)
     assert get_message("EMAIL_CONFIRMED") in response.data
     # make sure not logged in
@@ -361,7 +360,6 @@ def test_confirm_redirect_to_post_confirm(client, get_message):
 
     response = client.get("/confirm/" + token, follow_redirects=False)
     assert "/post_confirm" in response.location
-    assert response.headers.get("Referrer-Policy", None) == "no-referrer"
 
 
 @pytest.mark.registerable()
@@ -393,7 +391,6 @@ def test_spa_get(app, client, get_message):
         assert "/confirm-redirect" == split.path
         qparams = dict(parse_qsl(split.query))
         assert qparams["email"] == "dude@lp.com"
-        assert response.headers.get("Referrer-Policy", None) == "no-referrer"
 
         response = client.get("/confirm/" + token)
         split = urlsplit(response.headers["Location"])
@@ -402,7 +399,6 @@ def test_spa_get(app, client, get_message):
         assert "/confirm-error" in response.location
         assert "email" not in qparams
         assert get_message("ALREADY_CONFIRMED") in qparams["info"].encode("utf-8")
-        assert response.headers.get("Referrer-Policy", None) == "no-referrer"
 
     # Arguably for json we shouldn't have any - this is buried in register_user
     # but really shouldn't be.
