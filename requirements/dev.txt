@@ -15,6 +15,7 @@ flask
 flask_wtf
 flask_login
 wtforms
+markupsafe
 passlib
 blinker
 email-validator

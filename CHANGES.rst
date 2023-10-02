@@ -8,12 +8,13 @@ Version 5.3.1
 
 Released October XX, 2023
 
-Please Note: py_webauthn is pinned to 1.9.0 until the issue with user_handle
-is resolved.
+Please Note: If your application uses webauthn you must pin py_webauthn to 1.9.0
+until the issue with user_handle is resolved.
 
 Fixes
 ++++++
 
+- (:issue:`847`) Compatability with Flask 3.0 (wangsha)
 - (:issue:`829`) Revert change in 5.3.0 that added a Referrer-Policy header.
 - (:issue:`826`) Fix error in quickstart (codycollier)
 - (:pr:`835`) Update Armenian translations (amkrtchyan-tmp)
