@@ -53,16 +53,18 @@ try:
         VerifiedAuthentication,
     )
     from webauthn.registration.verify_registration_response import VerifiedRegistration
+    from webauthn.helpers import (
+        parse_registration_credential_json,
+        parse_authentication_credential_json,
+    )
     from webauthn.helpers.exceptions import (
         InvalidAuthenticationResponse,
         InvalidRegistrationResponse,
     )
     from webauthn.helpers.structs import (
-        AuthenticationCredential,
         AuthenticatorTransport,
         PublicKeyCredentialDescriptor,
         PublicKeyCredentialType,
-        RegistrationCredential,
         UserVerificationRequirement,
     )
     from webauthn.helpers import bytes_to_base64url
@@ -168,8 +170,8 @@ class WebAuthnRegisterResponseForm(Form):
             self.credential.errors.append(msg)
             return False
         try:
-            reg_cred = RegistrationCredential.parse_raw(self.credential.data)
-        except (ValueError, KeyError):
+            reg_cred = parse_registration_credential_json(self.credential.data)
+        except (ValueError, KeyError, InvalidRegistrationResponse):
             self.credential.errors.append(get_message("API_ERROR")[0])
             return False
         try:
@@ -259,8 +261,8 @@ class WebAuthnSigninResponseForm(Form):
         if not super().validate(**kwargs):
             return False  # pragma: no cover
         try:
-            auth_cred = AuthenticationCredential.parse_raw(self.credential.data)
-        except (ValueError, KeyError):
+            auth_cred = parse_authentication_credential_json(self.credential.data)
+        except (ValueError, KeyError, InvalidAuthenticationResponse):
             self.credential.errors.append(get_message("API_ERROR")[0])
             return False
 
