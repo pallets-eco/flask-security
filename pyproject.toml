@@ -41,7 +41,7 @@ dynamic = [
 dependencies = [
     # flask dependencies include werkzeug, jinja2, itsdangerous, click, blinker
     "Flask>=2.3.0",
-    "Flask-Login>=0.6.2",
+    "Flask-Login@git+https://github.com/maxcountryman/flask-login.git@main",
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=1.1.1",
     "email-validator>=1.1.1",
@@ -61,7 +61,7 @@ low = [
     "Flask-SQLAlchemy==3.0.3",
     "Flask-Babel==3.1.0",
     "Flask-Mailman==0.3.0",
-    "Flask-Login==0.6.2",
+    "Flask-Login@git+https://github.com/maxcountryman/flask-login.git@main",
     "Flask-WTF==1.1.1",
     "peewee==3.16.2",
     "argon2_cffi==21.3.0",
