@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-07-26 08:24-0700\n"
+"POT-Creation-Date: 2023-10-04 16:34-0700\n"
 "PO-Revision-Date: 2017-09-27 23:39-0300\n"
 "Last-Translator: José Neto <josenetodino@gmail.com>\n"
 "Language: pt_BR\n"
@@ -428,124 +428,124 @@ msgstr ""
 msgid "Credential user handle didn't match"
 msgstr ""
 
-#: flask_security/forms.py:58
+#: flask_security/forms.py:59
 msgid "Email Address"
 msgstr "Endereço de email"
 
-#: flask_security/forms.py:59
+#: flask_security/forms.py:60
 msgid "Password"
 msgstr "Senha"
 
-#: flask_security/forms.py:60
+#: flask_security/forms.py:61
 msgid "Remember Me"
 msgstr "Lembre de mim"
 
-#: flask_security/forms.py:61 flask_security/templates/security/_menu.html:33
+#: flask_security/forms.py:62 flask_security/templates/security/_menu.html:33
 #: flask_security/templates/security/login_user.html:6
 #: flask_security/templates/security/send_login.html:6
 msgid "Login"
 msgstr "Login"
 
-#: flask_security/forms.py:62
+#: flask_security/forms.py:63
 #: flask_security/templates/security/email/us_instructions.html:14
 #: flask_security/templates/security/us_signin.html:6
 msgid "Sign In"
 msgstr ""
 
-#: flask_security/forms.py:63 flask_security/templates/security/_menu.html:43
+#: flask_security/forms.py:64 flask_security/templates/security/_menu.html:43
 #: flask_security/templates/security/register_user.html:6
 msgid "Register"
 msgstr "Registro"
 
-#: flask_security/forms.py:64
+#: flask_security/forms.py:65
 msgid "Resend Confirmation Instructions"
 msgstr "Reenviar instruções de confirmação"
 
-#: flask_security/forms.py:65
+#: flask_security/forms.py:66
 msgid "Recover Password"
 msgstr "Recuperar senha"
 
-#: flask_security/forms.py:66
+#: flask_security/forms.py:67
 msgid "Reset Password"
 msgstr "Redefinir senha"
 
-#: flask_security/forms.py:67
+#: flask_security/forms.py:68
 msgid "Retype Password"
 msgstr "Reescreva a senha"
 
-#: flask_security/forms.py:68
+#: flask_security/forms.py:69
 msgid "New Password"
 msgstr "Nova senha"
 
-#: flask_security/forms.py:69 flask_security/templates/security/_menu.html:12
+#: flask_security/forms.py:70 flask_security/templates/security/_menu.html:12
 msgid "Change Password"
 msgstr "Alterar senha"
 
-#: flask_security/forms.py:70
+#: flask_security/forms.py:71
 msgid "Send Login Link"
 msgstr "Enviar link de login"
 
-#: flask_security/forms.py:71
+#: flask_security/forms.py:72
 msgid "Verify Password"
 msgstr ""
 
-#: flask_security/forms.py:72
+#: flask_security/forms.py:73
 msgid "Change Method"
 msgstr ""
 
-#: flask_security/forms.py:73
+#: flask_security/forms.py:74
 msgid "Phone Number"
 msgstr ""
 
-#: flask_security/forms.py:74
+#: flask_security/forms.py:75
 msgid "Authentication Code"
 msgstr ""
 
-#: flask_security/forms.py:75
+#: flask_security/forms.py:76
 msgid "Submit"
 msgstr ""
 
-#: flask_security/forms.py:76
+#: flask_security/forms.py:77
 msgid "Submit Code"
 msgstr ""
 
-#: flask_security/forms.py:77
+#: flask_security/forms.py:78
 msgid "Error(s)"
 msgstr ""
 
-#: flask_security/forms.py:78
+#: flask_security/forms.py:79
 msgid "Identity"
 msgstr ""
 
-#: flask_security/forms.py:79
+#: flask_security/forms.py:80
 msgid "Send Code"
 msgstr ""
 
-#: flask_security/forms.py:80
+#: flask_security/forms.py:81
 msgid "Passcode"
 msgstr ""
 
-#: flask_security/forms.py:81
+#: flask_security/forms.py:82
 msgid "Username"
 msgstr ""
 
-#: flask_security/forms.py:82
+#: flask_security/forms.py:83
 msgid "Delete"
 msgstr ""
 
-#: flask_security/forms.py:83
+#: flask_security/forms.py:84
 msgid "Set up using email"
 msgstr ""
 
-#: flask_security/forms.py:84
+#: flask_security/forms.py:85
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
 
-#: flask_security/forms.py:87
+#: flask_security/forms.py:88
 msgid "Set up using SMS"
 msgstr ""
 
-#: flask_security/forms.py:767
+#: flask_security/forms.py:768
 msgid "Disable two factor authentication"
 msgstr ""
 

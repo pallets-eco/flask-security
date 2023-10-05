@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-07-26 08:24-0700\n"
+"POT-Creation-Date: 2023-10-04 16:34-0700\n"
 "PO-Revision-Date: 2017-06-08 10:13+0200\n"
 "Last-Translator: Alexandre Bulté <alexandre@bulte.net>\n"
 "Language: fr_FR\n"
@@ -430,126 +430,126 @@ msgstr "Identifiant non enregistré pour cet usage (premier ou secondaire)"
 msgid "Credential user handle didn't match"
 msgstr ""
 
-#: flask_security/forms.py:58
+#: flask_security/forms.py:59
 msgid "Email Address"
 msgstr "Adresse email"
 
-#: flask_security/forms.py:59
+#: flask_security/forms.py:60
 msgid "Password"
 msgstr "Mot de passe"
 
-#: flask_security/forms.py:60
+#: flask_security/forms.py:61
 msgid "Remember Me"
 msgstr "Se souvenir de moi"
 
-#: flask_security/forms.py:61 flask_security/templates/security/_menu.html:33
+#: flask_security/forms.py:62 flask_security/templates/security/_menu.html:33
 #: flask_security/templates/security/login_user.html:6
 #: flask_security/templates/security/send_login.html:6
 msgid "Login"
 msgstr "Connexion"
 
-#: flask_security/forms.py:62
+#: flask_security/forms.py:63
 #: flask_security/templates/security/email/us_instructions.html:14
 #: flask_security/templates/security/us_signin.html:6
 msgid "Sign In"
 msgstr "Sign In"
 
-#: flask_security/forms.py:63 flask_security/templates/security/_menu.html:43
+#: flask_security/forms.py:64 flask_security/templates/security/_menu.html:43
 #: flask_security/templates/security/register_user.html:6
 msgid "Register"
 msgstr "Inscription"
 
-#: flask_security/forms.py:64
+#: flask_security/forms.py:65
 msgid "Resend Confirmation Instructions"
 msgstr "Renvoyer les instructions de confirmation"
 
-#: flask_security/forms.py:65
+#: flask_security/forms.py:66
 msgid "Recover Password"
 msgstr "Récupérer le mot de passe"
 
-#: flask_security/forms.py:66
+#: flask_security/forms.py:67
 msgid "Reset Password"
 msgstr "Réinitialiser le mot de passe"
 
-#: flask_security/forms.py:67
+#: flask_security/forms.py:68
 msgid "Retype Password"
 msgstr "Confirmer le mot de passe"
 
-#: flask_security/forms.py:68
+#: flask_security/forms.py:69
 msgid "New Password"
 msgstr "Nouveau mot de passe"
 
-#: flask_security/forms.py:69 flask_security/templates/security/_menu.html:12
+#: flask_security/forms.py:70 flask_security/templates/security/_menu.html:12
 msgid "Change Password"
 msgstr "Changer le mot de passe"
 
-#: flask_security/forms.py:70
+#: flask_security/forms.py:71
 msgid "Send Login Link"
 msgstr "Envoyer le lien de connexion"
 
-#: flask_security/forms.py:71
+#: flask_security/forms.py:72
 msgid "Verify Password"
 msgstr ""
 
-#: flask_security/forms.py:72
+#: flask_security/forms.py:73
 msgid "Change Method"
 msgstr "Changer de méthode"
 
-#: flask_security/forms.py:73
+#: flask_security/forms.py:74
 msgid "Phone Number"
 msgstr ""
 
-#: flask_security/forms.py:74
+#: flask_security/forms.py:75
 msgid "Authentication Code"
 msgstr "Code d'Identification"
 
-#: flask_security/forms.py:75
+#: flask_security/forms.py:76
 msgid "Submit"
 msgstr "Nous faire parvenir"
 
-#: flask_security/forms.py:76
+#: flask_security/forms.py:77
 msgid "Submit Code"
 msgstr "Soumettre le code"
 
-#: flask_security/forms.py:77
+#: flask_security/forms.py:78
 msgid "Error(s)"
 msgstr ""
 
-#: flask_security/forms.py:78
+#: flask_security/forms.py:79
 msgid "Identity"
 msgstr "Identité"
 
-#: flask_security/forms.py:79
+#: flask_security/forms.py:80
 msgid "Send Code"
 msgstr ""
 
-#: flask_security/forms.py:80
+#: flask_security/forms.py:81
 msgid "Passcode"
 msgstr "Code d'accès"
 
-#: flask_security/forms.py:81
+#: flask_security/forms.py:82
 msgid "Username"
 msgstr ""
 
-#: flask_security/forms.py:82
+#: flask_security/forms.py:83
 msgid "Delete"
 msgstr ""
 
-#: flask_security/forms.py:83
+#: flask_security/forms.py:84
 msgid "Set up using email"
 msgstr ""
 
-#: flask_security/forms.py:84
+#: flask_security/forms.py:85
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
 "Configuration à l'aide d'une application d'authentification (par exemple,"
 " google, lastpass, authy)"
 
-#: flask_security/forms.py:87
+#: flask_security/forms.py:88
 msgid "Set up using SMS"
 msgstr "Configurer par SMS"
 
-#: flask_security/forms.py:767
+#: flask_security/forms.py:768
 msgid "Disable two factor authentication"
 msgstr "Désactiver l'authentification à deux facteurs"
 

@@ -49,8 +49,8 @@ extensions out of the box for data persistence:
 1. `Flask-SQLAlchemy <https://pypi.python.org/pypi/flask-sqlalchemy/>`_
 2. `MongoEngine <https://pypi.python.org/pypi/mongoengine/>`_
 3. `Peewee Flask utils <https://docs.peewee-orm.com/en/latest/peewee/playhouse.html#flask-utils>`_
-4. `PonyORM <https://pypi.python.org/pypi/pony/>`_ - NOTE: not currently supported.
-5. `SQLAlchemy sessions <https://docs.sqlalchemy.org/en/14/orm/session_basics.html>`_
+4. `PonyORM <https://pypi.python.org/pypi/pony/>`_ - NOTE: not currently working - Help needed!.
+5. `SQLAlchemy sessions <https://docs.sqlalchemy.org/en/20/orm/session_basics.html>`_
 
 
 Getting Started

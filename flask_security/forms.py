@@ -13,9 +13,10 @@
 import inspect
 import typing as t
 
-from flask import Markup, current_app, request
+from flask import current_app, request
 from flask_login import current_user
 from flask_wtf import FlaskForm as BaseForm
+from markupsafe import Markup
 from wtforms import (
     BooleanField,
     EmailField,

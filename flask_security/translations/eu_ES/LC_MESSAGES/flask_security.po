@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2023-07-26 08:24-0700\n"
+"POT-Creation-Date: 2023-10-04 16:34-0700\n"
 "PO-Revision-Date: 2020-11-28 13:41+0100\n"
 "Last-Translator: Martin Mozos <martinmozos@gmail.com>\n"
 "Language: eu_ES\n"
@@ -430,126 +430,126 @@ msgstr ""
 msgid "Credential user handle didn't match"
 msgstr ""
 
-#: flask_security/forms.py:58
+#: flask_security/forms.py:59
 msgid "Email Address"
 msgstr "Posta elektronikoa"
 
-#: flask_security/forms.py:59
+#: flask_security/forms.py:60
 msgid "Password"
 msgstr "Pasahitza"
 
-#: flask_security/forms.py:60
+#: flask_security/forms.py:61
 msgid "Remember Me"
 msgstr "Gogorarazi"
 
-#: flask_security/forms.py:61 flask_security/templates/security/_menu.html:33
+#: flask_security/forms.py:62 flask_security/templates/security/_menu.html:33
 #: flask_security/templates/security/login_user.html:6
 #: flask_security/templates/security/send_login.html:6
 msgid "Login"
 msgstr "Hasi saioa"
 
-#: flask_security/forms.py:62
+#: flask_security/forms.py:63
 #: flask_security/templates/security/email/us_instructions.html:14
 #: flask_security/templates/security/us_signin.html:6
 msgid "Sign In"
 msgstr "Hasi saioa"
 
-#: flask_security/forms.py:63 flask_security/templates/security/_menu.html:43
+#: flask_security/forms.py:64 flask_security/templates/security/_menu.html:43
 #: flask_security/templates/security/register_user.html:6
 msgid "Register"
 msgstr "Izena eman"
 
-#: flask_security/forms.py:64
+#: flask_security/forms.py:65
 msgid "Resend Confirmation Instructions"
 msgstr "Bidali berrespen argibideak"
 
-#: flask_security/forms.py:65
+#: flask_security/forms.py:66
 msgid "Recover Password"
 msgstr "Pasahitza berreskuratu"
 
-#: flask_security/forms.py:66
+#: flask_security/forms.py:67
 msgid "Reset Password"
 msgstr "Pasahitza berrezarri"
 
-#: flask_security/forms.py:67
+#: flask_security/forms.py:68
 msgid "Retype Password"
 msgstr "Idatzi berriro pasahitza"
 
-#: flask_security/forms.py:68
+#: flask_security/forms.py:69
 msgid "New Password"
 msgstr "Pasahitz berria"
 
-#: flask_security/forms.py:69 flask_security/templates/security/_menu.html:12
+#: flask_security/forms.py:70 flask_security/templates/security/_menu.html:12
 msgid "Change Password"
 msgstr "Aldatu pasahitza"
 
-#: flask_security/forms.py:70
+#: flask_security/forms.py:71
 msgid "Send Login Link"
 msgstr "Bidali saioa hasteko esteka"
 
-#: flask_security/forms.py:71
+#: flask_security/forms.py:72
 msgid "Verify Password"
 msgstr "Pasahitza ziurtatu"
 
-#: flask_security/forms.py:72
+#: flask_security/forms.py:73
 msgid "Change Method"
 msgstr "Aldatzeko metodoa"
 
-#: flask_security/forms.py:73
+#: flask_security/forms.py:74
 msgid "Phone Number"
 msgstr "Telefono zenbakia"
 
-#: flask_security/forms.py:74
+#: flask_security/forms.py:75
 msgid "Authentication Code"
 msgstr "Autentifikazio kodea"
 
-#: flask_security/forms.py:75
+#: flask_security/forms.py:76
 msgid "Submit"
 msgstr "Bidali"
 
-#: flask_security/forms.py:76
+#: flask_security/forms.py:77
 msgid "Submit Code"
 msgstr "Bidali kodea"
 
-#: flask_security/forms.py:77
+#: flask_security/forms.py:78
 msgid "Error(s)"
 msgstr "Errorea(k)"
 
-#: flask_security/forms.py:78
+#: flask_security/forms.py:79
 msgid "Identity"
 msgstr "Identitatea"
 
-#: flask_security/forms.py:79
+#: flask_security/forms.py:80
 msgid "Send Code"
 msgstr "Bidali kodea"
 
-#: flask_security/forms.py:80
+#: flask_security/forms.py:81
 msgid "Passcode"
 msgstr "Pasakodea"
 
-#: flask_security/forms.py:81
+#: flask_security/forms.py:82
 msgid "Username"
 msgstr "Erabiltzaile izena"
 
-#: flask_security/forms.py:82
+#: flask_security/forms.py:83
 msgid "Delete"
 msgstr ""
 
-#: flask_security/forms.py:83
+#: flask_security/forms.py:84
 msgid "Set up using email"
 msgstr "Konfiguratu posta elektronikoa erabiliz"
 
-#: flask_security/forms.py:84
+#: flask_security/forms.py:85
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
 "Konfiguratu autentifikatzaile aplikazio bat erabiliz (google, lastpass "
 "edo authy adibidez)"
 
-#: flask_security/forms.py:87
+#: flask_security/forms.py:88
 msgid "Set up using SMS"
 msgstr "Konfiguratu SMS bidez"
 
-#: flask_security/forms.py:767
+#: flask_security/forms.py:768
 msgid "Disable two factor authentication"
 msgstr ""
 

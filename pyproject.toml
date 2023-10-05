@@ -40,11 +40,12 @@ dynamic = [
 ]
 dependencies = [
     # flask dependencies include werkzeug, jinja2, itsdangerous, click, blinker
-    "Flask>=2.3.0",
+    "Flask>=2.3.2",
     "Flask-Login>=0.6.2",
     "Flask-Principal>=0.4.0",
-    "Flask-WTF>=1.1.1",
+    "Flask-WTF>=1.1.2",
     "email-validator>=1.1.1",
+    "markupsafe>=2.1.0",
     "passlib>=1.7.4",
     "wtforms>=3.0.0",  # for form-level errors
     "importlib_resources>=5.10.0",
@@ -54,7 +55,7 @@ dependencies = [
 babel = ["babel>=2.12.1", "flask_babel>=3.1.0"]
 fsqla = ["flask_sqlalchemy>=3.0.3", "sqlalchemy>=2.0.12", "sqlalchemy-utils>=0.41.1"]
 common = ["bcrypt>=4.0.1", "flask_mailman>=0.3.0", "bleach>=6.0.0"]
-mfa = ["cryptography>=40.0.2", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn==1.9.0"]
+mfa = ["cryptography>=40.0.2", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=1.9.0"]
 low = [
     # Lowest supported versions
     "Flask==2.3.2",
@@ -62,7 +63,7 @@ low = [
     "Flask-Babel==3.1.0",
     "Flask-Mailman==0.3.0",
     "Flask-Login==0.6.2",
-    "Flask-WTF==1.1.1",
+    "Flask-WTF==1.1.2",
     "peewee==3.16.2",
     "argon2_cffi==21.3.0",
     "authlib==1.2.0",
