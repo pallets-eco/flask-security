@@ -8,8 +8,12 @@ Version 5.3.1
 
 Released October XX, 2023
 
-Please Note: If your application uses webauthn you must pin py_webauthn to 1.9.0
-until the issue with user_handle is resolved.
+**Please Note:**
+
+- If your application uses webauthn you must use pydantic < 2.0
+  until the issue with user_handle is resolved.
+- If you want to use the latest Flask (3.0.0) you need to have Flask-Login changes -
+  those aren't currently released - use the 'main' branch.
 
 Fixes
 ++++++
