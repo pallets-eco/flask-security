@@ -182,8 +182,9 @@ def login() -> "ResponseValue":
     if form.validate_on_submit():
         assert form.user is not None
         remember_me = form.remember.data if "remember" in form else None
+        next_loc = form.next.data if "next" in form else propagate_next(request.url)
         response = _security.two_factor_plugins.tf_enter(
-            form.user, remember_me, "password", next_loc=propagate_next(request.url)
+            form.user, remember_me, "password", next_loc=next_loc
         )
         if response:
             return response
