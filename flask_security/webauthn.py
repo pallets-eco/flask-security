@@ -46,6 +46,7 @@ from flask import abort, after_this_request, request, session
 from flask import current_app as app
 from flask_login import current_user
 from wtforms import BooleanField, HiddenField, RadioField, StringField, SubmitField
+from .forms import NextFormMixin
 
 try:
     import webauthn
@@ -205,7 +206,7 @@ class WebAuthnRegisterResponseForm(Form):
         return True
 
 
-class WebAuthnSigninForm(Form):
+class WebAuthnSigninForm(Form, NextFormMixin):
     identity = StringField(get_form_field_label("identity"))
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(label=get_form_field_xlate(_("Start")), id="wan_signin")
@@ -236,7 +237,7 @@ class WebAuthnSigninForm(Form):
         return True
 
 
-class WebAuthnSigninResponseForm(Form):
+class WebAuthnSigninResponseForm(Form, NextFormMixin):
     """
     This form is used both for signin (primary/first or secondary) and verify.
     """
@@ -621,7 +622,9 @@ def webauthn_signin() -> "ResponseValue":
             cv("WAN_SIGNIN_TEMPLATE"),
             wan_signin_form=form,
             wan_signin_response_form=build_form(
-                "wan_signin_response_form", remember=form.remember.data
+                "wan_signin_response_form",
+                remember=form.remember.data,
+                next=form.next.data,
             ),
             wan_state=state_token,
             credential_options=json.dumps(o_json),
@@ -705,7 +708,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
                     form.user,
                     remember_me,
                     "webauthn",
-                    next_loc=propagate_next(request.url),
+                    next_loc=propagate_next(request.url, form),
                 )
                 if response:
                     return response

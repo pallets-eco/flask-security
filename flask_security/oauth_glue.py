@@ -115,7 +115,7 @@ def oauthresponse(name: str) -> "ResponseValue":
     if user:
         after_this_request(view_commit)
         response = _security.two_factor_plugins.tf_enter(
-            user, False, "oauth", next_loc=propagate_next(request.url)
+            user, False, "oauth", next_loc=propagate_next(request.url, None)
         )
         if response:
             return response

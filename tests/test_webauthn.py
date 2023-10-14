@@ -26,6 +26,7 @@ from tests.test_utils import (
     capture_flashes,
     get_existing_session,
     get_form_action,
+    get_form_input,
     json_authenticate,
     logout,
     reset_fresh,
@@ -1654,3 +1655,20 @@ def test_login_next(app, client, get_message):
     )
     assert response.status_code == 200
     assert b"Profile Page" in response.data
+
+    # Try form.next
+    logout(client, endpoint="/auth/logout")
+    reset_signcount(app, "matt@lp.com", "testr3")
+
+    response = client.post(
+        "/auth/wan-signin", data=dict(identity="matt@lp.com", next="/im-in")
+    )
+    response_url = get_form_action(response)
+
+    next_loc = get_form_input(response, "next")
+    response = client.post(
+        response_url,
+        data=dict(credential=json.dumps(SIGNIN_DATA1), next=next_loc),
+        follow_redirects=False,
+    )
+    assert "/im-in" in response.location

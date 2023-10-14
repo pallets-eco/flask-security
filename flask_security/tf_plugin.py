@@ -4,7 +4,7 @@
 
     Flask-Security Two-Factor Plugin Module
 
-    :copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     TODO:
@@ -58,7 +58,9 @@ class TwoFactorSelectForm(Form):
 def tf_select() -> "ResponseValue":
     # Ask user which MFA method they want to use.
     # This is used when a user has setup more than one type of 2FA.
-    form = build_form_from_request("two_factor_select_form")
+    form = t.cast(
+        TwoFactorSelectForm, build_form_from_request("two_factor_select_form")
+    )
 
     # This endpoint is unauthenticated - make sure we're in a valid state
     if not all(k in session for k in ["tf_user_id", "tf_select"]):
@@ -81,7 +83,7 @@ def tf_select() -> "ResponseValue":
         if tf_impl:
             json_payload = {"tf_required": True}
             response = tf_impl.tf_login(
-                user, json_payload, next_loc=propagate_next(request.url)
+                user, json_payload, next_loc=propagate_next(request.url, None)
             )
         if not response:  # pragma no cover
             # This really can't happen unless between the time the started logging in

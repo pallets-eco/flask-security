@@ -579,6 +579,10 @@ def test_post_already_authenticated(client, get_message):
     assert b"Post Login" in response.data
     response = client.post("/us-signin?next=/page1", data=data, follow_redirects=True)
     assert b"Page 1" in response.data
+    # should work in form as well
+    ndata = dict(email="matt@lp.com", password="password", next="/page1")
+    response = client.post("/us-signin", data=ndata, follow_redirects=True)
+    assert b"Page 1" in response.data
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.post("/us-signin", json=data, headers=headers)
@@ -1243,6 +1247,7 @@ def test_next(app, client, get_message):
     assert "/post_login" in response.location
 
     logout(client)
+    # Test form.next
     response = client.post(
         "/us-signin",
         data=dict(
@@ -2105,3 +2110,19 @@ def test_propagate_next_tf(app, client):
         follow_redirects=True,
     )
     assert b"Profile Page" in response.data
+
+    # Try form.next
+    logout(client, endpoint="/auth/logout")
+
+    response = client.post(
+        "/auth/us-signin",
+        data=dict(identity="matt@lp.com", passcode="password", next="/im-in"),
+        follow_redirects=True,
+    )
+    sendcode_url = get_form_action(response, 0)
+    response = client.post(
+        sendcode_url,
+        data=dict(code=sms_sender.messages[0].split()[-1]),
+        follow_redirects=False,
+    )
+    assert "/im-in" in response.location

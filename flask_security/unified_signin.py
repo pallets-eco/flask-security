@@ -4,7 +4,7 @@
 
     Flask-Security Unified Signin module
 
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     This implements a unified sign in endpoint - allowing
@@ -24,7 +24,6 @@
       fact allow the user to add a password. Is that sufficient?
     - This also means that there is no way to REMOVE your password once it is setup,
       although user can register without one.
-    - Any reason to support 'next' in form? xx?next=yyy works fine.
     - separate code validation times for SMS, email, authenticator?
     - token versus code versus passcode? Confusing terminology.
 
@@ -52,6 +51,7 @@ from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
     Form,
+    NextFormMixin,
     Required,
     build_form_from_request,
     build_form,
@@ -231,7 +231,7 @@ class _UnifiedPassCodeForm(Form):
         return False  # pragma: no cover
 
 
-class UnifiedSigninForm(_UnifiedPassCodeForm):
+class UnifiedSigninForm(_UnifiedPassCodeForm, NextFormMixin):
     """A unified login form
     For either identity/password or request and enter code.
     """
@@ -414,7 +414,7 @@ def us_signin_send_code() -> "ResponseValue":
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a method request to send a code.
     """
-    form: UnifiedSigninForm = build_form_from_request("us_signin_form")
+    form = t.cast(UnifiedSigninForm, build_form_from_request("us_signin_form"))
     form.submit_send_code.data = True
     form.submit.data = False
 
@@ -485,7 +485,7 @@ def us_verify_send_code() -> "ResponseValue":
     """
     Send code during verify. POST only.
     """
-    form: UnifiedVerifyForm = build_form_from_request("us_verify_form")
+    form = t.cast(UnifiedVerifyForm, build_form_from_request("us_verify_form"))
     form.submit_send_code.data = True
     form.submit.data = False
 
@@ -557,7 +557,7 @@ def us_signin() -> "ResponseValue":
         else:
             return redirect(get_post_login_redirect())
 
-    form: UnifiedSigninForm = build_form_from_request("us_signin_form")
+    form = t.cast(UnifiedSigninForm, build_form_from_request("us_signin_form"))
     form.submit.data = True
     form.submit_send_code.data = False
 
@@ -570,7 +570,7 @@ def us_signin() -> "ResponseValue":
                 form.user,
                 remember_me,
                 form.authn_via,
-                next_loc=propagate_next(request.url),
+                next_loc=propagate_next(request.url, form),
             )
             if response:
                 return response
@@ -632,7 +632,7 @@ def us_verify() -> "ResponseValue":
     will have filled in ?next=xxx - which we want to carefully not lose as we
     go through these steps.
     """
-    form: UnifiedVerifyForm = build_form_from_request("us_verify_form")
+    form = t.cast(UnifiedVerifyForm, build_form_from_request("us_verify_form"))
     form.submit.data = True
     form.submit_send_code.data = False
 
@@ -736,7 +736,7 @@ def us_verify_link() -> "ResponseValue":
                 )
             )
         response = _security.two_factor_plugins.tf_enter(
-            user, False, "email", next_loc=propagate_next(request.url)
+            user, False, "email", next_loc=propagate_next(request.url, None)
         )
         if response:
             return response
@@ -769,7 +769,7 @@ def us_setup() -> "ResponseValue":
     use a timed signed token to pass along state.
     GET - retrieve current info (json) or form.
     """
-    form: UnifiedSigninSetupForm = build_form_from_request("us_setup_form")
+    form = t.cast(UnifiedSigninSetupForm, build_form_from_request("us_setup_form"))
 
     setup_methods = _compute_setup_methods()
     active_methods = _compute_active_methods(current_user)

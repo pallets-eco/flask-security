@@ -16,7 +16,7 @@ import hashlib
 import hmac
 import time
 import typing as t
-from urllib.parse import parse_qsl, parse_qs, urlsplit, urlunsplit, urlencode
+from urllib.parse import parse_qsl, urlsplit, urlunsplit, urlencode
 import urllib.request
 import urllib.error
 import warnings
@@ -36,10 +36,11 @@ from flask_login import logout_user as _logout_user
 from flask_login import current_user
 from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
 from flask_principal import AnonymousIdentity, Identity, identity_changed, Need
-from flask_wtf import csrf
+from flask_wtf import csrf, FlaskForm
 from wtforms import ValidationError
 from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.local import LocalProxy
+from werkzeug.datastructures import MultiDict
 
 from .quart_compat import best, get_quart_status
 from .proxies import _security, _datastore, _pwd_context, _hashing_context
@@ -48,7 +49,6 @@ from .signals import user_authenticated
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Flask, Response
     from flask.typing import ResponseValue
-    from flask_wtf import FlaskForm
     from .datastore import User
 
 SB = t.Union[str, bytes]
@@ -547,46 +547,27 @@ def validate_redirect_url(url: str) -> bool:
     return True
 
 
-def get_post_action_redirect(config_key: str, declared: t.Optional[str] = None) -> str:
-    # All this nonsense due to mypy
-    arg_next_url = None
-    arg_next = request.args.get("next", None)
-    if arg_next:
-        arg_next_url = get_url(arg_next)
-    form_next_url = None
-    form_next = request.form.get("next", None)
-    if form_next:
-        form_next_url = get_url(form_next)
-    urls = [
-        arg_next_url,
-        form_next_url,
-        find_redirect(config_key),
-    ]
-    if declared:
-        urls.insert(0, declared)
-    for url in urls:
-        if url and validate_redirect_url(url):
-            return url
-    raise ValueError("No valid redirect URL found - configuration error")
+def get_post_action_redirect(config_key: str) -> str:
+    return propagate_next(find_redirect(config_key), request.form)
 
 
-def get_post_login_redirect(declared: t.Optional[str] = None) -> str:
-    return get_post_action_redirect("SECURITY_POST_LOGIN_VIEW", declared)
+def get_post_login_redirect() -> str:
+    return get_post_action_redirect("SECURITY_POST_LOGIN_VIEW")
 
 
-def get_post_register_redirect(declared: t.Optional[str] = None) -> str:
-    return get_post_action_redirect("SECURITY_POST_REGISTER_VIEW", declared)
+def get_post_register_redirect() -> str:
+    return get_post_action_redirect("SECURITY_POST_REGISTER_VIEW")
 
 
-def get_post_logout_redirect(declared: t.Optional[str] = None) -> str:
-    return get_post_action_redirect("SECURITY_POST_LOGOUT_VIEW", declared)
+def get_post_logout_redirect() -> str:
+    return get_post_action_redirect("SECURITY_POST_LOGOUT_VIEW")
 
 
-def get_post_verify_redirect(declared: t.Optional[str] = None) -> str:
-    return get_post_action_redirect("SECURITY_POST_VERIFY_VIEW", declared)
+def get_post_verify_redirect() -> str:
+    return get_post_action_redirect("SECURITY_POST_VERIFY_VIEW")
 
 
-def find_redirect(key: str) -> t.Optional[str]:
+def find_redirect(key: str) -> str:
     """Returns the URL to redirect to after a user logs in successfully.
 
     :param key: The session or application configuration key to search for
@@ -599,17 +580,38 @@ def find_redirect(key: str) -> t.Optional[str]:
     app_url = None
     if app_value:
         app_url = get_url(app_value)
-    rv = session_url or app_url or current_app.config.get("APPLICATION_ROOT", "/")
+    rv = session_url or app_url or str(current_app.config.get("APPLICATION_ROOT", "/"))
     return rv
 
 
-def propagate_next(url: str) -> str:
-    # return either URL or, if URL already has a ?next=xx, return that.
-    url_next = urlsplit(url)
-    qparams = parse_qs(url_next.query)
-    if "next" in qparams:
-        return qparams["next"][0]
-    return url
+def propagate_next(
+    fallback_url: str, form: t.Optional[t.Union[FlaskForm, MultiDict]]
+) -> str:
+    """Compute appropriate redirect URL
+    The application can add a 'next' query parameter or have 'next' as a form field.
+    If either exist, make sure they are valid (not pointing to external location)
+    If neither, return the fallback_url
+
+    Can be passed either request.form (which is really a MultiDict OR a real form.
+    """
+    form_next = None
+    if form and isinstance(form, FlaskForm):
+        if hasattr(form, "next") and form.next.data:
+            form_next = get_url(form.next.data)
+    elif form and form.get("next", None):
+        form_next = get_url(str(form.get("next")))
+    arg_next = None
+    if request.args.get("next", None):
+        arg_next = get_url(request.args.get("next"))  # type: ignore[arg-type]
+    urls = [
+        arg_next,
+        form_next,
+        fallback_url,
+    ]
+    for url in urls:
+        if url and validate_redirect_url(url):
+            return url
+    raise ValueError("No valid redirect URL found - configuration error")
 
 
 def get_config(app: "Flask") -> t.Dict[str, t.Any]:
