@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.1.3\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-10-04 16:34-0700\n"
+"POT-Creation-Date: 2023-10-14 16:46-0700\n"
 "PO-Revision-Date: 2022-04-05 13:50+0200\n"
 "Last-Translator: Pascua Theus <pascua@identeco.de>\n"
 "Language: de_DE\n"
@@ -616,27 +616,27 @@ msgstr "Richte weitere Single-User-Login-Option ein"
 msgid "Delete active sign in option"
 msgstr "Löschen der aktivierten Anmeldeoption"
 
-#: flask_security/webauthn.py:118 flask_security/webauthn.py:342
+#: flask_security/webauthn.py:121 flask_security/webauthn.py:345
 msgid "Nickname"
 msgstr "Nickname"
 
-#: flask_security/webauthn.py:122
+#: flask_security/webauthn.py:125
 msgid "Usage"
 msgstr "Benutzung"
 
-#: flask_security/webauthn.py:124
+#: flask_security/webauthn.py:127
 msgid "Use as a first authentication factor"
 msgstr "Als ersten Faktor benutzen"
 
-#: flask_security/webauthn.py:127
+#: flask_security/webauthn.py:130
 msgid "Use as a secondary authentication factor"
 msgstr "Als zweiten Faktor benutzen"
 
-#: flask_security/webauthn.py:209
+#: flask_security/webauthn.py:212
 msgid "Start"
 msgstr "Start"
 
-#: flask_security/webauthn.py:912
+#: flask_security/webauthn.py:917
 msgid "webauthn"
 msgstr "WebAuthn"
 

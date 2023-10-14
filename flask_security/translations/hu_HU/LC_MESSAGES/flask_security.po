@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2023-10-04 16:34-0700\n"
+"POT-Creation-Date: 2023-10-14 16:46-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hu_HU\n"
@@ -609,27 +609,27 @@ msgstr "Kiegészítő bejelentkezési lehetőség beállítása"
 msgid "Delete active sign in option"
 msgstr "Az aktív bejelentkezési opció törlése"
 
-#: flask_security/webauthn.py:118 flask_security/webauthn.py:342
+#: flask_security/webauthn.py:121 flask_security/webauthn.py:345
 msgid "Nickname"
 msgstr "Becenév"
 
-#: flask_security/webauthn.py:122
+#: flask_security/webauthn.py:125
 msgid "Usage"
 msgstr "Használat"
 
-#: flask_security/webauthn.py:124
+#: flask_security/webauthn.py:127
 msgid "Use as a first authentication factor"
 msgstr "Használat első hitelesítési lépésként"
 
-#: flask_security/webauthn.py:127
+#: flask_security/webauthn.py:130
 msgid "Use as a secondary authentication factor"
 msgstr "Használat másodlagos hitelesítési lépésként"
 
-#: flask_security/webauthn.py:209
+#: flask_security/webauthn.py:212
 msgid "Start"
 msgstr ""
 
-#: flask_security/webauthn.py:912
+#: flask_security/webauthn.py:917
 msgid "webauthn"
 msgstr ""
 

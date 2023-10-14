@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.3.1
 -------------
 
-Released October XX, 2023
+Released October 14, 2023
 
 **Please Note:**
 
