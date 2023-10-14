@@ -23,6 +23,7 @@ Fixes
 - (:issue:`826`) Fix error in quickstart (codycollier)
 - (:pr:`835`) Update Armenian translations (amkrtchyan-tmp)
 - (:pr:`831`) Update German translations. (sr-verde)
+- (:issue:`853`) Fix 'next' propagation when passed as form.next (thanks cariaso)
 
 Version 5.3.0
 -------------

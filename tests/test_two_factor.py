@@ -1246,6 +1246,18 @@ def test_propagate_next(app, client):
             verify_url, data=dict(code=codes[0]["login_token"]), follow_redirects=False
         )
         assert "/im-in" in response.location
+        logout(client)
+
+        # do it with next in the form
+        data = dict(email="gal@lp.com", password="password", next="/im-in")
+        response = client.post("/login", data=data, follow_redirects=True)
+        assert "?next=/im-in" in response.request.url
+        # grab URL from form to show that our template propagates ?next
+        verify_url = get_form_action(response)
+        response = client.post(
+            verify_url, data=dict(code=codes[1]["login_token"]), follow_redirects=False
+        )
+        assert "/im-in" in response.location
 
 
 @pytest.mark.settings(freshness=timedelta(minutes=0))

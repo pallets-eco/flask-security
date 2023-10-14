@@ -183,7 +183,10 @@ def login() -> "ResponseValue":
         assert form.user is not None
         remember_me = form.remember.data if "remember" in form else None
         response = _security.two_factor_plugins.tf_enter(
-            form.user, remember_me, "password", next_loc=propagate_next(request.url)
+            form.user,
+            remember_me,
+            "password",
+            next_loc=propagate_next(request.url, form),
         )
         if response:
             return response
@@ -305,7 +308,7 @@ def register() -> "ResponseValue":
         # signin - we adhere to historic behavior.
         if not _security.confirmable or cv("LOGIN_WITHOUT_CONFIRMATION"):
             response = _security.two_factor_plugins.tf_enter(
-                form.user, False, "register", next_loc=propagate_next(request.url)
+                form.user, False, "register", next_loc=propagate_next(request.url, form)
             )
             if response:
                 return response
@@ -490,7 +493,7 @@ def confirm_email(token):
             # get the email.
             # Note also this goes against OWASP recommendations.
             response = _security.two_factor_plugins.tf_enter(
-                user, False, "confirm", next_loc=propagate_next(request.url)
+                user, False, "confirm", next_loc=propagate_next(request.url, None)
             )
             if response:
                 do_flash(m, c)
@@ -639,7 +642,7 @@ def reset_password(token):
         if cv("AUTO_LOGIN_AFTER_RESET"):
             # backwards compat - really shouldn't do this according to OWASP
             response = _security.two_factor_plugins.tf_enter(
-                form.user, False, "reset", next_loc=propagate_next(request.url)
+                form.user, False, "reset", next_loc=propagate_next(request.url, None)
             )
             if response:
                 return response
