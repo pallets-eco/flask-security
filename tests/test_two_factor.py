@@ -296,87 +296,64 @@ def test_two_factor_illegal_state(app, client, get_message):
     assert response.status_code == 302
     assert "/api/login" in response.location
 
+# Part of flag testing
+def post_and_assert_error(url, data, error_message, client):
+    response = client.post(url, data=data, follow_redirects=True)
+    assert error_message in response.data
 
-@pytest.mark.settings(two_factor_required=True)
-def test_two_factor_flag(app, client, get_message):
-    # trying to verify code without going through two-factor
-    # first login function
-    wrong_code = b"000000"
-    response = client.post(
-        "/tf-validate", data=dict(code=wrong_code), follow_redirects=True
-    )
+def post_and_assert_json_error(url, data, field, error_message, client):
+    response = client.post(url, json=data, headers={"Content-Type": "application/json"}, follow_redirects=True)
+    assert error_message in response.data
 
-    message = b"You currently do not have permissions to access this page"
-    assert message in response.data
+def post_and_assert_json_error_without_redirects(url, data, error_message, client):
+    response = client.post(url, json=data, headers={"Content-Type": "application/json"})
+    assert error_message in response.data
 
-    # Test login using invalid email
-    data = dict(email="nobody@lp.com", password="password")
-    response = client.post("/login", data=data, follow_redirects=True)
-    assert b"Specified user does not exist" in response.data
-    response = client.post(
-        "/login",
-        json=data,
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-    assert b"Specified user does not exist" in response.data
+def post_and_assert_json_error_with_status_code(url, data, field, error_message, client):
+    response = client.post(url, json=data, headers={"Content-Type": "application/json"}, follow_redirects=True)
+    assert response.status_code == 400
+    assert (response.json["response"]["field_errors"][field][0] == error_message)
 
-    # Test login using valid email and invalid password
-    data = dict(email="gal@lp.com", password="wrong_pass")
-    response = client.post("/login", data=data, follow_redirects=True)
-    assert b"Invalid password" in response.data
-    response = client.post(
-        "/login",
-        json=data,
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-    assert b"Invalid password" in response.data
+def post_and_assert_error_with_qr_code(url, data, error_message, client):
+    response = client.post(url, data=data, follow_redirects=True)
+    assert error_message in response.data
+    
+    # verify png QRcode is present
+    assert b"data:image/svg+xml;base64," in response.data
 
-    # Test two-factor authentication first login
-    data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login", data=data, follow_redirects=True)
-    message = b"Two-factor authentication adds an extra layer of security"
-    assert message in response.data
-    response = client.post(
-        "/tf-setup", data=dict(setup="not_a_method"), follow_redirects=True
-    )
-    assert b"Marked method is not valid" in response.data
+    # parse out key
+    rd = response.data.decode("utf-8")
+    matcher = re.match(r".*((?:\S{4}-){7}\S{4}).*", rd, re.DOTALL)
+    totp_secret = matcher.group(1)
+
+    # Generate token from passed totp_secret and confirm setup
+    totp = TOTP(totp_secret)
+    code = totp.generate().token
+
+    post_and_assert_error("/tf-validate", data=dict(code=code), error_message=b"You successfully changed your two-factor method", client=client)
+    logout(client)
+
+def post_and_assert_error_with_qr_code_png(url, data, error_message, client):
+    response = client.post(url, data=data, follow_redirects=True)
+    assert error_message in response.data
+    
+    # check availability of qrcode when this option is not picked
+    assert b"data:image/png;base64," not in response.data
+
+def post_and_assert_error_with_qr_code_without_key(url, data, error_message, client):
+    response = client.post(url, data=data, follow_redirects=True)
+    assert error_message in response.data
+
+    # verify png QRcode is present
+    assert b"data:image/svg+xml;base64," in response.data
+
+def post_and_assert_success(url, data, success_message, client):
+    response = client.post(url, data=data, follow_redirects=True)
+    assert success_message in response.data
     with client.session_transaction() as session:
         assert session["tf_state"] == "setup_from_login"
 
-    # try non-existing setup on setup page (using json)
-    data = dict(setup="not_a_method")
-    response = client.post(
-        "/tf-setup",
-        json=data,
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-    assert response.status_code == 400
-    assert (
-        response.json["response"]["field_errors"]["setup"][0]
-        == "Marked method is not valid"
-    )
-
-    data = dict(setup="email")
-    response = client.post(
-        "/tf-setup",
-        json=data,
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-
-    # Test for sms in process of valid login
-    sms_sender = SmsSenderFactory.createSender("test")
-    data = dict(email="gal@lp.com", password="password")
-    response = client.post(
-        "/login",
-        json=data,
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-    assert b'"code": 200' in response.data
+def get_sms_and_submit_token(sms_sender, wrong_code, get_message, client):
     assert sms_sender.get_count() == 1
     session = get_session(response)
     assert session["tf_state"] == "ready"
@@ -393,13 +370,18 @@ def test_two_factor_flag(app, client, get_message):
     # Upon completion, session cookie shouldn't have any two factor stuff in it.
     assert not tf_in_session(get_session(response))
 
-    # Test change two_factor view from sms to mail
-    setup_data = dict(setup="email")
-    response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    msg = b"To complete logging in, please enter the code sent to your mail"
-    assert msg in response.data
+def get_sms_and_validate_token(sms_sender, get_message, client):
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
 
-    # Fetch token validate form
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
+    assert not tf_in_session(get_session(response))
+
+    logout(client)
+
+
+def fetch_token_validate_form(app, client):
     response = client.get("/tf-validate")
     assert response.status_code == 200
     # make sure two_factor_verify_code_form is set
@@ -410,28 +392,47 @@ def test_two_factor_flag(app, client, get_message):
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed your two-factor method" in response.data
 
-    # Test change two_factor password confirmation view to authenticator
-    # Setup authenticator
-    setup_data = dict(setup="authenticator")
-    response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open an authenticator app on your device" in response.data
-    # verify png QRcode is present
-    assert b"data:image/svg+xml;base64," in response.data
+def case_1(wrong_code, client):
+    wrong_code = b"000000"
+    post_and_assert_error("/tf-validate", data=dict(code=wrong_code), error_message=b"You currently do not have permissions to access this page", client=client)
 
-    # parse out key
-    rd = response.data.decode("utf-8")
-    matcher = re.match(r".*((?:\S{4}-){7}\S{4}).*", rd, re.DOTALL)
-    totp_secret = matcher.group(1)
+def case_2(client):
+    post_and_assert_error("/login", data=dict(email="nobody@lp.com", password="password"), error_message=b"Specified user does not exist", client=client)
+    post_and_assert_json_error("/login", data=dict(email="nobody@lp.com", password="password"), field="email", error_message=b"Specified user does not exist", client=client)
 
-    # Generate token from passed totp_secret and confirm setup
-    totp = TOTP(totp_secret)
-    code = totp.generate().token
-    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert b"You successfully changed your two-factor method" in response.data
+def case_3(client):
+    post_and_assert_error("/login", data=dict(email="gal@lp.com", password="wrong_pass"), error_message=b"Invalid password", client=client)
+    post_and_assert_json_error("/login", data=dict(email="gal@lp.com", password="wrong_pass"), field="email", error_message=b"Invalid password", client=client)
 
-    logout(client)
+def case_4(client):
+    message = b"Two-factor authentication adds an extra layer of security"
+    post_and_assert_error("/login", data=dict(email="matt@lp.com", password="password"), error_message=message, client=client)
+    post_and_assert_success("/tf-setup", data=dict(setup="not_a_method"), success_message=b"Marked method is not valid", client=client)
 
-    # Test login with remember_token
+def case_5(client):
+    post_and_assert_json_error_with_status_code("/tf-setup", data=dict(setup="not_a_method"), field="setup", error_message="Marked method is not valid", client=client)
+    data = dict(setup="email")
+    response = client.post(
+        "/tf-setup",
+        json=data,
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
+
+def case_6(wrong_code, get_message, client):
+    sms_sender = SmsSenderFactory.createSender("test")
+    post_and_assert_json_error("/login", data=dict(email="gal@lp.com", password="password"), error_message=b'"code": 200', client=client)
+    get_sms_and_submit_token(sms_sender=sms_sender, wrong_code=wrong_code, get_message=get_message, client=client)
+
+def case_7(app, client):
+    msg = b"To complete logging in, please enter the code sent to your mail"
+    post_and_assert_error("/tf-setup", data=dict(setup="email"), error_message=msg, client=client)
+    fetch_token_validate_form(app=app, client=client)
+
+def case_8(client):
+    post_and_assert_error_with_qr_code("/tf-setup", data=dict(setup="authenticator"), error_message=b"Open an authenticator app on your device", client=client)
+
+def case_9(client):
     assert not client.get_cookie("remember_token")
     data = dict(email="gal@lp.com", password="password", remember=True)
     response = client.post(
@@ -442,67 +443,83 @@ def test_two_factor_flag(app, client, get_message):
     )
 
     # Generate token from passed totp_secret
-    code = totp.generate().token
-    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
+    post_and_assert_error("/tf-validate", data=dict(code=totp.generate().token), error_message=get_message("TWO_FACTOR_LOGIN_SUCCESSFUL"), client=client)
 
     # Verify that the remember token is properly set
     assert client.get_cookie("remember_token")
-
+    
     response = logout(client)
     # Verify that logout clears session info
     assert not tf_in_session(get_session(response))
 
-    # Test two-factor authentication first login
-    data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login", data=data, follow_redirects=True)
+def case_10(client):
     message = b"Two-factor authentication adds an extra layer of security"
-    assert message in response.data
+    post_and_assert_error_with_qr_code_png("/login", data=dict(email="matt@lp.com", password="password"), error_message=message, client=client)
 
-    # check availability of qrcode when this option is not picked
-    assert b"data:image/png;base64," not in response.data
+def case_11(client):
+    post_and_assert_error_with_qr_code_without_key("/tf-setup", data=dict(setup="authenticator"), error_message=b"Open an authenticator app on your device", client=client)
 
-    # check availability of qrcode page when this option is picked
-    setup_data = dict(setup="authenticator")
-    response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    assert b"Open an authenticator app on your device" in response.data
-    assert b"data:image/svg+xml;base64," in response.data
-
-    # check appearance of setup page when sms picked and phone number entered
+def case_12(get_message, client):
     sms_sender = SmsSenderFactory.createSender("test")
-    data = dict(setup="sms", phone="+442083661177")
-    response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"To Which Phone Number Should We Send Code To" in response.data
-    assert sms_sender.get_count() == 1
-    code = sms_sender.messages[0].split()[-1]
+    post_and_assert_error("/tf-setup", data=dict(setup="sms", phone="+442083661177"), error_message=b"To Which Phone Number Should We Send Code To", client=client)
+    get_sms_and_validate_token(sms_sender=sms_sender, get_message=get_message, client=client)
 
-    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
-    assert get_message("TWO_FACTOR_LOGIN_SUCCESSFUL") in response.data
-    assert not tf_in_session(get_session(response))
+def case_13(client):
+    post_and_assert_json_error_without_redirects("/tf-rescue", data=dict(help_setup="lost_device"), error_message=b'"code": 400')
 
-    logout(client)
-
-    # check when two_factor_rescue function should not appear
-    rescue_data_json = dict(help_setup="lost_device")
-    response = client.post(
-        "/tf-rescue",
-        json=rescue_data_json,
-        headers={"Content-Type": "application/json"},
-    )
-    assert b'"code": 400' in response.data
-
-    # check when two_factor_rescue function should appear
-    data = dict(email="gal2@lp.com", password="password")
-    response = client.post("/login", data=data, follow_redirects=True)
-    assert b"Please enter your authentication code" in response.data
-    rescue_data = dict(help_setup="email")
-    response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
+def case_14(client):
+    post_and_assert_error("/login", data=dict(email="gal2@lp.com", password="password"), error_message=b"Please enter your authentication code", client=client)
     message = b"The code for authentication was sent to your email address"
-    assert message in response.data
-    rescue_data = dict(help_setup="help")
-    response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
+    post_and_assert_error("/tf-rescue", data=dict(help_setup="email"),error_message=message, client=client)
     message = b"A mail was sent to us in order to reset your application account"
-    assert message in response.data
+    post_and_assert_error("/tf-rescue", data=dict(help_setup="help"), error_message=message, client=client)
+
+
+@pytest.mark.settings(two_factor_required=True)
+def test_two_factor_flag(app, client, get_message):
+
+    # Case 1: Wrong code on two-factor validation
+    wrong_code = b"000000"
+    case_1(wrong_code=wrong_code, client=client)
+
+    # Case 2: Test login using invalid email
+    case_2(client=client)
+
+    # Case 3: Test login using valid email and invalid password
+    case_3(client=client)
+
+    # Case 4: Test two-factor authentication first login
+    case_4(client=client)
+
+    # Case 5: try non-existing setup on setup page (using json)
+    case_5(client=client)
+
+    # Case 6: Test for sms in process of valid login
+    case_6(wrong_code=wrong_code, get_message=get_message, client=client)
+
+    # Case 7: Test change two_factor view from sms to mail
+    case_7(app=app, client=client)
+
+    # Case 8: Test change two_factor password confirmation view to authenticator
+    case_8(client=client)
+
+    # Case 9: Test login with remember_token
+    case_9(client=client)
+
+    # Case 10: Test two-factor authentication first login
+    case_10(client=client)
+
+    # Case 11: check availability of qrcode page when this option is picked
+    case_11(client=client)
+
+    # Case 12: check appearance of setup page when sms picked and phone number entered
+    case_12(get_message=get_message, client=client)
+
+    # Case 13: check when two_factor_rescue function should not appear
+    case_13(client=client)
+
+    # Case 14: check when two_factor_rescue function should appear
+    case_14(client=client)
 
 
 @pytest.mark.settings(two_factor_rescue_email=False)
