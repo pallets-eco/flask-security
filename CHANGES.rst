@@ -3,6 +3,16 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.3.2
+-------------
+
+Released xxx
+
+Fixes
+++++++
+
+- (:issue:`859`) Update Quickstart to show how to properly handle SQLAlchemy connections
+
 Version 5.3.1
 -------------
 

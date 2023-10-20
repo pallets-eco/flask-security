@@ -14,7 +14,6 @@ import hashlib
 from unittest import mock
 import re
 import os.path
-import sys
 import time
 import typing as t
 
@@ -809,7 +808,6 @@ def test_zxcvbn_xlate(app):
 """
 
 
-@pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
 @pytest.mark.settings(password_check_breached="strict")
 def test_breached(app, sqlalchemy_datastore):
     # partial response from: https://api.pwnedpasswords.com/range/07003
@@ -833,7 +831,6 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
             assert app.config["SECURITY_MSG_PASSWORD_BREACHED"][0] in pbad[0]
 
 
-@pytest.mark.skipif(sys.version_info < (3, 0), reason="requires python3 or higher")
 @pytest.mark.settings(
     password_check_breached="strict",
     password_breached_count=16,
@@ -1444,3 +1441,20 @@ def test_login_email_whatever(app, client, get_message):
     )
     assert response.status_code == 302
     assert "/" in response.location
+
+
+@pytest.mark.skip
+def test_sqlalchemy_session_conn(request, app, tmpdir, realdburl):
+    # test harness for checking connection mgmt by logging all connections
+    from .conftest import sqlalchemy_session_setup
+
+    ds = sqlalchemy_session_setup(
+        request, app, tmpdir, realdburl, echo_pool="debug", echo="debug"
+    )
+    init_app_with_options(app, ds)
+    client = app.test_client()
+
+    client.post("/login", data=dict(email="matt@lp.com", password="password"))
+
+    client.post("/login", json=dict(noemail="matt@lp.com", password="password"))
+    time.sleep(5)
