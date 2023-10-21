@@ -141,8 +141,8 @@ SQLAlchemy Install requirements
      $ . pymyenv/bin/activate
      $ pip install flask-security-too[common] sqlalchemy
 
-SQLAlchemy Application
-~~~~~~~~~~~~~~~~~~~~~~
+SQLAlchemy Application (w/o Flask-SQLAlchemy)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following code sample illustrates how to get started as quickly as
 possible using `SQLAlchemy in a declarative way
@@ -172,6 +172,9 @@ and models.py.
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
     # Don't worry if email has findable domain
     app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
+
+    # manage sessions per request - make sure connections are closed and returned
+    app.teardown_appcontext(lambda exc: db_session.close())
 
     # Setup Flask-Security
     user_datastore = SQLAlchemySessionUserDatastore(db_session, User, Role)

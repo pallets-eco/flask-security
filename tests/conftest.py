@@ -467,7 +467,7 @@ def sqlalchemy_session_datastore(request, app, tmpdir, realdburl):
     return sqlalchemy_session_setup(request, app, tmpdir, realdburl)
 
 
-def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
+def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
     """
     Note that we test having a different user id column name here.
     """
@@ -501,10 +501,11 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl):
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + path
 
-    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], **engine_kwargs)
     db_session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
     )
+    app.teardown_appcontext(lambda exc: db_session.close())
     Base = declarative_base()
     Base.query = db_session.query_property()
 
