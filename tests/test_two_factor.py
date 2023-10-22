@@ -690,6 +690,32 @@ def test_rescue_json(app, client):
 
 
 @pytest.mark.settings(two_factor_required=True)
+def test_json_auth_token(app, client):
+    """
+    Test getting auth_token with two-factor
+    """
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+    # Login with someone already setup.
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", json=data, headers=headers)
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    # Verify SMS sent
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+    response = client.post("/tf-validate?include_auth_token", json=dict(code=code))
+    assert response.status_code == 200
+    token = response.json["response"]["user"]["authentication_token"]
+    headers = {"Authentication-Token": token}
+    # make sure can access restricted page
+    response = client.get("/token", headers=headers)
+    assert b"Token Authentication" in response.data
+
+
+@pytest.mark.settings(two_factor_required=True)
 def test_no_opt_out(app, client, get_message):
     # Test if 2FA required, can't opt-out.
     sms_sender = SmsSenderFactory.createSender("test")

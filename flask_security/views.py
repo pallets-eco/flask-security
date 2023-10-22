@@ -965,7 +965,7 @@ def two_factor_token_validation():
                 return redirect(get_post_login_redirect())
 
         else:
-            return base_render_json(form)
+            return base_render_json(form, include_auth_token=True)
 
     # GET or not successful POST
 

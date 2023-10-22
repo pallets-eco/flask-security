@@ -129,7 +129,7 @@ class MailUtil:
             "check_deliverability": False
         }
         valid = email_validator.validate_email(email, **validator_args)
-        return valid.email
+        return valid.normalized
 
     def validate(self, email: str) -> str:
         """
@@ -147,4 +147,4 @@ class MailUtil:
 
         validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
         valid = email_validator.validate_email(email, **validator_args)
-        return valid.email
+        return valid.normalized
