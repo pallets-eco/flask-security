@@ -1108,11 +1108,12 @@ class Security:
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
         ``two_factor_verify_password_form`` removed.
         ``password_validator`` removed in favor of the new ``password_util_cls``.
-
     .. deprecated:: 5.0.0
         Passing in a LoginManager instance. Removed in 5.1.0
     .. deprecated:: 5.0.0
         json_encoder_cls is no longer honored since Flask 2.2 has deprecated it.
+    .. deprecated:: 5.3.1
+        Passing in an anonymous_user class.
     """
 
     def __init__(
@@ -1172,7 +1173,7 @@ class Security:
             warnings.warn(
                 "kwargs passed to the constructor are now ignored",
                 DeprecationWarning,
-                stacklevel=4,
+                stacklevel=2,
             )
         self.app = app
         self._datastore = datastore
@@ -1220,7 +1221,7 @@ class Security:
 
         # Attributes not settable from init.
         self._unauthn_handler: t.Callable[
-            [t.List[str], t.Optional[t.Dict[str, str]]], "ResponseValue"
+            ..., "ResponseValue"
         ] = default_unauthn_handler
         self._reauthn_handler: t.Callable[
             [timedelta, timedelta], "ResponseValue"
@@ -1389,6 +1390,14 @@ class Security:
         for attr in attr_names:
             if kwargs.get(attr, None):
                 setattr(self, attr, kwargs.get(attr))
+
+        if self.anonymous_user:
+            warnings.warn(
+                "Passing in an anonymous_user class for use with Flask-Login"
+                "was deprecated in 5.3.2 and will be removed in 5.4",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         # set all (SECURITY) config items as attributes (minus the SECURITY_ prefix)
         for key, value in get_config(app).items():
@@ -1871,7 +1880,7 @@ class Security:
     def unauthorized_handler(self, cb: t.Callable[[], "ResponseValue"]) -> None:
         warnings.warn(
             "'unauthorized_handler' has been replaced with"
-            " 'unauthz_handler' and 'unauthn_handler'",
+            " 'unauthz_handler' and 'unauthn_handler' and will be removed in 5.4",
             DeprecationWarning,
             stacklevel=2,
         )

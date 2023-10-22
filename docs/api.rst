@@ -15,16 +15,6 @@ Core
 
    A proxy for the current user.
 
-.. function:: flask_security.Security.unauthorized_handler
-
-    If an endpoint fails authentication or authorization from one of the decorators
-    described below
-    (except ``login_required``), a method annotated with this decorator will be called.
-    For ``login_required`` (which is implemented in Flask-Login) use
-    **flask_security.login_manager.unauthorized_handler**
-
-    .. deprecated:: 3.3.0
-
 Protecting Views
 ----------------
 .. autofunction:: flask_security.anonymous_user_required
@@ -146,8 +136,6 @@ Utils
 .. autofunction:: flask_security.url_for_security
 
 .. autofunction:: flask_security.send_mail
-
-.. autofunction:: flask_security.get_token_status
 
 .. autofunction:: flask_security.check_and_get_token_status
 
