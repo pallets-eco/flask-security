@@ -84,7 +84,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginJsonResponse"
+                allOf:
+                 - description: >
+                    The user successfully signed in using their primary credential.
+                    Note that depending on SECURITY_TWO_FACTOR configuration variable, a second form of authentication might be required prior to the user being fully authenticated.
+                    `tf_required` will be set to True in this case.
+                    Note that if 2FA is not configured, none of the ``tf_`` properties will be returned.
+                 - $ref: "#/components/schemas/LoginJsonResponse"
             text/html:
               schema:
                 description: Unsuccessful login
@@ -655,7 +661,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UsSigninJsonResponse"
+                allOf:
+                  - description: >
+                      The user successfully signed in using their primary credentials.
+                      Note that depending on the SECURITY_TWO_FACTOR and SECURITY_US_MFA_REQUIRED configuration variables, a second form of authentication might be required prior to the user being fully authenticated.
+                      `tf_required` will be set to True in this case.
+                  - $ref: "#/components/schemas/LoginJsonResponse"
             text/html:
               schema:
                 description: Unsuccessful sign in
@@ -1093,6 +1104,8 @@ paths:
                 type: string
     post:
       summary: Send two-factor code.
+      parameters:
+        - $ref: "#/components/parameters/include_auth_token"
       requestBody:
         required: true
         content:
@@ -1121,7 +1134,7 @@ paths:
                 allOf:
                   - description: >
                       The code was correct, the caller is now signed in.
-                  - $ref: "#/components/schemas/TfValidateJsonResponse"
+                  - $ref: "#/components/schemas/JsonResponseWithToken"
             text/html:
               schema:
                 description:
@@ -1210,10 +1223,12 @@ paths:
         authentication, this view will ask the user to choose.
       responses:
         200:
-          description: Two-factor method select form
+          description: Two-factor method select form - SECURITY_TWO_FACTOR_SELECT_TEMPLATE
           content:
             text/html:
               schema:
+                description: Select Form (SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
+                type: string
                 example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
             application/json:
               schema:
@@ -1243,8 +1258,9 @@ paths:
               properties:
                 which:
                   type: string
-                  description: <
+                  description: >
                     Which two-factor method to use.
+                  example: "sms"
           application/x-www-form-urlencoded:
             schema:
                 description: Select Form
@@ -1252,24 +1268,21 @@ paths:
                 example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
       responses:
         200:
-          description: Verify/re-authenticate response.
+          description: Second factor select response.
           content:
             application/json:
               schema:
-                allOf:
-                  - description: >
-                      The user successfully re-authenticated.
-                  - $ref: "#/components/schemas/JsonResponseWithToken"
+                $ref: "#/components/schemas/TfSelectJsonResponse"
             text/html:
               schema:
-                description: Unsuccessful re-authentication.
+                description: Form validation failure.
                 type: string
                 example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE) with error values
         302:
-          description: User successfully re-authenticated when using form based request.
+          description: User selected which two factor to use when using form based request.
           headers:
             Location:
-              description: Redirect to ``next`` or ``SECURITY_POST_VERIFY_VIEW``
+              description: Redirect to ``SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL`` or ``SECURITY_WAN_SIGNIN_URL``.
               schema:
                 type: string
         400:
@@ -1820,46 +1833,33 @@ components:
             If true, will remember userid as part of cookie. There is a configuration variable DEFAULT_REMEMBER_ME that can be set. This field will override that.
     LoginJsonResponse:
       type: object
-      description: >
-        The user successfully signed in. Note that depending on SECURITY_TWO_FACTOR configuration variables, a second form of authentication might be required.
-        Note that if 2FA is not configured, none of the ``tf_`` properties will be returned.
-      required: [meta, response]
-      properties:
-        meta:
-          type: object
-          required: [code]
+      allOf:
+        - $ref: '#/components/schemas/JsonResponseWithToken'
+        - type: object
           properties:
-            code:
-              type: integer
-              example: 200
-              description: Http status code
-        response:
-          type: object
-          properties:
-            authentication_token:
-              type: string
-              description: >
-                Token to be used in future token-based API calls. Only returned if "include_auth_token" parameter is set.
-            tf_required:
-              type: boolean
-              description: If two-factor authentication is required for caller.
-            tf_state:
-              type: string
-              description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
-            tf_method:
-              type: string
-              description: Which method was used to send code.
-              example: "webauthn"
-            tf_select:
-              type: boolean
-              description: <
-                If user has setup multiple forms of two-factor authentication, this will be True
-                and the application should prompt the user for which method they want to use.
-            tf_setup_methods:
-              type: array
-              items:
-                type: string
-                description: If user has setup multiple forms of two-factor authentication they are listed
+            response:
+              type: object
+              properties:
+                tf_required:
+                  type: boolean
+                  description: True if two-factor authentication is required for caller.
+                tf_state:
+                  type: string
+                  description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
+                tf_method:
+                  type: string
+                  description: Which method was used to send code.
+                  example: "webauthn"
+                tf_select:
+                  type: boolean
+                  description: >
+                    If user has setup multiple forms of two-factor authentication, this will be True
+                    and the application should prompt the user for which method they want to use.
+                tf_setup_methods:
+                  type: array
+                  items:
+                    type: string
+                    description: If user has setup multiple forms of two-factor authentication, they are listed
 
     BaseJsonResponse:
       type: object
@@ -1922,35 +1922,42 @@ components:
                   type: string
                   description: Session CSRF token
     DefaultJsonErrorResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseJsonResponse'
-        - type: object
+      type: object
+      required: [ meta, response ]
+      properties:
+        meta:
+          type: object
+          required: [ code ]
           properties:
-            response:
+            code:
+              type: integer
+              example: 400
+              description: Http status code
+        response:
+          type: object
+          required: [ errors ]
+          description: >
+            For form validation errors, the 'field_errors' key will be set with a list of errors per
+            invalid form input field (i.e. a dict of 'field-name': list of error strings).
+            The 'errors' key will be a simple list of both form and non-form related
+            errors (all form errors will also be included here).
+          properties:
+            field_errors:
               type: object
-              required: [ errors ]
               description: >
-                For form validation errors, the 'field_errors' key will be set with a list of errors per
-                invalid form input field (i.e. a dict of 'field-name': list of error strings).
-                The 'errors' key will be a simple list of both form and non-form related
-                errors (all form errors will also be included here).
-              properties:
-                field_errors:
-                  type: object
-                  description: >
-                    Errors per input/form field
-                  additionalProperties:
-                    type: array
-                    items:
-                      type: string
-                      example: field validation error.
-                      description: Error message (localized)
-                errors:
-                  type: array
-                  items:
-                    type: string
-                    example: "Unauthenticated"
-                    description: Error message (localized)
+                Errors per input/form field
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+                  example: field validation error.
+                  description: Error message (localized)
+            errors:
+              type: array
+              items:
+                type: string
+                example: "Unauthenticated"
+                description: Error message (localized)
     Verify:
       type: object
       required: [ password ]
@@ -2034,29 +2041,6 @@ components:
           description: password or code
         remember:
           type: boolean
-    UsSigninJsonResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseJsonResponse'
-        - type: object
-          description: >
-            The user successfully signed in. Note that depending on SECURITY_TWO_FACTOR and SECURITY_US_MFA_REQUIRED configuration variables, a second form of authentication might be required.
-          properties:
-            response:
-              type: object
-              properties:
-                authentication_token:
-                  type: string
-                  description: >
-                    Token to be used in future token-based API calls. Only returned if "include_auth_token" parameter is set.
-                tf_required:
-                  type: boolean
-                  description: If two-factor authentication is required for caller.
-                tf_state:
-                  type: string
-                  description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
-                tf_primary_method:
-                  type: string
-                  description: Which method was used to send code.
     UsSigninSendCode:
       type: object
       required: [identity, chosen_method]
@@ -2183,16 +2167,47 @@ components:
                 tf_authr_username:
                   type: string
                   description: Username (same as used in QRcode) (if tf_primary_method == 'authenticator')
-    TfValidateJsonResponse:
-      type: object
-      properties:
-        user:
-          type: object
-          description: >
-            By default an empty dictionary is returned. However by overriding _User::get_security_payload()_ any attributes of the User model can be returned.
-        csrf_token:
-          type: string
-          description: Session CSRF token
+    TfSelectJsonResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - oneOf:
+          - type: object
+            description: >
+              The user requires two-factor authorization and has chosen which one to use.
+            properties:
+              response:
+                type: object
+                properties:
+                  tf_required:
+                    type: boolean
+                    description: Will be True since a second factor is required.
+                  tf_state:
+                    type: string
+                    description: if "setup_from_login" then the caller must go through two-factor setup endpoint. If "ready" then a code has been sent and should be supplied to SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL.
+                  tf_method:
+                    type: string
+                    description: Which method was used to send code/link.
+                    example: "sms"
+          - type: object
+            description: >
+              The user requires two-factor authorization and has chosen to use `webauthn`.
+            properties:
+              response:
+                type: object
+                properties:
+                  tf_required:
+                    type: boolean
+                    description: Will be True since a second factor is required.
+                  tf_state:
+                    type: string
+                    description: This will be set to `ready`.
+                  tf_method:
+                    type: string
+                    description: This will be set to `webauthn`.
+                  tf_signin_url:
+                    type: string
+                    description: The value of SECURITY_WAN_SIGNIN_URL
+
     WanRegister:
       type: object
       required: [ name, usage ]
