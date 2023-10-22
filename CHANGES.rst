@@ -14,6 +14,7 @@ Fixes
 - (:issue:`859`) Update Quickstart to show how to properly handle SQLAlchemy connections.
 - (:issue:`861`) Auth Token not returned from /tf-validate. (thanks lilz-egoto)
 - (:pr:`864`) Fix for latest email_validator deprecation - bump minimum to 2.0.0
+- (:pr:`xxx`) Deprecate passing in the anonymous_user class (sent to Flask-Login).
 
 Version 5.3.1
 -------------
