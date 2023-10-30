@@ -678,16 +678,16 @@ def us_verify_link() -> "ResponseValue":
     Since this is just a URL - be careful not to disclose info like
     whether email exists or not.
     """
-    email = request.args.get("email", None)
+    fs_uniquifier = request.args.get("id", None)
     code = request.args.get("code", None)
-    if not email or not code:
+    if not fs_uniquifier or not code:
         m, c = get_message("API_ERROR")
         if _security.redirect_behavior == "spa":
             return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
 
-    user = _datastore.find_user(email=email)
+    user = _datastore.find_user(fs_uniquifier=fs_uniquifier)
     if not user or not user.active:
         if not user:
             m, c = generic_message("USER_DOES_NOT_EXIST", "GENERIC_AUTHN_FAILED")
@@ -994,13 +994,13 @@ def us_send_security_token(
 
     .. versionadded:: 3.4.0
     """
-    token = _security._totp_factory.generate_totp_password(totp_secret)
+    code = _security._totp_factory.generate_totp_password(totp_secret)
 
     if method == "email":
         login_link = None
         if send_magic_link:
             login_link = url_for_security(
-                "us_verify_link", email=user.email, code=token, _external=True
+                "us_verify_link", id=str(user.fs_uniquifier), code=code, _external=True
             )
         send_mail(
             cv("US_EMAIL_SUBJECT"),
@@ -1008,12 +1008,12 @@ def us_send_security_token(
             "us_instructions",
             user=user,
             username=user.calc_username(),
-            token=token,  # deprecated
-            login_token=token,
+            token=code,  # deprecated
+            login_token=code,
             login_link=login_link,
         )
     elif method == "sms":
-        m, c = get_message("USE_CODE", code=token)
+        m, c = get_message("USE_CODE", code=code)
         from_number = cv("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
         to_number = phone_number
         sms_sender = SmsSenderFactory.createSender(cv("SMS_SERVICE"))
@@ -1023,13 +1023,13 @@ def us_send_security_token(
         # tokens are generated automatically with authenticator apps
         # and passwords are well passwords
         # Still go ahead and notify signal receivers that they requested it.
-        token = None
+        code = None
     us_security_token_sent.send(
         app._get_current_object(),
         user=user,
         method=method,
-        token=token,
-        login_token=token,
+        token=code,
+        login_token=code,
         phone_number=phone_number,
         send_magic_link=send_magic_link,
     )
