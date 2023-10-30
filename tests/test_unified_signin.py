@@ -601,13 +601,14 @@ def test_verify_link(app, client, get_message):
     def authned(myapp, user, **extra_args):
         auths.append((user.email, extra_args["authn_via"]))
 
-    response = client.post(
-        "/us-signin/send-code",
-        data=dict(identity="matt@lp.com", chosen_method="email"),
-        follow_redirects=True,
-    )
-    assert response.status_code == 200
-    assert b"Sign In" in response.data
+    with capture_send_code_requests() as requests:
+        response = client.post(
+            "/us-signin/send-code",
+            data=dict(identity="matt@lp.com", chosen_method="email"),
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert b"Sign In" in response.data
     outbox = app.mail.outbox
 
     assert outbox[0].to == ["matt@lp.com"]
@@ -618,21 +619,20 @@ def test_verify_link(app, client, get_message):
     )
     magic_link = matcher.group(1)
 
-    # Try with no code
-    response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=False)
+    # Try with missing code
+    response = client.get("us-verify-link?id=matt@lp.com", follow_redirects=False)
     assert "/us-signin" in response.location
-    response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=True)
+    response = client.get("us-verify-link?id=matt@lp.com", follow_redirects=True)
     assert get_message("API_ERROR") in response.data
 
     # Try unknown user
-    response = client.get(
-        "us-verify-link?email=matt42@lp.com&code=12345", follow_redirects=True
-    )
+    response = client.get("us-verify-link?id=123435&code=12345", follow_redirects=True)
     assert get_message("USER_DOES_NOT_EXIST") in response.data
 
     # Try bad code
     response = client.get(
-        "us-verify-link?email=matt@lp.com&code=12345", follow_redirects=True
+        f"us-verify-link?id={requests[0]['user'].fs_uniquifier}&code=12345",
+        follow_redirects=True,
     )
     assert get_message("INVALID_CODE") in response.data
 
@@ -656,12 +656,14 @@ def test_verify_link_spa(app, client, get_message):
     # sessions.
     set_email(app)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
-    response = client.post(
-        "/us-signin/send-code",
-        json=dict(identity="matt@lp.com", chosen_method="email"),
-        headers=headers,
-    )
-    assert response.status_code == 200
+
+    with capture_send_code_requests() as requests:
+        response = client.post(
+            "/us-signin/send-code",
+            json=dict(identity="matt@lp.com", chosen_method="email"),
+            headers=headers,
+        )
+        assert response.status_code == 200
     outbox = app.mail.outbox
 
     matcher = re.match(
@@ -670,7 +672,7 @@ def test_verify_link_spa(app, client, get_message):
     magic_link = matcher.group(1)
 
     # Try with no code
-    response = client.get("us-verify-link?email=matt@lp.com", follow_redirects=False)
+    response = client.get("us-verify-link?id=matt@lp.com", follow_redirects=False)
     assert response.status_code == 302
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
@@ -679,9 +681,7 @@ def test_verify_link_spa(app, client, get_message):
     assert get_message("API_ERROR") == qparams["error"].encode("utf-8")
 
     # Try unknown user
-    response = client.get(
-        "us-verify-link?email=matt42@lp.com&code=12345", follow_redirects=False
-    )
+    response = client.get("us-verify-link?id=98765&code=12345", follow_redirects=False)
     assert response.status_code == 302
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
@@ -691,7 +691,8 @@ def test_verify_link_spa(app, client, get_message):
 
     # Try bad code
     response = client.get(
-        "us-verify-link?email=matt@lp.com&code=12345", follow_redirects=False
+        f"us-verify-link?id={requests[0]['user'].fs_uniquifier}&code=12345",
+        follow_redirects=False,
     )
     assert response.status_code == 302
     split = urlsplit(response.headers["Location"])
@@ -2055,14 +2056,36 @@ def test_generic_response(app, client, get_message):
     #
     # Test /us-verify-link
     #
-    response = client.get(
-        "us-verify-link?email=matt42@lp.com&code=12345", follow_redirects=True
-    )
+    set_email(app)
+    with capture_send_code_requests() as requests:
+        response = client.post(
+            "/us-signin/send-code",
+            data=dict(identity="matt@lp.com", chosen_method="email"),
+            follow_redirects=True,
+        )
+
+    uid = requests[0]["user"].fs_uniquifier
+    code = requests[0]["login_token"]
+
+    # Try bad/unknown id
+    response = client.get("us-verify-link?id=98765&code=12345", follow_redirects=True)
     assert get_message("GENERIC_AUTHN_FAILED") in response.data
 
     # Try bad code
     response = client.get(
-        "us-verify-link?email=matt@lp.com&code=12345", follow_redirects=True
+        f"us-verify-link?id={uid}&code=12345",
+        follow_redirects=True,
+    )
+    assert get_message("GENERIC_AUTHN_FAILED") in response.data
+
+    # Try deactivated user
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        app.security.datastore.deactivate_user(user)
+        app.security.datastore.commit()
+    response = client.get(
+        f"us-verify-link?id={uid}&code={code}",
+        follow_redirects=True,
     )
     assert get_message("GENERIC_AUTHN_FAILED") in response.data
 

@@ -3,6 +3,17 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.4.0
+-------------
+
+Released xxx
+
+Fixes
++++++
+
+- (:issue:`845`) us-signin magic link should use fs_uniquifier (not email)
+
+
 Version 5.3.2
 -------------
 
