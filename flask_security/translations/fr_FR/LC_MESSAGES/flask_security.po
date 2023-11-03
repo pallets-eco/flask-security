@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-10-14 16:46-0700\n"
+"POT-Creation-Date: 2023-11-03 15:21+0100\n"
 "PO-Revision-Date: 2017-06-08 10:13+0200\n"
 "Last-Translator: Alexandre Bulté <alexandre@bulte.net>\n"
 "Language: fr_FR\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.12.1\n"
+"Generated-By: Babel 2.13.1\n"
 
 #: flask_security/core.py:266
 msgid "Login Required"
@@ -549,9 +549,21 @@ msgstr ""
 msgid "Set up using SMS"
 msgstr "Configurer par SMS"
 
+#: flask_security/forms.py:760 flask_security/unified_signin.py:161
+msgid "Available Methods"
+msgstr "Méthodes disponibles"
+
 #: flask_security/forms.py:768
 msgid "Disable two factor authentication"
 msgstr "Désactiver l'authentification à deux facteurs"
+
+#: flask_security/forms.py:850
+msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
+msgstr ""
+
+#: flask_security/forms.py:852
+msgid "Contact Administrator"
+msgstr ""
 
 #: flask_security/recovery_codes.py:125
 msgid "Show Recovery Codes"
@@ -573,13 +585,17 @@ msgstr "Méthodes de second facteur disponibles:"
 msgid "Select"
 msgstr ""
 
+#: flask_security/twofactor.py:125
+msgid "Send code via email"
+msgstr ""
+
+#: flask_security/twofactor.py:134
+msgid "Use previously downloaded recovery code"
+msgstr ""
+
 #: flask_security/unified_signin.py:154
 msgid "Code or Password"
 msgstr "Code ou mot de passe"
-
-#: flask_security/unified_signin.py:161
-msgid "Available Methods"
-msgstr "Méthodes disponibles"
 
 #: flask_security/unified_signin.py:163
 msgid "Via email"
@@ -787,6 +803,10 @@ msgstr ""
 #: flask_security/templates/security/two_factor_verify_code.html:7
 #, python-format
 msgid "Please enter your authentication code generated via: %(method)s"
+msgstr ""
+
+#: flask_security/templates/security/two_factor_verify_code.html:10
+msgid "enter code"
 msgstr ""
 
 #: flask_security/templates/security/two_factor_verify_code.html:18
@@ -1046,3 +1066,4 @@ msgstr ""
 #~ " email dans l'intervalle requis "
 #~ "(%(within)s)De nouvelles instructions ont été"
 #~ " envoyées à %(email)s."
+

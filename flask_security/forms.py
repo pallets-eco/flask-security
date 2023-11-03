@@ -757,7 +757,7 @@ class TwoFactorSetupForm(Form):
     """The Two-factor token validation form"""
 
     setup = RadioField(
-        "Available Methods",
+        get_form_field_xlate(_("Available Methods")),
         choices=[
             ("email", get_form_field_label("email_method")),
             (
@@ -847,9 +847,9 @@ class TwoFactorRescueForm(Form):
 
     # rescue options - additional options are generated in set_rescue_options()
     help_setup = RadioField(
-        "Trouble Accessing Your Account?/Lost Mobile Device?",
+        get_form_field_xlate(_("Trouble Accessing Your Account?/Lost Mobile Device?")),
         choices=[
-            ("help", "Contact Administrator"),
+            ("help", get_form_field_xlate(_("Contact Administrator"))),
         ],
     )
     submit = SubmitField(get_form_field_label("submit"))
