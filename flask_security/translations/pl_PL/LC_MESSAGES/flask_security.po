@@ -1109,4 +1109,3 @@ msgstr ""
 #~ "Nie potwierdziłeś adresu e-mail w ciągu"
 #~ " %(within)s. Nowe instrukcje zostały "
 #~ "wysłane na adres %(email)s."
-

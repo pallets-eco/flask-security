@@ -1066,4 +1066,3 @@ msgstr ""
 #~ " email dans l'intervalle requis "
 #~ "(%(within)s)De nouvelles instructions ont été"
 #~ " envoyées à %(email)s."
-

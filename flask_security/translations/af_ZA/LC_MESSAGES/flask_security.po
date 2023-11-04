@@ -1089,4 +1089,3 @@ msgstr ""
 #~ "bevestig binne %(within)s nie. Nuwe "
 #~ "instruksies om jou e-pos adres te "
 #~ "bevestig is gestuur na %(email)s."
-

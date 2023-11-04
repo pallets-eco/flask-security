@@ -1052,4 +1052,3 @@ msgstr ""
 #~ "confirm your email have been sent "
 #~ "to %(email)s."
 #~ msgstr ""
-

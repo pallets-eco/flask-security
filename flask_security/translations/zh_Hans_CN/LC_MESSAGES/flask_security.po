@@ -1083,4 +1083,3 @@ msgstr ""
 #~ "confirm your email have been sent "
 #~ "to %(email)s."
 #~ msgstr "你未在 %(within)s 激活邮箱。新激活邮件已发送到 %(email)s。"
-

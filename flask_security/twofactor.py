@@ -122,7 +122,9 @@ def set_rescue_options(form: TwoFactorRescueForm, user: "User") -> t.Dict[str, s
 
     if cv("TWO_FACTOR_RESCUE_EMAIL"):
         recovery_options["email"] = url_for_security("two_factor_rescue")
-        form.help_setup.choices.append(("email", get_form_field_xlate(_("Send code via email"))))
+        form.help_setup.choices.append(
+            ("email", get_form_field_xlate(_("Send code via email")))
+        )
 
     if (
         _security.support_mfa
@@ -131,7 +133,10 @@ def set_rescue_options(form: TwoFactorRescueForm, user: "User") -> t.Dict[str, s
     ):
         recovery_options["recovery_code"] = url_for_security("mf_recovery")
         form.help_setup.choices.append(
-            ("recovery_code", get_form_field_xlate(_("Use previously downloaded recovery code")))
+            (
+                "recovery_code",
+                get_form_field_xlate(_("Use previously downloaded recovery code")),
+            )
         )
     return recovery_options
 

@@ -1108,4 +1108,3 @@ msgstr ""
 #~ " in de voorziene %(within)s. Nieuwe "
 #~ "instructies ter bevestiging van uw "
 #~ "e-mailadres werden verzonden naar %(email)s."
-

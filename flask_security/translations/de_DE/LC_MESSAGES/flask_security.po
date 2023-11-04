@@ -1153,4 +1153,3 @@ msgstr ""
 #~ "Die E-Mail-Adresse wurden nicht "
 #~ "innerhalb von %(within)s bestätigt. Neue "
 #~ "Instruktionen wurden an %(email)s gesendet."
-

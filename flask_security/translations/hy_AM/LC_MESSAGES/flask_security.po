@@ -1038,4 +1038,3 @@ msgstr ""
 #: flask_security/templates/security/email/welcome_existing_username.txt:16
 msgid "Please restart the registration process with a different username."
 msgstr "Խնդրում ենք վերսկսել գրանցման գործընթացը այլ օգտվողի անունով:"
-

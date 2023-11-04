@@ -1089,4 +1089,3 @@ msgstr ""
 #~ "E-posta adresinizi %(within)s içinde "
 #~ "onaylamadınız. Yeni onaylama talimatları "
 #~ "%(email)s adresine gönderilmiştir."
-

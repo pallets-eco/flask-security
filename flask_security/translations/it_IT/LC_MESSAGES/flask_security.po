@@ -1052,4 +1052,3 @@ msgid "Please restart the registration process with a different username."
 msgstr ""
 "Pre favore riavvia il processo di registrazione con un nome utente "
 "diverso."
-

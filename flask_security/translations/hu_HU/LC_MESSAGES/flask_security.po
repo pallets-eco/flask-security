@@ -1065,4 +1065,3 @@ msgstr ""
 #~ "%(within)s-en belül. Az e-mail megerősítéséhez"
 #~ " új utasításokat küldtünk a következő "
 #~ "címre: %(email)s."
-

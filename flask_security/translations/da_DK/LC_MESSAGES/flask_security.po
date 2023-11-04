@@ -1093,4 +1093,3 @@ msgstr ""
 #~ "Du har ikke bekræftet din email "
 #~ "indenfor %(within)s. Nye instruktioner er "
 #~ "blevet sendt til %(email)s."
-

@@ -1082,4 +1082,3 @@ msgstr ""
 #~ "confirm your email have been sent "
 #~ "to %(email)s."
 #~ msgstr "%(within)s以内にメール アドレスが検証されませんでした。新しい検証手順を %(email)s に送信しました。"
-
