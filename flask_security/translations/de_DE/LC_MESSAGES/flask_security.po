@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.1.3\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-10-14 16:46-0700\n"
+"POT-Creation-Date: 2023-11-03 15:21+0100\n"
 "PO-Revision-Date: 2022-04-05 13:50+0200\n"
 "Last-Translator: Pascua Theus <pascua@identeco.de>\n"
 "Language: de_DE\n"
@@ -19,7 +19,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.12.1\n"
+"Generated-By: Babel 2.13.1\n"
 
 #: flask_security/core.py:266
 msgid "Login Required"
@@ -568,9 +568,21 @@ msgstr "Einrichtung via Authentisierungs-App"
 msgid "Set up using SMS"
 msgstr "Einrichtung via SMS"
 
+#: flask_security/forms.py:760 flask_security/unified_signin.py:161
+msgid "Available Methods"
+msgstr "Verfügbare Methoden"
+
 #: flask_security/forms.py:768
 msgid "Disable two factor authentication"
 msgstr "Deaktiviere Zwei-Faktor-Authentisierung"
+
+#: flask_security/forms.py:850
+msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
+msgstr ""
+
+#: flask_security/forms.py:852
+msgid "Contact Administrator"
+msgstr ""
 
 #: flask_security/recovery_codes.py:125
 msgid "Show Recovery Codes"
@@ -592,13 +604,17 @@ msgstr "Verfügbare Zwei-Faktor-Methoden:"
 msgid "Select"
 msgstr "Auswählen"
 
+#: flask_security/twofactor.py:125
+msgid "Send code via email"
+msgstr ""
+
+#: flask_security/twofactor.py:134
+msgid "Use previously downloaded recovery code"
+msgstr ""
+
 #: flask_security/unified_signin.py:154
 msgid "Code or Password"
 msgstr "Code oder Passwort"
-
-#: flask_security/unified_signin.py:161
-msgid "Available Methods"
-msgstr "Verfügbare Methoden"
 
 #: flask_security/unified_signin.py:163
 msgid "Via email"
@@ -812,6 +828,10 @@ msgid "Please enter your authentication code generated via: %(method)s"
 msgstr ""
 "Bitte geben Sie den Authentisierungscode ein, den Sie via %(method)s "
 "erhalten haben."
+
+#: flask_security/templates/security/two_factor_verify_code.html:10
+msgid "enter code"
+msgstr ""
 
 #: flask_security/templates/security/two_factor_verify_code.html:18
 msgid "The code for authentication was sent to your email address"
