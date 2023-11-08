@@ -164,6 +164,21 @@ def test_create_user_with_roles(app, datastore):
         assert current_nqueries is None or end_nqueries == (current_nqueries + 1)
 
 
+def test_create_user_no_side_effects(app, datastore):
+    init_app_with_options(app, datastore)
+
+    with app.app_context():
+        datastore.find_role("admin")
+        roles = ["admin"]
+        datastore.commit()
+
+        datastore.create_user(
+            email="dude@lp.com", username="dude", password="password", roles=roles
+        )
+
+        assert all(isinstance(role, str) for role in roles)
+
+
 def test_delete_user(app, datastore):
     init_app_with_options(app, datastore)
 

@@ -12,6 +12,7 @@ import datetime
 import json
 import typing as t
 import uuid
+from copy import copy
 
 from .utils import config_value as cv
 
@@ -207,7 +208,7 @@ class UserDatastore:
 
     def _prepare_create_user_args(self, **kwargs):
         kwargs.setdefault("active", True)
-        roles = kwargs.get("roles", [])
+        roles = copy(kwargs.get("roles", []))
         for i, role in enumerate(roles):
             rn = role.name if isinstance(role, self.role_model) else role
             # see if the role exists
