@@ -28,6 +28,7 @@ from .utils import (
     do_flash,
     get_message,
     get_url,
+    is_user_authenticated,
     lookup_identity,
     check_and_update_authn_fresh,
     json_error_response,
@@ -143,7 +144,7 @@ def default_unauthz_handler(func_name, params):
 
 def _check_token():
     user = _security.login_manager.request_callback(request)
-    if user and user.is_authenticated:
+    if is_user_authenticated(user):
         app = current_app._get_current_object()
         identity_changed.send(app, identity=Identity(user.fs_uniquifier))
         return True
@@ -163,7 +164,7 @@ def _check_session():
     is in fact correctly authenticated). There are certainly endpoints that need to
     be web browser/session only (often those that in fact return tokens!).
     """
-    if not current_user.is_authenticated:
+    if not is_user_authenticated(current_user):
         return False
     if get_request_attr("fs_authn_via") != "session":
         return False
@@ -449,10 +450,9 @@ def unauth_csrf(
             ) or not current_app.extensions.get("csrf", None):
                 return fn(*args, **kwargs)
 
-            if (
-                config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
-                and not current_user.is_authenticated
-            ):
+            if config_value(
+                "CSRF_IGNORE_UNAUTH_ENDPOINTS"
+            ) and not is_user_authenticated(current_user):
                 set_request_attr("fs_ignore_csrf", True)
             else:
                 try:
@@ -621,7 +621,7 @@ def anonymous_user_required(f: DecoratedView) -> DecoratedView:
 
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if current_user.is_authenticated:
+        if is_user_authenticated(current_user):
             if _security._want_json(request):
                 payload = json_error_response(
                     errors=get_message("ANONYMOUS_USER_REQUIRED")[0]

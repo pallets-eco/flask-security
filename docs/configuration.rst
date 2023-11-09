@@ -469,24 +469,6 @@ These configuration keys are used globally across all features.
 
     .. versionadded:: 5.0.0
 
-.. py:data:: SECURITY_BACKWARDS_COMPAT_UNAUTHN
-
-    If set to ``True`` then the default behavior for authentication
-    failures from one of Flask-Security's decorators will be restored to
-    be compatible with releases prior to 3.3.0 (return 401 and some static html).
-
-    Default: ``False``.
-
-.. py:data:: SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN
-
-    If set to ``True`` then an Authentication-Token will be returned
-    on every successful call to login, reset-password, change-password
-    as part of the JSON response. This was the default prior to release 3.3.0
-    - however sending Authentication-Tokens (which by default don't expire)
-    to session based UIs is a bad security practice.
-
-    Default: ``False``.
-
 Core - Multi-factor
 -------------------
 These are used by the Two-Factor and Unified Signin features.
@@ -591,6 +573,37 @@ These are used by the Two-Factor and Unified Signin features.
 
     .. versionadded:: 3.4.0
 
+Core - Compatibility
+---------------------
+These are flags that change various backwards compatability functionality.
+
+.. py:data:: SECURITY_ANONYMOUS_USER_DISABLED
+
+    If set to `True` then :data:`flask_security.current_user` will be `None` for unauthenticated
+    users instead of pointing to an AnonymousUser object. Note that Flask-Login intends
+    to deprecate the entire AnonymousUser concept.
+
+    Default: ``False``.
+
+    .. versionadded:: 5.4.0
+
+.. py:data:: SECURITY_BACKWARDS_COMPAT_UNAUTHN
+
+    If set to ``True`` then the default behavior for authentication
+    failures from one of Flask-Security's decorators will be restored to
+    be compatible with releases prior to 3.3.0 (return 401 and some static html).
+
+    Default: ``False``.
+
+.. py:data:: SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN
+
+    If set to ``True`` then an Authentication-Token will be returned
+    on every successful call to login, reset-password, change-password
+    as part of the JSON response. This was the default prior to release 3.3.0
+    - however sending Authentication-Tokens (which by default don't expire)
+    to session based UIs is a bad security practice.
+
+    Default: ``False``.
 
 Core - rarely need changing
 ----------------------------

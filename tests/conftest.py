@@ -46,7 +46,7 @@ from flask_security import (
 )
 from flask_security.utils import localize_callback
 
-from tests.test_utils import populate_data
+from tests.test_utils import convert_bool_option, populate_data
 
 NO_BABEL = False
 try:
@@ -158,6 +158,12 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     if settings is not None:
         for key, value in settings.kwargs.items():
             app.config[key.upper()] = value
+
+    # allow pytest command line to override everything
+    if request.config.option.setting:
+        for s in request.config.option.setting:
+            key, value = s.split("=")
+            app.config["SECURITY_" + key.upper()] = convert_bool_option(value)
 
     app.mail = Mail(app)  # type: ignore
 
@@ -985,6 +991,13 @@ def pytest_addoption(parser):
         default=None,
         help="""Set url for using real mongo database for testing.
         e.g. 'localhost'""",
+    )
+    parser.addoption(
+        "--setting",
+        default=None,
+        action="append",
+        help="""Set one or more SECURITY_ settings from command line.
+        e.g. --setting anonymous_user_enable=False""",
     )
 
 

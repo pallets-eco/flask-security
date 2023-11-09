@@ -95,6 +95,7 @@ from .utils import (
     get_identity_attributes,
     get_message,
     get_request_attr,
+    is_user_authenticated,
     localize_callback,
     set_request_attr,
     uia_email_mapper,
@@ -119,6 +120,7 @@ AUTHN_MECHANISMS = ("basic", "session", "token")
 
 #: Default Flask-Security configuration
 _default_config: t.Dict[str, t.Any] = {
+    "ANONYMOUS_USER_DISABLED": False,
     "BLUEPRINT_NAME": "security",
     "CLI_ROLES_NAME": "roles",
     "CLI_USERS_NAME": "users",
@@ -689,31 +691,38 @@ def _request_loader(request):
         set_request_attr("fs_authn_via", "token")
         return user
 
-    return _security.login_manager.anonymous_user()
+    return None
 
 
 def _identity_loader():
-    if not isinstance(current_user._get_current_object(), AnonymousUserMixin):
-        identity = Identity(current_user.fs_uniquifier)
-        return identity
+    # N.B. once AnonymousUser is gone - can just check current_user
+    if current_user and hasattr(current_user, "fs_uniquifier"):
+        return Identity(current_user.fs_uniquifier)
     return None
 
 
 def _on_identity_loaded(sender, identity):
-    if hasattr(current_user, "fs_uniquifier"):
+    if current_user and hasattr(current_user, "fs_uniquifier"):
         identity.provides.add(UserNeed(current_user.fs_uniquifier))
 
-    for role in getattr(current_user, "roles", []):
-        identity.provides.add(RoleNeed(role.name))
-        for fsperm in role.get_permissions():
-            identity.provides.add(FsPermNeed(fsperm))
+        for role in getattr(current_user, "roles", []):
+            identity.provides.add(RoleNeed(role.name))
+            for fsperm in role.get_permissions():
+                identity.provides.add(FsPermNeed(fsperm))
 
     identity.user = current_user
 
 
-def _get_login_manager(app, anonymous_user):
+def _get_login_manager(app):
     lm = LoginManager()
-    lm.anonymous_user = anonymous_user or AnonymousUser
+    # Flask-Login is likely going in the direction of removing AnonymousUser
+    # however this might wreak havoc on applications that just assume that
+    # current_user is always set.
+    if cv("ANONYMOUS_USER_DISABLED", app=app):
+        lm.anonymous_user = lambda: None
+    else:
+        lm.anonymous_user = AnonymousUser
+
     lm.localize_callback = localize_callback
     lm.login_view = f'{cv("BLUEPRINT_NAME", app=app)}.login'
     lm.user_loader(_user_loader)
@@ -769,7 +778,11 @@ def _get_serializer(app, name):
 
 
 def _context_processor():
-    return dict(url_for_security=url_for_security, security=_security)
+    return dict(
+        url_for_security=url_for_security,
+        security=_security,
+        _fs_is_user_authenticated=is_user_authenticated,
+    )
 
 
 class RoleMixin:
@@ -828,7 +841,7 @@ class UserMixin(BaseUserMixin):
 
         .. versionchanged:: 4.0.0
             If user model has ``fs_token_uniquifier`` - use that (raise ValueError
-            if not set). Otherwise fallback to using ``fs_uniquifier``.
+            if not set). Otherwise, fallback to using ``fs_uniquifier``.
         """
 
         if hasattr(self, "fs_token_uniquifier"):
@@ -907,7 +920,7 @@ class UserMixin(BaseUserMixin):
         :return: A dict whose keys will be query params and values will be query values.
 
         The returned dict will always have an 'identity' key/value.
-        If the User Model contains 'email', an 'email' key/value will added.
+        If the User Model contains 'email', an 'email' key/value will be added.
         All keys provided in 'existing' will also be merged in.
 
         .. versionadded:: 3.2.0
@@ -1048,7 +1061,6 @@ class Security:
     :param wan_signin_response_form: set form for authenticating with a webauthn
     :param wan_delete_form: set form for deleting a webauthn security key
     :param wan_verify_form: set form for using a webauthn key to verify authenticity
-    :param anonymous_user: class to use for anonymous user
     :param mail_util_cls: Class to use for sending emails. Defaults to :class:`MailUtil`
     :param password_util_cls: Class to use for password normalization/validation.
      Defaults to :class:`PasswordUtil`
@@ -1113,7 +1125,7 @@ class Security:
     .. deprecated:: 5.0.0
         json_encoder_cls is no longer honored since Flask 2.2 has deprecated it.
     .. deprecated:: 5.3.1
-        Passing in an anonymous_user class.
+        Passing in an anonymous_user class. Removed in 5.4.0
     """
 
     def __init__(
@@ -1154,7 +1166,6 @@ class Security:
         ] = WebAuthnSigninResponseForm,
         wan_delete_form: t.Type[WebAuthnDeleteForm] = WebAuthnDeleteForm,
         wan_verify_form: t.Type[WebAuthnVerifyForm] = WebAuthnVerifyForm,
-        anonymous_user: t.Optional[t.Type["flask_login.AnonymousUserMixin"]] = None,
         mail_util_cls: t.Type["MailUtil"] = MailUtil,
         password_util_cls: t.Type["PasswordUtil"] = PasswordUtil,
         phone_util_cls: t.Type["PhoneUtil"] = PhoneUtil,
@@ -1178,7 +1189,6 @@ class Security:
         self.app = app
         self._datastore = datastore
         self._register_blueprint = register_blueprint
-        self.anonymous_user = anonymous_user
         self.mail_util_cls = mail_util_cls
         self.password_util_cls = password_util_cls
         self.phone_util_cls = phone_util_cls
@@ -1265,7 +1275,7 @@ class Security:
         self._username_util: UsernameUtil
         self._mf_recovery_codes_util: MfRecoveryCodesUtil
 
-        # We add forms, config etc as attributes - which of course mypy knows
+        # We add forms, config etc. as attributes - which of course mypy knows
         # nothing about. Add necessary attributes here to keep mypy happy
         self.trackable: bool = False
         self.confirmable: bool = False
@@ -1380,7 +1390,6 @@ class Security:
 
         # BC - Allow kwargs to overwrite/init other constructor attributes
         attr_names = [
-            "anonymous_user",
             "mail_util_cls",
             "password_util_cls",
             "phone_util_cls",
@@ -1390,14 +1399,6 @@ class Security:
         for attr in attr_names:
             if kwargs.get(attr, None):
                 setattr(self, attr, kwargs.get(attr))
-
-        if self.anonymous_user:
-            warnings.warn(
-                "Passing in an anonymous_user class for use with Flask-Login"
-                "was deprecated in 5.3.2 and will be removed in 5.4",
-                DeprecationWarning,
-                stacklevel=2,
-            )
 
         # set all (SECURITY) config items as attributes (minus the SECURITY_ prefix)
         for key, value in get_config(app).items():
@@ -1425,7 +1426,7 @@ class Security:
                     " must have one and only one key."
                 )
 
-        self.login_manager = _get_login_manager(app, self.anonymous_user)
+        self.login_manager = _get_login_manager(app)
         self._phone_util = self.phone_util_cls(app)
         self._mail_util = self.mail_util_cls(app)
         self._password_util = self.password_util_cls(app)

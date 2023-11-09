@@ -45,8 +45,12 @@ Each template is passed a template context object that includes the following,
 including the objects/values that are passed to the template by the main
 Flask application context processor:
 
-* ``<template_name>_form``: A form object for the view
-* ``security``: The Flask-Security extension object
+* ``<template_name>_form``: A form object for the view.
+* ``security``: The Flask-Security extension object.
+* ``url_for_security``: A function that returns the configured URL for the passed Security endpoint.
+* ``_fsdomain``: A function used to `tag` strings for extraction and localization.
+* ``_fs_is_user_authenticated``: Returns True if argument (user) is authenticated.
+  Usually the `current_user` proxy is the appropriate argument.
 
 To add more values to the template context, you can specify a context processor
 for all views or a specific view. For example::
@@ -529,7 +533,7 @@ it on `app.json_provider_cls`.
 401, 403, Oh My
 +++++++++++++++
 For a very long read and discussion; look at `this`_. Out of the box, Flask-Security in
-tandem with Flask-Login, behave as follows:
+tandem with Flask-Login, behaves as follows:
 
     * If authentication fails as the result of a `@login_required`, `@auth_required("session", "token")`,
       or `@token_auth_required` then if the request 'wants' a JSON

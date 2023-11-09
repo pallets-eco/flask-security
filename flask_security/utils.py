@@ -119,6 +119,25 @@ def find_csrf_field_name():
     return None
 
 
+def is_user_authenticated(user: "User") -> bool:
+    """
+    return True is user is authenticated.
+
+    With Flask-Login <=0.6.x and Flask-Security <5.4 current_user was always
+    set - for non-authenticated users it pointed to an AnonymousUser
+    Flask-Login is experimenting (11/5/23) with a LOGIN_NO_ANONYMOUS which will set
+    current_user to None and deprecate is_authenticated (current_user non None implies
+    authenticated).
+    We have a configuration variable ANONYMOUS_USER_DISABLED which if true will force
+    current_user to None on unauthenticated as well
+    """
+    if config_value("ANONYMOUS_USER_DISABLED"):
+        # Note that user often is current_user which is a proxy and isn't ever actually
+        # 'None'
+        return bool(user)
+    return bool(user and user.is_authenticated)
+
+
 def login_user(
     user: "User",
     remember: t.Optional[bool] = None,
@@ -403,9 +422,8 @@ def suppress_form_csrf():
     if get_request_attr("fs_ignore_csrf"):
         # This is the case where CsrfProtect was already called (e.g. @auth_required)
         return {"csrf": False}
-    if (
-        config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS")
-        and not current_user.is_authenticated
+    if config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS") and not is_user_authenticated(
+        current_user
     ):
         return {"csrf": False}
     return {}
@@ -919,7 +937,7 @@ def csrf_cookie_handler(response: "Response") -> "Response":
             and session.get("remember") != "clear"
         )
         # Set cookie if successfully logged in with flask_login's remember cookie
-        if has_remember_cookie and current_user.is_authenticated:
+        if has_remember_cookie and is_user_authenticated(current_user):
             op = "set"
         else:
             return response

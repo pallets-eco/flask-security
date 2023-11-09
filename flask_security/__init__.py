@@ -17,7 +17,6 @@ from .core import (
     RoleMixin,
     UserMixin,
     WebAuthnMixin,
-    AnonymousUser,
     FormInfo,
     current_user,
 )
@@ -134,4 +133,4 @@ from .webauthn import (
 )
 from .webauthn_util import WebauthnUtil
 
-__version__ = "5.3.2"
+__version__ = "5.4.0"

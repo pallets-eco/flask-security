@@ -8,8 +8,9 @@ import inspect
 import pytest
 
 from sqlalchemy import Column
-from flask_security import AnonymousUser, RoleMixin, UserMixin
+from flask_security import RoleMixin, UserMixin
 from flask_security.models import fsqla, fsqla_v2
+from flask_security.core import AnonymousUser
 
 
 class Role(RoleMixin):

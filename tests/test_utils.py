@@ -51,7 +51,7 @@ def json_authenticate(client, email="matt@lp.com", password="password", endpoint
 
 def is_authenticated(client, get_message):
     # Return True is 'client' is authenticated.
-    # Return False is not
+    # Return False if not
     # Raise ValueError not certain...
     response = client.get("/profile", headers={"accept": "application/json"})
     if response.status_code == 200:
@@ -417,3 +417,12 @@ class FakeSerializer:
 
     def dumps(self, state):
         return "heres your state"
+
+
+def convert_bool_option(v):
+    # Used for command line options to convert string to bool
+    if str(v).lower() in ["true"]:
+        return True
+    elif str(v).lower() in ["false"]:
+        return False
+    return v
