@@ -12,6 +12,25 @@ Fixes
 +++++
 
 - (:issue:`845`) us-signin magic link should use fs_uniquifier (not email)
+- (:pr:`873`) Update Spanish and Italian translations (gissimo)
+- (:pr:`xxx`) Make AnonymousUser optional and deprecated
+- (:issue:`875`) user_datastore.create_user has side effects on mutable inputs (NoRePercussions)
+
+Notes
+++++++
+- Prior to this release, the **current_user** proxy always pointed to a user object.
+  If the user wasn't authenticated, it pointed to an AnonymousUser object. With this release,
+  setting :py:data:`SECURITY_ANONYMOUS_USER_DISABLED` to `True` will force **current_user** to be set
+  to `None` if the requesting user isn't authenticated. It should be noted that this is in support
+  of a proposal by the Pallets team to remove AnonymousUser from Flask-Login - as well as deprecating
+  the `is_authenticated` property. The default behavior (`False`) should be the same as prior releases.
+  A new function `_fs_is_user_authenticated` is now part of the render_template context that
+  templates can use instead of `current_user.is_authenticated`.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+
+- Passing in an AnonymousUser class as part of Security initialization has been removed.
 
 
 Version 5.3.2
@@ -36,8 +55,6 @@ Released October 14, 2023
 
 - If your application uses webauthn you must use pydantic < 2.0
   until the issue with user_handle is resolved.
-- If you want to use the latest Flask (3.0.0) you need to have Flask-Login changes -
-  those aren't currently released - use the 'main' branch.
 
 Fixes
 ++++++

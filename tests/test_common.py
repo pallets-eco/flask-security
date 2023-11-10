@@ -45,6 +45,14 @@ def test_authenticate(client):
     assert b"Welcome matt@lp.com" in response.data
 
 
+@pytest.mark.settings(anonymous_user_disabled=True)
+def test_authenticate_no_anon(client):
+    response = authenticate(client)
+    assert response.status_code == 302
+    response = authenticate(client, follow_redirects=True)
+    assert b"Welcome matt@lp.com" in response.data
+
+
 def test_authenticate_with_next(client):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=/page1", data=data, follow_redirects=True)

@@ -344,6 +344,7 @@ def users_change_password(user, password):
 
     kwargs = {"password": password, "password_confirm": password}
     form = build_form("reset_password_form", meta={"csrf": False}, **kwargs)
+    form.user = user_obj
 
     if form.validate():
         # validation will normalize password

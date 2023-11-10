@@ -1,6 +1,6 @@
 Flask-Babel
 Babel
-Flask-Login@git+https://github.com/maxcountryman/flask-login@main
+Flask-Login
 Flask-Mailman
 Flask-Principal
 peewee

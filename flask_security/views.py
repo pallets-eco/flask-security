@@ -105,6 +105,7 @@ from .utils import (
     get_request_attr,
     get_url,
     hash_password,
+    is_user_authenticated,
     json_error_response,
     login_user,
     logout_user,
@@ -159,7 +160,7 @@ def login() -> "ResponseValue":
     """
     form = t.cast(LoginForm, build_form_from_request("login_form"))
 
-    if current_user.is_authenticated:
+    if is_user_authenticated(current_user):
         # Just redirect current_user to POST_LOGIN_VIEW.
         # While its tempting to try to logout the current user and login the
         # new requested user - that simply doesn't work with CSRF.
@@ -272,7 +273,7 @@ def logout():
     """View function which handles a logout request."""
     tf_clean_session()
 
-    if current_user.is_authenticated:
+    if is_user_authenticated(current_user):
         logout_user()
 
     # No body is required - so if a POST and json - return OK
@@ -743,7 +744,7 @@ def two_factor_setup():
     """
     form = t.cast(TwoFactorSetupForm, build_form_from_request("two_factor_setup_form"))
 
-    if not current_user.is_authenticated:
+    if not is_user_authenticated(current_user):
         # This is the initial login case
         # We can also get here from setup if they want to change TODO: how?
         if not all(k in session for k in ["tf_user_id", "tf_state"]) or session[
@@ -900,7 +901,7 @@ def two_factor_token_validation():
         TwoFactorVerifyCodeForm, build_form_from_request("two_factor_verify_code_form")
     )
 
-    changing = current_user.is_authenticated
+    changing = is_user_authenticated(current_user)
     if not changing:
         # This is the normal login case OR initial setup
         if (

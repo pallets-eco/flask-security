@@ -2,7 +2,7 @@
   <hr>
   <h2>{{ _fsdomain('Menu') }}</h2>
   <ul>
-    {% if current_user and current_user.is_authenticated %}
+    {% if _fs_is_user_authenticated(current_user) %}
       {# already authenticated user #}
       <li>
         <a href="{{ url_for_security('logout') }}">{{ _fsdomain("Sign out") }}</a>

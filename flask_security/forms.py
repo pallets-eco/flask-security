@@ -687,6 +687,9 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
 class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
     """The default reset password form"""
 
+    # filled in by caller
+    user: "User"
+
     submit = SubmitField(get_form_field_label("reset_password"))
 
     def validate(self, **kwargs: t.Any) -> bool:
@@ -694,7 +697,7 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
             return False
 
         pbad, self.password.data = _security._password_util.validate(
-            self.password.data, False, user=current_user
+            self.password.data, False, user=self.user
         )
         if pbad:
             self.password.errors.extend(pbad)

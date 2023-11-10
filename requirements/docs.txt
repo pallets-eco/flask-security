@@ -2,4 +2,4 @@ Pallets-Sphinx-Themes~=2.1
 Sphinx~=7.2
 sphinx-issues==3.0.1
 packaging
-Flask-Login@git+https://github.com/maxcountryman/flask-login.git@main
+Flask-Login

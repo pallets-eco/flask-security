@@ -76,6 +76,7 @@ from .utils import (
     get_message,
     get_url,
     get_within_delta,
+    is_user_authenticated,
     json_error_response,
     login_user,
     lookup_identity,
@@ -540,7 +541,7 @@ def us_signin() -> "ResponseValue":
     For POST - redirects to POST_LOGIN_VIEW (forms) or returns 400 (json).
     """
 
-    if current_user.is_authenticated and request.method == "POST":
+    if is_user_authenticated(current_user) and request.method == "POST":
         # Just redirect current_user to POST_LOGIN_VIEW (or next).
         # While its tempting to try to logout the current user and login the
         # new requested user - that simply doesn't work with CSRF.
@@ -598,7 +599,7 @@ def us_signin() -> "ResponseValue":
         }
         return base_render_json(form, include_user=False, additional=payload)
 
-    if current_user.is_authenticated:
+    if is_user_authenticated(current_user):
         # Basically a no-op if authenticated - just perform the same
         # post-login redirect as if user just logged in.
         return redirect(get_post_login_redirect())

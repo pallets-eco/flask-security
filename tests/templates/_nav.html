@@ -1,17 +1,17 @@
-{%- if current_user.is_authenticated -%}
+{%- if _fs_is_user_authenticated(current_user) -%}
   <p>{{ _fsdomain('Welcome') }} {{ current_user.calc_username() }}</p>
 {%- endif %}
 <ul>
   <li><a href="{{ url_for('index') }}">Index</a></li>
   <li><a href="{{ url_for('profile') }}">Profile</a></li>
-  {% if current_user.has_role('admin') -%}
+  {% if current_user and current_user.has_role('admin') -%}
   <li><a href="{{ url_for('admin') }}">Admin</a></li>
   {% endif -%}
-  {% if current_user.has_role('admin') or current_user.has_role('editor') -%}
+  {% if current_user and (current_user.has_role('admin') or current_user.has_role('editor')) -%}
   <li><a href="{{ url_for('admin_or_editor') }}">Admin or Editor</a></li>
   {% endif -%}
   <li>
-    {%- if current_user.is_authenticated -%}
+    {%- if _fs_is_user_authenticated(current_user) -%}
       <a href="{{ url_for('security.logout') }}">Log out</a>
     {%- else -%}
       <a href="{{ url_for('security.login') }}">Log in</a>
