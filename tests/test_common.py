@@ -612,16 +612,14 @@ def test_http_auth_no_authorization_json(client, get_message):
     assert response.headers["Content-Type"] == "application/json"
 
 
-@pytest.mark.settings(backwards_compat_unauthn=True)
 def test_http_auth_no_authentication(client, get_message):
     response = client.get("/http", headers={})
     assert response.status_code == 401
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
 
-@pytest.mark.settings(backwards_compat_unauthn=False)
 def test_http_auth_no_authentication_json(client, get_message):
     response = client.get("/http", headers={"accept": "application/json"})
     assert response.status_code == 401
@@ -631,8 +629,7 @@ def test_http_auth_no_authentication_json(client, get_message):
     assert response.headers["Content-Type"] == "application/json"
 
 
-@pytest.mark.settings(backwards_compat_unauthn=True)
-def test_invalid_http_auth_invalid_username(client):
+def test_invalid_http_auth_invalid_username(client, get_message):
     response = client.get(
         "/http",
         headers={
@@ -640,12 +637,11 @@ def test_invalid_http_auth_invalid_username(client):
             % base64.b64encode(b"bogus:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
 
-@pytest.mark.settings(backwards_compat_unauthn=False)
 def test_invalid_http_auth_invalid_username_json(client, get_message):
     # Even with JSON - Basic Auth required a WWW-Authenticate header response.
     response = client.get(
@@ -664,8 +660,7 @@ def test_invalid_http_auth_invalid_username_json(client, get_message):
     assert "WWW-Authenticate" in response.headers
 
 
-@pytest.mark.settings(backwards_compat_unauthn=True)
-def test_invalid_http_auth_bad_password(client):
+def test_invalid_http_auth_bad_password(client, get_message):
     response = client.get(
         "/http",
         headers={
@@ -673,13 +668,12 @@ def test_invalid_http_auth_bad_password(client):
             % base64.b64encode(b"joe@lp.com:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
 
-@pytest.mark.settings(backwards_compat_unauthn=True)
-def test_custom_http_auth_realm(client):
+def test_custom_http_auth_realm(client, get_message):
     response = client.get(
         "/http_custom_realm",
         headers={
@@ -687,7 +681,7 @@ def test_custom_http_auth_realm(client):
             % base64.b64encode(b"joe@lp.com:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="My Realm"' == response.headers["WWW-Authenticate"]
 
@@ -709,8 +703,7 @@ def test_multi_auth_basic(client):
     assert "WWW-Authenticate" in response.headers
 
 
-@pytest.mark.settings(backwards_compat_unauthn=True)
-def test_multi_auth_basic_invalid(client):
+def test_multi_auth_basic_invalid(client, get_message):
     response = client.get(
         "/multi_auth",
         headers={
@@ -718,7 +711,7 @@ def test_multi_auth_basic_invalid(client):
             % base64.b64encode(b"bogus:bogus").decode("utf-8")
         },
     )
-    assert b"<h1>Unauthorized</h1>" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 
@@ -1079,3 +1072,10 @@ def test_auth_token_decorator(in_app_context):
             headers={"Content-Type": "application/json", "Authentication-Token": token},
         )
         assert response.status_code == 200
+
+
+@pytest.mark.filterwarnings("ignore:.*BACKWARDS_COMPAT_UNAUTHN:DeprecationWarning")
+@pytest.mark.settings(backwards_compat_unauthn=True)
+def test_unauthn_compat(client):
+    response = client.get("/profile")
+    assert response.status_code == 401

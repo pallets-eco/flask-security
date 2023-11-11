@@ -59,11 +59,6 @@ def _get_unauthenticated_response(text=None, headers=None):
     return Response(text, 401, headers)
 
 
-def _get_unauthorized_response(text=None, headers=None):  # pragma: no cover
-    # People called this - even though it isn't public - no harm in keeping it.
-    return _get_unauthenticated_response(text, headers)
-
-
 def default_unauthn_handler(mechanisms, headers=None):
     """Default callback for failures to authenticate
 
@@ -244,12 +239,9 @@ def http_auth_required(realm: t.Any) -> DecoratedView:
                 handle_csrf("basic")
                 set_request_attr("fs_authn_via", "basic")
                 return fn(*args, **kwargs)
-            if _security._unauthorized_callback:
-                return _security._unauthorized_callback()
-            else:
-                r = _security.default_http_auth_realm if callable(realm) else realm
-                h = {"WWW-Authenticate": f'Basic realm="{r}"'}
-                return _security._unauthn_handler(["basic"], headers=h)
+            r = _security.default_http_auth_realm if callable(realm) else realm
+            h = {"WWW-Authenticate": f'Basic realm="{r}"'}
+            return _security._unauthn_handler(["basic"], headers=h)
 
         return wrapper
 
@@ -274,10 +266,7 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
             handle_csrf("token")
             set_request_attr("fs_authn_via", "token")
             return fn(*args, **kwargs)
-        if _security._unauthorized_callback:
-            return _security._unauthorized_callback()
-        else:
-            return _security._unauthn_handler(["token"])
+        return _security._unauthn_handler(["token"])
 
     return t.cast(DecoratedView, decorated)
 
@@ -324,8 +313,7 @@ def auth_required(
     The first mechanism that succeeds is used, following that, depending on
     configuration, CSRF protection will be tested.
 
-    On authentication failure `.Security.unauthorized_callback` (deprecated)
-    or :meth:`.Security.unauthn_handler` will be called.
+    On authentication failure :meth:`.Security.unauthn_handler` will be called.
 
     As a side effect, upon successful authentication, the request global
      ``fs_authn_via`` will be set to the method ("basic", "token", "session")
@@ -403,10 +391,7 @@ def auth_required(
                     handle_csrf(method)
                     set_request_attr("fs_authn_via", method)
                     return fn(*args, **kwargs)
-            if _security._unauthorized_callback:
-                return _security._unauthorized_callback()
-            else:
-                return _security._unauthn_handler(ams, headers=h)
+            return _security._unauthn_handler(ams, headers=h)
 
         return decorated_view
 
@@ -489,9 +474,6 @@ def roles_required(*roles: str) -> DecoratedView:
             perms = [Permission(RoleNeed(role)) for role in roles]
             for perm in perms:
                 if not perm.can():
-                    if _security._unauthorized_callback:
-                        # Backwards compat - deprecated
-                        return _security._unauthorized_callback()
                     return _security._unauthz_handler(
                         roles_required.__name__, list(roles)
                     )
@@ -523,9 +505,6 @@ def roles_accepted(*roles: str) -> DecoratedView:
             perm = Permission(*(RoleNeed(role) for role in roles))
             if perm.can():
                 return fn(*args, **kwargs)
-            if _security._unauthorized_callback:
-                # Backwards compat - deprecated
-                return _security._unauthorized_callback()
             return _security._unauthz_handler(roles_accepted.__name__, list(roles))
 
         return decorated_view
@@ -558,9 +537,6 @@ def permissions_required(*fsperms: str) -> DecoratedView:
             perms = [Permission(FsPermNeed(fsperm)) for fsperm in fsperms]
             for perm in perms:
                 if not perm.can():
-                    if _security._unauthorized_callback:
-                        # Backwards compat - deprecated
-                        return _security._unauthorized_callback()
                     return _security._unauthz_handler(
                         permissions_required.__name__, list(fsperms)
                     )
@@ -597,9 +573,6 @@ def permissions_accepted(*fsperms: str) -> DecoratedView:
             perm = Permission(*(FsPermNeed(fsperm) for fsperm in fsperms))
             if perm.can():
                 return fn(*args, **kwargs)
-            if _security._unauthorized_callback:
-                # Backwards compat - deprecated
-                return _security._unauthorized_callback()
             return _security._unauthz_handler(
                 permissions_accepted.__name__, list(fsperms)
             )

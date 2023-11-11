@@ -13,8 +13,9 @@ Fixes
 
 - (:issue:`845`) us-signin magic link should use fs_uniquifier (not email)
 - (:pr:`873`) Update Spanish and Italian translations (gissimo)
-- (:pr:`xxx`) Make AnonymousUser optional and deprecated
+- (:pr:`877`) Make AnonymousUser optional and deprecated
 - (:issue:`875`) user_datastore.create_user has side effects on mutable inputs (NoRePercussions)
+- (:pr:`xxx`) The long deprecated _unauthorized_callback/handler handler has been removed.
 
 Notes
 ++++++
@@ -31,6 +32,7 @@ Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 
 - Passing in an AnonymousUser class as part of Security initialization has been removed.
+- The never-public method _get_unauthorized_response method has been removed.
 
 
 Version 5.3.2
