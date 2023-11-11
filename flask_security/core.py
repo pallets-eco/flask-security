@@ -1239,7 +1239,6 @@ class Security:
         self._unauthz_handler: t.Callable[
             [str, t.Optional[t.List[str]]], "ResponseValue"
         ] = default_unauthz_handler
-        self._unauthorized_callback: t.Optional[t.Callable[[], "ResponseValue"]] = None
         self._render_json: t.Callable[
             [t.Dict[str, t.Any], int, t.Optional[t.Dict[str, str]], t.Optional["User"]],
             "ResponseValue",
@@ -1463,17 +1462,26 @@ class Security:
         if cv("AUTO_LOGIN_AFTER_RESET", app=app):
             warnings.warn(
                 "The auto-login after successful password reset functionality"
-                "has been deprecated and will be removed in a future release.",
+                " has been deprecated and will be removed in a future release.",
                 DeprecationWarning,
                 stacklevel=2,
             )
         if cv("AUTO_LOGIN_AFTER_CONFIRM", app=app):
             warnings.warn(
                 "The auto-login after successful confirmation functionality"
-                "has been deprecated and will be removed in a future release.",
+                " has been deprecated and will be removed in a future release.",
                 DeprecationWarning,
                 stacklevel=2,
             )
+        if cv("BACKWARDS_COMPAT_UNAUTHN", app=app):
+            warnings.warn(
+                "The BACKWARDS_COMPAT_UNAUTHN configuration variable is"
+                " deprecated as of version 5.4.0 and will be removed in a future"
+                " release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
         if cv("USERNAME_ENABLE", app):
             if hasattr(self.datastore, "user_model") and not hasattr(
                 self.datastore.user_model, "username"
@@ -1877,15 +1885,6 @@ class Security:
         .. versionadded:: 3.4.0
         """
         self._reauthn_handler = cb
-
-    def unauthorized_handler(self, cb: t.Callable[[], "ResponseValue"]) -> None:
-        warnings.warn(
-            "'unauthorized_handler' has been replaced with"
-            " 'unauthz_handler' and 'unauthn_handler' and will be removed in 5.4",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self._unauthorized_callback = cb
 
     def _add_ctx_processor(
         self, endpoint: str, fn: t.Callable[[], t.Dict[str, t.Any]]
