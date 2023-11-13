@@ -35,7 +35,6 @@ from flask_security import (
     WebauthnUtil,
     auth_required,
     current_user,
-    login_required,
     SQLAlchemyUserDatastore,
 )
 from flask_security.models import fsqla_v3 as fsqla
@@ -256,7 +255,7 @@ def create_app():
 
     # Views
     @app.route("/")
-    @login_required
+    @auth_required()
     def home():
         return render_template_string(
             """

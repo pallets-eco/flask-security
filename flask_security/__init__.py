@@ -78,6 +78,7 @@ from .signals import (
     tf_security_token_sent,
     tf_disabled,
     user_authenticated,
+    user_unauthenticated,
     user_confirmed,
     user_registered,
     user_not_registered,

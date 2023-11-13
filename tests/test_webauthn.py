@@ -1292,7 +1292,7 @@ def test_verify(app, client, get_message):
 
     old_paa = reset_fresh(client, app.config["SECURITY_FRESHNESS"])
     response = client.get("fresh")
-    assert "/verify?next=http://localhost/fresh" in response.location
+    assert response.location == "/verify?next=/fresh"
     signin_options, response_url = _signin_start(
         client, endpoint="wan-verify?next=/fresh"
     )

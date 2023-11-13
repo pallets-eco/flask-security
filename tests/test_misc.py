@@ -962,7 +962,7 @@ def test_authn_freshness(
     with capture_flashes() as flashes:
         response = client.get("/myspecialview", follow_redirects=False)
         assert response.status_code == 302
-        assert "/verify?next=http://localhost/myspecialview" in response.location
+        assert response.location == "/verify?next=/myspecialview"
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "REAUTHENTICATION_REQUIRED"
@@ -1042,7 +1042,7 @@ def test_default_authn_bp(app, client):
     reset_fresh(client, within=timedelta(minutes=1))
     response = client.get("/myview", follow_redirects=False)
     assert response.status_code == 302
-    assert "/myprefix/verify?next=http://localhost/myview" in response.location
+    assert response.location == "/myprefix/verify?next=/myview"
 
 
 def test_authn_freshness_grace(app, client, get_message):
@@ -1084,7 +1084,7 @@ def test_authn_freshness_nc(app, client_nc, get_message):
     # This should fail - should be a redirect
     response = client_nc.get("/myview", headers=h, follow_redirects=False)
     assert response.status_code == 302
-    assert "/verify?next=http://localhost/myview" in response.location
+    assert response.location == "/verify?next=/myview"
 
 
 def test_verify_fresh(app, client, get_message):
@@ -1117,7 +1117,7 @@ def test_verify_fresh(app, client, get_message):
     response = client.post(
         verify_url, data=dict(password="password"), follow_redirects=False
     )
-    assert response.location == "http://localhost/fresh"
+    assert response.location == "/fresh"
 
     # should be fine now
     response = client.get("/fresh", follow_redirects=True)
@@ -1439,3 +1439,28 @@ def test_sqlalchemy_session_conn(request, app, tmpdir, realdburl):
 
     client.post("/login", json=dict(noemail="matt@lp.com", password="password"))
     time.sleep(5)
+
+
+def test_login_required(app, client, get_message):
+    # Test that @login_required calls our default_unauthn_handler
+    from flask_login import login_required
+
+    @app.route("/loginreq")
+    @login_required
+    def login_req():
+        pass
+
+    response = client.get("/loginreq", follow_redirects=False)
+    assert response.location == "/login?next=/loginreq"
+
+    response = client.get("/loginreq", follow_redirects=True)
+    assert get_message("UNAUTHENTICATED") in response.data
+
+
+def test_simplify_url():
+    from flask_security.utils import simplify_url
+
+    s = simplify_url("https://localhost/profile", "https://localhost/login")
+    assert s == "/login"
+    s = simplify_url("https:/myhost/profile", "https://localhost/login")
+    assert s == "https://localhost/login"

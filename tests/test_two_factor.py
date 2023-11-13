@@ -931,7 +931,7 @@ def test_admin_setup_reset(app, client, get_message):
     # we shouldn't be logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 302
-    assert "/login?next=%2Fprofile" in response.location
+    assert response.location == "/login?next=/profile"
 
     # Use admin to setup gene's SMS/phone.
     with app.app_context():
@@ -1291,7 +1291,7 @@ def test_verify(app, client, get_message):
     # Test setup when re-authenticate required
     authenticate(client)
     response = client.get("tf-setup", follow_redirects=False)
-    assert "/verify?next=http://localhost/tf-setup" in response.location
+    assert response.location == "/verify?next=/tf-setup"
     logout(client)
 
     # Now try again - follow redirects to get to verify form
@@ -1318,7 +1318,7 @@ def test_verify(app, client, get_message):
             follow_redirects=False,
         )
         assert response.status_code == 302
-        assert response.location == "http://localhost/tf-setup"
+        assert response.location == "/tf-setup"
     assert get_message("REAUTHENTICATION_SUCCESSFUL") == flashes[0]["message"].encode(
         "utf-8"
     )
