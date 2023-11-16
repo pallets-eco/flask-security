@@ -987,7 +987,7 @@ def test_verify(app, client, get_message):
     us_authenticate(client)
     response = client.get("us-setup", follow_redirects=False)
     verify_url = response.location
-    assert "/us-verify?next=http://localhost/us-setup" in verify_url
+    assert verify_url == "/us-verify?next=/us-setup"
     logout(client)
     us_authenticate(client)
 
@@ -1018,7 +1018,7 @@ def test_verify(app, client, get_message):
 
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post(verify_url, data=dict(passcode=code), follow_redirects=False)
-    assert response.location == "http://localhost/us-setup"
+    assert response.location == "/us-setup"
 
 
 def test_verify_json(app, client, get_message):

@@ -37,7 +37,6 @@ from flask_security import (
     auth_token_required,
     http_auth_required,
     get_request_attr,
-    login_required,
     roles_accepted,
     roles_required,
     permissions_accepted,
@@ -188,7 +187,7 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
         return render_template("index.html", content="Profile Page")
 
     @app.route("/post_login")
-    @login_required
+    @auth_required()
     def post_login():
         return render_template("index.html", content="Post Login")
 

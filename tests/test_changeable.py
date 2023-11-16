@@ -203,7 +203,7 @@ def test_change_invalidates_session(app, client):
     # try to access protected endpoint - shouldn't work
     response = client.get("/profile")
     assert response.status_code == 302
-    assert "/login?next=%2Fprofile" in response.location
+    assert response.location == "/login?next=/profile"
 
 
 def test_change_updates_remember(app, client):
@@ -253,7 +253,7 @@ def test_change_invalidates_auth_token(app, client):
     # authtoken should now be invalid
     response = client.get("/token", headers=headers)
     assert response.status_code == 302
-    assert "/login?next=%2Ftoken" in response.location
+    assert response.location == "/login?next=/token"
 
 
 def test_auth_uniquifier(app):
@@ -432,7 +432,7 @@ def test_basic_change(app, client_nc, get_message):
         new_password_confirm="new strong password",
     )
     response = client_nc.post("/change", data=data)
-    assert b"You are not authenticated" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
 
     response = client_nc.post(

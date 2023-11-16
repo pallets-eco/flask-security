@@ -632,6 +632,26 @@ def propagate_next(
     raise ValueError("No valid redirect URL found - configuration error")
 
 
+def simplify_url(base_url: str, redirect_url: str) -> str:
+    """
+    Reduces the scheme and host from the redirect_url so it can be passed
+    as a relative URL in a query (e.g. next) param.
+    For this method we aren't worrying about a valid url (e.g. if it points
+    externally) - that will be handled by later requests.
+
+    :param base_url: The URL to simplify 'against'.
+    :param redirect_url: The URL to reduce.
+    """
+    b_url = urlsplit(base_url)
+    r_url = urlsplit(redirect_url)
+
+    if (not r_url.scheme or r_url.scheme == b_url.scheme) and (
+        not r_url.netloc or r_url.netloc == b_url.netloc
+    ):
+        return urlunsplit(("", "", r_url.path, r_url.query, r_url.fragment))
+    return redirect_url
+
+
 def get_config(app: "Flask") -> t.Dict[str, t.Any]:
     """Conveniently get the security configuration for the specified
     application without the annoying 'SECURITY_' prefix.

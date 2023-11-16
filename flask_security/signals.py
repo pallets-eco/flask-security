@@ -15,6 +15,8 @@ signals = blinker.Namespace()
 
 user_authenticated = signals.signal("user-authenticated")
 
+user_unauthenticated = signals.signal("user-unauthenticated")
+
 user_registered = signals.signal("user-registered")
 
 # For cases of RETURN_GENERIC_RESPONSES with existing email/username

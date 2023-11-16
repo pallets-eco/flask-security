@@ -269,7 +269,7 @@ def test_two_factor(app, client):
     # make sure not logged in
     response = client.get("/profile")
     assert response.status_code == 302
-    assert "/login?next=%2Fprofile" in response.location
+    assert response.location == "/login?next=/profile"
 
 
 @pytest.mark.two_factor()

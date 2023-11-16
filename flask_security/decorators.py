@@ -22,6 +22,7 @@ from werkzeug.local import LocalProxy
 from werkzeug.routing import BuildError
 
 from .proxies import _security, DecoratedView
+from .signals import user_unauthenticated
 from .utils import (
     FsPermNeed,
     config_value,
@@ -33,6 +34,7 @@ from .utils import (
     check_and_update_authn_fresh,
     json_error_response,
     set_request_attr,
+    simplify_url,
     get_request_attr,
     url_for_security,
 )
@@ -59,30 +61,35 @@ def _get_unauthenticated_response(text=None, headers=None):
     return Response(text, 401, headers)
 
 
-def default_unauthn_handler(mechanisms, headers=None):
+def default_unauthn_handler(mechanisms=None, headers=None):
     """Default callback for failures to authenticate
 
     If caller wants JSON - return 401.
     If caller wants BasicAuth - return 401 (the WWW-Authenticate header is set).
     Otherwise - assume caller is html and redirect if possible to a login view.
-    We let Flask-Login handle this.
-
     """
+    user_unauthenticated.send(current_app._get_current_object())  # type: ignore
     headers = headers or {}
-    msg = get_message("UNAUTHENTICATED")[0]
+    m, c = get_message("UNAUTHENTICATED")
 
     if config_value("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
-        payload = json_error_response(errors=msg)
+        payload = json_error_response(errors=m)
         return _security._render_json(payload, 401, headers, None)
 
     # Basic-Auth is often used to provide a browser based login form and then the
     # browser will always add the BasicAuth credentials. For that to work we need to
     # return 401 and not redirect to our login view.
     if "WWW-Authenticate" in headers:
-        return Response(msg, 401, headers)
-    return _security.login_manager.unauthorized()
+        return Response(m, 401, headers)
+
+    do_flash(m, c)
+    # Simplify the original URL to be relative (if possible) and set as 'next' parameter
+    login_url = url_for_security("login", _external=True)
+    next_url = simplify_url(login_url, request.url)
+    redirect_url = url_for_security("login", next=next_url)
+    return redirect(redirect_url)
 
 
 def default_reauthn_handler(within, grace):
@@ -108,7 +115,10 @@ def default_reauthn_handler(within, grace):
 
     view = "us_verify" if config_value("UNIFIED_SIGNIN") else "verify"
     do_flash(m, c)
-    redirect_url = url_for_security(view, next=request.url)
+    # Simplify the original URL to be relative (if possible) and set as 'next' parameter
+    view_url = url_for_security(view, _external=True)
+    next_url = simplify_url(view_url, request.url)
+    redirect_url = url_for_security(view, next=next_url)
     return redirect(redirect_url)
 
 

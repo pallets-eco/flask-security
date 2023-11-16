@@ -18,7 +18,7 @@ from tests.test_utils import authenticate, logout
     post_logout_view="/post_logout",
     default_http_auth_realm="Custom Realm",
 )
-def test_view_configuration(client):
+def test_view_configuration(client, get_message):
     response = client.get("/custom_login")
     assert b"<h1>Login</h1>" in response.data
 
@@ -35,7 +35,7 @@ def test_view_configuration(client):
         headers={"Authorization": "Basic %s" % base64.b64encode(b"joe@lp.com:bogus")},
     )
     assert response.status_code == 401
-    assert b"You are not authenticated" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Custom Realm"' == response.headers["WWW-Authenticate"]
 

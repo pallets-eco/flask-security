@@ -85,6 +85,22 @@ def test_authenticate_with_invalid_malformed_next(client, get_message):
     assert get_message("INVALID_REDIRECT") in response.data
 
 
+def test_unauthenticated(app, client, get_message):
+    from flask_security import user_unauthenticated
+    from flask import request
+
+    recvd = []
+
+    @user_unauthenticated.connect_via(app)
+    def un(myapp, **extra):
+        assert request.path == "/profile"
+        recvd.append("gotit")
+
+    response = client.get("/profile", follow_redirects=False)
+    assert len(recvd) == 1
+    assert response.location == "/login?next=/profile"
+
+
 def test_login_template_next(client):
     # Test that our login template propagates next.
     response = client.get("/profile", follow_redirects=True)
@@ -305,10 +321,11 @@ def test_inactive_forbids(app, client, get_message):
         app.security.datastore.deactivate_user(user)
         app.security.datastore.commit()
 
-    response = client.get("/profile", follow_redirects=True)
+    response = client.get("/profile", follow_redirects=False)
+    print(response.data)
     # should be thrown back to login page.
-    assert response.status_code == 200
-    assert b"Please log in to access this page" in response.data
+    assert response.status_code == 302
+    assert response.location == "/login?next=/profile"
 
 
 @pytest.mark.settings(unauthorized_view=None)
@@ -360,7 +377,7 @@ def test_inactive_forbids_basic(app, client, get_message):
             % base64.b64encode(b"joe@lp.com:password").decode("utf-8")
         },
     )
-    assert b"You are not authenticated" in response.data
+    assert get_message("UNAUTHENTICATED")[0] in response.data
 
 
 def test_unset_password(client, get_message):
@@ -397,7 +414,7 @@ def test_logout_with_next(client):
 
 def test_missing_session_access(client, get_message):
     response = client.get("/profile", follow_redirects=True)
-    assert get_message("LOGIN") in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
 
 
 def test_has_session_access(client):
@@ -551,12 +568,12 @@ def test_token_auth_invalid_for_session_auth(client):
     assert response.status_code == 401
 
 
-def test_http_auth(client):
+def test_http_auth(client, get_message):
     # browsers expect 401 response with WWW-Authenticate header - which will prompt
     # them to pop up a login form.
     response = client.get("/http", headers={})
     assert response.status_code == 401
-    assert b"You are not authenticated" in response.data
+    assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="Login Required"' == response.headers["WWW-Authenticate"]
 

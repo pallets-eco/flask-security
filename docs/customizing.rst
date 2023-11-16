@@ -537,9 +537,9 @@ tandem with Flask-Login, behaves as follows:
 
     * If authentication fails as the result of a `@login_required`, `@auth_required("session", "token")`,
       or `@token_auth_required` then if the request 'wants' a JSON
-      response, :meth:`.Security.render_json` is called with a 401 status code. If not
-      then flask_login.LoginManager.unauthorized() is called. By default THAT will redirect to
-      a login view.
+      response, :meth:`.Security.render_json` is called with a 401 status code.
+      If not then the `SECURITY_MSG_UNAUTHENTICATED` message is flashed and the request is
+      redirected to the `login` view.
 
     * If authentication fails as the result of a `@http_auth_required` or `@auth_required("basic")`
       then a 401 is returned along with the http header ``WWW-Authenticate`` set to
@@ -575,12 +575,12 @@ any `next` query param and in fact, an existing `?next=/xx` will override most o
 As a complex example consider an unauthenticated user accessing a `@auth_required` endpoint, and the user has
 two-factor authentication set up.:
 
-    * GET("/protected") - The `default_unauthn_handler` via Flask-Login will redirect to ``/login?next=/protected``
+    * GET("/protected") - The `default_unauthn_handler` will redirect to ``/login?next=/protected``
     * The login form/template will pick any `?next=/xx` argument off the request URL and append it to form action.
     * When the form is submitted if will do a POST("/login?next=/protected")
     * Assuming correct authentication, the system will send out a 2-factor code and redirect to ``/tf-verify?next=/protected``
     * The two_factor_validation_form/template also pulls any `?next=/xx` and appends to the form action.
     * When the `tf-validate` form is submitted it will do a POST("/tf-validate?next=/protected").
     * Assuming a correct code, the user is authenticated and is redirected. That redirection first
-      looks for a 'next' in the request.args then in request.form and finally will use the value of `SECURITY_POST_LOGIN_VIEW`.
+      looks for a 'next' in the request.args then in request.form and finally will use the value of :py:data:`SECURITY_POST_LOGIN_VIEW`.
       In this example it will find the ``next=/protected`` in the request.args and redirect to ``/protected``.

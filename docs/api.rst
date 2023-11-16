@@ -25,8 +25,6 @@ Protecting Views
 
 .. autofunction:: flask_security.auth_required
 
-.. autofunction:: flask_security.login_required
-
 .. autofunction:: flask_security.roles_required
 
 .. autofunction:: flask_security.roles_accepted
@@ -256,6 +254,13 @@ sends the following signals.
 
     .. versionadded:: 3.4.0
 
+.. data:: user_unauthenticated
+
+   Sent when a user fails to authenticate. It is sent from the `default_unauthn_handler`.
+   It is passed the app (which is the sender).
+
+    .. versionadded:: 5.4.0
+
 .. data:: user_registered
 
    Sent when a user registers on the site. In addition to the app (which is the
@@ -369,4 +374,4 @@ sends the following signals.
 
     .. versionadded:: 5.0.0
 
-.. _Flask documentation on signals: https://flask.palletsprojects.com/en/2.0.x/signals/
+.. _Flask documentation on signals: https://flask.palletsprojects.com/en/2.3.x/signals/

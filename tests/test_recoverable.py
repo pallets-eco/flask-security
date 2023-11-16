@@ -280,7 +280,7 @@ def test_recover_invalidates_session(app, client):
     # try to access protected endpoint with old session - shouldn't work
     response = other_client.get("/profile")
     assert response.status_code == 302
-    assert "/login?next=%2Fprofile" in response.location
+    assert response.location == "/login?next=/profile"
 
 
 def test_login_form_description(sqlalchemy_app):

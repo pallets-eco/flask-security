@@ -96,7 +96,6 @@ from .utils import (
     get_message,
     get_request_attr,
     is_user_authenticated,
-    localize_callback,
     set_request_attr,
     uia_email_mapper,
     uia_username_mapper,
@@ -387,7 +386,7 @@ _default_messages = {
     ),
     "UNAUTHORIZED": (_("You do not have permission to view this resource."), "error"),
     "UNAUTHENTICATED": (
-        _("You are not authenticated. Please supply the correct credentials."),
+        _("You must sign in to view this resource."),
         "error",
     ),
     "REAUTHENTICATION_REQUIRED": (
@@ -713,7 +712,7 @@ def _on_identity_loaded(sender, identity):
     identity.user = current_user
 
 
-def _get_login_manager(app):
+def _get_login_manager(app, security):
     lm = LoginManager()
     # Flask-Login is likely going in the direction of removing AnonymousUser
     # however this might wreak havoc on applications that just assume that
@@ -723,19 +722,16 @@ def _get_login_manager(app):
     else:
         lm.anonymous_user = AnonymousUser
 
-    lm.localize_callback = localize_callback
-    lm.login_view = f'{cv("BLUEPRINT_NAME", app=app)}.login'
     lm.user_loader(_user_loader)
     lm.request_loader(_request_loader)
+    # Set Flask-Login handler so @login_required will have same behavior as
+    # @auth_required
+    lm.unauthorized_callback = security._unauthn_handler
 
-    if cv("FLASH_MESSAGES", app=app):
-        lm.login_message, lm.login_message_category = cv("MSG_LOGIN", app=app)
-        lm.needs_refresh_message, lm.needs_refresh_message_category = cv(
-            "MSG_REFRESH", app=app
-        )
-    else:
-        lm.login_message = None
-        lm.needs_refresh_message = None
+    # Note: since we redirect unauthenticated requests to us - we no longer need to
+    # mess with Flask-Login login_view, or message settings.
+    # We also (5.4.0) stop doing anything with need_fresh_login - we support time-based
+    # freshness.
 
     lm.init_app(app)
     return lm
@@ -1425,7 +1421,7 @@ class Security:
                     " must have one and only one key."
                 )
 
-        self.login_manager = _get_login_manager(app)
+        self.login_manager = _get_login_manager(app, self)
         self._phone_util = self.phone_util_cls(app)
         self._mail_util = self.mail_util_cls(app)
         self._password_util = self.password_util_cls(app)
@@ -1841,8 +1837,9 @@ class Security:
         Callback for failed authentication.
         This is called by :func:`auth_required`, :func:`auth_token_required`
         or :func:`http_auth_required` if authentication fails.
+        It is also called from Flask-Login's @login_required decorator.
 
-        :param cb: Callback function with signature (mechanisms, headers=None)
+        :param cb: Callback function with signature (mechanisms=None, headers=None)
 
             :mechanisms: List of which authentication mechanisms were tried
             :headers: dict of headers to return
@@ -1852,9 +1849,12 @@ class Security:
         ``flask.errorhandler(<exception>)``
 
         The default implementation will return a 401 response if the request was JSON,
-        otherwise lets ``flask_login.login_manager.unauthorized()`` handle redirects.
+        otherwise will redirect to the `login` view.
 
         .. versionadded:: 3.3.0
+
+        .. versionchanged:: 5.4.0
+            No longer calls Flask-Login and has complete logic built-in.
         """
         self._unauthn_handler = cb
 

@@ -8,6 +8,9 @@ Version 5.4.0
 
 Released xxx
 
+Some of these changes continue the process of dis-entangling Flask-Security
+from Flask-Login and have possible backwards compatibility issues.
+
 Fixes
 +++++
 
@@ -15,11 +18,12 @@ Fixes
 - (:pr:`873`) Update Spanish and Italian translations (gissimo)
 - (:pr:`877`) Make AnonymousUser optional and deprecated
 - (:issue:`875`) user_datastore.create_user has side effects on mutable inputs (NoRePercussions)
-- (:pr:`xxx`) The long deprecated _unauthorized_callback/handler handler has been removed.
+- (:pr:`878`) The long deprecated _unauthorized_callback/handler has been removed.
+- (:pr:`xxx`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
 
 Notes
 ++++++
-- Prior to this release, the **current_user** proxy always pointed to a user object.
+- Historically, the **current_user** proxy (managed by Flask-Login) always pointed to a user object.
   If the user wasn't authenticated, it pointed to an AnonymousUser object. With this release,
   setting :py:data:`SECURITY_ANONYMOUS_USER_DISABLED` to `True` will force **current_user** to be set
   to `None` if the requesting user isn't authenticated. It should be noted that this is in support
@@ -32,7 +36,26 @@ Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 
 - Passing in an AnonymousUser class as part of Security initialization has been removed.
-- The never-public method _get_unauthorized_response method has been removed.
+- The never-public method _get_unauthorized_response has been removed.
+- Bring unauthenticated handling completely into Flask-Security:
+    Prior to this release, Flask-Security's :meth:`.Security.unauthn_handler` - called when
+    a request wasn't properly authenticated - handled JSON requests then delegated
+    form responses to Flask-Login's unauthenticated_callback. That logic has been moved
+    into Flask-Security and Flask-Login is configured to call back into Flask-Security's
+    handler. While the logic is very similar the following differences might be observed:
+
+    - Flask-Login's FORCE_HOST_FOR_REDIRECTS configuration isn't honored
+    - Flask-Login's USE_SESSION_FOR_NEXT configuration isn't honored
+    - The flashed message is SECURITY_MSG_UNAUTHENTICATED rather than SECURITY_MSG_LOGIN.
+      Furthermore SECURITY_MSG_UNAUTHENTICATED was reworded to read better.
+    - Flask-Login uses urlencode to encode the `next` query param - which quotes the '/' character.
+      Werkzeug (which Flask-Security uses to build the URL) uses `quote`
+      which considers '/' a safe character and isn't encoded.
+    - The signal sent on an unauthenticated request has changed to :data:`user_unauthenticated`.
+      Flask-Login used to send a `user_unauthorized` signal.
+
+- Flask-Security no longer configures anything related to Flask-Login's `fresh_login` logic.
+  This shouldn't be used - instead use Flask-Security's :meth:`flask_security.auth_required` decorator.
 
 
 Version 5.3.2
