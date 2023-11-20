@@ -10,7 +10,7 @@
 
 import typing as t
 
-from flask import current_app as app, redirect, request, session
+from flask import current_app, redirect, request, session
 
 from .forms import (
     get_form_field_xlate,
@@ -80,7 +80,8 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
         token_to_be_sent = None
 
     tf_security_token_sent.send(
-        app._get_current_object(),
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
         user=user,
         method=method,
         token=token_to_be_sent,
@@ -101,13 +102,19 @@ def complete_two_factor_process(user, primary_method, totp_secret, is_changing):
     if is_changing:
         completion_message = "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL"
         tf_profile_changed.send(
-            app._get_current_object(), user=user, method=primary_method
+            current_app._get_current_object(),
+            _async_wrapper=current_app.ensure_sync,
+            user=user,
+            method=primary_method,
         )
     # if we are logging in for the first time
     else:
         completion_message = "TWO_FACTOR_LOGIN_SUCCESSFUL"
         tf_code_confirmed.send(
-            app._get_current_object(), user=user, method=primary_method
+            current_app._get_current_object(),
+            _async_wrapper=current_app.ensure_sync,
+            user=user,
+            method=primary_method,
         )
         dologin = True
     token = _security.two_factor_plugins.tf_complete(user, dologin)
@@ -145,7 +152,11 @@ def tf_disable(user):
     """Disable two factor for user"""
     tf_clean_session()
     _datastore.tf_reset(user)
-    tf_disabled.send(app._get_current_object(), user=user)
+    tf_disabled.send(
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
+        user=user,
+    )
 
 
 def is_tf_setup(user):

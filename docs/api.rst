@@ -17,6 +17,10 @@ Core
 
 Protecting Views
 ----------------
+All Flask-Security decorators are compatible with Flask's async implementation.
+This is accomplished by wrapping function calls with flask.ensure_async().
+Please see `Flask async`_.
+
 .. autofunction:: flask_security.anonymous_user_required
 
 .. autofunction:: flask_security.http_auth_required
@@ -234,6 +238,8 @@ Signals
 -------
 See the `Flask documentation on signals`_ for information on how to use these
 signals in your code.
+All Flask-Security signals are compatible with Blinker's async implementation.
+See `Blinker async`_
 
 .. tip::
 
@@ -374,4 +380,6 @@ sends the following signals.
 
     .. versionadded:: 5.0.0
 
+.. _Flask async: https://flask.palletsprojects.com/en/3.0.x/async-await/#using-async-and-await
 .. _Flask documentation on signals: https://flask.palletsprojects.com/en/2.3.x/signals/
+.. _Blinker async: https://blinker.readthedocs.io/en/stable/#async-receivers

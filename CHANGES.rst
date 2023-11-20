@@ -11,6 +11,10 @@ Released xxx
 Some of these changes continue the process of dis-entangling Flask-Security
 from Flask-Login and have possible backwards compatibility issues.
 
+Features
+++++++++
+- (:issue:`879`) Work with Flask[async]. view decorators and signals support async handlers.
+
 Fixes
 +++++
 
@@ -19,7 +23,7 @@ Fixes
 - (:pr:`877`) Make AnonymousUser optional and deprecated
 - (:issue:`875`) user_datastore.create_user has side effects on mutable inputs (NoRePercussions)
 - (:pr:`878`) The long deprecated _unauthorized_callback/handler has been removed.
-- (:pr:`xxx`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
+- (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
 
 Notes
 ++++++

@@ -5,12 +5,12 @@
     Flask-Security registerable module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import typing as t
 
-from flask import current_app as app
+from flask import current_app
 
 from .confirmable import generate_confirmation_link
 from .forms import form_errors_munge
@@ -55,7 +55,8 @@ def register_user(registration_form):
         do_flash(*get_message("CONFIRM_REGISTRATION", email=user.email))
 
     user_registered.send(
-        app._get_current_object(),
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
         user=user,
         confirm_token=token,
         confirmation_token=token,
@@ -122,7 +123,8 @@ def register_existing(form: "ConfirmRegisterForm") -> bool:
 
     if form.existing_email_user:
         user_not_registered.send(
-            app._get_current_object(),  # type: ignore
+            current_app._get_current_object(),  # type: ignore
+            _async_wrapper=current_app.ensure_sync,
             user=form.existing_email_user,
             existing_email=True,
             existing_username=form.existing_username_user is not None,
@@ -146,7 +148,8 @@ def register_existing(form: "ConfirmRegisterForm") -> bool:
         # Note that we send email to NEW email - so it is possible for a bad-actor
         # to enumerate usernames (slowly).
         user_not_registered.send(
-            app._get_current_object(),  # type:ignore
+            current_app._get_current_object(),  # type: ignore[attr-defined]
+            _async_wrapper=current_app.ensure_sync,
             user=None,
             existing_email=False,
             existing_username=True,

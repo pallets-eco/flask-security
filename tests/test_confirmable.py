@@ -654,3 +654,36 @@ def test_generic_with_extra(app, sqlalchemy_datastore):
         )
         assert len(response.json["response"]["errors"]) == 1
     assert len(flashes) == 0
+
+
+@pytest.mark.flask_async()
+@pytest.mark.registerable()
+def test_confirmable_async(app, client, get_message):
+    recorded_confirms = []
+    recorded_instructions_sent = []
+
+    @user_confirmed.connect_via(app)
+    async def on_confirmed(myapp, user):
+        recorded_confirms.append(user)
+
+    @confirm_instructions_sent.connect_via(app)
+    async def on_instructions_sent(myapp, **kwargs):
+        recorded_instructions_sent.append(kwargs["user"])
+
+    email = "dude@lp.com"
+
+    with capture_registrations() as registrations:
+        data = dict(email=email, password="awesome sunset", next="")
+        response = client.post("/register", data=data)
+    assert response.status_code == 302
+    client.post(
+        "/confirm",
+        json=dict(email=email),
+        headers={"Content-Type": "application/json"},
+    )
+    assert len(recorded_instructions_sent) == 1
+
+    # Test confirm
+    token = registrations[0]["confirm_token"]
+    client.get("/confirm/" + token, follow_redirects=False)
+    assert len(recorded_confirms) == 1

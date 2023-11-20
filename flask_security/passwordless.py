@@ -34,7 +34,10 @@ def send_login_instructions(user):
     )
 
     login_instructions_sent.send(
-        app._get_current_object(), user=user, login_token=token
+        app._get_current_object(),
+        _async_wrapper=app.ensure_sync,
+        user=user,
+        login_token=token,
     )
 
 

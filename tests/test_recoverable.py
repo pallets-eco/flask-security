@@ -726,3 +726,38 @@ def test_auto_login_json(client, get_message):
     # verify actually logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
+
+
+@pytest.mark.flask_async()
+@pytest.mark.settings()
+def test_recoverable_json_async(app, client, get_message):
+    recorded_resets = []
+    recorded_instructions_sent = []
+
+    @password_reset.connect_via(app)
+    async def on_password_reset(myapp, user):
+        recorded_resets.append(user)
+
+    @reset_password_instructions_sent.connect_via(app)
+    async def on_instructions_sent(myapp, **kwargs):
+        recorded_instructions_sent.append(kwargs["user"])
+
+    # Test reset password creates a token and sends email
+    with capture_reset_password_requests() as requests:
+        response = client.post(
+            "/reset",
+            json=dict(email="joe@lp.com"),
+            headers={"Content-Type": "application/json"},
+        )
+
+    assert len(recorded_instructions_sent) == 1
+    assert response.status_code == 200
+    token = requests[0]["token"]
+
+    # Test submitting a new password
+    response = client.post(
+        "/reset/" + token + "?include_auth_token",
+        json=dict(password="awesome sunset", password_confirm="awesome sunset"),
+    )
+    assert not response.json["response"]
+    assert len(recorded_resets) == 1

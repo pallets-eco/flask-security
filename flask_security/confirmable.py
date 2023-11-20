@@ -6,11 +6,11 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2021-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
-from flask import current_app as app
+from flask import current_app
 
 from .proxies import _security, _datastore
 from .signals import confirm_instructions_sent, user_confirmed
@@ -47,7 +47,11 @@ def send_confirmation_instructions(user):
     )
 
     confirm_instructions_sent.send(
-        app._get_current_object(), user=user, token=token, confirmation_token=token
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
+        user=user,
+        token=token,
+        confirmation_token=token,
     )
 
 
@@ -95,5 +99,9 @@ def confirm_user(user):
         return False
     user.confirmed_at = _security.datetime_factory()
     _datastore.put(user)
-    user_confirmed.send(app._get_current_object(), user=user)
+    user_confirmed.send(
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
+        user=user,
+    )
     return True

@@ -1672,3 +1672,48 @@ def test_login_next(app, client, get_message):
         follow_redirects=False,
     )
     assert "/im-in" in response.location
+
+
+@pytest.mark.flask_async()
+@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+def test_async(app, client, get_message):
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    async def authned(myapp, user, **extra_args):
+        auths.append((user.email, extra_args["authn_via"]))
+
+    @wan_registered.connect_via(app)
+    async def pc(sender, user, name, **extra_args):
+        assert name == "testr1"
+        assert len(user.webauthn) == 1
+
+    @wan_deleted.connect_via(app)
+    async def wan_delete(sender, user, name, **extra_args):
+        assert name == "testr1"
+
+    authenticate(client)
+
+    register_options, response_url = _register_start(client, usage="first")
+    response = client.post(
+        response_url, data=dict(credential=json.dumps(REG_DATA1)), follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    # sign in - simple case use identity so we get back allowCredentials
+    logout(client)
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        data=dict(credential=json.dumps(SIGNIN_DATA1)),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Welcome matt@lp.com" in response.data
+    assert len(auths) == 2
+    assert auths[1][1] == ["webauthn"]
+
+    # test delete signal
+    response = client.post(
+        "/wan-delete", data=dict(name="testr1"), follow_redirects=True
+    )

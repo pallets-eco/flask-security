@@ -68,7 +68,10 @@ def default_unauthn_handler(mechanisms=None, headers=None):
     If caller wants BasicAuth - return 401 (the WWW-Authenticate header is set).
     Otherwise - assume caller is html and redirect if possible to a login view.
     """
-    user_unauthenticated.send(current_app._get_current_object())  # type: ignore
+    user_unauthenticated.send(
+        current_app._get_current_object(),  # type: ignore[attr-defined]
+        _async_wrapper=current_app.ensure_sync,
+    )
     headers = headers or {}
     m, c = get_message("UNAUTHENTICATED")
 
@@ -150,8 +153,11 @@ def default_unauthz_handler(func_name, params):
 def _check_token():
     user = _security.login_manager.request_callback(request)
     if is_user_authenticated(user):
-        app = current_app._get_current_object()
-        identity_changed.send(app, identity=Identity(user.fs_uniquifier))
+        identity_changed.send(
+            current_app._get_current_object(),
+            _async_wrapper=current_app.ensure_sync,
+            identity=Identity(user.fs_uniquifier),
+        )
         return True
 
     return False
@@ -187,8 +193,11 @@ def _check_http_auth():
     if user and user.verify_and_update_password(auth.password):
         _security.datastore.commit()
         _security.login_manager._update_request_context_with_user(user)
-        app = current_app._get_current_object()
-        identity_changed.send(app, identity=Identity(user.fs_uniquifier))
+        identity_changed.send(
+            current_app._get_current_object(),
+            _async_wrapper=current_app.ensure_sync,
+            identity=Identity(user.fs_uniquifier),
+        )
         return True
 
     return False
@@ -248,7 +257,7 @@ def http_auth_required(realm: t.Any) -> DecoratedView:
             if _check_http_auth():
                 handle_csrf("basic")
                 set_request_attr("fs_authn_via", "basic")
-                return fn(*args, **kwargs)
+                return current_app.ensure_sync(fn)(*args, **kwargs)
             r = _security.default_http_auth_realm if callable(realm) else realm
             h = {"WWW-Authenticate": f'Basic realm="{r}"'}
             return _security._unauthn_handler(["basic"], headers=h)
@@ -275,7 +284,7 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
         if _check_token():
             handle_csrf("token")
             set_request_attr("fs_authn_via", "token")
-            return fn(*args, **kwargs)
+            return current_app.ensure_sync(fn)(*args, **kwargs)
         return _security._unauthn_handler(["token"])
 
     return t.cast(DecoratedView, decorated)
@@ -400,7 +409,7 @@ def auth_required(
                         return _security._reauthn_handler(within, grace)
                     handle_csrf(method)
                     set_request_attr("fs_authn_via", method)
-                    return fn(*args, **kwargs)
+                    return current_app.ensure_sync(fn)(*args, **kwargs)
             return _security._unauthn_handler(ams, headers=h)
 
         return decorated_view
@@ -443,7 +452,7 @@ def unauth_csrf(
             if not current_app.config.get(
                 "WTF_CSRF_ENABLED", False
             ) or not current_app.extensions.get("csrf", None):
-                return fn(*args, **kwargs)
+                return current_app.ensure_sync(fn)(*args, **kwargs)
 
             if config_value(
                 "CSRF_IGNORE_UNAUTH_ENDPOINTS"
@@ -456,7 +465,7 @@ def unauth_csrf(
                     if not fall_through:
                         raise
 
-            return fn(*args, **kwargs)
+            return current_app.ensure_sync(fn)(*args, **kwargs)
 
         return decorated
 
@@ -487,7 +496,7 @@ def roles_required(*roles: str) -> DecoratedView:
                     return _security._unauthz_handler(
                         roles_required.__name__, list(roles)
                     )
-            return fn(*args, **kwargs)
+            return current_app.ensure_sync(fn)(*args, **kwargs)
 
         return decorated_view
 
@@ -514,7 +523,7 @@ def roles_accepted(*roles: str) -> DecoratedView:
         def decorated_view(*args, **kwargs):
             perm = Permission(*(RoleNeed(role) for role in roles))
             if perm.can():
-                return fn(*args, **kwargs)
+                return current_app.ensure_sync(fn)(*args, **kwargs)
             return _security._unauthz_handler(roles_accepted.__name__, list(roles))
 
         return decorated_view
@@ -551,7 +560,7 @@ def permissions_required(*fsperms: str) -> DecoratedView:
                         permissions_required.__name__, list(fsperms)
                     )
 
-            return fn(*args, **kwargs)
+            return current_app.ensure_sync(fn)(*args, **kwargs)
 
         return decorated_view
 
@@ -582,7 +591,7 @@ def permissions_accepted(*fsperms: str) -> DecoratedView:
         def decorated_view(*args, **kwargs):
             perm = Permission(*(FsPermNeed(fsperm) for fsperm in fsperms))
             if perm.can():
-                return fn(*args, **kwargs)
+                return current_app.ensure_sync(fn)(*args, **kwargs)
             return _security._unauthz_handler(
                 permissions_accepted.__name__, list(fsperms)
             )
@@ -612,6 +621,6 @@ def anonymous_user_required(f: DecoratedView) -> DecoratedView:
                 return _security._render_json(payload, 400, None, None)
             else:
                 return redirect(get_url(_security.post_login_view))
-        return f(*args, **kwargs)
+        return current_app.ensure_sync(f)(*args, **kwargs)
 
     return t.cast(DecoratedView, wrapper)

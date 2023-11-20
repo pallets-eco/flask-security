@@ -148,6 +148,10 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     if mfa_test is not None:
         pytest.importorskip("cryptography")
 
+    flask_async_test = marker_getter("flask_async")
+    if flask_async_test is not None:
+        pytest.importorskip("asgiref")  # from flask[async]
+
     # Override config settings as requested for this test
     settings = marker_getter("settings")
     if settings is not None:

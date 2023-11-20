@@ -5,12 +5,11 @@
     Flask-Security recoverable module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
-from flask import current_app as app
-
+from flask import current_app
 from .proxies import _security, _datastore
 from .signals import password_reset, reset_password_instructions_sent
 from .utils import (
@@ -43,7 +42,8 @@ def send_reset_password_instructions(user):
         )
 
     reset_password_instructions_sent.send(
-        app._get_current_object(),
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
         user=user,
         token=token,
         reset_token=token,
@@ -109,4 +109,8 @@ def update_password(user, password):
     _datastore.set_uniquifier(user)
     _datastore.put(user)
     send_password_reset_notice(user)
-    password_reset.send(app._get_current_object(), user=user)
+    password_reset.send(
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
+        user=user,
+    )
