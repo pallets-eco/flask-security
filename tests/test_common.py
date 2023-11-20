@@ -101,6 +101,23 @@ def test_unauthenticated(app, client, get_message):
     assert response.location == "/login?next=/profile"
 
 
+@pytest.mark.flask_async()
+def test_unauthenticated_async(app, client, get_message):
+    from flask_security import user_unauthenticated
+    from flask import request
+
+    recvd = []
+
+    @user_unauthenticated.connect_via(app)
+    async def un(myapp, **extra):
+        assert request.path == "/profile"
+        recvd.append("gotit")
+
+    response = client.get("/profile", follow_redirects=False)
+    assert len(recvd) == 1
+    assert response.location == "/login?next=/profile"
+
+
 def test_login_template_next(client):
     # Test that our login template propagates next.
     response = client.get("/profile", follow_redirects=True)

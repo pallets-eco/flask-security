@@ -178,11 +178,12 @@ Email Confirmation
 
 If desired you can require that new users confirm their email address.
 Flask-Security will send an email message to any new users with a confirmation
-link. Upon navigating to the confirmation link, the user will be automatically
-logged in. There is also view for resending a confirmation link to a given email
+link. Upon navigating to the confirmation link, the user's account will be set to
+'confirmed'. The user can then sign in usually the normal mechanisms.
+There is also view for resending a confirmation link to a given email
 if the user happens to try to use an expired token or has lost the previous
 email. Confirmation links can be configured to expire after a specified amount
-of time.
+of time (default 5 days).
 
 
 Password Reset/Recovery

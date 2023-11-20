@@ -185,12 +185,14 @@ def login_user(
     session["fs_paa"] = time.time()  # Primary authentication at - timestamp
 
     identity_changed.send(
-        current_app._get_current_object(),  # type: ignore
+        current_app._get_current_object(),  # type: ignore[attr-defined]
+        _async_wrapper=current_app.ensure_sync,
         identity=Identity(user.fs_uniquifier),
     )
 
     user_authenticated.send(
-        current_app._get_current_object(),  # type: ignore
+        current_app._get_current_object(),  # type: ignore[attr-defined]
+        _async_wrapper=current_app.ensure_sync,
         user=user,
         authn_via=authn_via,
     )
@@ -220,7 +222,9 @@ def logout_user() -> None:
         g.pop(csrf_field_name, None)
     session["fs_cc"] = "clear"
     identity_changed.send(
-        current_app._get_current_object(), identity=AnonymousIdentity()  # type: ignore
+        current_app._get_current_object(),  # type: ignore
+        _async_wrapper=current_app.ensure_sync,
+        identity=AnonymousIdentity(),
     )
     _logout_user()
 

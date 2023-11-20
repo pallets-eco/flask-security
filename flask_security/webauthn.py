@@ -43,7 +43,7 @@ import typing as t
 from functools import partial
 
 from flask import abort, after_this_request, request, session
-from flask import current_app as app
+from flask import current_app
 from flask_login import current_user
 from wtforms import BooleanField, HiddenField, RadioField, StringField, SubmitField
 from .forms import NextFormMixin
@@ -536,7 +536,8 @@ def webauthn_register_response(token: str) -> "ResponseValue":
             usage=form.usage,
         )
         wan_registered.send(
-            app._get_current_object(),  # type: ignore
+            current_app._get_current_object(),  # type: ignore
+            _async_wrapper=current_app.ensure_sync,
             user=current_user,
             name=state["name"],
         )
@@ -751,7 +752,8 @@ def webauthn_delete() -> "ResponseValue":
         after_this_request(view_commit)
 
         wan_deleted.send(
-            app._get_current_object(),  # type: ignore
+            current_app._get_current_object(),  # type: ignore
+            _async_wrapper=current_app.ensure_sync,
             user=current_user,
             name=cred.name,
         )

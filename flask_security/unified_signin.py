@@ -32,7 +32,7 @@
 import time
 import typing as t
 
-from flask import current_app as app
+from flask import current_app
 from flask import after_this_request, request, session
 from flask_login import current_user
 from wtforms import (
@@ -801,7 +801,8 @@ def us_setup() -> "ResponseValue":
             ]
             form.delete_method.data = None
             us_profile_changed.send(
-                app._get_current_object(),  # type: ignore
+                current_app._get_current_object(),  # type: ignore
+                _async_wrapper=current_app.ensure_sync,
                 user=current_user,
                 methods=delete_method,
                 delete=True,
@@ -950,7 +951,8 @@ def us_setup_validate(token: str) -> "ResponseValue":
         _datastore.us_set(current_user, method, state["totp_secret"], phone)
 
         us_profile_changed.send(
-            app._get_current_object(),  # type: ignore
+            current_app._get_current_object(),  # type: ignore
+            _async_wrapper=current_app.ensure_sync,
             user=current_user,
             methods=[method],
             delete=False,
@@ -1026,7 +1028,8 @@ def us_send_security_token(
         # Still go ahead and notify signal receivers that they requested it.
         code = None
     us_security_token_sent.send(
-        app._get_current_object(),
+        current_app._get_current_object(),
+        _async_wrapper=current_app.ensure_sync,
         user=user,
         method=method,
         token=code,

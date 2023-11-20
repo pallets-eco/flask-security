@@ -63,7 +63,11 @@ def change_user_password(
         login_user(user, remember=has_remember_cookie, authn_via=["change"])
     if notify:
         send_password_changed_notice(user)
-    password_changed.send(current_app._get_current_object(), user=user)  # type: ignore
+    password_changed.send(
+        current_app._get_current_object(),  # type: ignore
+        _async_wrapper=current_app.ensure_sync,
+        user=user,
+    )
 
 
 def admin_change_password(user: "User", new_passwd: str, notify: bool = True) -> None:
