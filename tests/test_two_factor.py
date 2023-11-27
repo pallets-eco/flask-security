@@ -733,7 +733,7 @@ def test_no_opt_out(app, client, get_message):
 
     response = client.get("/tf-setup", follow_redirects=True)
     assert b"Disable two factor" not in response.data
-    assert b"Currently setup two-factor method: sms" in response.data
+    assert b"Currently setup two-factor method: SMS" in response.data
 
     # Try to opt-out
     data = dict(setup="disable")
