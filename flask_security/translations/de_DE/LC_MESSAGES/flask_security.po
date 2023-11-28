@@ -578,11 +578,11 @@ msgstr "Deaktiviere Zwei-Faktor-Authentisierung"
 
 #: flask_security/forms.py:850
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
-msgstr ""
+msgstr "Probleme beim Zugriff auf Ihr Konto / Smartphone verloren?"
 
 #: flask_security/forms.py:852
 msgid "Contact Administrator"
-msgstr ""
+msgstr "Kontaktiere einen Administrator"
 
 #: flask_security/recovery_codes.py:125
 msgid "Show Recovery Codes"
@@ -606,11 +606,11 @@ msgstr "Auswählen"
 
 #: flask_security/twofactor.py:125
 msgid "Send code via email"
-msgstr ""
+msgstr "Sende code per E-Mail"
 
 #: flask_security/twofactor.py:134
 msgid "Use previously downloaded recovery code"
-msgstr ""
+msgstr "Zuvor heruntergeladenen Wiederherstellungscode verwenden"
 
 #: flask_security/unified_signin.py:154
 msgid "Code or Password"
