@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 5.4.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2023-11-27 09:13+0100\n"
+"POT-Creation-Date: 2023-12-05 19:01+0100\n"
 "PO-Revision-Date: 2023-11-27 10:01+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
@@ -630,6 +630,26 @@ msgstr "Configurar una opción de inicio de sesión adicional"
 msgid "Delete active sign in option"
 msgstr "Eliminar la opción de inicio de sesión activa"
 
+#: flask_security/views.py:131
+msgid "Google Authenticator"
+msgstr "Google Authenticator"
+
+#: flask_security/views.py:132
+msgid "Authenticator app"
+msgstr "Aplicación de autenticación"
+
+#: flask_security/views.py:133 flask_security/views.py:134
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: flask_security/views.py:135
+msgid "SMS"
+msgstr "SMS"
+
+#: flask_security/views.py:136
+msgid "None"
+msgstr "Ninguno"
+
 #: flask_security/webauthn.py:121 flask_security/webauthn.py:345
 msgid "Nickname"
 msgstr "Nombre"
@@ -727,7 +747,7 @@ msgid "Enter Recovery Code"
 msgstr "Introducir código de recuperación"
 
 #: flask_security/templates/security/mf_recovery_codes.html:6
-#: flask_security/templates/security/two_factor_setup.html:84
+#: flask_security/templates/security/two_factor_setup.html:75
 #: flask_security/templates/security/wan_register.html:75
 msgid "Recovery Codes"
 msgstr "Códigos de recuperación"
@@ -756,49 +776,28 @@ msgstr "Reenviar instrucciones de confirmación"
 msgid "Select Two Factor Method"
 msgstr "Selecciona un método de dos factores"
 
-#: flask_security/templates/security/two_factor_setup.html:23
-msgid "Google Authenticator"
-msgstr "Google Authenticator"
-
 #: flask_security/templates/security/two_factor_setup.html:24
-msgid "Authenticator app"
-msgstr "Aplicación de autenticación"
-
-#: flask_security/templates/security/two_factor_setup.html:25
-#: flask_security/templates/security/two_factor_setup.html:26
-msgid "Email"
-msgstr "Correo electrónico"
-
-#: flask_security/templates/security/two_factor_setup.html:27
-msgid "SMS"
-msgstr "SMS"
-
-#: flask_security/templates/security/two_factor_setup.html:28
-msgid "None"
-msgstr "Ninguno"
-
-#: flask_security/templates/security/two_factor_setup.html:33
 msgid "Two-factor authentication adds an extra layer of security to your account"
 msgstr ""
 "La autenticación de dos factores añade una capa adicional de seguridad a "
 "tu cuenta"
 
-#: flask_security/templates/security/two_factor_setup.html:34
+#: flask_security/templates/security/two_factor_setup.html:25
 msgid "In addition to your username and password, you'll need to use a code."
 msgstr "Además de tu nombre de usuario y contraseña, deberás utilizar un código."
 
-#: flask_security/templates/security/two_factor_setup.html:37
+#: flask_security/templates/security/two_factor_setup.html:28
 #, python-format
 msgid "Currently setup two-factor method: %(method)s"
 msgstr "Método de dos factores actualmente configurado: %(method)s"
 
-#: flask_security/templates/security/two_factor_setup.html:45
+#: flask_security/templates/security/two_factor_setup.html:36
 msgid "To complete logging in, please enter the code sent to your mail"
 msgstr ""
 "Para completar el inicio de sesión, introduce el código enviado a tu "
 "correo electrónico"
 
-#: flask_security/templates/security/two_factor_setup.html:51
+#: flask_security/templates/security/two_factor_setup.html:42
 #: flask_security/templates/security/us_setup.html:66
 msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
@@ -808,31 +807,31 @@ msgstr ""
 "siguiente código QR (o ingresa manualmente el código que aparece a "
 "continuación) para comenzar a recibir códigos:"
 
-#: flask_security/templates/security/two_factor_setup.html:54
+#: flask_security/templates/security/two_factor_setup.html:45
 msgid "Two factor authentication code"
 msgstr "Código de autenticación de dos factores"
 
-#: flask_security/templates/security/two_factor_setup.html:61
+#: flask_security/templates/security/two_factor_setup.html:52
 msgid "To Which Phone Number Should We Send Code To?"
 msgstr "¿A qué número de teléfono debemos enviar el código?"
 
-#: flask_security/templates/security/two_factor_setup.html:68
+#: flask_security/templates/security/two_factor_setup.html:59
 msgid "WebAuthn"
 msgstr "WebAuthn"
 
-#: flask_security/templates/security/two_factor_setup.html:70
+#: flask_security/templates/security/two_factor_setup.html:61
 #: flask_security/templates/security/us_setup.html:93
 msgid "This application supports WebAuthn security keys."
 msgstr "Esta aplicación es compatible con las claves de seguridad de WebAuthn."
 
-#: flask_security/templates/security/two_factor_setup.html:71
-#: flask_security/templates/security/two_factor_setup.html:87
+#: flask_security/templates/security/two_factor_setup.html:62
+#: flask_security/templates/security/two_factor_setup.html:78
 #: flask_security/templates/security/us_setup.html:94
 #: flask_security/templates/security/wan_register.html:78
 msgid "You can set them up here."
 msgstr "Se pueden configurar aquí."
 
-#: flask_security/templates/security/two_factor_setup.html:86
+#: flask_security/templates/security/two_factor_setup.html:77
 #: flask_security/templates/security/wan_register.html:77
 msgid "This application supports setting up recovery codes."
 msgstr "Esta aplicación permite establecer códigos de recuperación."

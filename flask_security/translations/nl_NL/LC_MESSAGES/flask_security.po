@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-11-27 09:13+0100\n"
+"POT-Creation-Date: 2023-12-05 19:01+0100\n"
 "PO-Revision-Date: 2017-05-01 17:52+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl_NL\n"
@@ -614,6 +614,26 @@ msgstr ""
 msgid "Delete active sign in option"
 msgstr ""
 
+#: flask_security/views.py:131
+msgid "Google Authenticator"
+msgstr ""
+
+#: flask_security/views.py:132
+msgid "Authenticator app"
+msgstr ""
+
+#: flask_security/views.py:133 flask_security/views.py:134
+msgid "Email"
+msgstr ""
+
+#: flask_security/views.py:135
+msgid "SMS"
+msgstr ""
+
+#: flask_security/views.py:136
+msgid "None"
+msgstr ""
+
 #: flask_security/webauthn.py:121 flask_security/webauthn.py:345
 msgid "Nickname"
 msgstr ""
@@ -711,7 +731,7 @@ msgid "Enter Recovery Code"
 msgstr ""
 
 #: flask_security/templates/security/mf_recovery_codes.html:6
-#: flask_security/templates/security/two_factor_setup.html:84
+#: flask_security/templates/security/two_factor_setup.html:75
 #: flask_security/templates/security/wan_register.html:75
 msgid "Recovery Codes"
 msgstr ""
@@ -738,80 +758,59 @@ msgstr "Verzend bevestiging instructies opnieuw"
 msgid "Select Two Factor Method"
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:23
-msgid "Google Authenticator"
-msgstr ""
-
 #: flask_security/templates/security/two_factor_setup.html:24
-msgid "Authenticator app"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:25
-#: flask_security/templates/security/two_factor_setup.html:26
-msgid "Email"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:27
-msgid "SMS"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:28
-msgid "None"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:33
 msgid "Two-factor authentication adds an extra layer of security to your account"
 msgstr ""
 "Dubbele Authenticatie voegt een extra laag van beveiliging toe aan uw "
 "account"
 
-#: flask_security/templates/security/two_factor_setup.html:34
+#: flask_security/templates/security/two_factor_setup.html:25
 msgid "In addition to your username and password, you'll need to use a code."
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:37
+#: flask_security/templates/security/two_factor_setup.html:28
 #, python-format
 msgid "Currently setup two-factor method: %(method)s"
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:45
+#: flask_security/templates/security/two_factor_setup.html:36
 msgid "To complete logging in, please enter the code sent to your mail"
 msgstr ""
 "Om verder in te loggen moet U de code die we naar uw e-mail hebben "
 "gezonden invoeren"
 
-#: flask_security/templates/security/two_factor_setup.html:51
+#: flask_security/templates/security/two_factor_setup.html:42
 #: flask_security/templates/security/us_setup.html:66
 msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:54
+#: flask_security/templates/security/two_factor_setup.html:45
 msgid "Two factor authentication code"
 msgstr "Dubbele Authenticatie code"
 
-#: flask_security/templates/security/two_factor_setup.html:61
+#: flask_security/templates/security/two_factor_setup.html:52
 msgid "To Which Phone Number Should We Send Code To?"
 msgstr "Naar welk telefoonnummer kunnen we code verzenden?"
 
-#: flask_security/templates/security/two_factor_setup.html:68
+#: flask_security/templates/security/two_factor_setup.html:59
 msgid "WebAuthn"
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:70
+#: flask_security/templates/security/two_factor_setup.html:61
 #: flask_security/templates/security/us_setup.html:93
 msgid "This application supports WebAuthn security keys."
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:71
-#: flask_security/templates/security/two_factor_setup.html:87
+#: flask_security/templates/security/two_factor_setup.html:62
+#: flask_security/templates/security/two_factor_setup.html:78
 #: flask_security/templates/security/us_setup.html:94
 #: flask_security/templates/security/wan_register.html:78
 msgid "You can set them up here."
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:86
+#: flask_security/templates/security/two_factor_setup.html:77
 #: flask_security/templates/security/wan_register.html:77
 msgid "This application supports setting up recovery codes."
 msgstr ""

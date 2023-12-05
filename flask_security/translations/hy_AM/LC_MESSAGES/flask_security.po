@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2023-11-27 09:13+0100\n"
+"POT-Creation-Date: 2023-12-05 19:01+0100\n"
 "PO-Revision-Date: 2020-12-01 11:47+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hy_AM\n"
@@ -617,6 +617,26 @@ msgstr "Կարգավորեք մուտքի լրացուցիչ տարբերակ"
 msgid "Delete active sign in option"
 msgstr "Ջնջել ակտիվ մուտքի տարբերակը"
 
+#: flask_security/views.py:131
+msgid "Google Authenticator"
+msgstr ""
+
+#: flask_security/views.py:132
+msgid "Authenticator app"
+msgstr ""
+
+#: flask_security/views.py:133 flask_security/views.py:134
+msgid "Email"
+msgstr ""
+
+#: flask_security/views.py:135
+msgid "SMS"
+msgstr ""
+
+#: flask_security/views.py:136
+msgid "None"
+msgstr ""
+
 #: flask_security/webauthn.py:121 flask_security/webauthn.py:345
 msgid "Nickname"
 msgstr "Մականուն"
@@ -714,7 +734,7 @@ msgid "Enter Recovery Code"
 msgstr "Մուտքագրեք վերականգնման ծածկագիրը"
 
 #: flask_security/templates/security/mf_recovery_codes.html:6
-#: flask_security/templates/security/two_factor_setup.html:84
+#: flask_security/templates/security/two_factor_setup.html:75
 #: flask_security/templates/security/wan_register.html:75
 msgid "Recovery Codes"
 msgstr "Վերականգնման ծածկագրեր"
@@ -743,49 +763,28 @@ msgstr "Ուղարկել օգտահաշվի վերահաստատման հրահ�
 msgid "Select Two Factor Method"
 msgstr "Ընտրեք «երկու գործոնի» տարբերակը"
 
-#: flask_security/templates/security/two_factor_setup.html:23
-msgid "Google Authenticator"
-msgstr ""
-
 #: flask_security/templates/security/two_factor_setup.html:24
-msgid "Authenticator app"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:25
-#: flask_security/templates/security/two_factor_setup.html:26
-msgid "Email"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:27
-msgid "SMS"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:28
-msgid "None"
-msgstr ""
-
-#: flask_security/templates/security/two_factor_setup.html:33
 msgid "Two-factor authentication adds an extra layer of security to your account"
 msgstr ""
 "Երկու գործոնով նույնականացումը ձեր հաշվին ավելացնում է անվտանգության "
 "լրացուցիչ շերտ"
 
-#: flask_security/templates/security/two_factor_setup.html:34
+#: flask_security/templates/security/two_factor_setup.html:25
 msgid "In addition to your username and password, you'll need to use a code."
 msgstr "Բացի ձեր օգտանունից և գաղտնաբառից, դուք պետք է օգտագործեք ծածկագիր:"
 
-#: flask_security/templates/security/two_factor_setup.html:37
+#: flask_security/templates/security/two_factor_setup.html:28
 #, python-format
 msgid "Currently setup two-factor method: %(method)s"
 msgstr "Ներկայիս կարգավորված երկգործոն մեթոդը. %(method)s"
 
-#: flask_security/templates/security/two_factor_setup.html:45
+#: flask_security/templates/security/two_factor_setup.html:36
 msgid "To complete logging in, please enter the code sent to your mail"
 msgstr ""
 "Մուտքն ավարտելու համար մուտքագրեք ձեր էլեկտրոնային հասցեին ուղարկված "
 "ծածկագիրը"
 
-#: flask_security/templates/security/two_factor_setup.html:51
+#: flask_security/templates/security/two_factor_setup.html:42
 #: flask_security/templates/security/us_setup.html:66
 msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
@@ -794,31 +793,31 @@ msgstr ""
 "Բացեք վավերացնող հավելվածը ձեր սարքում և սկանավորեք հետևյալ QRcode-ը (կամ"
 " մուտքագրեք ստորև նշված ծածկագիրը) ծածկագրեր ստանալու համար."
 
-#: flask_security/templates/security/two_factor_setup.html:54
+#: flask_security/templates/security/two_factor_setup.html:45
 msgid "Two factor authentication code"
 msgstr "Երկու գործոն նույնականացման ծածկագիր"
 
-#: flask_security/templates/security/two_factor_setup.html:61
+#: flask_security/templates/security/two_factor_setup.html:52
 msgid "To Which Phone Number Should We Send Code To?"
 msgstr "Ո՞ր հեռախոսահամարին պետք է ուղարկել ծածկագիրը"
 
-#: flask_security/templates/security/two_factor_setup.html:68
+#: flask_security/templates/security/two_factor_setup.html:59
 msgid "WebAuthn"
 msgstr "WebAuthn"
 
-#: flask_security/templates/security/two_factor_setup.html:70
+#: flask_security/templates/security/two_factor_setup.html:61
 #: flask_security/templates/security/us_setup.html:93
 msgid "This application supports WebAuthn security keys."
 msgstr "Այս հավելվածն օժանդակում է WebAuthn անվտանգության բանալիներին:"
 
-#: flask_security/templates/security/two_factor_setup.html:71
-#: flask_security/templates/security/two_factor_setup.html:87
+#: flask_security/templates/security/two_factor_setup.html:62
+#: flask_security/templates/security/two_factor_setup.html:78
 #: flask_security/templates/security/us_setup.html:94
 #: flask_security/templates/security/wan_register.html:78
 msgid "You can set them up here."
 msgstr "Դուք կարող եք դրանք կարգավորել այստեղ:"
 
-#: flask_security/templates/security/two_factor_setup.html:86
+#: flask_security/templates/security/two_factor_setup.html:77
 #: flask_security/templates/security/wan_register.html:77
 msgid "This application supports setting up recovery codes."
 msgstr "Այս հավելվածն օժանդակում է վերականգնման ծածկագրերի կարգավորումը:"
