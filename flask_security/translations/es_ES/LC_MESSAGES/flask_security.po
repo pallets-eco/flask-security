@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 5.4.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2023-12-05 19:01+0100\n"
+"POT-Creation-Date: 2023-12-06 12:04+0100\n"
 "PO-Revision-Date: 2023-11-27 10:01+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
@@ -566,19 +566,39 @@ msgstr ""
 msgid "Set up using SMS"
 msgstr "Configurar con SMS"
 
-#: flask_security/forms.py:763 flask_security/unified_signin.py:162
+#: flask_security/forms.py:92
+msgid "Google Authenticator"
+msgstr "Google Authenticator"
+
+#: flask_security/forms.py:93
+msgid "Authenticator app"
+msgstr "Aplicación de autenticación"
+
+#: flask_security/forms.py:94 flask_security/forms.py:95
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: flask_security/forms.py:96
+msgid "SMS"
+msgstr "SMS"
+
+#: flask_security/forms.py:97
+msgid "None"
+msgstr "Ninguno"
+
+#: flask_security/forms.py:772 flask_security/unified_signin.py:162
 msgid "Available Methods"
 msgstr "Métodos disponibles"
 
-#: flask_security/forms.py:771
+#: flask_security/forms.py:780
 msgid "Disable two factor authentication"
 msgstr "Deshabilitar la autenticación de dos factores"
 
-#: flask_security/forms.py:853
+#: flask_security/forms.py:862
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr "¿Problemas para acceder a tu cuenta/has perdido tu dispositivo móvil?"
 
-#: flask_security/forms.py:855
+#: flask_security/forms.py:864
 msgid "Contact Administrator"
 msgstr "Contactar con el administrador"
 
@@ -629,26 +649,6 @@ msgstr "Configurar una opción de inicio de sesión adicional"
 #: flask_security/unified_signin.py:306
 msgid "Delete active sign in option"
 msgstr "Eliminar la opción de inicio de sesión activa"
-
-#: flask_security/views.py:131
-msgid "Google Authenticator"
-msgstr "Google Authenticator"
-
-#: flask_security/views.py:132
-msgid "Authenticator app"
-msgstr "Aplicación de autenticación"
-
-#: flask_security/views.py:133 flask_security/views.py:134
-msgid "Email"
-msgstr "Correo electrónico"
-
-#: flask_security/views.py:135
-msgid "SMS"
-msgstr "SMS"
-
-#: flask_security/views.py:136
-msgid "None"
-msgstr "Ninguno"
 
 #: flask_security/webauthn.py:121 flask_security/webauthn.py:345
 msgid "Nickname"
