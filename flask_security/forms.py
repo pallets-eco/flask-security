@@ -88,7 +88,7 @@ _default_field_labels = {
     "sms_method": _("Set up using SMS"),
 }
 
-_tf_methods = {
+_tf_methods_xlate = {
     "google_authenticator": _("Google Authenticator"),
     "authenticator": _("Authenticator app"),
     "email": _("Email"),

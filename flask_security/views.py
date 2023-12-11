@@ -49,7 +49,7 @@ from .confirmable import (
 )
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
-    _tf_methods,
+    _tf_methods_xlate,
     DummyForm,
     ForgotPasswordForm,
     LoginForm,
@@ -851,7 +851,7 @@ def two_factor_setup():
                 two_factor_setup_form=form,
                 two_factor_verify_code_form=code_form,
                 choices=cv("TWO_FACTOR_ENABLED_METHODS"),
-                chosen_method=pm,
+                chosen_method=pm,  # do not translate
                 **qrcode_values,
                 **_ctx("tf_setup"),
             )
@@ -881,7 +881,9 @@ def two_factor_setup():
         two_factor_verify_code_form=code_form,
         choices=choices,
         chosen_method=form.setup.data,
-        primary_method=_tf_methods[getattr(user, "tf_primary_method", None)],
+        primary_method_xlated=_tf_methods_xlate[
+            getattr(user, "tf_primary_method", None)
+        ],
         two_factor_required=cv("TWO_FACTOR_REQUIRED"),
         **_ctx("tf_setup"),
     )
@@ -981,7 +983,7 @@ def two_factor_token_validation():
             cv("TWO_FACTOR_SETUP_TEMPLATE"),
             two_factor_setup_form=setup_form,
             two_factor_verify_code_form=form,
-            chosen_method=pm,
+            chosen_method=pm,  # do not translate
             choices=cv("TWO_FACTOR_ENABLED_METHODS"),
             **_ctx("tf_setup"),
         )
@@ -998,7 +1000,7 @@ def two_factor_token_validation():
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
-            chosen_method=pm,
+            chosen_method_xlated=_tf_methods_xlate[pm],
             problem=None,
             **_ctx("tf_token_validation"),
         )
@@ -1066,7 +1068,7 @@ def two_factor_rescue():
         cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
         two_factor_rescue_form=form,
-        chosen_method=form.user.tf_primary_method,
+        chosen_method_xlated=_tf_methods_xlate[form.user.tf_primary_method],
         rescue_mail=cv("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
         **_ctx("tf_token_validation"),

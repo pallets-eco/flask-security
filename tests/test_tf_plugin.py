@@ -65,7 +65,7 @@ def test_tf_select(app, client, get_message):
     )
     assert b"Select Two Factor Method" in response.data
     response = client.post("/tf-select", data=dict(which="sms"), follow_redirects=True)
-    assert b"Please enter your authentication code generated via: sms" in response.data
+    assert b"Please enter your authentication code generated via: SMS" in response.data
     code = sms_sender.messages[0].split()[-1]
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"Your code has been confirmed" in response.data
