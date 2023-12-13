@@ -881,9 +881,9 @@ def two_factor_setup():
         two_factor_verify_code_form=code_form,
         choices=choices,
         chosen_method=form.setup.data,
-        primary_method_xlated=_tf_methods_xlate[
+        primary_method=_tf_methods_xlate[
             getattr(user, "tf_primary_method", None)
-        ],
+        ],  # translated
         two_factor_required=cv("TWO_FACTOR_REQUIRED"),
         **_ctx("tf_setup"),
     )
@@ -1000,7 +1000,7 @@ def two_factor_token_validation():
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
-            chosen_method_xlated=_tf_methods_xlate[pm],
+            chosen_method=_tf_methods_xlate[pm],  # translated
             problem=None,
             **_ctx("tf_token_validation"),
         )
@@ -1068,7 +1068,7 @@ def two_factor_rescue():
         cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
         two_factor_rescue_form=form,
-        chosen_method_xlated=_tf_methods_xlate[form.user.tf_primary_method],
+        chosen_method=_tf_methods_xlate[form.user.tf_primary_method],  # translated
         rescue_mail=cv("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
         **_ctx("tf_token_validation"),
