@@ -51,10 +51,7 @@ NO_BABEL = False
 try:
     from flask_babel import Babel
 except ImportError:
-    try:
-        from flask_babelex import Babel
-    except ImportError:
-        NO_BABEL = True
+    NO_BABEL = True
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.testing import FlaskClient

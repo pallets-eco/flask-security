@@ -49,7 +49,7 @@ from .confirmable import (
 )
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
-    _tf_methods_xlate,
+    _setup_methods_xlate,
     DummyForm,
     ForgotPasswordForm,
     LoginForm,
@@ -108,6 +108,7 @@ from .utils import (
     hash_password,
     is_user_authenticated,
     json_error_response,
+    localize_callback,
     login_user,
     logout_user,
     propagate_next,
@@ -881,9 +882,9 @@ def two_factor_setup():
         two_factor_verify_code_form=code_form,
         choices=choices,
         chosen_method=form.setup.data,
-        primary_method=_tf_methods_xlate[
-            getattr(user, "tf_primary_method", None)
-        ],  # translated
+        primary_method=localize_callback(
+            _setup_methods_xlate[getattr(user, "tf_primary_method", None)]
+        ),
         two_factor_required=cv("TWO_FACTOR_REQUIRED"),
         **_ctx("tf_setup"),
     )
@@ -1000,7 +1001,7 @@ def two_factor_token_validation():
             cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_rescue_form=rescue_form,
             two_factor_verify_code_form=form,
-            chosen_method=_tf_methods_xlate[pm],  # translated
+            chosen_method=localize_callback(_setup_methods_xlate[pm]),
             problem=None,
             **_ctx("tf_token_validation"),
         )
@@ -1068,7 +1069,9 @@ def two_factor_rescue():
         cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
         two_factor_verify_code_form=code_form,
         two_factor_rescue_form=form,
-        chosen_method=_tf_methods_xlate[form.user.tf_primary_method],  # translated
+        chosen_method=localize_callback(
+            _setup_methods_xlate[form.user.tf_primary_method]
+        ),
         rescue_mail=cv("TWO_FACTOR_RESCUE_MAIL"),
         problem=rproblem,
         **_ctx("tf_token_validation"),
