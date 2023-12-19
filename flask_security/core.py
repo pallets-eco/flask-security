@@ -521,6 +521,10 @@ _default_messages = {
         _("You successfully disabled two factor authorization."),
         "success",
     ),
+    "US_CURRENT_METHODS": (
+        _("Currently active sign in options: %(method_list)s."),
+        "info",
+    ),
     "US_METHOD_NOT_AVAILABLE": (_("Requested method is not valid"), "error"),
     "US_SETUP_EXPIRED": (
         _("Setup must be completed within %(within)s. Please start over."),

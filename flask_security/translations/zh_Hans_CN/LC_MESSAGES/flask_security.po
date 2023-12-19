@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2023-12-06 12:04+0100\n"
+"POT-Creation-Date: 2023-12-17 20:22-0800\n"
 "PO-Revision-Date: 2018-08-02 19:55+0800\n"
 "Last-Translator: SteinKuo <guoming054@gmail.com>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.13.1\n"
+"Generated-By: Babel 2.14.0\n"
 
 #: flask_security/core.py:267
 msgid "Login Required"
@@ -326,103 +326,108 @@ msgstr "选择的方法无效"
 msgid "You successfully disabled two factor authorization."
 msgstr "你成功地禁用了双因素授权。"
 
-#: flask_security/core.py:524
+#: flask_security/core.py:525
+#, python-format
+msgid "Currently active sign in options: %(method_list)s."
+msgstr ""
+
+#: flask_security/core.py:528
 msgid "Requested method is not valid"
 msgstr "非法的请求方法"
 
-#: flask_security/core.py:526
+#: flask_security/core.py:530
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
 msgstr "必须在%(within)s内完成设置。请重新开始。"
 
-#: flask_security/core.py:529
+#: flask_security/core.py:533
 msgid "Unified sign in setup successful"
 msgstr "统一登录设置成功"
 
-#: flask_security/core.py:530
+#: flask_security/core.py:534
 msgid "You must specify a valid identity to sign in"
 msgstr "您必须指定一个有效的身份才能登录"
 
-#: flask_security/core.py:531
+#: flask_security/core.py:535
 #, python-format
 msgid "Use this code to sign in: %(code)s."
 msgstr "使用此代码登录：%(code)s"
 
-#: flask_security/core.py:533
+#: flask_security/core.py:537
 #, python-format
 msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
 "characters"
 msgstr ""
 
-#: flask_security/core.py:540
+#: flask_security/core.py:544
 msgid "Username contains illegal characters"
 msgstr ""
 
-#: flask_security/core.py:544
+#: flask_security/core.py:548
 msgid "Username can contain only letters and numbers"
 msgstr ""
 
-#: flask_security/core.py:547
+#: flask_security/core.py:551
 msgid "Username not provided"
-msgstr ""
-
-#: flask_security/core.py:549
-#, python-format
-msgid "%(username)s is already associated with an account."
 msgstr ""
 
 #: flask_security/core.py:553
 #, python-format
-msgid "WebAuthn operation must be completed within %(within)s. Please start over."
+msgid "%(username)s is already associated with an account."
 msgstr ""
 
 #: flask_security/core.py:557
-msgid "Nickname for new credential is required."
+#, python-format
+msgid "WebAuthn operation must be completed within %(within)s. Please start over."
 msgstr ""
 
 #: flask_security/core.py:561
-#, python-format
-msgid "%(name)s is already associated with a credential."
+msgid "Nickname for new credential is required."
 msgstr ""
 
 #: flask_security/core.py:565
 #, python-format
-msgid "%(name)s not registered with current user."
+msgid "%(name)s is already associated with a credential."
 msgstr ""
 
 #: flask_security/core.py:569
 #, python-format
-msgid "Successfully deleted WebAuthn credential with name: %(name)s"
+msgid "%(name)s not registered with current user."
 msgstr ""
 
 #: flask_security/core.py:573
 #, python-format
-msgid "Successfully added WebAuthn credential with name: %(name)s"
+msgid "Successfully deleted WebAuthn credential with name: %(name)s"
 msgstr ""
 
 #: flask_security/core.py:577
-msgid "WebAuthn credential id already registered."
+#, python-format
+msgid "Successfully added WebAuthn credential with name: %(name)s"
 msgstr ""
 
 #: flask_security/core.py:581
-msgid "Unregistered WebAuthn credential id."
+msgid "WebAuthn credential id already registered."
 msgstr ""
 
 #: flask_security/core.py:585
-msgid "WebAuthn credential doesn't belong to any user."
+msgid "Unregistered WebAuthn credential id."
 msgstr ""
 
 #: flask_security/core.py:589
+msgid "WebAuthn credential doesn't belong to any user."
+msgstr ""
+
+#: flask_security/core.py:593
 #, python-format
 msgid "Could not verify WebAuthn credential: %(cause)s."
 msgstr ""
 
-#: flask_security/core.py:593
+#: flask_security/core.py:597
 msgid "Credential not registered for this use (first or secondary)"
 msgstr ""
 
-#: flask_security/core.py:597
+#: flask_security/core.py:601
 msgid "Credential user handle didn't match"
 msgstr ""
 
@@ -543,39 +548,43 @@ msgstr "设置一个认证的app（例如：google、lastpass、authy）"
 msgid "Set up using SMS"
 msgstr "用SMS进行设置\""
 
-#: flask_security/forms.py:92
+#: flask_security/forms.py:93
 msgid "Google Authenticator"
 msgstr ""
 
-#: flask_security/forms.py:93
-msgid "Authenticator app"
+#: flask_security/forms.py:94
+msgid "authenticator"
 msgstr ""
 
-#: flask_security/forms.py:94 flask_security/forms.py:95
-msgid "Email"
-msgstr ""
-
-#: flask_security/forms.py:96
-msgid "SMS"
+#: flask_security/forms.py:95 flask_security/forms.py:96
+msgid "email"
 msgstr ""
 
 #: flask_security/forms.py:97
-msgid "None"
+msgid "SMS"
 msgstr ""
 
-#: flask_security/forms.py:772 flask_security/unified_signin.py:162
+#: flask_security/forms.py:98
+msgid "password"
+msgstr ""
+
+#: flask_security/forms.py:99
+msgid "none"
+msgstr ""
+
+#: flask_security/forms.py:774 flask_security/unified_signin.py:164
 msgid "Available Methods"
 msgstr ""
 
-#: flask_security/forms.py:780
+#: flask_security/forms.py:782
 msgid "Disable two factor authentication"
 msgstr ""
 
-#: flask_security/forms.py:862
+#: flask_security/forms.py:864
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr ""
 
-#: flask_security/forms.py:864
+#: flask_security/forms.py:866
 msgid "Contact Administrator"
 msgstr ""
 
@@ -607,23 +616,23 @@ msgstr ""
 msgid "Use previously downloaded recovery code"
 msgstr ""
 
-#: flask_security/unified_signin.py:155
+#: flask_security/unified_signin.py:157
 msgid "Code or Password"
 msgstr ""
 
-#: flask_security/unified_signin.py:164
+#: flask_security/unified_signin.py:166
 msgid "Via email"
 msgstr "通过邮件"
 
-#: flask_security/unified_signin.py:165
+#: flask_security/unified_signin.py:167
 msgid "Via SMS"
 msgstr "通过SMS"
 
-#: flask_security/unified_signin.py:293
+#: flask_security/unified_signin.py:295
 msgid "Setup additional sign in option"
 msgstr ""
 
-#: flask_security/unified_signin.py:306
+#: flask_security/unified_signin.py:308
 msgid "Delete active sign in option"
 msgstr ""
 
@@ -769,7 +778,7 @@ msgid "To complete logging in, please enter the code sent to your mail"
 msgstr "要完成登录，请输入发送到您邮箱的代码"
 
 #: flask_security/templates/security/two_factor_setup.html:42
-#: flask_security/templates/security/us_setup.html:66
+#: flask_security/templates/security/us_setup.html:61
 msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
 "(or enter the code below manually) to start receiving codes:"
@@ -788,13 +797,13 @@ msgid "WebAuthn"
 msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:61
-#: flask_security/templates/security/us_setup.html:93
+#: flask_security/templates/security/us_setup.html:88
 msgid "This application supports WebAuthn security keys."
 msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:62
 #: flask_security/templates/security/two_factor_setup.html:78
-#: flask_security/templates/security/us_setup.html:94
+#: flask_security/templates/security/us_setup.html:89
 #: flask_security/templates/security/wan_register.html:78
 msgid "You can set them up here."
 msgstr ""
@@ -825,23 +834,19 @@ msgstr "认证代码已发送至您的电子邮件地址。"
 msgid "A mail was sent to us in order to reset your application account"
 msgstr ""
 
-#: flask_security/templates/security/us_setup.html:28
+#: flask_security/templates/security/us_setup.html:30
 msgid "Setup Unified Sign In"
 msgstr ""
 
-#: flask_security/templates/security/us_setup.html:34
-msgid "Currently active sign in options:"
-msgstr ""
-
-#: flask_security/templates/security/us_setup.html:69
+#: flask_security/templates/security/us_setup.html:64
 msgid "Passwordless QRCode"
 msgstr ""
 
-#: flask_security/templates/security/us_setup.html:76
+#: flask_security/templates/security/us_setup.html:71
 msgid "No methods have been enabled - nothing to setup"
 msgstr ""
 
-#: flask_security/templates/security/us_setup.html:82
+#: flask_security/templates/security/us_setup.html:77
 msgid "Enter code here to complete setup"
 msgstr ""
 
@@ -1106,3 +1111,15 @@ msgstr ""
 
 #~ msgid "You are not authenticated. Please supply the correct credentials."
 #~ msgstr "你还没有通过认证。请提供正确的凭证。"
+
+#~ msgid "Authenticator app"
+#~ msgstr ""
+
+#~ msgid "Email"
+#~ msgstr ""
+
+#~ msgid "None"
+#~ msgstr ""
+
+#~ msgid "Currently active sign in options:"
+#~ msgstr ""

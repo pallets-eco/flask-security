@@ -290,8 +290,7 @@ appropriate input attributes can be set)::
 Localization
 ------------
 All messages, form labels, and form strings are localizable. Flask-Security uses
-`Flask-Babel <https://pypi.org/project/Flask-Babel/>`_ or
-`Flask-BabelEx <https://pythonhosted.org/Flask-BabelEx/>`_ to manage its messages.
+`Flask-Babel <https://pypi.org/project/Flask-Babel/>`_ to manage its messages.
 
 .. tip::
     Be sure to explicitly initialize your babel extension::
@@ -349,9 +348,6 @@ Then compile it with::
 Finally add your translations directory to your configuration::
 
     app.config["SECURITY_I18N_DIRNAME"] = ["builtin", "translations"]
-
-.. note::
-    This only works when using Flask-Babel since Flask-BabelEx doesn't support a list of translation directories.
 
 .. _emails_topic:
 

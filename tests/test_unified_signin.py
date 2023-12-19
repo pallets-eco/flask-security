@@ -12,6 +12,7 @@
 import base64
 from contextlib import contextmanager
 from datetime import timedelta
+import markupsafe
 from passlib.totp import TOTP
 import re
 from urllib.parse import parse_qsl, urlsplit
@@ -25,6 +26,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_reset_password_requests,
+    check_xlation,
     get_form_action,
     is_authenticated,
     logout,
@@ -2149,3 +2151,65 @@ def test_propagate_next_tf(app, client):
         follow_redirects=False,
     )
     assert "/im-in" in response.location
+
+
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
+@pytest.mark.babel()
+def test_xlation(app, client, get_message_local):
+    # Test method translation
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    set_email(app)
+    us_authenticate(client)
+    response = client.get("us-setup")
+    # note we test against REAL translations - don't use same code as view uses.
+    with app.test_request_context():
+        assert markupsafe.escape("SMS").encode() in response.data
+        p = [
+            "Options de connexion actuellement actives : mot de passe et e-mail.",
+            "Options de connexion actuellement actives : e-mail et mot de passe.",
+        ]
+        assert any(markupsafe.escape(s).encode() in response.data for s in p)
+
+
+@pytest.mark.registerable()
+@pytest.mark.settings(password_required=False)
+@pytest.mark.app_settings(babel_default_locale="fr_FR")
+@pytest.mark.babel()
+def test_empty_password_xlate(app, client, get_message):
+    # test that if no password (and no other setup method) we get correct xlated
+    # template
+    assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
+
+    data = dict(email="trp@lp.com", password="")
+    # register w/o password - this will automatically set up 'email'
+    client.post("/register", data=data, follow_redirects=True)
+    # will be auto-logged in since no confirmation
+
+    response = client.get("us-setup")
+    with app.test_request_context():
+        assert (
+            markupsafe.escape(
+                "Options de connexion actuellement actives : e-mail."
+            ).encode()
+            in response.data
+        )
+
+    # white-box testing - there are 2 places in us-setup code that set active methods
+    response = client.post("us-setup", data=dict(delete_method="email"))
+    with app.test_request_context():
+        assert (
+            markupsafe.escape(
+                "Options de connexion actuellement actives : aucune."
+            ).encode()
+            in response.data
+        )
+
+    response = client.get("us-setup")
+    with app.test_request_context():
+        assert (
+            markupsafe.escape(
+                "Options de connexion actuellement actives : aucune."
+            ).encode()
+            in response.data
+        )

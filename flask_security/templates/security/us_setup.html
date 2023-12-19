@@ -3,11 +3,13 @@
   On GET:
     available_methods: Value of SECURITY_US_ENABLED_METHODS
     active_methods: Which methods user has already set up
+    current_methods_msg: a translated string of already set up methods
     setup_methods: Which methods require a setup (e.g. password doesn't require any setup)
 
   On successful POST:
     available_methods: Value of SECURITY_US_ENABLED_METHODS
     active_methods: Which methods user has already set up
+    current_methods_msg: a translated string of already set up methods
     setup_methods: Which methods require a setup (e.g. password doesn't require any setup)
     chosen_method: which identity method was chosen (e.g. sms, authenticator)
     code_sent: Was a code sent?
@@ -31,14 +33,7 @@
     {{ render_form_errors(us_setup_form) }}
     {% if setup_methods %}
       <div class="fs-div">
-        {{ _fsdomain("Currently active sign in options:") }}
-        <em>
-          {% if active_methods %}
-            {{ ", ".join(active_methods) }}
-          {% else %}
-            None.
-          {% endif %}
-        </em>
+        {{ current_methods_msg }}
       </div>
       <h3>{{ us_setup_form.chosen_method.label }}</h3>
       <div class="fs-div">
