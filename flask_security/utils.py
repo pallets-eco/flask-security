@@ -549,7 +549,12 @@ def validate_redirect_url(url: str) -> bool:
     if url is None or url.strip() == "":
         return False
     url_next = urlsplit(url)
-    url_base = urlsplit(request.host_url)
+    security_redirect_host = config_value("REDIRECT_HOST")
+    url_base = (
+        urlsplit(f"http://{security_redirect_host}")
+        if security_redirect_host
+        else urlsplit(request.host_url)
+    )
     if (url_next.netloc or url_next.scheme) and url_next.netloc != url_base.netloc:
         base_domain = current_app.config.get("SERVER_NAME")
         if (

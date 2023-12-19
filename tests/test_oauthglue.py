@@ -221,48 +221,53 @@ def test_tf(app, sqlalchemy_datastore, get_message):
 )
 @pytest.mark.app_settings(wtf_csrf_enabled=True)
 def test_spa(app, sqlalchemy_datastore, get_message):
-    CSRFProtect(app)
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    with app.app_context():
+        CSRFProtect(app)
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-    init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
-    )
-    client = app.test_client()
-    csrf_token = get_csrf_token(client)
-    headers["X-CSRF-Token"] = csrf_token
+        init_app_with_options(
+            app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        )
+        client = app.test_client()
+        csrf_token = get_csrf_token(client)
+        headers["X-CSRF-Token"] = csrf_token
 
-    response = client.post("/login/oauthstart/github", headers=headers)
-    assert "/whatever" in response.location
-    redirect_url = urllib.parse.urlsplit(urllib.parse.unquote(response.location))
-    local_redirect = urllib.parse.parse_qs(redirect_url.query)["redirect_uri"][0]
+        response = client.post("/login/oauthstart/github", headers=headers)
+        assert "/whatever" in response.location
+        assert (
+            "%3Fredirect_uri%3Dhttp%3A//localhost%3A8081/login/oauthresponse/github"
+            in response.location
+        )
+        redirect_url = urllib.parse.urlsplit(urllib.parse.unquote(response.location))
+        local_redirect = urllib.parse.parse_qs(redirect_url.query)["redirect_uri"][0]
 
-    response = client.get(local_redirect, headers=headers)
-    assert response.status_code == 302
+        response = client.get(local_redirect, headers=headers)
+        assert response.status_code == 302
 
-    split = urlsplit(response.location)
-    assert "localhost:8081" == split.netloc
-    assert "/post-login" == split.path
-    qparams = dict(parse_qsl(split.query))
-    assert qparams["email"] == "matt@lp.com"
+        split = urlsplit(response.location)
+        assert "localhost:8081" == split.netloc
+        assert "/post-login" == split.path
+        qparams = dict(parse_qsl(split.query))
+        assert qparams["email"] == "matt@lp.com"
 
-    # try unknown user - should redirect to login_error_view
-    oauth_app = app.security.oauthglue.oauth_app
-    oauth_app.github.set_identity("jwag@lp.com")
-    response = client.get("/login/oauthresponse/github", follow_redirects=False)
-    split = urlsplit(response.location)
-    assert "/login-error" == split.path
-    qparams = dict(parse_qsl(split.query))
-    assert (
-        qparams["error"]
-        == get_message("IDENTITY_NOT_REGISTERED", id="jwag@lp.com").decode()
-    )
+        # try unknown user - should redirect to login_error_view
+        oauth_app = app.security.oauthglue.oauth_app
+        oauth_app.github.set_identity("jwag@lp.com")
+        response = client.get("/login/oauthresponse/github", follow_redirects=False)
+        split = urlsplit(response.location)
+        assert "/login-error" == split.path
+        qparams = dict(parse_qsl(split.query))
+        assert (
+            qparams["error"]
+            == get_message("IDENTITY_NOT_REGISTERED", id="jwag@lp.com").decode()
+        )
 
-    # try fake oauth exception
-    from authlib.integrations.base_client.errors import MismatchingStateError
+        # try fake oauth exception
+        from authlib.integrations.base_client.errors import MismatchingStateError
 
-    oauth_app.github.set_exception(MismatchingStateError)
-    response = client.get("/login/oauthresponse/github", follow_redirects=False)
-    split = urlsplit(response.location)
-    assert "/login-error" == split.path
-    qparams = dict(parse_qsl(split.query))
-    assert qparams["error"] == get_message("OAUTH_HANDSHAKE_ERROR").decode()
+        oauth_app.github.set_exception(MismatchingStateError)
+        response = client.get("/login/oauthresponse/github", follow_redirects=False)
+        split = urlsplit(response.location)
+        assert "/login-error" == split.path
+        qparams = dict(parse_qsl(split.query))
+        assert qparams["error"] == get_message("OAUTH_HANDSHAKE_ERROR").decode()

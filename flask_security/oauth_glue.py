@@ -181,8 +181,8 @@ class OAuthGlue:
         oauth_provider = self.oauth_provider(name)
         if not oauth_provider:
             return abort(404)
-        start_uri = url_for_security(
-            "oauthresponse", name=name, _external=True, **values
+        start_uri = get_url(
+            url_for_security("oauthresponse", name=name, _external=True, **values)
         )
         redirect_url = oauth_provider.authorize_redirect(start_uri)
         return redirect_url
