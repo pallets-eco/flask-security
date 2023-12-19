@@ -100,11 +100,11 @@ def create_app():
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
-    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=1)
-    app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
+    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=10)
+    app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=20)
     app.config["SECURITY_USERNAME_ENABLE"] = True
     app.config["SECURITY_USERNAME_REQUIRED"] = True
-    app.config["SECURITY_PASSWORD_REQUIRED"] = True
+    app.config["SECURITY_PASSWORD_REQUIRED"] = False  # allow registration w/o password
     app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = False
     # enable oauth - note that this assumes that app is passes XXX_CLIENT_ID and
     # XXX_CLIENT_SECRET as environment variables.
@@ -176,38 +176,30 @@ def create_app():
         mail_util_cls=FlashMailUtil,
     )
 
+    # Setup Babel
+    def get_locale():
+        # For a given session - set lang based on first request.
+        # Honor explicit url request first
+        global SET_LANG
+        if not SET_LANG:
+            session.pop("lang", None)
+            SET_LANG = True
+        if "lang" not in session:
+            locale = request.args.get("lang", None)
+            if not locale:
+                locale = request.accept_languages.best
+            if not locale:
+                locale = "en"
+            if locale:
+                session["lang"] = locale
+        return session.get("lang", None).replace("-", "_")
+
     try:
         import flask_babel
 
-        babel = flask_babel.Babel(app)
+        flask_babel.Babel(app, locale_selector=get_locale)
     except ImportError:
-        try:
-            import flask_babelex
-
-            babel = flask_babelex.Babel(app)
-        except ImportError:
-            babel = None
-
-    if babel:
-
-        def get_locale():
-            # For a given session - set lang based on first request.
-            # Honor explicit url request first
-            global SET_LANG
-            if not SET_LANG:
-                session.pop("lang", None)
-                SET_LANG = True
-            if "lang" not in session:
-                locale = request.args.get("lang", None)
-                if not locale:
-                    locale = request.accept_languages.best
-                if not locale:
-                    locale = "en"
-                if locale:
-                    session["lang"] = locale
-            return session.get("lang", None).replace("-", "_")
-
-        babel.locale_selector = get_locale
+        pass
 
     @app.after_request
     def allow_absolute_redirect(r):

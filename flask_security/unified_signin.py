@@ -50,6 +50,7 @@ from wtforms.widgets import CheckboxInput
 from .confirmable import requires_confirmation
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
+    _setup_methods_xlate,
     Form,
     NextFormMixin,
     Required,
@@ -77,6 +78,7 @@ from .utils import (
     get_url,
     get_within_delta,
     is_user_authenticated,
+    localize_callback,
     json_error_response,
     login_user,
     lookup_identity,
@@ -781,6 +783,16 @@ def us_setup() -> "ResponseValue":
         c for c in form.delete_choices if c[0] in active_methods
     ]
 
+    # translate active methods
+    if not active_methods:
+        active_methods = [None]
+    current_methods = _security.i18n_domain.format_list(
+        [localize_callback(_setup_methods_xlate[m]) for m in active_methods]
+    )
+    current_methods_msg = get_message(
+        "US_CURRENT_METHODS", method_list=current_methods
+    )[0]
+
     if form.validate_on_submit():
         qrcode_values = dict()
         json_response = dict()
@@ -793,6 +805,15 @@ def us_setup() -> "ResponseValue":
             for m in delete_method:
                 _datastore.us_reset(current_user, m)
             active_methods = _compute_active_methods(current_user)
+            if not active_methods:
+                active_methods = [None]
+            current_methods = _security.i18n_domain.format_list(
+                [localize_callback(_setup_methods_xlate[m]) for m in active_methods]
+            )
+
+            current_methods_msg = get_message(
+                "US_CURRENT_METHODS", method_list=current_methods
+            )[0]
             form.chosen_method.choices = [
                 c for c in form.setup_choices if c[0] not in active_methods
             ]
@@ -843,6 +864,7 @@ def us_setup() -> "ResponseValue":
                     cv("US_SETUP_TEMPLATE"),
                     available_methods=cv("US_ENABLED_METHODS"),
                     active_methods=active_methods,
+                    current_methods_msg=current_methods_msg,
                     setup_methods=setup_methods,
                     us_setup_form=form,
                     **_security._run_ctx_processor("us_setup"),
@@ -879,6 +901,7 @@ def us_setup() -> "ResponseValue":
             cv("US_SETUP_TEMPLATE"),
             available_methods=cv("US_ENABLED_METHODS"),
             active_methods=active_methods,
+            current_methods_msg=current_methods_msg,
             setup_methods=setup_methods,
             code_sent=form.chosen_method.data in _compute_code_methods(),
             chosen_method=form.chosen_method.data,
@@ -909,6 +932,7 @@ def us_setup() -> "ResponseValue":
         cv("US_SETUP_TEMPLATE"),
         available_methods=cv("US_ENABLED_METHODS"),
         active_methods=active_methods,
+        current_methods_msg=current_methods_msg,
         setup_methods=setup_methods,
         us_setup_form=form,
         **_security._run_ctx_processor("us_setup"),

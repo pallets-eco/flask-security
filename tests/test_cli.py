@@ -117,13 +117,6 @@ def test_cli_createuser_errors(script_info):
 @pytest.mark.babel()
 @pytest.mark.app_settings(babel_default_locale="fr_FR")
 def test_cli_locale(script_info):
-    # Flask_BabelEx required a request context - and click just has an app context.
-    try:
-        import flask_babelex  # noqa: F401
-
-        pytest.skip("Flask-BabelEx doesn't support app context")
-    except ImportError:
-        pass
     runner = CliRunner()
     result = runner.invoke(
         users_create, ["--password", "battery staple"], obj=script_info

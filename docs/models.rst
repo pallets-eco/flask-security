@@ -3,6 +3,9 @@
 Models
 ======
 
+Basics
+------
+
 Flask-Security assumes you'll be using libraries such as SQLAlchemy,
 MongoEngine, Peewee or PonyORM to define a `User`
 and `Role` data model. The fields on your models must follow a particular convention

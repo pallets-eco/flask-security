@@ -24,6 +24,9 @@ Fixes
 - (:issue:`875`) user_datastore.create_user has side effects on mutable inputs (NoRePercussions)
 - (:pr:`878`) The long deprecated _unauthorized_callback/handler has been removed.
 - (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
+- (:pr:`855`) Improve translations for two-factor method selection (gissimo)
+- (:pr:`866`) Improve German translations (sr-verde)
+- (:pr:`xxx`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
 
 Notes
 ++++++
@@ -60,6 +63,7 @@ Backwards Compatibility Concerns
 
 - Flask-Security no longer configures anything related to Flask-Login's `fresh_login` logic.
   This shouldn't be used - instead use Flask-Security's :meth:`flask_security.auth_required` decorator.
+- Support for Flask-Babelex has been removed. Please convert to Flask-Babel.
 
 
 Version 5.3.2

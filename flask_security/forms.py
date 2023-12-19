@@ -88,13 +88,15 @@ _default_field_labels = {
     "sms_method": _("Set up using SMS"),
 }
 
-_tf_methods_xlate = {
+# translated methods for two-factor and us-signin. keyed by form 'choices'
+_setup_methods_xlate = {
     "google_authenticator": _("Google Authenticator"),
-    "authenticator": _("Authenticator app"),
-    "email": _("Email"),
-    "mail": _("Email"),
+    "authenticator": _("authenticator"),
+    "email": _("email"),
+    "mail": _("email"),
     "sms": _("SMS"),
-    None: _("None"),
+    "password": _("password"),
+    None: _("none"),
 }
 
 
