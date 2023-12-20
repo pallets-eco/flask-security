@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: Flask-Security 5.4.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2023-12-17 20:22-0800\n"
-"PO-Revision-Date: 2023-11-27 10:01+0100\n"
+"PO-Revision-Date: 2023-12-20 15:33+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
 "Language-Team: \n"
@@ -344,7 +344,7 @@ msgstr "Has deshabilitado la autorización de dos factores."
 #: flask_security/core.py:525
 #, python-format
 msgid "Currently active sign in options: %(method_list)s."
-msgstr ""
+msgstr "Opciones de inicio de sesión activas actualmente: %(method_list)s."
 
 #: flask_security/core.py:528
 msgid "Requested method is not valid"
@@ -577,11 +577,11 @@ msgstr "Google Authenticator"
 
 #: flask_security/forms.py:94
 msgid "authenticator"
-msgstr ""
+msgstr "aplicación de autenticación"
 
 #: flask_security/forms.py:95 flask_security/forms.py:96
 msgid "email"
-msgstr ""
+msgstr "correo electrónico"
 
 #: flask_security/forms.py:97
 msgid "SMS"
@@ -589,11 +589,11 @@ msgstr "SMS"
 
 #: flask_security/forms.py:98
 msgid "password"
-msgstr ""
+msgstr "contraseña"
 
 #: flask_security/forms.py:99
 msgid "none"
-msgstr ""
+msgstr "ninguno"
 
 #: flask_security/forms.py:774 flask_security/unified_signin.py:164
 msgid "Available Methods"
@@ -1090,15 +1090,3 @@ msgstr ""
 
 #~ msgid "You are not authenticated. Please supply the correct credentials."
 #~ msgstr "No estás autenticado. Proporciona las credenciales correctas."
-
-#~ msgid "Authenticator app"
-#~ msgstr "Aplicación de autenticación"
-
-#~ msgid "Email"
-#~ msgstr "Correo electrónico"
-
-#~ msgid "None"
-#~ msgstr "Ninguno"
-
-#~ msgid "Currently active sign in options:"
-#~ msgstr "Opciones de inicio de sesión activas actualmente:"
