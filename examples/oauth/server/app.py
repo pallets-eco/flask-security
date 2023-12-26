@@ -110,7 +110,7 @@ def create_app():
     db.init_app(app)
     Security(app, user_datastore, mail_util_cls=FlashMailUtil)
 
-    @app.route("/")
+    @app.route("/home")
     @auth_required()
     def home():
         return render_template_string("Hello {{ current_user.email }}")

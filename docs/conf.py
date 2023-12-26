@@ -96,10 +96,8 @@ exclude_patterns = ["_build"]
 
 nitpicky = True
 nitpick_ignore = [
-    ("py:attr", "LoginManager.unauthorized"),
     ("py:class", "mongoengine.connection"),
     ("py:class", "ResponseValue"),
-    ("py:class", "function"),
     ("py:class", "AuthenticatorSelectionCriteria"),
     ("py:class", "UserVerificationRequirement"),
     ("py:class", "OAuth"),

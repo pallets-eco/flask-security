@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover
     pass
 
 from flask import abort, after_this_request, redirect, request
+from flask_login import current_user
 
 from .decorators import unauth_csrf
 from .proxies import _security
@@ -32,6 +33,8 @@ from .utils import (
     get_message,
     get_post_login_redirect,
     get_url,
+    is_user_authenticated,
+    json_error_response,
     propagate_next,
     slash_url_suffix,
     url_for_security,
@@ -81,18 +84,37 @@ def oauthstart(name: str) -> "ResponseValue":
     TODO: remember me?
     """
     assert _security.oauthglue
+    if is_user_authenticated(current_user):
+        # Just redirect current_user to POST_LOGIN_VIEW.
+        # For json - return an error.
+        # This endpoint is POST only.
+        # This does NOT use get_post_login_redirect() so that it doesn't look at
+        # 'next' - which can cause infinite redirect loops
+        # (see test_common::test_authenticated_loop)
+        if _security._want_json(request):
+            payload = json_error_response(
+                errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
+            )
+            return _security._render_json(payload, 400, None, None)
+        else:
+            return redirect(get_url(cv("POST_LOGIN_VIEW")))
     # we never want to return here or to the redirect location.
     values = dict(next=request.args.get("next", "/"))
     return _security.oauthglue.get_redirect(name, **values)
 
 
 def oauthresponse(name: str) -> "ResponseValue":
-    """Callback from oauth provider - response is provider specific"""
+    """
+    Callback from oauth provider - response is provider specific
+    Since this is a callback from oauth provider - there is no form,
+    however the ?next= parameter is returned as we specified in oauthstart
+    N.B. all responses MUST be redirects.
+    """
     assert _security.oauthglue
     oauth_provider = _security.oauthglue.oauth_provider(name)
     if not oauth_provider:
         # this shouldn't really be able to happen
-        abort(404)
+        abort(404)  # TODO - redirect... to where?
     # This parses the Flask Request
     try:
         token = oauth_provider.authorize_access_token()
@@ -123,7 +145,9 @@ def oauthresponse(name: str) -> "ResponseValue":
         login_user(user)
         if _security.redirect_behavior == "spa":
             return redirect(
-                get_url(cv("POST_LOGIN_VIEW"), qparams=user.get_redirect_qparams())
+                get_url(
+                    cv("POST_OAUTH_LOGIN_VIEW"), qparams=user.get_redirect_qparams()
+                )
             )
         return redirect(get_post_login_redirect())
     # Seems ok to show identity - the only identity it could be is the callers

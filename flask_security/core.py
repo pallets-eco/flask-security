@@ -183,16 +183,17 @@ _default_config: t.Dict[str, t.Any] = {
     "LOGOUT_METHODS": ["GET", "POST"],
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
-    "CONFIRM_ERROR_VIEW": None,
-    "POST_REGISTER_VIEW": None,
-    "POST_CONFIRM_VIEW": None,
+    "LOGIN_ERROR_VIEW": None,  # spa
+    "POST_OAUTH_LOGIN_VIEW": None,  # spa
+    "CONFIRM_ERROR_VIEW": None,  # spa
+    "POST_CONFIRM_VIEW": None,  # spa
+    "RESET_VIEW": None,  # spa
+    "RESET_ERROR_VIEW": None,  # spa
     "POST_RESET_VIEW": None,
     "POST_CHANGE_VIEW": None,
     "POST_VERIFY_VIEW": None,
+    "POST_REGISTER_VIEW": None,
     "UNAUTHORIZED_VIEW": None,
-    "RESET_ERROR_VIEW": None,
-    "RESET_VIEW": None,
-    "LOGIN_ERROR_VIEW": None,
     "REQUIRES_CONFIRMATION_ERROR_VIEW": None,
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
@@ -1286,7 +1287,7 @@ class Security:
         self.passwordless: bool = False
         self.webauthn: bool = False
 
-        # Redirect URLs
+        # Redirect URLs (we should stop setting these attributes and use CV)
         self.login_error_view: str = ""
         self.post_change_view: str = ""
         self.post_login_view: str = ""
