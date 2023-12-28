@@ -22,6 +22,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_registrations,
+    check_location,
     is_authenticated,
     logout,
     populate_data,
@@ -469,7 +470,7 @@ def test_auto_login(app, client, get_message):
 
     token = registrations[0]["confirm_token"]
     response = client.get("/confirm/" + token, follow_redirects=False)
-    assert "/postlogin" == response.location
+    assert check_location(app, response.location, "/postlogin")
     assert is_authenticated(client, get_message)
 
 
