@@ -249,7 +249,17 @@ These configuration keys are used globally across all features.
     have GET endpoints that validate the passed token and redirect to an action form.
     For Single-Page-Applications style UIs which need to control their own internal URL routing these redirects
     need to not contain forms, but contain relevant information as query parameters.
-    Setting this to ``spa`` will enable that behavior.
+    Setting this to ``"spa"`` will enable that behavior.
+
+    When this is enabled, the following must also be defined:
+
+    - :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
+    - :py:data:`SECURITY_LOGIN_ERROR_VIEW`
+    - :py:data:`SECURITY_CONFIRM_ERROR_VIEW`
+    - :py:data:`SECURITY_POST_CONFIRM_VIEW`
+    - :py:data:`SECURITY_RESET_ERROR_VIEW`
+    - :py:data:`SECURITY_RESET_VIEW`
+
 
     Default: ``None`` which is existing html-style form redirects.
 
@@ -261,6 +271,10 @@ These configuration keys are used globally across all features.
     separately and is running on a different port than the
     Flask application. In order to test redirects, the `netloc`
     of the redirect URL needs to be rewritten. Setting this to e.g. `localhost:8080` does that.
+
+    .. tip::
+        Be aware that when this is set, any of the `*_VIEW` configuration variables that are set
+        to URLs and not endpoints, will be redirected to this host.
 
     Default: ``None``.
 
@@ -882,7 +896,7 @@ Confirmable
     Specifies the view to redirect to if a confirmation error occurs.
     This value can be set to a URL or an endpoint name.
     If this value is ``None``, the user is presented the default view
-    to resend a confirmation link. In the case of ``SECURITY_REDIRECT_BEHAVIOR`` == ``spa``
+    to resend a confirmation link. In the case of ``SECURITY_REDIRECT_BEHAVIOR`` == ``"spa"``
     query params in the redirect will contain the error.
 
     Default: ``None``.
@@ -996,7 +1010,7 @@ Recoverable
 .. py:data:: SECURITY_RESET_VIEW
 
     Specifies the view/URL to redirect to after a GET reset-password link.
-    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``spa``.
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``.
     Query params in the redirect will contain the ``token``.
 
     Default: ``None``.
@@ -1422,7 +1436,7 @@ This feature is DEPRECATED as of 5.0.0. Please use unified signin feature instea
     * GET on oauthresponse where there was an OAuth protocol error.
     * GET on oauthresponse where the returned identity isn't registered.
 
-    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``spa``.
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``.
     Query params in the redirect will contain the error.
 
     Default: ``None``.
@@ -1672,6 +1686,18 @@ Social Oauth
 
     Default: ``"/login/oauthresponse"``
 
+.. py:data:: SECURITY_POST_OAUTH_LOGIN_VIEW
+
+    Specifies the view/URL to redirect to after a successful authentication (login)
+    using social oauth.
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``.
+    Query params in the redirect will contain `identity` and `email`.
+
+    Default: ``None``.
+
+    .. versionadded:: 5.4.0
+
+
 
 Feature Flags
 -------------
@@ -1717,6 +1743,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_POST_CONFIRM_VIEW`
 * :py:data:`SECURITY_POST_RESET_VIEW`
 * :py:data:`SECURITY_POST_CHANGE_VIEW`
+* :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW`
 * :py:data:`SECURITY_UNAUTHORIZED_VIEW`
 * :py:data:`SECURITY_RESET_VIEW`
 * :py:data:`SECURITY_RESET_ERROR_VIEW`

@@ -1785,7 +1785,14 @@ paths:
         302:
           description: >
             Redirect to OAuth provider. The redirect URL will pass along, if provided,
-            the value of the `next` query argument.
+            the value of the `next` query argument. If the caller is already
+            authenticated redirect will be to ``SECURITY_POST_LOGIN_VIEW``
+        400:
+          description: Caller is already authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /login/oauthresponse/{name}:
     parameters:
       - name: name
@@ -1804,7 +1811,7 @@ paths:
           headers:
             Location:
               description: |
-                On spa-success: SECURITY_POST_LOGIN_VIEW?identity={identity}&email={email}
+                On spa-success: SECURITY_POST_OAUTH_ LOGIN_VIEW?identity={identity}&email={email}
 
                 On spa-oauth-error: SECURITY_LOGIN_ERROR_VIEW?error={msg}
 

@@ -438,7 +438,7 @@ def test_custom_reset_templates(client):
 
 
 @pytest.mark.settings(
-    redirect_host="localhost:8081",
+    redirect_host="myui.com:8090",
     redirect_behavior="spa",
     reset_view="/reset-redirect",
 )
@@ -459,7 +459,7 @@ def test_spa_get(app, client):
     response = client.get("/reset/" + token)
     assert response.status_code == 302
     split = urlsplit(response.headers["Location"])
-    assert "localhost:8081" == split.netloc
+    assert "myui.com:8090" == split.netloc
     assert "/reset-redirect" == split.path
     qparams = dict(parse_qsl(split.query))
     # we shouldn't be showing PII

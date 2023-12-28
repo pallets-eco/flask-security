@@ -8,8 +8,8 @@ Version 5.4.0
 
 Released xxx
 
-Some of these changes continue the process of dis-entangling Flask-Security
-from Flask-Login and have possible backwards compatibility issues.
+Among other changes, this continues the process of dis-entangling Flask-Security
+from Flask-Login and may require some application changes due to backwards incompatible changes.
 
 Features
 ++++++++
@@ -27,7 +27,8 @@ Fixes
 - (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
 - (:pr:`855`) Improve translations for two-factor method selection (gissimo)
 - (:pr:`866`) Improve German translations (sr-verde)
-- (:pr:`xxx`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
+- (:pr:`889`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
+- (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for implications.
 
 Notes
 ++++++
@@ -45,6 +46,8 @@ Backwards Compatibility Concerns
 
 - Passing in an AnonymousUser class as part of Security initialization has been removed.
 - The never-public method _get_unauthorized_response has been removed.
+- Oauth - a new configuration variable :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW` was introduced
+  and it replaces :py:data:`SECURITY_POST_LOGIN_VIEW` in the oauthresponse logic.
 - Bring unauthenticated handling completely into Flask-Security:
     Prior to this release, Flask-Security's :meth:`.Security.unauthn_handler` - called when
     a request wasn't properly authenticated - handled JSON requests then delegated
@@ -56,7 +59,7 @@ Backwards Compatibility Concerns
     - Flask-Login's USE_SESSION_FOR_NEXT configuration isn't honored
     - The flashed message is SECURITY_MSG_UNAUTHENTICATED rather than SECURITY_MSG_LOGIN.
       Furthermore SECURITY_MSG_UNAUTHENTICATED was reworded to read better.
-    - Flask-Login uses urlencode to encode the `next` query param - which quotes the '/' character.
+    - Flask-Login uses `urlencode` to encode the `next` query param - which quotes the '/' character.
       Werkzeug (which Flask-Security uses to build the URL) uses `quote`
       which considers '/' a safe character and isn't encoded.
     - The signal sent on an unauthenticated request has changed to :data:`user_unauthenticated`.

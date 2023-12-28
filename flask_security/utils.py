@@ -448,6 +448,12 @@ def get_url(endpoint_or_url: str, qparams: t.Optional[t.Dict[str, str]] = None) 
     """Returns a URL if a valid endpoint is found. Otherwise, returns the
     provided value.
 
+    .. warning::
+        If an endpoint ISN'T provided, then it is assumed that the URL
+        is external to Flask and if the spa configuration REDIRECT_HOST
+        is set will redirect to that host. This could be an issue in
+        development.
+
     :param endpoint_or_url: The endpoint name or URL to default to
     :param qparams: additional query params to add to end of url
     :return: URL
@@ -457,7 +463,6 @@ def get_url(endpoint_or_url: str, qparams: t.Optional[t.Dict[str, str]] = None) 
     except Exception:
         # This is an external URL (no endpoint defined in app)
         # For (mostly) testing - allow changing/adding the url - for example
-        # add a different host:port for cases where the UI is running
         # add a different host:port for cases where the UI is running
         # separately.
         if config_value("REDIRECT_HOST"):

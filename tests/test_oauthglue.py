@@ -17,10 +17,12 @@ from flask_wtf import CSRFProtect
 
 from tests.test_utils import (
     authenticate,
+    check_location,
     get_csrf_token,
     get_form_action,
     get_form_input,
     init_app_with_options,
+    is_authenticated,
     logout,
     setup_tf_sms,
 )
@@ -213,10 +215,10 @@ def test_tf(app, sqlalchemy_datastore, get_message):
 
 @pytest.mark.settings(
     oauth_enable=True,
-    redirect_host="localhost:8081",
+    redirect_host="myui.com:8090",
     redirect_behavior="spa",
     login_error_view="/login-error",
-    post_login_view="/post-login",
+    post_oauth_login_view="/post-login",
     csrf_ignore_unauth_endpoints=False,
 )
 @pytest.mark.app_settings(wtf_csrf_enabled=True)
@@ -240,7 +242,7 @@ def test_spa(app, sqlalchemy_datastore, get_message):
     assert response.status_code == 302
 
     split = urlsplit(response.location)
-    assert "localhost:8081" == split.netloc
+    assert "myui.com:8090" == split.netloc
     assert "/post-login" == split.path
     qparams = dict(parse_qsl(split.query))
     assert qparams["email"] == "matt@lp.com"
@@ -266,3 +268,23 @@ def test_spa(app, sqlalchemy_datastore, get_message):
     assert "/login-error" == split.path
     qparams = dict(parse_qsl(split.query))
     assert qparams["error"] == get_message("OAUTH_HANDSHAKE_ERROR").decode()
+
+
+@pytest.mark.settings(oauth_enable=True, post_login_view="/post-login")
+def test_already_auth(app, sqlalchemy_datastore, get_message):
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    authenticate(client)
+    assert is_authenticated(client, get_message)
+
+    # json
+    response = client.post("/login/oauthstart/github", headers=headers)
+    assert response.status_code == 400
+
+    # forms
+    response = client.post("/login/oauthstart/github", follow_redirects=False)
+    assert response.status_code == 302
+    check_location(app, response.location, "/post-login")

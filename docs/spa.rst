@@ -43,12 +43,14 @@ An example configuration::
     SECURITY_REGISTERABLE = True
     SECURITY_UNIFIED_SIGNIN = True
 
-    # These need to be defined to handle redirects
+    # These need to be defined to handle redirects - these are part of the apps UI
     # As defined in the API documentation - they will receive the relevant context
     SECURITY_POST_CONFIRM_VIEW = "/confirmed"
     SECURITY_CONFIRM_ERROR_VIEW = "/confirm-error"
     SECURITY_RESET_VIEW = "/reset-password"
     SECURITY_RESET_ERROR_VIEW = "/reset-password-error"
+    SECURITY_LOGIN_ERROR_VIEW = "/login-error"
+    SECURITY_POST_OAUTH_LOGIN_VIEW = "/post-oauth-login"
     SECURITY_REDIRECT_BEHAVIOR = "spa"
 
     # CSRF protection is critical for all session-based browser UIs
@@ -78,6 +80,10 @@ When in development mode, the Flask application will run by default on port 5000
 The UI might want to run on port 8080. In order to test redirects you need to set::
 
     SECURITY_REDIRECT_HOST = 'localhost:8080'
+
+.. tip::
+    The `logout` endpoint doesn't take a body - be sure to add `content_type="application/json"`
+    header to your POST("/logout") request so that no redirection is done.
 
 Client side authentication options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
