@@ -19,6 +19,7 @@ Fixes
 +++++
 
 - (:issue:`845`) us-signin magic link should use fs_uniquifier (not email)
+- (:issue:`893`) Once again work on open-redirect vulnerability - this time due to newer Werkzeug
 - (:pr:`873`) Update Spanish and Italian translations (gissimo)
 - (:pr:`877`) Make AnonymousUser optional and deprecated
 - (:issue:`875`) user_datastore.create_user has side effects on mutable inputs (NoRePercussions)

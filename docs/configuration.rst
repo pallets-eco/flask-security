@@ -279,38 +279,19 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_REDIRECT_VALIDATE_MODE
 
-    These 2 configuration options attempt to solve a open-redirect vulnerability
-    that can be exploited if an application sets the Werkzeug response option
-    ``autocorrect_location_header = False`` (it is ``True`` by default).
-    For numerous views (e.g. /login) Flask-Security allows callers to specify
-    a redirect upon successful completion (via the ?next parameter). So it is
-    possible for a user to be tricked into logging in to a legitimate site
-    and then redirected to a malicious site. Flask-Security attempts to
-    verify that redirects are always relative to overcome this security concern.
-    FS uses the standard Python library urlsplit() to parse the URL and verify
-    that the ``netloc`` hasn't been altered.
-    However, many browsers actually accept URLs that should be considered
-    relative and perform various stripping and conversion that can cause them
-    to be interpreted as absolute. A trivial example of this is:
+    Defines how Flask-Security will attempt to mitigate an open redirect
+    vulnerability w.r.t. client supplied `next` parameters.
+    Please see :ref:`redirect_topic` for a complete discussion.
 
-    .. line-block::
-        /login?next=%20///github.com
+    Current options include `"absolute"` and `"regex"`. A list is allowed.
 
-    This will pass the urlsplit() test that it is relative - but many browsers
-    will simply strip off the space and interpret it as an absolute URL!
-    With the default configuration of Werkzeug this isn't an issue since it by
-    default modifies the Location Header to with the request ``netloc``. However
-    if the application sets the Werkzeug response option
-    ``autocorrect_location_header = False`` this will allow a redirect outside of
-    the application.
 
-    Setting this to ``"regex"`` will force the URL to be matched using the
-    pattern specified below. If a match occurs the URL is considered 'absolute'
-    and will be rejected.
-
-    Default: ``None``
+    Default: ``["absolute"]``
 
     .. versionadded:: 4.0.2
+
+    .. versionchanged:: 5.4.0
+        Default is now `"absolute"` and now takes a list.
 
 .. py:data:: SECURITY_REDIRECT_VALIDATE_RE
 
@@ -318,7 +299,7 @@ These configuration keys are used globally across all features.
     don't allow control characters or white-space followed by slashes (or
     back slashes).
 
-    Default: ``r"^/{4,}|\\{3,}|[\s\000-\037][/\\]{2,}"``
+    Default: ``r"^/{4,}|\\{3,}|[\s\000-\037][/\\]{2,}(?![/\\])|[/\\]([^/\\]|/[^/\\])*[/\\].*"``
 
     .. versionadded:: 4.0.2
 

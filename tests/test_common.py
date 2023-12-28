@@ -22,6 +22,7 @@ from flask_principal import identity_loaded
 from tests.test_utils import (
     authenticate,
     capture_flashes,
+    check_location,
     get_auth_token_version_3x,
     get_form_action,
     get_num_queries,
@@ -224,13 +225,13 @@ def test_login_form_username(client):
 
 
 @pytest.mark.settings(username_enable=True, username_required=True)
-def test_login_form_username_required(client):
+def test_login_form_username_required(app, client):
     # If username required - we should still be able to login with email alone
     # given default user_identity_attributes
     response = client.post(
         "/login", data=dict(email="matt@lp.com", password="password")
     )
-    assert response.location == "/"
+    assert check_location(app, response.location, "/")
 
 
 @pytest.mark.confirmable()
