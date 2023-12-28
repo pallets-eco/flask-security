@@ -27,6 +27,7 @@ from flask_security.signals import (
     us_security_token_sent,
 )
 from flask_security.utils import hash_data, hash_password
+from flask_security.utils import config_value as cv
 
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.http import parse_cookie
@@ -61,6 +62,16 @@ def is_authenticated(client, get_message):
     ) == get_message("UNAUTHENTICATED"):
         return False
     raise ValueError("Failed to figure out if authenticated")
+
+
+def check_location(app, location, expected_base):
+    # verify response location. This can be absolute or relative based
+    # on configuration
+    redirect_validate_mode = cv("REDIRECT_VALIDATE_MODE", app=app) or []
+    if "absolute" in redirect_validate_mode:
+        return location == f"http://localhost{expected_base}"
+    else:
+        return location == expected_base
 
 
 def verify_token(client_nc, token, status=None):

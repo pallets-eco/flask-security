@@ -93,6 +93,60 @@ can be protected by requiring a 'fresh' or recent authentication. Flask-Security
 
 Flask-Security itself uses this as part of securing the :ref:`unified-sign-in`, :ref:`two-factor`, and :ref:`webauthn` setup endpoints.
 
+.. _redirect_topic:
+
+Open Redirect Exposure
+~~~~~~~~~~~~~~~~~~~~~~~
+Flask-Security, accepts a ``next=xx`` parameter (either
+as a query param OR in the POSTed form) which it will use when completing an operation
+which results in a redirection. If a malicious user/
+application can inject an arbitrary ``next`` parameter which redirects to an external
+location, this results in a security vulnerability called an `open redirect`.
+The following endpoints accept a ``next`` parameter::
+
+- .login ("/login")
+- .logout ("/logout")
+- .register ("/register")
+- .verify ("/verify")
+- .two_factor_token_validation ("/tf-validate")
+- .wan_verify_response ("/wan-verify")
+- .wan_signin_response ("/wan-signin")
+- .us_signin ("/us-signin")
+- .us_verify ("/us-verify")
+
+
+Flask-Security attempts to verify that redirects are always relative.
+FS uses the standard Python library urlsplit() to parse the URL and verify
+that the ``netloc`` hasn't been altered.
+However, many browsers actually accept URLs that should be considered
+relative and perform various stripping and conversions that can cause them
+to be interpreted as absolute. A trivial example of this is:
+
+.. line-block::
+    /login?next=%20///github.com
+
+This will pass the urlsplit() test that it is relative - but many browsers
+will simply strip off the space and interpret it as an absolute URL!
+
+Prior to Werkzeug 2.1, Werkzeug set the response configuration variable
+``autocorrect_location_header = True`` which forced the response `Location`
+header to always be an absolute path - thus effectively squashing any open
+redirect possibility. However since 2.1 it is now `False`.
+
+Flask Security offers
+2 mitigations for this via the :py:data:`SECURITY_REDIRECT_VALIDATE_MODE` and
+:py:data:`SECURITY_REDIRECT_VALIDATE_RE` configuration variables.
+
+- The first mode - `"absolute"`, which is the default, is to once again set Werkzeug's ``autocorrect_location_header``
+  to ``True``. Please note that this is set JUST for Flask-Security's blueprint - not all requests.
+- With the second mode - `"regex"` - FS uses a regular expression to validate all ``next`` parameters to make sure
+  they will be interpreted as `relative`. Be aware that the default regular
+  expression is based on in-the-field testing and it is quite possible that there
+  are other crafted relative URLs that could escape detection.
+
+:py:data:`SECURITY_REDIRECT_VALIDATE_MODE` actually takes a list - so both
+mechanisms can be specified.
+
 .. _pass_validation_topic:
 
 Password Validation and Complexity

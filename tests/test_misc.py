@@ -25,6 +25,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_reset_password_requests,
+    check_location,
     check_xlation,
     get_csrf_token,
     init_app_with_options,
@@ -1136,7 +1137,7 @@ def test_verify_fresh(app, client, get_message):
     response = client.post(
         verify_url, data=dict(password="password"), follow_redirects=False
     )
-    assert response.location == "http://localhost/fresh"
+    assert check_location(app, response.location, "/fresh")
 
     # should be fine now
     response = client.get("/fresh", follow_redirects=True)
@@ -1320,6 +1321,27 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
     assert "/post_logout" in response.location
 
 
+def test_invalid_redirect_config(app, sqlalchemy_datastore, get_message):
+    with pytest.raises(ValueError):
+        init_app_with_options(
+            app,
+            sqlalchemy_datastore,
+            **{"SECURITY_REDIRECT_VALIDATE_MODE": ["regex", "bogus"]},
+        )
+
+
+def test_invalid_redirect_re(app, sqlalchemy_datastore, get_message):
+    with pytest.raises(ValueError):
+        init_app_with_options(
+            app,
+            sqlalchemy_datastore,
+            **{
+                "SECURITY_REDIRECT_VALIDATE_MODE": ["regex"],
+                "SECURITY_REDIRECT_VALIDATE_RE": None,
+            },
+        )
+
+
 @pytest.mark.settings(redirect_validate_mode="regex")
 def test_validate_redirect(app, sqlalchemy_datastore):
     """
@@ -1333,7 +1355,22 @@ def test_validate_redirect(app, sqlalchemy_datastore):
         assert not validate_redirect_url("\\\\\\github.com")
         assert not validate_redirect_url(" //github.com")
         assert not validate_redirect_url("\t//github.com")
+        assert not validate_redirect_url(r"/\github.com")
+        assert not validate_redirect_url(r"\/github.com")
         assert not validate_redirect_url("//github.com")  # this is normal urlsplit
+
+
+@pytest.mark.settings(post_login_view="\\\\\\github.com")
+def test_validate_redirect_default(app, client):
+    """
+    Test various possible URLs that urlsplit() shows as relative but
+    many browsers will interpret as absolute - and thus have a
+    open-redirect vulnerability. This tests the default configuration for
+    Flask-Security, Flask, Werkzeug
+    """
+    authenticate(client)
+    response = client.get("/login", follow_redirects=False)
+    assert response.location.startswith("http://localhost")
 
 
 def test_kwargs():

@@ -3,6 +3,16 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.3.3
+-------------
+
+Released December 29, 2023
+
+Fixes
++++++
+- (:issue:`893`) Once again work on open-redirect vulnerability - this time due to newer Werkzeug.
+  Addresses: CVE-2023-49438
+
 Version 5.3.2
 -------------
 

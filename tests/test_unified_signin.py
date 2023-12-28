@@ -25,6 +25,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_reset_password_requests,
+    check_location,
     get_form_action,
     is_authenticated,
     logout,
@@ -455,7 +456,7 @@ def test_us_passwordless_confirm_json(app, client, get_message):
     matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
     link = matcher[0].split(":", 1)[1]
     response = client.get(link, headers=headers, follow_redirects=False)
-    assert response.location == "/login"
+    assert check_location(app, response.location, "/login")
 
     # should be able to authenticate now.
     response = client.post(
@@ -986,7 +987,9 @@ def test_verify(app, client, get_message):
     us_authenticate(client)
     response = client.get("us-setup", follow_redirects=False)
     verify_url = response.location
-    assert "/us-verify?next=http://localhost/us-setup" in verify_url
+    assert check_location(
+        app, response.location, "/us-verify?next=http://localhost/us-setup"
+    )
     logout(client)
     us_authenticate(client)
 
@@ -1017,7 +1020,7 @@ def test_verify(app, client, get_message):
 
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post(verify_url, data=dict(passcode=code), follow_redirects=False)
-    assert response.location == "http://localhost/us-setup"
+    assert check_location(app, response.location, "/us-setup")
 
 
 def test_verify_json(app, client, get_message):

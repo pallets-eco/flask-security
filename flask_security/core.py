@@ -196,8 +196,8 @@ _default_config: t.Dict[str, t.Any] = {
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
     "REDIRECT_ALLOW_SUBDOMAINS": False,
-    "REDIRECT_VALIDATE_MODE": None,
-    "REDIRECT_VALIDATE_RE": r"^/{4,}|\\{3,}|[\s\000-\037][/\\]{2,}",
+    "REDIRECT_VALIDATE_MODE": ["absolute"],
+    "REDIRECT_VALIDATE_RE": r"^/{4,}|\\{3,}|[\s\000-\037][/\\]{2,}(?![/\\])|[/\\]([^/\\]|/[^/\\])*[/\\].*",  # noqa: E501
     "FORGOT_PASSWORD_TEMPLATE": "security/forgot_password.html",
     "LOGIN_USER_TEMPLATE": "security/login_user.html",
     "REGISTER_USER_TEMPLATE": "security/register_user.html",
@@ -1432,10 +1432,6 @@ class Security:
         self._username_util = self.username_util_cls(app)
         self._webauthn_util = self.webauthn_util_cls(app)
         self._mf_recovery_codes_util = self.mf_recovery_codes_util_cls(app)
-        rvre = cv("REDIRECT_VALIDATE_RE", app=app)
-        if rvre:
-            self._redirect_validate_re = re.compile(rvre)
-
         self.remember_token_serializer = _get_serializer(app, "remember")
         self.login_serializer = _get_serializer(app, "login")
         self.reset_serializer = _get_serializer(app, "reset")
@@ -1522,10 +1518,32 @@ class Security:
         if cv("OAUTH_ENABLE", app=app):
             self.oauthglue = OAuthGlue(app, self._oauth)
 
+        redirect_validate_mode = cv("REDIRECT_VALIDATE_MODE", app=app) or []
+        if redirect_validate_mode:
+            # should be "regex" or "absolute" or a list of those
+            if not isinstance(redirect_validate_mode, list):
+                redirect_validate_mode = [redirect_validate_mode]
+            if all([m in ["regex", "absolute"] for m in redirect_validate_mode]):
+                if "regex" in redirect_validate_mode:
+                    rvre = cv("REDIRECT_VALIDATE_RE", app=app)
+                    if rvre:
+                        self._redirect_validate_re = re.compile(rvre)
+                    else:
+                        raise ValueError("Must specify REDIRECT_VALIDATE_RE")
+            else:
+                raise ValueError("Invalid value(s) for REDIRECT_VALIDATE_MODE")
+
+        def autocorrect(r):
+            # By setting this (Werkzeug) avoids any open-redirect issues.
+            r.autocorrect_location_header = True
+            return r
+
         # register our blueprint/endpoints
         bp = None
         if self.register_blueprint:
             bp = create_blueprint(app, self, __name__)
+            if "absolute" in redirect_validate_mode:
+                bp.after_request(autocorrect)
             self.two_factor_plugins.create_blueprint(app, bp, self)
             if self.oauthglue:
                 self.oauthglue._create_blueprint(app, bp)

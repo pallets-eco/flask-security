@@ -26,6 +26,7 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_send_code_requests,
+    check_location,
     get_form_action,
     get_session,
     is_authenticated,
@@ -811,7 +812,7 @@ def test_opt_in(app, client, get_message):
     # Validate token - this should complete 2FA setup
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed" in response.data
-    assert response.history[0].location == "/tf-setup"
+    assert check_location(app, response.history[0].location, "/tf-setup")
 
     # Upon completion, session cookie shouldnt have any two factor stuff in it.
     session = get_session(response)
@@ -1291,7 +1292,9 @@ def test_verify(app, client, get_message):
     # Test setup when re-authenticate required
     authenticate(client)
     response = client.get("tf-setup", follow_redirects=False)
-    assert "/verify?next=http://localhost/tf-setup" in response.location
+    assert check_location(
+        app, response.location, "/verify?next=http://localhost/tf-setup"
+    )
     logout(client)
 
     # Now try again - follow redirects to get to verify form
@@ -1318,7 +1321,8 @@ def test_verify(app, client, get_message):
             follow_redirects=False,
         )
         assert response.status_code == 302
-        assert response.location == "http://localhost/tf-setup"
+        assert check_location(app, response.location, "/tf-setup")
+
     assert get_message("REAUTHENTICATION_SUCCESSFUL") == flashes[0]["message"].encode(
         "utf-8"
     )
@@ -1443,4 +1447,4 @@ def test_post_setup_redirect(app, client):
 
     # Validate token - this should complete 2FA setup
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=False)
-    assert response.location == "/post_setup_view"
+    assert check_location(app, response.location, "/post_setup_view")
