@@ -386,11 +386,12 @@ def get_register_username_field(app):
     )
 
 
-login_username_field = StringField(
-    get_form_field_label("username"),
-    render_kw={"autocomplete": "username"},
-    validators=[username_validator],
-)
+def login_username_field():
+    return StringField(
+        get_form_field_label("username"),
+        render_kw={"autocomplete": "username"},
+        validators=[username_validator],
+    )
 
 
 class RegisterFormMixin:

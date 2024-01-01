@@ -1513,7 +1513,7 @@ class Security:
                 fcls.username = get_register_username_field(app)
             fcls = self.forms["login_form"].cls
             if fcls and issubclass(fcls, LoginForm):
-                fcls.username = login_username_field
+                fcls.username = login_username_field()
 
         # initialize two-factor plugins. Note that each implementation likely
         # has its own feature flag which will control whether it is active or not.
