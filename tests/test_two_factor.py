@@ -4,7 +4,7 @@
 
     two_factor tests
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -399,7 +399,7 @@ def test_two_factor_flag(app, client, get_message):
     # Test change two_factor view from sms to mail
     setup_data = dict(setup="email")
     response = client.post("/tf-setup", data=setup_data, follow_redirects=True)
-    msg = b"To complete logging in, please enter the code sent to your mail"
+    msg = b"Enter code to complete setup"
     assert msg in response.data
 
     # Fetch token validate form
@@ -475,7 +475,7 @@ def test_two_factor_flag(app, client, get_message):
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"To Which Phone Number Should We Send Code To" in response.data
+    assert b"Enter code to complete setup" in response.data
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
 
@@ -504,7 +504,7 @@ def test_two_factor_flag(app, client, get_message):
     assert message in response.data
     rescue_data = dict(help_setup="help")
     response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
-    message = b"A mail was sent to us in order to reset your application account"
+    message = b"An email was sent to us in order to reset your application account"
     assert message in response.data
 
 
@@ -540,6 +540,12 @@ def test_setup_bad_phone(app, client, get_message):
 
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(setup="sms", phone="555-1212")
+    response = client.post("/tf-setup", data=data, follow_redirects=True)
+    assert b"Phone number not valid" in response.data
+    assert sms_sender.get_count() == 0
+
+    # require phone number with SMS
+    data = dict(setup="sms")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
     assert b"Phone number not valid" in response.data
     assert sms_sender.get_count() == 0
@@ -807,7 +813,7 @@ def test_opt_in(app, client, get_message):
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"To Which Phone Number Should We Send Code To" in response.data
+    assert b"Enter code to complete setup" in response.data
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
 
@@ -1036,29 +1042,20 @@ def test_totp_secret_generation(app, client):
     with app.app_context():
         user = app.security.datastore.find_user(email="jill@lp.com")
         assert signalled_identity[0] == user.fs_uniquifier
+        assert not user.tf_totp_secret
     del signalled_identity[:]
 
     sms_sender = SmsSenderFactory.createSender("test")
-    # Select sms method but do not send a phone number just yet (regenerates secret)
-    data = dict(setup="sms")
+    data = dict(setup="sms", phone="+442083661188")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"To Which Phone Number Should We Send Code To" in response.data
+    assert b"Enter code to complete setup" in response.data
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
 
     # Retrieve the currently generated totp secret for later comparison
     session = get_session(response)
-    if "tf_totp_secret" in session:
-        generated_secret = session["tf_totp_secret"]
-    else:
-        with app.app_context():
-            user = app.security.datastore.find_user(email="jill@lp.com")
-            generated_secret = user.tf_totp_secret
+    generated_secret = session["tf_totp_secret"]
     assert "enckey" in generated_secret
-
-    # Send a new phone number in the second step, method remains unchanged
-    data = dict(setup="sms", phone="+442083661188")
-    response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert sms_sender.get_count() == 1
-    code = sms_sender.messages[0].split()[-1]
 
     # Validate token - this should complete 2FA setup
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
@@ -1145,7 +1142,7 @@ def test_authr_identity_num(app, client):
 def test_email_salutation(app, client):
     authenticate(client, email="jill@lp.com")
     response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
-    msg = b"To complete logging in, please enter the code sent to your mail"
+    msg = b"Enter code to complete setup"
     assert msg in response.data
     outbox = app.mail.outbox
 
@@ -1163,7 +1160,7 @@ def test_email_salutation(app, client):
 def test_username_salutation(app, client):
     authenticate(client, email="jill@lp.com")
     response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
-    msg = b"To complete logging in, please enter the code sent to your mail"
+    msg = b"Enter code to complete setup"
     assert msg in response.data
     outbox = app.mail.outbox
 
@@ -1423,7 +1420,7 @@ def test_no_sms(app, get_message):
         response = client.post(
             "/tf-setup", data=dict(setup="email"), follow_redirects=True
         )
-        msg = b"To complete logging in, please enter the code sent to your mail"
+        msg = b"Enter code to complete setup"
         assert msg in response.data
 
         code = app.mail.outbox[0].body.split()[-1]
@@ -1441,7 +1438,7 @@ def test_post_setup_redirect(app, client):
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"To Which Phone Number Should We Send Code To" in response.data
+    assert b"Enter code to complete setup" in response.data
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
 

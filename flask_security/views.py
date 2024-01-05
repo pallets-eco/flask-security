@@ -5,7 +5,7 @@
     Flask-Security views module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     CSRF is tricky. By default all our forms have CSRF protection built in via
@@ -181,6 +181,10 @@ def login() -> "ResponseValue":
                 return base_render_json(form)
         else:
             return redirect(get_url(cv("POST_LOGIN_VIEW")))
+
+    # Clean out any potential old session info - in case of previous
+    # aborted 2FA attempt.
+    tf_clean_session()
 
     if form.validate_on_submit():
         assert form.user is not None
@@ -787,38 +791,34 @@ def two_factor_setup():
             after_this_request(view_commit)
             if not _security._want_json(request):
                 do_flash(*get_message("TWO_FACTOR_DISABLED"))
-                return redirect(get_url(_security.post_login_view))
+                return redirect(get_url(cv("TWO_FACTOR_POST_SETUP_VIEW")))
             else:
                 return base_render_json(form)
 
-        # Regenerate the TOTP secret on every call of 2FA setup unless it is
-        # within the same session and method (e.g. upon entering the phone number)
-        if pm != session.get("tf_primary_method", None):
-            session["tf_totp_secret"] = _security._totp_factory.generate_totp_secret()
-
+        # Regenerate the TOTP secret on every call of 2FA setup
+        totp = _security._totp_factory.generate_totp_secret()
+        phone = form.phone.data if pm == "sms" else None
+        session["tf_totp_secret"] = totp
         session["tf_primary_method"] = pm
         session["tf_state"] = "validating_profile"
         json_response = {
             "tf_state": "validating_profile",
-            "tf_primary_method": pm,
+            "tf_primary_method": pm,  # old
+            "tf_method": pm,
         }
-        new_phone = (
-            form.phone.data if (form.phone.data and len(form.phone.data) > 0) else None
-        )
-        if new_phone:
-            user.tf_phone_number = new_phone
+        if phone:
+            #  TODO dont save here - wait until complete
+            user.tf_phone_number = phone
             _datastore.put(user)
             after_this_request(view_commit)
 
-        # This form is sort of bizarre - for SMS and authenticator
-        # you select, then get more info, and submit again.
-        # For authenticator of course, we don't actually send anything
-        # and for SMS it is the second time around that we get the phone number
-        if pm == "email" or (pm == "sms" and new_phone):
+        if (
+            pm == "email" or pm == "sms"
+        ):  # TODO not sure this is needed - send checks this
             msg = user.tf_send_security_token(
                 method=pm,
-                totp_secret=session["tf_totp_secret"],
-                phone_number=getattr(user, "tf_phone_number", None),
+                totp_secret=totp,
+                phone_number=phone,
             )
             if msg:
                 # send code didn't work
@@ -831,9 +831,7 @@ def two_factor_setup():
 
         qrcode_values = dict()
         if pm == "authenticator":
-            authr_setup_values = _security._totp_factory.fetch_setup_values(
-                session["tf_totp_secret"], user
-            )
+            authr_setup_values = _security._totp_factory.fetch_setup_values(totp, user)
             # Add all the values used in qrcode to json response
             json_response["tf_authr_key"] = authr_setup_values["key"]
             json_response["tf_authr_username"] = authr_setup_values["username"]
@@ -845,31 +843,35 @@ def two_factor_setup():
                 authr_username=authr_setup_values["username"],
                 authr_issuer=authr_setup_values["issuer"],
             )
+        if _security._want_json(request):
+            return base_render_json(form, include_user=False, additional=json_response)
         code_form = build_form("two_factor_verify_code_form")
-        if not _security._want_json(request):
-            return _security.render_template(
-                cv("TWO_FACTOR_SETUP_TEMPLATE"),
-                two_factor_setup_form=form,
-                two_factor_verify_code_form=code_form,
-                choices=cv("TWO_FACTOR_ENABLED_METHODS"),
-                chosen_method=pm,  # do not translate
-                **qrcode_values,
-                **_ctx("tf_setup"),
-            )
-        return base_render_json(form, include_user=False, additional=json_response)
+        return _security.render_template(
+            cv("TWO_FACTOR_SETUP_TEMPLATE"),
+            two_factor_setup_form=form,
+            two_factor_verify_code_form=code_form,
+            choices=cv("TWO_FACTOR_ENABLED_METHODS"),
+            chosen_method=pm,  # do not translate
+            primary_method=localize_callback(
+                _setup_methods_xlate[getattr(user, "tf_primary_method", None)]
+            ),
+            **qrcode_values,
+            **_ctx("tf_setup"),
+        )
 
     # We get here on GET and POST with failed validation.
     # For things like phone number - we've already done one POST
     # that succeeded and now it failed - so retain the initial info
     choices = cv("TWO_FACTOR_ENABLED_METHODS")
-    if not cv("TWO_FACTOR_REQUIRED"):
-        choices.append("disable")
+    if (not cv("TWO_FACTOR_REQUIRED")) and user.tf_primary_method is not None:
+        choices.insert(0, "disable")
 
     if _security._want_json(request):
         # Provide information application/UI might need to render their own form/input
         json_response = {
             "tf_required": cv("TWO_FACTOR_REQUIRED"),
-            "tf_primary_method": getattr(user, "tf_primary_method", None),
+            "tf_primary_method": getattr(user, "tf_primary_method", None),  # old
+            "tf_method": getattr(user, "tf_primary_method", None),
             "tf_phone_number": getattr(user, "tf_phone_number", None),
             "tf_available_methods": choices,
         }
@@ -899,61 +901,54 @@ def two_factor_token_validation():
        In this case - user not logged in -
        but 'tf_state' == 'ready' or 'validating_profile'
     2) validating after CHANGE/ENABLE 2FA. In this case user logged in/authenticated
+       In this case we allow a GET to get the specific enter-code form.
 
     """
     form = t.cast(
         TwoFactorVerifyCodeForm, build_form_from_request("two_factor_verify_code_form")
     )
 
+    # state info in session
+    pm = session.get("tf_primary_method", None)
+    totp_secret = session.get("tf_totp_secret", None)
+    tf_state = session.get("tf_state", None)
+    tf_user_id = session.get("tf_user_id", None)
+
     changing = is_user_authenticated(current_user)
     if not changing:
-        # This is the normal login case OR initial setup
+        # This is the normal login case OR initial setup (two factor required)
         if (
-            not all(k in session for k in ["tf_user_id", "tf_state"])
-            or session["tf_state"] not in ["ready", "validating_profile"]
-            or (
-                session["tf_state"] == "validating_profile"
-                and not all(
-                    k in session for k in ["tf_primary_method", "tf_totp_secret"]
-                )
-            )
+            tf_state not in ["ready", "validating_profile"]
+            or (tf_state == "validating_profile" and not all([pm, totp_secret]))
+            or not tf_user_id
         ):
             # illegal call on this endpoint
             tf_clean_session()
             return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
-        user = _datastore.find_user(fs_uniquifier=session["tf_user_id"])
+        user = _datastore.find_user(fs_uniquifier=tf_user_id)
         form.user = user
         if not user:
             tf_clean_session()
             return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
-        if session["tf_state"] == "ready":
-            # normal login case
+        if tf_state == "ready":
+            # normal login case - use saved values
             pm = user.tf_primary_method
             totp_secret = user.tf_totp_secret
-        else:
-            # initial setup case
-            pm = session["tf_primary_method"]
-            totp_secret = session["tf_totp_secret"]
     else:
         # Changing TFA profile - user is already authenticated.
-        if (
-            not all(k in session for k in ["tf_state", "tf_primary_method"])
-            or session["tf_state"] != "validating_profile"
-        ):
+        if tf_state != "validating_profile" or not all([pm, totp_secret]):
             tf_clean_session()
             # logout since this seems like attack-ish/logic error
             logout_user()
             return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
-        pm = session["tf_primary_method"]
-        totp_secret = session["tf_totp_secret"]
         form.user = current_user
 
     form.primary_method = pm
     form.tf_totp_secret = totp_secret
     if form.validate_on_submit():
-        # Success - log in user and clear all session variables
+        # Success - finish process based on 'changing' and clear all session variables
         completion_message, token = complete_two_factor_process(
             form.user, pm, totp_secret, changing
         )
@@ -978,15 +973,12 @@ def two_factor_token_validation():
     if changing:
         if _security._want_json(request):
             return base_render_json(form)
-        setup_form = build_form("two_factor_setup_form")
-
+        # allow app to fetch just this form (independent of /tf_setup)
         return _security.render_template(
-            cv("TWO_FACTOR_SETUP_TEMPLATE"),
-            two_factor_setup_form=setup_form,
+            cv("TWO_FACTOR_VERIFY_CODE_TEMPLATE"),
             two_factor_verify_code_form=form,
-            chosen_method=pm,  # do not translate
-            choices=cv("TWO_FACTOR_ENABLED_METHODS"),
-            **_ctx("tf_setup"),
+            chosen_method=localize_callback(_setup_methods_xlate[pm]),
+            **_ctx("tf_token_validation"),
         )
 
     # if we were trying to validate an existing method
@@ -1133,7 +1125,7 @@ def create_blueprint(app, state, import_name):
         bp.route(us_setup_url, methods=["GET", "POST"], endpoint="us_setup")(us_setup)
         bp.route(
             us_setup_url + slash_url_suffix(us_setup_url, "<token>"),
-            methods=["GET", "POST"],
+            methods=["POST"],
             endpoint="us_setup_validate",
         )(us_setup_validate)
 

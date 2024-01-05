@@ -546,6 +546,10 @@ These are used by the Two-Factor and Unified Signin features.
     Setting this to 0 results in undefined behavior.
     Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
 
+    .. note::
+        This stores freshness information in the session - which must be presented
+        (usually via a Cookie) to the above endpoints.
+
     Default: timedelta(hours=24)
 
     .. versionadded:: 3.4.0

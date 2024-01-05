@@ -1476,7 +1476,7 @@ def test_tf(app, client, get_message):
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(setup="sms", phone="+442083661177")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"To Which Phone Number Should We Send Code To" in response.data
+    assert b"Enter code to complete setup" in response.data
     code = sms_sender.messages[0].split()[-1]
 
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)

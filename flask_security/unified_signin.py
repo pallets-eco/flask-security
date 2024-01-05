@@ -87,6 +87,7 @@ from .utils import (
     url_for_security,
     view_commit,
 )
+from .twofactor import tf_clean_session
 from .webauthn import has_webauthn
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -563,6 +564,9 @@ def us_signin() -> "ResponseValue":
     form = t.cast(UnifiedSigninForm, build_form_from_request("us_signin_form"))
     form.submit.data = True
     form.submit_send_code.data = False
+    # Clean out any potential old session info - in case of previous
+    # aborted 2FA attempt.
+    tf_clean_session()
 
     if form.validate_on_submit():
         # Check if multi-factor is required. Some (this is configurable) don't

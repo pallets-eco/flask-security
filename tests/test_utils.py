@@ -4,7 +4,7 @@
 
     Test utils
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 from contextlib import contextmanager
@@ -50,11 +50,14 @@ def json_authenticate(client, email="matt@lp.com", password="password", endpoint
     return client.post(ep, content_type="application/json", json=data)
 
 
-def is_authenticated(client, get_message):
+def is_authenticated(client, get_message, auth_token=None):
     # Return True is 'client' is authenticated.
     # Return False if not
     # Raise ValueError not certain...
-    response = client.get("/profile", headers={"accept": "application/json"})
+    headers = {"accept": "application/json"}
+    if auth_token:
+        headers["Authentication-Token"] = auth_token
+    response = client.get("/profile", headers=headers)
     if response.status_code == 200:
         return True
     if response.status_code == 401 and response.json["response"]["errors"][0].encode(
