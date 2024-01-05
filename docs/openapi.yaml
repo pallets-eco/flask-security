@@ -959,7 +959,7 @@ paths:
           headers:
             Location:
               description: |
-                On form-success: SECURITY_POST_SETUP_VIEW
+                On form-success: SECURITY_US_POST_SETUP_VIEW
               schema:
                 type: string
         400:
@@ -1032,6 +1032,9 @@ paths:
                     description: Config setting SECURITY_TWO_FACTOR_REQUIRED.
                   tf_primary_method:
                     type: string
+                    description: Current (if any) setup method (deprecated).
+                  tf_method:
+                    type: string
                     description: Current (if any) setup method.
                   tf_available_methods:
                     type: string
@@ -1077,6 +1080,15 @@ paths:
                 description: Invalid form values or verification code sent successfully and should be entered into the form.
                 type: string
                 example: render_template(SECURITY_TWO_FACTOR_SETUP_TEMPLATE) with error values
+        302:
+          description: Successfully disabled two-factor.
+          headers:
+            Location:
+              description: |
+                On form-success: SECURITY_TWO_FACTOR_POST_SETUP_VIEW
+              schema:
+                type:
+                  string
         400:
           description: Errors while validating attributes.
           content:
@@ -1091,7 +1103,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /tf-validate:
     get:
-      summary: GET current two-factor state form
+      summary: GET current two-factor validate code form
       responses:
         200:
           description: Code validation
@@ -1099,8 +1111,7 @@ paths:
             text/html:
               schema:
                 description: >
-                  If this is a normal, already setup method, then render_template(SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE) is returned;
-                  if this is validating a new method then render_template(SECURITY_TWO_FACTOR_SETUP_TEMPLATE) is returned.
+                  If this is a normal, already setup method, then render_template(SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE) is returned.
                 type: string
     post:
       summary: Send two-factor code.
@@ -1133,19 +1144,23 @@ paths:
               schema:
                 allOf:
                   - description: >
-                      The code was correct, the caller is now signed in.
+                      The code was correct. If this part of user authentication, the caller is now signed in.
+                      If this was part of changing a two-factor method, that was successful.
                   - $ref: "#/components/schemas/JsonResponseWithToken"
             text/html:
               schema:
-                description:
+                description: >
                   Unsuccessfully processed code. As above, which form is
                   rendered depends on the state of the user's two factor configuration.
                 type: string
         302:
-          description: User successfully sent code when using form based request. The caller is not logged in.
+          description: User successfully sent code when using form based request.
           headers:
             Location:
-              description: Redirect to either ``next`` or ``SECURITY_POST_LOGIN_VIEW``
+              description: >
+                On form-success for two-factor authentication: SECURITY_POST_LOGIN_VIEW
+
+                On form-success for two-factor change method: SECURITY_TWO_FACTOR_SETUP_VIEW
               schema:
                 type: string
         400:
@@ -2162,6 +2177,10 @@ components:
                     indicating the caller needs to call '/tf-validate' with the correct code.
                   example: validating_profile
                 tf_primary_method:
+                  type: string
+                  description: Current method being configured (deprecated).
+                  example: sms
+                tf_method:
                   type: string
                   description: Current method being configured.
                   example: sms

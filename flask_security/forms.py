@@ -6,7 +6,7 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -773,13 +773,13 @@ class TwoFactorSetupForm(Form):
     setup = RadioField(
         get_form_field_xlate(_("Available Methods")),
         choices=[
+            ("disable", get_form_field_xlate(_("Disable two factor authentication"))),
             ("email", get_form_field_label("email_method")),
             (
                 "authenticator",
                 get_form_field_label("authapp_method"),
             ),
             ("sms", get_form_field_label("sms_method")),
-            ("disable", get_form_field_xlate(_("Disable two factor authentication"))),
         ],
         validate_choice=False,
     )
@@ -801,13 +801,9 @@ class TwoFactorSetupForm(Form):
         if "setup" not in self.data or self.data["setup"] not in choices:
             self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
             return False
-        if self.setup.data == "sms" and self.phone.data and len(self.phone.data) > 0:
-            # Somewhat bizarre - but this isn't required the first time around
-            # when they select "sms". Then they get a field to fill out with
-            # phone number, then Submit again.
+        if self.setup.data == "sms":
             msg = _security._phone_util.validate_phone_number(self.phone.data)
             if msg:
-                self.phone.errors = list()
                 self.phone.errors.append(msg)
                 return False
 

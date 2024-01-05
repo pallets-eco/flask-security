@@ -29,6 +29,7 @@ Fixes
 - (:pr:`866`) Improve German translations (sr-verde)
 - (:pr:`889`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
 - (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for implications.
+- (:pr:`xxx`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
 
 Notes
 ++++++
@@ -46,8 +47,23 @@ Backwards Compatibility Concerns
 
 - Passing in an AnonymousUser class as part of Security initialization has been removed.
 - The never-public method _get_unauthorized_response has been removed.
-- Oauth - a new configuration variable :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW` was introduced
+- Social-Oauth - a new configuration variable :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW` was introduced
   and it replaces :py:data:`SECURITY_POST_LOGIN_VIEW` in the oauthresponse logic.
+- Two-Factor setup. Prior to this release when setting up "SMS" the `/tf-setup` endpoint could
+  be POSTed to w/o a phone number, and then another POST could be made to set the phone number.
+  This has always been confusing and added complexity to the code. Now, if "SMS" is selected, the phone number
+  must be supplied (which has always been supported).
+  Other changes:
+
+    - The default two-factor-setup.html template now has a more generic `"Enter code to complete setup"` message.
+    - Make sure the `"disable"` option first.
+    - Adding any currently configured two-factor method on setup failure.
+    - The two_factor_verify template won't show the rescue form if it isn't set.
+    - A GET on /tf-validate now returns the two-factor-validate-form always - before
+      if the client was validating a new method, it would return the two-factor-setup-form
+    - After successfully disabling two-factor the client is redirected to :py:data:`SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
+      rather than :py:data:`SECURITY_POST_LOGIN_VIEW`.
+
 - Bring unauthenticated handling completely into Flask-Security:
     Prior to this release, Flask-Security's :meth:`.Security.unauthn_handler` - called when
     a request wasn't properly authenticated - handled JSON requests then delegated

@@ -102,17 +102,17 @@ as a query param OR in the POSTed form) which it will use when completing an ope
 which results in a redirection. If a malicious user/
 application can inject an arbitrary ``next`` parameter which redirects to an external
 location, this results in a security vulnerability called an `open redirect`.
-The following endpoints accept a ``next`` parameter::
+The following endpoints accept a ``next`` parameter:
 
-- .login ("/login")
-- .logout ("/logout")
-- .register ("/register")
-- .verify ("/verify")
-- .two_factor_token_validation ("/tf-validate")
-- .wan_verify_response ("/wan-verify")
-- .wan_signin_response ("/wan-signin")
-- .us_signin ("/us-signin")
-- .us_verify ("/us-verify")
+    - .login ("/login")
+    - .logout ("/logout")
+    - .register ("/register")
+    - .verify ("/verify")
+    - .two_factor_token_validation ("/tf-validate")
+    - .wan_verify_response ("/wan-verify")
+    - .wan_signin_response ("/wan-signin")
+    - .us_signin ("/us-signin")
+    - .us_verify ("/us-verify")
 
 
 Flask-Security attempts to verify that redirects are always relative.
@@ -152,7 +152,7 @@ mechanisms can be specified.
 Password Validation and Complexity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There is a large body of references (and endless discussions) around how to get users to create
-good passwords. The `OWASP Authenication cheatsheet <https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html>`_
+good passwords. The `OWASP Authentication cheatsheet <https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html>`_
 is a useful place to start. Flask-Security has a default password validator that:
 
  * Checks for minimum and maximum length (minimum is configurable via :py:data:`SECURITY_PASSWORD_LENGTH_MIN`).
@@ -393,10 +393,10 @@ request and instead defer that decision to later decorators/code. Flask-Security
 :func:`.auth_token_required`, and :func:`.http_auth_required` all support calling csrf protection based on configuration::
 
     # Disable pre-request CSRF
-    app.config[WTF_CSRF_CHECK_DEFAULT] = False
+    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
 
     # Check csrf for session and http auth (but not token)
-    app.config[SECURITY_CSRF_PROTECT_MECHANISMS] = ["session", "basic"]
+    app.config["SECURITY_CSRF_PROTECT_MECHANISMS"] = ["session", "basic"]
 
     # Enable CSRF protection
     flask_wtf.CSRFProtect(app)

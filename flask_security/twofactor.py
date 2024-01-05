@@ -5,7 +5,7 @@
     Flask-Security two_factor module
 
     :copyright: (c) 2016 by Gal Stainfeld, at Emedgene
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
 """
 
 import typing as t
@@ -231,5 +231,4 @@ class CodeTfPlugin(TfPluginBase):
 
         # JSON response - Fake up a form - doesn't really matter which.
         form = DummyForm(formdata=None)
-        form.user = user
         return base_render_json(form, include_user=False, additional=json_payload)
