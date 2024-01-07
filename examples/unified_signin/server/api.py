@@ -1,10 +1,10 @@
 """
-Copyright 2020 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2020-2024 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, abort, current_app, jsonify
 from flask_security import auth_required
@@ -17,7 +17,7 @@ api = Blueprint("api", __name__)
 @api.route("/health", methods=["GET"])
 @auth_required("session")
 def health():
-    return jsonify(secret="lush oranges", date=datetime.utcnow())
+    return jsonify(secret="lush oranges", date=datetime.now(timezone.utc))
 
 
 @api.route("/popmail", methods=["GET"])

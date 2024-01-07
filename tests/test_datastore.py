@@ -5,15 +5,21 @@
     Datastore tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
-import datetime
 from pytest import raises, skip, importorskip
 from tests.test_utils import init_app_with_options, get_num_queries, is_sqlalchemy
 
-from flask_security import RoleMixin, Security, UserMixin, LoginForm, RegisterForm
+from flask_security import (
+    RoleMixin,
+    Security,
+    UserMixin,
+    LoginForm,
+    RegisterForm,
+    naive_utcnow,
+)
 from flask_security.datastore import Datastore, UserDatastore
 
 
@@ -309,7 +315,7 @@ def test_modify_permissions(app, datastore):
         assert perms == t1.get_permissions()
         if hasattr(t1, "update_datetime"):
             orig_update_time = t1.update_datetime
-            assert t1.update_datetime <= datetime.datetime.utcnow()
+            assert t1.update_datetime <= naive_utcnow()
 
         ds.add_permissions_to_role(t1, "execute")
         ds.commit()
@@ -429,7 +435,7 @@ def test_uuid(app, request, tmpdir, realdburl):
         username = Column(String(255), unique=True, nullable=True)
         password = Column(String(255))
         active = Column(Boolean())
-        created_at = Column(DateTime, default=datetime.datetime.utcnow)
+        created_at = Column(DateTime, default=naive_utcnow())
         confirmed_at = Column(DateTime())
         roles = relationship(
             "Role", secondary="roles_users", backref=backref("users", lazy="dynamic")

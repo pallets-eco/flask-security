@@ -5,10 +5,10 @@
     This module contains an user datastore classes.
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
-import datetime
+from datetime import datetime
 import json
 import typing as t
 import uuid
@@ -818,6 +818,8 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         extensions: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> None:
+        from .proxies import _security
+
         if not hasattr(self, "webauthn_model") or not self.webauthn_model:
             raise NotImplementedError
 
@@ -831,7 +833,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
             backup_state=backup_state,
             transports=transports,
             extensions=extensions,
-            lastuse_datetime=datetime.datetime.utcnow(),
+            lastuse_datetime=_security.datetime_factory(),
             **kwargs,
         )
         user.webauthn.append(webauthn)
@@ -945,6 +947,8 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         extensions: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> None:
+        from .proxies import _security
+
         if not hasattr(self, "webauthn_model") or not self.webauthn_model:
             raise NotImplementedError
         webauthn = self.webauthn_model(
@@ -958,7 +962,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
             backup_state=backup_state,
             transports=transports,
             extensions=extensions,
-            lastuse_datetime=datetime.datetime.utcnow(),
+            lastuse_datetime=_security.datetime_factory(),
             **kwargs,
         )
         user.webauthn.append(webauthn)
@@ -1080,6 +1084,8 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         extensions: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> None:
+        from .proxies import _security
+
         if not hasattr(self, "webauthn_model") or not self.webauthn_model:
             raise NotImplementedError
         webauthn = self.webauthn_model(
@@ -1093,7 +1099,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
             backup_state=backup_state,
             transports=transports,
             extensions=extensions,
-            lastuse_datetime=datetime.datetime.utcnow(),
+            lastuse_datetime=_security.datetime_factory(),
             **kwargs,
         )
         self.put(webauthn)  # type: ignore
@@ -1165,9 +1171,9 @@ if t.TYPE_CHECKING:  # pragma: no cover
         fs_uniquifier: str
         fs_token_uniquifier: str
         fs_webauthn_user_handle: str
-        confirmed_at: t.Optional[datetime.datetime]
-        last_login_at: datetime.datetime
-        current_login_at: datetime.datetime
+        confirmed_at: t.Optional[datetime]
+        last_login_at: datetime
+        current_login_at: datetime
         last_login_ip: t.Optional[str]
         current_login_ip: t.Optional[str]
         login_count: int
@@ -1177,8 +1183,8 @@ if t.TYPE_CHECKING:  # pragma: no cover
         mf_recovery_codes: t.Optional[t.List[str]]
         us_phone_number: t.Optional[str]
         us_totp_secrets: t.Optional[t.Union[str, bytes]]
-        create_datetime: datetime.datetime
-        update_datetime: datetime.datetime
+        create_datetime: datetime
+        update_datetime: datetime
         roles: t.List["Role"]
         webauthn: t.List["WebAuthn"]
 
@@ -1190,7 +1196,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         name: str
         description: t.Optional[str]
         permissions: t.Optional[t.List[str]]
-        update_datetime: datetime.datetime
+        update_datetime: datetime
 
         def __init__(self, **kwargs):
             ...
@@ -1205,7 +1211,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         backup_state: bool
         device_type: str
         extensions: t.Optional[str]
-        lastuse_datetime: datetime.datetime
+        lastuse_datetime: datetime
         user_id: int
         usage: str
 

@@ -4,7 +4,7 @@
 
     Utility class providing methods for validating and normalizing passwords.
 
-    :copyright: (c) 2020-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """

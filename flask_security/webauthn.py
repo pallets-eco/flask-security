@@ -4,7 +4,7 @@
 
     Flask-Security WebAuthn module
 
-    :copyright: (c) 2021-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
@@ -36,7 +36,6 @@
 
 """
 
-import datetime
 import json
 import time
 import typing as t
@@ -678,7 +677,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
         after_this_request(view_commit)
         assert form.cred
         assert form.user
-        form.cred.lastuse_datetime = datetime.datetime.utcnow()
+        form.cred.lastuse_datetime = _security.datetime_factory()
         form.cred.sign_count = form.authentication_verification.new_sign_count
         form.cred.backup_state = getattr(
             form.authentication_verification, "credential_backed_up", False
@@ -835,7 +834,7 @@ def webauthn_verify_response(token: str) -> "ResponseValue":
         # update last use and sign count
         after_this_request(view_commit)
         assert form.cred
-        form.cred.lastuse_datetime = datetime.datetime.utcnow()
+        form.cred.lastuse_datetime = _security.datetime_factory()
         form.cred.sign_count = form.authentication_verification.new_sign_count
         _datastore.put(form.cred)
 

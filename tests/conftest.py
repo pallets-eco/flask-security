@@ -5,7 +5,7 @@
     Test fixtures and what not
 
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -37,6 +37,7 @@ from flask_security import (
     auth_token_required,
     http_auth_required,
     get_request_attr,
+    naive_utcnow,
     roles_accepted,
     roles_required,
     permissions_accepted,
@@ -569,7 +570,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
             DateTime,
             nullable=False,
             server_default=func.now(),
-            onupdate=datetime.utcnow,
+            onupdate=naive_utcnow,
         )
 
     class User(Base, UserMixin):
@@ -603,7 +604,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
             DateTime,
             nullable=False,
             server_default=func.now(),
-            onupdate=datetime.utcnow,
+            onupdate=naive_utcnow,
         )
 
         @declared_attr
