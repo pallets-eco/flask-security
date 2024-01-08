@@ -50,7 +50,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Flask-Security"
-copyright = "2012-2023"
+copyright = "2012-2024"
 author = "Matt Wright & Chris Wagner"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -248,7 +248,7 @@ texinfo_documents = [
 epub_title = "Flask-Security"
 epub_author = "Matt Wright"
 epub_publisher = "J. Christopher Wagner"
-epub_copyright = "2012-2020"
+epub_copyright = "2012-2024"
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

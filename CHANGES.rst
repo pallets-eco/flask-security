@@ -14,6 +14,7 @@ from Flask-Login and may require some application changes due to backwards incom
 Features
 ++++++++
 - (:issue:`879`) Work with Flask[async]. view decorators and signals support async handlers.
+- (:pr:`900`) CI support for python 3.12
 
 Fixes
 +++++

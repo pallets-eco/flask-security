@@ -7,7 +7,7 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
     :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -96,6 +96,7 @@ from .utils import (
     get_message,
     get_request_attr,
     is_user_authenticated,
+    naive_utcnow,
     set_request_attr,
     uia_email_mapper,
     uia_username_mapper,
@@ -285,7 +286,7 @@ _default_config: t.Dict[str, t.Any] = {
     "API_ENABLED_METHODS": ["session", "token"],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
-    "DATETIME_FACTORY": datetime.utcnow,
+    "DATETIME_FACTORY": naive_utcnow,
     "TOTP_SECRETS": None,
     "TOTP_ISSUER": None,
     "SMS_SERVICE": "Dummy",
@@ -1265,6 +1266,7 @@ class Security:
         self.register_blueprint: bool
         self.two_factor_plugins: TfPlugin
         self.oauthglue: t.Optional[OAuthGlue] = None
+        self.datetime_factory: t.Callable[[], datetime]
 
         self.login_manager: "flask_login.LoginManager"
         self._mail_util: MailUtil

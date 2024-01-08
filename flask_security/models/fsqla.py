@@ -1,5 +1,5 @@
 """
-Copyright 2019-2021 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2019-2024 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 
@@ -11,7 +11,6 @@ BE AWARE: Once any version of this is shipped no changes can be made - instead
 a new version needs to be created.
 """
 
-import datetime
 from typing import cast
 from sqlalchemy import (
     Boolean,
@@ -25,7 +24,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.sql import func
 
-from flask_security import AsaList, RoleMixin, UserMixin
+from flask_security import AsaList, RoleMixin, UserMixin, naive_utcnow
 
 
 class FsModels:
@@ -77,7 +76,7 @@ class FsRoleMixin(RoleMixin):
         type_=DateTime,
         nullable=False,
         server_default=func.now(),
-        onupdate=datetime.datetime.utcnow,
+        onupdate=naive_utcnow,
     )
 
 
@@ -126,5 +125,5 @@ class FsUserMixin(UserMixin):
         type_=DateTime,
         nullable=False,
         server_default=func.now(),
-        onupdate=datetime.datetime.utcnow,
+        onupdate=naive_utcnow,
     )

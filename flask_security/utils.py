@@ -5,12 +5,12 @@
     Flask-Security utils module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 import abc
 import base64
-import datetime
+from datetime import datetime, timedelta, timezone
 from functools import partial
 import hashlib
 import hmac
@@ -102,6 +102,25 @@ else:
     def view_commit(response=None):
         _datastore.commit()
         return response
+
+
+# From a miguel grinberg blog around dealing with 3.12.
+# Our default SQLAlchemy Datetime is naive.
+# Note that most code should call _security.datetime_factory()
+def aware_utcnow():
+    return datetime.now(timezone.utc)
+
+
+def aware_utcfromtimestamp(timestamp):
+    return datetime.fromtimestamp(timestamp, timezone.utc)
+
+
+def naive_utcnow():
+    return aware_utcnow().replace(tzinfo=None)
+
+
+def naive_utcfromtimestamp(timestamp):
+    return aware_utcfromtimestamp(timestamp).replace(tzinfo=None)
 
 
 def find_csrf_field_name():
@@ -230,8 +249,8 @@ def logout_user() -> None:
 
 
 def check_and_update_authn_fresh(
-    within: datetime.timedelta,
-    grace: datetime.timedelta,
+    within: timedelta,
+    grace: timedelta,
     method: t.Optional[str] = None,
 ) -> bool:
     """Check if user authenticated within specified time and update grace period.
@@ -278,7 +297,7 @@ def check_and_update_authn_fresh(
         # No session, you can't play.
         return False
 
-    now = datetime.datetime.utcnow()
+    now = naive_utcnow()
     new_exp = now + grace
     grace_ts = int(new_exp.timestamp())
 
@@ -294,7 +313,7 @@ def check_and_update_authn_fresh(
         session["fs_gexp"] = grace_ts
         return False
 
-    authn_time = datetime.datetime.utcfromtimestamp(session["fs_paa"])
+    authn_time = naive_utcfromtimestamp(session["fs_paa"])
     # allow for some time drift where it's possible authn_time is in the future
     # but let's be cautious and not allow arbitrary future times
     delta = now - authn_time
@@ -720,7 +739,7 @@ def get_within_delta(key, app=None):
     """
     txt = config_value(key, app=app)
     values = txt.split()
-    return datetime.timedelta(**{values[1]: int(values[0])})
+    return timedelta(**{values[1]: int(values[0])})
 
 
 def send_mail(subject, recipient, template, **context):
@@ -805,7 +824,7 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
 
 
 def check_and_get_token_status(
-    token: str, serializer_name: str, within: datetime.timedelta
+    token: str, serializer_name: str, within: timedelta
 ) -> t.Tuple[bool, bool, t.Any]:
     """Get the status of a token and return data.
 

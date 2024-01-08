@@ -1,4 +1,4 @@
-# :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -21,7 +21,7 @@ data and a mail sender that flashes what mail would be sent!
 
 """
 
-import datetime
+from datetime import timedelta
 import os
 import typing as t
 
@@ -45,7 +45,12 @@ from flask_security.signals import (
     user_not_registered,
     user_registered,
 )
-from flask_security.utils import hash_password, uia_email_mapper, uia_phone_mapper
+from flask_security.utils import (
+    hash_password,
+    naive_utcnow,
+    uia_email_mapper,
+    uia_phone_mapper,
+)
 
 
 def _find_bool(v):
@@ -100,8 +105,8 @@ def create_app():
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
-    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=10)
-    app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=20)
+    app.config["SECURITY_FRESHNESS"] = timedelta(minutes=10)
+    app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = timedelta(minutes=20)
     app.config["SECURITY_USERNAME_ENABLE"] = True
     app.config["SECURITY_USERNAME_REQUIRED"] = True
     app.config["SECURITY_PASSWORD_REQUIRED"] = False  # allow registration w/o password
@@ -277,7 +282,7 @@ def add_user(ds, email, password, roles):
     roles = [ds.find_or_create_role(rn) for rn in roles]
     ds.commit()
     user = ds.create_user(
-        email=email, password=pw, active=True, confirmed_at=datetime.datetime.utcnow()
+        email=email, password=pw, active=True, confirmed_at=naive_utcnow()
     )
     ds.commit()
     for role in roles:

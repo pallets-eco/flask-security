@@ -4,7 +4,7 @@
 
     WebAuthn tests
 
-    :copyright: (c) 2021-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -12,7 +12,6 @@
 from base64 import urlsafe_b64encode
 import copy
 import datetime
-from dateutil import parser
 import json
 import re
 import typing as t
@@ -383,7 +382,7 @@ def test_basic_json(app, clients, get_message):
     response = clients.get("/wan-register", headers=headers)
     active_creds = response.json["response"]["registered_credentials"]
     assert active_creds[0]["name"] == "testr1"
-    assert parser.parse(active_creds[0]["lastuse"]) == fake_dt
+    assert datetime.datetime.fromisoformat(active_creds[0]["lastuse"]) == fake_dt
 
     # sign in - simple case use identity so we get back allowCredentials
     logout(clients)
@@ -409,7 +408,7 @@ def test_basic_json(app, clients, get_message):
     # fetch credentials and verify lastuse was updated
     response = clients.get("/wan-register", headers=headers)
     active_creds = response.json["response"]["registered_credentials"]
-    assert parser.parse(active_creds[0]["lastuse"]) != fake_dt
+    assert datetime.datetime.fromisoformat(active_creds[0]["lastuse"]) != fake_dt
     assert active_creds[0]["transports"] == ["usb"]
     assert active_creds[0]["usage"] == "first"
 

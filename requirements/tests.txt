@@ -3,7 +3,7 @@ Babel
 Flask-Login
 Flask-Mailman
 Flask-Principal
-peewee
+peewee; python_version < '3.12'
 Flask-SQLAlchemy
 argon2_cffi
 authlib
@@ -13,7 +13,6 @@ check-manifest
 coverage
 cryptography
 djlint
-python-dateutil
 mongoengine
 mongomock
 msgcheck
@@ -27,6 +26,8 @@ pytest
 qrcode
 # authlib requires requests
 requests
+# passlib requires setuptools which is deprecated
+setuptools
 sqlalchemy
 sqlalchemy-utils
 webauthn

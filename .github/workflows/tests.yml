@@ -29,12 +29,14 @@ jobs:
           - {python: '3.10', tox: 'py310-low'}
           - {python: '3.11', tox: 'py311-release'}
           - {python: '3.11', tox: 'py311-low'}
+          - { python: '3.12', tox: 'py312-release' }
+          - { python: '3.12', tox: 'py312-low' }
           - {python: 'pypy-3.9', tox: 'pypy39-release'}
           - {python: 'pypy-3.9', tox: 'pypy39-low'}
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
       - name: update pip
@@ -54,7 +56,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        - uses: actions/setup-python@v4
+        - uses: actions/setup-python@v5
           with:
             python-version: "3.9"
         - name: update pip
@@ -69,7 +71,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        - uses: actions/setup-python@v4
+        - uses: actions/setup-python@v5
           with:
             python-version: "3.9"
         - name: update pip
@@ -83,7 +85,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        - uses: actions/setup-python@v4
+        - uses: actions/setup-python@v5
           with:
             python-version: "3.9"
         - name: update pip
@@ -117,7 +119,7 @@ jobs:
             --health-retries 5
       steps:
         - uses: actions/checkout@v4
-        - uses: actions/setup-python@v4
+        - uses: actions/setup-python@v5
           with:
             python-version: "3.9"
         - name: update pip

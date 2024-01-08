@@ -609,9 +609,10 @@ Core - rarely need changing
 
 .. py:data:: SECURITY_DATETIME_FACTORY
 
-    Specifies the default datetime factory.
+    Specifies the default datetime factory. The default is naive-UTC which
+    corresponds to many DB's DateTime type.
 
-    Default:``datetime.datetime.utcnow``.
+    Default:``flask_security.naive_utcnow``.
 
 .. py:data:: SECURITY_CONFIRM_SALT
 

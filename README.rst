@@ -34,7 +34,7 @@ Quickly add security features to your Flask application.
 
 Notes on this repo
 ------------------
-This is a independently maintained version of Flask-Security based on the 3.0.0
+This is a independently maintained version of Flask-Security forked from the 3.0.0
 version of the `Original <https://github.com/mattupstate/flask-security>`_
 
 Goals
