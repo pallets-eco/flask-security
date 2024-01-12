@@ -59,6 +59,7 @@ try:
     )
     from webauthn.helpers.exceptions import (
         InvalidAuthenticationResponse,
+        InvalidJSONStructure,
         InvalidRegistrationResponse,
     )
     from webauthn.helpers.structs import (
@@ -171,7 +172,12 @@ class WebAuthnRegisterResponseForm(Form):
             return False
         try:
             reg_cred = parse_registration_credential_json(self.credential.data)
-        except (ValueError, KeyError, InvalidRegistrationResponse):
+        except (
+            ValueError,
+            KeyError,
+            InvalidJSONStructure,
+            InvalidRegistrationResponse,
+        ):
             self.credential.errors.append(get_message("API_ERROR")[0])
             return False
         try:
@@ -262,7 +268,12 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
             return False  # pragma: no cover
         try:
             auth_cred = parse_authentication_credential_json(self.credential.data)
-        except (ValueError, KeyError, InvalidAuthenticationResponse):
+        except (
+            ValueError,
+            KeyError,
+            InvalidJSONStructure,
+            InvalidAuthenticationResponse,
+        ):
             self.credential.errors.append(get_message("API_ERROR")[0])
             return False
 
@@ -405,7 +416,7 @@ def webauthn_register() -> "ResponseValue":
             challenge=challenge.encode(),
             rp_name=cv("WAN_RP_NAME"),
             rp_id=request.host.split(":")[0],
-            user_id=current_user.fs_webauthn_user_handle,
+            user_id=current_user.fs_webauthn_user_handle.encode(),
             user_name=current_user.calc_username(),
             timeout=cv("WAN_REGISTER_TIMEOUT"),
             exclude_credentials=create_credential_list(

@@ -508,7 +508,7 @@ def test_bad_data_register(app, client, get_message):
     register_options, response_url = _register_start_json(client, name="testr3")
 
     # first try mangling json - should get API_ERROR
-    response = client.post(response_url, json=dict(credential="hi there"))
+    response = client.post(response_url, json=dict(credential='"hi there"'))
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
@@ -556,7 +556,7 @@ def test_bad_data_signin(app, client, get_message):
 
     logout(client)
     signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
-    response = client.post(response_url, json=dict(credential="hi there"))
+    response = client.post(response_url, json=dict(credential='"hi there"'))
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
@@ -1202,12 +1202,9 @@ def test_user_handle(app, clients, get_message):
         user = app.security.datastore.find_user(email="matt@lp.com")
         app.security.datastore.set_webauthn_user_handle(user)
         app.security.datastore.commit()
-
-        b64_user_handle = (
-            urlsafe_b64encode(user.fs_webauthn_user_handle.encode())
-            .decode("utf-8")
-            .replace("=", "")
-        )
+        b64_user_handle = urlsafe_b64encode(
+            user.fs_webauthn_user_handle.encode()
+        ).decode("utf-8")
     upd_signin_data = copy.deepcopy(SIGNIN_DATA_UH)
     upd_signin_data["response"]["userHandle"] = b64_user_handle
     signin_options, response_url, _ = _signin_start_json(clients, "matt@lp.com")

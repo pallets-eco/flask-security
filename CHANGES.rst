@@ -30,7 +30,8 @@ Fixes
 - (:pr:`866`) Improve German translations (sr-verde)
 - (:pr:`889`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
 - (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for implications.
-- (:pr:`xxx`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
+- (:pr:`900`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
+- (:pr:`xxx`) Work with py_webauthn 2.0
 
 Notes
 ++++++
@@ -86,6 +87,15 @@ Backwards Compatibility Concerns
   This shouldn't be used - instead use Flask-Security's :meth:`flask_security.auth_required` decorator.
 - Support for Flask-Babelex has been removed. Please convert to Flask-Babel.
 
+Version 5.3.3
+-------------
+
+Released December 29, 2023
+
+Fixes
++++++
+- (:issue:`893`) Once again work on open-redirect vulnerability - this time due to newer Werkzeug.
+  Addresses: CVE-2023-49438
 
 Version 5.3.2
 -------------
