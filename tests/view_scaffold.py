@@ -206,14 +206,6 @@ def create_app():
     except ImportError:
         pass
 
-    @app.after_request
-    def allow_absolute_redirect(r):
-        # This is JUST to test odd possible redirects that look relative but are
-        # interpreted by browsers as absolute.
-        # DON'T SET THIS IN YOUR APPLICATION!
-        r.autocorrect_location_header = False
-        return r
-
     @user_registered.connect_via(app)
     def on_user_registered(myapp, user, confirm_token, **extra):
         flash(f"To confirm {user.email} - go to /confirm/{confirm_token}")
