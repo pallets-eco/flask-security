@@ -114,38 +114,9 @@ The following endpoints accept a ``next`` parameter:
     - .us_signin ("/us-signin")
     - .us_verify ("/us-verify")
 
+Flask-Security always quotes the path portion of a user supplied URL.
+This `link <https://www.cve.org/CVERecord?id=CVE-2021-32618>`_ provides background of why simple parsing of URLs isn't enough.
 
-Flask-Security attempts to verify that redirects are always relative.
-FS uses the standard Python library urlsplit() to parse the URL and verify
-that the ``netloc`` hasn't been altered.
-However, many browsers actually accept URLs that should be considered
-relative and perform various stripping and conversions that can cause them
-to be interpreted as absolute. A trivial example of this is:
-
-.. line-block::
-    /login?next=%20///github.com
-
-This will pass the urlsplit() test that it is relative - but many browsers
-will simply strip off the space and interpret it as an absolute URL!
-
-Prior to Werkzeug 2.1, Werkzeug set the response configuration variable
-``autocorrect_location_header = True`` which forced the response `Location`
-header to always be an absolute path - thus effectively squashing any open
-redirect possibility. However since 2.1 it is now `False`.
-
-Flask Security offers
-2 mitigations for this via the :py:data:`SECURITY_REDIRECT_VALIDATE_MODE` and
-:py:data:`SECURITY_REDIRECT_VALIDATE_RE` configuration variables.
-
-- The first mode - `"absolute"`, which is the default, is to once again set Werkzeug's ``autocorrect_location_header``
-  to ``True``. Please note that this is set JUST for Flask-Security's blueprint - not all requests.
-- With the second mode - `"regex"` - FS uses a regular expression to validate all ``next`` parameters to make sure
-  they will be interpreted as `relative`. Be aware that the default regular
-  expression is based on in-the-field testing and it is quite possible that there
-  are other crafted relative URLs that could escape detection.
-
-:py:data:`SECURITY_REDIRECT_VALIDATE_MODE` actually takes a list - so both
-mechanisms can be specified.
 
 .. _pass_validation_topic:
 

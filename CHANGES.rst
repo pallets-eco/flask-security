@@ -19,19 +19,21 @@ Features
 Fixes
 +++++
 
-- (:issue:`845`) us-signin magic link should use fs_uniquifier (not email)
-- (:issue:`893`) Once again work on open-redirect vulnerability - this time due to newer Werkzeug
-- (:pr:`873`) Update Spanish and Italian translations (gissimo)
-- (:pr:`877`) Make AnonymousUser optional and deprecated
-- (:issue:`875`) user_datastore.create_user has side effects on mutable inputs (NoRePercussions)
+- (:issue:`845`) us-signin magic link should use fs_uniquifier. (not email)
+- (:issue:`893`) Improve open-redirect vulnerability mitigation. (see below)
+- (:pr:`873`) Update Spanish and Italian translations. (gissimo)
+- (:pr:`877`) Make AnonymousUser optional and deprecated.
+- (:issue:`875`) user_datastore.create_user has side effects on mutable inputs. (NoRePercussions)
 - (:pr:`878`) The long deprecated _unauthorized_callback/handler has been removed.
 - (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
-- (:pr:`855`) Improve translations for two-factor method selection (gissimo)
-- (:pr:`866`) Improve German translations (sr-verde)
+- (:pr:`855`) Improve translations for two-factor method selection. (gissimo)
+- (:pr:`866`) Improve German translations. (sr-verde)
 - (:pr:`889`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
-- (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for implications.
-- (:pr:`900`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
-- (:pr:`xxx`) Work with py_webauthn 2.0
+- (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for the new configuration and implications.
+- (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
+- (:pr:`901`) Work with py_webauthn 2.0
+- (:pr:`xxx`) Remove undocumented and untested looking in session for possible 'next'
+  redirect location.
 
 Notes
 ++++++
@@ -86,6 +88,19 @@ Backwards Compatibility Concerns
 - Flask-Security no longer configures anything related to Flask-Login's `fresh_login` logic.
   This shouldn't be used - instead use Flask-Security's :meth:`flask_security.auth_required` decorator.
 - Support for Flask-Babelex has been removed. Please convert to Flask-Babel.
+- Open Redirect mitigation. Release 4.1.0 had a fix for :issue:`486` involving a potential
+  open redirect. This was very low priority since the default configuration of Werkzeug (always
+  convert the Location header to absolute URL) rendered the vulnerability un-exploitable. The solution at that
+  time was to add an optional regex looking for these bizarre URLs that from a HTTP spec perspective
+  are relative, but various browsers would interpret as absolute. In Werkzeug release 2.1 the
+  default was changed so that the Location header was allowed to be a relative URL. This made the
+  open redirect vulnerability much more likely to be exploitable. More recently, additional bizarre
+  URLs were found, as documented in :issue:`893`. More work was done and a patch release 5.3.3
+  was published.  This fix utilized changing the Werkzeug default back to absolute and an updated
+  regex. Comments and thoughts by @gmanfuncky proposed a much better solution and that is in 5.4.
+  This implementation is independent of Werkzeug (and relative Location headers are again the default).
+  The entire regex option has been removed.
+  Instead, any user-supplied path used as a redirect is parsed and quoted.
 
 Version 5.3.3
 -------------

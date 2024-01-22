@@ -5,7 +5,7 @@
     Lots of tests
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -65,7 +65,6 @@ from flask_security.utils import (
     send_mail,
     uia_email_mapper,
     uia_phone_mapper,
-    validate_redirect_url,
     verify_hash,
 )
 
@@ -1302,56 +1301,32 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
     assert "/post_logout" in response.location
 
 
-def test_invalid_redirect_config(app, sqlalchemy_datastore, get_message):
-    with pytest.raises(ValueError):
-        init_app_with_options(
-            app,
-            sqlalchemy_datastore,
-            **{"SECURITY_REDIRECT_VALIDATE_MODE": ["regex", "bogus"]},
-        )
-
-
-def test_invalid_redirect_re(app, sqlalchemy_datastore, get_message):
-    with pytest.raises(ValueError):
-        init_app_with_options(
-            app,
-            sqlalchemy_datastore,
-            **{
-                "SECURITY_REDIRECT_VALIDATE_MODE": ["regex"],
-                "SECURITY_REDIRECT_VALIDATE_RE": None,
-            },
-        )
-
-
-@pytest.mark.settings(redirect_validate_mode="regex")
-def test_validate_redirect(app, sqlalchemy_datastore):
+def test_open_redirect(app, client, get_message):
     """
     Test various possible URLs that urlsplit() shows as relative but
     many browsers will interpret as absolute - and thus have a
-    open-redirect vulnerability. Note this vulnerability only
-    is viable if the application sets autocorrect_location_header = False
+    open-redirect vulnerability.
     """
-    init_app_with_options(app, sqlalchemy_datastore)
-    with app.test_request_context("http://localhost:5001/login"):
-        assert not validate_redirect_url("\\\\\\github.com")
-        assert not validate_redirect_url(" //github.com")
-        assert not validate_redirect_url("\t//github.com")
-        assert not validate_redirect_url(r"/\github.com")
-        assert not validate_redirect_url(r"\/github.com")
-        assert not validate_redirect_url("//github.com")  # this is normal urlsplit
-
-
-@pytest.mark.settings(post_login_view="\\\\\\github.com")
-def test_validate_redirect_default(app, client):
-    """
-    Test various possible URLs that urlsplit() shows as relative but
-    many browsers will interpret as absolute - and thus have a
-    open-redirect vulnerability. This tests the default configuration for
-    Flask-Security, Flask, Werkzeug
-    """
-    authenticate(client)
-    response = client.get("/login", follow_redirects=False)
-    assert response.location.startswith("http://localhost")
+    test_urls = [
+        ("\\\\\\github.com", "%5C%5C%5Cgithub.com"),
+        (" //github.com", "%20//github.com"),
+        (r"/\github.com", "/%5Cgithub.com"),
+        (r"\/github.com", "%5C/github.com"),
+        ("//github.com", ""),
+        ("\t//github.com", ""),
+    ]
+    for i, o in test_urls:
+        data = dict(email="matt@lp.com", password="password", next=i)
+        response = client.post("/login", data=data, follow_redirects=False)
+        if response.status_code == 302:
+            # this means it passed form validation but should have been quoted
+            assert check_location(app, response.location, o)
+        elif response.status_code == 200:
+            # should have failed form validation
+            assert get_message("INVALID_REDIRECT") in response.data
+        else:
+            raise AssertionError("Bad response code")
+        logout(client)
 
 
 def test_kwargs():

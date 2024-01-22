@@ -16,7 +16,7 @@ import hashlib
 import hmac
 import time
 import typing as t
-from urllib.parse import parse_qsl, urlsplit, urlunsplit, urlencode
+from urllib.parse import parse_qsl, quote, urlsplit, urlunsplit, urlencode
 import urllib.request
 import urllib.error
 import warnings
@@ -587,14 +587,20 @@ def validate_redirect_url(url: str) -> bool:
             return True
         else:
             return False
-    if config_value("REDIRECT_VALIDATE_MODE") == "regex":
-        matcher = _security._redirect_validate_re.match(url)
-        return matcher is None
     return True
 
 
 def get_post_action_redirect(config_key: str) -> str:
-    return propagate_next(find_redirect(config_key), request.form)
+    """
+    There is a security angle here - the result of this method is
+    sent to Flask::redirect() - and we need to be sure that it can't be
+    interpreted as a user-input external URL - that would mean we would
+    have an 'open-redirect' vulnerability.
+    """
+    rurl = propagate_next(find_redirect(config_key), request.form)
+    (scheme, netloc, path, query, fragment) = urlsplit(rurl)
+    safe_url = urlunsplit((scheme, netloc, quote(path), query, fragment))
+    return safe_url
 
 
 def get_post_login_redirect() -> str:
@@ -614,19 +620,15 @@ def get_post_verify_redirect() -> str:
 
 
 def find_redirect(key: str) -> str:
-    """Returns the URL to redirect to after a user logs in successfully.
+    """Returns the URL to redirect to.
 
-    :param key: The session or application configuration key to search for
+    :param key: The  application configuration key to search for
     """
-    session_value = session.pop(key.lower(), None)
-    session_url = None
-    if session_value:
-        session_url = get_url(session_value)
     app_value = current_app.config[key.upper()]
     app_url = None
     if app_value:
         app_url = get_url(app_value)
-    rv = session_url or app_url or str(current_app.config.get("APPLICATION_ROOT", "/"))
+    rv = app_url or str(current_app.config.get("APPLICATION_ROOT", "/"))
     return rv
 
 

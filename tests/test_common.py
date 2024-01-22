@@ -4,7 +4,7 @@
 
     Test common functionality
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -78,6 +78,15 @@ def test_authenticate_with_invalid_next(client, get_message):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=http://google.com", data=data)
     assert get_message("INVALID_REDIRECT") in response.data
+
+
+@pytest.mark.settings(flash_messages=False)
+def test_authenticate_with_invalid_next_json(client, get_message):
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://google.com", json=data)
+    assert response.json["response"]["errors"][0].encode() == get_message(
+        "INVALID_REDIRECT"
+    )
 
 
 def test_authenticate_with_invalid_malformed_next(client, get_message):
