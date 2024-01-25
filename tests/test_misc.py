@@ -886,10 +886,12 @@ def test_json_form_errors(app, client):
     """Test wtforms form level errors are correctly sent via json"""
     with app.test_request_context():
         form = ChangePasswordForm()
+        form.validate()
         form.form_errors.append("I am an error")
         response = base_render_json(form)
-        assert len(response.json["response"]["errors"]) == 1
-        assert response.json["response"]["errors"][0] == "I am an error"
+        error_list = response.json["response"]["errors"]
+        assert len(error_list) == 3
+        assert "I am an error" in error_list
 
 
 def test_method_view(app, client):
@@ -1313,7 +1315,7 @@ def test_open_redirect(app, client, get_message):
         (r"/\github.com", "/%5Cgithub.com"),
         (r"\/github.com", "%5C/github.com"),
         ("//github.com", ""),
-        ("\t//github.com", ""),
+        ("\t//github.com", "%09//github.com"),
     ]
     for i, o in test_urls:
         data = dict(email="matt@lp.com", password="password", next=i)

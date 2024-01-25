@@ -3,6 +3,9 @@
     ~~~~~~~~~~~~~~~~
 
     Recoverable functionality tests
+
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 import re
@@ -17,6 +20,8 @@ from tests.test_utils import (
     authenticate,
     capture_flashes,
     capture_reset_password_requests,
+    check_location,
+    get_form_input,
     logout,
     populate_data,
 )
@@ -761,3 +766,29 @@ def test_recoverable_json_async(app, client, get_message):
     )
     assert not response.json["response"]
     assert len(recorded_resets) == 1
+
+
+@pytest.mark.csrf()
+@pytest.mark.settings(post_reset_view="/post_reset_view")
+def test_csrf(app, client, get_message):
+    response = client.get("/reset")
+    csrf_token = get_form_input(response, "csrf_token")
+    with capture_reset_password_requests() as requests:
+        client.post(
+            "/reset",
+            data=dict(email="joe@lp.com", csrf_token=csrf_token),
+            follow_redirects=True,
+        )
+    token = requests[0]["token"]
+
+    # use the token - no CSRF so shouldn't work
+    data = {"password": "mypassword", "password_confirm": "mypassword"}
+    response = client.post(
+        "/reset/" + token,
+        data=data,
+    )
+    assert b"The CSRF token is missing" in response.data
+
+    data["csrf_token"] = csrf_token
+    response = client.post(f"/reset/{token}", data=data)
+    assert check_location(app, response.location, "/post_reset_view")

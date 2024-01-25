@@ -4,7 +4,7 @@
 
     CSRF tests
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -17,7 +17,7 @@ import pytest
 from flask_wtf import CSRFProtect
 
 from flask_security import Security, hash_password
-from tests.test_utils import get_session, logout
+from tests.test_utils import get_form_input, get_session, logout
 
 
 REAL_VALIDATE_CSRF = None
@@ -79,10 +79,7 @@ def json_login(
     use_header=False,
     remember=None,
 ):
-    """Return tuple (auth_token, csrf_token)
-    Note that since this is sent as JSON rather than form that csrfProtect
-    won't find token value (since it looks in request.form).
-    """
+    # Return tuple (auth_token, csrf_token)
     csrf_token = _get_csrf_token(client)
     data = dict(email=email, password=password, remember=remember)
 
@@ -110,16 +107,15 @@ def json_logout(client):
     return response
 
 
+@pytest.mark.csrf()
 def test_login_csrf(app, client):
-    app.config["WTF_CSRF_ENABLED"] = True
-
     # This shouldn't log in - but return login form with csrf token.
     data = dict(email="matt@lp.com", password="password", remember="y")
     response = client.post("/login", data=data)
     assert response.status_code == 200
-    assert b"csrf_token" in response.data
+    assert b"The CSRF token is missing." in response.data
 
-    data["csrf_token"] = _get_csrf_token(client)
+    data["csrf_token"] = get_form_input(response, "csrf_token")
     response = client.post("/login", data=data, follow_redirects=True)
     assert response.status_code == 200
     assert b"Welcome matt" in response.data
@@ -152,9 +148,8 @@ def test_login_csrf_double(app, client):
     assert b"Welcome matt" in response.data
 
 
+@pytest.mark.csrf()
 def test_login_csrf_json(app, client):
-    app.config["WTF_CSRF_ENABLED"] = True
-
     with mp_validate_csrf() as mp:
         auth_token, csrf_token = json_login(client)
         assert auth_token
@@ -167,19 +162,13 @@ def test_login_csrf_json(app, client):
     assert "csrf_token" not in session
 
 
-def test_login_csrf_json_header(app, sqlalchemy_datastore):
-    app.config["WTF_CSRF_ENABLED"] = True
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
-
-    client = app.test_client()
-
+@pytest.mark.csrf(csrfprotect=True)
+def test_login_csrf_json_header(app, client):
     with mp_validate_csrf() as mp:
         auth_token, csrf_token = json_login(client, use_header=True)
         assert auth_token
         assert csrf_token
-    assert mp.success == 2 and mp.failure == 0
+    assert mp.success == 1 and mp.failure == 0
     json_logout(client)
 
 
@@ -216,21 +205,27 @@ def test_login_csrf_unauth_double(app, client, get_message):
     )
 
 
+@pytest.mark.csrf()
 @pytest.mark.recoverable()
 def test_reset(app, client):
     """Test that form-based CSRF works for /reset"""
-    app.config["WTF_CSRF_ENABLED"] = True
+    response = client.get("/reset", content_type="application/json")
+    csrf_token = response.json["response"]["csrf_token"]
 
     with mp_validate_csrf() as mp:
         data = dict(email="matt@lp.com")
         # should fail - no CSRF token
         response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 400
+        assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+        # test template also has error
+        response = client.post("/reset", data=data)
+        assert b"The CSRF token is missing" in response.data
 
-        data["csrf_token"] = _get_csrf_token(client)
+        data["csrf_token"] = csrf_token
         response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 200
-    assert mp.success == 1 and mp.failure == 1
+    assert mp.success == 1 and mp.failure == 2
 
 
 @pytest.mark.recoverable()
@@ -247,6 +242,7 @@ def test_cp_reset(app, client):
         # should fail - no CSRF token
         response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 400
+        assert response.json["response"]["errors"][0] == "The CSRF token is missing."
 
         csrf_token = _get_csrf_token(client)
         response = client.post(
@@ -262,15 +258,11 @@ def test_cp_reset(app, client):
 
 
 @pytest.mark.changeable()
-def test_cp_with_token(app, sqlalchemy_datastore):
+@pytest.mark.csrf(csrfprotect=True)
+def test_cp_with_token(app, client):
     # Make sure can use returned CSRF-Token in Header.
-    app.config["WTF_CSRF_ENABLED"] = True
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
-
-    client = app.test_client()
-
+    # Since the csrf token isn't in the form - must enable app-wide CSRF
+    # using CSRFProtect() - as the above mark does.
     auth_token, csrf_token = json_login(client, use_header=True)
 
     # make sure returned csrf_token works in header.
@@ -443,17 +435,11 @@ def test_csrf_cookie(app, sqlalchemy_datastore):
     assert not client.get_cookie("XSRF-Token")
 
 
+@pytest.mark.csrf(csrfprotect=True)
 @pytest.mark.settings(CSRF_COOKIE={"key": "XSRF-Token"})
 @pytest.mark.changeable()
-def test_cp_with_token_cookie(app, sqlalchemy_datastore):
-    # Make sure can use returned CSRF-Token cookie in Header when changing password.
-    app.config["WTF_CSRF_ENABLED"] = True
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
-
-    client = app.test_client()
-
+def test_cp_with_token_cookie(app, client):
+    # Make sure can use returned CSRF-Token cookie in Header when changing password
     json_login(client, use_header=True)
 
     # make sure returned csrf_token works in header.
@@ -518,19 +504,13 @@ def test_cp_with_token_cookie_expire(app, sqlalchemy_datastore):
     assert not client.get_cookie("XSRF-Token")
 
 
+@pytest.mark.csrf(csrfprotect=True)
 @pytest.mark.settings(
     CSRF_COOKIE_NAME="XSRF-Token", CSRF_COOKIE_REFRESH_EACH_REQUEST=True
 )
 @pytest.mark.changeable()
-def test_cp_with_token_cookie_refresh(app, sqlalchemy_datastore):
+def test_cp_with_token_cookie_refresh(app, client):
     # Test CSRF_COOKIE_REFRESH_EACH_REQUEST
-    app.config["WTF_CSRF_ENABLED"] = True
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
-
-    client = app.test_client()
-
     json_login(client, use_header=True)
 
     # make sure returned csrf_token works in header.
@@ -565,25 +545,14 @@ def test_cp_with_token_cookie_refresh(app, sqlalchemy_datastore):
     assert not client.get_cookie("XSRF-Token")
 
 
+@pytest.mark.csrf(csrfprotect=True)
 @pytest.mark.settings(CSRF_COOKIE_NAME="XSRF-Token")
 @pytest.mark.changeable()
-def test_remember_login_csrf_cookie(app, sqlalchemy_datastore):
+def test_remember_login_csrf_cookie(app, client):
     # Test csrf cookie upon resuming a remember session
-    app.config["WTF_CSRF_ENABLED"] = True
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
-
-    client = app.test_client()
-
     # Login with remember_token generation
     json_login(client, use_header=True, remember=True)
 
-    # csrf_cookie = [c for c in client.cookie_jar if c.name == "XSRF-Token"][0]
-    # session_cookie = [c for c in client.cookie_jar if c.name == "session"][0]
-    # Delete session and csrf cookie - we should always get new ones
-    # client.delete_cookie(csrf_cookie.domain, csrf_cookie.name)
-    # client.delete_cookie(session_cookie.domain, session_cookie.name)
     client.delete_cookie("XSRF-Token")
     client.delete_cookie("session")
 

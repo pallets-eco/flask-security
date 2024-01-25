@@ -212,6 +212,7 @@ Flask-Security strives to support various options for both its endpoints (e.g. `
 and the application endpoints (protected with Flask-Security decorators such as :func:`.auth_required`).
 
 If your application just uses forms that are derived from ``Flask-WTF::Flaskform`` - you are done.
+Note that all of Flask-Security's endpoints are form based (regardless of how the request was made).
 
 
 CSRF: Single-Page-Applications and AJAX/XHR
@@ -387,7 +388,7 @@ CSRF: Pro-Tips
        (or clients must use CSRF/session cookie for logging
        in then once they have an authentication token, no further need for cookie).
 
-    #) If you enable CSRFProtect(app) and you want to support non-form based JSON requests,
+    #) If you enable CSRFProtect(app) and you want to send request data as JSON,
        then you must include the CSRF token in the header (e.g. X-CSRF-Token)
 
     #) You must enable CSRFProtect(app) if you want to accept the CSRF token in the request

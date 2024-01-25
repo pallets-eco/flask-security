@@ -23,6 +23,7 @@ from tests.test_utils import (
     FakeSerializer,
     authenticate,
     capture_flashes,
+    check_location,
     get_existing_session,
     get_form_action,
     get_form_input,
@@ -185,8 +186,12 @@ class HackWebauthnUtil(WebauthnUtil):
         return "http://localhost:5001"
 
 
-def _register_start(client, name="testr1", usage="secondary", endpoint="wan-register"):
-    response = client.post(endpoint, data=dict(name=name, usage=usage))
+def _register_start(
+    client, name="testr1", usage="secondary", endpoint="wan-register", csrf_token=None
+):
+    response = client.post(
+        endpoint, data=dict(name=name, usage=usage, csrf_token=csrf_token)
+    )
     matcher = re.match(
         r".*handleRegister\(\'(.*)\'\).*",
         response.data.decode("utf-8"),
@@ -230,8 +235,11 @@ def _signin_start(
     client,
     identity=None,
     endpoint="wan-signin",
+    csrf_token=None,
 ):
-    response = client.post(endpoint, data=dict(identity=identity))
+    response = client.post(
+        endpoint, data=dict(identity=identity, csrf_token=csrf_token)
+    )
     matcher = re.match(
         r".*handleSignin\(\'(.*)\'\).*",
         response.data.decode("utf-8"),
@@ -1713,3 +1721,50 @@ def test_async(app, client, get_message):
     response = client.post(
         "/wan-delete", data=dict(name="testr1"), follow_redirects=True
     )
+
+
+@pytest.mark.csrf()
+@pytest.mark.settings(
+    webauthn_util_cls=HackWebauthnUtil,
+    wan_post_register_view="/done-registration",
+    post_login_view="/post-login",
+)
+def test_csrf(app, client, get_message):
+    response = client.get("/login")
+    csrf_token = get_form_input(response, "csrf_token")
+    authenticate(client, csrf=True)
+
+    register_options, response_url = _register_start(
+        client, usage="first", csrf_token=csrf_token
+    )
+    data = dict(credential=json.dumps(REG_DATA1))
+    response = client.post(response_url, data=data, follow_redirects=True)
+    assert (
+        b"The CSRF token is missing" in response.data
+    )  # this should have been flashed
+
+    data["csrf_token"] = csrf_token
+    response = client.post(response_url, data=data)
+    assert check_location(app, response.location, "/done-registration")
+    logout(client)
+
+    # use old csrf_token - should fail and we should get the error in the template
+    response = client.post(
+        "wan-signin", data=dict(identity="matt@lp.com", csrf_token=csrf_token)
+    )
+    assert b"The CSRF tokens do not match." in response.data
+
+    response = client.get("/wan-signin")
+    csrf_token = get_form_input(response, "csrf_token")
+    signin_options, response_url = _signin_start(
+        client, "matt@lp.com", csrf_token=csrf_token
+    )
+    data = dict(credential=json.dumps(SIGNIN_DATA1))
+    response = client.post(response_url, data=data, follow_redirects=True)
+    assert (
+        b"The CSRF token is missing" in response.data
+    )  # this should have been flashed
+
+    data["csrf_token"] = csrf_token
+    response = client.post(response_url, data=data)
+    assert check_location(app, response.location, "/post-login")

@@ -30,6 +30,7 @@ from tests.test_utils import (
     check_location,
     check_xlation,
     get_form_action,
+    get_form_input,
     get_session,
     is_authenticated,
     logout,
@@ -1469,3 +1470,38 @@ def test_xlation(app, client, get_message_local):
     with app.test_request_context():
         existing = "Méthode à deux facteurs actuellement configurée : authentificateur"
         assert markupsafe.escape(existing).encode() in response.data
+
+
+@pytest.mark.csrf(ignore_unauth=True)
+@pytest.mark.settings(two_factor_post_setup_view="/post_setup_view")
+def test_setup_csrf(app, client):
+    # Verify /tf-setup properly handles CSRF and template relays CSRF errors
+    tf_authenticate(app, client)
+    response = client.get("tf-setup")
+    assert b"Disable" in response.data
+    csrf_token = get_form_input(response, "csrf_token")
+
+    response = client.post("tf-setup", data=dict(setup="disable"))
+    assert b"The CSRF token is missing" in response.data
+
+    response = client.post(
+        "tf-setup", data=dict(setup="disable", csrf_token=csrf_token)
+    )
+    assert check_location(app, response.location, "/post_setup_view")
+
+
+@pytest.mark.csrf(ignore_unauth=True, csrfprotect=True)
+def test_setup_csrf_header(app, client):
+    # Test that can setup using csrf token in header
+    tf_authenticate(app, client)
+    response = client.get("tf-setup", json=dict())
+    csrf_token = response.json["response"]["csrf_token"]
+
+    response = client.post("tf-setup", json=dict(setup="disable"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    response = client.post(
+        "tf-setup", json=dict(setup="disable"), headers={"X-CSRF-Token": csrf_token}
+    )
+    assert response.status_code == 200

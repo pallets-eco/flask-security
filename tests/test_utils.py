@@ -36,9 +36,17 @@ _missing = object
 
 
 def authenticate(
-    client, email="matt@lp.com", password="password", endpoint=None, **kwargs
+    client,
+    email="matt@lp.com",
+    password="password",
+    endpoint=None,
+    csrf=False,
+    **kwargs,
 ):
     data = dict(email=email, password=password, remember="y")
+    if csrf:
+        response = client.get(endpoint or "/login")
+        data["csrf_token"] = get_form_input(response, "csrf_token")
     return client.post(endpoint or "/login", data=data, **kwargs)
 
 

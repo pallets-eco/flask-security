@@ -2030,9 +2030,9 @@ def test_generic_response(app, client, get_message):
     data = dict(identity="matt@lp.com", code="12345")
     response = client.post("/us-signin", json=data)
     assert response.status_code == 400
-    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
-    assert len(response.json["response"]["field_errors"]["null"]) == 1
-    assert response.json["response"]["field_errors"]["null"][0].encode(
+    assert list(response.json["response"]["field_errors"].keys()) == [""]
+    assert len(response.json["response"]["field_errors"][""]) == 1
+    assert response.json["response"]["field_errors"][""][0].encode(
         "utf-8"
     ) == get_message("GENERIC_AUTHN_FAILED")
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
@@ -2047,9 +2047,9 @@ def test_generic_response(app, client, get_message):
     data = dict(identity="matt2@lp.com", code="12345")
     response = client.post("/us-signin", json=data)
     assert response.status_code == 400
-    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
-    assert len(response.json["response"]["field_errors"]["null"]) == 1
-    assert response.json["response"]["field_errors"]["null"][0].encode(
+    assert list(response.json["response"]["field_errors"].keys()) == [""]
+    assert len(response.json["response"]["field_errors"][""]) == 1
+    assert response.json["response"]["field_errors"][""][0].encode(
         "utf-8"
     ) == get_message("GENERIC_AUTHN_FAILED")
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(

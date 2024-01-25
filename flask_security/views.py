@@ -767,6 +767,7 @@ def two_factor_setup():
 
     else:
         # Caller is changing their TFA profile. This requires a 'fresh' authentication
+        # N.B unauth_csrf has done the CSRF check already.
         if not check_and_update_authn_fresh(
             cv("FRESHNESS"),
             cv("FRESHNESS_GRACE_PERIOD"),

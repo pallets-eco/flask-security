@@ -87,7 +87,7 @@ def test_github(app, sqlalchemy_datastore, get_message):
 
     # make sure required CSRF
     response = client.post(github_url, follow_redirects=False)
-    assert "The CSRF token is missing"
+    assert b"The CSRF token is missing" in response.data
 
     response = client.post(
         github_url, data=dict(csrf_token=csrf_token), follow_redirects=False

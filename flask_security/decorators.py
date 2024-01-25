@@ -5,9 +5,11 @@
     Flask-Security decorators module
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
+from __future__ import annotations
 
 from collections import namedtuple
 import datetime
@@ -38,6 +40,9 @@ from .utils import (
     get_request_attr,
     url_for_security,
 )
+
+if t.TYPE_CHECKING:  # pragma: no cover
+    from flask.typing import ResponseValue
 
 # Convenient references
 _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
@@ -203,14 +208,14 @@ def _check_http_auth():
     return False
 
 
-def handle_csrf(method: t.Optional[str]) -> None:
+def handle_csrf(method: str, json_response: bool = False) -> ResponseValue | None:
     """Invoke CSRF protection based on authentication method.
 
     Usually this is called as part of a decorator, but if that isn't
     appropriate, endpoint code can call this directly.
 
     If CSRF protection is appropriate, this will call flask_wtf::protect() which
-    will raise a ValidationError on CSRF failure.
+    will raise a CSRFError(BadRequest) on CSRF failure.
 
     This routine does nothing if any of these are true:
 
@@ -220,9 +225,17 @@ def handle_csrf(method: t.Optional[str]) -> None:
 
         #) csrfProtect already checked and accepted the token
 
+    This means in the default config - CSRF is done as part of form validation
+    not here. Only if the application calls CSRFProtect(app) will this method
+    do anything. Furthermore - since this is called PRIOR to form instantiation
+    if the request is JSON - it MUST send the csrf_token as a header.
+
     If the passed in method is not in *SECURITY_CSRF_PROTECT_MECHANISMS* then not only
     will no CSRF code be run, but a flag in the current context ``fs_ignore_csrf``
     will be set so that downstream code knows to ignore any CSRF checks.
+
+    Returns None if all ok, returns a Response with JSON error if request
+    wanted JSON - else re-raises the CSRFError exception.
 
     .. versionadded:: 3.3.0
     """
@@ -231,13 +244,20 @@ def handle_csrf(method: t.Optional[str]) -> None:
         or not current_app.extensions.get("csrf", None)
         or g.get("csrf_valid", False)
     ):
-        return
+        return None
 
     if config_value("CSRF_PROTECT_MECHANISMS"):
         if method in config_value("CSRF_PROTECT_MECHANISMS"):
-            _csrf.protect()  # type: ignore
+            try:
+                _csrf.protect()  # type: ignore
+            except CSRFError as e:
+                if json_response:
+                    payload = json_error_response(errors=e.description)
+                    return _security._render_json(payload, 400, None, None)
+                raise
         else:
             set_request_attr("fs_ignore_csrf", True)
+    return None
 
 
 def http_auth_required(realm: t.Any) -> DecoratedView:
@@ -255,7 +275,9 @@ def http_auth_required(realm: t.Any) -> DecoratedView:
         @wraps(fn)
         def wrapper(*args, **kwargs):
             if _check_http_auth():
-                handle_csrf("basic")
+                eresponse = handle_csrf("basic", _security._want_json(request))
+                if eresponse:
+                    return eresponse
                 set_request_attr("fs_authn_via", "basic")
                 return current_app.ensure_sync(fn)(*args, **kwargs)
             r = _security.default_http_auth_realm if callable(realm) else realm
@@ -282,7 +304,9 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
     @wraps(fn)
     def decorated(*args, **kwargs):
         if _check_token():
-            handle_csrf("token")
+            eresponse = handle_csrf("token", _security._want_json(request))
+            if eresponse:
+                return eresponse
             set_request_attr("fs_authn_via", "token")
             return current_app.ensure_sync(fn)(*args, **kwargs)
         return _security._unauthn_handler(["token"])
@@ -407,7 +431,9 @@ def auth_required(
                     # in a session cookie...
                     if not check_and_update_authn_fresh(within, grace, method):
                         return _security._reauthn_handler(within, grace)
-                    handle_csrf(method)
+                    eresponse = handle_csrf(method, _security._want_json(request))
+                    if eresponse:
+                        return eresponse
                     set_request_attr("fs_authn_via", method)
                     return current_app.ensure_sync(fn)(*args, **kwargs)
             return _security._unauthn_handler(ams, headers=h)

@@ -560,8 +560,9 @@ def webauthn_register_response(token: str) -> "ResponseValue":
 
     if _security._want_json(request):
         return base_render_json(form)
-    if len(form.errors) > 0:
-        do_flash(form.errors["credential"][0], "error")
+    if form.errors:
+        for v in form.errors.values():
+            do_flash(v[0], "error")
     return redirect(url_for_security("wan_register"))
 
 
@@ -742,8 +743,9 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
 
     # Since the response is auto submitted - we go back to
     # signin form - for now use flash.
-    if form.credential.errors:
-        do_flash(form.credential.errors[0], "error")
+    if form.errors:
+        for v in form.errors.values():
+            do_flash(v[0], "error")
     return redirect(url_for_security("wan_signin"))
 
 
