@@ -289,6 +289,13 @@ Be aware that if you enable this it will ONLY work if you send the session cooki
 .. note::
     It is IMPORTANT that you initialize/call ``CSRFProtect`` PRIOR to initializing Flask_Security.
 
+.. note::
+    Calling CSRFProtect(app) will setup a @before_request handler to verify CSRF - this occurs BEFORE any Flask-Security decorators
+    or other view/form logic. One side effect is that CSRFProtect, on error, will raise a BadRequest error which returns a small
+    piece of HTML by default - your application will need to add a Flask ErrorHandler to change that. Alternatively, and recommended
+    is to set `WTF_CSRF_CHECK_DEFAULT` to `False` - which will disable the @before_request and let Flask-Security handle CSRF protection
+    including properly returning a JSON response if the caller asks for it.
+
 
 Using a Cookie
 --------------
