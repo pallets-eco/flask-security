@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for more details.
 
 """
+
 import typing as t
 import unicodedata
 

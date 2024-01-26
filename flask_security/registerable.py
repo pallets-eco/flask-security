@@ -8,6 +8,7 @@
     :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
 import typing as t
 
 from flask import current_app

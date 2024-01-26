@@ -4,6 +4,7 @@
 
     Entity tests
 """
+
 import inspect
 import pytest
 

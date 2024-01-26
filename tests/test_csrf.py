@@ -7,6 +7,7 @@
     :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
 from contextlib import contextmanager
 import time
 

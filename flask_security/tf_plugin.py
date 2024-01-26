@@ -10,6 +10,7 @@
     TODO:
         - add localized callback for select choices.
 """
+
 import typing as t
 
 from flask import request, redirect, session

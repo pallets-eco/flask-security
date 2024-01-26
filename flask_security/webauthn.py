@@ -470,12 +470,12 @@ def webauthn_register() -> "ResponseValue":
             "transports": cred.transports,
             "lastuse": cred.lastuse_datetime.isoformat(),
             "usage": cred.usage,
-            "backup_state": cred.backup_state
-            if hasattr(cred, "backup_state")
-            else False,
-            "device_type": cred.device_type
-            if hasattr(cred, "device_type")
-            else "Unknown",
+            "backup_state": (
+                cred.backup_state if hasattr(cred, "backup_state") else False
+            ),
+            "device_type": (
+                cred.device_type if hasattr(cred, "device_type") else "Unknown"
+            ),
         }
         # TODO: i18n
         discoverable = "Unknown"

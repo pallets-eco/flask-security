@@ -7,6 +7,7 @@
     :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
 import typing as t
 
 from flask import after_this_request, request, redirect

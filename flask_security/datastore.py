@@ -8,6 +8,7 @@
     :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
 from datetime import datetime
 import json
 import typing as t
@@ -1188,8 +1189,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         roles: t.List["Role"]
         webauthn: t.List["WebAuthn"]
 
-        def __init__(self, **kwargs):
-            ...
+        def __init__(self, **kwargs): ...
 
     class Role(RoleMixin):
         id: int
@@ -1198,8 +1198,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
         permissions: t.Optional[t.List[str]]
         update_datetime: datetime
 
-        def __init__(self, **kwargs):
-            ...
+        def __init__(self, **kwargs): ...
 
     class WebAuthn(WebAuthnMixin):
         id: int
@@ -1215,5 +1214,4 @@ if t.TYPE_CHECKING:  # pragma: no cover
         user_id: int
         usage: str
 
-        def __init__(self, **kwargs):
-            ...
+        def __init__(self, **kwargs): ...

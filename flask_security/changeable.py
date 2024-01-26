@@ -9,6 +9,7 @@
     :author: Eskil Heyn Olsen
     :license: MIT, see LICENSE for more details.
 """
+
 import typing as t
 
 from flask import current_app, request, session

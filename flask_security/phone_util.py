@@ -9,6 +9,7 @@
 
     Avoid making 'phonenumbers' a required package unless needed.
 """
+
 import typing as t
 
 from .utils import config_value, get_message
