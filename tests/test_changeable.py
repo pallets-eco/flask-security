@@ -21,7 +21,9 @@ from flask_security.signals import password_changed, user_authenticated
 from flask_security.utils import localize_callback
 from tests.test_utils import (
     authenticate,
+    check_location,
     check_xlation,
+    get_form_input,
     get_session,
     hash_password,
     init_app_with_options,
@@ -665,4 +667,50 @@ def test_pwd_no_normalize(app, client):
         json=data,
         headers={"Content-Type": "application/json"},
     )
+    assert response.status_code == 200
+
+
+@pytest.mark.csrf(ignore_unauth=True)
+@pytest.mark.settings(post_change_view="/post_change_view")
+def test_csrf(app, client):
+    # enable CSRF, make sure template shows CSRF errors.
+    authenticate(client)
+    data = {
+        "password": "password",
+        "new_password": "new strong password",
+        "new_password_confirm": "new strong password",
+    }
+    response = client.post("/change", data=data)
+    assert b"The CSRF token is missing" in response.data
+    # Note that we get a CSRF token EVEN for errors - this seems odd
+    # but can't find anything that says its a security issue
+    csrf_token = get_form_input(response, "csrf_token")
+
+    data["csrf_token"] = csrf_token
+    response = client.post("/change", data=data)
+    assert check_location(app, response.location, "/post_change_view")
+
+
+@pytest.mark.csrf(ignore_unauth=True, csrfprotect=True)
+def test_csrf_json(app, client):
+    # This tests the handle_csrf code path - especially the JSON code path
+    # that should return a JSON response!
+    authenticate(client)
+    data = {
+        "password": "password",
+        "new_password": "new strong password",
+        "new_password_confirm": "new strong password",
+    }
+    response = client.post("/change", json=data)
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    # check form path also
+    response = client.post("/change", data=data)
+    assert response.status_code == 400
+    assert b"The CSRF token is missing." in response.data
+
+    response = client.get("/change", content_type="application/json")
+    csrf_token = response.json["response"]["csrf_token"]
+    response = client.post("/change", json=data, headers={"X-CSRF-Token": csrf_token})
     assert response.status_code == 200

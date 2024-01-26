@@ -25,6 +25,7 @@ from tests.test_utils import (
     check_location,
     get_auth_token_version_3x,
     get_form_action,
+    get_form_input,
     get_num_queries,
     hash_password,
     json_authenticate,
@@ -258,9 +259,9 @@ def test_generic_response(app, client, get_message):
     response = client.post(
         "/login", json=dict(email="mattwho@lp.com", password="forgot")
     )
-    # make sure just 'null' key in errors.
-    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
-    assert len(response.json["response"]["field_errors"]["null"]) == 1
+    # make sure no field error key.
+    assert list(response.json["response"]["field_errors"].keys()) == [""]
+    assert len(response.json["response"]["field_errors"][""]) == 1
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "GENERIC_AUTHN_FAILED"
     )
@@ -299,9 +300,9 @@ def test_generic_response_username(app, client, get_message):
     assert get_message("GENERIC_AUTHN_FAILED") in response.data
 
     response = client.post("/login", json=dict(username="dude2", password="forgot"))
-    # make sure just 'null' key in errors.
-    assert list(response.json["response"]["field_errors"].keys()) == ["null"]
-    assert len(response.json["response"]["field_errors"]["null"]) == 1
+    # make sure no field error key.
+    assert list(response.json["response"]["field_errors"].keys()) == [""]
+    assert len(response.json["response"]["field_errors"][""]) == 1
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "GENERIC_AUTHN_FAILED"
     )
@@ -595,6 +596,29 @@ def test_token_auth_invalid_for_session_auth(client):
     assert response.status_code == 401
 
 
+@pytest.mark.csrf(ignore_unauth=True, csrfprotect=True)
+def test_token_auth_csrf(client):
+    response = json_authenticate(client)
+    token = response.json["response"]["user"]["authentication_token"]
+    csrf_token = response.json["response"]["csrf_token"]
+    headers = {"Authentication-Token": token}
+    response = client.post("/token", headers=headers)
+    assert b"The CSRF token is missing" in response.data
+
+    # test JSON version
+    response = client.post("/token", headers=headers, content_type="application/json")
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    # now do it right
+    headers["X-CSRF-Token"] = csrf_token
+    response = client.post(
+        "/token",
+        headers=headers,
+    )
+    assert b"Token Authentication" in response.data
+
+
 def test_http_auth(client, get_message):
     # browsers expect 401 response with WWW-Authenticate header - which will prompt
     # them to pop up a login form.
@@ -728,6 +752,34 @@ def test_custom_http_auth_realm(client, get_message):
     assert get_message("UNAUTHENTICATED") in response.data
     assert "WWW-Authenticate" in response.headers
     assert 'Basic realm="My Realm"' == response.headers["WWW-Authenticate"]
+
+
+@pytest.mark.csrf(csrfprotect=True)
+def test_http_auth_csrf(client, get_message):
+    headers = {
+        "Authorization": "Basic %s"
+        % base64.b64encode(b"joe@lp.com:password").decode("utf-8")
+    }
+    response = client.post(
+        "/http",
+        headers=headers,
+    )
+    assert b"The CSRF token is missing" in response.data
+
+    # test JSON version
+    response = client.post("/http", headers=headers, content_type="application/json")
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    # grab a csrf_token
+    response = client.get("/login")
+    csrf_token = get_form_input(response, "csrf_token")
+    headers["X-CSRF-Token"] = csrf_token
+    response = client.post(
+        "/http",
+        headers=headers,
+    )
+    assert b"HTTP Authentication" in response.data
 
 
 def test_multi_auth_basic(client):

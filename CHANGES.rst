@@ -32,8 +32,10 @@ Fixes
 - (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for the new configuration and implications.
 - (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
 - (:pr:`901`) Work with py_webauthn 2.0
-- (:pr:`xxx`) Remove undocumented and untested looking in session for possible 'next'
+- (:pr:`906`) Remove undocumented and untested looking in session for possible 'next'
   redirect location.
+- (:pr:`xxx`) Improve CSRF documentation and testing. Fix bug where a CSRF failure could
+  return an HTML page even if the request was JSON.
 
 Notes
 ++++++
@@ -101,6 +103,12 @@ Backwards Compatibility Concerns
   This implementation is independent of Werkzeug (and relative Location headers are again the default).
   The entire regex option has been removed.
   Instead, any user-supplied path used as a redirect is parsed and quoted.
+- JSON error response has changed due to issue with WTForms form-level errors. When WTForms
+  introduced form-level errors they added it to the form.errors response using `None` as a key.
+  When serializing it, it would turn into "null". However, if there is more than one error
+  the default settings for JSON serialization in Flask attempt to sort the keys - which fails
+  with the `None` key. An issue has been filed with WTForms - and maybe it will be changed.
+  Flask-Security now changes any `None` key to `""`.
 
 Version 5.3.3
 -------------

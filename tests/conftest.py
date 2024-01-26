@@ -22,6 +22,7 @@ import pytest
 from flask import Flask, Response, jsonify, render_template
 from flask import request as flask_request
 from flask_mailman import Mail
+from flask_wtf import CSRFProtect
 
 from flask_security import (
     MongoEngineUserDatastore,
@@ -175,6 +176,20 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
             raise pytest.skip("Requires Babel")
         Babel(app)
 
+    csrf = marker_getter("csrf")
+    if csrf is not None:
+        # without any keys/arguments - this is the default config
+        # Note that WTF_CSRF_CHECK_DEFAULT = True means Flask_wtf will
+        # run a CSRF check as part of @before_request - before we see it.
+        app.config["WTF_CSRF_ENABLED"] = True
+        if "ignore_unauth" in csrf.kwargs.keys():
+            app.config["WTF_CSRF_CHECK_DEFAULT"] = False
+            app.config["SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS"] = True
+        if "csrfprotect" in csrf.kwargs.keys():
+            # This is needed when passing CSRF in header or non-form input
+            app.config["WTF_CSRF_CHECK_DEFAULT"] = False
+            CSRFProtect(app)
+
     @app.route("/")
     def index():
         return render_template("index.html", content="Home Page")
@@ -193,7 +208,7 @@ def app(request: pytest.FixtureRequest) -> "SecurityFixture":
     def post_login():
         return render_template("index.html", content="Post Login")
 
-    @app.route("/http")
+    @app.route("/http", methods=["GET", "POST"])
     @http_auth_required
     def http():
         return "HTTP Authentication"

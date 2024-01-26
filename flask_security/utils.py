@@ -9,6 +9,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from __future__ import annotations
+
 import abc
 import base64
 from datetime import datetime, timedelta, timezone
@@ -51,9 +53,6 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Flask, Response
     from flask.typing import ResponseValue
     from .datastore import User
-
-SB = t.Union[str, bytes]
-
 
 localize_callback = LocalProxy(lambda: _security.i18n_domain.gettext)
 
@@ -139,7 +138,7 @@ def find_csrf_field_name():
     return None
 
 
-def is_user_authenticated(user: "User") -> bool:
+def is_user_authenticated(user: User) -> bool:
     """
     return True is user is authenticated.
 
@@ -159,9 +158,9 @@ def is_user_authenticated(user: "User") -> bool:
 
 
 def login_user(
-    user: "User",
-    remember: t.Optional[bool] = None,
-    authn_via: t.Optional[t.List[str]] = None,
+    user: User,
+    remember: bool | None = None,
+    authn_via: list[str] | None = None,
 ) -> bool:
     """Perform the login routine.
 
@@ -324,7 +323,7 @@ def check_and_update_authn_fresh(
     return False
 
 
-def get_hmac(password: SB) -> bytes:
+def get_hmac(password: str | bytes) -> bytes:
     """Returns a Base64 encoded HMAC+SHA512 of the password signed with
     the salt specified by *SECURITY_PASSWORD_SALT*.
 
@@ -343,7 +342,7 @@ def get_hmac(password: SB) -> bytes:
     return base64.b64encode(h.digest())
 
 
-def verify_password(password: SB, password_hash: SB) -> bool:
+def verify_password(password: str | bytes, password_hash: str | bytes) -> bool:
     """Returns ``True`` if the password matches the supplied hash.
 
     :param password: A plaintext password to verify
@@ -359,7 +358,7 @@ def verify_password(password: SB, password_hash: SB) -> bool:
     return _pwd_context.verify(password, password_hash)
 
 
-def verify_and_update_password(password: SB, user: "User") -> bool:
+def verify_and_update_password(password: str | bytes, user: User) -> bool:
     """Returns ``True`` if the password is valid for the specified user.
 
     Additionally, the hashed password in the database is updated if the
@@ -390,7 +389,7 @@ def verify_and_update_password(password: SB, user: "User") -> bool:
     return verified
 
 
-def hash_password(password: SB) -> t.Any:
+def hash_password(password: str | bytes) -> str:
     """Hash the specified plaintext password.
 
     Unless the hash algorithm (as specified by `SECURITY_PASSWORD_HASH`) is listed in
@@ -683,7 +682,7 @@ def simplify_url(base_url: str, redirect_url: str) -> str:
     return redirect_url
 
 
-def get_config(app: "Flask") -> t.Dict[str, t.Any]:
+def get_config(app: Flask) -> t.Dict[str, t.Any]:
     """Conveniently get the security configuration for the specified
     application without the annoying 'SECURITY_' prefix.
 
@@ -857,7 +856,7 @@ def check_and_get_token_status(
     return expired, invalid, data
 
 
-def get_identity_attributes(app: t.Optional["Flask"] = None) -> t.List[str]:
+def get_identity_attributes(app: t.Optional[Flask] = None) -> t.List[str]:
     # Return list of keys of identity attributes
     # Is it possible to not have any?
     app = app or current_app
@@ -868,7 +867,7 @@ def get_identity_attributes(app: t.Optional["Flask"] = None) -> t.List[str]:
 
 
 def get_identity_attribute(
-    attr: str, app: t.Optional["Flask"] = None
+    attr: str, app: t.Optional[Flask] = None
 ) -> t.Dict[str, t.Any]:
     """Given an user_identity_attribute, return the defining dict.
     A bit annoying since USER_IDENTITY_ATTRIBUTES is a list of dict
@@ -957,7 +956,7 @@ def use_double_hash(password_hash=None):
     return not (single_hash is True or scheme in single_hash)
 
 
-def csrf_cookie_handler(response: "Response") -> "Response":
+def csrf_cookie_handler(response: Response) -> Response:
     """Called at end of every request.
     Uses session to track state (set/clear)
 
@@ -1026,12 +1025,12 @@ def csrf_cookie_handler(response: "Response") -> "Response":
 
 
 def base_render_json(
-    form: "FlaskForm",
+    form: FlaskForm,
     include_user: bool = True,
     include_auth_token: bool = False,
     additional: t.Optional[t.Dict[str, t.Any]] = None,
     error_status_code: int = 400,
-) -> "ResponseValue":
+) -> ResponseValue:
     """
     This method is called by all views that return JSON responses.
     This fills in the response and then calls :meth:`.Security.render_json`
@@ -1079,7 +1078,7 @@ def base_render_json(
 
 def simple_render_json(
     additional: t.Optional[t.Dict[str, t.Any]] = None,
-) -> "ResponseValue":
+) -> ResponseValue:
     payload = dict(csrf_token=csrf.generate_csrf())
     if additional:
         payload.update(additional)
@@ -1107,7 +1106,7 @@ def default_want_json(req):
 
 def json_error_response(
     errors: t.Optional[t.Union[str, list]] = None,
-    field_errors: t.Optional[t.Dict[str, list]] = None,
+    field_errors: t.Optional[t.Dict[str | None, list]] = None,
 ) -> t.Dict[str, t.Any]:
     """Helper to create an error response.
 
@@ -1117,7 +1116,9 @@ def json_error_response(
 
     The "field_errors" key which is exactly what is returned from WTForms - namely
     a dict of field-name: msg. For form-level errors (WTForms 3.0) the 'field-name' is
-    'None'
+    None - which alas means it isn't sortable and Flask's default JSONProvider
+    sorts keys - so we change that to '__all__' which is what django uses
+    apparently and was suggested as part of WTForms 3.0.
     """
     response_json: t.Dict[str, t.Union[list, t.Dict[str, list]]] = dict()
     plain_errors = []
@@ -1133,7 +1134,14 @@ def json_error_response(
         # we return that, as well as create a simple list of errors.
         for e in field_errors.values():
             plain_errors.extend(e)
-        response_json["field_errors"] = field_errors
+        if None in field_errors.keys():
+            # Ugh - wtforms decided to use None as a key - which json
+            # a) can't sort
+            # b) converts to "null"
+            # Issue filed - maybe they will change it
+            field_errors[""] = field_errors[None]
+            del field_errors[None]
+        response_json["field_errors"] = field_errors  # type: ignore
     response_json["errors"] = plain_errors
 
     return response_json

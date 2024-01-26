@@ -516,7 +516,7 @@ def test_username(app, client, get_message):
     assert response.status_code == 400
     assert (
         get_message("USER_DOES_NOT_EXIST")
-        == response.json["response"]["field_errors"]["null"][0].encode()
+        == response.json["response"]["field_errors"][""][0].encode()
     )
 
     # login using us-signin
