@@ -27,6 +27,7 @@ registrations. To use a real disk DB:
     set SQLALCHEMY_DATABASE_URI=sqlite:////var/tmp/oauth_example.db
 
 """
+
 import os
 
 from flask import Flask, flash, render_template_string

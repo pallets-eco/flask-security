@@ -10,6 +10,7 @@
     While this default implementation uses Flask-Mailman - we want to make sure that
     Flask-Mailman isn't REQUIRED (if this implementation isn't used).
 """
+
 import typing as t
 
 import email_validator

@@ -12,6 +12,7 @@ and an un-protected API to fetch it!
 This example is designed for a JSON and session cookie based client.
 
 """
+
 import datetime
 import os
 

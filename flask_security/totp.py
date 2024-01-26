@@ -7,6 +7,7 @@
     :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
 import base64
 import io
 import typing as t

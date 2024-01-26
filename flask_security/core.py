@@ -1229,12 +1229,12 @@ class Security:
         }
 
         # Attributes not settable from init.
-        self._unauthn_handler: t.Callable[
-            ..., "ResponseValue"
-        ] = default_unauthn_handler
-        self._reauthn_handler: t.Callable[
-            [timedelta, timedelta], "ResponseValue"
-        ] = default_reauthn_handler
+        self._unauthn_handler: t.Callable[..., "ResponseValue"] = (
+            default_unauthn_handler
+        )
+        self._reauthn_handler: t.Callable[[timedelta, timedelta], "ResponseValue"] = (
+            default_reauthn_handler
+        )
         self._unauthz_handler: t.Callable[
             [str, t.Optional[t.List[str]]], "ResponseValue"
         ] = default_unauthz_handler

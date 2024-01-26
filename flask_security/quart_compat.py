@@ -10,6 +10,7 @@
     This modules tests whether we are using quart or not
     we can test if the name of the imported flask is: quart.flask_patch
 """
+
 import flask
 
 if "quart." in flask.__name__ or hasattr(flask, "_quart_patched"):  # pragma: no cover

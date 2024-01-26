@@ -8,6 +8,7 @@
     :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
 import abc
 import base64
 from datetime import datetime, timedelta, timezone
