@@ -4,7 +4,7 @@
 
     Class and methods to glue our login path with authlib for to support 'social' auth.
 
-    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -127,7 +127,7 @@ def oauthresponse(name: str) -> "ResponseValue":
         # N.B. flashing doesn't seem to work - probably for same reason as
         # the original failure...
         m, c = get_message("OAUTH_HANDSHAKE_ERROR")
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("login"))
@@ -143,7 +143,7 @@ def oauthresponse(name: str) -> "ResponseValue":
             return response
         # two factor not required - login user
         login_user(user)
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
                 get_url(
                     cv("POST_OAUTH_LOGIN_VIEW"), qparams=user.get_redirect_qparams()
@@ -153,7 +153,7 @@ def oauthresponse(name: str) -> "ResponseValue":
     # Seems ok to show identity - the only identity it could be is the callers
     # so seems no way this can be used to enumerate registered users.
     m, c = get_message("IDENTITY_NOT_REGISTERED", id=value)
-    if _security.redirect_behavior == "spa":
+    if cv("REDIRECT_BEHAVIOR") == "spa":
         return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
     do_flash(m, c)
     # TODO: should redirect to where we came from?

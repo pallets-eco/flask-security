@@ -34,8 +34,11 @@ Fixes
 - (:pr:`901`) Work with py_webauthn 2.0
 - (:pr:`906`) Remove undocumented and untested looking in session for possible 'next'
   redirect location.
-- (:pr:`xxx`) Improve CSRF documentation and testing. Fix bug where a CSRF failure could
+- (:pr:`908`) Improve CSRF documentation and testing. Fix bug where a CSRF failure could
   return an HTML page even if the request was JSON.
+- (:pr:`xxx`) Chore - stop setting all config as attributes. init_app(\*\*kwargs) can only
+  set forms, flags, and utility classes.
+- (:pr:`xxx`) Remove deprecation of AUTO_LOGIN_AFTER_CONFIRM - it has a reasonable use case.
 
 Notes
 ++++++

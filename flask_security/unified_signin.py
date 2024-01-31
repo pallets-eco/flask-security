@@ -689,7 +689,7 @@ def us_verify_link() -> "ResponseValue":
     code = request.args.get("code", None)
     if not fs_uniquifier or not code:
         m, c = get_message("API_ERROR")
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
@@ -700,7 +700,7 @@ def us_verify_link() -> "ResponseValue":
             m, c = generic_message("USER_DOES_NOT_EXIST", "GENERIC_AUTHN_FAILED")
         else:
             m, c = generic_message("DISABLED_ACCOUNT", "GENERIC_AUTHN_FAILED")
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("us_signin"))
@@ -713,7 +713,7 @@ def us_verify_link() -> "ResponseValue":
         window=cv("US_TOKEN_VALIDITY"),
     ):
         m, c = generic_message("INVALID_CODE", "GENERIC_AUTHN_FAILED")
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
                 get_url(
                     cv("LOGIN_ERROR_VIEW"),
@@ -735,7 +735,7 @@ def us_verify_link() -> "ResponseValue":
         # isn't quite ready for SPA. So we return an error via a redirect rather
         # than mess up SPA applications. To be clear - this simply doesn't
         # work - using a magic link w/ 2FA - need to use code.
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
                 get_url(
                     cv("LOGIN_ERROR_VIEW"),
@@ -750,7 +750,7 @@ def us_verify_link() -> "ResponseValue":
 
     login_user(user, authn_via=["email"])
     after_this_request(view_commit)
-    if _security.redirect_behavior == "spa":
+    if cv("REDIRECT_BEHAVIOR") == "spa":
         # We do NOT send the authentication token here since the only way to
         # send it would be via a query param and that isn't secure. (logging and
         # possibly HTTP Referer header).

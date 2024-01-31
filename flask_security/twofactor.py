@@ -8,6 +8,8 @@
     :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
 """
 
+from __future__ import annotations
+
 import typing as t
 
 from flask import current_app, redirect, request, session
@@ -121,7 +123,7 @@ def complete_two_factor_process(user, primary_method, totp_secret, is_changing):
     return completion_message, token
 
 
-def set_rescue_options(form: TwoFactorRescueForm, user: "User") -> t.Dict[str, str]:
+def set_rescue_options(form: TwoFactorRescueForm, user: User) -> t.Dict[str, str]:
     # Based on config - set up options for rescue.
     # Note that this modifies the passed in Form as well as returns
     # a dict that can be returned as part of a JSON response.
@@ -165,22 +167,22 @@ def is_tf_setup(user):
 
 
 class CodeTfPlugin(TfPluginBase):
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         super().__init__(app)
 
     def create_blueprint(
-        self, app: "flask.Flask", bp: "flask.Blueprint", state: "Security"
+        self, app: flask.Flask, bp: flask.Blueprint, state: Security
     ) -> None:
         pass
 
-    def get_setup_methods(self, user: "User") -> t.List[t.Optional[str]]:
+    def get_setup_methods(self, user: User) -> t.List[t.Optional[str]]:
         if is_tf_setup(user):
             return [user.tf_primary_method]
         return []
 
     def tf_login(
-        self, user: "User", json_payload: t.Dict[str, t.Any], next_loc: t.Optional[str]
-    ) -> "ResponseValue":
+        self, user: User, json_payload: t.Dict[str, t.Any], next_loc: t.Optional[str]
+    ) -> ResponseValue:
         """Helper for two-factor authentication login
 
         This is called only when login/password have already been validated.

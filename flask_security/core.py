@@ -11,6 +11,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 import importlib
@@ -118,7 +120,7 @@ AUTHN_MECHANISMS = ("basic", "session", "token")
 
 
 #: Default Flask-Security configuration
-_default_config: t.Dict[str, t.Any] = {
+_default_config: dict[str, t.Any] = {
     "ANONYMOUS_USER_DISABLED": False,
     "BLUEPRINT_NAME": "security",
     "CLI_ROLES_NAME": "roles",
@@ -604,7 +606,7 @@ _default_messages = {
 
 
 def _default_form_instantiator(
-    name: str, cls: t.Type[Form], *args: t.Any, **kwargs: t.Dict[str, t.Any]
+    name: str, cls: t.Type[Form], *args: t.Any, **kwargs: dict[str, t.Any]
 ) -> Form:
     return cls(*args, **kwargs)
 
@@ -634,7 +636,7 @@ class FormInfo:
     """
 
     instantiator: t.Callable[..., Form] = _default_form_instantiator
-    cls: t.Optional[t.Type[Form]] = None
+    cls: t.Type[Form] | None = None
 
 
 def _user_loader(user_id):
@@ -655,8 +657,8 @@ def _request_loader(request):
     if get_request_attr("fs_authn_via") == "token":
         return g._login_user
 
-    header_key = _security.token_authentication_header
-    args_key = _security.token_authentication_key
+    header_key = cv("TOKEN_AUTHENTICATION_HEADER")
+    args_key = cv("TOKEN_AUTHENTICATION_KEY")
     header_token = request.headers.get(header_key, None)
     token = request.args.get(args_key, header_token)
     if request.is_json:
@@ -666,7 +668,7 @@ def _request_loader(request):
 
     try:
         data = _security.remember_token_serializer.loads(
-            token, max_age=_security.token_max_age
+            token, max_age=cv("TOKEN_MAX_AGE")
         )
 
         # Version 3.x generated tokens that map to data with 3 elements,
@@ -746,7 +748,7 @@ def _get_principal(app):
     return p
 
 
-def _get_pwd_context(app: "flask.Flask") -> CryptContext:
+def _get_pwd_context(app: flask.Flask) -> CryptContext:
     pw_hash = cv("PASSWORD_HASH", app=app)
     schemes = cv("PASSWORD_SCHEMES", app=app)
     deprecated = cv("DEPRECATED_PASSWORD_SCHEMES", app=app)
@@ -764,7 +766,7 @@ def _get_pwd_context(app: "flask.Flask") -> CryptContext:
     return cc
 
 
-def _get_hashing_context(app: "flask.Flask") -> CryptContext:
+def _get_hashing_context(app: flask.Flask) -> CryptContext:
     schemes = cv("HASHING_SCHEMES", app=app)
     deprecated = cv("DEPRECATED_HASHING_SCHEMES", app=app)
     return CryptContext(schemes=schemes, deprecated=deprecated)
@@ -790,7 +792,7 @@ class RoleMixin:
     if t.TYPE_CHECKING:  # pragma: no cover
 
         def __init__(self) -> None:
-            self.permissions: t.Optional[t.List[str]]
+            self.permissions: list[str] | None
 
     def __eq__(self, other):
         return self.name == other or self.name == getattr(other, "name", None)
@@ -828,7 +830,7 @@ class UserMixin(BaseUserMixin):
         """Returns `True` if the user is active."""
         return self.active
 
-    def get_auth_token(self) -> t.Union[str, bytes]:
+    def get_auth_token(self) -> str | bytes:
         """Constructs the user's authentication token.
 
         :raises ValueError: If ``fs_token_uniquifier`` is part of model but not set.
@@ -851,7 +853,7 @@ class UserMixin(BaseUserMixin):
             data = [str(self.fs_uniquifier)]
         return _security.remember_token_serializer.dumps(data)
 
-    def verify_auth_token(self, data: t.Union[str, bytes]) -> bool:
+    def verify_auth_token(self, data: str | bytes) -> bool:
         """
         Perform additional verification of contents of auth token.
         Prior to this being called the token has been validated (via signing)
@@ -880,7 +882,7 @@ class UserMixin(BaseUserMixin):
 
         return data[uniquifier_index] == self.fs_uniquifier
 
-    def has_role(self, role: t.Union[str, "Role"]) -> bool:
+    def has_role(self, role: str | Role) -> bool:
         """Returns `True` if the user identifies with the specified role.
 
         :param role: A role name or `Role` instance"""
@@ -911,8 +913,8 @@ class UserMixin(BaseUserMixin):
         return {}
 
     def get_redirect_qparams(
-        self, existing: t.Optional[t.Dict[str, t.Any]] = None
-    ) -> t.Dict[str, t.Any]:
+        self, existing: dict[str, t.Any] | None = None
+    ) -> dict[str, t.Any]:
         """Return user info that will be added to redirect query params.
 
         :param existing: A dict that will be updated.
@@ -967,7 +969,7 @@ class UserMixin(BaseUserMixin):
                 break
         return str(cusername) if cusername is not None else ""
 
-    def us_send_security_token(self, method: str, **kwargs: t.Any) -> t.Optional[str]:
+    def us_send_security_token(self, method: str, **kwargs: t.Any) -> str | None:
         """Generate and send the security code for unified sign in.
 
         :param method: The method in which the code will be sent
@@ -985,7 +987,7 @@ class UserMixin(BaseUserMixin):
             return get_message("FAILED_TO_SEND_CODE")[0]
         return None
 
-    def tf_send_security_token(self, method: str, **kwargs: t.Any) -> t.Optional[str]:
+    def tf_send_security_token(self, method: str, **kwargs: t.Any) -> str | None:
         """Generate and send the security code for two-factor.
 
         :param method: The method in which the code will be sent
@@ -1005,7 +1007,7 @@ class UserMixin(BaseUserMixin):
 
 
 class WebAuthnMixin:
-    def get_user_mapping(self) -> t.Dict[str, t.Any]:
+    def get_user_mapping(self) -> dict[str, t.Any]:
         """
         Return the filter needed by find_user() to get the user
         associated with this webauthn credential.
@@ -1129,8 +1131,8 @@ class Security:
 
     def __init__(
         self,
-        app: t.Optional["flask.Flask"] = None,
-        datastore: t.Optional["UserDatastore"] = None,
+        app: flask.Flask | None = None,
+        datastore: UserDatastore | None = None,
         register_blueprint: bool = True,
         login_form: t.Type[LoginForm] = LoginForm,
         verify_form: t.Type[VerifyForm] = VerifyForm,
@@ -1165,15 +1167,15 @@ class Security:
         ] = WebAuthnSigninResponseForm,
         wan_delete_form: t.Type[WebAuthnDeleteForm] = WebAuthnDeleteForm,
         wan_verify_form: t.Type[WebAuthnVerifyForm] = WebAuthnVerifyForm,
-        mail_util_cls: t.Type["MailUtil"] = MailUtil,
-        password_util_cls: t.Type["PasswordUtil"] = PasswordUtil,
-        phone_util_cls: t.Type["PhoneUtil"] = PhoneUtil,
+        mail_util_cls: t.Type[MailUtil] = MailUtil,
+        password_util_cls: t.Type[PasswordUtil] = PasswordUtil,
+        phone_util_cls: t.Type[PhoneUtil] = PhoneUtil,
         render_template: t.Callable[..., str] = default_render_template,
-        totp_cls: t.Type["Totp"] = Totp,
-        username_util_cls: t.Type["UsernameUtil"] = UsernameUtil,
-        webauthn_util_cls: t.Type["WebauthnUtil"] = WebauthnUtil,
-        mf_recovery_codes_util_cls: t.Type["MfRecoveryCodesUtil"] = MfRecoveryCodesUtil,
-        oauth: t.Optional["OAuth"] = None,
+        totp_cls: t.Type[Totp] = Totp,
+        username_util_cls: t.Type[UsernameUtil] = UsernameUtil,
+        webauthn_util_cls: t.Type[WebauthnUtil] = WebauthnUtil,
+        mf_recovery_codes_util_cls: t.Type[MfRecoveryCodesUtil] = MfRecoveryCodesUtil,
+        oauth: OAuth | None = None,
         **kwargs: t.Any,
     ):
         # to be nice and hopefully avoid backwards compat issues - we still accept
@@ -1229,20 +1231,18 @@ class Security:
         }
 
         # Attributes not settable from init.
-        self._unauthn_handler: t.Callable[..., "ResponseValue"] = (
-            default_unauthn_handler
-        )
-        self._reauthn_handler: t.Callable[[timedelta, timedelta], "ResponseValue"] = (
+        self._unauthn_handler: t.Callable[..., ResponseValue] = default_unauthn_handler
+        self._reauthn_handler: t.Callable[[timedelta, timedelta], ResponseValue] = (
             default_reauthn_handler
         )
-        self._unauthz_handler: t.Callable[
-            [str, t.Optional[t.List[str]]], "ResponseValue"
-        ] = default_unauthz_handler
+        self._unauthz_handler: t.Callable[[str, list[str] | None], ResponseValue] = (
+            default_unauthz_handler
+        )
         self._render_json: t.Callable[
-            [t.Dict[str, t.Any], int, t.Optional[t.Dict[str, str]], t.Optional["User"]],
-            "ResponseValue",
+            [dict[str, t.Any], int, dict[str, str] | None, User | None],
+            ResponseValue,
         ] = default_render_json
-        self._want_json: t.Callable[["Request"], bool] = default_want_json
+        self._want_json: t.Callable[[Request], bool] = default_want_json
 
         # Type attributes that we don't initialize until init_app time.
         self.remember_token_serializer: URLSafeTimedSerializer
@@ -1255,26 +1255,25 @@ class Security:
         self.principal: Principal
         self.pwd_context: CryptContext
         self.hashing_context: CryptContext
-        self._context_processors: t.Dict[
-            str, t.List[t.Callable[[], t.Dict[str, t.Any]]]
-        ] = {}
+        self._context_processors: dict[str, list[t.Callable[[], dict[str, t.Any]]]] = {}
         self.i18n_domain: FsDomain
-        self.datastore: "UserDatastore"
+        self.datastore: UserDatastore
         self.register_blueprint: bool
         self.two_factor_plugins: TfPlugin
-        self.oauthglue: t.Optional[OAuthGlue] = None
-        self.datetime_factory: t.Callable[[], datetime]
+        self.oauthglue: OAuthGlue | None = None
+        self.datetime_factory: t.Callable[[], datetime] = (
+            naive_utcnow  # can be changed in init_app()
+        )
 
-        self.login_manager: "flask_login.LoginManager"
+        self.login_manager: flask_login.LoginManager
         self._mail_util: MailUtil
         self._phone_util: PhoneUtil
         self._password_util: PasswordUtil
-        self._totp_factory: "Totp"
+        self._totp_factory: Totp
         self._username_util: UsernameUtil
         self._mf_recovery_codes_util: MfRecoveryCodesUtil
 
-        # We add forms, config etc. as attributes - which of course mypy knows
-        # nothing about. Add necessary attributes here to keep mypy happy
+        # Add necessary attributes here to keep mypy happy
         self.trackable: bool = False
         self.confirmable: bool = False
         self.registerable: bool = False
@@ -1285,19 +1284,6 @@ class Security:
         self.passwordless: bool = False
         self.webauthn: bool = False
 
-        # Redirect URLs (we should stop setting these attributes and use CV)
-        self.login_error_view: str = ""
-        self.post_change_view: str = ""
-        self.post_login_view: str = ""
-        self.post_reset_view: str = ""
-        self.reset_view: str = ""
-        self.reset_error_view: str = ""
-        self.requires_confirmation_error_view: str = ""
-        self.two_factor_error_view: str = ""
-        self.post_confirm_view: str = ""
-        self.confirm_error_view: str = ""
-
-        self.redirect_behavior: t.Optional[str] = None
         self.support_mfa: bool = False
 
         if app is not None and datastore is not None:
@@ -1305,9 +1291,9 @@ class Security:
 
     def init_app(
         self,
-        app: "flask.Flask",
-        datastore: t.Optional["UserDatastore"] = None,
-        register_blueprint: t.Optional[bool] = None,
+        app: flask.Flask,
+        datastore: UserDatastore | None = None,
+        register_blueprint: bool | None = None,
         **kwargs: t.Any,
     ) -> None:
         """Initializes the Flask-Security extension for the specified
@@ -1316,8 +1302,9 @@ class Security:
         :param app: The application.
         :param datastore: An instance of a user datastore.
         :param register_blueprint: to register the Security blueprint or not.
-        :param kwargs: Can be used to override/initialize any of the constructor
-            attributes.
+        :param kwargs: Can be used to override/initialize any of the form names,
+            flags, and utility classes.
+            All other kwargs are ignored.
 
         If you create the Security instance with both an 'app' and 'datastore'
         you shouldn't call this - it will be called as part of the constructor.
@@ -1386,22 +1373,31 @@ class Security:
             if form_cls:
                 self.forms[form_name].cls = form_cls
 
-        # BC - Allow kwargs to overwrite/init other constructor attributes
+        # The following will be set as attributes and initialized from either
+        # kwargs or config.
         attr_names = [
+            "trackable",
+            "registerable",
+            "confirmable",
+            "changeable",
+            "recoverable",
+            "two_factor",
+            "unified_signin",
+            "passwordless",
+            "webauthn",
             "mail_util_cls",
             "password_util_cls",
             "phone_util_cls",
             "render_template",
             "totp_cls",
+            "webauthn_util_cls",
         ]
         for attr in attr_names:
             if kwargs.get(attr, None):
                 setattr(self, attr, kwargs.get(attr))
 
-        # set all (SECURITY) config items as attributes (minus the SECURITY_ prefix)
         for key, value in get_config(app).items():
-            # need to start getting rid of this - very confusing.
-            if not key.endswith("_URL"):
+            if key.lower() in attr_names:
                 setattr(self, key.lower(), value)
 
         identity_loaded.connect_via(app)(_on_identity_loaded)
@@ -1457,13 +1453,6 @@ class Security:
         if cv("AUTO_LOGIN_AFTER_RESET", app=app):
             warnings.warn(
                 "The auto-login after successful password reset functionality"
-                " has been deprecated and will be removed in a future release.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        if cv("AUTO_LOGIN_AFTER_CONFIRM", app=app):
-            warnings.warn(
-                "The auto-login after successful confirmation functionality"
                 " has been deprecated and will be removed in a future release.",
                 DeprecationWarning,
                 stacklevel=2,
@@ -1749,8 +1738,8 @@ class Security:
     def render_json(
         self,
         cb: t.Callable[
-            [t.Dict[str, t.Any], int, t.Optional[t.Dict[str, str]], t.Optional["User"]],
-            "ResponseValue",
+            [dict[str, t.Any], int, dict[str, str] | None, User | None],
+            ResponseValue,
         ],
     ) -> None:
         """Callback to render response payload as JSON.
@@ -1785,7 +1774,7 @@ class Security:
         """
         self._render_json = cb
 
-    def want_json(self, fn: t.Callable[["flask.Request"], bool]) -> None:
+    def want_json(self, fn: t.Callable[[flask.Request], bool]) -> None:
         """Function that returns True if response should be JSON (based on the request)
 
         :param fn: Function with the following signature (request)
@@ -1801,7 +1790,7 @@ class Security:
 
     def unauthz_handler(
         self,
-        cb: t.Callable[[str, t.Optional[t.List[str]]], "ResponseValue"],
+        cb: t.Callable[[str, list[str] | None], ResponseValue],
     ) -> None:
         """
         Callback for failed authorization.
@@ -1830,7 +1819,7 @@ class Security:
 
     def unauthn_handler(
         self,
-        cb: t.Callable[[t.List[str], t.Optional[t.Dict[str, str]]], "ResponseValue"],
+        cb: t.Callable[[list[str], dict[str, str] | None], ResponseValue],
     ) -> None:
         """
         Callback for failed authentication.
@@ -1858,7 +1847,7 @@ class Security:
         self._unauthn_handler = cb
 
     def reauthn_handler(
-        self, cb: t.Callable[[timedelta, timedelta], "ResponseValue"]
+        self, cb: t.Callable[[timedelta, timedelta], ResponseValue]
     ) -> None:
         """
         Callback when endpoint required a fresh authentication.
@@ -1886,112 +1875,100 @@ class Security:
         self._reauthn_handler = cb
 
     def _add_ctx_processor(
-        self, endpoint: str, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, endpoint: str, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         group = self._context_processors.setdefault(endpoint, [])
         if fn not in group:
             group.append(fn)
 
-    def _run_ctx_processor(self, endpoint: str) -> t.Dict[str, t.Any]:
-        rv: t.Dict[str, t.Any] = {}
+    def _run_ctx_processor(self, endpoint: str) -> dict[str, t.Any]:
+        rv: dict[str, t.Any] = {}
         for gl in ["global", endpoint]:
             for fn in self._context_processors.setdefault(gl, []):
                 rv.update(fn())
         return rv
 
-    def context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+    def context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("global", fn)
 
     def forgot_password_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("forgot_password", fn)
 
-    def login_context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+    def login_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("login", fn)
 
-    def register_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
-    ) -> None:
+    def register_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("register", fn)
 
     def reset_password_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("reset_password", fn)
 
     def change_password_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("change_password", fn)
 
     def send_confirmation_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("send_confirmation", fn)
 
     def send_login_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("send_login", fn)
 
-    def verify_context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+    def verify_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("verify", fn)
 
-    def mail_context_processor(self, fn: t.Callable[[], t.Dict[str, t.Any]]) -> None:
+    def mail_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("mail", fn)
 
-    def tf_setup_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
-    ) -> None:
+    def tf_setup_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("tf_setup", fn)
 
     def tf_token_validation_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("tf_token_validation", fn)
 
-    def tf_select_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
-    ) -> None:
+    def tf_select_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("tf_select", fn)
 
-    def us_signin_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
-    ) -> None:
+    def us_signin_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("us_signin", fn)
 
-    def us_setup_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
-    ) -> None:
+    def us_setup_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("us_setup", fn)
 
-    def us_verify_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
-    ) -> None:
+    def us_verify_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("us_verify", fn)
 
     def wan_register_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("wan_register", fn)
 
     def wan_signin_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("wan_signin", fn)
 
     def wan_verify_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("wan_verify", fn)
 
     def mf_recovery_codes_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("mf_recovery_codes", fn)
 
     def mf_recovery_context_processor(
-        self, fn: t.Callable[[], t.Dict[str, t.Any]]
+        self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("mf_recovery", fn)
