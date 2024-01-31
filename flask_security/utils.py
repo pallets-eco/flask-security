@@ -522,7 +522,7 @@ def transform_url(
 
 
 def get_security_endpoint_name(endpoint):
-    return f"{_security.blueprint_name}.{endpoint}"
+    return f"{config_value('BLUEPRINT_NAME')}.{endpoint}"
 
 
 def url_for_security(endpoint: str, **values: t.Any) -> str:
@@ -769,7 +769,7 @@ def send_mail(subject, recipient, template, **context):
 
     subject = localize_callback(subject)
 
-    sender = _security.email_sender
+    sender = config_value("EMAIL_SENDER")
     if isinstance(sender, LocalProxy):
         sender = sender._get_current_object()
 
@@ -949,7 +949,7 @@ def use_double_hash(password_hash=None):
     single_hash = config_value("PASSWORD_SINGLE_HASH") or {"plaintext"}
 
     if password_hash is None:
-        scheme = _security.password_hash
+        scheme = config_value("PASSWORD_HASH")
     else:
         scheme = _pwd_context.identify(password_hash)
 

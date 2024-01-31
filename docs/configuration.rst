@@ -1,6 +1,10 @@
 Configuration
 =============
 
+.. warning::
+    Be sure to set all configuration (in app.config["xxx"]) *PRIOR* to instantiating
+    the Security class or calling security.init_app().
+
 The following configuration values are used by Flask-Security:
 
 Core
@@ -916,11 +920,11 @@ Confirmable
 
     If ``True``, then the user corresponding to the confirmation token will be automatically signed in.
     If ``False`` (the default) then the user will be requires to authenticate using the usual mechanism(s).
-    Note that the confirmation token is not valid after being used once.
+    Note that the confirmation token is not valid after being used once. This is not recommended by OWASP
+    however an application that is by invite only (no self-registration) might find this useful.
 
     Default: ``False``.
 
-    .. deprecated:: 5.3.0
 .. py:data:: SECURITY_LOGIN_WITHOUT_CONFIRMATION
 
     Specifies if a user may login before confirming their email when

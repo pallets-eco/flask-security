@@ -981,7 +981,7 @@ def test_verifying_token_from_version_3x(in_app_context):
         token = get_auth_token_version_3x(app, user)
 
         data = app.security.remember_token_serializer.loads(
-            token, max_age=app.security.token_max_age
+            token, max_age=app.config["SECURITY_TOKEN_MAX_AGE"]
         )
 
         assert user.verify_auth_token(data) is True

@@ -15,7 +15,7 @@ from flask import current_app
 from .proxies import _security, _datastore
 from .signals import confirm_instructions_sent, user_confirmed
 from .utils import (
-    config_value,
+    config_value as cv,
     get_token_status,
     hash_data,
     send_mail,
@@ -38,7 +38,7 @@ def send_confirmation_instructions(user):
     confirmation_link, token = generate_confirmation_link(user)
 
     send_mail(
-        config_value("EMAIL_SUBJECT_CONFIRM"),
+        cv("EMAIL_SUBJECT_CONFIRM"),
         user.email,
         "confirmation_instructions",
         user=user,
@@ -68,7 +68,7 @@ def requires_confirmation(user):
     """Returns `True` if the user requires confirmation."""
     return (
         _security.confirmable
-        and not _security.login_without_confirmation
+        and not cv("LOGIN_WITHOUT_CONFIRMATION")
         and user.confirmed_at is None
     )
 

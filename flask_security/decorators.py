@@ -27,7 +27,7 @@ from .proxies import _security, DecoratedView
 from .signals import user_unauthenticated
 from .utils import (
     FsPermNeed,
-    config_value,
+    config_value as cv,
     do_flash,
     get_message,
     get_url,
@@ -80,7 +80,7 @@ def default_unauthn_handler(mechanisms=None, headers=None):
     headers = headers or {}
     m, c = get_message("UNAUTHENTICATED")
 
-    if config_value("BACKWARDS_COMPAT_UNAUTHN"):
+    if cv("BACKWARDS_COMPAT_UNAUTHN"):
         return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
         payload = json_error_response(errors=m)
@@ -112,16 +112,16 @@ def default_reauthn_handler(within, grace):
     if _security._want_json(request):
         from .webauthn import has_webauthn
 
-        is_us = config_value("UNIFIED_SIGNIN")
+        is_us = cv("UNIFIED_SIGNIN")
         payload = json_error_response(errors=m)
         payload["reauth_required"] = True
         payload["unified_signin_enabled"] = is_us
         payload["has_webauthn_verify_credential"] = has_webauthn(
-            current_user, config_value("WAN_ALLOW_AS_VERIFY")
+            current_user, cv("WAN_ALLOW_AS_VERIFY")
         )
         return _security._render_json(payload, 401, None, None)
 
-    view = "us_verify" if config_value("UNIFIED_SIGNIN") else "verify"
+    view = "us_verify" if cv("UNIFIED_SIGNIN") else "verify"
     do_flash(m, c)
     # Simplify the original URL to be relative (if possible) and set as 'next' parameter
     view_url = url_for_security(view, _external=True)
@@ -135,7 +135,7 @@ def default_unauthz_handler(func_name, params):
     if _security._want_json(request):
         payload = json_error_response(errors=unauthz_message)
         return _security._render_json(payload, 403, None, None)
-    view = config_value("UNAUTHORIZED_VIEW")
+    view = cv("UNAUTHORIZED_VIEW")
     if view:
         if callable(view):
             view = view()
@@ -246,8 +246,8 @@ def handle_csrf(method: str, json_response: bool = False) -> ResponseValue | Non
     ):
         return None
 
-    if config_value("CSRF_PROTECT_MECHANISMS"):
-        if method in config_value("CSRF_PROTECT_MECHANISMS"):
+    if cv("CSRF_PROTECT_MECHANISMS"):
+        if method in cv("CSRF_PROTECT_MECHANISMS"):
             try:
                 _csrf.protect()  # type: ignore
             except CSRFError as e:
@@ -280,7 +280,7 @@ def http_auth_required(realm: t.Any) -> DecoratedView:
                     return eresponse
                 set_request_attr("fs_authn_via", "basic")
                 return current_app.ensure_sync(fn)(*args, **kwargs)
-            r = _security.default_http_auth_realm if callable(realm) else realm
+            r = cv("DEFAULT_HTTP_AUTH_REALM") if callable(realm) else realm
             h = {"WWW-Authenticate": f'Basic realm="{r}"'}
             return _security._unauthn_handler(["basic"], headers=h)
 
@@ -399,7 +399,7 @@ def auth_required(
             else:
                 within = datetime.timedelta(minutes=within)
             if grace is None:
-                grace = config_value("FRESHNESS_GRACE_PERIOD")
+                grace = cv("FRESHNESS_GRACE_PERIOD")
             elif callable(grace):
                 grace = grace()
             else:
@@ -417,7 +417,7 @@ def auth_required(
 
             h = {}
             if "basic" in ams:
-                r = _security.default_http_auth_realm
+                r = cv("DEFAULT_HTTP_AUTH_REALM")
                 h["WWW-Authenticate"] = f'Basic realm="{r}"'
             mechanisms = [
                 (method, login_mechanisms.get(method))
@@ -480,9 +480,9 @@ def unauth_csrf(
             ) or not current_app.extensions.get("csrf", None):
                 return current_app.ensure_sync(fn)(*args, **kwargs)
 
-            if config_value(
-                "CSRF_IGNORE_UNAUTH_ENDPOINTS"
-            ) and not is_user_authenticated(current_user):
+            if cv("CSRF_IGNORE_UNAUTH_ENDPOINTS") and not is_user_authenticated(
+                current_user
+            ):
                 set_request_attr("fs_ignore_csrf", True)
             else:
                 try:
@@ -646,7 +646,7 @@ def anonymous_user_required(f: DecoratedView) -> DecoratedView:
                 )
                 return _security._render_json(payload, 400, None, None)
             else:
-                return redirect(get_url(_security.post_login_view))
+                return redirect(get_url(cv("POST_LOGIN_VIEW")))
         return current_app.ensure_sync(f)(*args, **kwargs)
 
     return t.cast(DecoratedView, wrapper)

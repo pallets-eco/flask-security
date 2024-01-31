@@ -50,6 +50,7 @@ from .confirmable import (
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
     _setup_methods_xlate,
+    ChangePasswordForm,
     DummyForm,
     ForgotPasswordForm,
     LoginForm,
@@ -377,19 +378,17 @@ def token_login(token):
 
     if not user or invalid:
         m, c = get_message("INVALID_LOGIN_TOKEN")
-        if _security.redirect_behavior == "spa":
-            return redirect(get_url(_security.login_error_view, qparams={c: m}))
+        if cv("REDIRECT_BEHAVIOR") == "spa":
+            return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("login"))
     if expired:
         send_login_instructions(user)
-        m, c = get_message(
-            "LOGIN_EXPIRED", email=user.email, within=_security.login_within
-        )
-        if _security.redirect_behavior == "spa":
+        m, c = get_message("LOGIN_EXPIRED", email=user.email, within=cv("LOGIN_WITHIN"))
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
                 get_url(
-                    _security.login_error_view,
+                    cv("LOGIN_ERROR_VIEW"),
                     qparams=user.get_redirect_qparams({c: m}),
                 )
             )
@@ -398,9 +397,9 @@ def token_login(token):
 
     login_user(user, authn_via=["token"])
     after_this_request(view_commit)
-    if _security.redirect_behavior == "spa":
+    if cv("REDIRECT_BEHAVIOR") == "spa":
         return redirect(
-            get_url(_security.post_login_view, qparams=user.get_redirect_qparams())
+            get_url(cv("POST_LOGIN_VIEW"), qparams=user.get_redirect_qparams())
         )
 
     do_flash(*get_message("PASSWORDLESS_LOGIN_SUCCESSFUL"))
@@ -458,31 +457,29 @@ def confirm_email(token):
             )
         else:
             m, c = get_message("INVALID_CONFIRMATION_TOKEN")
-        if _security.redirect_behavior == "spa":
-            return redirect(get_url(_security.confirm_error_view, qparams={c: m}))
+        if cv("REDIRECT_BEHAVIOR") == "spa":
+            return redirect(get_url(cv("CONFIRM_ERROR_VIEW"), qparams={c: m}))
         do_flash(m, c)
         return redirect(
-            get_url(_security.confirm_error_view)
-            or url_for_security("send_confirmation")
+            get_url(cv("CONFIRM_ERROR_VIEW")) or url_for_security("send_confirmation")
         )
 
     already_confirmed = user.confirmed_at is not None
     if already_confirmed:
         m, c = get_message("ALREADY_CONFIRMED")
 
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             # No reason to expose identity info to anyone who has the link
             return redirect(
                 get_url(
-                    _security.confirm_error_view,
+                    cv("CONFIRM_ERROR_VIEW"),
                     qparams={c: m},
                 )
             )
 
         do_flash(m, c)
         return redirect(
-            get_url(_security.confirm_error_view)
-            or url_for_security("send_confirmation")
+            get_url(cv("CONFIRM_ERROR_VIEW")) or url_for_security("send_confirmation")
         )
 
     confirm_user(user)
@@ -507,18 +504,18 @@ def confirm_email(token):
                 return response
             login_user(user, authn_via=["confirm"])
 
-    if _security.redirect_behavior == "spa":
+    if cv("REDIRECT_BEHAVIOR") == "spa":
         return redirect(
             get_url(
-                _security.post_confirm_view,
+                cv("POST_CONFIRM_VIEW"),
                 qparams=user.get_redirect_qparams({c: m}),
             )
         )
     do_flash(m, c)
     return redirect(
-        get_url(_security.post_confirm_view)
+        get_url(cv("POST_CONFIRM_VIEW"))
         or get_url(
-            _security.post_login_view if cv("AUTO_LOGIN_AFTER_CONFIRM") else ".login"
+            cv("POST_LOGIN_VIEW") if cv("AUTO_LOGIN_AFTER_CONFIRM") else ".login"
         )
     )
 
@@ -553,13 +550,13 @@ def forgot_password():
 
     if (
         form.requires_confirmation
-        and _security.requires_confirmation_error_view
+        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
         and not cv("RETURN_GENERIC_RESPONSES")
     ):
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
         return redirect(
             get_url(
-                _security.requires_confirmation_error_view,
+                cv("REQUIRES_CONFIRMATION_ERROR_VIEW"),
                 qparams={"email": form.email.data},
             )
         )
@@ -603,8 +600,8 @@ def reset_password(token):
                 )
             else:
                 m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
-            if _security.redirect_behavior == "spa":
-                return redirect(get_url(_security.reset_error_view, qparams={c: m}))
+            if cv("REDIRECT_BEHAVIOR") == "spa":
+                return redirect(get_url(cv("RESET_ERROR_VIEW"), qparams={c: m}))
             do_flash(m, c)
             return redirect(url_for_security("forgot_password"))
 
@@ -612,10 +609,10 @@ def reset_password(token):
         # Still - don't include PII such as identity and email if someone
         # intercepts link they still won't necessarily know the login identity
         # (even though they can change the password!).
-        if _security.redirect_behavior == "spa":
+        if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
                 get_url(
-                    _security.reset_view,
+                    cv("RESET_VIEW"),
                     qparams={"token": token},
                 )
             )
@@ -662,15 +659,14 @@ def reset_password(token):
             else:
                 do_flash(*get_message("PASSWORD_RESET"))
                 return redirect(
-                    get_url(_security.post_reset_view)
-                    or get_url(_security.post_login_view)
+                    get_url(cv("POST_RESET_VIEW")) or get_url(cv("POST_LOGIN_VIEW"))
                 )
         else:
             if _security._want_json(request):
                 return _security._render_json({}, 200, None, None)
             else:
                 do_flash(*get_message("PASSWORD_RESET_NO_LOGIN"))
-                return redirect(get_url(_security.post_reset_view) or get_url(".login"))
+                return redirect(get_url(cv("POST_RESET_VIEW")) or get_url(".login"))
 
     # validation failure case - for forms - we try again including the token
     # for non-forms -  we just return errors and assume caller remembers token.
@@ -687,7 +683,7 @@ def reset_password(token):
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def change_password():
     """View function which handles a change password request."""
-    form = build_form_from_request("change_password_form")
+    form = t.cast(ChangePasswordForm, build_form_from_request("change_password_form"))
 
     if not current_user.password:
         # This is case where user registered w/o a password - since we can't
@@ -711,7 +707,7 @@ def change_password():
 
         do_flash(*get_message("PASSWORD_CHANGE"))
         return redirect(
-            get_url(_security.post_change_view) or get_url(_security.post_login_view)
+            get_url(cv("POST_CHANGE_VIEW")) or get_url(cv("POST_LOGIN_VIEW"))
         )
 
     active_password = True if current_user.password else False
@@ -1075,18 +1071,20 @@ def create_blueprint(app, state, import_name):
     """Creates the security extension blueprint"""
 
     bp = Blueprint(
-        state.blueprint_name,
+        cv("BLUEPRINT_NAME", app=app),
         import_name,
-        url_prefix=state.url_prefix,
-        subdomain=state.subdomain,
+        url_prefix=cv("URL_PREFIX", app=app),
+        subdomain=cv("SUBDOMAIN", app=app),
         template_folder="templates",
         static_folder=cv("STATIC_FOLDER", app),
         static_url_path=cv("STATIC_FOLDER_URL", app),
     )
 
-    if state.logout_methods is not None:
+    if cv("LOGOUT_METHODS", app=app) is not None:
         bp.route(
-            cv("LOGOUT_URL", app=app), methods=state.logout_methods, endpoint="logout"
+            cv("LOGOUT_URL", app=app),
+            methods=cv("LOGOUT_METHODS", app=app),
+            endpoint="logout",
         )(logout)
 
     login_url = cv("LOGIN_URL", app=app)
