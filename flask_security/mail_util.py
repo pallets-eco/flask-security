@@ -126,9 +126,8 @@ class MailUtil:
         Will throw email_validator.EmailNotValidError (ValueError)
         if email isn't syntactically valid.
         """
-        validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {
-            "check_deliverability": False
-        }
+        validator_args = config_value("EMAIL_VALIDATOR_ARGS")
+        validator_args["check_deliverability"] = False
         valid = email_validator.validate_email(email, **validator_args)
         return valid.normalized
 
