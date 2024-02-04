@@ -590,33 +590,35 @@ def validate_redirect_url(url: str) -> bool:
     return True
 
 
-def get_post_action_redirect(config_key: str) -> str:
+def get_post_action_redirect(
+    config_key: str, next_loc: FlaskForm | MultiDict | dict | None
+) -> str:
     """
     There is a security angle here - the result of this method is
     sent to Flask::redirect() - and we need to be sure that it can't be
     interpreted as a user-input external URL - that would mean we would
     have an 'open-redirect' vulnerability.
     """
-    rurl = propagate_next(find_redirect(config_key), request.form)
+    rurl = propagate_next(find_redirect(config_key), next_loc)
     (scheme, netloc, path, query, fragment) = urlsplit(rurl)
     safe_url = urlunsplit((scheme, netloc, quote(path), query, fragment))
     return safe_url
 
 
 def get_post_login_redirect() -> str:
-    return get_post_action_redirect("SECURITY_POST_LOGIN_VIEW")
+    return get_post_action_redirect("SECURITY_POST_LOGIN_VIEW", request.form)
 
 
 def get_post_register_redirect() -> str:
-    return get_post_action_redirect("SECURITY_POST_REGISTER_VIEW")
+    return get_post_action_redirect("SECURITY_POST_REGISTER_VIEW", request.form)
 
 
 def get_post_logout_redirect() -> str:
-    return get_post_action_redirect("SECURITY_POST_LOGOUT_VIEW")
+    return get_post_action_redirect("SECURITY_POST_LOGOUT_VIEW", request.form)
 
 
 def get_post_verify_redirect() -> str:
-    return get_post_action_redirect("SECURITY_POST_VERIFY_VIEW")
+    return get_post_action_redirect("SECURITY_POST_VERIFY_VIEW", request.form)
 
 
 def find_redirect(key: str) -> str:
@@ -632,15 +634,14 @@ def find_redirect(key: str) -> str:
     return rv
 
 
-def propagate_next(
-    fallback_url: str, form: t.Optional[t.Union[FlaskForm, MultiDict]]
-) -> str:
+def propagate_next(fallback_url: str, form: FlaskForm | MultiDict | dict | None) -> str:
     """Compute appropriate redirect URL
     The application can add a 'next' query parameter or have 'next' as a form field.
     If either exist, make sure they are valid (not pointing to external location)
     If neither, return the fallback_url
 
-    Can be passed either request.form (which is really a MultiDict OR a real form.
+    Can be passed either request.form
+     (which is really a MultiDict OR a real form OR a dict with a 'next' key).
     """
     form_next = None
     if form and isinstance(form, FlaskForm):

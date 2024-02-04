@@ -36,9 +36,10 @@ Fixes
   redirect location.
 - (:pr:`908`) Improve CSRF documentation and testing. Fix bug where a CSRF failure could
   return an HTML page even if the request was JSON.
-- (:pr:`xxx`) Chore - stop setting all config as attributes. init_app(\*\*kwargs) can only
+- (:pr:`911`) Chore - stop setting all config as attributes. init_app(\*\*kwargs) can only
   set forms, flags, and utility classes.
-- (:pr:`xxx`) Remove deprecation of AUTO_LOGIN_AFTER_CONFIRM - it has a reasonable use case.
+- (:pr:`911`) Remove deprecation of AUTO_LOGIN_AFTER_CONFIRM - it has a reasonable use case.
+- (:issue:`912`) Improve oauth debugging support. Handle next propagation in a more general way.
 
 Notes
 ++++++
@@ -57,7 +58,8 @@ Backwards Compatibility Concerns
 - Passing in an AnonymousUser class as part of Security initialization has been removed.
 - The never-public method _get_unauthorized_response has been removed.
 - Social-Oauth - a new configuration variable :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW` was introduced
-  and it replaces :py:data:`SECURITY_POST_LOGIN_VIEW` in the oauthresponse logic.
+  and it replaces :py:data:`SECURITY_POST_LOGIN_VIEW` in the oauthresponse logic when
+  :py:data:`SECURITY_REDIRECT_BEHAVIOR` == `"spa"`.
 - Two-Factor setup. Prior to this release when setting up "SMS" the `/tf-setup` endpoint could
   be POSTed to w/o a phone number, and then another POST could be made to set the phone number.
   This has always been confusing and added complexity to the code. Now, if "SMS" is selected, the phone number

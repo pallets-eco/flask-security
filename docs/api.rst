@@ -164,7 +164,17 @@ Utils
 .. autoclass:: flask_security.SmsSenderFactory
   :members: createSender
 
+.. py:class:: OauthCbType[oauth: OAuth, token: t.Any]
+
+    This callback is called when the oauth
+    redirect happens. It must take the response from the provider and return
+    a tuple of <user_model_field_name, value> - which will be used
+    to look up the user in the datastore.
+
 .. autoclass:: flask_security.OAuthGlue
+  :members: register_provider, register_provider_ext
+
+.. autoclass:: flask_security.FsOAuthProvider
   :members:
 
 

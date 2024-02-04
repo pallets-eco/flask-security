@@ -101,14 +101,19 @@ nitpick_ignore = [
     ("py:class", "AuthenticatorSelectionCriteria"),
     ("py:class", "UserVerificationRequirement"),
     ("py:class", "OAuth"),
+    ("py:class", "OAuthError"),
     ("py:class", "authlib.integrations.flask_client.OAuth"),
     ("py:class", "t.Type"),
     ("py:class", "t.Callable"),
+    ("py:class", "t.Tuple"),
     ("py:class", "t.Any"),
     ("py:class", "timedelta"),
 ]
 autodoc_typehints = "description"
 # autodoc_mock_imports = ["flask_sqlalchemy"]
+autodoc_type_aliases = {
+    "CbType": "oauth_provider.CbType",
+}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
@@ -121,6 +126,7 @@ intersphinx_mapping = {
     "flask_sqlalchemy": ("https://flask-sqlalchemy.palletsprojects.com/", None),
     "flask_login": ("https://flask-login.readthedocs.io/en/latest/", None),
     "passlib": ("https://passlib.readthedocs.io/en/stable", None),
+    "authlib": ("https://docs.authlib.org/en/latest/", None),
 }
 
 # -- Options for HTML output ---------------------------------------------
