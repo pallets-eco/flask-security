@@ -1,5 +1,5 @@
 """
-Copyright 2020-2023 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2020-2024 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 A simple example of utilizing Flask-Security's oauth glue layer.
@@ -15,7 +15,7 @@ unified sign in with email, we hack a Mail handler that flashes the contents of 
 This example is designed for a browser based client.
 
 This example uses github as the oauth provider. Before this example will work:
-1) on github register a new oauth application and grap the CLIENT_ID and CLIENT_SECRET.
+1) on github register a new oauth application and grab the CLIENT_ID and CLIENT_SECRET.
    These must be passed in as env variables:
     "GITHUB_CLIENT_ID" and "GITHUB_CLIENT_SECRET".
    See: https://docs.authlib.org/en/latest/client/flask.html# for details.
@@ -30,15 +30,32 @@ registrations. To use a real disk DB:
 
 import os
 
-from flask import Flask, flash, render_template_string
+from flask import Flask, flash, render_template_string, redirect
 from flask_security import (
     Security,
     auth_required,
+    FsOAuthProvider,
     MailUtil,
 )
 from flask_wtf import CSRFProtect
 
 from models import db, user_datastore
+
+
+# This is my test tenant on Azure
+class AzureProvider(FsOAuthProvider):
+    def authlib_config(self):
+        return {
+            "api_base_url": "https://graph.microsoft.com/",
+            "server_metadata_url": "https://login.microsoftonline.com/"
+            "8ad9bf45-2e93-4043-8f46-a6420c8e9d68/v2.0/"
+            ".well-known/openid-configuration",
+            "client_kwargs": {"scope": "openid email profile"},
+        }
+
+    def fetch_identity_cb(self, oauth, token):
+        profile = token["userinfo"]
+        return "email", profile["email"]
 
 
 def _find_bool(v):
@@ -73,6 +90,7 @@ def create_app():
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
+    # app.config["SESSION_COOKIE_SAMESITE"] = "strict"
 
     # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
     # underlying engine. This option makes sure that DB connections from the pool
@@ -109,12 +127,21 @@ def create_app():
 
     # Setup Flask-Security
     db.init_app(app)
-    Security(app, user_datastore, mail_util_cls=FlashMailUtil)
+    security = Security(app, user_datastore, mail_util_cls=FlashMailUtil)
+    # If configured - setup Azure - which works slightly differently -
+    # in particular w.r.t. the redirect URL having to match the ENTIRE
+    # url including query params (such as next).
+    if app.config.get("AZURE_CLIENT_SECRET"):
+        security.oauthglue.register_provider_ext(AzureProvider("azure"))
 
     @app.route("/home")
     @auth_required()
     def home():
         return render_template_string("Hello {{ current_user.email }}")
+
+    @app.route("/")
+    def root():
+        return redirect("/home")
 
     return app
 

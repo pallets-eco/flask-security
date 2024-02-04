@@ -281,7 +281,7 @@ views and features (such as two-factor authentication). Flask-Security is shippe
 with support for github and google - others can be added by the application (see `loginpass`_
 for many examples).
 
-See :py:class:`flask_security.OAuthGlue`
+See :py:class:`flask_security.OAuthGlue` and :py:class:`flask_security.FsOAuthProvider`
 
 Please note - this is for authentication only, and the authenticating user must
 already be a registered user in your application. Once authenticated, all further
@@ -291,6 +291,10 @@ See `Flask OAuth Client <https://docs.authlib.org/en/latest/client/flask.html>`_
 for details. Note in particular, that you must setup and provide provider specific
 information - and most importantly - XX_CLIENT_ID and XX_CLIENT_SECRET should be
 specified as environment variables.
+
+We have seen issues with some providers when `SESSION_COOKIE_SAMESITE` = "strict".
+The handshake (sometimes just the first time when the user is being asked to accept your application)
+fails due to the session cookie not getting sent as part of the redirect.
 
 A very simple example of configuring social auth with Flask-Security is available
 in the `examples` directory.

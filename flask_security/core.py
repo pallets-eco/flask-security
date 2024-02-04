@@ -418,7 +418,8 @@ _default_messages = {
     ),
     "OAUTH_HANDSHAKE_ERROR": (
         _(
-            "An error occurred while communicating with the Oauth provider. "
+            "An error occurred while communicating with the Oauth provider:"
+            " (%(exerror)s - %(exdesc)s). "
             "Please try again."
         ),
         "error",
@@ -1076,7 +1077,8 @@ class Security:
         and signin. Defaults to :class:`WebauthnUtil`
     :param mf_recovery_codes_util_cls: Class for generating, checking, encrypting
         and decrypting recovery codes. Defaults to :class:`MfRecoveryCodesUtil`
-    :param oauth: An instance of authlib.integrations.flask_client.OAuth
+    :param oauth: An instance of authlib.integrations.flask_client.OAuth. If not set,
+        Flask-Security will create one.
 
     .. tip::
         Be sure that all your configuration values have been set PRIOR to

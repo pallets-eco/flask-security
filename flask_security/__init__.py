@@ -60,6 +60,7 @@ from .forms import (
 )
 from .mail_util import MailUtil
 from .oauth_glue import OAuthGlue
+from .oauth_provider import FsOAuthProvider
 from .password_util import PasswordUtil
 from .phone_util import PhoneUtil
 from .recovery_codes import (
