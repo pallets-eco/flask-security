@@ -105,7 +105,9 @@ msgstr "Bitte neu authentisieren, um auf diese Seite zuzugreifen."
 #: flask_security/core.py:399
 #, python-format
 msgid "Thank you. Confirmation instructions have been sent to %(email)s."
-msgstr "Vielen Dank. Bestätigungsanleitung wurde an %(email)s gesendet."
+msgstr ""
+"Vielen Dank. Um Ihre E-Mail-Adresse %(email)s zu bestätigen, klicken Sie bitte auf "
+"den Link in der E-Mail, die wir gerade an Sie gesendet haben."
 
 #: flask_security/core.py:402
 msgid "Thank you. Your email has been confirmed."
@@ -189,7 +191,9 @@ msgstr "Die E-Mail-Adresse muss bestätigt werden."
 #: flask_security/core.py:443
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
-msgstr "Bestätigungsanleitung wurde an %(email)s gesendet."
+msgstr ""
+"Um Ihre E-Mail-Adresse %(email)s zu bestätigen, klicken Sie bitte auf "
+"den Link in der E-Mail, die wir gerade an Sie gesendet haben."
 
 #: flask_security/core.py:447
 #, python-format
@@ -487,7 +491,7 @@ msgstr "Registrieren"
 
 #: flask_security/forms.py:65
 msgid "Resend Confirmation Instructions"
-msgstr "Bestätigungsanleitung neu senden"
+msgstr "Bestätigungslink erneut senden"
 
 #: flask_security/forms.py:66
 msgid "Recover Password"
@@ -781,7 +785,7 @@ msgstr "Passwort zurücksetzen"
 
 #: flask_security/templates/security/send_confirmation.html:6
 msgid "Resend confirmation instructions"
-msgstr "Bestätigungsanleitung erneut versenden"
+msgstr "Bestätigungslink erneut versenden"
 
 #: flask_security/templates/security/two_factor_select.html:6
 msgid "Select Two Factor Method"
