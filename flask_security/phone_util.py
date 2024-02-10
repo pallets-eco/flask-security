@@ -4,11 +4,13 @@
 
     Utility class for managing phone numbers
 
-    :copyright: (c) 2020-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     Avoid making 'phonenumbers' a required package unless needed.
 """
+
+from __future__ import annotations
 
 import typing as t
 
@@ -34,14 +36,14 @@ class PhoneUtil:
         initialization time rather than at first request.
     """
 
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         """Instantiate class.
 
         :param app: The Flask application being initialized.
         """
         pass
 
-    def validate_phone_number(self, input_data: str) -> t.Optional[str]:
+    def validate_phone_number(self, input_data: str) -> str | None:
         """Return ``None`` if a valid phone number else
         the ``PHONE_INVALID`` error message."""
         import phonenumbers
@@ -56,7 +58,7 @@ class PhoneUtil:
             pass
         return get_message("PHONE_INVALID")[0]
 
-    def get_canonical_form(self, input_data: str) -> t.Optional[str]:
+    def get_canonical_form(self, input_data: str) -> str | None:
         """Validate and return a canonical form to be stored in DB
         and compared against.
         Returns ``None`` if input isn't a valid phone number.

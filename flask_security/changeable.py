@@ -5,10 +5,12 @@
     Flask-Security change password module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :author: Eskil Heyn Olsen
     :license: MIT, see LICENSE for more details.
 """
+
+from __future__ import annotations
 
 import typing as t
 
@@ -34,7 +36,7 @@ def send_password_changed_notice(user):
 
 
 def change_user_password(
-    user: "User", password: t.Optional[str], notify: bool = True, autologin: bool = True
+    user: User, password: str | None, notify: bool = True, autologin: bool = True
 ) -> None:
     """Change the specified user's password
 
@@ -71,7 +73,7 @@ def change_user_password(
     )
 
 
-def admin_change_password(user: "User", new_passwd: str, notify: bool = True) -> None:
+def admin_change_password(user: User, new_passwd: str, notify: bool = True) -> None:
     """
     Administratively change a user's password.
     Note that this will immediately render the user's existing sessions (and possibly

@@ -315,9 +315,9 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
 
 
 def auth_required(
-    *auth_methods: t.Union[str, t.Callable[[], t.List[str]], None],
-    within: t.Union[int, float, t.Callable[[], datetime.timedelta]] = -1,
-    grace: t.Optional[t.Union[int, float, t.Callable[[], datetime.timedelta]]] = None,
+    *auth_methods: str | t.Callable[[], list[str]] | None,
+    within: int | float | t.Callable[[], datetime.timedelta] = -1,
+    grace: int | float | t.Callable[[], datetime.timedelta] | None = None,
 ) -> DecoratedView:
     """
     Decorator that protects endpoints through multiple mechanisms.
@@ -431,8 +431,7 @@ def auth_required(
                     # in a session cookie...
                     if not check_and_update_authn_fresh(within, grace, method):
                         return _security._reauthn_handler(within, grace)
-                    eresponse = handle_csrf(method, _security._want_json(request))
-                    if eresponse:
+                    if eresponse := handle_csrf(method, _security._want_json(request)):
                         return eresponse
                     set_request_attr("fs_authn_via", method)
                     return current_app.ensure_sync(fn)(*args, **kwargs)

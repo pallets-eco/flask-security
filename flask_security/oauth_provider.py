@@ -76,7 +76,7 @@ class FsOAuthProvider:
         This is called as part of provider registration."""
         return self._registration_info
 
-    def fetch_identity_cb(self, oauth: OAuth, token: t.Any) -> t.Tuple[str, t.Any]:
+    def fetch_identity_cb(self, oauth: OAuth, token: t.Any) -> tuple[str, t.Any]:
         """This callback is called when the oauth
         redirect happens. It must take the response from the provider and return
         a tuple of <user_model_field_name, value> - which will be used

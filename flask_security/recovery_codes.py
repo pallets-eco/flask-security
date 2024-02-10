@@ -4,9 +4,11 @@
 
     Flask-Security Recovery Codes Module
 
-    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
+from __future__ import annotations
 
 import typing as t
 
@@ -48,22 +50,22 @@ class MfRecoveryCodesUtil:
     if someone gets access to memory they can find the key...
     """
 
-    def __init__(self, app: "flask.Flask"):
-        self.cryptor: t.Optional["MultiFernet"] = None
+    def __init__(self, app: flask.Flask):
+        self.cryptor: MultiFernet | None = None
         keys = cv("MULTI_FACTOR_RECOVERY_CODES_KEYS", app)
         # N.B. order is important - first key is 'primary'.
         if keys:
             self.setup_cryptor(keys)
 
-    def setup_cryptor(self, keys: t.List[bytes]) -> None:
+    def setup_cryptor(self, keys: list[bytes]) -> None:
         from cryptography.fernet import Fernet, MultiFernet
 
-        cryptors: t.List[Fernet] = []
+        cryptors: list[Fernet] = []
         for key in keys:
             cryptors.append(Fernet(key))
         self.cryptor = MultiFernet(cryptors)
 
-    def create_recovery_codes(self, user: "User") -> t.List[str]:
+    def create_recovery_codes(self, user: User) -> list[str]:
         # Create new recovery codes and store in user record.
         # If configured codes are stored encrypted - but plainttext
         # versions are returned.
@@ -73,17 +75,17 @@ class MfRecoveryCodesUtil:
         _datastore.mf_set_recovery_codes(user, self.encrypt_codes(new_codes))
         return new_codes
 
-    def get_recovery_codes(self, user: "User") -> t.List[str]:
+    def get_recovery_codes(self, user: User) -> list[str]:
         ecodes = _datastore.mf_get_recovery_codes(user)
         return self.decrypt_codes(ecodes)
 
-    def check_recovery_code(self, user: "User", code: str) -> bool:
+    def check_recovery_code(self, user: User, code: str) -> bool:
         # Verify code is valid
         codes = _datastore.mf_get_recovery_codes(user)
         dcodes = self.decrypt_codes(codes)
         return code in dcodes
 
-    def delete_recovery_code(self, user: "User", code: str) -> bool:
+    def delete_recovery_code(self, user: User, code: str) -> bool:
         # codes are single use - so delete after use.
         # encrypting code gives different answer due to time stamp.
         # we don't want to re-encrypt other codes.
@@ -93,7 +95,7 @@ class MfRecoveryCodesUtil:
         idx = codes.index(code)
         return _datastore.mf_delete_recovery_code(user, idx)
 
-    def encrypt_codes(self, codes: t.List[str]) -> t.List[str]:
+    def encrypt_codes(self, codes: list[str]) -> list[str]:
         if not self.cryptor:
             return codes
         ecodes = []
@@ -101,7 +103,7 @@ class MfRecoveryCodesUtil:
             ecodes.append(self.cryptor.encrypt(code.encode()).decode())
         return ecodes
 
-    def decrypt_codes(self, codes: t.List[str]) -> t.List[str]:
+    def decrypt_codes(self, codes: list[str]) -> list[str]:
         from cryptography.fernet import InvalidToken
 
         if not self.cryptor:
@@ -149,7 +151,7 @@ class MfRecoveryForm(Form):
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
         # filled by view
-        self.user: t.Optional["User"] = None
+        self.user: User | None = None
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
@@ -168,7 +170,7 @@ class MfRecoveryForm(Form):
     within=lambda: cv("FRESHNESS"),
     grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
 )
-def mf_recovery_codes() -> "ResponseValue":
+def mf_recovery_codes() -> ResponseValue:
     """
     Create and download multi-factor recovery codes.
     For forms, we want the user to explicitly request to see the codes - so
@@ -218,7 +220,7 @@ def mf_recovery():
     User must have already established 2FA
 
     """
-    form = build_form_from_request("mf_recovery_form")
+    form = t.cast(MfRecoveryForm, build_form_from_request("mf_recovery_form"))
     form.user = tf_check_state(["ready"])
     if not form.user:
         return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))

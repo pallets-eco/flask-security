@@ -103,9 +103,9 @@ nitpick_ignore = [
     ("py:class", "OAuth"),
     ("py:class", "OAuthError"),
     ("py:class", "authlib.integrations.flask_client.OAuth"),
+    ("py:class", "TotpMatch"),
     ("py:class", "t.Type"),
     ("py:class", "t.Callable"),
-    ("py:class", "t.Tuple"),
     ("py:class", "t.Any"),
     ("py:class", "timedelta"),
 ]

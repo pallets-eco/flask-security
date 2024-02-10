@@ -4,9 +4,11 @@
 
     Flask-Security TOTP (Timed-One-Time-Passwords) module
 
-    :copyright: (c) 2019-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
+from __future__ import annotations
 
 import base64
 import io
@@ -33,7 +35,7 @@ class Totp:
 
     """
 
-    def __init__(self, secrets: t.Dict[t.Union[str, int], str], issuer: str):
+    def __init__(self, secrets: dict[str | int, str], issuer: str):
         """Initialize a totp factory.
         secrets are used to encrypt the per-user totp_secret on disk.
         """
@@ -58,7 +60,7 @@ class Totp:
         return self._totp.new().to_json(encrypt=True)
 
     def verify_totp(
-        self, token: str, totp_secret: str, user: "User", window: int = 0
+        self, token: str, totp_secret: str, user: User, window: int = 0
     ) -> bool:
         """Verifies token for specific user.
 
@@ -108,7 +110,7 @@ class Totp:
         tp = self._totp.from_source(totp_secret)
         return tp.pretty_key()
 
-    def fetch_setup_values(self, totp: str, user: "User") -> t.Dict[str, str]:
+    def fetch_setup_values(self, totp: str, user: User) -> dict[str, str]:
         """Generate various values user needs to setup authenticator app.
             Returns dict with keys:
                 'key': totp key
@@ -157,7 +159,7 @@ class Totp:
             # This should have been checked at app init.
             raise
 
-    def generate_recovery_codes(self, number: int) -> t.List[str]:
+    def generate_recovery_codes(self, number: int) -> list[str]:
         """Generate a set of secure passwords - used for 2FA recovery codes.
             # this is nice for english - but not for others
             return genphrase(entropy="fair", wordset="eff_short", sep="-",
@@ -174,7 +176,7 @@ class Totp:
             )
         return spwds
 
-    def get_last_counter(self, user: "User") -> t.Optional[TotpMatch]:
+    def get_last_counter(self, user: User) -> TotpMatch | None:
         """Implement this to fetch stored last_counter from cache.
 
         :param user: User model
@@ -182,7 +184,7 @@ class Totp:
         """
         return None
 
-    def set_last_counter(self, user: "User", tmatch: TotpMatch) -> None:
+    def set_last_counter(self, user: User, tmatch: TotpMatch) -> None:
         """Implement this to cache last_counter.
 
         :param user: User model

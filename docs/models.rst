@@ -180,7 +180,7 @@ the User record (since we need to look up the ``User`` based on a WebAuthn ``cre
     Add the following to the WebAuthn model:
 
         user = ReferenceField("User")
-        def get_user_mapping(self) -> t.Dict[str, str]:
+        def get_user_mapping(self) -> dict[str, str]:
             """Return the mapping from webauthn back to User"""
             return dict(id=self.user.id)
 

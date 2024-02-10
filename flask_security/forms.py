@@ -10,6 +10,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from __future__ import annotations
+
 import inspect
 import typing as t
 
@@ -275,7 +277,7 @@ class Form(BaseForm):
 
 def generic_message(
     detailed_msg: str, generic_msg: str, **kwargs: t.Any
-) -> t.Tuple[str, str]:
+) -> tuple[str, str]:
     if cv("RETURN_GENERIC_RESPONSES"):
         m, c = get_message(generic_msg, **kwargs)
     else:
@@ -283,7 +285,7 @@ def generic_message(
     return m, c
 
 
-def form_errors_munge(form: Form, fields: t.Dict[str, t.Dict[str, str]]) -> None:
+def form_errors_munge(form: Form, fields: dict[str, dict[str, str]]) -> None:
     """
     To support OWASP best practice on unauthenticated endpoints to avoid
     disclosing whether a user exists or not we need to return generic error messages.
@@ -300,8 +302,7 @@ def form_errors_munge(form: Form, fields: t.Dict[str, t.Dict[str, str]]) -> None
             field.errors = []
             # If they want to replace that message with a generic message and place
             # it in the generic/form level errors - do that.
-            replace_msg = rinfo.get("replace_msg", None)
-            if replace_msg:
+            if replace_msg := rinfo.get("replace_msg"):
                 form.form_errors.append(get_message(replace_msg)[0])
 
 
@@ -430,7 +431,7 @@ class SendConfirmationForm(Form, UserEmailFormMixin):
 
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: t.Optional["User"] = None  # set by valid_user_email
+        self.user: User | None = None  # set by valid_user_email
         if request and request.method == "GET":
             self.email.data = request.args.get("email", None)
 
@@ -452,7 +453,7 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
         self.requires_confirmation: bool = False
-        self.user: t.Optional["User"] = None  # set by valid_user_email
+        self.user: User | None = None  # set by valid_user_email
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
@@ -481,7 +482,7 @@ class PasswordlessLoginForm(Form):
 
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: t.Optional["User"] = None  # set by valid_user_email
+        self.user: User | None = None  # set by valid_user_email
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
@@ -521,9 +522,9 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
             )
             self.password.description = html
         self.requires_confirmation: bool = False
-        self.user: t.Optional["User"] = None
+        self.user: User | None = None
         # ifield can be set by subclasses to skip identity checks.
-        self.ifield: t.Optional[Field] = None
+        self.ifield: Field | None = None
         # If True then user has authenticated so we can show detailed errors
         self.user_authenticated = False
 
@@ -596,9 +597,9 @@ class VerifyForm(Form, PasswordFormMixin):
 
     submit = SubmitField(get_form_field_label("verify_password"))
 
-    def __init__(self, *args: t.Any, user: "User", **kwargs: t.Any):
+    def __init__(self, *args: t.Any, user: User, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: "User" = user
+        self.user: User = user
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
@@ -699,7 +700,7 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
     """The default reset password form"""
 
     # filled in by caller
-    user: "User"
+    user: User
 
     submit = SubmitField(get_form_field_label("reset_password"))
 
@@ -821,7 +822,7 @@ class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
         self.window: int = 0
         self.primary_method: str = ""
         self.tf_totp_secret: str = ""
-        self.user: t.Optional["User"] = None  # set by view
+        self.user: User | None = None  # set by view
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
@@ -870,10 +871,10 @@ class DummyForm(Form):
 
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
-        self.user: t.Optional["User"] = kwargs.get("user", None)
+        self.user: User | None = kwargs.get("user", None)
 
 
-def build_form_from_request(form_name: str, **kwargs: t.Dict[str, t.Any]) -> Form:
+def build_form_from_request(form_name: str, **kwargs: dict[str, t.Any]) -> Form:
     # helper function for views
     form_data = None
     if request.content_length:

@@ -4,10 +4,12 @@
 
     Utility class providing methods for validating and normalizing usernames.
 
-    :copyright: (c) 2020-2021 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
+
+from __future__ import annotations
 
 import typing as t
 import unicodedata
@@ -31,14 +33,14 @@ class UsernameUtil:
     .. versionadded:: 4.1.0
     """
 
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         """Instantiate class.
 
         :param app: The Flask application being initialized.
         """
         pass
 
-    def check_username(self, username: str) -> t.Optional[str]:
+    def check_username(self, username: str) -> str | None:
         """
         Given a username - check for allowable character categories.
         This is broken out so applications can easily override this method only.
@@ -72,7 +74,7 @@ class UsernameUtil:
             return unicodedata.normalize(cf, username)
         return username
 
-    def validate(self, username: str) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+    def validate(self, username: str) -> tuple[str | None, str | None]:
         """
         Username validation.
         Called in app/request context.

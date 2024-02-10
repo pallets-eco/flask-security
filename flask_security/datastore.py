@@ -9,6 +9,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 import json
 import typing as t
@@ -184,9 +186,9 @@ class UserDatastore:
 
     def __init__(
         self,
-        user_model: t.Type["User"],
-        role_model: t.Type["Role"],
-        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
+        user_model: t.Type[User],
+        role_model: t.Type[Role],
+        webauthn_model: t.Type[WebAuthn] | None = None,
     ):
         self.user_model = user_model
         self.role_model = role_model
@@ -200,9 +202,7 @@ class UserDatastore:
         def put(self, model):
             pass
 
-    def _prepare_role_modify_args(
-        self, role: t.Union[str, "Role"]
-    ) -> t.Union["Role", None]:
+    def _prepare_role_modify_args(self, role: str | Role) -> Role | None:
         if isinstance(role, str):
             return self.find_role(role)
         return role
@@ -223,18 +223,18 @@ class UserDatastore:
 
         return kwargs
 
-    def find_user(self, **kwargs: t.Any) -> t.Union["User", None]:
+    def find_user(self, **kwargs: t.Any) -> User | None:
         """Returns a user matching the provided parameters.
         Besides keyword arguments used to filter the results,
         'case_insensitive' can be passed (defaults to False)
         """
         raise NotImplementedError
 
-    def find_role(self, role: str) -> t.Union["Role", None]:
+    def find_role(self, role: str) -> Role | None:
         """Returns a role matching the provided name."""
         raise NotImplementedError
 
-    def add_role_to_user(self, user: "User", role: t.Union["Role", str]) -> bool:
+    def add_role_to_user(self, user: User, role: Role | str) -> bool:
         """Adds a role to a user.
 
         :param user: The user to manipulate.
@@ -242,8 +242,7 @@ class UserDatastore:
             string role name
         :return: True is role was added, False if role already existed.
         """
-        role_obj = self._prepare_role_modify_args(role)
-        if not role_obj:
+        if not (role_obj := self._prepare_role_modify_args(role)):
             raise ValueError(f"Role: {role} doesn't exist")
         if role_obj not in user.roles:
             user.roles.append(role_obj)
@@ -251,7 +250,7 @@ class UserDatastore:
             return True
         return False
 
-    def remove_role_from_user(self, user: "User", role: t.Union["Role", str]) -> bool:
+    def remove_role_from_user(self, user: User, role: Role | str) -> bool:
         """Removes a role from a user.
 
         :param user: The user to manipulate. Can be an User object or email
@@ -269,7 +268,7 @@ class UserDatastore:
         return rv
 
     def add_permissions_to_role(
-        self, role: t.Union["Role", str], permissions: t.Union[set, list, tuple, str]
+        self, role: Role | str, permissions: set | list | tuple | str
     ) -> bool:
         """Add one or more permissions to role.
 
@@ -284,8 +283,7 @@ class UserDatastore:
         """
 
         rv = False
-        role_obj = self._prepare_role_modify_args(role)
-        if role_obj:
+        if role_obj := self._prepare_role_modify_args(role):
             rv = True
             current_perms = role_obj.get_permissions()
             if isinstance(permissions, set) or isinstance(permissions, tuple):
@@ -298,7 +296,7 @@ class UserDatastore:
         return rv
 
     def remove_permissions_from_role(
-        self, role: t.Union["Role", str], permissions: t.Union[set, list, tuple, str]
+        self, role: Role | str, permissions: set | list | tuple | str
     ) -> bool:
         """Remove one or more permissions from a role.
 
@@ -313,8 +311,7 @@ class UserDatastore:
         """
 
         rv = False
-        role_obj = self._prepare_role_modify_args(role)
-        if role_obj:
+        if role_obj := self._prepare_role_modify_args(role):
             rv = True
             current_perms = role_obj.get_permissions()
             if isinstance(permissions, set) or isinstance(permissions, tuple):
@@ -325,13 +322,13 @@ class UserDatastore:
             self.put(role_obj)
         return rv
 
-    def toggle_active(self, user: "User") -> bool:
+    def toggle_active(self, user: User) -> bool:
         """Toggles a user's active status. Always returns True."""
         user.active = not user.active
         self.put(user)
         return True
 
-    def deactivate_user(self, user: "User") -> bool:
+    def deactivate_user(self, user: User) -> bool:
         """Deactivates a specified user. Returns `True` if a change was made.
 
         This will immediately disallow access to all endpoints that require
@@ -346,7 +343,7 @@ class UserDatastore:
             return True
         return False
 
-    def activate_user(self, user: "User") -> bool:
+    def activate_user(self, user: User) -> bool:
         """Activates a specified user. Returns `True` if a change was made.
 
         :param user: The user to activate
@@ -357,9 +354,7 @@ class UserDatastore:
             return True
         return False
 
-    def set_uniquifier(
-        self, user: "User", uniquifier: t.Union[str, None] = None
-    ) -> None:
+    def set_uniquifier(self, user: User, uniquifier: str | None = None) -> None:
         """Set user's Flask-Security identity key.
         This will immediately render outstanding auth tokens,
         session cookies and remember cookies invalid.
@@ -374,9 +369,7 @@ class UserDatastore:
         user.fs_uniquifier = uniquifier
         self.put(user)
 
-    def set_token_uniquifier(
-        self, user: "User", uniquifier: t.Union[str, None] = None
-    ) -> None:
+    def set_token_uniquifier(self, user: User, uniquifier: str | None = None) -> None:
         """Set user's auth token identity key.
         This will immediately render outstanding auth tokens invalid.
 
@@ -394,7 +387,7 @@ class UserDatastore:
             user.fs_token_uniquifier = uniquifier
             self.put(user)
 
-    def create_role(self, **kwargs: t.Any) -> "Role":
+    def create_role(self, **kwargs: t.Any) -> Role:
         """
         Creates and returns a new role from the given parameters.
         Supported params (depending on RoleModel):
@@ -421,13 +414,13 @@ class UserDatastore:
         role = self.role_model(**kwargs)
         return self.put(role)
 
-    def find_or_create_role(self, name: str, **kwargs: t.Any) -> "Role":
+    def find_or_create_role(self, name: str, **kwargs: t.Any) -> Role:
         """Returns a role matching the given name or creates it with any
         additionally provided parameters.
         """
         return self.find_role(name) or self.create_role(name=name, **kwargs)
 
-    def create_user(self, **kwargs: t.Any) -> "User":
+    def create_user(self, **kwargs: t.Any) -> User:
         """Creates and returns a new user from the given parameters.
 
         :kwparam email: required.
@@ -473,14 +466,14 @@ class UserDatastore:
         user = self.user_model(**kwargs)
         return self.put(user)
 
-    def delete_user(self, user: "User") -> None:
+    def delete_user(self, user: User) -> None:
         """Deletes the specified user.
 
         :param user: The user to delete
         """
         self.delete(user)  # type: ignore
 
-    def reset_user_access(self, user: "User") -> None:
+    def reset_user_access(self, user: User) -> None:
         """
         Use this method to reset user authentication methods in the case of compromise.
         This will:
@@ -521,10 +514,10 @@ class UserDatastore:
 
     def tf_set(
         self,
-        user: "User",
+        user: User,
         primary_method: str,
-        totp_secret: t.Optional[str] = None,
-        phone: t.Optional[str] = None,
+        totp_secret: str | None = None,
+        phone: str | None = None,
     ) -> None:
         """Set two-factor info into user record.
         This carefully only changes things if different.
@@ -553,7 +546,7 @@ class UserDatastore:
         if changed:
             self.put(user)
 
-    def tf_reset(self, user: "User") -> None:
+    def tf_reset(self, user: User) -> None:
         """Disable two-factor auth for user.
 
         .. versionadded: 3.4.1
@@ -563,7 +556,7 @@ class UserDatastore:
         user.tf_phone_number = None
         self.put(user)
 
-    def mf_set_recovery_codes(self, user: "User", rcs: t.Optional[t.List[str]]) -> None:
+    def mf_set_recovery_codes(self, user: User, rcs: list[str] | None) -> None:
         """Set MF recovery codes into user record.
         Any existing codes will be erased.
 
@@ -572,11 +565,11 @@ class UserDatastore:
         user.mf_recovery_codes = rcs
         self.put(user)
 
-    def mf_get_recovery_codes(self, user: "User") -> t.List[str]:
+    def mf_get_recovery_codes(self, user: User) -> list[str]:
         codes = getattr(user, "mf_recovery_codes", [])
         return codes if codes else []
 
-    def mf_delete_recovery_code(self, user: "User", idx: int) -> bool:
+    def mf_delete_recovery_code(self, user: User, idx: int) -> bool:
         """Delete a single recovery code.
         Recovery codes are single-use - so delete after using!
 
@@ -593,7 +586,7 @@ class UserDatastore:
         except IndexError:
             return False
 
-    def us_get_totp_secrets(self, user: "User") -> t.Dict[str, str]:
+    def us_get_totp_secrets(self, user: User) -> dict[str, str]:
         """Return totp secrets.
         These are json encoded in the DB.
 
@@ -605,9 +598,7 @@ class UserDatastore:
             return {}
         return json.loads(user.us_totp_secrets)
 
-    def us_put_totp_secrets(
-        self, user: "User", secrets: t.Optional[t.Dict[str, str]]
-    ) -> None:
+    def us_put_totp_secrets(self, user: User, secrets: dict[str, str] | None) -> None:
         """Save secrets. Assume to be a dict (or None)
         with keys as methods, and values as (encrypted) secrets.
 
@@ -618,10 +609,10 @@ class UserDatastore:
 
     def us_set(
         self,
-        user: "User",
+        user: User,
         method: str,
-        totp_secret: t.Optional[str] = None,
-        phone: t.Optional[str] = None,
+        totp_secret: str | None = None,
+        phone: str | None = None,
     ) -> None:
         """Set unified sign in info into user record.
 
@@ -644,7 +635,7 @@ class UserDatastore:
             user.us_phone_number = phone
             self.put(user)
 
-    def us_reset(self, user: "User", method: t.Optional[str] = None) -> None:
+    def us_reset(self, user: User, method: str | None = None) -> None:
         """Disable unified sign in for user.
         This will disable authenticator app and SMS, and email.
         N.B. if user has no password they may not be able to authenticate at all.
@@ -668,7 +659,7 @@ class UserDatastore:
                 user.us_phone_number = None
                 self.put(user)
 
-    def us_setup_email(self, user: "User") -> bool:
+    def us_setup_email(self, user: User) -> bool:
         # setup email (if allowed) for user for unified sign in.
         from .proxies import _security
 
@@ -680,7 +671,7 @@ class UserDatastore:
         return True
 
     def set_webauthn_user_handle(
-        self, user: "User", user_handle: t.Union[str, None] = None
+        self, user: User, user_handle: str | None = None
     ) -> None:
         """Set the value for the Relaying Party's (that's us)
         UserHandle (user.id)
@@ -693,7 +684,7 @@ class UserDatastore:
 
     def create_webauthn(
         self,
-        user: "User",
+        user: User,
         credential_id: bytes,
         public_key: bytes,
         name: str,
@@ -701,8 +692,8 @@ class UserDatastore:
         usage: str,
         device_type: str,
         backup_state: bool,
-        transports: t.Optional[t.List[str]] = None,
-        extensions: t.Optional[str] = None,
+        transports: list[str] | None = None,
+        extensions: str | None = None,
         **kwargs: t.Any,
     ) -> None:
         """
@@ -714,20 +705,20 @@ class UserDatastore:
         """
         raise NotImplementedError
 
-    def delete_webauthn(self, webauthn: "WebAuthn") -> None:
+    def delete_webauthn(self, webauthn: WebAuthn) -> None:
         """
         .. versionadded: 5.0.0
         """
         self.delete(webauthn)
 
-    def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
+    def find_webauthn(self, credential_id: bytes) -> WebAuthn | None:
         """Returns a credential matching the id.
 
         .. versionadded: 5.0.0
         """
         raise NotImplementedError
 
-    def find_user_from_webauthn(self, webauthn: "WebAuthn") -> t.Union["User", None]:
+    def find_user_from_webauthn(self, webauthn: WebAuthn) -> User | None:
         """Returns user associated with this webauthn credential
 
         .. versionadded: 5.0.0
@@ -737,7 +728,7 @@ class UserDatastore:
         user_filter = webauthn.get_user_mapping()
         return self.find_user(**user_filter)
 
-    def webauthn_reset(self, user: "User") -> None:
+    def webauthn_reset(self, user: User) -> None:
         """Reset access via webauthn credentials.
         This will DELETE all registered credentials.
         There doesn't appear to be any reason to change the user's
@@ -764,17 +755,15 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
     def __init__(
         self,
-        db: "flask_sqlalchemy.SQLAlchemy",
-        user_model: t.Type["User"],
-        role_model: t.Type["Role"],
-        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
+        db: flask_sqlalchemy.SQLAlchemy,
+        user_model: t.Type[User],
+        role_model: t.Type[Role],
+        webauthn_model: t.Type[WebAuthn] | None = None,
     ):
         SQLAlchemyDatastore.__init__(self, db)
         UserDatastore.__init__(self, user_model, role_model, webauthn_model)
 
-    def find_user(
-        self, case_insensitive: bool = False, **kwargs: t.Any
-    ) -> t.Union["User", None]:
+    def find_user(self, case_insensitive: bool = False, **kwargs: t.Any) -> User | None:
         from sqlalchemy import func as alchemyFn
 
         query = self.user_model.query
@@ -797,17 +786,17 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         else:
             return query.filter_by(**kwargs).first()
 
-    def find_role(self, role: str) -> t.Union["Role", None]:
+    def find_role(self, role: str) -> Role | None:
         return self.role_model.query.filter_by(name=role).first()  # type: ignore
 
-    def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
+    def find_webauthn(self, credential_id: bytes) -> WebAuthn | None:
         return self.webauthn_model.query.filter_by(  # type: ignore
             credential_id=credential_id
         ).first()
 
     def create_webauthn(
         self,
-        user: "User",
+        user: User,
         credential_id: bytes,
         public_key: bytes,
         name: str,
@@ -815,8 +804,8 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         usage: str,
         device_type: str,
         backup_state: bool,
-        transports: t.Optional[t.List[str]] = None,
-        extensions: t.Optional[str] = None,
+        transports: list[str] | None = None,
+        extensions: str | None = None,
         **kwargs: t.Any,
     ) -> None:
         from .proxies import _security
@@ -855,10 +844,10 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
 
     def __init__(
         self,
-        session: "sqlalchemy.orm.scoping.scoped_session",
-        user_model: t.Type["User"],
-        role_model: t.Type["Role"],
-        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
+        session: sqlalchemy.orm.scoping.scoped_session,
+        user_model: t.Type[User],
+        role_model: t.Type[Role],
+        webauthn_model: t.Type[WebAuthn] | None = None,
     ):
         class PretendFlaskSQLAlchemyDb:
             """This is a pretend db object, so we can just pass in a session."""
@@ -892,10 +881,10 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
 
     def __init__(
         self,
-        db: "mongoengine.connection",
-        user_model: t.Type["User"],
-        role_model: t.Type["Role"],
-        webauthn_model: t.Optional[t.Type["WebAuthn"]] = None,
+        db: mongoengine.connection,
+        user_model: t.Type[User],
+        role_model: t.Type[Role],
+        webauthn_model: t.Type[WebAuthn] | None = None,
     ):
         MongoEngineDatastore.__init__(self, db)
         UserDatastore.__init__(self, user_model, role_model, webauthn_model)
@@ -925,7 +914,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
     def find_role(self, role):
         return self.role_model.objects(name=role).first()
 
-    def find_webauthn(self, credential_id: bytes) -> t.Union["WebAuthn", None]:
+    def find_webauthn(self, credential_id: bytes) -> WebAuthn | None:
         if not self.webauthn_model:
             raise NotImplementedError
 
@@ -936,7 +925,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
 
     def create_webauthn(
         self,
-        user: "User",
+        user: User,
         credential_id: bytes,
         public_key: bytes,
         name: str,
@@ -944,8 +933,8 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         usage: str,
         device_type: str,
         backup_state: bool,
-        transports: t.Optional[t.List[str]] = None,
-        extensions: t.Optional[str] = None,
+        transports: list[str] | None = None,
+        extensions: str | None = None,
         **kwargs: t.Any,
     ) -> None:
         from .proxies import _security
@@ -1073,7 +1062,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
 
     def create_webauthn(
         self,
-        user: "User",
+        user: User,
         credential_id: bytes,
         public_key: bytes,
         name: str,
@@ -1081,8 +1070,8 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         usage: str,
         device_type: str,
         backup_state: bool,
-        transports: t.Optional[t.List[str]] = None,
-        extensions: t.Optional[str] = None,
+        transports: list[str] | None = None,
+        extensions: str | None = None,
         **kwargs: t.Any,
     ) -> None:
         from .proxies import _security
@@ -1166,36 +1155,36 @@ if t.TYPE_CHECKING:  # pragma: no cover
     class User(UserMixin):
         id: int
         email: str
-        username: t.Optional[str]
-        password: t.Optional[str]
+        username: str | None
+        password: str | None
         active: bool
         fs_uniquifier: str
         fs_token_uniquifier: str
         fs_webauthn_user_handle: str
-        confirmed_at: t.Optional[datetime]
+        confirmed_at: datetime | None
         last_login_at: datetime
         current_login_at: datetime
-        last_login_ip: t.Optional[str]
-        current_login_ip: t.Optional[str]
+        last_login_ip: str | None
+        current_login_ip: str | None
         login_count: int
-        tf_primary_method: t.Optional[str]
-        tf_totp_secret: t.Optional[str]
-        tf_phone_number: t.Optional[str]
-        mf_recovery_codes: t.Optional[t.List[str]]
-        us_phone_number: t.Optional[str]
-        us_totp_secrets: t.Optional[t.Union[str, bytes]]
+        tf_primary_method: str | None
+        tf_totp_secret: str | None
+        tf_phone_number: str | None
+        mf_recovery_codes: list[str] | None
+        us_phone_number: str | None
+        us_totp_secrets: str | bytes | None
         create_datetime: datetime
         update_datetime: datetime
-        roles: t.List["Role"]
-        webauthn: t.List["WebAuthn"]
+        roles: list[Role]
+        webauthn: list[WebAuthn]
 
         def __init__(self, **kwargs): ...
 
     class Role(RoleMixin):
         id: int
         name: str
-        description: t.Optional[str]
-        permissions: t.Optional[t.List[str]]
+        description: str | None
+        permissions: list[str] | None
         update_datetime: datetime
 
         def __init__(self, **kwargs): ...
@@ -1206,10 +1195,10 @@ if t.TYPE_CHECKING:  # pragma: no cover
         credential_id: bytes
         public_key: bytes
         sign_count: int
-        transports: t.Optional[t.List[str]]
+        transports: list[str] | None
         backup_state: bool
         device_type: str
-        extensions: t.Optional[str]
+        extensions: str | None
         lastuse_datetime: datetime
         user_id: int
         usage: str

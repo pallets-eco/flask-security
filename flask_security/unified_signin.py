@@ -4,7 +4,7 @@
 
     Flask-Security Unified Signin module
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     This implements a unified sign in endpoint - allowing
@@ -28,6 +28,8 @@
     - token versus code versus passcode? Confusing terminology.
 
 """
+
+from __future__ import annotations
 
 import time
 import typing as t
@@ -145,7 +147,7 @@ class _UnifiedPassCodeForm(Form):
     """Common form for signin and verify/reauthenticate."""
 
     # filled in by caller
-    user: "User"
+    user: User
 
     # Filled in here
     authn_via: str
@@ -362,7 +364,7 @@ class UnifiedSigninSetupValidateForm(Form):
     """The unified sign in setup validation form"""
 
     # These 2 filled in by view
-    user: "User"
+    user: User
     totp_secret: str
 
     passcode = StringField(
@@ -412,7 +414,7 @@ def _send_code_helper(form, send_magic_link):
 
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
-def us_signin_send_code() -> "ResponseValue":
+def us_signin_send_code() -> ResponseValue:
     """
     Send code view. POST only.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -449,7 +451,7 @@ def us_signin_send_code() -> "ResponseValue":
         )
     elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
         # TODO - this suppresses the error if they don't select ANY send code option.
-        rinfo: t.Dict[str, t.Dict[str, str]] = dict(
+        rinfo: dict[str, dict[str, str]] = dict(
             identity=dict(), passcode=dict(), chosen_method=dict()
         )
         form_errors_munge(form, rinfo)
@@ -485,7 +487,7 @@ def us_signin_send_code() -> "ResponseValue":
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def us_verify_send_code() -> "ResponseValue":
+def us_verify_send_code() -> ResponseValue:
     """
     Send code during verify. POST only.
     """
@@ -532,7 +534,7 @@ def us_verify_send_code() -> "ResponseValue":
 
 
 @unauth_csrf(fall_through=True)
-def us_signin() -> "ResponseValue":
+def us_signin() -> ResponseValue:
     """
     Unified sign in view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -632,7 +634,7 @@ def us_signin() -> "ResponseValue":
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def us_verify() -> "ResponseValue":
+def us_verify() -> ResponseValue:
     """
     Re-authenticate to reset freshness time.
     This is likely the result of a reauthn_handler redirect, which
@@ -679,7 +681,7 @@ def us_verify() -> "ResponseValue":
 
 
 @anonymous_user_required
-def us_verify_link() -> "ResponseValue":
+def us_verify_link() -> ResponseValue:
     """
     Used to verify a magic email link. GET only
     Since this is just a URL - be careful not to disclose info like
@@ -769,7 +771,7 @@ def us_verify_link() -> "ResponseValue":
     within=lambda: cv("FRESHNESS"),
     grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
 )
-def us_setup() -> "ResponseValue":
+def us_setup() -> ResponseValue:
     """
     Change unified sign in methods.
     We want to verify the new method - so don't store anything yet in DB
@@ -944,7 +946,7 @@ def us_setup() -> "ResponseValue":
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def us_setup_validate(token: str) -> "ResponseValue":
+def us_setup_validate(token: str) -> ResponseValue:
     """
     Validate new setup.
     The token is the state variable which is signed and timed
