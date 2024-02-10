@@ -91,7 +91,6 @@ from .utils import (
     csrf_cookie_handler,
     default_render_template,
     default_want_json,
-    get_config,
     get_identity_attribute,
     get_identity_attributes,
     get_message,
@@ -906,7 +905,7 @@ class UserMixin(BaseUserMixin):
                 return True
         return False
 
-    def get_security_payload(self) -> t.Dict[str, t.Any]:
+    def get_security_payload(self) -> dict[str, t.Any]:
         """Serialize user object as response payload.
         Override this to return any/all of the user object in JSON responses.
         Return a dict.
@@ -1340,7 +1339,6 @@ class Security:
         # Override default forms
         # BC - kwarg value here overrides init/constructor time
         # BC - we allow forms to be set from config
-        # Can't wait for assignment expressions.
         form_names = [
             "login_form",
             "verify_form",
@@ -1369,10 +1367,9 @@ class Security:
             "wan_verify_form",
         ]
         for form_name in form_names:
-            form_cls = kwargs.get(
-                form_name, app.config.get(f"SECURITY_{form_name.upper()}", None)
-            )
-            if form_cls:
+            if form_cls := kwargs.get(
+                form_name, cv(form_name.upper(), app, strict=False)
+            ):
                 self.forms[form_name].cls = form_cls
 
         # The following will be set as attributes and initialized from either
@@ -1395,12 +1392,8 @@ class Security:
             "webauthn_util_cls",
         ]
         for attr in attr_names:
-            if kwargs.get(attr, None):
-                setattr(self, attr, kwargs.get(attr))
-
-        for key, value in get_config(app).items():
-            if key.lower() in attr_names:
-                setattr(self, key.lower(), value)
+            if ov := kwargs.get(attr, cv(attr.upper(), app, strict=False)):
+                setattr(self, attr, ov)
 
         identity_loaded.connect_via(app)(_on_identity_loaded)
 
@@ -1530,13 +1523,9 @@ class Security:
         if hasattr(app, "cli"):
             from .cli import users, roles
 
-            # Waiting for 3.8 assignment expressions
-            un = cv("CLI_USERS_NAME", app, strict=True)
-            rn = cv("CLI_ROLES_NAME", app, strict=True)
-
-            if un:
+            if un := cv("CLI_USERS_NAME", app, strict=True):
                 app.cli.add_command(users, un)
-            if rn:
+            if rn := cv("CLI_ROLES_NAME", app, strict=True):
                 app.cli.add_command(roles, rn)
 
         # Migrate from TWO_FACTOR config to generic config.

@@ -5,9 +5,11 @@
     Flask-Security registerable module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
+
+from __future__ import annotations
 
 import typing as t
 
@@ -77,7 +79,7 @@ def register_user(registration_form):
     return user
 
 
-def register_existing(form: "ConfirmRegisterForm") -> bool:
+def register_existing(form: ConfirmRegisterForm) -> bool:
     """
     In the case of generic responses we want to mitigate any possible
     email/username enumeration.
@@ -103,7 +105,7 @@ def register_existing(form: "ConfirmRegisterForm") -> bool:
     # Since in this case we have an 'existing' entry - we simply Null out those
     # errors.
     # This also means for JSON there is no way to tell if things worked or not.
-    fields_to_squash: t.Dict[str, t.Dict[str, str]] = dict(email=dict())
+    fields_to_squash: dict[str, dict[str, str]] = dict(email=dict())
     if hasattr(form, "username") and form.existing_username_user:
         fields_to_squash["username"] = dict()
     form_errors_munge(form, fields_to_squash)

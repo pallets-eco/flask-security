@@ -4,12 +4,14 @@
 
     Utility class providing methods for validating, normalizing and sending emails.
 
-    :copyright: (c) 2020-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     While this default implementation uses Flask-Mailman - we want to make sure that
     Flask-Mailman isn't REQUIRED (if this implementation isn't used).
 """
+
+from __future__ import annotations
 
 import typing as t
 
@@ -35,7 +37,7 @@ class MailUtil:
     .. versionadded:: 4.0.0
     """
 
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         """Instantiate class.
 
         :param app: The Flask application being initialized.
@@ -47,9 +49,9 @@ class MailUtil:
         template: str,
         subject: str,
         recipient: str,
-        sender: t.Union[str, tuple],
+        sender: str | tuple,
         body: str,
-        html: t.Optional[str],
+        html: str | None,
         **kwargs: t.Any,
     ) -> None:
         """Send an email via the Flask-Mailman or Flask-Mail or other mail extension.

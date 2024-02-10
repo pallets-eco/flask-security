@@ -9,6 +9,8 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from __future__ import annotations
+
 import os
 import tempfile
 import time
@@ -93,7 +95,7 @@ class SecurityFixture(Flask):
 
 
 @pytest.fixture()
-def app(request: pytest.FixtureRequest) -> "SecurityFixture":
+def app(request: pytest.FixtureRequest) -> SecurityFixture:
     app = SecurityFixture(__name__)
     app.response_class = Response
     app.debug = True
@@ -379,7 +381,7 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
         # user_id = ObjectIdField(required=True)
         meta = {"db_alias": db_name}
 
-        def get_user_mapping(self) -> t.Dict[str, str]:
+        def get_user_mapping(self) -> dict[str, str]:
             """
             Return the mapping from webauthn back to User
             """
@@ -562,7 +564,7 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
                 nullable=False,
             )
 
-        def get_user_mapping(self) -> t.Dict[str, t.Any]:
+        def get_user_mapping(self) -> dict[str, t.Any]:
             """
             Return the filter needed by find_user() to get the user
             associated with this webauthn credential.
@@ -898,7 +900,7 @@ def pony_app(app, pony_datastore):
 
 
 @pytest.fixture()
-def client(request: pytest.FixtureRequest, sqlalchemy_app: t.Callable) -> "FlaskClient":
+def client(request: pytest.FixtureRequest, sqlalchemy_app: t.Callable) -> FlaskClient:
     app = sqlalchemy_app()
     populate_data(app)
     return app.test_client()
@@ -942,7 +944,7 @@ def in_app_context(request, sqlalchemy_app):
 
 
 @pytest.fixture()
-def get_message(app: "Flask") -> t.Callable[..., bytes]:
+def get_message(app: Flask) -> t.Callable[..., bytes]:
     def fn(key, **kwargs):
         rv = app.config["SECURITY_MSG_" + key][0] % kwargs
         return rv.encode("utf-8")

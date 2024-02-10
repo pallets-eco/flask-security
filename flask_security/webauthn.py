@@ -36,6 +36,8 @@
 
 """
 
+from __future__ import annotations
+
 import json
 import time
 import typing as t
@@ -158,8 +160,8 @@ class WebAuthnRegisterResponseForm(Form):
     usage: str
     user_verification: bool
     # this is returned to caller (not part of the client form)
-    registration_verification: "VerifiedRegistration"
-    transports: t.List["AuthenticatorTransport"] = []
+    registration_verification: VerifiedRegistration
+    transports: list[AuthenticatorTransport] = []
     extensions: str
 
     def validate(self, **kwargs: t.Any) -> bool:
@@ -216,7 +218,7 @@ class WebAuthnSigninForm(Form, NextFormMixin):
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(label=get_form_field_xlate(_("Start")), id="wan_signin")
 
-    user: t.Optional["User"] = None
+    user: User | None = None
     # set by caller - is this a second factor authentication?
     is_secondary: bool
 
@@ -257,9 +259,9 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
     is_secondary: bool
     is_verify: bool
     # returned to caller
-    authentication_verification: "VerifiedAuthentication"
-    user: t.Optional["User"] = None
-    cred: t.Optional["WebAuthn"] = None
+    authentication_verification: VerifiedAuthentication
+    user: User | None = None
+    cred: WebAuthn | None = None
     # Set to True if this authentication qualifies as 'multi-factor'
     mf_check: bool = False
 
@@ -371,7 +373,7 @@ class WebAuthnDeleteForm(Form):
 class WebAuthnVerifyForm(Form):
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_verify")
 
-    user: "User"
+    user: User
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
@@ -386,7 +388,7 @@ class WebAuthnVerifyForm(Form):
     within=lambda: cv("FRESHNESS"),
     grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
 )
-def webauthn_register() -> "ResponseValue":
+def webauthn_register() -> ResponseValue:
     """Start Registration for an existing authenticated user
 
     Note that it requires a POST to start the registration and must send 'name'
@@ -395,7 +397,7 @@ def webauthn_register() -> "ResponseValue":
     Also - this requires that the user already be logged in - so we can provide info
     as part of the GET that could otherwise be considered leaking user info.
     """
-    payload: t.Dict[str, t.Any]
+    payload: dict[str, t.Any]
 
     form: WebAuthnRegisterForm = t.cast(
         WebAuthnRegisterForm, build_form_from_request("wan_register_form")
@@ -462,7 +464,7 @@ def webauthn_register() -> "ResponseValue":
         )
 
     current_creds = []
-    cred: "WebAuthn"
+    cred: WebAuthn
     for cred in current_user.webauthn:
         cl = {
             "name": cred.name,
@@ -499,7 +501,7 @@ def webauthn_register() -> "ResponseValue":
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def webauthn_register_response(token: str) -> "ResponseValue":
+def webauthn_register_response(token: str) -> ResponseValue:
     """Response from browser."""
     form: WebAuthnRegisterResponseForm = t.cast(
         WebAuthnRegisterResponseForm,
@@ -566,7 +568,7 @@ def webauthn_register_response(token: str) -> "ResponseValue":
     return redirect(url_for_security("wan_register"))
 
 
-def _signin_common(user: t.Optional["User"], usage: t.List[str]) -> t.Tuple[t.Any, str]:
+def _signin_common(user: User | None, usage: list[str]) -> tuple[t.Any, str]:
     """
     Common code between signin and verify - once form has been verified.
     """
@@ -602,7 +604,7 @@ def _signin_common(user: t.Optional["User"], usage: t.List[str]) -> t.Tuple[t.An
 
 @anonymous_user_required
 @unauth_csrf(fall_through=True)
-def webauthn_signin() -> "ResponseValue":
+def webauthn_signin() -> ResponseValue:
     # This view can be called either as a 'first' authentication or as part of
     # 2FA.
     is_secondary = all(k in session for k in ["tf_user_id", "tf_state"]) and session[
@@ -656,7 +658,7 @@ def webauthn_signin() -> "ResponseValue":
 
 
 @unauth_csrf(fall_through=True)
-def webauthn_signin_response(token: str) -> "ResponseValue":
+def webauthn_signin_response(token: str) -> ResponseValue:
     is_secondary = all(k in session for k in ["tf_user_id", "tf_state"]) and session[
         "tf_state"
     ] in ["ready"]
@@ -754,7 +756,7 @@ def webauthn_signin_response(token: str) -> "ResponseValue":
     within=lambda: cv("FRESHNESS"),
     grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
 )
-def webauthn_delete() -> "ResponseValue":
+def webauthn_delete() -> ResponseValue:
     """Deletes an existing registered credential."""
     form = t.cast(WebAuthnDeleteForm, build_form_from_request("wan_delete_form"))
 
@@ -783,7 +785,7 @@ def webauthn_delete() -> "ResponseValue":
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def webauthn_verify() -> "ResponseValue":
+def webauthn_verify() -> ResponseValue:
     """
     Re-authenticate to reset freshness time.
     This is likely the result of a reauthn_handler redirect, which
@@ -819,7 +821,7 @@ def webauthn_verify() -> "ResponseValue":
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def webauthn_verify_response(token: str) -> "ResponseValue":
+def webauthn_verify_response(token: str) -> ResponseValue:
     form = t.cast(
         WebAuthnSigninResponseForm, build_form_from_request("wan_signin_response_form")
     )
@@ -871,7 +873,7 @@ def webauthn_verify_response(token: str) -> "ResponseValue":
     return redirect(url_for_security("wan_verify"))
 
 
-def is_cred_usable(cred: "WebAuthn", usage: t.Union[str, t.List[str]]) -> bool:
+def is_cred_usable(cred: WebAuthn, usage: str | list[str]) -> bool:
     # Return True is cred can be used for the requested usage/verify
     if not isinstance(usage, list):
         usage = [usage]
@@ -879,7 +881,7 @@ def is_cred_usable(cred: "WebAuthn", usage: t.Union[str, t.List[str]]) -> bool:
     return cred.usage in usage
 
 
-def has_webauthn(user: "User", usage: t.Union[str, t.List[str]]) -> bool:
+def has_webauthn(user: User, usage: str | list[str]) -> bool:
     # Return True if ``user`` has one or more keys with requested usage.
     # Usage: either "first" or "secondary"
     if not isinstance(usage, list):
@@ -892,8 +894,8 @@ def has_webauthn(user: "User", usage: t.Union[str, t.List[str]]) -> bool:
 
 
 def create_credential_list(
-    user: "User", usage: t.List[str]
-) -> t.List["PublicKeyCredentialDescriptor"]:
+    user: User, usage: list[str]
+) -> list[PublicKeyCredentialDescriptor]:
     # Return a list of registered credentials - filtered by whether they apply to our
     # authentication state (first or secondary)
     cl = []
@@ -915,25 +917,25 @@ def create_credential_list(
 
 
 class WebAuthnTfPlugin(TfPluginBase):
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         super().__init__(app)
 
     def create_blueprint(
-        self, app: "flask.Flask", bp: "flask.Blueprint", state: "Security"
+        self, app: flask.Flask, bp: flask.Blueprint, state: Security
     ) -> None:
         """Our endpoints are already registered since webauthn can be both
         a 'first' or 'secondary' authentication mechanism.
         """
         pass
 
-    def get_setup_methods(self, user: "User") -> t.List[t.Optional[str]]:
+    def get_setup_methods(self, user: User) -> list[str]:
         if has_webauthn(user, "secondary"):
             return [_("webauthn")]
         return []
 
     def tf_login(
-        self, user: "User", json_payload: t.Dict[str, t.Any], next_loc: t.Optional[str]
-    ) -> "ResponseValue":
+        self, user: User, json_payload: dict[str, t.Any], next_loc: str | None
+    ) -> ResponseValue:
         session["tf_state"] = "ready"
         if not _security._want_json(request):
             values = dict(next=next_loc) if next_loc else dict()

@@ -9,6 +9,8 @@
 
 """
 
+from __future__ import annotations
+
 import typing as t
 import unicodedata
 
@@ -33,7 +35,7 @@ class PasswordUtil:
     .. versionadded:: 4.0.0
     """
 
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         """Instantiate class.
 
         :param app: The Flask application being initialized.
@@ -54,7 +56,7 @@ class PasswordUtil:
 
     def validate(
         self, password: str, is_register: bool, **kwargs: t.Any
-    ) -> t.Tuple[t.Optional[t.List], str]:
+    ) -> tuple[list | None, str]:
         """
         Password validation.
         Called in app/request context.

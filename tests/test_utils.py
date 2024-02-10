@@ -8,9 +8,10 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from __future__ import annotations
+
 from contextlib import contextmanager
 import re
-import typing as t
 
 from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
@@ -295,7 +296,7 @@ def is_sqlalchemy(datastore):
 
 
 class SmsTestSender(SmsSenderBaseClass):
-    messages: t.List[str] = []
+    messages: list[str] = []
     count = 0
 
     # This looks strange because we need class variables since test need to access a

@@ -227,7 +227,13 @@ def logout_user() -> None:
     identity is now the `AnonymousIdentity`
     """
 
-    for key in ("identity.name", "identity.auth_type", "fs_paa", "fs_gexp"):
+    for key in (
+        "identity.name",
+        "identity.auth_type",
+        "fs_paa",
+        "fs_gexp",
+        "fs_oauth_next",
+    ):
         session.pop(key, None)
 
     # Clear csrf token between sessions.
@@ -251,7 +257,7 @@ def logout_user() -> None:
 def check_and_update_authn_fresh(
     within: timedelta,
     grace: timedelta,
-    method: t.Optional[str] = None,
+    method: str | None = None,
 ) -> bool:
     """Check if user authenticated within specified time and update grace period.
 
@@ -301,8 +307,7 @@ def check_and_update_authn_fresh(
     new_exp = now + grace
     grace_ts = int(new_exp.timestamp())
 
-    fs_gexp = session.get("fs_gexp", None)
-    if fs_gexp:
+    if fs_gexp := session.get("fs_gexp", None):
         if now.timestamp() < fs_gexp:
             # Within grace period - extend it, and we're good.
             session["fs_gexp"] = grace_ts
@@ -329,9 +334,7 @@ def get_hmac(password: str | bytes) -> bytes:
 
     :param password: The password to sign
     """
-    salt = config_value("PASSWORD_SALT")
-
-    if salt is None:
+    if not (salt := config_value("PASSWORD_SALT")):
         raise RuntimeError(
             "The configuration value `SECURITY_PASSWORD_SALT` must "
             "not be None when the value of `SECURITY_PASSWORD_HASH` is "
@@ -463,7 +466,7 @@ def do_flash(message: str, category: str) -> None:
         flash(message, category)
 
 
-def get_url(endpoint_or_url: str, qparams: t.Optional[t.Dict[str, str]] = None) -> str:
+def get_url(endpoint_or_url: str, qparams: dict[str, str] | None = None) -> str:
     """Returns a URL if a valid endpoint is found. Otherwise, returns the
     provided value.
 
@@ -502,7 +505,7 @@ def slash_url_suffix(url, suffix):
 
 
 def transform_url(
-    url: str, qparams: t.Optional[t.Dict[str, str]] = None, **kwargs: str
+    url: str, qparams: dict[str, str] | None = None, **kwargs: str
 ) -> str:
     """Modify url
 
@@ -626,9 +629,8 @@ def find_redirect(key: str) -> str:
 
     :param key: The  application configuration key to search for
     """
-    app_value = current_app.config[key.upper()]
     app_url = None
-    if app_value:
+    if app_value := current_app.config[key.upper()]:
         app_url = get_url(app_value)
     rv = app_url or str(current_app.config.get("APPLICATION_ROOT", "/"))
     return rv
@@ -646,15 +648,14 @@ def propagate_next(fallback_url: str, form: FlaskForm | MultiDict | dict | None)
     form_next = None
     if form and isinstance(form, FlaskForm):
         if hasattr(form, "next") and form.next.data:
-            form_next = get_url(form.next.data)
+            form_next = form.next.data
     elif form and form.get("next", None):
-        form_next = get_url(str(form.get("next")))
-    arg_next = None
-    if request.args.get("next", None):
-        arg_next = get_url(request.args.get("next"))  # type: ignore[arg-type]
+        form_next = str(form.get("next"))
+    arg_next = request.args.get("next")
+
     urls = [
-        arg_next,
-        form_next,
+        get_url(form_next) if form_next else None,
+        get_url(arg_next) if arg_next else None,
         fallback_url,
     ]
     for url in urls:
@@ -683,22 +684,7 @@ def simplify_url(base_url: str, redirect_url: str) -> str:
     return redirect_url
 
 
-def get_config(app: Flask) -> t.Dict[str, t.Any]:
-    """Conveniently get the security configuration for the specified
-    application without the annoying 'SECURITY_' prefix.
-
-    :param app: The application to inspect
-    """
-    items = app.config.items()
-    prefix = "SECURITY_"
-
-    def strip_prefix(tup):
-        return tup[0].replace("SECURITY_", ""), tup[1]
-
-    return dict([strip_prefix(i) for i in items if i[0].startswith(prefix)])
-
-
-def get_message(key: str, **kwargs: t.Any) -> t.Tuple[str, str]:
+def get_message(key: str, **kwargs: t.Any) -> tuple[str, str]:
     rv = config_value("MSG_" + key)
     return localize_callback(rv[0], **kwargs), rv[1]
 
@@ -828,7 +814,7 @@ def get_token_status(token, serializer, max_age=None, return_data=False):
 
 def check_and_get_token_status(
     token: str, serializer_name: str, within: timedelta
-) -> t.Tuple[bool, bool, t.Any]:
+) -> tuple[bool, bool, t.Any]:
     """Get the status of a token and return data.
 
     :param token: The token to check
@@ -857,7 +843,7 @@ def check_and_get_token_status(
     return expired, invalid, data
 
 
-def get_identity_attributes(app: t.Optional[Flask] = None) -> t.List[str]:
+def get_identity_attributes(app: Flask | None = None) -> list[str]:
     # Return list of keys of identity attributes
     # Is it possible to not have any?
     app = app or current_app
@@ -867,9 +853,7 @@ def get_identity_attributes(app: t.Optional[Flask] = None) -> t.List[str]:
     return []
 
 
-def get_identity_attribute(
-    attr: str, app: t.Optional[Flask] = None
-) -> t.Dict[str, t.Any]:
+def get_identity_attribute(attr: str, app: Flask | None = None) -> dict[str, t.Any]:
     """Given an user_identity_attribute, return the defining dict.
     A bit annoying since USER_IDENTITY_ATTRIBUTES is a list of dict
     where each dict has just one key.
@@ -904,7 +888,7 @@ def lookup_identity(identity):
     return None
 
 
-def uia_phone_mapper(identity: str) -> t.Optional[str]:
+def uia_phone_mapper(identity: str) -> str | None:
     """Used to match identity as a phone number. This is a simple proxy
     to :py:class:`PhoneUtil`
 
@@ -916,7 +900,7 @@ def uia_phone_mapper(identity: str) -> t.Optional[str]:
     return ph
 
 
-def uia_email_mapper(identity: str) -> t.Optional[str]:
+def uia_email_mapper(identity: str) -> str | None:
     """Used to match identity as an email.
 
     :return: Normalized email or None if not valid email.
@@ -932,7 +916,7 @@ def uia_email_mapper(identity: str) -> t.Optional[str]:
         return None
 
 
-def uia_username_mapper(identity: str) -> t.Optional[str]:
+def uia_username_mapper(identity: str) -> str | None:
     """Used to match identity as a username. This is a simple proxy
     to :py:class:`UsernameUtil`
 
@@ -1029,7 +1013,7 @@ def base_render_json(
     form: FlaskForm,
     include_user: bool = True,
     include_auth_token: bool = False,
-    additional: t.Optional[t.Dict[str, t.Any]] = None,
+    additional: dict[str, t.Any] | None = None,
     error_status_code: int = 400,
 ) -> ResponseValue:
     """
@@ -1037,7 +1021,7 @@ def base_render_json(
     This fills in the response and then calls :meth:`.Security.render_json`
     which can be overridden by the app.
     """
-    user = form.user if hasattr(form, "user") else None
+    user = getattr(form, "user", None)
     if form.errors:
         code = error_status_code
         # wtforms 3.0 introduces form-level errors - these show up as part of the
@@ -1078,7 +1062,7 @@ def base_render_json(
 
 
 def simple_render_json(
-    additional: t.Optional[t.Dict[str, t.Any]] = None,
+    additional: dict[str, t.Any] | None = None,
 ) -> ResponseValue:
     payload = dict(csrf_token=csrf.generate_csrf())
     if additional:
@@ -1097,7 +1081,7 @@ def default_want_json(req):
     # TODO should this handle json sub-types?
     accept_mimetypes = req.accept_mimetypes
     if not hasattr(req.accept_mimetypes, "best"):  # pragma: no cover
-        # Alright. we dont have the best property, lets add it ourselves.
+        # Alright. we don't have the best property, lets add it ourselves.
         # This is for quart compatibility
         accept_mimetypes.best = best
     if accept_mimetypes.best == "application/json":
@@ -1106,9 +1090,9 @@ def default_want_json(req):
 
 
 def json_error_response(
-    errors: t.Optional[t.Union[str, list]] = None,
-    field_errors: t.Optional[t.Dict[str | None, list]] = None,
-) -> t.Dict[str, t.Any]:
+    errors: str | list | None = None,
+    field_errors: dict[str | None, list] | None = None,
+) -> dict[str, t.Any]:
     """Helper to create an error response.
 
     The "errors" key holds a simple list of errors - which is made up of any passed
@@ -1121,7 +1105,7 @@ def json_error_response(
     sorts keys - so we change that to '__all__' which is what django uses
     apparently and was suggested as part of WTForms 3.0.
     """
-    response_json: t.Dict[str, t.Union[list, t.Dict[str, list]]] = dict()
+    response_json: dict[str, list | dict[str, list]] = dict()
     plain_errors = []
     if errors:
         if isinstance(errors, str):
@@ -1171,7 +1155,7 @@ class DummySmsSender(SmsSenderBaseClass):
 
 
 class SmsSenderFactory:
-    senders: t.Dict[str, t.Type[SmsSenderBaseClass]] = {"Dummy": DummySmsSender}
+    senders: dict[str, t.Type[SmsSenderBaseClass]] = {"Dummy": DummySmsSender}
 
     @classmethod
     def createSender(cls, name, *args, **kwargs):
@@ -1203,7 +1187,7 @@ except Exception:
     pass
 
 
-def password_length_validator(password: str) -> t.Optional[t.List[str]]:
+def password_length_validator(password: str) -> list[str] | None:
     """Test password for length.
 
     :param password: Plain text password to check
@@ -1225,7 +1209,7 @@ def password_length_validator(password: str) -> t.Optional[t.List[str]]:
 
 def password_complexity_validator(
     password: str, is_register: bool, **kwargs: t.Any
-) -> t.Optional[t.List[str]]:
+) -> list[str] | None:
     """Test password for complexity.
 
     Currently just supports 'zxcvbn'.
@@ -1246,7 +1230,7 @@ def password_complexity_validator(
     if config_value("PASSWORD_COMPLEXITY_CHECKER") == "zxcvbn":
         import zxcvbn
 
-        user_info: t.List[t.Any] = []
+        user_info: list[t.Any] = []
         if not is_register:
             for v in kwargs["user"].__dict__.values():
                 if v and isinstance(v, str):
@@ -1268,7 +1252,7 @@ def password_complexity_validator(
         return None
 
 
-def password_breached_validator(password: str) -> t.Optional[t.List[str]]:
+def password_breached_validator(password: str) -> list[str] | None:
     """Check if password on breached list.
     Does nothing unless :py:data:`SECURITY_PASSWORD_CHECK_BREACHED` is set.
     If password is found on the breached list, return an error if the count is
@@ -1281,8 +1265,7 @@ def password_breached_validator(password: str) -> t.Optional[t.List[str]]:
 
     .. versionadded:: 3.4.0
     """
-    pwn = config_value("PASSWORD_CHECK_BREACHED")
-    if pwn:
+    if pwn := config_value("PASSWORD_CHECK_BREACHED"):
         try:
             cnt = pwned(password)
             if cnt >= config_value("PASSWORD_BREACHED_COUNT"):

@@ -4,12 +4,14 @@
 
     Flask-Security Two-Factor Plugin Module
 
-    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     TODO:
         - add localized callback for select choices.
 """
+
+from __future__ import annotations
 
 import typing as t
 
@@ -56,7 +58,7 @@ class TwoFactorSelectForm(Form):
 
 
 @unauth_csrf(fall_through=True)
-def tf_select() -> "ResponseValue":
+def tf_select() -> ResponseValue:
     # Ask user which MFA method they want to use.
     # This is used when a user has setup more than one type of 2FA.
     form = t.cast(
@@ -106,23 +108,23 @@ def tf_select() -> "ResponseValue":
 
 
 class TfPluginBase:  # pragma no cover
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         pass
 
     def create_blueprint(
-        self, app: "flask.Flask", bp: "flask.Blueprint", state: "Security"
+        self, app: flask.Flask, bp: flask.Blueprint, state: Security
     ) -> None:
         raise NotImplementedError
 
-    def get_setup_methods(self, user: "User") -> t.List[t.Optional[str]]:
+    def get_setup_methods(self, user: User) -> list[str]:
         """
         Return a list of methods that ``user`` has setup for this second factor
         """
         raise NotImplementedError
 
     def tf_login(
-        self, user: "User", json_payload: t.Dict[str, t.Any], next_loc: t.Optional[str]
-    ) -> "ResponseValue":
+        self, user: User, json_payload: dict[str, t.Any], next_loc: str | None
+    ) -> ResponseValue:
         """
         Called from first/primary authenticated views if the user successfully
         authenticated, and required a second method of authentication.
@@ -142,19 +144,19 @@ class TfPlugin:
     """
 
     def __init__(self) -> None:
-        self._tf_impls: t.Dict[str, "TfPluginBase"] = {}
+        self._tf_impls: dict[str, TfPluginBase] = {}
 
     def register_tf_impl(
         # N.B. all methods must be unique across all implementations.
         self,
-        app: "flask.Flask",
+        app: flask.Flask,
         name: str,
-        impl: t.Type["TfPluginBase"],
+        impl: t.Type[TfPluginBase],
     ) -> None:
         self._tf_impls[name] = impl(app)
 
     def create_blueprint(
-        self, app: "flask.Flask", bp: "flask.Blueprint", state: "Security"
+        self, app: flask.Flask, bp: flask.Blueprint, state: Security
     ) -> None:
         if state.support_mfa:
             for impl in self._tf_impls.values():
@@ -167,7 +169,7 @@ class TfPlugin:
                 endpoint="tf_select",
             )(tf_select)
 
-    def method_to_impl(self, user: "User", method: str) -> t.Optional[TfPluginBase]:
+    def method_to_impl(self, user: User, method: str) -> TfPluginBase | None:
         # reverse map a method to the implementation.
         # N.B. again - requires that methods be unique across all implementations.
         # There is a small window that a previously setup method was removed.
@@ -177,7 +179,7 @@ class TfPlugin:
                 return impl
         return None  # pragma no cover
 
-    def get_setup_tf_methods(self, user: "User") -> t.List[t.Optional[str]]:
+    def get_setup_tf_methods(self, user: User) -> list[str]:
         # Return list of methods that user has setup
         methods = []
         for impl in self._tf_impls.values():
@@ -186,18 +188,18 @@ class TfPlugin:
 
     def tf_enter(
         self,
-        user: "User",
+        user: User,
         remember_me: bool,
         primary_authn_via: str,
-        next_loc: t.Optional[str],
-    ) -> t.Optional["ResponseValue"]:
+        next_loc: str | None,
+    ) -> ResponseValue | None:
         """Check if two-factor is required and if so, start the process.
         Must be called in a request context.
         remember_me controls 2 cookies - the remember_me cookie and the tf_validity
         cookie. We use the session to hold the fact that the user requested 'remember'
         across the second factor.
         """
-        json_payload: t.Dict[str, t.Any]
+        json_payload: dict[str, t.Any]
         if _security.support_mfa:
             tf_setup_methods = self.get_setup_tf_methods(user)
             if cv("TWO_FACTOR_REQUIRED") or len(tf_setup_methods) > 0:
@@ -224,7 +226,7 @@ class TfPlugin:
                         # got the methods up above.
                         impl = t.cast(
                             TfPluginBase,
-                            self.method_to_impl(user, t.cast(str, tf_setup_methods[0])),
+                            self.method_to_impl(user, tf_setup_methods[0]),
                         )
                         return impl.tf_login(user, json_payload, next_loc)
                     else:
@@ -244,7 +246,7 @@ class TfPlugin:
                         return simple_render_json(json_payload)
         return None
 
-    def tf_complete(self, user: "User", dologin: bool) -> t.Optional[str]:
+    def tf_complete(self, user: User, dologin: bool) -> str | None:
         remember = session.pop("tf_remember_login", None)
 
         if dologin:
@@ -296,7 +298,7 @@ def tf_verify_validity_token(fs_uniquifier: str) -> bool:
     return True
 
 
-def tf_set_validity_token_cookie(response: "Response", token: str) -> "Response":
+def tf_set_validity_token_cookie(response: Response, token: str) -> Response:
     """Sets the Two-Factor validity token for a specific user given that is
     configured and the user selects remember me
 
@@ -312,7 +314,7 @@ def tf_set_validity_token_cookie(response: "Response", token: str) -> "Response"
     return response
 
 
-def tf_check_state(allowed_states: t.List[str]) -> t.Optional["User"]:
+def tf_check_state(allowed_states: list[str]) -> User | None:
     if (
         not all(k in session for k in ["tf_user_id", "tf_state"])
         or session["tf_state"] not in allowed_states

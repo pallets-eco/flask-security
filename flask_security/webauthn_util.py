@@ -4,10 +4,12 @@
 
     Utility class providing methods controlling various aspects of webauthn.
 
-    :copyright: (c) 2020-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
+
+from __future__ import annotations
 
 import secrets
 import typing as t
@@ -15,6 +17,7 @@ import typing as t
 from flask import current_app, request
 
 try:
+    # noinspection PyUnresolvedReferences
     from webauthn.helpers.structs import (
         AuthenticatorAttachment,
         AuthenticatorSelectionCriteria,
@@ -41,15 +44,15 @@ class WebauthnUtil:
     .. versionadded:: 5.0.0
     """
 
-    def __init__(self, app: "flask.Flask"):
+    def __init__(self, app: flask.Flask):
         """Instantiate class.
 
         :param app: The Flask application being initialized.
         """
         pass
 
-    def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
-        # Mostly override this for testing so we can have a 'constant' challenge.
+    def generate_challenge(self, nbytes: int | None = None) -> str:
+        # Mostly override this for testing, so we can have a 'constant' challenge.
         return secrets.token_urlsafe(nbytes)
 
     def origin(self) -> str:
@@ -57,8 +60,8 @@ class WebauthnUtil:
         return request.host_url.rstrip("/")
 
     def registration_options(
-        self, user: "User", usage: str, existing_options: t.Dict[str, t.Any]
-    ) -> t.Dict[str, t.Any]:
+        self, user: User, usage: str, existing_options: dict[str, t.Any]
+    ) -> dict[str, t.Any]:
         """
         :param user: User object - could be used to configure on a per-user basis.
         :param usage: Either "first" or "secondary" (webauthn is being used as a second
@@ -73,8 +76,8 @@ class WebauthnUtil:
         return existing_options
 
     def authenticator_selection(
-        self, user: "User", usage: str
-    ) -> "AuthenticatorSelectionCriteria":
+        self, user: User, usage: str
+    ) -> AuthenticatorSelectionCriteria:
         """
         :param user: User object - could be used to configure on a per-user basis.
         :param usage: Either "first" or "secondary" (webauthn is being used as a second
@@ -117,13 +120,13 @@ class WebauthnUtil:
 
     def authentication_options(
         self,
-        user: t.Optional["User"],
-        usage: t.List[str],
-        existing_options: t.Dict[str, t.Any],
-    ) -> t.Dict[str, t.Any]:
+        user: User | None,
+        usage: list[str],
+        existing_options: dict[str, t.Any],
+    ) -> dict[str, t.Any]:
         """
         :param user: User object - could be used to configure on a per-user basis.
-            However this can be null.
+            However, this can be null.
         :param usage: Either "first" or "secondary" (webauthn is being used as a second
             factor for authentication)
         :param existing_options: Currently filled in authentication options.
@@ -135,8 +138,8 @@ class WebauthnUtil:
         return existing_options
 
     def user_verification(
-        self, user: t.Optional["User"], usage: t.List[str]
-    ) -> "UserVerificationRequirement":
+        self, user: User | None, usage: list[str]
+    ) -> UserVerificationRequirement:
         """
         As part of signin - do we want/need user verification.
         This is called from /wan-signin and /wan-verify

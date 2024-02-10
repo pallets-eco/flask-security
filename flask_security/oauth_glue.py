@@ -14,7 +14,10 @@ from __future__ import annotations
 import typing as t
 
 try:
+    # noinspection PyUnresolvedReferences
     from authlib.integrations.flask_client import OAuth
+
+    # noinspection PyUnresolvedReferences
     from authlib.integrations.base_client.errors import (
         OAuthError,
     )
@@ -161,7 +164,7 @@ class OAuthGlue:
         if not oauthapp:
             oauthapp = OAuth(app)
         self.oauth = oauthapp
-        self.providers: t.Dict[str, FsOAuthProvider] = dict()
+        self.providers: dict[str, FsOAuthProvider] = dict()
         if cv("OAUTH_BUILTIN_PROVIDERS", app=app):
             for provider in cv("OAUTH_BUILTIN_PROVIDERS", app=app):
                 if provider == "github":

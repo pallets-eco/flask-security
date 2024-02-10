@@ -20,6 +20,7 @@ Since we don't actually send email - we have signal handlers flash the required
 data and a mail sender that flashes what mail would be sent!
 
 """
+from __future__ import annotations
 
 from datetime import timedelta
 import os
@@ -67,9 +68,9 @@ class FlashMailUtil(MailUtil):
         template: str,
         subject: str,
         recipient: str,
-        sender: t.Union[str, tuple],
+        sender: str | tuple,
         body: str,
-        html: t.Optional[str],
+        html: str | None,
         **kwargs: t.Any,
     ) -> None:
         flash(f"Email body: {body}")
@@ -117,7 +118,7 @@ def create_app():
     # app.config["SECURITY_URL_PREFIX"] = "/fs"
 
     class TestWebauthnUtil(WebauthnUtil):
-        def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
+        def generate_challenge(self, nbytes: int | None = None) -> str:
             # Use a constant Challenge so we can use this app to generate gold
             # responses for use in unit testing. See test_webauthn.
             # NEVER NEVER NEVER do this in production

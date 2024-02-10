@@ -14,7 +14,6 @@ import copy
 import datetime
 import json
 import re
-import typing as t
 
 import pytest
 
@@ -178,7 +177,7 @@ SIGNIN_DATA_UH = {
 
 
 class HackWebauthnUtil(WebauthnUtil):
-    def generate_challenge(self, nbytes: t.Optional[int] = None) -> str:
+    def generate_challenge(self, nbytes=None):
         return CHALLENGE
 
     def origin(self):
