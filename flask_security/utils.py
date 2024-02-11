@@ -164,12 +164,12 @@ def login_user(
 ) -> bool:
     """Perform the login routine.
 
-    If *SECURITY_TRACKABLE* is used, make sure you commit changes after this
+    If :py:data:`SECURITY_TRACKABLE` is used, make sure you commit changes after this
     request (i.e. ``app.security.datastore.commit()``).
 
     :param user: The user to login
     :param remember: Flag specifying if the remember cookie should be set.
-                     If ``None`` use value of SECURITY_DEFAULT_REMEMBER_ME
+                     If ``None`` use value of :py:data:`SECURITY_DEFAULT_REMEMBER_ME`
     :param authn_via: A list of strings denoting which mechanism(s) the user
         authenticated with.
         These should be one or more of ["password", "sms", "authenticator", "email"] or
@@ -330,7 +330,7 @@ def check_and_update_authn_fresh(
 
 def get_hmac(password: str | bytes) -> bytes:
     """Returns a Base64 encoded HMAC+SHA512 of the password signed with
-    the salt specified by *SECURITY_PASSWORD_SALT*.
+    the salt specified by :py:data:`SECURITY_PASSWORD_SALT`.
 
     :param password: The password to sign
     """
@@ -395,10 +395,11 @@ def verify_and_update_password(password: str | bytes, user: User) -> bool:
 def hash_password(password: str | bytes) -> str:
     """Hash the specified plaintext password.
 
-    Unless the hash algorithm (as specified by `SECURITY_PASSWORD_HASH`) is listed in
-    the configuration variable `SECURITY_PASSWORD_SINGLE_HASH`,
+    Unless the hash algorithm (as specified by
+    :py:data:`SECURITY_PASSWORD_HASH`) is listed in
+    the configuration variable :py:data:`SECURITY_PASSWORD_SINGLE_HASH`,
     perform a double hash - first create an HMAC from the plaintext password
-    and the value of `SECURITY_PASSWORD_SALT`,
+    and the value of :py:data:`SECURITY_PASSWORD_SALT`,
     then use the configured hashing algorithm.
     This satisfies OWASP/ASVS section 2.4.5: 'provide additional
     iteration of a key derivation'.
@@ -872,9 +873,9 @@ def get_identity_attribute(attr: str, app: Flask | None = None) -> dict[str, t.A
 def lookup_identity(identity):
     """
     Lookup identity in DB.
-    This loops through, in order, SECURITY_USER_IDENTITY_ATTRIBUTES, and first
-    calls the mapper function to validate/normalize. Then the db.find_user is called
-    on the specified user model attribute.
+    This loops through, in order, :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`,
+    and first calls the mapper function to validate/normalize.
+    Then the db.find_user is called on the specified user model attribute.
     """
     for mapping in config_value("USER_IDENTITY_ATTRIBUTES"):
         attr = list(mapping.keys())[0]
@@ -930,7 +931,7 @@ def uia_username_mapper(identity: str) -> str | None:
 def use_double_hash(password_hash=None):
     """Return a bool indicating whether a password should be hashed twice."""
     # Default to plaintext for backward compatibility with
-    # SECURITY_PASSWORD_SINGLE_HASH = False
+    # :py:data:`SECURITY_PASSWORD_SINGLE_HASH` = False
     single_hash = config_value("PASSWORD_SINGLE_HASH") or {"plaintext"}
 
     if password_hash is None:

@@ -51,7 +51,12 @@ class FsModels:
     ):
         """Initialize Model.
         This needs to be called after the DB object has been created
-        (e.g. db = Sqlalchemy())
+        (e.g. db = Sqlalchemy()).
+
+        .. note::
+            This should only be used if you are utilizing the fsqla data
+            models. With your own models you would need similar but slightly
+            difficult code.
         """
         cls.db = appdb
         cls.user_table_name = user_table_name

@@ -12,6 +12,8 @@ and `Role` data model. The fields on your models must follow a particular conven
 depending on the functionality your app requires. Aside from this, you're free
 to add any additional fields to your model(s) if you want.
 
+Packaged Models
+----------------
 As more features are added to Flask-Security, the list of required fields and tables grow.
 As you use these features, and therefore require these fields and tables, database migrations are required;
 which are a bit of a pain. To make things easier - Flask-Security includes mixins that
@@ -23,12 +25,22 @@ be easily extended to add any sort of custom fields and can be found in the
 The provided models are versioned since they represent actual DB models, and any
 changes require a schema migration (and perhaps a data migration). Applications
 must specifically import the version they want (and handle any required migration).
+Your application code should import just the required version e.g.::
+
+    from flask_security.models import fsqla_v3 as fsqla
+
+
+A single method ``fsqla.FsModels.set_db_info`` is provided to glue the supplied models to your
+DB instance. This is only needed if you use the packaged models.
+
+Model Specification
+-------------------
 
 Your `User` model needs a Primary Key - Flask-Security doesn't actually reference
 this - so it can be any name or type your application needs. It should be used in the
 foreign relationship between `User` and `Role`. The `WebAuthn` model also
 references this primary key (which can be overridden by providing a
-suitable implementation of ``get_user_mapping``).
+suitable implementation of :py:meth:`flask_security.WebAuthnMixin.get_user_mapping`).
 
 At the bare minimum your `User` and `Role` model should include the following fields:
 
@@ -109,14 +121,14 @@ will require the following additional field:
 * ``us_phone_number`` (string, 64 bytes, nullable, unique)
 
 Separate Identity Domains
-~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^
 If you want authentication tokens to not be invalidated when the user changes their
 password add the following to your `User` model:
 
 * ``fs_token_uniquifier`` (string, 64 bytes, unique, non-nullable)
 
 Username
-~~~~~~~~~
+^^^^^^^^
 If you set :py:data:`SECURITY_USERNAME_ENABLE` to `True`, then your `User` model
 requires the following additional field:
 

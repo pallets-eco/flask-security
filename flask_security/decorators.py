@@ -230,7 +230,8 @@ def handle_csrf(method: str, json_response: bool = False) -> ResponseValue | Non
     do anything. Furthermore - since this is called PRIOR to form instantiation
     if the request is JSON - it MUST send the csrf_token as a header.
 
-    If the passed in method is not in *SECURITY_CSRF_PROTECT_MECHANISMS* then not only
+    If the passed in method is not in
+    :py:data:`SECURITY_CSRF_PROTECT_MECHANISMS` then not only
     will no CSRF code be run, but a flag in the current context ``fs_ignore_csrf``
     will be set so that downstream code knows to ignore any CSRF checks.
 
@@ -295,8 +296,8 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
     """Decorator that protects endpoints using token authentication. The token
     should be added to the request by the client by using a query string
     variable with a name equal to the configuration value of
-    *SECURITY_TOKEN_AUTHENTICATION_KEY* or in a request header named that of
-    the configuration value of *SECURITY_TOKEN_AUTHENTICATION_HEADER*
+    :py:data:`SECURITY_TOKEN_AUTHENTICATION_KEY` or in a request header named that of
+    the configuration value of :py:data:`SECURITY_TOKEN_AUTHENTICATION_HEADER`
 
     Once authenticated, if so configured, CSRF protection will be tested.
     """
@@ -459,7 +460,7 @@ def unauth_csrf(
     This decorator will always require CSRF if the caller is authenticated.
 
     This decorator will suppress CSRF if caller isn't authenticated and has set the
-    *SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS* config variable.
+    :py:data:`SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS` config variable.
 
     :param fall_through: if set to True, then if CSRF fails here - simply keep going.
         This is appropriate if underlying view is form based and once the form is
@@ -629,7 +630,7 @@ def permissions_accepted(*fsperms: str) -> DecoratedView:
 def anonymous_user_required(f: DecoratedView) -> DecoratedView:
     """Decorator which requires that caller NOT be logged in.
     If a logged in user accesses an endpoint protected with this decorator
-    they will be redirected to the *SECURITY_POST_LOGIN_VIEW*.
+    they will be redirected to the :py:data:`SECURITY_POST_LOGIN_VIEW`.
     If the caller requests a JSON response, a 400 will be returned.
 
     .. versionchanged:: 3.3.0

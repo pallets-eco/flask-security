@@ -57,6 +57,10 @@ Datastores
 ----------
 .. autoclass:: flask_security.UserDatastore
     :members:
+    :exclude-members: create_webauthn, find_user_from_webauthn,
+        mf_set_recovery_codes, mf_delete_recovery_code,
+        set_webauthn_user_handle,
+        us_get_totp_secrets, us_put_totp_secrets
 
 .. autoclass:: flask_security.SQLAlchemyUserDatastore
     :show-inheritance:
@@ -104,6 +108,11 @@ Datastores
     The WebAuthn model. This must be provided by the application.
     See :ref:`Models <models_topic>`.
 
+Packaged Models
+---------------
+.. autoclass:: flask_security.models.fsqla.FsModels
+   :members:
+
 Utils
 -----
 .. autofunction:: flask_security.lookup_identity
@@ -147,8 +156,6 @@ Utils
 .. autofunction:: flask_security.password_breached_validator
 
 .. autofunction:: flask_security.pwned
-
-.. autofunction:: flask_security.transform_url
 
 .. autofunction:: flask_security.unique_identity_attribute
 

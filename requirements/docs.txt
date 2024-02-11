@@ -3,3 +3,6 @@ Sphinx~=7.2
 sphinx-issues==3.0.1
 packaging
 Flask-Login
+Flask-SQLAlchemy
+sqlalchemy
+sqlalchemy-utils

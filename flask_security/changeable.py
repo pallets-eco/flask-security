@@ -84,7 +84,7 @@ def admin_change_password(user: User, new_passwd: str, notify: bool = True) -> N
 
     :param user: The user object to change
     :param new_passwd: The new plain-text password to assign to the user.
-    :param notify: If True and SECURITY_SEND_PASSWORD_CHANGE_EMAIL is True
+    :param notify: If True and :py:data:`SECURITY_SEND_PASSWORD_CHANGE_EMAIL` is True
         send the 'change_notice' email to the user.
     """
     change_user_password(user, new_passwd, notify=notify, autologin=False)

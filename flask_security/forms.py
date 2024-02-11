@@ -243,7 +243,7 @@ def unique_username(form, field):
 
 def unique_identity_attribute(form, field):
     """A validator that checks the field data against all configured
-    SECURITY_USER_IDENTITY_ATTRIBUTES.
+    :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
     This can be used as part of registration.
 
     Be aware that the "mapper" function likely also normalizes the input in addition
