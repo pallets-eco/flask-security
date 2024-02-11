@@ -440,10 +440,6 @@ class UserDatastore:
                     enorm = app.security._mail_util.validate(email)
                 except ValueError:
 
-        .. note::
-            The roles kwparam is modified as part of the call - it will, if necessary,
-            be converted from names to role instances.
-
         .. danger::
            Be aware that whatever `password` is passed in will
            be stored directly in the DB. Do NOT pass in a plaintext password!
