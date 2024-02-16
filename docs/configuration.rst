@@ -739,8 +739,8 @@ Login/Logout
 .. py:data:: SECURITY_UNAUTHORIZED_VIEW
 
     Specifies the view to redirect to if a user attempts to access a URL/endpoint that they do
-    not have permission to access. If this value is ``None``, the user is presented with a default
-    HTTP 403 response.
+    not have permission to access. This can be a callable (which returns a URL or ``None``) or an endpoint or a URL.
+    If this value is ``None`` or the configured callable returns ``None`` or empty, the user is presented with a default HTTP 403 response.
 
     Default: ``None``.
 

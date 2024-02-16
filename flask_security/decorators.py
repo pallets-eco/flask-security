@@ -21,7 +21,6 @@ from flask_login import current_user, login_required  # noqa: F401
 from flask_principal import Identity, Permission, RoleNeed, identity_changed
 from flask_wtf.csrf import CSRFError
 from werkzeug.local import LocalProxy
-from werkzeug.routing import BuildError
 
 from .proxies import _security, DecoratedView
 from .signals import user_unauthenticated
@@ -135,23 +134,14 @@ def default_unauthz_handler(func_name, params):
     if _security._want_json(request):
         payload = json_error_response(errors=unauthz_message)
         return _security._render_json(payload, 403, None, None)
-    view = cv("UNAUTHORIZED_VIEW")
-    if view:
+    if view := cv("UNAUTHORIZED_VIEW"):
         if callable(view):
-            view = view()
+            if not (redirect_to := view()):
+                abort(403)
         else:
-            try:
-                view = get_url(view)
-            except BuildError:
-                view = None
+            redirect_to = get_url(view)
         do_flash(unauthz_message, unauthz_message_type)
-        redirect_to = "/"
-        if request.referrer and not request.referrer.split("?")[0].endswith(
-            request.path
-        ):
-            redirect_to = request.referrer
-
-        return redirect(view or redirect_to)
+        return redirect(redirect_to)
     abort(403)
 
 

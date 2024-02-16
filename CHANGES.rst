@@ -11,35 +11,42 @@ Released xxx
 Among other changes, this continues the process of dis-entangling Flask-Security
 from Flask-Login and may require some application changes due to backwards incompatible changes.
 
-Features
-++++++++
+Features & Improvements
++++++++++++++++++++++++
 - (:issue:`879`) Work with Flask[async]. view decorators and signals support async handlers.
 - (:pr:`900`) CI support for python 3.12
+- (:issue:`912`) Improve oauth debugging support. Handle next propagation in a more general way.
+- (:pr:`877`) Make AnonymousUser optional and deprecated.
+- (:pr:`906`) Remove undocumented and untested looking in session for possible 'next'
+  redirect location.
+- (:pr:`901`) Work with py_webauthn 2.0
+- (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
+- (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
+- (:issue:`904`) Changes to default unauthorized handler - remove use of referrer header (see below).
+
+
+Docs and Chores
++++++++++++++++
+- (:pr:`889`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
+- (:pr:`911`) Chore - stop setting all config as attributes. init_app(\*\*kwargs) can only
+  set forms, flags, and utility classes.
+- (:pr:`873`) Update Spanish and Italian translations. (gissimo)
+- (:pr:`855`) Improve translations for two-factor method selection. (gissimo)
+- (:pr:`866`) Improve German translations. (sr-verde)
+- (:pr:`911`) Remove deprecation of AUTO_LOGIN_AFTER_CONFIRM - it has a reasonable use case.
 
 Fixes
 +++++
 
 - (:issue:`845`) us-signin magic link should use fs_uniquifier. (not email)
 - (:issue:`893`) Improve open-redirect vulnerability mitigation. (see below)
-- (:pr:`873`) Update Spanish and Italian translations. (gissimo)
-- (:pr:`877`) Make AnonymousUser optional and deprecated.
 - (:issue:`875`) user_datastore.create_user has side effects on mutable inputs. (NoRePercussions)
 - (:pr:`878`) The long deprecated _unauthorized_callback/handler has been removed.
-- (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
-- (:pr:`855`) Improve translations for two-factor method selection. (gissimo)
-- (:pr:`866`) Improve German translations. (sr-verde)
-- (:pr:`889`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
 - (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for the new configuration and implications.
-- (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
-- (:pr:`901`) Work with py_webauthn 2.0
-- (:pr:`906`) Remove undocumented and untested looking in session for possible 'next'
-  redirect location.
 - (:pr:`908`) Improve CSRF documentation and testing. Fix bug where a CSRF failure could
   return an HTML page even if the request was JSON.
-- (:pr:`911`) Chore - stop setting all config as attributes. init_app(\*\*kwargs) can only
-  set forms, flags, and utility classes.
-- (:pr:`911`) Remove deprecation of AUTO_LOGIN_AFTER_CONFIRM - it has a reasonable use case.
-- (:issue:`912`) Improve oauth debugging support. Handle next propagation in a more general way.
+- (:pr:`914`) It was possible that if :data:`SECURITY_EMAIL_VALIDATOR_ARGS` were set that
+  deliverability would be checked even for login.
 
 Notes
 ++++++
@@ -114,6 +121,12 @@ Backwards Compatibility Concerns
   the default settings for JSON serialization in Flask attempt to sort the keys - which fails
   with the `None` key. An issue has been filed with WTForms - and maybe it will be changed.
   Flask-Security now changes any `None` key to `""`.
+- The default unauthorized handler behavior has changed slightly and is now documented. The default
+  (:data:`SECURITY_UNAUTHORIZED_VIEW` == ``None``) has not changed (a default HTTP 403 response).
+  The precise behavior when :data:`SECURITY_UNAUTHORIZED_VIEW` was set was never documented.
+  The important change is that Flask-Security no longer ever looks at the request.referrer header and
+  will never redirect to it. If an application needs that, it can provide a callable that can return
+  that or any other header.
 
 Version 5.3.3
 -------------

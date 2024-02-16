@@ -28,6 +28,8 @@ from tests.test_utils import (
     get_form_input,
     get_num_queries,
     hash_password,
+    init_app_with_options,
+    is_authenticated,
     json_authenticate,
     logout,
     populate_data,
@@ -463,34 +465,64 @@ def test_unauthorized_access(client, get_message):
     assert response.status_code == 403
 
 
-@pytest.mark.settings(unauthorized_view=lambda: None)
-def test_unauthorized_access_with_referrer(client, get_message):
-    authenticate(client, "joe@lp.com")
-    response = client.get("/admin", headers={"referer": "/admin"})
-    assert response.location != "/admin"
-    client.get(response.location)
+def test_unauthorized_callable_view(app, sqlalchemy_datastore, get_message):
+    # Test various options using custom unauthorized view
+    def unauthz_view():
+        from flask import request
 
-    response = client.get(
-        "/admin?a=b", headers={"referer": "http://localhost/admin?x=y"}
-    )
-    assert "/" in response.location
-    client.get(response.headers["Location"])
+        if request.path == "/admin":
+            return None
+        elif request.path == "/admin_perm":
+            return ""
+        elif request.path == "/admin_and_editor":
+            return "/profile"
+        elif request.path == "/simple":
+            # N.B. security issue - app should verify this is local
+            return request.referrer
+        else:
+            return "not_implemented"
 
-    response = client.get(
-        "/admin", headers={"referer": "/admin"}, follow_redirects=True
-    )
+    app.config["SECURITY_UNAUTHORIZED_VIEW"] = unauthz_view
+    init_app_with_options(app, sqlalchemy_datastore)
+    client = app.test_client()
+    # activate tiya
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="tiya@lp.com")
+        app.security.datastore.activate_user(user)
+        app.security.datastore.commit()
+    authenticate(client, "tiya@lp.com")
+    assert is_authenticated(client, get_message)
+
+    response = client.get("/admin")
+    assert response.status_code == 403
+    response = client.get("/admin_perm")
+    assert response.status_code == 403
+
+    response = client.get("/admin_and_editor", follow_redirects=False)
+    assert check_location(app, response.location, "/profile")
+    response = client.get(response.location)
     assert response.data.count(get_message("UNAUTHORIZED")) == 1
 
-    # When referrer is from another path and unauthorized,
-    # we expect a temp redirect (302) to the referer
-    response = client.get("/admin?w=s", headers={"referer": "/profile"})
+    response = client.get(
+        "/simple", headers={"referer": "/myhome"}, follow_redirects=False
+    )
+    assert check_location(app, response.location, "/myhome")
+
+
+def test_unauthorized_url_view(app, sqlalchemy_datastore):
+    # Test unknown endpoint basically results in redirect to the given string.
+    app.config["SECURITY_UNAUTHORIZED_VIEW"] = ".myendpoint"
+    init_app_with_options(app, sqlalchemy_datastore)
+    client = app.test_client()
+    authenticate(client, "tiya@lp.com")
+    response = client.get("/admin")
     assert response.status_code == 302
-    assert "/profile" in response.location
+    check_location(app, response.location, ".myendpoint")
 
 
 @pytest.mark.settings(unauthorized_view="/unauthz")
 def test_roles_accepted(clients):
-    # This specificaly tests that we can pass a URL for unauthorized_view.
+    # This specifically tests that we can pass a URL for unauthorized_view.
     for user in ("matt@lp.com", "joe@lp.com"):
         authenticate(clients, user)
         response = clients.get("/admin_or_editor")
