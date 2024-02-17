@@ -3,7 +3,7 @@
 mypy
 build
 check-wheel-contents
-psycopg2
+psycopg2-binary
 pymysql
 pre-commit
 tox
