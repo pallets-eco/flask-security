@@ -291,6 +291,7 @@ def logout():
 
 
 @anonymous_user_required
+@unauth_csrf(fall_through=True)
 def register() -> "ResponseValue":
     """View function which handles a registration request."""
 

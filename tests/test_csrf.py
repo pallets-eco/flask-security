@@ -567,3 +567,38 @@ def test_remember_login_csrf_cookie(app, client):
     assert not client.get_cookie("remember_token")
     assert not client.get_cookie("session")
     assert not client.get_cookie("XSRF-Token")
+
+
+@pytest.mark.csrf(csrfprotect=True)
+@pytest.mark.registerable()
+def test_json_register_csrf_with_ignore_unauth_set_to_false(app, client):
+    """
+    Test that you are able to register a user when using the JSON api
+    and the CSRF_IGNORE_UNAUTH_ENDPOINTS is set to False.
+    """
+    app.config["WTF_CSRF_ENABLED"] = True
+    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
+    app.config["CSRF_IGNORE_UNAUTH_ENDPOINTS"] = False
+    app.config["SECURITY_CSRF_HEADER"] = "X-CSRF-Token"
+    CSRFProtect(app)
+
+    csrf_token = client.get("/login", headers={"Accept": "application/json"}).json[
+        "response"
+    ]["csrf_token"]
+
+    email = "eg@testuser.com"
+    data = {"email": email, "password": "password"}
+
+    response = client.post(
+        "/register", json=data, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    response = client.post(
+        "/register",
+        json=data,
+        headers={"Content-Type": "application/json", "X-CSRF-Token": csrf_token},
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["user"]["email"] == email
