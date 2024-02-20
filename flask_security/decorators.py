@@ -246,8 +246,8 @@ def handle_csrf(method: str, json_response: bool = False) -> ResponseValue | Non
                     payload = json_error_response(errors=e.description)
                     return _security._render_json(payload, 400, None, None)
                 raise
-        else:
-            set_request_attr("fs_ignore_csrf", True)
+            return None
+    set_request_attr("fs_ignore_csrf", True)
     return None
 
 

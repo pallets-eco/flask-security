@@ -259,10 +259,13 @@ def test_cp_reset(app, client):
 
 @pytest.mark.changeable()
 @pytest.mark.csrf(csrfprotect=True)
+@pytest.mark.settings(csrf_header="X-XSRF-Token")
 def test_cp_with_token(app, client):
     # Make sure can use returned CSRF-Token in Header.
     # Since the csrf token isn't in the form - must enable app-wide CSRF
     # using CSRFProtect() - as the above mark does.
+    # Using X-XSRF-Token as header tests that we properly
+    # add that as a known header to WTFforms.
     auth_token, csrf_token = json_login(client, use_header=True)
 
     # make sure returned csrf_token works in header.
@@ -277,7 +280,7 @@ def test_cp_with_token(app, client):
             "/change",
             content_type="application/json",
             json=data,
-            headers={"X-CSRF-Token": csrf_token},
+            headers={"X-XSRF-Token": csrf_token},
         )
         assert response.status_code == 200
     assert mp.success == 1 and mp.failure == 0
@@ -415,6 +418,32 @@ def test_different_mechanisms_nc(app, client_nc):
         )
         assert response.status_code == 200
     assert mp.success == 0 and mp.failure == 0
+
+
+@pytest.mark.changeable()
+@pytest.mark.csrf(csrfprotect=True)
+@pytest.mark.settings(csrf_protect_mechanisms=[])
+def test_cp_with_token_empty_mechanisms(app, client):
+    # If no mechanisms - shouldn't do any CSRF
+    auth_token, csrf_token = json_login(client, use_header=True)
+
+    # make sure returned csrf_token works in header.
+    data = dict(
+        password="password",
+        new_password="battery staple",
+        new_password_confirm="battery staple",
+    )
+
+    response = client.post(
+        "/change",
+        content_type="application/json",
+        json=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authentication-Token": auth_token,
+        },
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.settings(csrf_ignore_unauth_endpoints=True, CSRF_COOKIE_NAME="XSRF-Token")
