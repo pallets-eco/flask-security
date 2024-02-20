@@ -97,6 +97,7 @@ from .utils import (
     get_request_attr,
     is_user_authenticated,
     naive_utcnow,
+    parse_auth_token,
     set_request_attr,
     uia_email_mapper,
     uia_username_mapper,
@@ -258,6 +259,7 @@ _default_config: dict[str, t.Any] = {
     "TOKEN_AUTHENTICATION_KEY": "auth_token",
     "TOKEN_AUTHENTICATION_HEADER": "Authentication-Token",
     "TOKEN_MAX_AGE": None,
+    "TOKEN_EXPIRE_TIMESTAMP": lambda user: 0,
     "CONFIRM_SALT": "confirm-salt",
     "RESET_SALT": "reset-salt",
     "LOGIN_SALT": "login-salt",
@@ -667,31 +669,15 @@ def _request_loader(request):
             token = data.get(args_key, token)
 
     try:
-        data = _security.remember_token_serializer.loads(
-            token, max_age=cv("TOKEN_MAX_AGE")
-        )
-
-        # Version 3.x generated tokens that map to data with 3 elements,
-        # and fs_uniquifier was on last element.
-        # Version 4.0.0 generates tokens that map to data with only 1 element,
-        # which maps to fs_uniquifier.
-        # Here we compute uniquifier_index so that we can pick up correct index for
-        # matching fs_uniquifier in version 4.0.0 even if token was created with
-        # version 3.x
-        uniquifier_index = 0 if len(data) == 1 else 2
-
+        tdata = parse_auth_token(token)
         if hasattr(_security.datastore.user_model, "fs_token_uniquifier"):
-            user = _security.datastore.find_user(
-                fs_token_uniquifier=data[uniquifier_index]
-            )
+            user = _security.datastore.find_user(fs_token_uniquifier=tdata["uid"])
         else:
-            user = _security.datastore.find_user(fs_uniquifier=data[uniquifier_index])
-        if not user.active:
-            user = None
+            user = _security.datastore.find_user(fs_uniquifier=tdata["uid"])
     except Exception:
-        user = None
+        return None
 
-    if user and user.verify_auth_token(data):
+    if user and user.active and user.verify_auth_token(tdata):
         set_request_attr("fs_authn_via", "token")
         return user
 
@@ -838,49 +824,55 @@ class UserMixin(BaseUserMixin):
         Optionally use a separate uniquifier so that changing password doesn't
         invalidate auth tokens.
 
-        This data MUST be securely signed using the ``remember_token_serializer``
+        The returned value is securely signed using the ``remember_token_serializer``
 
         .. versionchanged:: 4.0.0
             If user model has ``fs_token_uniquifier`` - use that (raise ValueError
             if not set). Otherwise, fallback to using ``fs_uniquifier``.
+        .. versionchanged:: 5.4.0
+            New format - a dict with a version string. Add a token-based expiry
+            option as well as a session id.
         """
 
+        tdata: dict[str, t.Any] = dict(ver=str(5))
         if hasattr(self, "fs_token_uniquifier"):
             if not self.fs_token_uniquifier:
                 raise ValueError()
-            data = [str(self.fs_token_uniquifier)]
+            tdata["uid"] = str(self.fs_token_uniquifier)
         else:
-            data = [str(self.fs_uniquifier)]
-        return _security.remember_token_serializer.dumps(data)
+            tdata["uid"] = str(self.fs_uniquifier)
+        tdata["sid"] = 0  # session id
+        tdata["exp"] = int(cv("TOKEN_EXPIRE_TIMESTAMP")(self))  # if >0 then shorter of
+        # :data:SECURITY_MAX_AGE and this.
 
-    def verify_auth_token(self, data: str | bytes) -> bool:
+        # Let application add things
+        self.augment_auth_token(tdata)
+
+        # Serialize and sign
+        return _security.remember_token_serializer.dumps(tdata)
+
+    def augment_auth_token(self, tdata: dict[str, t.Any]) -> None:
+        """Override this to add/modify parts of the auth token.
+        Additions to the dict can be made and verified in verify_auth_token()
+
+        .. versionadded:: 5.4.0
         """
-        Perform additional verification of contents of auth token.
-        Prior to this being called the token has been validated (via signing)
-        and has not expired.
+        return
 
-        :param data: the data as formulated by :meth:`get_auth_token`
+    def verify_auth_token(self, tdata: dict[str, t.Any]) -> bool:
+        """
+        Override this to perform additional verification of contents of auth token.
+        Prior to this being called the token has been validated (via signing)
+        and has not expired (either with MAX_AGE or specific 'exp' value).
+
+        :param tdata: a dictionary just as in augment_auth_token()
 
         .. versionadded:: 3.3.0
 
-        .. versionchanged:: 4.0.0
-            If user model has ``fs_token_uniquifier`` - use that otherwise
-            use ``fs_uniquifier``.
+        .. versionchanged:: 5.4.0
+            Now receives a dictionary.
         """
-
-        # Version 3.x generated tokens that map to data with 3 elements,
-        # and fs_uniquifier was on last element.
-        # Version 4.0.0 generates tokens that map to data with only 1 element,
-        # which maps to fs_uniquifier.
-        # Here we compute uniquifier_index so that we can pick up correct index for
-        # matching fs_uniquifier in version 4.0.0 even if token was created with
-        # version 3.x
-        uniquifier_index = 0 if len(data) == 1 else 2
-
-        if hasattr(self, "fs_token_uniquifier"):
-            return data[uniquifier_index] == self.fs_token_uniquifier
-
-        return data[uniquifier_index] == self.fs_uniquifier
+        return True
 
     def has_role(self, role: str | Role) -> bool:
         """Returns `True` if the user identifies with the specified role.

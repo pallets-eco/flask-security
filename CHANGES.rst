@@ -23,6 +23,8 @@ Features & Improvements
 - (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
 - (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
 - (:issue:`904`) Changes to default unauthorized handler - remove use of referrer header (see below).
+- (:pr:`xxx`) The authentication_token format has changed - adding per-token expiry time and future session ID.
+  Old tokens are still accepted.
 
 
 Docs and Chores
@@ -47,6 +49,7 @@ Fixes
   return an HTML page even if the request was JSON.
 - (:pr:`914`) It was possible that if :data:`SECURITY_EMAIL_VALIDATOR_ARGS` were set that
   deliverability would be checked even for login.
+- (:issue:`925`) Register with JSON and authentication token failed CSRF. (lilz-egoto)
 
 Notes
 ++++++

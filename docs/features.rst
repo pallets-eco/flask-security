@@ -90,6 +90,10 @@ isolating password changes from authentication tokens. That attribute can be cha
 Unlike ``fs_uniquifier``, it can be set to ``nullable`` - it will automatically be generated
 at first use if null.
 
+Authentication tokens have 2 options for specifying expiry time :data:`SECURITY_TOKEN_MAX_AGE`
+is applied to ALL authentication tokens. Each authentication token can itself have an embedded
+expiry value (settable via the :data:`SECURITY_TOKEN_EXPIRE_TIMESTAMP` callable).
+
 .. _two-factor:
 
 Two-factor Authentication

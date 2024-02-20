@@ -71,6 +71,7 @@ low = [
     "babel==2.12.1",
     "bcrypt==4.0.1",
     "bleach==6.0.0",
+    "freezegun",
     "jinja2==3.1.2",
     "itsdangerous==2.1.2",
     "markupsafe==2.1.2",
