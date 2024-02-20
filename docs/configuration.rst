@@ -222,6 +222,25 @@ These configuration keys are used globally across all features.
 
     Default: ``None``, meaning the token never expires.
 
+.. py:data:: SECURITY_TOKEN_EXPIRE_TIMESTAMP
+
+    A callable that returns a unix timestamp in the future when this specific
+    authentication token should expire. Returning 0 means no expiration.
+    It is passed the currently authenticated User so any fields can be used
+    to customize an expiration time. Of course it is called in a request
+    context so any information about the current request can also be used.
+
+    If BOTH this and :data:`SECURITY_TOKEN_MAX_AGE` are set - the shorter is used.
+
+    .. note::
+        These 2 expiry options work differently - with this one, the actual expire
+        timestamp is in the auth_token. The signed token (using itsdangerous)
+        has the timestamp the token was generated. On validation, that is checked
+        against ``SECURITY_TOKEN_MAX_AGE``. So for MAX_AGE, at the time of
+        validation, the token hasn't yet been associated with a User.
+
+    Default: ``lambda user: 0``
+
 .. py:data:: SECURITY_EMAIL_VALIDATOR_ARGS
 
     Email address are validated and normalized via the ``mail_util_cls`` which
@@ -294,32 +313,6 @@ These configuration keys are used globally across all features.
     Default: ``False``.
 
     .. versionadded:: 4.0.0
-
-.. py:data:: SECURITY_REDIRECT_VALIDATE_MODE
-
-    Defines how Flask-Security will attempt to mitigate an open redirect
-    vulnerability w.r.t. client supplied `next` parameters.
-    Please see :ref:`redirect_topic` for a complete discussion.
-
-    Current options include `"absolute"` and `"regex"`. A list is allowed.
-
-
-    Default: ``["absolute"]``
-
-    .. versionadded:: 4.0.2
-
-    .. versionchanged:: 5.4.0
-        Default is now `"absolute"` and now takes a list.
-
-.. py:data:: SECURITY_REDIRECT_VALIDATE_RE
-
-    This regex handles known patterns that can be exploited. Basically,
-    don't allow control characters or white-space followed by slashes (or
-    back slashes).
-
-    Default: ``r"^/{4,}|\\{3,}|[\s\000-\037][/\\]{2,}(?![/\\])|[/\\]([^/\\]|/[^/\\])*[/\\].*"``
-
-    .. versionadded:: 4.0.2
 
 .. py:data:: SECURITY_CSRF_PROTECT_MECHANISMS
 
@@ -466,6 +459,8 @@ These configuration keys are used globally across all features.
     If set to ``True`` Flask-Security will return generic responses to endpoints
     that could be used to enumerate users. Please see :ref:`generic_responses`.
 
+    Default: ``False``
+
     .. versionadded:: 5.0.0
 
 Core - Multi-factor
@@ -567,6 +562,7 @@ These are used by the Two-Factor and Unified Signin features.
         - :py:data:`SECURITY_US_SETUP_URL`
         - :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
         - :py:data:`SECURITY_WAN_REGISTER_URL`
+        - :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
 
     N.B. To avoid strange behavior, be sure to set the grace period less than
     the freshness period.

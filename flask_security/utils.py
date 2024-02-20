@@ -138,7 +138,7 @@ def find_csrf_field_name():
     return None
 
 
-def is_user_authenticated(user: User) -> bool:
+def is_user_authenticated(user: User | None) -> bool:
     """
     return True is user is authenticated.
 
@@ -465,6 +465,44 @@ def do_flash(message: str, category: str) -> None:
     """
     if config_value("FLASH_MESSAGES"):
         flash(message, category)
+
+
+def parse_auth_token(auth_token: str) -> dict[str, t.Any]:
+    """Parse an authentication token.
+    This will raise an exception if not properly signed or expired
+    """
+    tdata = dict()
+
+    # This can raise BadSignature or SignatureExpired exceptions from itsdangerous
+    raw_data = _security.remember_token_serializer.loads(
+        auth_token, max_age=config_value("TOKEN_MAX_AGE")
+    )
+
+    # Version 3.x generated tokens that map to data with 3 elements,
+    # and fs_uniquifier was on last element.
+    # Version 4.0.0 generates tokens that map to data with only 1 element,
+    # which maps to fs_uniquifier.
+    # Version 5 and up are already a dict (with a version #)
+    if isinstance(raw_data, dict):
+        # new format - starting at ver=5
+        if not all(k in raw_data for k in ["ver", "uid", "exp", "sid"]):
+            raise ValueError("Token missing keys")
+        tdata = raw_data
+        if ts := tdata.get("exp"):
+            if ts < int(time.time()):
+                raise SignatureExpired("token[exp] value expired")
+    else:
+        # old tokens that were lists
+        if len(raw_data) == 1:
+            # version 4
+            tdata["ver"] = "4"
+            tdata["uid"] = raw_data[0]
+        else:
+            # version 3
+            tdata["ver"] = "3"
+            tdata["uid"] = raw_data[2]
+
+    return tdata
 
 
 def get_url(endpoint_or_url: str, qparams: dict[str, str] | None = None) -> str:

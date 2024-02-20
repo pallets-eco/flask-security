@@ -13,6 +13,7 @@ check-manifest
 coverage
 cryptography
 djlint
+freezegun
 mongoengine
 mongomock
 msgcheck

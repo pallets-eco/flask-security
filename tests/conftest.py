@@ -472,6 +472,13 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
             # which handles datetime
             return {"email": str(self.email), "last_update": self.update_datetime}
 
+        def augment_auth_token(self, tdata):
+            # for testing - if TESTING_AUGMENT_AUTH_TOKEN is set - call that
+            from flask import current_app
+
+            if cb := current_app.config.get("TESTING_AUGMENT_AUTH_TOKEN"):
+                cb(tdata)
+
     with app.app_context():
         db.create_all()
 

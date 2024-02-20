@@ -419,6 +419,12 @@ def get_auth_token_version_3x(app, user):
     return app.security.remember_token_serializer.dumps(data)
 
 
+def get_auth_token_version_4x(app, user):
+    """Copy of algorithm that generated user token in version 4.x- 5.4"""
+    data = [str(user.fs_uniquifier)]
+    return app.security.remember_token_serializer.dumps(data)
+
+
 class FakeSerializer:
     def __init__(self, age=None, invalid=False):
         self.age = age
