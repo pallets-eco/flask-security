@@ -1667,18 +1667,18 @@ class Security:
         if cv("CSRF_COOKIE_NAME", app=app) and not csrf:
             # Common use case is for cookie value to be used as contents for header
             # which is only looked at when CsrfProtect is initialized.
-            # Yes, this is opinionated - they can always get CSRF token via:
-            # 'get /login'
             raise ValueError(
                 "CSRF_COOKIE defined however CsrfProtect not part of application"
             )
 
         if csrf:
             csrf.exempt("flask_security.views.logout")
+            # Add configured header to WTF_CSRF_HEADERS
+            if ch := cv("CSRF_HEADER", app=app):
+                if ch not in app.config["WTF_CSRF_HEADERS"]:
+                    app.config["WTF_CSRF_HEADERS"].append(ch)
         if cv("CSRF_COOKIE_NAME", app=app):
             app.after_request(csrf_cookie_handler)
-            # Add configured header to WTF_CSRF_HEADERS
-            app.config["WTF_CSRF_HEADERS"].append(cv("CSRF_HEADER", app=app))
 
     def set_form_info(self, name: str, form_info: FormInfo) -> None:
         """Set form instantiation info.
