@@ -1620,6 +1620,8 @@ paths:
           type: string
     post:
       summary: Sign in using a WebAuthn key - Step 2
+      parameters:
+        - $ref: "#/components/parameters/include_auth_token"
       requestBody:
         required: true
         content:
@@ -1635,7 +1637,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DefaultJsonResponse"
+                $ref: "#/components/schemas/JsonResponseWithToken"
         302:
           description: >
             Validation failed - since this form is often auto-submitted

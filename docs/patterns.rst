@@ -76,8 +76,10 @@ at the end of the request. Most (all?) browsers intercept this response and pop 
 This effectively bypasses any of the normal Flask-Security login forms. By default, the Flask-Security endpoints that require the caller be
 authenticated do NOT support ``basic`` - however the :py:data:`SECURITY_API_ENABLED_METHODS` can be used to override this.
 
+.. _freshness_topic:
+
 Freshness
-++++++++++
+~~~~~~~~~
 A common pattern for browser-based sites is to use sessions to manage identity. This is usually
 implemented using session cookies. These cookies expire once the session (browser tab) is closed. This is very
 convenient, and keeps the users from having to constantly re-authenticate. The downside is that sessions can easily be
@@ -88,10 +90,24 @@ can be protected by requiring a 'fresh' or recent authentication. Flask-Security
     - :func:`.auth_required` takes parameters that define how recent the authentication must have happened. In addition a grace
       period can be specified so that multiple step operations don't require re-authentication in the middle.
     - A default :meth:`.Security.reauthn_handler` that is called when a request fails the recent authentication check.
-    - :py:data:`SECURITY_VERIFY_URL` and :py:data:`SECURITY_US_VERIFY_URL` endpoints that request the user to re-authenticate.
-    - ``VerifyForm`` and ``UsVerifyForm`` forms that can be extended.
+    - :py:data:`SECURITY_VERIFY_URL`, :py:data:`SECURITY_US_VERIFY_URL`, :py:data:`SECURITY_WAN_VERIFY_URL` endpoints
+      that request the user to re-authenticate.
+    - ``VerifyForm``, ``UsVerifyForm``, ``WebAuthnVerifyForm`` forms that can be extended.
 
-Flask-Security itself uses this as part of securing the :ref:`unified-sign-in`, :ref:`two-factor`, and :ref:`webauthn` setup endpoints.
+Flask-Security itself uses this as part of securing the following endpoints:
+
+    - .wan_register ("/wan-register")
+    - .wan_delete ("/wan-delete")
+    - .tf_setup ("/tf-setup")
+    - .us_setup ("/us-setup")
+    - .mf_recovery_codes ("/mf-recovery-codes")
+
+Using the :py:data:`SECURITY_FRESHNESS` and :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` configuration variables.
+
+.. tip::
+    Freshness requires a session (cookie) be sent as part of the request. Without
+    a session, freshness will fail. If your application doesn't/can't send session cookies
+    you can disable freshness by setting ``SECURITY_FRESHNESS`` to ``timedelta(minutes=-1)``
 
 .. _redirect_topic:
 
@@ -194,7 +210,7 @@ to set :py:data:`SECURITY_WAN_ALLOW_USER_HINTS` to ``False``.
 
 .. _cheat-sheet: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages
 
-.. _csrftopic:
+.. _csrf_topic:
 
 CSRF
 ~~~~

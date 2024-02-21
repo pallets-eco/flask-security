@@ -5,12 +5,13 @@
     Confirmable tests
 """
 
+from datetime import date, timedelta
 import re
-import time
 from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
+from freezegun import freeze_time
 from wtforms.fields import StringField
 from wtforms.validators import Length
 
@@ -185,14 +186,14 @@ def test_requires_confirmation_error_redirect(app, clients):
 @pytest.mark.registerable()
 @pytest.mark.settings(confirm_email_within="1 milliseconds")
 def test_expired_confirmation_token(client, get_message):
-    with capture_registrations() as registrations:
-        data = dict(email="mary@lp.com", password="awesome sunset", next="")
-        client.post("/register", data=data, follow_redirects=True)
+    # Note that we need relatively new-ish date since session cookies also expire.
+    with freeze_time(date.today() + timedelta(days=-1)):
+        with capture_registrations() as registrations:
+            data = dict(email="mary@lp.com", password="awesome sunset", next="")
+            client.post("/register", data=data, follow_redirects=True)
 
-    email = registrations[0]["email"]
-    token = registrations[0]["confirm_token"]
-
-    time.sleep(1)
+        email = registrations[0]["email"]
+        token = registrations[0]["confirm_token"]
 
     response = client.get("/confirm/" + token, follow_redirects=True)
     msg = get_message("CONFIRMATION_EXPIRED", within="1 milliseconds", email=email)
@@ -416,15 +417,16 @@ def test_spa_get(app, client, get_message):
 def test_spa_get_bad_token(app, client, get_message):
     """Test expired and invalid token"""
     with capture_flashes() as flashes:
-        with capture_registrations() as registrations:
-            response = client.post(
-                "/register",
-                json=dict(email="dude@lp.com", password="awesome sunset"),
-                headers={"Content-Type": "application/json"},
-            )
-            assert response.headers["Content-Type"] == "application/json"
-        token = registrations[0]["confirm_token"]
-        time.sleep(1)
+        # Note that we need relatively new-ish date since session cookies also expire.
+        with freeze_time(date.today() + timedelta(days=-1)):
+            with capture_registrations() as registrations:
+                response = client.post(
+                    "/register",
+                    json=dict(email="dude@lp.com", password="awesome sunset"),
+                    headers={"Content-Type": "application/json"},
+                )
+                assert response.headers["Content-Type"] == "application/json"
+            token = registrations[0]["confirm_token"]
 
         response = client.get("/confirm/" + token)
         assert response.status_code == 302

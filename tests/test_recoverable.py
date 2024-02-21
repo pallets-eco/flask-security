@@ -8,12 +8,13 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from datetime import date, timedelta
 import re
-import time
 from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
+from freezegun import freeze_time
 from wtforms.fields import StringField
 from wtforms.validators import Length
 from tests.test_utils import (
@@ -298,13 +299,13 @@ def test_login_form_description(sqlalchemy_app):
 
 @pytest.mark.settings(reset_password_within="1 milliseconds")
 def test_expired_reset_token(client, get_message):
-    with capture_reset_password_requests() as requests:
-        client.post("/reset", data=dict(email="joe@lp.com"), follow_redirects=True)
+    # Note that we need relatively new-ish date since session cookies also expire.
+    with freeze_time(date.today() + timedelta(days=-1)):
+        with capture_reset_password_requests() as requests:
+            client.post("/reset", data=dict(email="joe@lp.com"), follow_redirects=True)
 
     user = requests[0]["user"]
     token = requests[0]["token"]
-
-    time.sleep(1)
 
     with capture_flashes() as flashes:
         msg = get_message(
@@ -481,16 +482,17 @@ def test_spa_get(app, client):
 def test_spa_get_bad_token(app, client, get_message):
     """Test expired and invalid token"""
     with capture_flashes() as flashes:
-        with capture_reset_password_requests() as requests:
-            response = client.post(
-                "/reset",
-                json=dict(email="joe@lp.com"),
-                headers={"Content-Type": "application/json"},
-            )
-            assert response.headers["Content-Type"] == "application/json"
-            assert "user" not in response.json["response"]
-        token = requests[0]["token"]
-        time.sleep(1)
+        # Note that we need relatively new-ish date since session cookies also expire.
+        with freeze_time(date.today() + timedelta(days=-1)):
+            with capture_reset_password_requests() as requests:
+                response = client.post(
+                    "/reset",
+                    json=dict(email="joe@lp.com"),
+                    headers={"Content-Type": "application/json"},
+                )
+                assert response.headers["Content-Type"] == "application/json"
+                assert "user" not in response.json["response"]
+            token = requests[0]["token"]
 
         response = client.get("/reset/" + token)
         assert response.status_code == 302

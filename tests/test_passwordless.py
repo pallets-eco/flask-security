@@ -5,13 +5,14 @@
     Passwordless tests
 """
 
+from datetime import date, timedelta
 import re
-import time
 from urllib.parse import parse_qsl, urlsplit
 import warnings
 
 import pytest
 from flask import Flask
+from freezegun import freeze_time
 from tests.test_utils import (
     capture_flashes,
     capture_passwordless_login_requests,
@@ -112,14 +113,13 @@ def test_passwordless_template(app, client, get_message):
 @pytest.mark.settings(login_within="1 milliseconds")
 def test_expired_login_token(client, app, get_message):
     e = "matt@lp.com"
-
     with capture_passwordless_login_requests() as requests:
-        client.post("/login", data=dict(email=e), follow_redirects=True)
+        # Note that we need relatively new-ish date since session cookies also expire.
+        with freeze_time(date.today() + timedelta(days=-1)):
+            client.post("/login", data=dict(email=e), follow_redirects=True)
 
     token = requests[0]["login_token"]
     user = requests[0]["user"]
-
-    time.sleep(1)
 
     response = client.get("/login/" + token, follow_redirects=True)
     assert (
@@ -168,14 +168,15 @@ def test_spa_get_bad_token(app, client, get_message):
     """Test expired and invalid token"""
     with capture_flashes() as flashes:
         with capture_passwordless_login_requests() as requests:
-            response = client.post(
-                "/login",
-                json=dict(email="matt@lp.com"),
-                headers={"Content-Type": "application/json"},
-            )
-            assert response.headers["Content-Type"] == "application/json"
+            # Note that we need relatively new-ish date since session cookies expire.
+            with freeze_time(date.today() + timedelta(days=-1)):
+                response = client.post(
+                    "/login",
+                    json=dict(email="matt@lp.com"),
+                    headers={"Content-Type": "application/json"},
+                )
+                assert response.headers["Content-Type"] == "application/json"
         token = requests[0]["login_token"]
-        time.sleep(1)
 
         response = client.get("/login/" + token)
         assert response.status_code == 302

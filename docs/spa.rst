@@ -89,7 +89,7 @@ Client side authentication options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Depending on your SPA architecture and vision you can choose between cookie or token based authentication.
 
-For both there is more documentation and some examples. In both cases, you need to understand and handle :ref:`csrftopic` concerns.
+For both there is more documentation and some examples. In both cases, you need to understand and handle :ref:`csrf_topic` concerns.
 
 Security Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~

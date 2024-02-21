@@ -1096,6 +1096,24 @@ def test_authn_freshness_nc(app, client_nc, get_message):
     assert response.location == "/verify?next=/myview"
 
 
+@pytest.mark.two_factor()
+@pytest.mark.settings(freshness=timedelta(minutes=-1), multi_factor_recovery_codes=True)
+def test_authn_freshness_nc_no_fresh(app, client_nc, get_message):
+    # test disabling freshness when no session is sent.
+    response = json_authenticate(client_nc)
+    token = response.json["response"]["user"]["authentication_token"]
+    h = {"Authentication-Token": token}
+
+    # This should work
+    response = client_nc.get("/tf-setup", json={}, headers=h)
+    assert response.status_code == 200
+    assert not response.json["response"]["tf_required"]
+
+    response = client_nc.get("/mf-recovery-codes", json={}, headers=h)
+    assert response.status_code == 200
+    assert response.json["response"]["recovery_codes"] == []
+
+
 def test_verify_fresh(app, client, get_message):
     # Hit a fresh-required endpoint and walk through verify
     authenticate(client)

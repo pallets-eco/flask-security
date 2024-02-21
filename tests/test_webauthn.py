@@ -26,10 +26,12 @@ from tests.test_utils import (
     get_existing_session,
     get_form_action,
     get_form_input,
+    is_authenticated,
     json_authenticate,
     logout,
     reset_fresh,
     setup_tf_sms,
+    verify_token,
 )
 
 from flask_security import (
@@ -401,7 +403,7 @@ def test_basic_json(app, clients, get_message):
     assert "user" not in rjson["response"]
 
     response = clients.post(
-        response_url,
+        f"{response_url}?include_auth_token",
         json=dict(credential=json.dumps(SIGNIN_DATA1)),
     )
     assert response.status_code == 200
@@ -409,8 +411,8 @@ def test_basic_json(app, clients, get_message):
     assert auths[1][1] == ["webauthn"]
 
     # verify actually logged in
-    response = clients.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    assert is_authenticated(clients, get_message)
+    verify_token(clients, response.json["response"]["user"]["authentication_token"])
 
     # fetch credentials and verify lastuse was updated
     response = clients.get("/wan-register", headers=headers)
@@ -1272,9 +1274,12 @@ def test_verify_json(app, client, get_message):
     signin_options = response.json["response"]["credential_options"]
     assert signin_options["userVerification"] == "discouraged"
 
-    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    response_url = (
+        f'wan-verify/{response.json["response"]["wan_state"]}?include_auth_token'
+    )
     response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
     assert response.status_code == 200
+    verify_token(client, response.json["response"]["user"]["authentication_token"])
 
     response = client.get("fresh", headers=headers)
     assert response.status_code == 200

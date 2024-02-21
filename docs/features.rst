@@ -70,7 +70,7 @@ Token Authentication
 --------------------
 
 Token based authentication can be used by retrieving the user auth token from an
-authentication endpoint (e.g. ``/login``, ``/us-signin``).
+authentication endpoint (e.g. ``/login``, ``/us-signin``, ``/wan-signin``).
 Perform an HTTP POST with a query param of ``include_auth_token`` and the authentication details
 as JSON data.
 A successful call will return the authentication token. This token can be used in subsequent
@@ -93,6 +93,11 @@ at first use if null.
 Authentication tokens have 2 options for specifying expiry time :data:`SECURITY_TOKEN_MAX_AGE`
 is applied to ALL authentication tokens. Each authentication token can itself have an embedded
 expiry value (settable via the :data:`SECURITY_TOKEN_EXPIRE_TIMESTAMP` callable).
+
+.. note::
+    While every Flask-Security endpoint will accept an authentication token header,
+    there are some endpoints that require session information (e.g. a session cookie).
+    Please read :ref:`freshness_topic` and :ref:`csrf_topic`
 
 .. _two-factor:
 
@@ -249,7 +254,7 @@ JSON/Ajax Support
 -----------------
 
 Flask-Security supports JSON/Ajax requests where appropriate. Please
-look at :ref:`csrftopic` for details on how to work with JSON and
+look at :ref:`csrf_topic` for details on how to work with JSON and
 Single Page Applications. More specifically
 JSON is supported for the following operations:
 
