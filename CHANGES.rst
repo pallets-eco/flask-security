@@ -19,11 +19,11 @@ Features & Improvements
 - (:pr:`877`) Make AnonymousUser optional and deprecated.
 - (:pr:`906`) Remove undocumented and untested looking in session for possible 'next'
   redirect location.
-- (:pr:`901`) Work with py_webauthn 2.0
+- (:pr:`901`) Work with py_webauthn 2.0 (and only 2.0+)
 - (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
 - (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
 - (:issue:`904`) Changes to default unauthorized handler - remove use of referrer header (see below).
-- (:pr:`xxx`) The authentication_token format has changed - adding per-token expiry time and future session ID.
+- (:pr:`927`) The authentication_token format has changed - adding per-token expiry time and future session ID.
   Old tokens are still accepted.
 
 
@@ -40,27 +40,17 @@ Docs and Chores
 Fixes
 +++++
 
-- (:issue:`845`) us-signin magic link should use fs_uniquifier. (not email)
+- (:issue:`845`) us-signin magic link should use fs_uniquifier (not email).
 - (:issue:`893`) Improve open-redirect vulnerability mitigation. (see below)
 - (:issue:`875`) user_datastore.create_user has side effects on mutable inputs. (NoRePercussions)
 - (:pr:`878`) The long deprecated _unauthorized_callback/handler has been removed.
 - (:issue:`884`) Oauth re-used POST_LOGIN_VIEW which caused confusion. See below for the new configuration and implications.
 - (:pr:`908`) Improve CSRF documentation and testing. Fix bug where a CSRF failure could
   return an HTML page even if the request was JSON.
+- (:issue:`925`) Register with JSON and authentication token failed CSRF. (lilz-egoto)
+- (:issue:`870`) Fix 2 issues with CSRF configuration.
 - (:pr:`914`) It was possible that if :data:`SECURITY_EMAIL_VALIDATOR_ARGS` were set that
   deliverability would be checked even for login.
-- (:issue:`925`) Register with JSON and authentication token failed CSRF. (lilz-egoto)
-
-Notes
-++++++
-- Historically, the **current_user** proxy (managed by Flask-Login) always pointed to a user object.
-  If the user wasn't authenticated, it pointed to an AnonymousUser object. With this release,
-  setting :py:data:`SECURITY_ANONYMOUS_USER_DISABLED` to `True` will force **current_user** to be set
-  to `None` if the requesting user isn't authenticated. It should be noted that this is in support
-  of a proposal by the Pallets team to remove AnonymousUser from Flask-Login - as well as deprecating
-  the `is_authenticated` property. The default behavior (`False`) should be the same as prior releases.
-  A new function `_fs_is_user_authenticated` is now part of the render_template context that
-  templates can use instead of `current_user.is_authenticated`.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -130,6 +120,17 @@ Backwards Compatibility Concerns
   The important change is that Flask-Security no longer ever looks at the request.referrer header and
   will never redirect to it. If an application needs that, it can provide a callable that can return
   that or any other header.
+
+Notes
+++++++
+- Historically, the **current_user** proxy (managed by Flask-Login) always pointed to a user object.
+  If the user wasn't authenticated, it pointed to an AnonymousUser object. With this release,
+  setting :py:data:`SECURITY_ANONYMOUS_USER_DISABLED` to `True` will force **current_user** to be set
+  to `None` if the requesting user isn't authenticated. It should be noted that this is in support
+  of a proposal by the Pallets team to remove AnonymousUser from Flask-Login - as well as deprecating
+  the `is_authenticated` property. The default behavior (`False`) should be the same as prior releases.
+  A new function `_fs_is_user_authenticated` is now part of the render_template context that
+  templates can use instead of `current_user.is_authenticated`.
 
 Version 5.3.3
 -------------

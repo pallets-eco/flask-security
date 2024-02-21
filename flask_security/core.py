@@ -866,6 +866,7 @@ class UserMixin(BaseUserMixin):
         and has not expired (either with MAX_AGE or specific 'exp' value).
 
         :param tdata: a dictionary just as in augment_auth_token()
+        :return: True if auth token represented by tdata is valid, False otherwise.
 
         .. versionadded:: 3.3.0
 

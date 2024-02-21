@@ -331,7 +331,7 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_CSRF_COOKIE_NAME
 
     The name for the CSRF cookie. This usually should be dictated by your
-    client-side code  - more information can be found at :ref:`csrftopic`
+    client-side code  - more information can be found at :ref:`csrf_topic`
 
     Default: ``None`` - meaning no cookie will be sent.
 
@@ -547,7 +547,8 @@ These are used by the Two-Factor and Unified Signin features.
 
     .. note::
         This stores freshness information in the session - which must be presented
-        (usually via a Cookie) to the above endpoints.
+        (usually via a Cookie) to the above endpoints. To disable this, set it
+        to ``timedelta(minutes=-1)``
 
     Default: timedelta(hours=24)
 

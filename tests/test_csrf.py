@@ -9,12 +9,13 @@
 """
 
 from contextlib import contextmanager
-import time
+from datetime import date, timedelta
 
 import flask_wtf.csrf
 
 import pytest
 from flask_wtf import CSRFProtect
+from freezegun import freeze_time
 
 from flask_security import Security, hash_password
 from tests.test_utils import get_form_input, get_session, logout
@@ -229,14 +230,11 @@ def test_reset(app, client):
 
 
 @pytest.mark.recoverable()
+@pytest.mark.csrf(csrfprotect=True)
 def test_cp_reset(app, client):
     """Test that header based CSRF works for /reset when
     using WTF_CSRF_CHECK_DEFAULT=False.
     """
-    app.config["WTF_CSRF_ENABLED"] = True
-    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
-    CSRFProtect(app)
-
     with mp_validate_csrf() as mp:
         data = dict(email="matt@lp.com")
         # should fail - no CSRF token
@@ -348,16 +346,10 @@ def test_cp_config2(app, sqlalchemy_datastore):
 
 
 @pytest.mark.changeable()
+@pytest.mark.csrf(csrfprotect=True)
 @pytest.mark.settings(CSRF_PROTECT_MECHANISMS=["basic", "session"])
-def test_different_mechanisms(app, sqlalchemy_datastore):
+def test_different_mechanisms(app, client):
     # Verify that using token doesn't require CSRF, but sessions do
-    app.config["WTF_CSRF_ENABLED"] = True
-    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
-
-    client = app.test_client()
     with mp_validate_csrf() as mp:
         auth_token, csrf_token = json_login(client)
 
@@ -446,15 +438,9 @@ def test_cp_with_token_empty_mechanisms(app, client):
     assert response.status_code == 200
 
 
+@pytest.mark.csrf(csrfprotect=True)
 @pytest.mark.settings(csrf_ignore_unauth_endpoints=True, CSRF_COOKIE_NAME="XSRF-Token")
-def test_csrf_cookie(app, sqlalchemy_datastore):
-    app.config["WTF_CSRF_ENABLED"] = True
-    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
-
-    client = app.test_client()
+def test_csrf_cookie(app, client):
     json_login(client)
     assert client.get_cookie("XSRF-Token")
 
@@ -491,23 +477,17 @@ def test_cp_with_token_cookie(app, client):
     assert not client.get_cookie("XSRF-Token")
 
 
+@pytest.mark.csrf(csrfprotect=True)
+@pytest.mark.app_settings(wtf_csrf_time_limit=1)
 @pytest.mark.settings(CSRF_COOKIE_NAME="XSRF-Token", csrf_ignore_unauth_endpoints=True)
 @pytest.mark.changeable()
-def test_cp_with_token_cookie_expire(app, sqlalchemy_datastore):
+def test_cp_with_token_cookie_expire(app, client):
     # Make sure that we get a new Csrf-Token cookie if expired.
-    app.config["WTF_CSRF_ENABLED"] = True
-    app.config["WTF_CSRF_TIME_LIMIT"] = 1
-    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
-    CSRFProtect(app)
-    app.security = Security(app=app, datastore=sqlalchemy_datastore)
-    create_user(app)
+    # Note that we need relatively new-ish date since session cookies also expire.
+    with freeze_time(date.today() + timedelta(days=-1)):
+        json_login(client, use_header=True)
 
-    client = app.test_client()
-
-    json_login(client, use_header=True)
-
-    # sleep so make csrf_token expires
-    time.sleep(2)
+    # time unfrozen so should be expired
     data = dict(
         password="password",
         new_password="battery staple",
@@ -600,16 +580,12 @@ def test_remember_login_csrf_cookie(app, client):
 
 @pytest.mark.csrf(csrfprotect=True)
 @pytest.mark.registerable()
+@pytest.mark.settings(csrf_header="X-CSRF-Token")
 def test_json_register_csrf_with_ignore_unauth_set_to_false(app, client):
     """
     Test that you are able to register a user when using the JSON api
     and the CSRF_IGNORE_UNAUTH_ENDPOINTS is set to False.
     """
-    app.config["WTF_CSRF_ENABLED"] = True
-    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
-    app.config["CSRF_IGNORE_UNAUTH_ENDPOINTS"] = False
-    app.config["SECURITY_CSRF_HEADER"] = "X-CSRF-Token"
-    CSRFProtect(app)
 
     csrf_token = client.get("/login", headers={"Accept": "application/json"}).json[
         "response"
