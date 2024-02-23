@@ -36,6 +36,8 @@ Docs and Chores
 - (:pr:`855`) Improve translations for two-factor method selection. (gissimo)
 - (:pr:`866`) Improve German translations. (sr-verde)
 - (:pr:`911`) Remove deprecation of AUTO_LOGIN_AFTER_CONFIRM - it has a reasonable use case.
+- (:pr:`xxx`) Update message extraction - note that the CONFIRM_REGISTRATION message was changed to improve
+  readability.
 
 Fixes
 +++++

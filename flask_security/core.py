@@ -396,7 +396,11 @@ _default_messages = {
         "error",
     ),
     "CONFIRM_REGISTRATION": (
-        _("Thank you. Confirmation instructions have been sent to %(email)s."),
+        _(
+            "Thank you. To confirm your email address %(email)s,"
+            " please click on the link"
+            " in the email we have just sent to you."
+        ),
         "success",
     ),
     "EMAIL_CONFIRMED": (_("Thank you. Your email has been confirmed."), "success"),
