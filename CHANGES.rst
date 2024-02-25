@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.4.0
 -------------
 
-Released xxx
+Released February 26, 2024
 
 Among other changes, this continues the process of dis-entangling Flask-Security
 from Flask-Login and may require some application changes due to backwards incompatible changes.
@@ -15,14 +15,14 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`879`) Work with Flask[async]. view decorators and signals support async handlers.
 - (:pr:`900`) CI support for python 3.12
+- (:pr:`901`) Work with py_webauthn 2.0 (and only 2.0+)
+- (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
 - (:issue:`912`) Improve oauth debugging support. Handle next propagation in a more general way.
-- (:pr:`877`) Make AnonymousUser optional and deprecated.
+- (:pr:`877`) Make AnonymousUser (Flask-Login) optional and deprecated.
 - (:pr:`906`) Remove undocumented and untested looking in session for possible 'next'
   redirect location.
-- (:pr:`901`) Work with py_webauthn 2.0 (and only 2.0+)
 - (:pr:`881`) No longer rely on Flask-Login.unauthorized callback. See below for implications.
-- (:pr:`899`) Improve (and simplify) Two-Factor setup. See below for backwards compatability issues and new functionality.
-- (:issue:`904`) Changes to default unauthorized handler - remove use of referrer header (see below).
+- (:issue:`904`) Changes to default unauthorized handler - remove use of referrer header (see below) and document precise behavior.
 - (:pr:`927`) The authentication_token format has changed - adding per-token expiry time and future session ID.
   Old tokens are still accepted.
 
@@ -36,7 +36,7 @@ Docs and Chores
 - (:pr:`855`) Improve translations for two-factor method selection. (gissimo)
 - (:pr:`866`) Improve German translations. (sr-verde)
 - (:pr:`911`) Remove deprecation of AUTO_LOGIN_AFTER_CONFIRM - it has a reasonable use case.
-- (:pr:`xxx`) Update message extraction - note that the CONFIRM_REGISTRATION message was changed to improve
+- (:pr:`931`) Update message extraction - note that the CONFIRM_REGISTRATION message was changed to improve
   readability.
 
 Fixes
@@ -97,6 +97,18 @@ Backwards Compatibility Concerns
 - Flask-Security no longer configures anything related to Flask-Login's `fresh_login` logic.
   This shouldn't be used - instead use Flask-Security's :meth:`flask_security.auth_required` decorator.
 - Support for Flask-Babelex has been removed. Please convert to Flask-Babel.
+- JSON error response has changed due to issue with WTForms form-level errors. When WTForms
+  introduced form-level errors they added it to the form.errors response using `None` as a key.
+  When serializing it, it would turn into "null". However, if there is more than one error
+  the default settings for JSON serialization in Flask attempt to sort the keys - which fails
+  with the `None` key. An issue has been filed with WTForms - and maybe it will be changed.
+  Flask-Security now changes any `None` key to `""`.
+- The default unauthorized handler behavior has changed slightly and is now documented. The default
+  (:data:`SECURITY_UNAUTHORIZED_VIEW` == ``None``) has not changed (a default HTTP 403 response).
+  The precise behavior when :data:`SECURITY_UNAUTHORIZED_VIEW` was set was never documented.
+  The important change is that Flask-Security no longer ever looks at the request.referrer header and
+  will never redirect to it. If an application needs that, it can provide a callable that can return
+  that or any other header.
 - Open Redirect mitigation. Release 4.1.0 had a fix for :issue:`486` involving a potential
   open redirect. This was very low priority since the default configuration of Werkzeug (always
   convert the Location header to absolute URL) rendered the vulnerability un-exploitable. The solution at that
@@ -110,18 +122,6 @@ Backwards Compatibility Concerns
   This implementation is independent of Werkzeug (and relative Location headers are again the default).
   The entire regex option has been removed.
   Instead, any user-supplied path used as a redirect is parsed and quoted.
-- JSON error response has changed due to issue with WTForms form-level errors. When WTForms
-  introduced form-level errors they added it to the form.errors response using `None` as a key.
-  When serializing it, it would turn into "null". However, if there is more than one error
-  the default settings for JSON serialization in Flask attempt to sort the keys - which fails
-  with the `None` key. An issue has been filed with WTForms - and maybe it will be changed.
-  Flask-Security now changes any `None` key to `""`.
-- The default unauthorized handler behavior has changed slightly and is now documented. The default
-  (:data:`SECURITY_UNAUTHORIZED_VIEW` == ``None``) has not changed (a default HTTP 403 response).
-  The precise behavior when :data:`SECURITY_UNAUTHORIZED_VIEW` was set was never documented.
-  The important change is that Flask-Security no longer ever looks at the request.referrer header and
-  will never redirect to it. If an application needs that, it can provide a callable that can return
-  that or any other header.
 
 Notes
 ++++++
