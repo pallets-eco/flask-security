@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 5.4.0\n"
+"Project-Id-Version: Flask-Security 5.4.1\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2024-02-21 18:15-0800\n"
-"PO-Revision-Date: 2023-12-20 15:33+0100\n"
+"PO-Revision-Date: 2024-02-27 13:54+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
 "Language-Team: \n"
@@ -108,6 +108,8 @@ msgid ""
 "Thank you. To confirm your email address %(email)s, please click on the "
 "link in the email we have just sent to you."
 msgstr ""
+"Gracias. Para confirmar tu dirección de correo electrónico %(email)s, haz"
+" clic en el enlace del mensaje que acabamos de enviarte."
 
 #: flask_security/core.py:406
 msgid "Thank you. Your email has been confirmed."
@@ -146,6 +148,8 @@ msgid ""
 "An error occurred while communicating with the Oauth provider: "
 "(%(exerror)s - %(exdesc)s). Please try again."
 msgstr ""
+"Se ha producido un error al comunicarse con el proveedor de OAuth: "
+"(%(exerror)s - %(exdesc)s). Por favor inténtalo de nuevo."
 
 #: flask_security/core.py:432
 msgid "Password does not match"
@@ -815,12 +819,12 @@ msgstr "Código de autenticación de dos factores"
 
 #: flask_security/templates/security/two_factor_setup.html:62
 msgid "Enter code to complete setup"
-msgstr ""
+msgstr "Introduce el código para completar la configuración"
 
 #: flask_security/templates/security/two_factor_setup.html:65
 #: flask_security/templates/security/two_factor_verify_code.html:10
 msgid "enter numeric code"
-msgstr ""
+msgstr "introduce el código numérico"
 
 #: flask_security/templates/security/two_factor_setup.html:73
 #: flask_security/templates/security/wan_register.html:77
@@ -859,6 +863,8 @@ msgstr "El código de autenticación se envió a tu dirección de correo electr�
 #: flask_security/templates/security/two_factor_verify_code.html:22
 msgid "An email was sent to us in order to reset your application account"
 msgstr ""
+"Se nos envió un correo electrónico para restablecer tu cuenta de "
+"aplicación"
 
 #: flask_security/templates/security/us_setup.html:30
 msgid "Setup Unified Sign In"
@@ -1079,38 +1085,3 @@ msgid "Please restart the registration process with a different username."
 msgstr ""
 "Por favor reinicia el proceso de registro con un nombre de usuario "
 "diferente."
-
-#~ msgid "You are not authenticated. Please supply the correct credentials."
-#~ msgstr "No estás autenticado. Proporciona las credenciales correctas."
-
-#~ msgid "To complete logging in, please enter the code sent to your mail"
-#~ msgstr ""
-#~ "Para completar el inicio de sesión, "
-#~ "introduce el código enviado a tu "
-#~ "correo electrónico"
-
-#~ msgid "To Which Phone Number Should We Send Code To?"
-#~ msgstr "¿A qué número de teléfono debemos enviar el código?"
-
-#~ msgid "enter code"
-#~ msgstr "introduce el código"
-
-#~ msgid "A mail was sent to us in order to reset your application account"
-#~ msgstr ""
-#~ "Se nos envió un correo electrónico "
-#~ "para restablecer tu cuenta de aplicación"
-
-#~ msgid ""
-#~ "An error occurred while communicating "
-#~ "with the Oauth provider. Please try "
-#~ "again."
-#~ msgstr ""
-#~ "Se ha producido un error al "
-#~ "comunicarse con el proveedor de OAuth."
-#~ " Por favor inténtalo de nuevo."
-
-#~ msgid "Thank you. Confirmation instructions have been sent to %(email)s."
-#~ msgstr ""
-#~ "Gracias. Instrucciones sobre cómo confirmar"
-#~ " tu cuenta se han enviado a "
-#~ "%(email)s."
