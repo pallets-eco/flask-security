@@ -161,6 +161,7 @@ def create_app():
     CSRFProtect(app)
     # Create database models and hook up.
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
     db = SQLAlchemy(app)
     fsqla.FsModels.set_db_info(db)
 
