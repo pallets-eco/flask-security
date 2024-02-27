@@ -3,8 +3,8 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
-Version 5.4.0
--------------
+Version 5.4.0 & 5.4.1
+----------------------
 
 Released February 26, 2024
 
