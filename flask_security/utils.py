@@ -140,7 +140,7 @@ def find_csrf_field_name():
 
 def is_user_authenticated(user: User | None) -> bool:
     """
-    return True is user is authenticated.
+    return True if user is authenticated.
 
     With Flask-Login <=0.6.x and Flask-Security <5.4 current_user was always
     set - for non-authenticated users it pointed to an AnonymousUser
