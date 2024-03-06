@@ -3,6 +3,17 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.4.2
+-------------
+
+Released xxx
+
+Fixes
++++++
+- (:issue:`946`) OpenAPI spec missing.
+- (:pr:`945`) Doc fixes (e-goto)
+- (:pr:`941`) Update ES/IT translations (gissimo)
+
 Version 5.4.0 & 5.4.1
 ----------------------
 

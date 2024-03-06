@@ -79,6 +79,10 @@ Customizing and Usage Patterns
 
 API
 ---
+   `OpenApi Spec`_
+
+
+.. _OpenApi Spec: _static/openapi_view.html
 
 .. toctree::
    :maxdepth: 2
