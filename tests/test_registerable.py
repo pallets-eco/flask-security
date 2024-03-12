@@ -9,7 +9,13 @@ import pytest
 import re
 from flask import Flask
 import markupsafe
-from tests.test_utils import authenticate, check_xlation, json_authenticate, logout
+from tests.test_utils import (
+    authenticate,
+    check_xlation,
+    get_form_input,
+    json_authenticate,
+    logout,
+)
 
 from flask_security import Security
 from flask_security.core import UserMixin
@@ -33,6 +39,8 @@ def test_registerable_flag(clients, app, get_message):
     response = clients.get("/register")
     assert b"<h1>Register</h1>" in response.data
     assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
+    assert get_form_input(response, "email") is not None
+    assert not get_form_input(response, "username")
 
     # Test registering is successful, sends email, and fires signal
     @user_registered.connect_via(app)
@@ -542,6 +550,14 @@ def test_username(app, client, get_message):
         get_message("USERNAME_ALREADY_ASSOCIATED", username="dude")
         == response.json["response"]["field_errors"]["username"][0].encode()
     )
+
+
+@pytest.mark.settings(username_enable=True)
+def test_username_template(app, client):
+    # verify template displays username option
+    response = client.get("/register")
+    username_field = get_form_input(response, "username")
+    assert username_field is not None
 
 
 @pytest.mark.settings(username_enable=True)

@@ -303,6 +303,10 @@ def test_basic(app, clients, get_message):
     authenticate(clients)
 
     response = clients.get("/wan-register")
+    # default config allows for both primary and secondary usage
+    # so form should have selector
+    assert get_form_input(response, "usage-0")
+    assert get_form_input(response, "usage-1")
 
     # post with no name
     response = clients.post("/wan-register", data=dict())
