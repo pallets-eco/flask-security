@@ -21,7 +21,7 @@
       {{ wan_register_form.hidden_tag() }}
       {{ render_field_with_errors(wan_register_form.name) }}
       {# Default is just second factor #}
-      {% if security.wan_allow_as_first_factor %}
+      {% if config["SECURITY_WAN_ALLOW_AS_FIRST_FACTOR"] %}
         <div>
           {% for subfield in wan_register_form.usage %}{{ render_field_with_errors(subfield) }}{% endfor %}
         </div>

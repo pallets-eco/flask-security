@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.4.3
+-------------
+
+Released xxx
+
+Fixes
++++++
+- (:issue:`950`) Regression - some templates no longer getting correct config (thanks pete7863).
+
 Version 5.4.2
 -------------
 
@@ -42,7 +51,7 @@ Docs and Chores
 +++++++++++++++
 - (:pr:`889`) Improve method translations for unified signin and two factor. Remove support for Flask-Babelex.
 - (:pr:`911`) Chore - stop setting all config as attributes. init_app(\*\*kwargs) can only
-  set forms, flags, and utility classes.
+  set forms, flags, and utility classes (see below for compatibility concerns).
 - (:pr:`873`) Update Spanish and Italian translations. (gissimo)
 - (:pr:`855`) Improve translations for two-factor method selection. (gissimo)
 - (:pr:`866`) Improve German translations. (sr-verde)
@@ -120,6 +129,10 @@ Backwards Compatibility Concerns
   The important change is that Flask-Security no longer ever looks at the request.referrer header and
   will never redirect to it. If an application needs that, it can provide a callable that can return
   that or any other header.
+- Configuration variables (and other things) are no longer added as attributes on the Security instance.
+  For example `security.username_enable` no longer exists - this could be an issue in code or templates.
+  For templates, Flask places `config` in the Jinja context - so rather than using an attribute, use
+  `config["SECURITY_USERNAME_ENABLE"]` for the example above.
 - Open Redirect mitigation. Release 4.1.0 had a fix for :issue:`486` involving a potential
   open redirect. This was very low priority since the default configuration of Werkzeug (always
   convert the Location header to absolute URL) rendered the vulnerability un-exploitable. The solution at that

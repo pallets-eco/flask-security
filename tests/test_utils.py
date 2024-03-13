@@ -186,7 +186,7 @@ def get_form_action(response, ordinal=0):
 
 def get_form_input(response, field_id):
     # return value of field with the id == field_id or None if not found
-    rex = f'<input id="{field_id}"[^>]*value="([^"]*)">'
+    rex = f'<input [^>]*id="{field_id}"[^>]*value="([^"]*)">'
     matcher = re.findall(
         rex,
         response.data.decode("utf-8"),
