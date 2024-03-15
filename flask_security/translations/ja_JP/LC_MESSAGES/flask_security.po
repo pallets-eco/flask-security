@@ -33,7 +33,7 @@ msgstr "ようこそ"
 
 #: flask_security/core.py:271
 msgid "Please confirm your email"
-msgstr "メール アドレスの検証"
+msgstr "メールアドレスの検証"
 
 #: flask_security/core.py:272
 msgid "Login instructions"
@@ -105,11 +105,11 @@ msgstr ""
 
 #: flask_security/core.py:406
 msgid "Thank you. Your email has been confirmed."
-msgstr "ありがとうございます。メール アドレスが検証されました。"
+msgstr "ありがとうございます。メールアドレスが検証されました。"
 
 #: flask_security/core.py:407
 msgid "Your email has already been confirmed."
-msgstr "メール アドレスは検証済みです"
+msgstr "メールアドレスは検証済みです"
 
 #: flask_security/core.py:408
 msgid "Invalid confirmation token."
@@ -175,12 +175,12 @@ msgstr "リンクが無効です"
 
 #: flask_security/core.py:446
 msgid "Email requires confirmation."
-msgstr "メール アドレスの検証が必要です"
+msgstr "メールアドレスの検証が必要です"
 
 #: flask_security/core.py:448
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
-msgstr "%(email)sにメール アドレス検証手順が再送信されました"
+msgstr "%(email)sにメールアドレス検証手順が再送信されました"
 
 #: flask_security/core.py:452
 #, python-format
@@ -209,11 +209,11 @@ msgstr "アカウントが無効になっています"
 
 #: flask_security/core.py:468
 msgid "Email not provided"
-msgstr "メール アドレスを入力してください"
+msgstr "メールアドレスを入力してください"
 
 #: flask_security/core.py:469
 msgid "Invalid email address"
-msgstr "正しいメール アドレスを入力してください"
+msgstr "正しいメールアドレスを入力してください"
 
 #: flask_security/core.py:470 flask_security/core.py:516
 msgid "Invalid code"
@@ -435,7 +435,7 @@ msgstr ""
 
 #: flask_security/forms.py:61
 msgid "Email Address"
-msgstr "メール アドレス"
+msgstr "メールアドレス"
 
 #: flask_security/forms.py:62
 msgid "Password"
@@ -692,7 +692,7 @@ msgstr "パスワードを忘れた場合"
 
 #: flask_security/templates/security/_menu.html:53
 msgid "Confirm account"
-msgstr "メール アドレスの検証"
+msgstr "メールアドレスの検証"
 
 #: flask_security/templates/security/change_password.html:6
 msgid "Change password"
@@ -923,12 +923,12 @@ msgstr ""
 #: flask_security/templates/security/email/confirmation_instructions.html:8
 #: flask_security/templates/security/email/confirmation_instructions.txt:8
 msgid "Please confirm your email through the link below:"
-msgstr "以下のリンクからメール アドレスを検証してください："
+msgstr "以下のリンクからメールアドレスを検証してください："
 
 #: flask_security/templates/security/email/confirmation_instructions.html:10
 #: flask_security/templates/security/email/welcome.html:12
 msgid "Confirm my account"
-msgstr "メール アドレスの検証"
+msgstr "メールアドレスの検証"
 
 #: flask_security/templates/security/email/login_instructions.html:1
 #: flask_security/templates/security/email/login_instructions.txt:1
@@ -978,7 +978,7 @@ msgstr ""
 #: flask_security/templates/security/email/welcome.html:10
 #: flask_security/templates/security/email/welcome.txt:11
 msgid "You can confirm your email through the link below:"
-msgstr "以下のリンクによりメール アドレスを検証できます。"
+msgstr "以下のリンクによりメールアドレスを検証できます。"
 
 #: flask_security/templates/security/email/welcome_existing.html:11
 #: flask_security/templates/security/email/welcome_existing.txt:11
@@ -1106,7 +1106,7 @@ msgstr ""
 #~ "within %(within)s. New instructions to "
 #~ "confirm your email have been sent "
 #~ "to %(email)s."
-#~ msgstr "%(within)s以内にメール アドレスが検証されませんでした。新しい検証手順を %(email)s に送信しました。"
+#~ msgstr "%(within)s以内にメールアドレスが検証されませんでした。新しい検証手順を %(email)s に送信しました。"
 
 #~ msgid "You are not authenticated. Please supply the correct credentials."
 #~ msgstr ""
@@ -1142,4 +1142,4 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Thank you. Confirmation instructions have been sent to %(email)s."
-#~ msgstr "ご登録ありがとうございます。%(email)sにメール アドレス検証手順が送信されました。"
+#~ msgstr "ご登録ありがとうございます。%(email)sにメールアドレス検証手順が送信されました。"
