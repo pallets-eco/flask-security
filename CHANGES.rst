@@ -11,6 +11,8 @@ Released xxx
 Fixes
 +++++
 - (:issue:`950`) Regression - some templates no longer getting correct config (thanks pete7863).
+- (:issue:`954`) CSRF not properly ignored for application forms using SECURITY_CSRF_PROTECT_MECHANISMS.
+- (:pr:`957`) Improve jp translations (e-goto)
 
 Version 5.4.2
 -------------

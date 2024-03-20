@@ -221,14 +221,18 @@ def handle_csrf(method: str, json_response: bool = False) -> ResponseValue | Non
     if the request is JSON - it MUST send the csrf_token as a header.
 
     If the passed in method is not in
-    :py:data:`SECURITY_CSRF_PROTECT_MECHANISMS` then not only
-    will no CSRF code be run, but a flag in the current context ``fs_ignore_csrf``
-    will be set so that downstream code knows to ignore any CSRF checks.
+    :py:data:`SECURITY_CSRF_PROTECT_MECHANISMS` then in addition to
+    no CSRF code being run, the flask_wtf request global 'csrf_valid' will be set
+    so that downstream code knows to ignore any CSRF checks.
 
     Returns None if all ok, returns a Response with JSON error if request
     wanted JSON - else re-raises the CSRFError exception.
 
     .. versionadded:: 3.3.0
+
+    .. versionchanged:: 5.4.3
+        Use flask_wtf request global 'csrf_valid' instead of our own to handle
+        application forms that aren't derived from our forms.
     """
     if (
         not current_app.config.get("WTF_CSRF_ENABLED", False)
@@ -247,7 +251,7 @@ def handle_csrf(method: str, json_response: bool = False) -> ResponseValue | Non
                     return _security._render_json(payload, 400, None, None)
                 raise
             return None
-    set_request_attr("fs_ignore_csrf", True)
+    set_request_attr("csrf_valid", True)  # flask_wtf global
     return None
 
 
@@ -419,7 +423,7 @@ def auth_required(
                 if mechanism and mechanism():
                     # successfully authenticated. Basic auth is by definition 'fresh'.
                     # Note that using token auth is ok - but caller still has to pass
-                    # in a session cookie...
+                    # in a session cookie if freshness checking is required.
                     if not check_and_update_authn_fresh(within, grace, method):
                         return _security._reauthn_handler(within, grace)
                     if eresponse := handle_csrf(method, _security._want_json(request)):
@@ -447,39 +451,40 @@ def unauth_csrf(
 
     This decorator does nothing if *WTF_CSRF_ENABLED* == **False**.
 
-    This decorator will always require CSRF if the caller is authenticated.
+    This decorator does nothing if the caller is authenticated.
 
     This decorator will suppress CSRF if caller isn't authenticated and has set the
-    :py:data:`SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS` config variable.
-
-    :param fall_through: if set to True, then if CSRF fails here - simply keep going.
-        This is appropriate if underlying view is form based and once the form is
-        instantiated, the csrf_token will be available.
-        Note that this can mask some errors such as 'The CSRF session token is missing.'
-        meaning that the caller didn't send a session cookie and instead the caller
-        might get a 'The CSRF token is missing.' error.
+    :py:data:`SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS` config variable to **True**.
 
     .. versionadded:: 3.3.0
+
+    .. versionchanged:: 5.4.2
+        The fall_through parameter is now ignored.
+        Add code to properly handle JSON errors.
     """
 
     def wrapper(fn):
         @wraps(fn)
         def decorated(*args, **kwargs):
-            if not current_app.config.get(
-                "WTF_CSRF_ENABLED", False
-            ) or not current_app.extensions.get("csrf", None):
+            if (
+                not current_app.config.get("WTF_CSRF_ENABLED", False)
+                or not current_app.extensions.get("csrf", None)
+                or g.get("csrf_valid", False)
+            ):
                 return current_app.ensure_sync(fn)(*args, **kwargs)
 
             if cv("CSRF_IGNORE_UNAUTH_ENDPOINTS") and not is_user_authenticated(
                 current_user
             ):
-                set_request_attr("fs_ignore_csrf", True)
+                set_request_attr("csrf_valid", True)
             else:
                 try:
                     _csrf.protect()
-                except CSRFError:
-                    if not fall_through:
-                        raise
+                except CSRFError as e:
+                    if _security._want_json(request):
+                        payload = json_error_response(errors=e.description)
+                        return _security._render_json(payload, 400, None, None)
+                    raise
 
             return current_app.ensure_sync(fn)(*args, **kwargs)
 

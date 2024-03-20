@@ -603,7 +603,7 @@ def _signin_common(user: User | None, usage: list[str]) -> tuple[t.Any, str]:
 
 
 @anonymous_user_required
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def webauthn_signin() -> ResponseValue:
     # This view can be called either as a 'first' authentication or as part of
     # 2FA.
@@ -657,7 +657,7 @@ def webauthn_signin() -> ResponseValue:
     )
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def webauthn_signin_response(token: str) -> ResponseValue:
     is_secondary = all(k in session for k in ["tf_user_id", "tf_state"]) and session[
         "tf_state"

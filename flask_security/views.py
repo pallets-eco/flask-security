@@ -152,7 +152,7 @@ def _ctx(endpoint):
     return _security._run_ctx_processor(endpoint)
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def login() -> "ResponseValue":
     """View function for login view
 
@@ -291,7 +291,7 @@ def logout():
 
 
 @anonymous_user_required
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def register() -> "ResponseValue":
     """View function which handles a registration request."""
 
@@ -350,7 +350,7 @@ def register() -> "ResponseValue":
     )
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def send_login():
     """View function that sends login instructions for passwordless login"""
     form = build_form_from_request("passwordless_login_form")
@@ -408,7 +408,7 @@ def token_login(token):
     return redirect(get_post_login_redirect())
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def send_confirmation():
     """View function which sends confirmation instructions (/confirm)."""
     form = t.cast(
@@ -522,7 +522,7 @@ def confirm_email(token):
 
 
 @anonymous_user_required
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def forgot_password():
     """View function that handles a forgotten password request (/reset)."""
     form = t.cast(ForgotPasswordForm, build_form_from_request("forgot_password_form"))
@@ -570,7 +570,7 @@ def forgot_password():
 
 
 @anonymous_user_required
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def reset_password(token):
     """View function that handles a reset password request (/reset/<token>).
 
@@ -725,7 +725,7 @@ def change_password():
     )
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def two_factor_setup():
     """View function for two-factor setup.
 
@@ -890,7 +890,7 @@ def two_factor_setup():
     )
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def two_factor_token_validation():
     """View function for two-factor token validation
 
@@ -998,7 +998,7 @@ def two_factor_token_validation():
 
 
 @anonymous_user_required
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def two_factor_rescue():
     """Function that handles a situation where user can't
     enter his two-factor validation code

@@ -212,7 +212,7 @@ def mf_recovery_codes() -> ResponseValue:
 
 
 @anonymous_user_required
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def mf_recovery():
     """View for entering a recovery code.
 
