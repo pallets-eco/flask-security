@@ -188,7 +188,7 @@ def login_user(
 
         old_current_login, new_current_login = (
             user.current_login_at,
-            config_value("DATETIME_FACTORY")(),
+            _security.datetime_factory(),
         )
         old_current_ip, new_current_ip = user.current_login_ip, remote_addr
 
