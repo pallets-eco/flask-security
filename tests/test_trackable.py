@@ -5,6 +5,7 @@
     Trackable tests
 """
 
+import datetime
 import pytest
 from flask import after_this_request, redirect
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -92,3 +93,15 @@ def test_trackable_using_login_user(app, client):
         assert user.last_login_ip == _client_ip(client)
         assert user.current_login_ip == "127.0.0.1"
         assert user.login_count == 2
+
+
+@pytest.mark.settings(datetime_factory=lambda: datetime.datetime(2024, 3, 24))
+def test_trackable_datetime(app, client):
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
+    e = "matt@lp.com"
+    authenticate(client, email=e)
+
+    with app.app_context():
+        user = app.security.datastore.find_user(email=e)
+        assert user.current_login_at == datetime.datetime(2024, 3, 24)
+        assert user.login_count == 1

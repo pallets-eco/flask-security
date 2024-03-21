@@ -1387,6 +1387,7 @@ class Security:
             "render_template",
             "totp_cls",
             "webauthn_util_cls",
+            "datetime_factory",
         ]
         for attr in attr_names:
             if ov := kwargs.get(attr, cv(attr.upper(), app, strict=False)):
