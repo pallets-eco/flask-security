@@ -446,9 +446,6 @@ def suppress_form_csrf():
     If app doesn't want CSRF for unauth endpoints then check if caller is authenticated
     or not (many endpoints can be called either way).
     """
-    if get_request_attr("fs_ignore_csrf"):
-        # This is the case where CsrfProtect was already called (e.g. @auth_required)
-        return {"csrf": False}
     if config_value("CSRF_IGNORE_UNAUTH_ENDPOINTS") and not is_user_authenticated(
         current_user
     ):

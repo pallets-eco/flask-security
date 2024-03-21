@@ -1,5 +1,5 @@
 {% extends "security/base.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors, render_field_errors %}
 
 {% block content %}
   {% include "security/_messages.html" %}
@@ -13,6 +13,7 @@
     {% if register_user_form.password_confirm %}
       {{ render_field_with_errors(register_user_form.password_confirm) }}
     {% endif %}
+    {{ render_field_errors(register_user_form.csrf_token) }}
     {{ render_field(register_user_form.submit) }}
   </form>
   {% include "security/_menu.html" %}

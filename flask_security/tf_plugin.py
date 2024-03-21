@@ -57,7 +57,7 @@ class TwoFactorSelectForm(Form):
         super().__init__(*args, **kwargs)
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def tf_select() -> ResponseValue:
     # Ask user which MFA method they want to use.
     # This is used when a user has setup more than one type of 2FA.

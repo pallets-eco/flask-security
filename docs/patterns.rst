@@ -230,6 +230,19 @@ and the application endpoints (protected with Flask-Security decorators such as 
 If your application just uses forms that are derived from ``Flask-WTF::Flaskform`` - you are done.
 Note that all of Flask-Security's endpoints are form based (regardless of how the request was made).
 
+Behind-The-Scenes
+++++++++++++++++++
+Depending on configuration, there are 3 places CSRF tokens can be checked:
+  #) As part of form validation for any form derived from FlaskForm (which all Flask-Security
+     forms are. An error here is recorded in the ``csrf_token`` field and the calling view
+     decided whether to return 200 or 400 (all Flask-Security views return 200 with form field errors).
+     This is the default if no other configuration changes are made.
+  #) As part of an @before_request handler that Flask-WTF sets up if CSRFprotect() is called. On error
+     this always returns HTTP 400 and small snippet of HTML. This can be disabled
+     by setting config["WTF_CSRF_CHECK_DEFAULT"] = True.
+  #) As part of a Flask-Security decorator (:func:`.unauth_csrf`, :func:`.auth_required`). On
+     error either a JSON response is returned OR CSRFError exception is raised and 400 is returned with the small snippet of HTML
+     (the exception and default response is part of Flask-WTF).
 
 CSRF: Single-Page-Applications and AJAX/XHR
 ++++++++++++++++++++++++++++++++++++++++++++
@@ -256,7 +269,7 @@ Explicit fetch and send of csrf-token
 The current session CSRF token
 is returned on every JSON GET request (to a Flask-Security endpoint) as ``response['csrf_token`]``.
 For web applications that ARE served via flask, it is even easier to get the csrf-token -
-`<https://flask-wtf.readthedocs.io/en/1.0.x/csrf/>`_ gives some useful tips.
+`<https://flask-wtf.readthedocs.io/en/1.2.x/csrf/>`_ gives some useful tips.
 
 Armed with the csrf-token, the UI must include that in every mutating operation.
 Be careful NOT to include the csrf-token in non-mutating requests (such as GETs).
@@ -293,7 +306,7 @@ Note that we use the header name ``X-CSRF-Token`` as that is one of the default
 headers configured in Flask-WTF (*WTF_CSRF_HEADERS*)
 
 To protect your application's endpoints (that presumably are not using Flask forms),
-you need to enable CSRF as described in the FlaskWTF `documentation <https://flask-wtf.readthedocs.io/en/1.1.x/csrf/>`_: ::
+you need to enable CSRF as described in the FlaskWTF `documentation <https://flask-wtf.readthedocs.io/en/1.2.x/csrf/>`_: ::
 
     flask_wtf.CSRFProtect(app)
 

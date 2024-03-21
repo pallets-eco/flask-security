@@ -121,6 +121,39 @@ def test_registerable_flag(clients, app, get_message):
     assert b"Page 1" in response.data
 
 
+@pytest.mark.csrf(csrfprotect=True)
+def test_form_csrf(app, client):
+    # Test that CSRFprotect config catches CSRF requirement at unauth_csrf() decorator.
+    # Note that in this case - 400 is returned - though if CSRFprotect isn't enabled
+    # then CSRF errors are caught at form.submit time and a 200 with error values
+    # is returned.
+    response = client.post(
+        "/register",
+        data=dict(
+            email="csrf@example.com",
+            password="mypassword",
+            password_confirm="mypassword",
+        ),
+    )
+    assert response.status_code == 400
+    assert b"The CSRF token is missing" in response.data
+
+    response = client.get("/register")
+    csrf_token = get_form_input(response, "csrf_token")
+    response = client.post(
+        "/register",
+        data=dict(
+            email="csrf@example.com",
+            password="mypassword",
+            password_confirm="mypassword",
+            csrf_token=csrf_token,
+        ),
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    assert response.location == "/"
+
+
 @pytest.mark.confirmable()
 @pytest.mark.app_settings(babel_default_locale="fr_FR")
 @pytest.mark.babel()

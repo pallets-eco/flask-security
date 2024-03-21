@@ -413,7 +413,7 @@ def _send_code_helper(form, send_magic_link):
 
 
 @anonymous_user_required
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def us_signin_send_code() -> ResponseValue:
     """
     Send code view. POST only.
@@ -533,7 +533,7 @@ def us_verify_send_code() -> ResponseValue:
     )
 
 
-@unauth_csrf(fall_through=True)
+@unauth_csrf()
 def us_signin() -> ResponseValue:
     """
     Unified sign in view.

@@ -16,8 +16,9 @@ import flask_wtf.csrf
 import pytest
 from flask_wtf import CSRFProtect
 from freezegun import freeze_time
+from flask import render_template_string
 
-from flask_security import Security, hash_password
+from flask_security import Security, auth_required
 from tests.test_utils import get_form_input, get_session, logout
 
 
@@ -61,15 +62,6 @@ def _get_csrf_token(client):
         "/login", data={}, headers={"Content-Type": "application/json"}
     )
     return response.json["response"]["csrf_token"]
-
-
-def create_user(app):
-    with app.app_context():
-        app.security.datastore.create_user(
-            email="matt@lp.com",
-            password=hash_password("password"),
-        )
-        app.security.datastore.commit()
 
 
 def json_login(
@@ -215,18 +207,24 @@ def test_reset(app, client):
 
     with mp_validate_csrf() as mp:
         data = dict(email="matt@lp.com")
-        # should fail - no CSRF token
+        # should fail - no CSRF token - should get a JSON response
         response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 400
         assert response.json["response"]["errors"][0] == "The CSRF token is missing."
-        # test template also has error
+        # test template also has error - since using just Flask-WTF form based CSRF -
+        # should be an error on the csrf_token field.
         response = client.post("/reset", data=data)
-        assert b"The CSRF token is missing" in response.data
+        assert b'class="fs-error-msg">The CSRF token is missing' in response.data
 
+        # test sending csrf_token works - JSON
         data["csrf_token"] = csrf_token
         response = client.post("/reset", content_type="application/json", json=data)
         assert response.status_code == 200
-    assert mp.success == 1 and mp.failure == 2
+
+        # test sending csrf_token works - forms
+        response = client.post("/reset", data=data)
+        assert b"Send password reset instructions" in response.data
+    assert mp.success == 2 and mp.failure == 2
 
 
 @pytest.mark.recoverable()
@@ -250,9 +248,7 @@ def test_cp_reset(app, client):
             headers={"X-CSRF-Token": csrf_token},
         )
         assert response.status_code == 200
-    # 2 failures since the first time it will check twice - once due to @unauth_csrf
-    # which will fall-through on error to form validation (which also fails).
-    assert mp.success == 1 and mp.failure == 2
+    assert mp.success == 1 and mp.failure == 1
 
 
 @pytest.mark.changeable()
@@ -351,7 +347,7 @@ def test_cp_config2(app, sqlalchemy_datastore):
 def test_different_mechanisms(app, client):
     # Verify that using token doesn't require CSRF, but sessions do
     with mp_validate_csrf() as mp:
-        auth_token, csrf_token = json_login(client)
+        auth_token, csrf_token = json_login(client, use_header=True)
 
         # session based change password should fail
         data = dict(
@@ -376,7 +372,7 @@ def test_different_mechanisms(app, client):
             },
         )
         assert response.status_code == 200
-    assert mp.success == 1 and mp.failure == 2
+    assert mp.success == 1 and mp.failure == 1
 
 
 @pytest.mark.changeable()
@@ -607,3 +603,58 @@ def test_json_register_csrf_with_ignore_unauth_set_to_false(app, client):
     )
     assert response.status_code == 200
     assert response.json["response"]["user"]["email"] == email
+
+
+@pytest.mark.csrf(csrfprotect=True)
+@pytest.mark.settings(
+    csrf_protect_mechanisms=["session"], csrf_ignore_unauth_endpoints=True
+)
+def test_myform(app, client):
+    # Create app form - and make sure protect_mechanisms properly skips CSRF
+    # For this test - we don't configure CSRFProtect - just use form CSRF
+    from flask_wtf import FlaskForm
+    from wtforms import StringField
+
+    class custom_form(FlaskForm):
+        name = StringField("Name")
+
+    @app.route("/custom", methods=["GET", "POST"])
+    @auth_required()
+    def custom():
+        form = custom_form()
+        if form.validate_on_submit():
+            return render_template_string(f"Nice POST {form.name.data}")
+        return render_template_string(
+            f"Hi {form.name.data}, anything wrong? {form.errors}"
+        )
+
+    auth_token, csrf_token = json_login(client, use_header=True)
+
+    # using session - POST should fail - no CSRF
+    response = client.post("/custom", json={"name": "first POST"})
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    # use CSRF token - should work
+    response = client.post(
+        "/custom", json={"name": "second POST"}, headers={"X-XSRF-Token": csrf_token}
+    )
+    assert response.status_code == 200
+
+    # try with form input
+    response = client.post(
+        "/custom", data={"name": "form POST", "csrf_token": csrf_token}
+    )
+    assert response.data == b"Nice POST form POST"
+
+    # now try authenticating via token - shouldn't need CSRF token
+    client_nc = app.test_client(use_cookies=False)
+    response = client_nc.post(
+        "/custom",
+        json={"name": "authtoken POST"},
+        headers={
+            "Content-Type": "application/json",
+            "Authentication-Token": auth_token,
+        },
+    )
+    assert b"CSRF" not in response.data
