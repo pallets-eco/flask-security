@@ -90,6 +90,10 @@ def register_existing(form: ConfirmRegisterForm) -> bool:
     issuing requests. One way to mitigate that is to use signals and add specific
     application code.
 
+    Returning False means to return normal error messages.
+    Returns True if the only 'error' is an existing email/user. In this case we
+    simulate a normal registration and email the existing account to inform.
+
     """
 
     if not (
@@ -100,12 +104,14 @@ def register_existing(form: ConfirmRegisterForm) -> bool:
         return False
 
     # There are 2 classes of error - an existing email/username and non-compliant
-    # username/password. We want to give the user feedback on a non-compliant
-    # username/password - but not give away whether the email/username is already taken.
+    # email/username/password. We want to give the user feedback on a non-compliant
+    # input - but not give away whether the email/username is already taken.
     # Since in this case we have an 'existing' entry - we simply Null out those
     # errors.
     # This also means for JSON there is no way to tell if things worked or not.
-    fields_to_squash: dict[str, dict[str, str]] = dict(email=dict())
+    fields_to_squash: dict[str, dict[str, str]] = dict()
+    if form.existing_email_user:
+        fields_to_squash["email"] = dict()
     if hasattr(form, "username") and form.existing_username_user:
         fields_to_squash["username"] = dict()
     form_errors_munge(form, fields_to_squash)

@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.4.3
 -------------
 
-Released March xx, 2024
+Released March 23, 2024
 
 Fixes
 +++++
@@ -14,6 +14,7 @@ Fixes
 - (:issue:`954`) CSRF not properly ignored for application forms using SECURITY_CSRF_PROTECT_MECHANISMS.
 - (:pr:`957`) Improve jp translations (e-goto)
 - (:issue:`959`) Regression - datetime_factory should still be an attribute (thanks TimotheeJeannin)
+- (:issue:`942`) GENERIC_RESPONSES hide email validation/syntax errors.
 
 Version 5.4.2
 -------------

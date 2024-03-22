@@ -198,6 +198,8 @@ Security() instantiation.
   :members:
   :special-members: __init__
 
+.. autoclass:: flask_security.EmailValidateException
+
 .. autoclass:: flask_security.PasswordUtil
   :members:
   :special-members: __init__
