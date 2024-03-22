@@ -658,3 +658,18 @@ def test_myform(app, client):
         },
     )
     assert b"CSRF" not in response.data
+
+
+@pytest.mark.csrf(csrfprotect=True)
+def test_csrf_json_protect(app, client):
+    # test sending CSRF token in json body for an unauth endpoint (/login)
+    # In older code the @unauth_csrf() decorator would 'fall through' - if the
+    # decorator CSRF checked failed it would fall through to the form CSRF check.
+    # The decorator CSRF check returns a 400 JSON response.
+    csrf_token = _get_csrf_token(client)
+    response = client.post(
+        "/login",
+        json=dict(email="matt@lp.com", password="password", csrf_token=csrf_token),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
