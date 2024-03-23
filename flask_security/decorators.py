@@ -458,7 +458,7 @@ def unauth_csrf(
 
     .. versionadded:: 3.3.0
 
-    .. versionchanged:: 5.4.2
+    .. versionchanged:: 5.4.3
         The fall_through parameter is now ignored.
         Add code to properly handle JSON errors.
     """

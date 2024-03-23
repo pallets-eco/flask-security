@@ -38,6 +38,7 @@ from wtforms.validators import Optional, StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
 from .confirmable import requires_confirmation
+from .mail_util import EmailValidateException
 from .proxies import _security
 from .utils import (
     _,
@@ -150,8 +151,8 @@ class EmailValidation:
     N.B. Side-effect - if valid email, the field.data is set to the normalized value.
 
     The 'verify' keyword informs the validator to perform checks to be more sure
-    that the email can actually receive an email. Set to False - validation is done
-    to normalize and use for identity purposes.
+    that the email can actually receive an email (as well as normalize).
+    Set to False - just normalize (for use with identity purposes).
     """
 
     def __init__(self, *args, **kwargs):
@@ -166,12 +167,16 @@ class EmailValidation:
                 field.data = _security._mail_util.validate(field.data)
             else:
                 field.data = _security._mail_util.normalize(field.data)
-        except ValueError:
-            msg = get_message("INVALID_EMAIL_ADDRESS")[0]
+        except EmailValidateException as e:
             # we stop further validators if email isn't valid.
             # TODO: email_validator provides some really nice error messages - however
             # they aren't localized. And there isn't an easy way to add multiple
             # errors at once.
+            raise StopValidation(e.msg)
+        except ValueError:
+            # Backwards compat - mail_util no longer raises this - but app subclasses
+            # might (and we're making this change in 5.4.3).
+            msg = get_message("INVALID_EMAIL_ADDRESS")[0]
             raise StopValidation(msg)
 
 

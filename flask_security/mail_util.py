@@ -18,10 +18,20 @@ import typing as t
 import email_validator
 from flask import current_app
 
-from .utils import config_value
+from .utils import config_value, get_message
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask
+
+
+class EmailValidateException(ValueError):
+    """This is raised for any email validation errors.
+    This can be used by custom MailUtil implementations to provide
+    custom error messages.
+    """
+
+    def __init__(self, message: str) -> None:
+        self.msg = message
 
 
 class MailUtil:
@@ -114,24 +124,24 @@ class MailUtil:
 
     def normalize(self, email: str) -> str:
         """
-        Given an input email - return a normalized version or raises ValueError
-        if field value isn't syntactically valid.
+        Given an input email - return a normalized version or
+        raise EmailValidateException if field value isn't syntactically valid.
 
-        This is called for forms that use email as an identity to be looked up.
+        This is called by forms that use email as an identity to be looked up.
 
         Must be called in app context and uses :py:data:`SECURITY_EMAIL_VALIDATOR_ARGS`
         config variable to pass any relevant arguments to
         email_validator.validate_email() method.
 
         This defaults to NOT checking for deliverability (i.e. DNS checks).
-
-        Will throw email_validator.EmailNotValidError (ValueError)
-        if email isn't syntactically valid.
         """
         validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
         validator_args["check_deliverability"] = False
-        valid = email_validator.validate_email(email, **validator_args)
-        return valid.normalized
+        try:
+            valid = email_validator.validate_email(email, **validator_args)
+            return valid.normalized
+        except ValueError:
+            raise EmailValidateException(get_message("INVALID_EMAIL_ADDRESS")[0])
 
     def validate(self, email: str) -> str:
         """
@@ -144,9 +154,12 @@ class MailUtil:
         config variable to pass any relevant arguments to
         email_validator.validate_email() method.
 
-        ValueError is thrown if not valid.
+        EmailValidationException is thrown on invalid email.
         """
 
         validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
-        valid = email_validator.validate_email(email, **validator_args)
-        return valid.normalized
+        try:
+            valid = email_validator.validate_email(email, **validator_args)
+            return valid.normalized
+        except ValueError:
+            raise EmailValidateException(get_message("INVALID_EMAIL_ADDRESS")[0])
