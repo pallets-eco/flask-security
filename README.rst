@@ -40,7 +40,7 @@ version of the `Original <https://github.com/mattupstate/flask-security>`_
 Goals
 +++++
 * Regain momentum for this critical piece of the Flask eco-system. To that end the
-  the plan is to put out small, frequent releases starting with pulling the simplest
+  plan is to put out small, frequent releases starting with pulling the simplest
   and most obvious changes that have already been vetted in the upstream version, as
   well as other pull requests. This was completed with the June 29 2019 3.2.0 release.
 * Continue work to get Flask-Security to be usable from Single Page Applications,
