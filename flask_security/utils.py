@@ -25,6 +25,7 @@ import urllib.error
 import warnings
 
 from flask import (
+    Response,
     after_this_request,
     current_app,
     flash,
@@ -50,7 +51,7 @@ from .proxies import _security, _datastore, _pwd_context, _hashing_context
 from .signals import user_authenticated
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask import Flask, Response
+    from flask import Flask
     from flask.typing import ResponseValue
     from .datastore import User
 
@@ -205,13 +206,13 @@ def login_user(
 
     identity_changed.send(
         current_app._get_current_object(),  # type: ignore[attr-defined]
-        _async_wrapper=current_app.ensure_sync,
+        _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
         identity=Identity(user.fs_uniquifier),
     )
 
     user_authenticated.send(
         current_app._get_current_object(),  # type: ignore[attr-defined]
-        _async_wrapper=current_app.ensure_sync,
+        _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
         user=user,
         authn_via=authn_via,
     )

@@ -68,7 +68,7 @@ def change_user_password(
         send_password_changed_notice(user)
     password_changed.send(
         current_app._get_current_object(),  # type: ignore
-        _async_wrapper=current_app.ensure_sync,
+        _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
         user=user,
     )
 

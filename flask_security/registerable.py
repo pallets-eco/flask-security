@@ -133,7 +133,7 @@ def register_existing(form: ConfirmRegisterForm) -> bool:
     if form.existing_email_user:
         user_not_registered.send(
             current_app._get_current_object(),  # type: ignore
-            _async_wrapper=current_app.ensure_sync,
+            _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
             user=form.existing_email_user,
             existing_email=True,
             existing_username=form.existing_username_user is not None,
@@ -158,7 +158,7 @@ def register_existing(form: ConfirmRegisterForm) -> bool:
         # to enumerate usernames (slowly).
         user_not_registered.send(
             current_app._get_current_object(),  # type: ignore[attr-defined]
-            _async_wrapper=current_app.ensure_sync,
+            _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
             user=None,
             existing_email=False,
             existing_username=True,

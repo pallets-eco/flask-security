@@ -141,6 +141,8 @@ that are then assigned to users, the ``Role`` model requires:
 
 * ``permissions`` (list of UnicodeText, nullable)
 
+.. _webauthn_model:
+
 WebAuthn
 ^^^^^^^^
 Flask Security can act as a WebAuthn Relying Party by enabling

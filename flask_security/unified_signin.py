@@ -829,7 +829,7 @@ def us_setup() -> ResponseValue:
             form.delete_method.data = None
             us_profile_changed.send(
                 current_app._get_current_object(),  # type: ignore
-                _async_wrapper=current_app.ensure_sync,
+                _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
                 user=current_user,
                 methods=delete_method,
                 delete=True,
@@ -982,7 +982,7 @@ def us_setup_validate(token: str) -> ResponseValue:
 
         us_profile_changed.send(
             current_app._get_current_object(),  # type: ignore
-            _async_wrapper=current_app.ensure_sync,
+            _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
             user=current_user,
             methods=[method],
             delete=False,

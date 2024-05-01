@@ -549,7 +549,7 @@ def webauthn_register_response(token: str) -> ResponseValue:
         )
         wan_registered.send(
             current_app._get_current_object(),  # type: ignore
-            _async_wrapper=current_app.ensure_sync,
+            _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
             user=current_user,
             name=state["name"],
         )
@@ -598,7 +598,9 @@ def _signin_common(user: User | None, usage: list[str]) -> tuple[t.Any, str]:
     }
 
     o_json = json.loads(webauthn.options_to_json(options))
-    state_token = t.cast(str, _security.wan_serializer.dumps(state))
+    state_token = t.cast(  # type: ignore[redundant-cast]
+        str, _security.wan_serializer.dumps(state)
+    )
     return o_json, state_token
 
 
@@ -767,7 +769,7 @@ def webauthn_delete() -> ResponseValue:
 
         wan_deleted.send(
             current_app._get_current_object(),  # type: ignore
-            _async_wrapper=current_app.ensure_sync,
+            _async_wrapper=current_app.ensure_sync,  # type: ignore[arg-type]
             user=current_user,
             name=cred.name,
         )
