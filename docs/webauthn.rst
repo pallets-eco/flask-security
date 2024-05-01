@@ -16,6 +16,15 @@ and something you are (think a mobile device with face-Id). Flask-Security suppo
 
 .. _W3C standard: https://www.w3.org/TR/webauthn-2/
 
+Getting Started
++++++++++++++++
+To add WebAuthn support to your application you will need:
+
+    - Install the `webauthn`_ package (the Flask-Security pip 'extra' [mfa] will do this).
+    - Add/modify your DB models as described :ref:`here <webauthn_model>`.
+
+.. _webauthn: https://pypi.org/project/webauthn/
+
 Key Concepts
 +++++++++++++
 
