@@ -191,7 +191,7 @@ Some background material:
 .. _Single Page Applications (spa): https://en.wikipedia.org/wiki/Single-page_application
 .. _Nginx: https://www.nginx.com/
 .. _S3: https://www.savjee.be/2018/05/Content-security-policy-and-aws-s3-cloudfront/
-.. _Flask-Talisman: https://github.com/GoogleCloudPlatform/flask-talisman
+.. _Flask-Talisman: https://pypi.org/project/flask-talisman/
 .. _CORS: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 .. _Flask-CORS: https://github.com/corydolphin/flask-cors
 .. _Zappa: https://github.com/Miserlou/Zappa
