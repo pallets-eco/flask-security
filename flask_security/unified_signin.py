@@ -590,14 +590,20 @@ def us_signin() -> ResponseValue:
             return base_render_json(form, include_auth_token=True)
 
         return redirect(get_post_login_redirect())
-    elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+
+    # Here on GET or failed POST validate
+    if request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
         rinfo = dict(
             identity=dict(replace_msg="GENERIC_AUTHN_FAILED"),
             passcode=dict(replace_msg="GENERIC_AUTHN_FAILED"),
         )
         form_errors_munge(form, rinfo)
 
-    # Here on GET or failed POST validate
+    if request.method == "GET":
+        # set CSRF COOKIE if configured. This is the equivalent of forms and
+        # base_render_json always sending the csrf_token
+        session["fs_cc"] = "set"
+
     code_methods = _compute_code_methods()
     if _security._want_json(request):
         payload = {

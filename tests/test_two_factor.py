@@ -1505,3 +1505,92 @@ def test_setup_csrf_header(app, client):
         "tf-setup", json=dict(setup="disable"), headers={"X-CSRF-Token": csrf_token}
     )
     assert response.status_code == 200
+
+
+@pytest.mark.csrf(csrfprotect=True)
+@pytest.mark.settings(CSRF_COOKIE_NAME="XSRF-Token")
+def test_csrf_2fa_login_cookie(app, client):
+    # Use XSRF-Token cookie for entire login sequence
+    sms_sender = SmsSenderFactory.createSender("test")
+    response = client.get(
+        "/login", data={}, headers={"Content-Type": "application/json"}
+    )
+    assert client.get_cookie("XSRF-Token")
+    csrf_token = response.json["response"]["csrf_token"]
+    assert csrf_token == client.get_cookie("XSRF-Token").value
+
+    response = client.post(
+        "/login",
+        json=dict(email="gal@lp.com", password="password"),
+        headers={
+            "Content-Type": "application/json",
+            "X-CSRF-Token": client.get_cookie("XSRF-Token").value,
+        },
+    )
+    assert b'"code": 200' in response.data
+    session = get_session(response)
+    assert session["tf_state"] == "ready"
+
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+
+    response = client.post(
+        "/tf-validate",
+        json=dict(code=code),
+        headers={
+            "Content-Type": "application/json",
+            "X-CSRF-Token": client.get_cookie("XSRF-Token").value,
+        },
+    )
+    assert response.status_code == 200
+
+    # verify original session csrf_token still works.
+    response = client.post(
+        "/json_auth",
+        json=dict(label="label"),
+        headers={"Content-Type": "application/json", "X-CSRF-Token": csrf_token},
+    )
+    assert response.status_code == 200
+
+    # use XSRF_Cookie to send in csrf_token
+    response = client.post(
+        "/json_auth",
+        json=dict(label="label"),
+        headers={
+            "Content-Type": "application/json",
+            "X-CSRF-Token": client.get_cookie("XSRF-Token").value,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json["label"] == "label"
+
+
+@pytest.mark.csrf(ignore_unauth=True, csrfprotect=True)
+@pytest.mark.settings(CSRF_COOKIE_NAME="XSRF-Token")
+def test_csrf_2fa_nounauth_cookie(app, client):
+    # use CSRF cookie when ignoring unauth endpoints
+    sms_sender = SmsSenderFactory.createSender("test")
+    response = client.post(
+        "/login",
+        json=dict(email="gal@lp.com", password="password"),
+        headers={"Content-Type": "application/json"},
+    )
+
+    code = sms_sender.messages[0].split()[-1]
+    response = client.post(
+        "/tf-validate",
+        json=dict(code=code),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+
+    response = client.post(
+        "/json_auth",
+        json=dict(label="label"),
+        headers={
+            "Content-Type": "application/json",
+            "X-CSRF-Token": client.get_cookie("XSRF-Token").value,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json["label"] == "label"

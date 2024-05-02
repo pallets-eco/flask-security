@@ -5,7 +5,7 @@ Flask-Mailman
 Flask-Principal
 peewee; python_version < '3.12'
 Flask-SQLAlchemy
-argon2_cffi
+argon2-cffi
 authlib
 bcrypt
 bleach

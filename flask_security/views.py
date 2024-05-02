@@ -216,6 +216,11 @@ def login() -> "ResponseValue":
             fields_to_squash["username"] = dict(replace_msg="GENERIC_AUTHN_FAILED")
         form_errors_munge(form, fields_to_squash)
 
+    if request.method == "GET":
+        # set CSRF COOKIE if configured. This is the equivalent of forms and
+        # base_render_json always sending the csrf_token
+        session["fs_cc"] = "set"
+
     if _security._want_json(request):
         payload = {
             "identity_attributes": get_identity_attributes(),
@@ -227,6 +232,7 @@ def login() -> "ResponseValue":
         and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
         and not cv("RETURN_GENERIC_RESPONSES")
     ):
+        # Validation failed BECAUSE user needs to confirm
         assert form.user_authenticated
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
         return redirect(

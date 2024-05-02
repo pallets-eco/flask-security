@@ -301,6 +301,11 @@ def app(request: pytest.FixtureRequest) -> SecurityFixture:
     def echo_json():
         return jsonify(flask_request.get_json())
 
+    @app.route("/json_auth", methods=["POST"])
+    @auth_required()
+    def echo_jsonauth():
+        return jsonify(flask_request.get_json())
+
     @app.route("/unauthz", methods=["GET", "POST"])
     def unauthz():
         return render_template("index.html", content="Unauthorized")
