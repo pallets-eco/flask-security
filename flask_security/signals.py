@@ -5,7 +5,7 @@
     Flask-Security signals module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -49,3 +49,7 @@ us_profile_changed = signals.signal("us-profile-changed")
 wan_registered = signals.signal("wan-registered")
 
 wan_deleted = signals.signal("wan-deleted")
+
+change_email_instructions_sent = signals.signal("change-email-instructions-sent")
+
+change_email_confirmed = signals.signal("change-email")

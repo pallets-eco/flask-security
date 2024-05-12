@@ -3,6 +3,20 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.5.0
+-------------
+
+Released TBD
+
+Features
+++++++++
+- (:issue:`956`) Add support for changing registered user's email (:py:data:`SECURITY_CHANGE_EMAIL`).
+
+Fixes
++++++
+- (:pr:`972`) Set :py:data:`SECURITY_CSRF_COOKIE` at beginning (GET /login) of authentication
+  ritual - just as we return the CSRF token. (thanks @e-goto)
+
 Version 5.4.3
 -------------
 
@@ -11,10 +25,10 @@ Released March 23, 2024
 Fixes
 +++++
 - (:issue:`950`) Regression - some templates no longer getting correct config (thanks pete7863).
-- (:issue:`954`) CSRF not properly ignored for application forms using SECURITY_CSRF_PROTECT_MECHANISMS.
+- (:issue:`954`) CSRF not properly ignored for application forms using :py:data:`SECURITY_CSRF_PROTECT_MECHANISMS`.
 - (:pr:`957`) Improve jp translations (e-goto)
 - (:issue:`959`) Regression - datetime_factory should still be an attribute (thanks TimotheeJeannin)
-- (:issue:`942`) GENERIC_RESPONSES hide email validation/syntax errors.
+- (:issue:`942`) :py:data:`SECURITY_RETURN_GENERIC_RESPONSES` hide email validation/syntax errors.
 
 Version 5.4.2
 -------------

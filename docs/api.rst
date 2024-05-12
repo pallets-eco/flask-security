@@ -223,6 +223,7 @@ Security() instantiation.
 Forms
 -----
 
+.. autoclass:: flask_security.ChangeEmailForm
 .. autoclass:: flask_security.ChangePasswordForm
 .. autoclass:: flask_security.ConfirmRegisterForm
 .. autoclass:: flask_security.ForgotPasswordForm

@@ -14,20 +14,18 @@ Welcome to Flask-Security
 Flask-Security allows you to quickly add common security mechanisms to your
 Flask application. They include:
 
-1. Session based authentication
-2. Role and Permission management
-3. Password hashing
-4. Basic HTTP authentication
-5. Token based authentication
-6. Token based account activation (optional)
-7. Token based password recovery / resetting (optional)
-8. Two-factor authentication (optional)
-9. Unified sign in (optional)
-10. User registration (optional)
-11. Login tracking (optional)
-12. JSON/Ajax Support
-13. WebAuthn Support (optional)
-14. Use 'social'/Oauth for authentication (e.g. google, github, ..) (optional)
+1. Authentication (via session, Basic HTTP, or token)
+2. User registration (optional)
+3. Role and Permission management
+4. Account activation (via email confirmation) (optional)
+5. Password management (recovery and resetting) (optional)
+6. Two-factor authentication (optional)
+7. WebAuthn Support (optional)
+8. Use 'social'/Oauth for authentication (e.g. google, github, ..) (optional)
+9. Change email (optional)
+10. Login tracking (optional)
+11. JSON/Ajax Support
+
 
 Many of these features are made possible by integrating various Flask extensions
 and libraries. They include:

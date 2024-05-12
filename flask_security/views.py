@@ -42,6 +42,7 @@ from flask import (
 from flask_login import current_user
 
 from .changeable import change_user_password
+from .change_email import change_email, change_email_confirm
 from .confirmable import (
     confirm_email_token_status,
     confirm_user,
@@ -1192,6 +1193,19 @@ def create_blueprint(app, state, import_name):
             methods=["GET", "POST"],
             endpoint="change_password",
         )(change_password)
+
+    if state.change_email:
+        change_email_url = cv("CHANGE_EMAIL_URL", app=app)
+        bp.route(
+            change_email_url,
+            methods=["GET", "POST"],
+            endpoint="change_email",
+        )(change_email)
+        bp.route(
+            change_email_url + slash_url_suffix(change_email_url, "<token>"),
+            methods=["GET"],
+            endpoint="change_email_confirm",
+        )(change_email_confirm)
 
     if state.confirmable:
         confirm_url = cv("CONFIRM_URL", app=app)

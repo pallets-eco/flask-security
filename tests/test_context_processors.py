@@ -15,8 +15,10 @@ from tests.test_utils import authenticate, capture_reset_password_requests, logo
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
 @pytest.mark.changeable()
+@pytest.mark.change_email()
 @pytest.mark.settings(
     login_without_confirmation=True,
+    change_email_template="custom_security/change_email.html",
     change_password_template="custom_security/change_password.html",
     login_user_template="custom_security/login_user.html",
     reset_password_template="custom_security/reset_password.html",
@@ -107,6 +109,15 @@ def test_context_processors(client, app):
     email = app.mail.outbox[1]
     assert "global" in email.body
     assert "bar-mail" in email.body
+
+    @app.security.change_email_context_processor
+    def change_email():
+        return {"foo": "bar-change-email"}
+
+    authenticate(client)
+    response = client.get("/change-email")
+    assert b"global" in response.data
+    assert b"bar-change-email" in response.data
 
 
 @pytest.mark.passwordless()

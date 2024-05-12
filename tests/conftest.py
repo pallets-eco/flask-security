@@ -123,6 +123,7 @@ def app(request: pytest.FixtureRequest) -> SecurityFixture:
 
     for opt in [
         "changeable",
+        "change_email",
         "recoverable",
         "registerable",
         "trackable",

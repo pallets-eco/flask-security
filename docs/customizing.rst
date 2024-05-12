@@ -21,6 +21,7 @@ following is a list of view templates:
 * `security/register_user.html`
 * `security/reset_password.html`
 * `security/change_password.html`
+* `security/change_email.html`
 * `security/send_confirmation.html`
 * `security/send_login.html`
 * `security/verify.html`
@@ -47,6 +48,7 @@ Flask application context processor:
 
 * ``<template_name>_form``: A form object for the view.
 * ``security``: The Flask-Security extension object.
+* ``config``: Injected by Flask - this holds all extensions' configuration.
 * ``url_for_security``: A function that returns the configured URL for the passed Security endpoint.
 * ``_fsdomain``: A function used to `tag` strings for extraction and localization.
 * ``_fs_is_user_authenticated``: Returns True if argument (user) is authenticated.
@@ -77,6 +79,7 @@ The following is a list of all the available context processor decorators:
 * ``register_context_processor``: Register view
 * ``reset_password_context_processor``: Reset password view
 * ``change_password_context_processor``: Change password view
+* ``change_email_context_processor``: Change email view
 * ``send_confirmation_context_processor``: Send confirmation view
 * ``send_login_context_processor``: Send login view
 * ``mail_context_processor``: Whenever an email will be sent
@@ -162,6 +165,7 @@ The following is a list of all the available form overrides:
 * ``forgot_password_form``: Forgot password form
 * ``reset_password_form``: Reset password form
 * ``change_password_form``: Change password form
+* ``change_email_form``: Change email form
 * ``send_confirmation_form``: Send confirmation form
 * ``mf_recovery_codes_form``: Setup recovery codes form
 * ``mf_recovery_form``: Use recovery code form
@@ -368,6 +372,8 @@ The following is a list of email templates:
 * `security/email/reset_notice.txt`
 * `security/email/change_notice.txt`
 * `security/email/change_notice.html`
+* `security/email/change_email_instructions.txt`
+* `security/email/change_email_instructions.html`
 * `security/email/welcome.html`
 * `security/email/welcome.txt`
 * `security/email/welcome_existing.html`
@@ -418,6 +424,9 @@ welcome                         SECURITY_SEND_REGISTER_EMAIL         SECURITY_EM
 confirmation_instructions       N/A                                  SECURITY_EMAIL_SUBJECT_CONFIRM                    - user                 confirm_instructions_sent
                                                                                                                        - confirmation_link
                                                                                                                        - confirmation_token
+change_email_instructions       N/A                                  SECURITY_CHANGE_EMAIL_SUBJECT                     - user                 change_email_instructions_sent
+                                                                                                                       - link
+                                                                                                                       - token
 login_instructions              N/A                                  SECURITY_EMAIL_SUBJECT_PASSWORDLESS               - user                 login_instructions_sent
                                                                                                                        - login_link
                                                                                                                        - login_token

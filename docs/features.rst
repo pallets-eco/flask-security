@@ -236,6 +236,10 @@ Thus changing the password also invalidates all authentication tokens. This may 
 behavior, so if the UserModel contains an attribute ``fs_token_uniquifier``, then that will be used
 when generating authentication tokens and so won't be affected by password changes.
 
+Email Change
+------------
+If configured, users can change the email they registered with. This will send a new confirmation email to the new email address.
+
 
 Login Tracking
 --------------
@@ -262,6 +266,7 @@ JSON is supported for the following operations:
 * Unified sign in requests
 * Registration requests
 * Change password requests
+* Change email requests
 * Confirmation requests
 * Forgot password requests
 * Passwordless login requests

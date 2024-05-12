@@ -12,6 +12,7 @@
 
 # flake8: noqa: F401
 from .changeable import admin_change_password
+from .change_email import ChangeEmailForm
 from .core import (
     Security,
     RoleMixin,
