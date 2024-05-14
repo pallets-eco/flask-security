@@ -268,7 +268,7 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_REDIRECT_BEHAVIOR
 
-    Passwordless login, confirmation, reset password, unified signin, and oauth signin
+    Passwordless login, confirmation, reset password, unified signin, change_email, and oauth signin
     have GET endpoints that validate the passed token and redirect to an action form.
     For Single-Page-Applications style UIs which need to control their own internal URL routing these redirects
     need to not contain forms, but contain relevant information as query parameters.
@@ -279,6 +279,8 @@ These configuration keys are used globally across all features.
     - :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
     - :py:data:`SECURITY_LOGIN_ERROR_VIEW`
     - :py:data:`SECURITY_CONFIRM_ERROR_VIEW`
+    - :py:data:`SECURITY_POST_CHANGE_EMAIL_VIEW`
+    - :py:data:`SECURITY_CHANGE_EMAIL_ERROR_VIEW`
     - :py:data:`SECURITY_POST_CONFIRM_VIEW`
     - :py:data:`SECURITY_RESET_ERROR_VIEW`
     - :py:data:`SECURITY_RESET_VIEW`
@@ -902,7 +904,7 @@ Confirmable
     Specifies the view to redirect to if a confirmation error occurs.
     This value can be set to a URL or an endpoint name.
     If this value is ``None``, the user is presented the default view
-    to resend a confirmation link. In the case of ``SECURITY_REDIRECT_BEHAVIOR`` == ``"spa"``
+    to resend a confirmation link. In the case of :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``
     query params in the redirect will contain the error.
 
     Default: ``None``.
@@ -1075,6 +1077,71 @@ Recoverable
     Sets subject for the password notice.
 
     Default: ``_("Your password has been reset")``.
+
+Change_Email
+------------
+.. versionadded:: 5.5.0
+
+.. py:data:: SECURITY_CHANGE_EMAIL
+
+    It ``True`` an endpoint is created that allows a user to change their email address.
+
+    Default: ``False``
+.. py:data:: SECURITY_CHANGE_EMAIL_SUBJECT
+
+    Sets the subject for the change email confirmation email.
+
+    Default: ``_("Confirm your new email address")``.
+.. py:data:: SECURITY_CHANGE_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the change email page.
+
+    Default: ``"security/change_email.html"``.
+.. py:data:: SECURITY_CHANGE_EMAIL_WITHIN
+
+    Specifies the amount of time a user has before their change email
+    token expires. Always pluralize the time unit for this value.
+
+    Default: ``"2 hours"``
+.. py:data:: SECURITY_POST_CHANGE_EMAIL_VIEW
+
+    Specifies the view to redirect to after a user successfully confirms their new email address.
+    This value can be set to a URL or an endpoint name. If this value is
+    ``None``, the user is redirected to the value of :py:data:`SECURITY_POST_LOGIN_VIEW`.
+    Note that if the request URL or form has a ``next`` parameter, that will take precedence.
+    In the case of :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"`` this value must be set.
+
+    Default: ``None``.
+.. py:data:: SECURITY_CHANGE_EMAIL_ERROR_VIEW
+
+    Specifies the view to redirect to if a change email confirmation error occurs.
+    This value can be set to a URL or an endpoint name.
+    If this value is ``None``, the user is redirected back to the change_email page.
+    In the case of :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``
+    this value must be set, and the query params in the redirect will contain the error.
+
+    Default: ``None``.
+.. py:data:: SECURITY_CHANGE_EMAIL_URL
+
+    Specifies the change-email endpoint URL.
+
+    Default: ``"/change-email"``.
+.. py:data:: SECURITY_CHANGE_EMAIL_CONFIRM_URL
+
+    Specifies the change-email confirmation endpoint URL. This is a GET
+    only endpoint (accessed via a link in an email).
+
+    Default: ``"/change-email-confirm"``.
+.. py:data:: SECURITY_EMAIL_CHANGE_SALT
+
+    Specifies the salt value when generating change email confirmation links/tokens.
+
+    Default: ``"change-email-salt"``.
+
+Additional relevant configuration variables:
+
+    - :py:data:`SECURITY_FRESHNESS` - Used to protect /change-email.
+    - :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /change-email.
 
 Two-Factor
 -----------
@@ -1709,6 +1776,7 @@ Feature Flags
 -------------
 All feature flags. By default all are 'False'/not enabled.
 
+* :py:data:`SECURITY_CHANGE_EMAIL`
 * :py:data:`SECURITY_CONFIRMABLE`
 * :py:data:`SECURITY_REGISTERABLE`
 * :py:data:`SECURITY_RECOVERABLE`
@@ -1729,6 +1797,8 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_LOGOUT_URL`
 * :py:data:`SECURITY_VERIFY_URL`
 * :py:data:`SECURITY_REGISTER_URL`
+* :py:data:`SECURITY_CHANGE_EMAIL_URL`
+* :py:data:`SECURITY_CHANGE_EMAIL_CONFIRM_URL`
 * :py:data:`SECURITY_RESET_URL`
 * :py:data:`SECURITY_CHANGE_URL`
 * :py:data:`SECURITY_CONFIRM_URL`
@@ -1777,6 +1847,7 @@ A list of all templates:
 * :py:data:`SECURITY_REGISTER_USER_TEMPLATE`
 * :py:data:`SECURITY_RESET_PASSWORD_TEMPLATE`
 * :py:data:`SECURITY_CHANGE_PASSWORD_TEMPLATE`
+* :py:data:`SECURITY_CHANGE_EMAIL_TEMPLATE`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE`
 * :py:data:`SECURITY_SEND_CONFIRMATION_TEMPLATE`
@@ -1802,6 +1873,9 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_ALREADY_CONFIRMED``
 * ``SECURITY_MSG_API_ERROR``
 * ``SECURITY_MSG_ANONYMOUS_USER_REQUIRED``
+* ``SECURITY_MSG_CHANGE_EMAIL_EXPIRED``
+* ``SECURITY_MSG_CHANGE_EMAIL_CONFIRMED``
+* ``SECURITY_MSG_CHANGE_EMAIL_SENT``
 * ``SECURITY_MSG_CODE_HAS_BEEN_SENT``
 * ``SECURITY_MSG_CONFIRMATION_EXPIRED``
 * ``SECURITY_MSG_CONFIRMATION_REQUEST``

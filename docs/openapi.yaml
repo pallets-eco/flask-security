@@ -412,6 +412,104 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /change-email:
+    get:
+      summary: GET change email form
+      responses:
+        200:
+          description: change email form
+          content:
+            text/html:
+              schema:
+                type: string
+                description: render_template(SECURITY_CHANGE_EMAIL_TEMPLATE)
+                example: render_template(SECURITY_CHANGE_EMAIL_TEMPLATE)
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/DefaultJsonResponse'
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          current_email:
+                            type: string
+                            description: User's currently registered email
+    post:
+      summary: Generate and send change email confirmation link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeEmail"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/ChangeEmail"
+      responses:
+        200:
+          description: Change email response.
+          content:
+            text/html:
+              schema:
+                description: |
+                  Change email form (errors or not).
+                  If no errors then a confirmation instructions (with link) has been sent to the
+                  requested (new) email.
+                type: string
+                example: render_template(SECURITY_CHANGE_EMAIL_TEMPLATE) with error values
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        400:
+          description: Errors while validating form
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/DefaultJsonErrorResponse'
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          current_email:
+                            type: string
+                            description: User's currently registered email
+  /change-email/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Confirm change of user's registered email
+      description: >
+        This is the result of getting a change-email token and is usually
+        the result of clicking the link from a change-email  email.
+        This always results in a redirect().
+      responses:
+        302:
+          description: >
+            Redirects depending on success/error and whether
+            __SECURITY_REDIRECT_BEHAVIOR__ == 'spa'.
+          headers:
+            Location:
+              description: |
+                On spa-success: SECURITY_POST_CHANGE_EMAIL_VIEW?success={SECURITY_MSG_CHANGE_EMAIL_CONFIRMED}
+
+                On spa-error-expired: SECURITY_CHANGE_EMAIL_ERROR_VIEW?error={SECURITY_MSG_CHANGE_EMAIL_EXPIRED}
+
+                On spa-error-invalid-token: SECURITY_CHANGE_EMAIL_ERROR_VIEW?error={SECURITY_MSG_API_ERROR}
+
+                On default-error: SECURITY_CHANGE_EMAIL_ERROR_VIEW || .change_email
+
+                On default-success: SECURITY_POST_CHANGE_EMAIL_VIEW || SECURITY_POST_LOGIN_VIEW
+              schema:
+                type: string
+
   /reset:
     get:
       summary: GET reset password form
@@ -2044,6 +2142,14 @@ components:
         new_password_confirm:
           type: string
           description: New password - again
+    ChangeEmail:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          description: New email requested
+
     EmailLink:
       type: object
       required: [email]

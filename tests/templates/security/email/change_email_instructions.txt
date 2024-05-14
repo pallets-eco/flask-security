@@ -1,0 +1,12 @@
+{# This template receives the following context:
+  link - the link that should be fetched (GET) to confirm
+  token - this token is part of confirmation link - but can be used to
+    construct arbitrary URLs for redirecting.
+  user - the entire user model object
+  security - the Flask-Security configuration
+#}
+Link:{{ link }}
+Email:{{ user.email }}
+Token:{{ token }}
+RegisterBlueprint:{{ security.register_blueprint }}
+Within:{{ config["SECURITY_CHANGE_EMAIL_WITHIN"] }}

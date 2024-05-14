@@ -73,8 +73,8 @@ Confirmable
 ^^^^^^^^^^^
 
 If you enable account confirmation by setting your application's
-:py:data:`SECURITY_CONFIRMABLE` configuration value to `True`, your `User` model will
-require the following additional field:
+:py:data:`SECURITY_CONFIRMABLE` or :py:data:`SECURITY_CHANGE_EMAIL` configuration value to `True`,
+your `User` model will require the following additional field:
 
 * ``confirmed_at`` (datetime)
 

@@ -134,6 +134,7 @@ def create_app():
     # Turn on all features (except passwordless since that removes normal login)
     for opt in [
         "changeable",
+        "change_email",
         "recoverable",
         "registerable",
         "trackable",

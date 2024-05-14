@@ -1,0 +1,15 @@
+{% extends "security/base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors %}
+
+{% block content %}
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain('Change email') }}</h1>
+  <h3>{{ _fsdomain('Once submitted, an email confirmation will be sent to this new email address.') }}</h3>
+  <form action="{{ url_for_security('change_email') }}" method="post" name="change_email_form">
+    {{ change_email_form.hidden_tag() }}
+    {{ render_form_errors(change_email_form) }}
+    {{ render_field_with_errors(change_email_form.email) }}
+    {{ render_field_errors(change_email_form.csrf_token) }}
+    {{ render_field(change_email_form.submit) }}
+  </form>
+{% endblock content %}

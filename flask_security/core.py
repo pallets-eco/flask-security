@@ -30,6 +30,7 @@ from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy
 
 from .babel import FsDomain
+from .change_email import ChangeEmailForm
 from .decorators import (
     default_reauthn_handler,
     default_unauthn_handler,
@@ -223,6 +224,15 @@ _default_config: dict[str, t.Any] = {
     "SEND_PASSWORD_RESET_EMAIL": True,
     "SEND_PASSWORD_RESET_NOTICE_EMAIL": True,
     "LOGIN_WITHIN": "1 days",
+    "CHANGE_EMAIL": False,
+    "CHANGE_EMAIL_TEMPLATE": "security/change_email.html",
+    "CHANGE_EMAIL_WITHIN": "2 hours",
+    "CHANGE_EMAIL_URL": "/change-email",
+    "CHANGE_EMAIL_CONFIRM_URL": "/change-email-confirm",
+    "CHANGE_EMAIL_ERROR_VIEW": None,
+    "POST_CHANGE_EMAIL_VIEW": None,
+    "CHANGE_EMAIL_SALT": "change-email-salt",
+    "CHANGE_EMAIL_SUBJECT": _("Confirm your new email address"),
     "TWO_FACTOR_AUTHENTICATOR_VALIDITY": 120,
     "TWO_FACTOR_MAIL_VALIDITY": 300,
     "TWO_FACTOR_SMS_VALIDITY": 120,
@@ -607,6 +617,21 @@ _default_messages = {
     "WEBAUTHN_MISMATCH_USER_HANDLE": (
         _("Credential user handle didn't match"),
         "error",
+    ),
+    "CHANGE_EMAIL_EXPIRED": (
+        _("Confirmation must be completed within %(within)s. Please start over."),
+        "error",
+    ),
+    "CHANGE_EMAIL_CONFIRMED": (
+        _("Change of email address confirmed"),
+        "success",
+    ),
+    "CHANGE_EMAIL_SENT": (
+        _(
+            "Instructions to confirm your new email address have"
+            " been sent to %(email)s."
+        ),
+        "success",
     ),
 }
 
@@ -1132,8 +1157,10 @@ class Security:
         app: flask.Flask | None = None,
         datastore: UserDatastore | None = None,
         register_blueprint: bool = True,
+        *,
         login_form: t.Type[LoginForm] = LoginForm,
         verify_form: t.Type[VerifyForm] = VerifyForm,
+        change_email_form: t.Type[ChangeEmailForm] = ChangeEmailForm,
         confirm_register_form: t.Type[ConfirmRegisterForm] = ConfirmRegisterForm,
         register_form: t.Type[RegisterForm] = RegisterForm,
         forgot_password_form: t.Type[ForgotPasswordForm] = ForgotPasswordForm,
@@ -1207,6 +1234,7 @@ class Security:
             "register_form": FormInfo(cls=register_form),
             "forgot_password_form": FormInfo(cls=forgot_password_form),
             "reset_password_form": FormInfo(cls=reset_password_form),
+            "change_email_form": FormInfo(cls=change_email_form),
             "change_password_form": FormInfo(cls=change_password_form),
             "send_confirmation_form": FormInfo(cls=send_confirmation_form),
             "passwordless_login_form": FormInfo(cls=passwordless_login_form),
@@ -1246,6 +1274,7 @@ class Security:
         self.remember_token_serializer: URLSafeTimedSerializer
         self.login_serializer: URLSafeTimedSerializer
         self.reset_serializer: URLSafeTimedSerializer
+        self.change_email_serializer: URLSafeTimedSerializer
         self.confirm_serializer: URLSafeTimedSerializer
         self.us_setup_serializer: URLSafeTimedSerializer
         self.tf_validity_serializer: URLSafeTimedSerializer
@@ -1273,6 +1302,7 @@ class Security:
 
         # Add necessary attributes here to keep mypy happy
         self.trackable: bool = False
+        self.change_email: bool = False
         self.confirmable: bool = False
         self.registerable: bool = False
         self.changeable: bool = False
@@ -1339,6 +1369,7 @@ class Security:
         form_names = [
             "login_form",
             "verify_form",
+            "change_email_form",
             "confirm_register_form",
             "register_form",
             "forgot_password_form",
@@ -1374,6 +1405,7 @@ class Security:
         attr_names = [
             "trackable",
             "registerable",
+            "change_email",
             "confirmable",
             "changeable",
             "recoverable",
@@ -1423,6 +1455,7 @@ class Security:
         self.remember_token_serializer = _get_serializer(app, "remember")
         self.login_serializer = _get_serializer(app, "login")
         self.reset_serializer = _get_serializer(app, "reset")
+        self.change_email_serializer = _get_serializer(app, "change_email")
         self.confirm_serializer = _get_serializer(app, "confirm")
         self.us_setup_serializer = _get_serializer(app, "us_setup")
         self.tf_validity_serializer = _get_serializer(app, "two_factor_validity")
@@ -1896,6 +1929,11 @@ class Security:
         self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("reset_password", fn)
+
+    def change_email_context_processor(
+        self, fn: t.Callable[[], dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("change_email", fn)
 
     def change_password_context_processor(
         self, fn: t.Callable[[], dict[str, t.Any]]
