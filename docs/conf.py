@@ -33,6 +33,7 @@ extensions = [
     "pallets_sphinx_themes",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.autosectionlabel",
     "sphinx_issues",
 ]
 
@@ -114,6 +115,8 @@ autodoc_typehints = "description"
 autodoc_type_aliases = {
     "CbType": "oauth_provider.CbType",
 }
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
@@ -175,7 +178,7 @@ html_static_path = ["_static", "openapi.yaml"]
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
     "index": ["project.html", "localtoc.html", "searchbox.html"],
-    "**": ["localtoc.html", "relations.html", "searchbox.html"],
+    "**": ["relations.html", "searchbox.html", "localtoc.html"],
 }
 singlehtml_sidebars = {"index": ["project.html", "localtoc.html"]}
 

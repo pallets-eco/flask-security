@@ -85,7 +85,7 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_PASSWORD_SCHEMES
 
-    List of support password hash algorithms. ``SECURITY_PASSWORD_HASH``
+    List of supported password hash algorithms. ``SECURITY_PASSWORD_HASH``
     must be from this list. Passwords encrypted with any of these schemes will be honored.
 
 .. py:data:: SECURITY_DEPRECATED_PASSWORD_SCHEMES
@@ -108,7 +108,7 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_PASSWORD_SINGLE_HASH
 
     A list of schemes that should not be hashed twice. By default, passwords are
-    hashed twice, first with ``SECURITY_PASSWORD_SALT``, and then with a random salt.
+    hashed twice, first with :py:data:`SECURITY_PASSWORD_SALT`, and then with a random salt.
 
     Default: a list of known schemes not working with double hashing (`django_{digest}`, `plaintext`).
 
@@ -347,7 +347,7 @@ These configuration keys are used globally across all features.
 
     .. versionchanged:: 4.1.0
         The 'key' attribute was deprecated in favor of a separate configuration
-        variable ``SECURITY_CSRF_COOKIE_NAME``.
+        variable :data:`SECURITY_CSRF_COOKIE_NAME`.
 
 .. py:data:: SECURITY_CSRF_HEADER
 
@@ -805,7 +805,7 @@ Registerable
 
     Specifies the view to redirect to after a user successfully registers.
     This value can be set to a URL or an endpoint name. If this value is
-    ``None``, the user is redirected to the value of ``SECURITY_POST_LOGIN_VIEW``.
+    ``None``, the user is redirected to the value of :data:`SECURITY_POST_LOGIN_VIEW`.
     Note that if the request URL or form has a ``next`` parameter, that will take precedence.
 
     Default: ``None``.
@@ -912,7 +912,7 @@ Confirmable
 
     Specifies the view to redirect to after a user successfully confirms their email.
     This value can be set to a URL or an endpoint name. If this value is ``None``, the user is redirected to the
-    value of ``SECURITY_POST_LOGIN_VIEW``.
+    value of :data:`SECURITY_POST_LOGIN_VIEW`.
 
     Default: ``None``.
 .. py:data:: SECURITY_AUTO_LOGIN_AFTER_CONFIRM
@@ -927,7 +927,7 @@ Confirmable
 .. py:data:: SECURITY_LOGIN_WITHOUT_CONFIRMATION
 
     Specifies if a user may login before confirming their email when
-    the value of ``SECURITY_CONFIRMABLE`` is set to ``True``.
+    the value of :data:`SECURITY_CONFIRMABLE` is set to ``True``.
 
     Default: ``False``.
 .. py:data:: SECURITY_REQUIRES_CONFIRMATION_ERROR_VIEW
@@ -957,7 +957,7 @@ Configuration variables for the ``SECURITY_CHANGEABLE`` feature:
     Specifies the view to redirect to after a user successfully changes their password.
     This value can be set to a URL or an endpoint name.
     If this value is ``None``, the user is redirected  to the
-    value of ``SECURITY_POST_LOGIN_VIEW``.
+    value of :data:`SECURITY_POST_LOGIN_VIEW`.
 
     Default: ``None``.
 .. py:data:: SECURITY_CHANGE_PASSWORD_TEMPLATE
@@ -1078,7 +1078,7 @@ Recoverable
 
     Default: ``_("Your password has been reset")``.
 
-Change_Email
+Change-Email
 ------------
 .. versionadded:: 5.5.0
 
@@ -1154,7 +1154,7 @@ Configuration related to the two-factor authentication feature.
     Specifies if Flask-Security should enable the two-factor login feature.
     If set to ``True``, in addition to their passwords, users will be required to
     enter a code that is sent to them. Note that unless
-    ``SECURITY_TWO_FACTOR_REQUIRED`` is set - this is opt-in.
+    :data:`SECURITY_TWO_FACTOR_REQUIRED` is set - this is opt-in.
 
     Default: ``False``.
 .. py:data:: SECURITY_TWO_FACTOR_REQUIRED
@@ -1404,8 +1404,8 @@ Unified Signin
 .. py:data:: SECURITY_US_ENABLED_METHODS
 
     Specifies the default enabled methods for unified signin authentication.
-    Be aware that ``password`` only affects this ``SECURITY_US_SIGNIN_URL`` endpoint.
-    Removing it from here won't stop users from using the ``SECURITY_LOGIN_URL`` endpoint
+    Be aware that ``password`` only affects this :data:`SECURITY_US_SIGNIN_URL` endpoint.
+    Removing it from here won't stop users from using the :data:`SECURITY_LOGIN_URL` endpoint
     (unless you replace the login endpoint using :py:data:`SECURITY_US_SIGNIN_REPLACES_LOGIN`).
 
     This config variable defines which methods can be used to provide authentication data.
@@ -1654,7 +1654,7 @@ WebAuthn
         - ``"secondary"`` - just keys registered as "secondary" are allowed
 
     If list is empty or ``None`` WebAuthn keys aren't allowed. This also means that the
-            :py:data:``SECURITY_WAN_VERIFY`` endpoint won't be registered.
+            :py:data:`SECURITY_WAN_VERIFY_URL` endpoint won't be registered.
 
     Default: ``["first", "secondary"]``
 

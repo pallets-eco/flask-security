@@ -968,7 +968,7 @@ Released March 31, 2020
 
 Features
 ++++++++
-- (:pr:`257`) Support a unified sign in feature. Please see :ref:`unified-sign-in`.
+- (:pr:`257`) Support a unified sign in feature. Please see :ref:`configuration:unified signin`.
 - (:pr:`265`) Add phone number validation class. This is used in both unified sign in
   as well as two-factor when using ``sms``.
 - (:pr:`274`) Add support for 'freshness' of caller's authentication. This permits endpoints

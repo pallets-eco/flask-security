@@ -1059,10 +1059,11 @@ class Security:
     :param register_blueprint: to register the Security blueprint or not.
     :param login_form: set form for the login view
     :param verify_form: set form for re-authentication due to freshness check
+    :param change_email_form: set form for changing email address
     :param register_form: set form for the register view when
-            *SECURITY_CONFIRMABLE* is false
+            :data:`SECURITY_CONFIRMABLE` is false
     :param confirm_register_form: set form for the register view when
-            *SECURITY_CONFIRMABLE* is true
+            :data:`SECURITY_CONFIRMABLE` is true
     :param forgot_password_form: set form for the forgot password view
     :param reset_password_form: set form for the reset password view
     :param change_password_form: set form for the change password view
@@ -1111,7 +1112,8 @@ class Security:
 
     .. versionadded:: 3.4.0
         ``us_signin_form``, ``us_setup_form``, ``us_setup_validate_form``, and
-        ``us_verify_form`` added as part of the :ref:`unified-sign-in` feature.
+        ``us_verify_form`` added as part of the :ref:`configuration:unified signin`
+         feature.
 
     .. versionadded:: 3.4.0
         ``totp_cls`` added to enable applications to implement replay protection - see
@@ -1139,6 +1141,9 @@ class Security:
         ``mf_recovery_form``.
     .. versionadded:: 5.1.0
         ``mf_recovery_codes_util_cls``, ``oauth``
+    .. versionadded:: 5.5.0
+        ``change_email_form`` in support of the
+         :ref:`Change-Email<configuration:change-email>` feature.
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
