@@ -56,7 +56,7 @@ class FsModels:
         .. note::
             This should only be used if you are utilizing the fsqla data
             models. With your own models you would need similar but slightly
-            difficult code.
+            different code.
         """
         cls.db = appdb
         cls.user_table_name = user_table_name

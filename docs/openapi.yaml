@@ -29,12 +29,16 @@ paths:
         200:
           description: >
             Login form or user information. The JSON response will always
-            carry the csrf_token information. If the caller is logged in, then
+            carry the csrf_token information.
+            If SECURITY_CSRF_COOKIE_NAME is set then a cookie with the csrf token will be set.
+            If the caller is logged in, then
             additional information is returned. This can be very useful for single-page applications where during a force refresh, all state is lost.
             By performing this GET, the session cookie will authenticate the user and the response will contain user information.
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_LOGIN_USER_TEMPLATE)
                 example: render_template(SECURITY_LOGIN_USER_TEMPLATE)
             application/json:
               schema:
@@ -222,7 +226,7 @@ paths:
                         description: Http status code
   /verify:
     get:
-      summary: GET Basic re-authentication form
+      summary: GET verify/re-authentication form
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
         this endpoint will be called to request an already signed in user to re-authenticate.
@@ -232,6 +236,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_VERIFY_TEMPLATE)
                 example: render_template(SECURITY_VERIFY_TEMPLATE)
             application/json:
               schema:
@@ -243,7 +249,7 @@ paths:
                       True if caller has a registered WebAuthn Key which has a `usage` that
                       is allowed by the SECURITY_WAN_ALLOW_AS_VERIFY configuration setting.
     post:
-      summary: Basic re-authentication
+      summary: Verify/re-authentication
       parameters:
         - $ref: "#/components/parameters/include_auth_token"
       requestBody:
@@ -293,6 +299,7 @@ paths:
             text/html:
               schema:
                 type: string
+                description: render_template(SECURITY_REGISTER_USER_TEMPLATE)
                 example: render_template(SECURITY_REGISTER_USER_TEMPLATE)
         302:
           description: Response when already logged in
@@ -355,6 +362,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_CHANGE_PASSWORD_TEMPLATE)
                 example: render_template(SECURITY_CHANGE_PASSWORD_TEMPLATE)
             application/json:
               schema:
@@ -520,6 +529,7 @@ paths:
             text/html:
               schema:
                 type: string
+                description: render_template(SECURITY_FORGOT_PASSWORD_TEMPLATE)
                 example: render_template(SECURITY_FORGOT_PASSWORD_TEMPLATE)
         302:
           description: Response when already logged in
@@ -644,6 +654,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_SEND_CONFIRMATION_TEMPLATE)
                 example: render_template(SECURITY_SEND_CONFIRMATION_TEMPLATE)
     post:
       summary: Send confirmation email
@@ -726,6 +738,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_US_SIGNIN_TEMPLATE)
                 example: render_template(SECURITY_US_SIGNIN_TEMPLATE)
             application/json:
               schema:
@@ -767,8 +781,8 @@ paths:
                   - $ref: "#/components/schemas/LoginJsonResponse"
             text/html:
               schema:
-                description: Unsuccessful sign in
                 type: string
+                description: Unsuccessful sign in - render_template(SECURITY_US_SIGNIN_TEMPLATE) with error values
                 example: render_template(SECURITY_US_SIGNIN_TEMPLATE) with error values
         302:
           description: >
@@ -807,7 +821,7 @@ paths:
           content:
             application/json:
               schema:
-                description: Code successfully sent
+                $ref: "#/components/schemas/DefaultJsonResponse"
             text/html:
               schema:
                 description: Validation error, code send error, or code successfully sent
@@ -828,7 +842,7 @@ paths:
 
   /us-verify:
     get:
-      summary: GET Unified sign in re-authentication form/information
+      summary: GET Unified sign in verify/re-authentication form/information
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
         this endpoint will be called to request an already signed in user to re-authenticate.
@@ -838,6 +852,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_US_VERIFY_TEMPLATE)
                 example: render_template(SECURITY_US_VERIFY_TEMPLATE)
             application/json:
               schema:
@@ -861,7 +877,7 @@ paths:
                       True if caller has a registered WebAuthn Key which has a `usage` that
                       is allowed by the SECURITY_WAN_ALLOW_AS_VERIFY configuration setting.
     post:
-      summary: Unified sign in re-authentication
+      summary: Unified sign in verify/re-authentication
       parameters:
         - $ref: "#/components/parameters/include_auth_token"
       requestBody:
@@ -885,8 +901,8 @@ paths:
                   - $ref: "#/components/schemas/JsonResponseWithToken"
             text/html:
               schema:
-                description: Unsuccessful re-authentication.
                 type: string
+                description: Unsuccessful re-authentication - render_template(SECURITY_US_VERIFY_TEMPLATE) with error values
                 example: render_template(SECURITY_US_VERIFY_TEMPLATE) with error values
         302:
           description: User successfully re-authenticated when using form based request.
@@ -919,7 +935,7 @@ paths:
           content:
             application/json:
               schema:
-                description: Code successfully sent
+                $ref: "#/components/schemas/DefaultJsonResponse"
             text/html:
               schema:
                 description: Validation error, code send error, or code successfully sent
@@ -946,6 +962,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_US_SETUP_TEMPLATE)
                 example: render_template(SECURITY_US_SETUP_TEMPLATE)
             application/json:
               schema:
@@ -1032,6 +1050,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_US_SETUP_TEMPLATE)
                 example: render_template(SECURITY_US_SETUP_TEMPLATE)
 
     post:
@@ -1120,6 +1140,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_TWO_FACTOR_SETUP_TEMPLATE)
                 example: render_template(SECURITY_TWO_FACTOR_SETUP_TEMPLATE)
             application/json:
               schema:
@@ -1340,7 +1362,7 @@ paths:
           content:
             text/html:
               schema:
-                description: Select Form (SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
+                description: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
                 type: string
                 example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE)
             application/json:
@@ -1405,18 +1427,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /mf-recovery-codes:
+    summary: Generate and retrieve one-time use recovery codes.
     get:
-      summary: Generate and retrieve one-time use recovery codes.
+      summary: Retrieve one-time use recovery codes.
       description: >
         If a user has two-factor authentication enabled, they can generate and
         use a recovery code if they lose or otherwise can't use their second factor
         device.
+      parameters:
+        - name: show_codes
+          in: path
+          required: false
+          schema:
+            type: string
       responses:
         200:
           description: Multi-factor recovery code form
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
                 example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
             application/json:
               schema:
@@ -1435,13 +1466,6 @@ paths:
 
     post:
       summary: Generate a new set of one-time recovery codes
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-                description: Generate Codes Form
-                type: string
-                example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
       responses:
         200:
           description: New one-time codes generated.
@@ -1462,7 +1486,7 @@ paths:
                               type: string
             text/html:
               schema:
-                description: New codes generated.
+                description: New codes generated - render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
                 type: string
                 example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
         400:
@@ -1485,6 +1509,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE)
                 example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE)
             application/json:
               schema:
@@ -1537,6 +1563,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_WAN_REGISTER_TEMPLATE)
                 example: render_template(SECURITY_WAN_REGISTER_TEMPLATE)
             application/json:
               schema:
@@ -1584,7 +1612,7 @@ paths:
                 $ref: "#/components/schemas/WanRegisterJsonResponse"
             text/html:
               schema:
-                description: Validation failed
+                description: Validation failed - render_template(SECURITY_WAN_REGISTER_TEMPLATE)
                 type: string
                 example: render_template(SECURITY_WAN_REGISTER_TEMPLATE) with error values
         400:
@@ -1650,6 +1678,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_WAN_SIGNIN_TEMPLATE)
                 example: render_template(SECURITY_WAN_SIGNIN_TEMPLATE)
             application/json:
               schema:
@@ -1753,7 +1783,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /wan-delete:
     get:
-      summary: GET Delete WebAuthn key form
+      summary: GET Delete WebAuthn key - this method isn't very useful.
       responses:
         200:
           description: Delete an existing WebAuthn Key
@@ -1814,6 +1844,8 @@ paths:
           content:
             text/html:
               schema:
+                type: string
+                description: render_template(SECURITY_WAN_VERIFY_TEMPLATE)
                 example: render_template(SECURITY_WAN_VERIFY_TEMPLATE)
             application/json:
               schema:

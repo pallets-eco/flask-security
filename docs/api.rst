@@ -337,6 +337,20 @@ sends the following signals.
    Sent when a user requests a password reset. In addition to the app (which is
    the sender), it is passed `user`, `token` (deprecated), and `reset_token` arguments.
 
+.. data:: change_email_instructions_sent
+
+    Sent when a user requests to change their registered email address. In addition to the
+    app (which is the sender) it is passed `user`, `token`, and `new_email`.
+
+    .. versionadded:: 5.5.0
+
+.. data:: change_email_confirmed
+
+    Sent when a user has confirmed their new email address. In addition to the
+    app (which is the sender) it is passed `user`, `old_email`.
+
+    .. versionadded:: 5.5.0
+
 .. data:: tf_code_confirmed
 
     Sent when a user performs two-factor authentication login on the site. In

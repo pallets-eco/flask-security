@@ -99,12 +99,10 @@ expiry value (settable via the :data:`SECURITY_TOKEN_EXPIRE_TIMESTAMP` callable)
     there are some endpoints that require session information (e.g. a session cookie).
     Please read :ref:`freshness_topic` and :ref:`csrf_topic`
 
-.. _two-factor:
-
 Two-factor Authentication
 ----------------------------------------
-
-Two-factor authentication is enabled by generating time-based one time passwords
+If :ref:`configured<configuration:Two-Factor>`,
+the two-factor authentication feature generates time-based one time passwords
 (Tokens). The tokens are generated using the users `totp secret`_, which is unique
 per user, and is generated both on first login, and when changing the two-factor
 method (doing this causes the previous totp secret to become invalid). The token
@@ -121,13 +119,12 @@ they lose track of their secondary factor device. Rescue options include sending
 a one time code via email, send an email to the application admin, and using a previously
 generated and downloaded one-time code (see :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`).
 
-.. _unified-sign-in:
-
 Unified Sign In
 ---------------
 **This feature is in Beta - mostly due to it being brand new and little to no production soak time**
 
-Unified sign in provides a generalized login endpoint that takes an `identity`
+If :ref:`configured<configuration:Unified Signin>`,
+a generalized login endpoint is provided that takes an `identity`
 and a `passcode`; where (based on configuration):
 
     * `identity` is any of :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` (e.g. email, username, phone)
@@ -172,20 +169,18 @@ If you disable the freshness check then sessions aren't required.
     * Registration and Confirmation only work with email - so while you can enable multiple
       authentication methods, you still have to register with email.
 
-.. _webauthn:
-
 WebAuthn
----------------
+--------
 **This feature is in Beta - mostly due to it being brand new and little to no production soak time**
 
 WebAuthn is a standardized protocol that connects authenticators (such as YubiKey and mobile biometrics)
-with websites. Flask-Security supports using WebAuthn keys as either 'first' or 'secondary'
+with websites. If :ref:`configured<configuration:WebAuthn>`, Flask-Security supports using WebAuthn keys as either 'first' or 'secondary'
 authenticators. Please read :ref:`webauthn_topic` for more details.
 
 Email Confirmation
 ------------------
-
-If desired you can require that new users confirm their email address.
+If :ref:`configured<configuration:Confirmable>`, your application
+can require that new users confirm their email address prior to allowing them to authenticate.
 Flask-Security will send an email message to any new users with a confirmation
 link. Upon navigating to the confirmation link, the user's account will be set to
 'confirmed'. The user can then sign in usually the normal mechanisms.
@@ -194,11 +189,10 @@ if the user happens to try to use an expired token or has lost the previous
 email. Confirmation links can be configured to expire after a specified amount
 of time (default 5 days).
 
-
 Password Reset/Recovery
 -----------------------
-
-Password reset and recovery is available for when a user forgets their
+If :ref:`configured<configuration:Recoverable>`,
+password reset and recovery is available for when a user forgets their
 password. Flask-Security sends an email to the user with a link to a view which
 allows them to reset their password. Once the password is reset they are redirected to
 the login page where they need to authenticate using the new password.
@@ -210,8 +204,7 @@ which will invalidate all existing sessions AND (by default) all authentication 
 
 User Registration
 -----------------
-
-Flask-Security comes packaged with a basic user registration view. This view is
+If :ref:`configured<configuration:Registerable>`, Flask-Security provides a basic user registration view. This view is
 very simple and new users need only supply an email address and their password.
 This view can be overridden if your registration process requires more fields.
 User email is validated and normalized using the
@@ -224,7 +217,7 @@ able to authenticate with EITHER email or username - however that can be changed
 
 Password Change
 ---------------
-Flask-Security comes packaged with a basic change user password view. Unlike password
+If :ref:`configured<configuration:Changeable>` users can change their password. Unlike password
 recovery, this endpoint is used when the user is already authenticated. The result
 of a successful password change is not only a new password, but a new value for ``fs_uniquifier``.
 This has the effect is immediately invalidating all existing sessions. The change request
@@ -238,13 +231,13 @@ when generating authentication tokens and so won't be affected by password chang
 
 Email Change
 ------------
-If configured, users can change the email they registered with. This will send a new confirmation email to the new email address.
+If :ref:`configured<configuration:Change-Email>`, users can change the email they registered with. This will send a new confirmation email to the new email address.
 
 
 Login Tracking
 --------------
 
-Flask-Security can, if configured, keep track of basic login events and
+Flask-Security can, if :ref:`configured<configuration:Trackable>`, keep track of basic login events and
 statistics. They include:
 
 * Last login date

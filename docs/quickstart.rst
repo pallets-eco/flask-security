@@ -13,7 +13,7 @@ There are some complete (but simple) examples available in the *examples* direct
     for some missing packages.
 
 .. note::
-    The default ``SECURITY_PASSWORD_HASH`` is "bcrypt" - so be sure to install bcrypt.
+    The default :data:`SECURITY_PASSWORD_HASH` is "bcrypt" - so be sure to install bcrypt.
     If you opt for a different hash e.g. "argon2" you will need to install the appropriate package e.g. `argon_cffi`_.
 .. danger::
    The examples below place secrets in source files. Never do this for your application

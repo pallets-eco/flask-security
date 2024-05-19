@@ -48,9 +48,15 @@ class MfRecoveryCodesUtil:
     """Handle creation, checking, encrypting and decrypting recovery codes.
     Since these are rarely used - keep them encrypted until needed - yes
     if someone gets access to memory they can find the key...
+
+    .. versionadded:: 5.0.0
     """
 
     def __init__(self, app: flask.Flask):
+        """Initialize MfRecoveryCodesUtil.
+        If :data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS` is set then
+        initialize ``cryptor``.
+        """
         self.cryptor: MultiFernet | None = None
         keys = cv("MULTI_FACTOR_RECOVERY_CODES_KEYS", app)
         # N.B. order is important - first key is 'primary'.
@@ -66,36 +72,41 @@ class MfRecoveryCodesUtil:
         self.cryptor = MultiFernet(cryptors)
 
     def create_recovery_codes(self, user: User) -> list[str]:
-        # Create new recovery codes and store in user record.
-        # If configured codes are stored encrypted - but plainttext
-        # versions are returned.
+        """Create :data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_N` new recovery codes and
+        store in user record.
+        If configured (:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS`),
+        codes are stored encrypted - but plainttext versions are returned.
+        """
         new_codes = _security._totp_factory.generate_recovery_codes(
             cv("MULTI_FACTOR_RECOVERY_CODES_N")
         )
-        _datastore.mf_set_recovery_codes(user, self.encrypt_codes(new_codes))
+        _datastore.mf_set_recovery_codes(user, self._encrypt_codes(new_codes))
         return new_codes
 
     def get_recovery_codes(self, user: User) -> list[str]:
+        """Return list of (unencrypted) recovery codes"""
         ecodes = _datastore.mf_get_recovery_codes(user)
-        return self.decrypt_codes(ecodes)
+        return self._decrypt_codes(ecodes)
 
     def check_recovery_code(self, user: User, code: str) -> bool:
-        # Verify code is valid
+        """Verify code is valid"""
         codes = _datastore.mf_get_recovery_codes(user)
-        dcodes = self.decrypt_codes(codes)
+        dcodes = self._decrypt_codes(codes)
         return code in dcodes
 
     def delete_recovery_code(self, user: User, code: str) -> bool:
-        # codes are single use - so delete after use.
-        # encrypting code gives different answer due to time stamp.
-        # we don't want to re-encrypt other codes.
+        """codes are single use - so delete after use.
+        encrypting code gives different answer due to time stamp.
+        we don't want to re-encrypt other codes.
+        """
         codes = _datastore.mf_get_recovery_codes(user)
         if self.cryptor:
-            codes = self.decrypt_codes(codes)
+            codes = self._decrypt_codes(codes)
         idx = codes.index(code)
         return _datastore.mf_delete_recovery_code(user, idx)
 
-    def encrypt_codes(self, codes: list[str]) -> list[str]:
+    def _encrypt_codes(self, codes: list[str]) -> list[str]:
+        """Return list of encrypted codes"""
         if not self.cryptor:
             return codes
         ecodes = []
@@ -103,7 +114,10 @@ class MfRecoveryCodesUtil:
             ecodes.append(self.cryptor.encrypt(code.encode()).decode())
         return ecodes
 
-    def decrypt_codes(self, codes: list[str]) -> list[str]:
+    def _decrypt_codes(self, codes: list[str]) -> list[str]:
+        """Return list of decrypted codes.
+        Don't include in list if no longer valid.
+        """
         from cryptography.fernet import InvalidToken
 
         if not self.cryptor:
