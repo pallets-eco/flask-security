@@ -45,7 +45,7 @@ class UsernameUtil:
         Given a username - check for allowable character categories.
         This is broken out so applications can easily override this method only.
 
-        By default allow letters and numbers (using unicodedata.category).
+        By default, allow letters and numbers (using unicodedata.category).
 
         Returns None if allowed, error message if not allowed.
         """
