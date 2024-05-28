@@ -891,7 +891,7 @@ def get_identity_attributes(app: Flask | None = None) -> list[str]:
 
 
 def get_identity_attribute(attr: str, app: Flask | None = None) -> dict[str, t.Any]:
-    """Given an user_identity_attribute, return the defining dict.
+    """Given a user_identity_attribute, return the defining dict.
     A bit annoying since USER_IDENTITY_ATTRIBUTES is a list of dict
     where each dict has just one key.
     """
@@ -910,7 +910,7 @@ def lookup_identity(identity):
     """
     Lookup identity in DB.
     This loops through, in order, :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`,
-    and first calls the mapper function to validate/normalize.
+    and first calls the mapper function to normalize.
     Then the db.find_user is called on the specified user model attribute.
     """
     for mapping in config_value("USER_IDENTITY_ATTRIBUTES"):
@@ -926,8 +926,8 @@ def lookup_identity(identity):
 
 
 def uia_phone_mapper(identity: str) -> str | None:
-    """Used to match identity as a phone number. This is a simple proxy
-    to :py:class:`PhoneUtil`
+    """Used to normalize a phone number. This is a simple proxy
+    to :py:meth:`PhoneUtil.get_canonical_form`
 
     See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
 
@@ -938,7 +938,9 @@ def uia_phone_mapper(identity: str) -> str | None:
 
 
 def uia_email_mapper(identity: str) -> str | None:
-    """Used to match identity as an email.
+    """Used to normalize identity as an email.
+    This is a simple proxy
+    to :py:meth:`MailUtil.normalize`
 
     :return: Normalized email or None if not valid email.
 
@@ -954,8 +956,8 @@ def uia_email_mapper(identity: str) -> str | None:
 
 
 def uia_username_mapper(identity: str) -> str | None:
-    """Used to match identity as a username. This is a simple proxy
-    to :py:class:`UsernameUtil`
+    """Used to normalize a username. This is a simple proxy
+    to :py:meth:`UsernameUtil.normalize`
 
     See :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
 
