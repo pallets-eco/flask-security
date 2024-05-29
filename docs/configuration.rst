@@ -80,10 +80,10 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_PASSWORD_HASH
 
     Specifies the password hash algorithm to use when hashing passwords.
-    Recommended values for production systems are ``bcrypt``, ``argon2``, ``sha512_crypt``, or
+    Recommended values for production systems are ``argon2``, ``bcrypt``, or
     ``pbkdf2_sha512``. Some algorithms require the installation  of a backend package (e.g. `bcrypt`_, `argon2`_).
 
-    Default: ``"bcrypt"``.
+    Default: ``"argon2"``.
 
 .. py:data:: SECURITY_PASSWORD_SCHEMES
 
@@ -134,9 +134,11 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS
 
-    Pass additional options to the various hashing methods. This is a
-    dict of the form ``{<scheme>__<option>: <value>, ..}``
-    e.g. {"argon2__rounds": 10}.
+    Pass additional options through ``passlib`` to the various hashing methods.
+    This is a dict of the form ``{<scheme>__<option>: <value>, ..}``
+    e.g. {"argon2__time_cost": 3}.
+
+    Default: ``{}``
 
     .. versionadded:: 3.3.1
 
