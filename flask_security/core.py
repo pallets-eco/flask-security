@@ -135,7 +135,7 @@ _default_config: dict[str, t.Any] = {
     "I18N_DOMAIN": "flask_security",
     "I18N_DIRNAME": "builtin",
     "EMAIL_VALIDATOR_ARGS": None,
-    "PASSWORD_HASH": "bcrypt",
+    "PASSWORD_HASH": "argon2",
     "PASSWORD_SALT": None,
     "PASSWORD_SINGLE_HASH": {
         "django_argon2",
@@ -160,9 +160,8 @@ _default_config: dict[str, t.Any] = {
         "plaintext",
     ],
     "PASSWORD_HASH_OPTIONS": {},  # Deprecated at passlib 1.7
-    "PASSWORD_HASH_PASSLIB_OPTIONS": {
-        "argon2__rounds": 10  # 1.7.1 default is 2.
-    },  # >= 1.7.1 method to pass options.
+    "PASSWORD_HASH_PASSLIB_OPTIONS": {},  # passlib >= 1.7.1 method to pass options
+    # (as part of CryptoContext.using)
     "PASSWORD_LENGTH_MIN": 8,
     "PASSWORD_COMPLEXITY_CHECKER": None,
     "PASSWORD_CHECK_BREACHED": False,

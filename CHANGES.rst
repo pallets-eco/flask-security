@@ -8,14 +8,22 @@ Version 5.5.0
 
 Released TBD
 
-Features
-++++++++
+Features & Improvements
++++++++++++++++++++++++
 - (:issue:`956`) Add support for changing registered user's email (:py:data:`SECURITY_CHANGE_EMAIL`).
+- (:pr:`xxx`) Change default password hash to argon2 (was bcrypt). See below for details.
 
 Fixes
 +++++
 - (:pr:`972`) Set :py:data:`SECURITY_CSRF_COOKIE` at beginning (GET /login) of authentication
   ritual - just as we return the CSRF token. (thanks @e-goto)
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+- Notes around the change to argon2 as the default password hash:
+    - applications should add the argon2_cffi package to their requirements (it is included in the flask_security[common] extras).
+    - leave bcrypt installed to that old passwords still work.
+    - the default configuration will re-hash passwords with argon2 upon first use.
 
 Version 5.4.3
 -------------

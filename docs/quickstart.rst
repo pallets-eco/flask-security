@@ -13,8 +13,8 @@ There are some complete (but simple) examples available in the *examples* direct
     for some missing packages.
 
 .. note::
-    The default :data:`SECURITY_PASSWORD_HASH` is "bcrypt" - so be sure to install bcrypt.
-    If you opt for a different hash e.g. "argon2" you will need to install the appropriate package e.g. `argon_cffi`_.
+    The default :data:`SECURITY_PASSWORD_HASH` is "argon2" - so be sure to install `argon_cffi`_.
+    If you opt for a different hash e.g. "bcrypt" you will need to install the appropriate package.
 .. danger::
    The examples below place secrets in source files. Never do this for your application
    especially if your source code is placed in a public repo. How you pass in secrets
@@ -67,8 +67,7 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
 
     # Generate a nice key using secrets.token_urlsafe()
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
-    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    # Generate a good salt for password hashing using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 
     # have session and remember cookie be samesite (flask/flask_login)
@@ -167,8 +166,7 @@ and models.py.
 
     # Generate a nice key using secrets.token_urlsafe()
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
-    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    # Generate a good salt for password hashing using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
     # Don't worry if email has findable domain
     app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
@@ -321,8 +319,7 @@ local MongoDB instance):
 
     # Generate a nice key using secrets.token_urlsafe()
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
-    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    # Generate a good salt for password hashing using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
     # Don't worry if email has findable domain
     app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
@@ -413,8 +410,7 @@ possible using Peewee:
 
     # Generate a nice key using secrets.token_urlsafe()
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
-    # Bcrypt is set as default SECURITY_PASSWORD_HASH, which requires a salt
-    # Generate a good salt using: secrets.SystemRandom().getrandbits(128)
+    # Generate a good salt for password hashing using: secrets.SystemRandom().getrandbits(128)
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 
     app.config['DATABASE'] = {

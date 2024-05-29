@@ -56,7 +56,7 @@ Goals
     * WebAuthn support (5.0)
     * Two-Factor recovery codes (5.0)
     * First-class support for username as identity (4.1)
-    * Support for fresheness decorator to ensure sensitive operations have new authentication (4.0)
+    * Support for freshness decorator to ensure sensitive operations have new authentication (4.0)
     * Support for email normalization and validation (4.0)
     * Unified signin (username, phone, passwordless) feature (3.4)
 

@@ -40,12 +40,19 @@ control (such as per-object), you can refer to the Flask-Principal `documentatio
 Password Hashing
 ----------------
 
-Password hashing is enabled with `passlib`_. Passwords are hashed with the
-`bcrypt`_ function by default but you can easily configure the hashing
-algorithm. You should **always use a hashing algorithm** in your production
-environment. Hash algorithms not listed in ``SECURITY_PASSWORD_SINGLE_HASH``
+Password hashing is implemented using `passlib`_. Passwords are hashed with the
+`argon2`_ function by default but you can easily configure other hashing
+algorithms.
+For any given hashing algorithm, consult its documentation on what
+options/values are recommended. For argon2, the `argon2_cffi`_ package
+keeps its default options up to date with `RFC9106`_, and should be suitable for most
+applications. The `OWASP Password Storage Cheat Sheet <owasp_pass_cheat>`_ also
+has a lot of useful suggestions.
+
+You should **always use a hashing algorithm** in your production
+environment. Hash algorithms not listed in :data:`SECURITY_PASSWORD_SINGLE_HASH`
 will be double hashed - first an HMAC will be computed, then the selected hash
-function will be used. In this case - you must provide a ``SECURITY_PASSWORD_SALT``.
+function will be used. In this case - you must provide a :data:`SECURITY_PASSWORD_SALT`.
 A good way to generate this is::
 
     secrets.SystemRandom().getrandbits(128)
@@ -308,6 +315,10 @@ in the `examples` directory.
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection
 .. _passlib: https://passlib.readthedocs.io/en/stable/
 .. _totp secret: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#overview
+.. _argon2: https://en.wikipedia.org/wiki/Argon2
+.. _argon2_cffi: https://pypi.org/project/argon2-cffi/
+.. _RFC9106: https://www.rfc-editor.org/rfc/rfc9106.html
+.. _owasp_pass_cheat: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 .. _bcrypt: https://en.wikipedia.org/wiki/Bcrypt
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/
 .. _Wikipedia: https://en.wikipedia.org/wiki/Multi-factor_authentication
