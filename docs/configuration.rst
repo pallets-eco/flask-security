@@ -322,12 +322,12 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_REDIRECT_MATCH_SUBDOMAINS
 
-    This attribute specifies a list of permitted subdomains that can be the 
+    This attribute specifies a list of permitted subdomains that can be the
     target of redirections. Only the subdomains included in this list will be
     authorized to receive redirects.
 
-    For enhanced security, configuring this setting will override the default 
-    setting that permits all subdomains of SERVER_NAME. This is based on the 
+    For enhanced security, configuring this setting will override the default
+    setting that permits all subdomains of SERVER_NAME. This is based on the
     assumption that you desire to have precise control over the host names that
     are permitted. It is essential that you provide a comprehensive list of all
     the subdomains you intend to allow access to.
