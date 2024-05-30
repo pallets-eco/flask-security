@@ -12,6 +12,8 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`956`) Add support for changing registered user's email (:py:data:`SECURITY_CHANGE_EMAIL`).
 - (:pr:`xxx`) Change default password hash to argon2 (was bcrypt). See below for details.
+- (:issue:`983`) Add new configuration for (:py:data:`REDIRECT_MATCH_SUBDOMAINS`) to allow for
+  more flexible redirect matching.
 
 Fixes
 +++++

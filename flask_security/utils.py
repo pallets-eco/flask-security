@@ -616,17 +616,37 @@ def validate_redirect_url(url: str) -> bool:
     url_base = urlsplit(request.host_url)
     if (url_next.netloc or url_next.scheme) and url_next.netloc != url_base.netloc:
         base_domain = current_app.config.get("SERVER_NAME")
-        if (
-            config_value("REDIRECT_ALLOW_SUBDOMAINS")
-            and base_domain
-            and (
-                url_next.netloc == base_domain
-                or url_next.netloc.endswith(f".{base_domain}")
-            )
-        ):
-            return True
-        else:
-            return False
+
+        if (config_value("REDIRECT_ALLOW_SUBDOMAINS")):
+            if (config_value("REDIRECT_MATCH_SUBDOMAINS")):
+
+                # This is a list of allowed sub domains, there are two
+                # possible ways to match the subdomain:
+                # 1. The subdomain is in the list of allowed subdomains (strict)
+                # 2. The subdomain starts with a . and the netloc ends with this (loose)
+
+                allowed_subdomains = config_value("REDIRECT_ALLOWED_SUBDOMAINS")
+
+                if (len(allowed_subdomains) > 0):
+                    if (url_next.netloc in allowed_subdomains):
+                        return True
+                    else:
+                        for subdomain in allowed_subdomains:
+                            if (subdomain.startswith(".") and
+                                    url_next.netloc.endswith(subdomain)):
+                                return True
+                        return False
+
+            if (
+                base_domain
+                and (
+                    url_next.netloc == base_domain
+                    or url_next.netloc.endswith(f".{base_domain}")
+                )
+            ):
+                return True
+            else:
+                return False
     return True
 
 

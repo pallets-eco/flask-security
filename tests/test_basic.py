@@ -171,6 +171,42 @@ def test_authenticate_with_invalid_subdomain_next(app, client, get_message):
     assert get_message("INVALID_REDIRECT") in response.data
 
 
+def test_authenticate_with_subdomain_fuzzy_match_next(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
+    app.config["SECURITY_REDIRECT_MATCH_SUBDOMAINS"] = ['.lp.com']
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://sub.lp.com", data=data)
+    assert response.status_code == 302
+
+
+def test_authenticate_with_subdomain_fuzzy_match_next_invalid(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
+    app.config["SECURITY_REDIRECT_MATCH_SUBDOMAINS"] = ['foo.lp.com']
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://sub.lp.net", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+
+
+def test_authenticate_with_subdomain_fuzzy_match_next_strict(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
+    app.config["SECURITY_REDIRECT_MATCH_SUBDOMAINS"] = ['sub.lp.com']
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://sub.lp.com", data=data)
+    assert response.status_code == 302
+
+
+def test_authenticate_with_subdomain_fuzzy_match_next_strict_invalid(app, client, get_message):
+    app.config["SERVER_NAME"] = "lp.com"
+    app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
+    app.config["SECURITY_REDIRECT_MATCH_SUBDOMAINS"] = ['foo.lp.com']
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://sub.lp.com", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+
+
 def test_authenticate_with_subdomain_next_default_config(app, client, get_message):
     app.config["SERVER_NAME"] = "lp.com"
     data = dict(email="matt@lp.com", password="password")
