@@ -620,49 +620,25 @@ def validate_redirect_url(url: str) -> bool:
         # Are we allowed to redirect to other hosts outside of ourself?
 
         if config_value("REDIRECT_ALLOW_SUBDOMAINS"):
+            # Capture any allowed subdomains
+            allowed_subdomains = []
+
             if config_value("REDIRECT_MATCH_SUBDOMAINS"):
-
-                # This is a list of allowed sub domains, there are two
-                # possible ways to match the subdomain:
-                # 1. The subdomain is in the list of allowed subdomains (strict)
-                # 2. The subdomain starts with a . and the netloc ends with this (loose)
-
                 allowed_subdomains = config_value("REDIRECT_MATCH_SUBDOMAINS")
 
-                # Safety check - do we have a list of allowed subdomains?
-
-                if len(allowed_subdomains) > 0:
-
-                    # First, let's check if we have a direct match to the list.
-
-                    if url_next.netloc in allowed_subdomains:
-                        return True
-
-                    # Now, let's check for subdomains that start with a dot.
-
-                    else:
-                        for subdomain in allowed_subdomains:
-
-                            # We found a subdomain that starts with a dot.
-                            # Let's check if the netloc ends with this subdomain.
-
-                            if subdomain.startswith(".") and url_next.netloc.endswith(
-                                subdomain
-                            ):
-
-                                # Gotcha! We found a match.
-
-                                return True
-
-                        # Default to False if we didn't find a match.
-
-                    return False
-
-            # Fall through to the original check if we don't have a
-            # list of allowed subdomains.
-
+            # If we have a list of allowed subdomains, check if the next
+            # URL is in the list
             if (
-                config_value("REDIRECT_ALLOW_SUBDOMAINS")
+                len(allowed_subdomains) > 0
+                and url_next.netloc in allowed_subdomains
+            ):
+                return True
+
+            # If we don't have a list of allowed subdomains, check if the
+            # next URL is the same as the base domain or a subdomain of the
+            # base domain. This is the original behavior.
+            if (
+                len(allowed_subdomains) == 0
                 and base_domain
                 and (
                     url_next.netloc == base_domain
