@@ -328,6 +328,14 @@ These configuration keys are used globally across all features.
     is not allowed. This is useful when you have multiple subdomains and you want to
     restrict the redirect to a specific set of subdomains.
 
+    For security reasons, if this setting is configured then the default behavior of
+    allowing all subdomains of SERVER_NAME is disabled. This setting assumes that you
+    wish to have detailed control over your allowed subdomains. If you do not wish this 
+    behavior, then also include an entry that matches your SERVER_NAME variable. I.E. 
+    if SERVER_NAME is 'example.com' then include '.example.com' in the list.
+
+    This setting requires that :py:data:`SECURITY_REDIRECT_ALLOW_SUBDOMAINS` is set to ``True``.
+
     Examples: ``['.example.com']`` will allow all subdomains of example.com to be redirected to.
     ``['auth.example.com']`` will only allow the auth.example.com subdomain to be redirected to.
 
