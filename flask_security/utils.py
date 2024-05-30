@@ -628,16 +628,9 @@ def validate_redirect_url(url: str) -> bool:
 
             # If we have a list of allowed subdomains, check if the next
             # URL is in the list
-            if (
-                len(allowed_subdomains) > 0
-                and url_next.netloc in allowed_subdomains
-            ):
+            if len(allowed_subdomains) > 0 and url_next.netloc in allowed_subdomains:
                 return True
-
-            # If we don't have a list of allowed subdomains, check if the
-            # next URL is the same as the base domain or a subdomain of the
-            # base domain. This is the original behavior.
-            if (
+            elif (
                 len(allowed_subdomains) == 0
                 and base_domain
                 and (
@@ -645,6 +638,9 @@ def validate_redirect_url(url: str) -> bool:
                     or url_next.netloc.endswith(f".{base_domain}")
                 )
             ):
+                # If we don't have a list of allowed subdomains, check if the
+                # next URL is the same as the base domain or a subdomain of the
+                # base domain. This is the original behavior.
                 return True
             else:
                 return False
