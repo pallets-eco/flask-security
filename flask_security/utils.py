@@ -627,7 +627,7 @@ def validate_redirect_url(url: str) -> bool:
                 # 1. The subdomain is in the list of allowed subdomains (strict)
                 # 2. The subdomain starts with a . and the netloc ends with this (loose)
 
-                allowed_subdomains = config_value("REDIRECT_ALLOW_SUBDOMAINS")
+                allowed_subdomains = config_value("REDIRECT_MATCH_SUBDOMAINS")
 
                 # Safety check - do we have a list of allowed subdomains?
 
