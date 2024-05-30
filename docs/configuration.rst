@@ -322,22 +322,19 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_REDIRECT_MATCH_SUBDOMAINS
 
-    Define which subdomains are allowed to be redirected to. This is a list of strings
-    that are matched against the subdomain of the redirect target. If the subdomain
-    matches, the redirect is allowed. If the subdomain is not in the list, the redirect
-    is not allowed. This is useful when you have multiple subdomains and you want to
-    restrict the redirect to a specific set of subdomains.
+    This attribute specifies a list of permitted subdomains that can be the 
+    target of redirections. Only the subdomains included in this list will be
+    authorized to receive redirects.
 
-    For security reasons, if this setting is configured then the default behavior of
-    allowing all subdomains of SERVER_NAME is disabled. This setting assumes that you
-    wish to have **explicit** control over your allowed subdomains. If you do not wish this
-    behavior, then also include an entry that matches your SERVER_NAME variable. I.E.
-    if SERVER_NAME is 'example.com' then include '.example.com' in the list.
+    For enhanced security, configuring this setting will override the default 
+    setting that permits all subdomains of SERVER_NAME. This is based on the 
+    assumption that you desire to have precise control over the host names that
+    are permitted. It is essential that you provide a comprehensive list of all
+    the subdomains you intend to allow access to.
 
     This setting requires that :py:data:`SECURITY_REDIRECT_ALLOW_SUBDOMAINS` is set to ``True``.
 
-    Examples: ``['.example.com']`` will allow all subdomains of example.com to be redirected to.
-    ``['auth.example.com']`` will only allow the auth.example.com subdomain to be redirected to.
+    Examples: ``['auth.example.com']`` will only allow the auth.example.com subdomain to be redirected to.
 
     Default: ``[]``.
 
