@@ -198,7 +198,9 @@ def test_authenticate_with_subdomain_fuzzy_match_next_strict(app, client, get_me
     assert response.status_code == 302
 
 
-def test_authenticate_with_subdomain_fuzzy_match_next_strict_invalid(app, client, get_message):
+def test_authenticate_with_subdomain_fuzzy_match_next_strict_invalid(
+    app, client, get_message
+):
     app.config["SERVER_NAME"] = "lp.com"
     app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
     app.config["SECURITY_REDIRECT_MATCH_SUBDOMAINS"] = ["foo.lp.com"]

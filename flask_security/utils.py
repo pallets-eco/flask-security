@@ -619,8 +619,8 @@ def validate_redirect_url(url: str) -> bool:
 
         # Are we allowed to redirect to other hosts outside of ourself?
 
-        if (config_value("REDIRECT_ALLOW_SUBDOMAINS")):
-            if (config_value("REDIRECT_MATCH_SUBDOMAINS")):
+        if config_value("REDIRECT_ALLOW_SUBDOMAINS"):
+            if config_value("REDIRECT_MATCH_SUBDOMAINS"):
 
                 # This is a list of allowed sub domains, there are two
                 # possible ways to match the subdomain:
@@ -631,11 +631,11 @@ def validate_redirect_url(url: str) -> bool:
 
                 # Safety check - do we have a list of allowed subdomains?
 
-                if (len(allowed_subdomains) > 0):
+                if len(allowed_subdomains) > 0:
 
                     # First, let's check if we have a direct match to the list.
 
-                    if (url_next.netloc in allowed_subdomains):
+                    if url_next.netloc in allowed_subdomains:
                         return True
 
                     # Now, let's check for subdomains that start with a dot.
@@ -646,8 +646,9 @@ def validate_redirect_url(url: str) -> bool:
                             # We found a subdomain that starts with a dot.
                             # Let's check if the netloc ends with this subdomain.
 
-                            if (subdomain.startswith(".") and
-                                    url_next.netloc.endswith(subdomain)):
+                            if subdomain.startswith(".") and url_next.netloc.endswith(
+                                subdomain
+                            ):
 
                                 # Gotcha! We found a match.
 

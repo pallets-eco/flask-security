@@ -330,8 +330,8 @@ These configuration keys are used globally across all features.
 
     For security reasons, if this setting is configured then the default behavior of
     allowing all subdomains of SERVER_NAME is disabled. This setting assumes that you
-    wish to have **explicit** control over your allowed subdomains. If you do not wish this 
-    behavior, then also include an entry that matches your SERVER_NAME variable. I.E. 
+    wish to have **explicit** control over your allowed subdomains. If you do not wish this
+    behavior, then also include an entry that matches your SERVER_NAME variable. I.E.
     if SERVER_NAME is 'example.com' then include '.example.com' in the list.
 
     This setting requires that :py:data:`SECURITY_REDIRECT_ALLOW_SUBDOMAINS` is set to ``True``.
