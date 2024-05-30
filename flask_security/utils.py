@@ -657,10 +657,12 @@ def validate_redirect_url(url: str) -> bool:
 
                     return False
 
-            # Fall through to the original check if we don't have a list of allowed subdomains.
+            # Fall through to the original check if we don't have a
+            # list of allowed subdomains.
 
             if (
-                base_domain
+                config_value("REDIRECT_ALLOW_SUBDOMAINS")
+                and base_domain
                 and (
                     url_next.netloc == base_domain
                     or url_next.netloc.endswith(f".{base_domain}")
@@ -669,6 +671,9 @@ def validate_redirect_url(url: str) -> bool:
                 return True
             else:
                 return False
+        else:
+            return False
+
     return True
 
 
