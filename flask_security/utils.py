@@ -19,7 +19,7 @@ import hashlib
 import hmac
 import time
 import typing as t
-from urllib.parse import parse_qsl, quote, urlsplit, urlunsplit, urlencode
+from urllib.parse import parse_qsl, quote, urlsplit, urlunsplit, urlencode, urlparse
 import urllib.request
 import urllib.error
 import warnings
@@ -617,8 +617,12 @@ def validate_redirect_url(url: str) -> bool:
     if (url_next.netloc or url_next.scheme) and url_next.netloc != url_base.netloc:
         base_domain = current_app.config.get("SERVER_NAME")
 
-        # Are we allowed to redirect to other hosts outside of ourself?
+        # Some Flask implementations may not have SERVER_NAME set
+        if not base_domain:
+            base_domain = url_base.netloc
+        tld = get_top_level_domain(base_domain)
 
+        # Are we allowed to redirect to other hosts outside of ourself?
         if config_value("REDIRECT_ALLOW_SUBDOMAINS"):
             # Capture any allowed subdomains
             allowed_subdomains = []
@@ -628,7 +632,11 @@ def validate_redirect_url(url: str) -> bool:
 
             # If we have a list of allowed subdomains, check if the next
             # URL is in the list
-            if len(allowed_subdomains) > 0 and url_next.netloc in allowed_subdomains:
+            if (
+                len(allowed_subdomains) > 0
+                and url_next.netloc in allowed_subdomains
+                and url_next.netloc.endswith(f".{tld}")
+            ):
                 return True
             elif (
                 len(allowed_subdomains) == 0
@@ -648,6 +656,16 @@ def validate_redirect_url(url: str) -> bool:
             return False
 
     return True
+
+
+def get_top_level_domain(url):
+    # Extract the hostname from the URL if it's not already a hostname
+    hostname = urlparse(url).hostname or url
+    # Split the hostname into parts
+    hostname_parts = hostname.split(".")
+    # The TLD is the last part
+    tld = hostname_parts[-1] if len(hostname_parts) > 1 else ""
+    return tld
 
 
 def get_post_action_redirect(
