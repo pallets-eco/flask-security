@@ -614,14 +614,16 @@ def validate_redirect_url(url: str) -> bool:
         return False
     url_next = urlsplit(url)
     url_base = urlsplit(request.host_url)
+
     if (url_next.netloc or url_next.scheme) and url_next.netloc != url_base.netloc:
         base_domain = current_app.config.get("SERVER_NAME")
 
         # Some Flask implementations may not have SERVER_NAME set
         if not base_domain:
-            base_domain = url_base.netloc
+            base_domain = request.host
         tld = get_top_level_domain(base_domain)
 
+        print(f"tld: {tld}")
         # Are we allowed to redirect to other hosts outside of ourself?
         if config_value("REDIRECT_ALLOW_SUBDOMAINS"):
             # Capture any allowed subdomains
@@ -661,10 +663,13 @@ def validate_redirect_url(url: str) -> bool:
 def get_top_level_domain(url):
     # Extract the hostname from the URL if it's not already a hostname
     hostname = urlparse(url).hostname or url
+    print(f"hostname: {hostname}")
     # Split the hostname into parts
     hostname_parts = hostname.split(".")
+    print(f"hostname_parts: {hostname_parts}")
     # The TLD is the last part
     tld = hostname_parts[-1] if len(hostname_parts) > 1 else ""
+    print(f"tld: {tld}")
     return tld
 
 
