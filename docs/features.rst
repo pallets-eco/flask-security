@@ -40,12 +40,19 @@ control (such as per-object), you can refer to the Flask-Principal `documentatio
 Password Hashing
 ----------------
 
-Password hashing is enabled with `passlib`_. Passwords are hashed with the
-`bcrypt`_ function by default but you can easily configure the hashing
-algorithm. You should **always use a hashing algorithm** in your production
-environment. Hash algorithms not listed in ``SECURITY_PASSWORD_SINGLE_HASH``
+Password hashing is implemented using `passlib`_. Passwords are hashed with the
+`argon2`_ function by default but you can easily configure other hashing
+algorithms.
+For any given hashing algorithm, consult its documentation on what
+options/values are recommended. For argon2, the `argon2_cffi`_ package
+keeps its default options up to date with `RFC9106`_, and should be suitable for most
+applications. The `OWASP Password Storage Cheat Sheet <owasp_pass_cheat>`_ also
+has a lot of useful suggestions.
+
+You should **always use a hashing algorithm** in your production
+environment. Hash algorithms not listed in :data:`SECURITY_PASSWORD_SINGLE_HASH`
 will be double hashed - first an HMAC will be computed, then the selected hash
-function will be used. In this case - you must provide a ``SECURITY_PASSWORD_SALT``.
+function will be used. In this case - you must provide a :data:`SECURITY_PASSWORD_SALT`.
 A good way to generate this is::
 
     secrets.SystemRandom().getrandbits(128)
@@ -98,6 +105,57 @@ expiry value (settable via the :data:`SECURITY_TOKEN_EXPIRE_TIMESTAMP` callable)
     While every Flask-Security endpoint will accept an authentication token header,
     there are some endpoints that require session information (e.g. a session cookie).
     Please read :ref:`freshness_topic` and :ref:`csrf_topic`
+
+User Registration
+-----------------
+If :ref:`configured<configuration:Registerable>`, Flask-Security provides a basic user registration view. This view is
+very simple and new users need only supply an email address and their password.
+This view can be overridden if your registration process requires more fields.
+User email is validated and normalized using the
+`email_validator <https://pypi.org/project/email-validator/>`_ package.
+
+The :py:data:`SECURITY_USERNAME_ENABLE` configuration option, when set to ``True``, will add
+support for the user to register a username in addition to an email. By default, the user will be
+able to authenticate with EITHER email or username - however that can be changed via the
+:py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
+
+Email Confirmation
+------------------
+If :ref:`configured<configuration:Confirmable>`, your application
+can require that new users confirm their email address prior to allowing them to authenticate.
+Flask-Security will send an email message to any new users with a confirmation
+link. Upon navigating to the confirmation link, the user's account will be set to
+'confirmed'. The user can then sign in usually the normal mechanisms.
+There is also view for resending a confirmation link to a given email
+if the user happens to try to use an expired token or has lost the previous
+email. Confirmation links can be configured to expire after a specified amount
+of time (default 5 days).
+
+Password Reset/Recovery
+-----------------------
+If :ref:`configured<configuration:Recoverable>`,
+password reset and recovery is available for when a user forgets their
+password. Flask-Security sends an email to the user with a link to a view which
+allows them to reset their password. Once the password is reset they are redirected to
+the login page where they need to authenticate using the new password.
+Password reset links can be configured to expire after a specified amount of time.
+
+As with password change - this will update the the user's ``fs_uniquifier`` attribute
+which will invalidate all existing sessions AND (by default) all authentication tokens.
+
+Password Change
+---------------
+If :ref:`configured<configuration:Changeable>` users can change their password. Unlike password
+recovery, this endpoint is used when the user is already authenticated. The result
+of a successful password change is not only a new password, but a new value for ``fs_uniquifier``.
+This has the effect is immediately invalidating all existing sessions. The change request
+itself effectively re-logs in the user so a new session is created. Note that since the user
+is effectively re-logged in, the same signals are sent as when the user normally authenticates.
+
+*NOTE*: The ``fs_uniquifier`` by default, controls both sessions and authenticated tokens.
+Thus changing the password also invalidates all authentication tokens. This may not be desirable
+behavior, so if the UserModel contains an attribute ``fs_token_uniquifier``, then that will be used
+when generating authentication tokens and so won't be affected by password changes.
 
 Two-factor Authentication
 ----------------------------------------
@@ -177,66 +235,12 @@ WebAuthn is a standardized protocol that connects authenticators (such as YubiKe
 with websites. If :ref:`configured<configuration:WebAuthn>`, Flask-Security supports using WebAuthn keys as either 'first' or 'secondary'
 authenticators. Please read :ref:`webauthn_topic` for more details.
 
-Email Confirmation
-------------------
-If :ref:`configured<configuration:Confirmable>`, your application
-can require that new users confirm their email address prior to allowing them to authenticate.
-Flask-Security will send an email message to any new users with a confirmation
-link. Upon navigating to the confirmation link, the user's account will be set to
-'confirmed'. The user can then sign in usually the normal mechanisms.
-There is also view for resending a confirmation link to a given email
-if the user happens to try to use an expired token or has lost the previous
-email. Confirmation links can be configured to expire after a specified amount
-of time (default 5 days).
-
-Password Reset/Recovery
------------------------
-If :ref:`configured<configuration:Recoverable>`,
-password reset and recovery is available for when a user forgets their
-password. Flask-Security sends an email to the user with a link to a view which
-allows them to reset their password. Once the password is reset they are redirected to
-the login page where they need to authenticate using the new password.
-Password reset links can be configured to expire after a specified amount of time.
-
-As with password change - this will update the the user's ``fs_uniquifier`` attribute
-which will invalidate all existing sessions AND (by default) all authentication tokens.
-
-
-User Registration
------------------
-If :ref:`configured<configuration:Registerable>`, Flask-Security provides a basic user registration view. This view is
-very simple and new users need only supply an email address and their password.
-This view can be overridden if your registration process requires more fields.
-User email is validated and normalized using the
-`email_validator <https://pypi.org/project/email-validator/>`_ package.
-
-The :py:data:`SECURITY_USERNAME_ENABLE` configuration option, when set to ``True``, will add
-support for the user to register a username in addition to an email. By default, the user will be
-able to authenticate with EITHER email or username - however that can be changed via the
-:py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
-
-Password Change
----------------
-If :ref:`configured<configuration:Changeable>` users can change their password. Unlike password
-recovery, this endpoint is used when the user is already authenticated. The result
-of a successful password change is not only a new password, but a new value for ``fs_uniquifier``.
-This has the effect is immediately invalidating all existing sessions. The change request
-itself effectively re-logs in the user so a new session is created. Note that since the user
-is effectively re-logged in, the same signals are sent as when the user normally authenticates.
-
-*NOTE*: The ``fs_uniquifier`` by default, controls both sessions and authenticated tokens.
-Thus changing the password also invalidates all authentication tokens. This may not be desirable
-behavior, so if the UserModel contains an attribute ``fs_token_uniquifier``, then that will be used
-when generating authentication tokens and so won't be affected by password changes.
-
 Email Change
 ------------
 If :ref:`configured<configuration:Change-Email>`, users can change the email they registered with. This will send a new confirmation email to the new email address.
 
-
 Login Tracking
 --------------
-
 Flask-Security can, if :ref:`configured<configuration:Trackable>`, keep track of basic login events and
 statistics. They include:
 
@@ -246,10 +250,8 @@ statistics. They include:
 * Current login IP address
 * Total login count
 
-
 JSON/Ajax Support
 -----------------
-
 Flask-Security supports JSON/Ajax requests where appropriate. Please
 look at :ref:`csrf_topic` for details on how to work with JSON and
 Single Page Applications. More specifically
@@ -275,7 +277,6 @@ Note: All registration requests done through JSON/Ajax utilize the ``confirm_reg
 
 Command Line Interface
 ----------------------
-
 Basic `Click`_ commands for managing users and roles are automatically
 registered. They can be completely disabled or their names can be changed.
 Run ``flask --help`` and look for users and roles.
@@ -314,6 +315,10 @@ in the `examples` directory.
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection
 .. _passlib: https://passlib.readthedocs.io/en/stable/
 .. _totp secret: https://passlib.readthedocs.io/en/stable/narr/totp-tutorial.html#overview
+.. _argon2: https://en.wikipedia.org/wiki/Argon2
+.. _argon2_cffi: https://pypi.org/project/argon2-cffi/
+.. _RFC9106: https://www.rfc-editor.org/rfc/rfc9106.html
+.. _owasp_pass_cheat: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 .. _bcrypt: https://en.wikipedia.org/wiki/Bcrypt
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/
 .. _Wikipedia: https://en.wikipedia.org/wiki/Multi-factor_authentication

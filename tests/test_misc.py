@@ -292,11 +292,11 @@ def test_change_hash_type(app, sqlalchemy_datastore):
         **{
             "SECURITY_PASSWORD_HASH": "plaintext",
             "SECURITY_PASSWORD_SALT": None,
-            "SECURITY_PASSWORD_SCHEMES": ["bcrypt", "plaintext"],
+            "SECURITY_PASSWORD_SCHEMES": ["argon2", "plaintext"],
         },
     )
 
-    app.config["SECURITY_PASSWORD_HASH"] = "bcrypt"
+    app.config["SECURITY_PASSWORD_HASH"] = "argon2"
     app.config["SECURITY_PASSWORD_SALT"] = "salty"
 
     app.security = Security(

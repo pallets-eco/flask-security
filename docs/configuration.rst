@@ -54,7 +54,9 @@ These configuration keys are used globally across all features.
     Default: ``None``.
 .. py:data:: SECURITY_FLASH_MESSAGES
 
-    Specifies whether or not to flash messages during security procedures.
+    Specifies whether or not to flash messages for actions certain endpoint perform.
+    Normally Flash-Security views will flash informational or error messages only when the operation
+    results in a redirect.
 
     Default: ``True``.
 .. py:data:: SECURITY_I18N_DOMAIN
@@ -78,10 +80,10 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_PASSWORD_HASH
 
     Specifies the password hash algorithm to use when hashing passwords.
-    Recommended values for production systems are ``bcrypt``, ``argon2``, ``sha512_crypt``, or
+    Recommended values for production systems are ``argon2``, ``bcrypt``, or
     ``pbkdf2_sha512``. Some algorithms require the installation  of a backend package (e.g. `bcrypt`_, `argon2`_).
 
-    Default: ``"bcrypt"``.
+    Default: ``"argon2"``.
 
 .. py:data:: SECURITY_PASSWORD_SCHEMES
 
@@ -132,9 +134,11 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS
 
-    Pass additional options to the various hashing methods. This is a
-    dict of the form ``{<scheme>__<option>: <value>, ..}``
-    e.g. {"argon2__rounds": 10}.
+    Pass additional options through ``passlib`` to the various hashing methods.
+    This is a dict of the form ``{<scheme>__<option>: <value>, ..}``
+    e.g. {"argon2__time_cost": 3}.
+
+    Default: ``{}``
 
     .. versionadded:: 3.3.1
 
@@ -385,7 +389,7 @@ These configuration keys are used globally across all features.
     Mapping functions take a single argument - ``identity`` from the form
     and should return ``None`` if the ``identity`` argument isn't in a format
     suitable for the attribute. If the ``identity`` argument format matches, it
-    should be returned, optionally having had some canonicalization performed.
+    should be returned, optionally having had some normalization performed.
     The returned result will be used to look up the identity in the UserDataStore
     using the column name specified in the key.
 
@@ -393,7 +397,7 @@ These configuration keys are used globally across all features.
     phone number normalization using the ``phonenumbers`` package.
 
     .. tip::
-        If your mapper performs any sort of canonicalization/normalization,
+        If your mapper performs any sort of normalization,
         make sure you apply the exact same transformation in your form validator
         when setting the field.
 
@@ -822,6 +826,13 @@ Registerable
     a username field added. This requires that your user model contain the
     field ``username``. It MUST be set as 'unique' and if you don't want
     to require a username, it should be set as 'nullable'.
+    The form validators will call :meth:`.UsernameUtil.validate`.
+
+    In addition, :data:`SECURITY_USER_IDENTITY_ATTRIBUTES` will be updated to include::
+
+        {"username": {"mapper": uia_username_mapper}, "case_insensitive": True}
+
+    See :meth:`flask_security.uia_username_mapper` for details.
 
     If you already have added a username field to your forms, don't set this
     option - the system will throw an exception at init_app time.
@@ -1408,14 +1419,14 @@ Unified Signin
     Removing it from here won't stop users from using the :data:`SECURITY_LOGIN_URL` endpoint
     (unless you replace the login endpoint using :py:data:`SECURITY_US_SIGNIN_REPLACES_LOGIN`).
 
-    This config variable defines which methods can be used to provide authentication data.
-    :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` controls what sorts of identities can be used.
+    This config variable defines which methods can be used to provide ``passcode`` data.
+    :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES` defines which user model fields can be used as ``identity``.
 
     Default: ``["password", "email", "authenticator", "sms"]`` - which are the only supported options.
 
 .. py:data:: SECURITY_US_MFA_REQUIRED
 
-    A list of ``US_ENABLED_METHODS`` that will require two-factor
+    A list of :data:`SECURITY_US_ENABLED_METHODS` that will require two-factor
     authentication. This is of course dependent on the settings of :py:data:`SECURITY_TWO_FACTOR`
     and :py:data:`SECURITY_TWO_FACTOR_REQUIRED`. Note that even with REQUIRED, only
     methods listed here will trigger a two-factor cycle.
@@ -1654,7 +1665,7 @@ WebAuthn
         - ``"secondary"`` - just keys registered as "secondary" are allowed
 
     If list is empty or ``None`` WebAuthn keys aren't allowed. This also means that the
-            :py:data:`SECURITY_WAN_VERIFY_URL` endpoint won't be registered.
+    :py:data:`SECURITY_WAN_VERIFY_URL` endpoint won't be registered.
 
     Default: ``["first", "secondary"]``
 

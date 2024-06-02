@@ -3,6 +3,9 @@
     ~~~~~~~~~~~~
 
     hashing tests
+
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+    :license: MIT, see LICENSE for more details.
 """
 
 import timeit
@@ -15,26 +18,33 @@ from passlib.hash import argon2, pbkdf2_sha256, django_pbkdf2_sha256, plaintext
 from flask_security.utils import hash_password, verify_password, get_hmac
 
 
-def test_verify_password_bcrypt_double_hash(app, sqlalchemy_datastore):
+def test_verify_password_double_hash(app, sqlalchemy_datastore):
     init_app_with_options(
         app,
         sqlalchemy_datastore,
         **{
-            "SECURITY_PASSWORD_HASH": "bcrypt",
+            "SECURITY_PASSWORD_HASH": "argon2",
+            "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {"argon2__rounds": 1},
             "SECURITY_PASSWORD_SALT": "salty",
             "SECURITY_PASSWORD_SINGLE_HASH": False,
         },
     )
     with app.app_context():
-        assert verify_password("pass", hash_password("pass"))
+        hashed_pwd = hash_password("pass")
+        assert verify_password("pass", hashed_pwd)
+        assert "t=1" in hashed_pwd
+
+        # Verify double hash
+        assert verify_password("pass", argon2.hash(get_hmac("pass")))
 
 
-def test_verify_password_bcrypt_single_hash(app, sqlalchemy_datastore):
+def test_verify_password_single_hash(app, sqlalchemy_datastore):
     init_app_with_options(
         app,
         sqlalchemy_datastore,
         **{
-            "SECURITY_PASSWORD_HASH": "bcrypt",
+            "SECURITY_PASSWORD_HASH": "argon2",
+            "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {"argon2__rounds": 1},
             "SECURITY_PASSWORD_SALT": None,
             "SECURITY_PASSWORD_SINGLE_HASH": True,
         },
@@ -48,11 +58,12 @@ def test_verify_password_single_hash_list(app, sqlalchemy_datastore):
         app,
         sqlalchemy_datastore,
         **{
-            "SECURITY_PASSWORD_HASH": "bcrypt",
+            "SECURITY_PASSWORD_HASH": "argon2",
+            "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {"argon2__rounds": 1},
             "SECURITY_PASSWORD_SALT": "salty",
             "SECURITY_PASSWORD_SINGLE_HASH": ["django_pbkdf2_sha256", "plaintext"],
             "SECURITY_PASSWORD_SCHEMES": [
-                "bcrypt",
+                "argon2",
                 "pbkdf2_sha256",
                 "django_pbkdf2_sha256",
                 "plaintext",
@@ -73,9 +84,10 @@ def test_verify_password_backward_compatibility(app, sqlalchemy_datastore):
         app,
         sqlalchemy_datastore,
         **{
-            "SECURITY_PASSWORD_HASH": "bcrypt",
+            "SECURITY_PASSWORD_HASH": "argon2",
+            "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {"argon2__rounds": 1},
             "SECURITY_PASSWORD_SINGLE_HASH": False,
-            "SECURITY_PASSWORD_SCHEMES": ["bcrypt", "plaintext"],
+            "SECURITY_PASSWORD_SCHEMES": ["argon2", "plaintext"],
         },
     )
     with app.app_context():
@@ -85,26 +97,15 @@ def test_verify_password_backward_compatibility(app, sqlalchemy_datastore):
         assert verify_password("pass", plaintext.hash("pass"))
 
 
-def test_verify_password_bcrypt_rounds_too_low(app, sqlalchemy_datastore):
-    with raises(ValueError) as exc_msg:
-        init_app_with_options(
-            app,
-            sqlalchemy_datastore,
-            **{
-                "SECURITY_PASSWORD_HASH": "bcrypt",
-                "SECURITY_PASSWORD_SALT": "salty",
-                "SECURITY_PASSWORD_HASH_OPTIONS": {"bcrypt": {"rounds": 3}},
-            },
-        )
-    assert all(s in str(exc_msg.value) for s in ["rounds", "too low"])
-
-
 def test_login_with_bcrypt_enabled(app, sqlalchemy_datastore):
     init_app_with_options(
         app,
         sqlalchemy_datastore,
         **{
             "SECURITY_PASSWORD_HASH": "bcrypt",
+            "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {
+                "bcrypt__rounds": 4,  # minimum so test is faster
+            },
             "SECURITY_PASSWORD_SALT": "salty",
             "SECURITY_PASSWORD_SINGLE_HASH": False,
         },
@@ -119,26 +120,11 @@ def test_missing_hash_salt_option(app, sqlalchemy_datastore):
             app,
             sqlalchemy_datastore,
             **{
-                "SECURITY_PASSWORD_HASH": "bcrypt",
+                "SECURITY_PASSWORD_HASH": "argon2",
                 "SECURITY_PASSWORD_SALT": None,
                 "SECURITY_PASSWORD_SINGLE_HASH": False,
             },
         )
-
-
-def test_verify_password_argon2(app, sqlalchemy_datastore):
-    init_app_with_options(
-        app,
-        sqlalchemy_datastore,
-        **{"SECURITY_PASSWORD_HASH": "argon2", "SECURITY_PASSWORD_SINGLE_HASH": False},
-    )
-    with app.app_context():
-        hashed_pwd = hash_password("pass")
-        assert verify_password("pass", hashed_pwd)
-        assert "t=10" in hashed_pwd
-
-        # Verify double hash
-        assert verify_password("pass", argon2.hash(get_hmac("pass")))
 
 
 def test_verify_password_argon2_opts(app, sqlalchemy_datastore):
@@ -148,7 +134,7 @@ def test_verify_password_argon2_opts(app, sqlalchemy_datastore):
         **{
             "SECURITY_PASSWORD_HASH": "argon2",
             "SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS": {
-                "argon2__rounds": 4,
+                "argon2__rounds": 1,
                 "argon2__salt_size": 16,
                 "argon2__hash_len": 16,
             },
@@ -156,7 +142,7 @@ def test_verify_password_argon2_opts(app, sqlalchemy_datastore):
     )
     with app.app_context():
         hashed_pwd = hash_password("pass")
-        assert "t=4" in hashed_pwd
+        assert "t=1" in hashed_pwd
         assert verify_password("pass", hashed_pwd)
 
 
