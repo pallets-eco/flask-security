@@ -107,9 +107,9 @@ from .utils import (
     get_post_verify_redirect,
     get_request_attr,
     get_url,
+    handle_already_auth,
     hash_password,
     is_user_authenticated,
-    json_error_response,
     localize_callback,
     login_user,
     logout_user,
@@ -155,34 +155,13 @@ def _ctx(endpoint):
 
 @unauth_csrf()
 def login() -> "ResponseValue":
-    """View function for login view
-
-    Allow already authenticated users. For GET this is useful for
-    single-page-applications on refresh - session still active but need to
-    access user info and csrf-token.
-    For POST - redirects to POST_LOGIN_VIEW (forms) or returns 400 (json).
-    """
+    """View function for login view"""
     form = t.cast(LoginForm, build_form_from_request("login_form"))
 
     if is_user_authenticated(current_user):
-        # Just redirect current_user to POST_LOGIN_VIEW.
-        # While its tempting to try to logout the current user and login the
-        # new requested user - that simply doesn't work with CSRF.
-
-        # This does NOT use get_post_login_redirect() so that it doesn't look at
-        # 'next' - which can cause infinite redirect loops
-        # (see test_common::test_authenticated_loop)
-        if _security._want_json(request):
-            if request.method == "POST":
-                payload = json_error_response(
-                    errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
-                )
-                return _security._render_json(payload, 400, None, None)
-            else:
-                form.user = current_user
-                return base_render_json(form)
-        else:
-            return redirect(get_url(cv("POST_LOGIN_VIEW")))
+        return handle_already_auth(
+            form, payload={"identity_attributes": get_identity_attributes()}
+        )
 
     # Clean out any potential old session info - in case of previous
     # aborted 2FA attempt.

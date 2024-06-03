@@ -79,9 +79,9 @@ from .utils import (
     get_message,
     get_url,
     get_within_delta,
+    handle_already_auth,
     is_user_authenticated,
     localize_callback,
-    json_error_response,
     login_user,
     lookup_identity,
     propagate_next,
@@ -539,33 +539,20 @@ def us_signin() -> ResponseValue:
     Unified sign in view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
     and a passcode (password or OTP).
-
-    Allow already authenticated users. For GET this is useful for
-    single-page-applications on refresh - session still active but need to
-    access user info and csrf-token.
-    For POST - redirects to POST_LOGIN_VIEW (forms) or returns 400 (json).
     """
-
-    if is_user_authenticated(current_user) and request.method == "POST":
-        # Just redirect current_user to POST_LOGIN_VIEW (or next).
-        # While its tempting to try to logout the current user and login the
-        # new requested user - that simply doesn't work with CSRF.
-
-        # While this is close to anonymous_user_required - it differs in that
-        # it uses get_post_login_redirect which correctly handles 'next'.
-        # TODO: consider changing anonymous_user_required to also call
-        # get_post_login_redirect - not sure why it never has?
-        if _security._want_json(request):
-            payload = json_error_response(
-                errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
-            )
-            return _security._render_json(payload, 400, None, None)
-        else:
-            return redirect(get_post_login_redirect())
-
     form = t.cast(UnifiedSigninForm, build_form_from_request("us_signin_form"))
     form.submit.data = True
     form.submit_send_code.data = False
+    code_methods = _compute_code_methods()
+    payload = {
+        "available_methods": cv("US_ENABLED_METHODS"),
+        "code_methods": code_methods,
+        "identity_attributes": get_identity_attributes(),
+    }
+
+    if is_user_authenticated(current_user):
+        return handle_already_auth(form, payload=payload)
+
     # Clean out any potential old session info - in case of previous
     # aborted 2FA attempt.
     tf_clean_session()
@@ -604,19 +591,8 @@ def us_signin() -> ResponseValue:
         # base_render_json always sending the csrf_token
         session["fs_cc"] = "set"
 
-    code_methods = _compute_code_methods()
     if _security._want_json(request):
-        payload = {
-            "available_methods": cv("US_ENABLED_METHODS"),
-            "code_methods": code_methods,
-            "identity_attributes": get_identity_attributes(),
-        }
         return base_render_json(form, include_user=False, additional=payload)
-
-    if is_user_authenticated(current_user):
-        # Basically a no-op if authenticated - just perform the same
-        # post-login redirect as if user just logged in.
-        return redirect(get_post_login_redirect())
 
     # On error - wipe code
     form.passcode.data = None

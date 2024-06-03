@@ -30,6 +30,7 @@ from flask import (
     current_app,
     flash,
     g,
+    redirect,
     request,
     render_template,
     session,
@@ -1345,3 +1346,31 @@ def pwned(password: str) -> int:
 
     entries = dict(map(convert_password_tuple, raw.upper().split("\r\n")))
     return entries.get(sha1[5:].upper(), 0)
+
+
+def handle_already_auth(form, payload=None):
+    """
+    Allow already authenticated users. For GET this is useful for
+    single-page-applications on refresh - session still active but need to
+    access user info and csrf-token.
+    For GET with forms - redirect to POST_LOGIN_VIEW.
+    For POST - redirects to POST_LOGIN_VIEW (forms) or returns 400 (json).
+
+    This does NOT use get_post_login_redirect() so that it doesn't look at
+    'next' - which can cause infinite redirect loops
+    (see test_basic::test_authenticated_loop)
+
+    While it's tempting to try to logout the current user and login the
+    new requested user - that simply doesn't work with CSRF.
+    """
+    if _security._want_json(request):
+        if request.method == "POST":
+            payload = json_error_response(
+                errors=get_message("ANONYMOUS_USER_REQUIRED")[0]
+            )
+            return _security._render_json(payload, 400, None, None)
+        else:
+            form.user = current_user
+            return base_render_json(form, additional=payload)
+    else:
+        return redirect(get_url(config_value("POST_LOGIN_VIEW")))

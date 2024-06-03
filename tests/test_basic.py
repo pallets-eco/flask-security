@@ -199,6 +199,16 @@ def test_get_already_authenticated(client):
     response = client.get("/login", follow_redirects=True)
     assert b"Post Login" in response.data
 
+    # should still get extra goodies
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.get("/login", headers=headers)
+    assert response.status_code == 200
+
+    jresponse = response.json["response"]
+    assert all(a in jresponse for a in ["identity_attributes"])
+    assert "authentication_token" not in jresponse["user"]
+    assert all(a in jresponse["user"] for a in ["email", "last_update"])
+
 
 @pytest.mark.settings(post_login_view="/post_login")
 def test_get_already_authenticated_next(client):

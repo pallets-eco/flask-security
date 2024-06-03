@@ -31,8 +31,9 @@ paths:
             Login form or user information. The JSON response will always
             carry the csrf_token information.
             If SECURITY_CSRF_COOKIE_NAME is set then a cookie with the csrf token will be set.
-            If the caller is logged in, then
-            additional information is returned. This can be very useful for single-page applications where during a force refresh, all state is lost.
+            If the caller is already authenticated, then
+            additional information is returned for JSON requests.
+            This can be very useful for single-page applications where during a force refresh, all state is lost.
             By performing this GET, the session cookie will authenticate the user and the response will contain user information.
           content:
             text/html:
@@ -43,7 +44,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BaseJsonResponse'
+                  - $ref: '#/components/schemas/DefaultJsonResponse'
                   - type: object
                     properties:
                       response:
@@ -102,8 +103,8 @@ paths:
                 example: render_template(SECURITY_LOGIN_USER_TEMPLATE) with error values
         302:
           description: >
-            If the caller already authenticated, the form contents is ignored and a
-            redirect is done: redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW).
+            If the caller is already authenticated, the form contents is ignored and a
+            redirect is done: redirect(SECURITY_POST_LOGIN_VIEW) (note that 'next' is ignored).
 
             If the caller is NOT already authenticated, and the form contents are
             validated the caller will be redirected to:
@@ -734,7 +735,13 @@ paths:
       summary: GET Unified Sign In form
       responses:
         200:
-          description: Sign in form
+          description: >
+            Sign in form
+            If SECURITY_CSRF_COOKIE_NAME is set then a cookie with the csrf token will be set.
+            If the caller is already authenticated, then
+            additional information is returned for JSON requests.
+            This can be very useful for single-page applications where during a force refresh, all state is lost.
+            By performing this GET, the session cookie will authenticate the user and the response will contain user information.
           content:
             text/html:
               schema:
@@ -743,17 +750,19 @@ paths:
                 example: render_template(SECURITY_US_SIGNIN_TEMPLATE)
             application/json:
               schema:
-                type: object
-                properties:
-                  available_methods:
-                    type: string
-                    description: Config setting SECURITY_US_ENABLED_METHODS
-                  code_methods:
-                    type: string
-                    description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
-                  identity_attributes:
-                    type: string
-                    description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
+                allOf:
+                  - $ref: '#/components/schemas/DefaultJsonResponse'
+                  - type: object
+                    properties:
+                      available_methods:
+                        type: string
+                        description: Config setting SECURITY_US_ENABLED_METHODS
+                      code_methods:
+                        type: string
+                        description: All SECURITY_US_ENABLED_METHODS that require a code to be generated and sent.
+                      identity_attributes:
+                        type: string
+                        description: Configuration setting SECURITY_USER_IDENTITY_ATTRIBUTES
     post:
       summary: Unified Sign In
       parameters:
@@ -786,8 +795,8 @@ paths:
                 example: render_template(SECURITY_US_SIGNIN_TEMPLATE) with error values
         302:
           description: >
-            If the caller already authenticated, the form contents is ignored and a
-            redirect is done: redirect(next) or redirect(SECURITY_POST_LOGIN_VIEW).
+            If the caller already authenticated, the form contents are ignored and a
+            redirect is done: redirect(SECURITY_POST_LOGIN_VIEW) (note that 'next' is ignored).
 
             If the caller is NOT already authenticated, and the form contents are
             validated the caller will be redirected to:
