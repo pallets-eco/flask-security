@@ -11,12 +11,18 @@ Released TBD
 Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`956`) Add support for changing registered user's email (:py:data:`SECURITY_CHANGE_EMAIL`).
-- (:pr:`xxx`) Change default password hash to argon2 (was bcrypt). See below for details.
+- (:issue:`944`) Change default password hash to argon2 (was bcrypt). See below for details.
 
 Fixes
 +++++
 - (:pr:`972`) Set :py:data:`SECURITY_CSRF_COOKIE` at beginning (GET /login) of authentication
   ritual - just as we return the CSRF token. (thanks @e-goto)
+- (:issue:`973`) login and unified sign in should handle GET for authenticated user consistently
+
+Docs and Chores
++++++++++++++++
+- (:pr:`979`) Update Russian translations (ademaro)
+- (:pr:`981` and :pr:`956`) Improve docs
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -151,7 +157,7 @@ Backwards Compatibility Concerns
   Flask-Security now changes any `None` key to `""`.
 - The default unauthorized handler behavior has changed slightly and is now documented. The default
   (:data:`SECURITY_UNAUTHORIZED_VIEW` == ``None``) has not changed (a default HTTP 403 response).
-  The precise behavior when :data:`SECURITY_UNAUTHORIZED_VIEW` was set was never documented.
+  The precise behavior when :data:`SECURITY_UNAUTHORIZED_VIEW` is set was never documented.
   The important change is that Flask-Security no longer ever looks at the request.referrer header and
   will never redirect to it. If an application needs that, it can provide a callable that can return
   that or any other header.

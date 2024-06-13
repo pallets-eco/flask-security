@@ -4,7 +4,7 @@
 
     Unified signin tests
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
 """
@@ -558,20 +558,25 @@ def test_admin_setup_reset(app, client_nc, get_message):
 
 
 @pytest.mark.settings(post_login_view="/post_login")
-def test_get_already_authenticated(client):
+def test_get_already_authenticated(app, client):
     response = authenticate(client, follow_redirects=True)
     assert b"Welcome matt@lp.com" in response.data
-    response = client.get("/us-signin", follow_redirects=True)
+    # This should ignore next
+    response = client.get("/us-signin?next=/page1", follow_redirects=True)
     assert b"Post Login" in response.data
 
+    # should still get extra goodies
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.get("/us-signin", headers=headers)
+    assert response.status_code == 200
 
-@pytest.mark.settings(post_login_view="/post_login")
-def test_get_already_authenticated_next(client):
-    response = authenticate(client, follow_redirects=True)
-    assert b"Welcome matt@lp.com" in response.data
-    # This should override post_login_view
-    response = client.get("/us-signin?next=/page1", follow_redirects=True)
-    assert b"Page 1" in response.data
+    jresponse = response.json["response"]
+    assert all(
+        a in jresponse
+        for a in ["code_methods", "identity_attributes", "available_methods"]
+    )
+    assert "authentication_token" not in jresponse["user"]
+    assert all(a in jresponse["user"] for a in ["email", "last_update"])
 
 
 @pytest.mark.settings(post_login_view="/post_login")
@@ -581,12 +586,6 @@ def test_post_already_authenticated(client, get_message):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/us-signin", data=data, follow_redirects=True)
     assert b"Post Login" in response.data
-    response = client.post("/us-signin?next=/page1", data=data, follow_redirects=True)
-    assert b"Page 1" in response.data
-    # should work in form as well
-    ndata = dict(email="matt@lp.com", password="password", next="/page1")
-    response = client.post("/us-signin", data=ndata, follow_redirects=True)
-    assert b"Page 1" in response.data
 
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.post("/us-signin", json=data, headers=headers)
