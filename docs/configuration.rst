@@ -537,7 +537,9 @@ These are used by the Two-Factor and Unified Signin features.
         - :py:data:`SECURITY_US_SETUP_URL`
         - :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
         - :py:data:`SECURITY_WAN_REGISTER_URL`
+        - :py:data:`SECURITY_WAN_DELETE_URL`
         - :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
+        - :py:data:`SECURITY_CHANGE_EMAIL_URL`
 
     Setting this to a negative number will disable any freshness checking and
     the endpoints:
@@ -552,9 +554,8 @@ These are used by the Two-Factor and Unified Signin features.
     Please see :meth:`flask_security.check_and_update_authn_fresh` for details.
 
     .. note::
-        This stores freshness information in the session - which must be presented
-        (usually via a Cookie) to the above endpoints. To disable this, set it
-        to ``timedelta(minutes=-1)``
+        The timestamp of when the caller/user last successfully authenticated is
+        stored in the session as well as authentication token.
 
     Default: timedelta(hours=24)
 
@@ -563,13 +564,11 @@ These are used by the Two-Factor and Unified Signin features.
 .. py:data:: SECURITY_FRESHNESS_GRACE_PERIOD
 
     A timedelta that provides a grace period when altering sensitive
-    information.
-    This is used to protect the endpoints:
+    information. This ensures that multi-step operations don't get denied
+    because the session/token happens to expire mid-step.
 
-        - :py:data:`SECURITY_US_SETUP_URL`
-        - :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
-        - :py:data:`SECURITY_WAN_REGISTER_URL`
-        - :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
+    Note that this is not implemented for freshness information carried in the
+    auth token.
 
     N.B. To avoid strange behavior, be sure to set the grace period less than
     the freshness period.
@@ -578,6 +577,18 @@ These are used by the Two-Factor and Unified Signin features.
     Default: timedelta(hours=1)
 
     .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_FRESHNESS_ALLOW_AUTH_TOKEN
+
+    Controls whether the freshness data set in the auth token can be used to
+    satisfy freshness checks. Some applications might want to force freshness
+    protected endpoints to always use browser based access with sessions - they
+    should set this to ``False``.
+
+    Default: ``True``
+
+
+    .. versionadded:: 5.5.0
 
 Core - Compatibility
 ---------------------
@@ -1672,8 +1683,8 @@ WebAuthn
 
 Additional relevant configuration variables:
 
-    * :py:data:`SECURITY_FRESHNESS` - Used to protect /us-setup.
-    * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /us-setup.
+    * :py:data:`SECURITY_FRESHNESS` - Used to protect /wan-register and /wan-delete.
+    * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /wan-register and /wan-delete.
 
 Recovery Codes
 --------------

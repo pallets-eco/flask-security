@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import re
+import time
 
 from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
@@ -171,6 +172,22 @@ def reset_fresh(client, within):
         sess["fs_paa"] = old_paa
         sess.pop("fs_gexp", None)
     return old_paa
+
+
+def reset_fresh_auth_token(app, within, email="matt@lp.com"):
+    # Assumes client authenticated.
+    # Returns a new auth token that will force the NEXT request,
+    # if protected with a freshness check to require a fresh authentication
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email=email)
+        tdata = dict(ver=str(5))
+        if hasattr(user, "fs_token_uniquifier"):
+            tdata["uid"] = str(user.fs_token_uniquifier)
+        else:
+            tdata["uid"] = str(user.fs_uniquifier)
+        tdata["fs_paa"] = time.time() - within.total_seconds() - 100
+        tdata["exp"] = int(app.config.get("SECURITY_TOKEN_EXPIRE_TIMESTAMP")(user))
+        return app.security.remember_token_serializer.dumps(tdata)
 
 
 def get_form_action(response, ordinal=0):

@@ -1,5 +1,5 @@
 """
-Copyright 2020-2022 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2020-2024 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 A simple example of server and client utilizing unified sign in and other
@@ -13,7 +13,6 @@ This example is designed for a JSON and session cookie based client.
 
 """
 
-import datetime
 import os
 
 from flask import Flask
@@ -75,6 +74,8 @@ def create_app():
     # We aren't interested in form-based APIs - so no need for flashing.
     app.config["SECURITY_FLASH_MESSAGES"] = False
 
+    app.config["SECURITY_AUTO_LOGIN_AFTER_CONFIRM"] = True
+
     # Allow signing in with a phone number or email
     app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
         {"email": {"mapper": uia_email_mapper, "case_insensitive": True}},
@@ -107,12 +108,6 @@ def create_app():
     # have session and remember cookie be samesite (flask/flask_login)
     app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
     app.config["SESSION_COOKIE_SAMESITE"] = "strict"
-
-    # This means the first 'fresh-required' endpoint after login will always require
-    # re-verification - but after that the grace period will kick in.
-    # This isn't likely something a normal app would need/want to do.
-    app.config["SECURITY_FRESHNESS"] = datetime.timedelta(minutes=0)
-    app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = datetime.timedelta(minutes=2)
 
     # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
     # underlying engine. This option makes sure that DB connections from the pool

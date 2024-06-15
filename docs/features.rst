@@ -77,7 +77,8 @@ Token Authentication
 --------------------
 
 Token based authentication can be used by retrieving the user auth token from an
-authentication endpoint (e.g. ``/login``, ``/us-signin``, ``/wan-signin``).
+authentication endpoint (e.g. ``/login``, ``/us-signin``, ``/wan-signin``, ``/verify``,
+``/us-verify``, ``/wan-verify``).
 Perform an HTTP POST with a query param of ``include_auth_token`` and the authentication details
 as JSON data.
 A successful call will return the authentication token. This token can be used in subsequent
@@ -100,6 +101,10 @@ at first use if null.
 Authentication tokens have 2 options for specifying expiry time :data:`SECURITY_TOKEN_MAX_AGE`
 is applied to ALL authentication tokens. Each authentication token can itself have an embedded
 expiry value (settable via the :data:`SECURITY_TOKEN_EXPIRE_TIMESTAMP` callable).
+
+Authentication tokens also convey freshness by recording the time the token was generated.
+This is used for endpoints protected with :func:`.auth_required` with a ``within``
+value set.
 
 .. note::
     While every Flask-Security endpoint will accept an authentication token header,

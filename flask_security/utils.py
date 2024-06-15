@@ -269,21 +269,21 @@ def check_and_update_authn_fresh(
                   will set a grace period for which freshness won't be checked.
                   The intent here is that the caller shouldn't get part-way though
                   a set of operations and suddenly be required to authenticate again.
+                  This is not supported for authentication tokens.
     :param method: Optional - if set and == "basic" then will always return True.
                   (since basic-auth sends username/password on every request)
 
     If within.total_seconds() is negative, will always return True (always 'fresh').
     This effectively just disables this entire mechanism.
 
+    within.total_seconds() == 0 results in undefined behavior.
+
     If "fs_gexp" is in the session and the current timestamp is less than that,
     return True and extend grace time (i.e. set fs_gexp to current time + grace).
 
-    If not within the grace period, and within.total_seconds() is 0,
-    return False (not fresh).
-
-    Be aware that for this to work, sessions and therefore session cookies
-    must be functioning and being sent as part of the request. If the required
-    state isn't in the session cookie then return False (not 'fresh').
+    Be aware that for this to work, state is required to be sent from the client.
+    Flask security adds this state to the session (cookie) and the auth token.
+    Without this state, 'False' is always returned - (not fresh).
 
     .. warning::
         Be sure the caller is already authenticated PRIOR to calling this method.
@@ -292,6 +292,10 @@ def check_and_update_authn_fresh(
 
     .. versionchanged:: 4.0.0
         Added `method` parameter.
+
+    .. versionchanged:: 5.5.0
+        Grab 'Primary Authenticated At' from  request_attrs
+        which is set from either session or auth token
     """
 
     if method == "basic":
@@ -301,8 +305,8 @@ def check_and_update_authn_fresh(
         # this means 'always fresh'
         return True
 
-    if "fs_paa" not in session:
-        # No session, you can't play.
+    if not (paa := get_request_attr("fs_paa")):
+        # No recorded primary authenticated at time, you can't play.
         return False
 
     now = naive_utcnow()
@@ -315,12 +319,7 @@ def check_and_update_authn_fresh(
             session["fs_gexp"] = grace_ts
             return True
 
-    # Special case 0 - return False always, but set grace period.
-    if within.total_seconds() == 0:
-        session["fs_gexp"] = grace_ts
-        return False
-
-    authn_time = naive_utcfromtimestamp(session["fs_paa"])
+    authn_time = naive_utcfromtimestamp(paa)
     # allow for some time drift where it's possible authn_time is in the future
     # but let's be cautious and not allow arbitrary future times
     delta = now - authn_time
@@ -484,7 +483,7 @@ def parse_auth_token(auth_token: str) -> dict[str, t.Any]:
     # Version 5 and up are already a dict (with a version #)
     if isinstance(raw_data, dict):
         # new format - starting at ver=5
-        if not all(k in raw_data for k in ["ver", "uid", "exp", "sid"]):
+        if not all(k in raw_data for k in ["ver", "uid", "exp"]):
             raise ValueError("Token missing keys")
         tdata = raw_data
         if ts := tdata.get("exp"):

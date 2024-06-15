@@ -1079,6 +1079,24 @@ def test_authn_freshness_grace(app, client, get_message):
 
 
 def test_authn_freshness_nc(app, client_nc, get_message):
+    # By default, auth token carries the fs_paa time.
+    @auth_required(within=30)
+    def myview():
+        return Response(status=200)
+
+    app.add_url_rule("/myview", view_func=myview, methods=["GET"])
+
+    response = json_authenticate(client_nc)
+    token = response.json["response"]["user"]["authentication_token"]
+    h = {"Authentication-Token": token}
+
+    # This should fail - should be a redirect
+    response = client_nc.get("/myview", headers=h, follow_redirects=False)
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(freshness_allow_auth_token=False)
+def test_authn_freshness_nc_no(app, client_nc, get_message):
     # If don't send session cookie - then freshness always fails
     @auth_required(within=30)
     def myview():

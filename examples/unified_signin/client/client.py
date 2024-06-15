@@ -1,5 +1,5 @@
 """
-Copyright 2020-2021 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2020-2024 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 This relies on session/session cookie for continued authentication.
@@ -83,6 +83,9 @@ def register(server_url, session, email, password):
 def ussetup(server_url, session, password, phone):
     # unified sign in - setup sms with a phone number
     # Use the backdoor to grab verification SMS.
+
+    # reset freshness to show how that would work
+    resp = session.get(f"{server_url}/api/resetfresh")
 
     csrf_token = session.cookies["XSRF-TOKEN"]
     resp = session.post(
