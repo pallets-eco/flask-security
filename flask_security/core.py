@@ -16,10 +16,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 import importlib
+import time
 import typing as t
 import warnings
 
-from flask import current_app, g
+from flask import current_app, g, session
 from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
@@ -292,6 +293,7 @@ _default_config: dict[str, t.Any] = {
     "PHONE_REGION_DEFAULT": "US",
     "FRESHNESS": timedelta(hours=24),
     "FRESHNESS_GRACE_PERIOD": timedelta(hours=1),
+    "FRESHNESS_ALLOW_AUTH_TOKEN": True,
     "API_ENABLED_METHODS": ["session", "token"],
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
@@ -674,6 +676,7 @@ def _user_loader(user_id):
     user = _security.datastore.find_user(fs_uniquifier=str(user_id))
     if user and user.active:
         set_request_attr("fs_authn_via", "session")
+        set_request_attr("fs_paa", session.get("fs_paa", 0))
         return user
     return None
 
@@ -707,6 +710,8 @@ def _request_loader(request):
 
     if user and user.active and user.verify_auth_token(tdata):
         set_request_attr("fs_authn_via", "token")
+        if cv("FRESHNESS_ALLOW_AUTH_TOKEN"):
+            set_request_attr("fs_paa", tdata.get("fs_paa", 0))
         return user
 
     return None
@@ -849,8 +854,12 @@ class UserMixin(BaseUserMixin):
 
         :raises ValueError: If ``fs_token_uniquifier`` is part of model but not set.
 
-        Optionally use a separate uniquifier so that changing password doesn't
-        invalidate auth tokens.
+        Uses ``fs_uniquifier`` or ``fs_token_uniquifier`` (if in the UserModel)
+        to identify this user. If ``fs_token_uniquifier`` is used then
+        changing password doesn't invalidate auth tokens.
+
+        Calls :meth:`.UserMixin.augment_auth_token` which applications can override
+        to add any additional information.
 
         The returned value is securely signed using the ``remember_token_serializer``
 
@@ -860,6 +869,9 @@ class UserMixin(BaseUserMixin):
         .. versionchanged:: 5.4.0
             New format - a dict with a version string. Add a token-based expiry
             option as well as a session id.
+        .. versionchanged:: 5.5.0
+            Remove session id (never set or used); added fs_paa (last authentication
+            timestamp)
         """
 
         tdata: dict[str, t.Any] = dict(ver=str(5))
@@ -869,7 +881,9 @@ class UserMixin(BaseUserMixin):
             tdata["uid"] = str(self.fs_token_uniquifier)
         else:
             tdata["uid"] = str(self.fs_uniquifier)
-        tdata["sid"] = 0  # session id
+        # Set the primary authenticated at variable. This is equivalent to
+        # what we set in the session.
+        tdata["fs_paa"] = time.time()  # equivalent of session["fs_paa"]
         tdata["exp"] = int(cv("TOKEN_EXPIRE_TIMESTAMP")(self))  # if >0 then shorter of
         # :data:SECURITY_MAX_AGE and this.
 
@@ -881,7 +895,8 @@ class UserMixin(BaseUserMixin):
 
     def augment_auth_token(self, tdata: dict[str, t.Any]) -> None:
         """Override this to add/modify parts of the auth token.
-        Additions to the dict can be made and verified in verify_auth_token()
+        Additions to the dict can be made here and verified in
+        :meth:`.UserMixin.verify_auth_token`
 
         .. versionadded:: 5.4.0
         """
@@ -1032,7 +1047,7 @@ class WebAuthnMixin:
         """
         Return the filter needed by find_user() to get the user
         associated with this webauthn credential.
-        Note that this probably has to be overridden using mongoengine.
+        Note that this probably has to be overridden when using mongoengine.
 
         .. versionadded:: 5.0.0
         """

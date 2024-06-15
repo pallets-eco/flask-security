@@ -18,6 +18,7 @@ Fixes
 - (:pr:`972`) Set :py:data:`SECURITY_CSRF_COOKIE` at beginning (GET /login) of authentication
   ritual - just as we return the CSRF token. (thanks @e-goto)
 - (:issue:`973`) login and unified sign in should handle GET for authenticated user consistently
+- (:pr:`990`) Add freshness capability to auth tokens (enables /us-setup to function w/ just auth tokens)
 
 Docs and Chores
 +++++++++++++++

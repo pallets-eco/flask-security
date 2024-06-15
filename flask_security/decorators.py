@@ -332,9 +332,7 @@ def auth_required(
         timedelta.total_seconds() is used for the calculations:
 
             - If > 0, then the caller must have authenticated within the time specified
-              (as measured using the session cookie).
-            - If 0 and not within the grace period (see below) the caller will
-              always be redirected to re-authenticate.
+              (as measured using the session cookie or authentication token).
             - If < 0 (the default) no freshness check is performed.
 
         Note that Basic Auth, by definition, is always 'fresh' and will never result in
@@ -422,8 +420,7 @@ def auth_required(
             for method, mechanism in mechanisms:
                 if mechanism and mechanism():
                     # successfully authenticated. Basic auth is by definition 'fresh'.
-                    # Note that using token auth is ok - but caller still has to pass
-                    # in a session cookie if freshness checking is required.
+                    # If 'within' is set - check for freshness of authentication.
                     if not check_and_update_authn_fresh(within, grace, method):
                         return _security._reauthn_handler(within, grace)
                     if eresponse := handle_csrf(method, _security._want_json(request)):

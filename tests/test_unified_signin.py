@@ -33,6 +33,7 @@ from tests.test_utils import (
     is_authenticated,
     logout,
     reset_fresh,
+    reset_fresh_auth_token,
     setup_tf_sms,
 )
 from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
@@ -871,9 +872,11 @@ def test_setup_json(app, client_nc, get_message):
     user_identity_attributes=UIA_EMAIL_PHONE,
 )
 def test_setup_json_no_session(app, client_nc, get_message):
-    # Test that with normal config freshness is required so must have session.
+    # Test that with normal config freshness is required and we can use auth_token
+    # for that
     set_email(app)
-    token = us_authenticate(client_nc)
+    us_authenticate(client_nc)
+    token = reset_fresh_auth_token(app, app.config["SECURITY_FRESHNESS"])
     headers = {
         "Authentication-Token": token,
         "Accept": "application/json",
@@ -883,6 +886,26 @@ def test_setup_json_no_session(app, client_nc, get_message):
     assert response.status_code == 401
     assert response.json["response"]["reauth_required"]
     assert "WWW-Authenticate" not in response.headers
+
+    # re-verify
+    client_nc.post(
+        "/us-verify/send-code",
+        json=dict(identity="matt@lp.com", chosen_method="email"),
+        headers=headers,
+    )
+    outbox = app.mail.outbox
+    matcher = re.match(r".*Token:(\d+).*", outbox[1].body, re.IGNORECASE | re.DOTALL)
+    code = matcher.group(1)
+    response = client_nc.post(
+        "/us-verify?include_auth_token", json=dict(passcode=code), headers=headers
+    )
+    assert response.status_code == 200
+    token = response.json["response"]["user"]["authentication_token"]
+    headers["Authentication-Token"] = token
+
+    # should work now
+    response = client_nc.get("/us-setup", headers=headers)
+    assert response.status_code == 200
 
 
 @pytest.mark.settings(api_enabled_methods=["basic"])
@@ -1660,19 +1683,18 @@ def test_replace_send_code(app, get_message):
     ds = SQLAlchemyUserDatastore(db, User, Role)
     app.security = Security(app, datastore=ds)
 
-    with app.app_context():
-        client = app.test_client()
+    client = app.test_client()
 
-        # since we don't use client fixture - have to add user
-        data = dict(email="trp@lp.com", password="password")
-        response = client.post("/register", data=data, follow_redirects=True)
-        assert b"Welcome trp@lp.com" in response.data
-        logout(client)
+    # since we don't use client fixture - have to add user
+    data = dict(email="trp@lp.com", password="password")
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Welcome trp@lp.com" in response.data
+    logout(client)
 
-        set_phone(app, email="trp@lp.com")
-        data = dict(identity="trp@lp.com", chosen_method="sms")
-        response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
-        assert b"Code has been sent" in response.data
+    set_phone(app, email="trp@lp.com")
+    data = dict(identity="trp@lp.com", chosen_method="sms")
+    response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
+    assert b"Code has been sent" in response.data
 
 
 @pytest.mark.settings(us_enabled_methods=["password"])

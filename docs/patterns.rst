@@ -101,13 +101,16 @@ Flask-Security itself uses this as part of securing the following endpoints:
     - .tf_setup ("/tf-setup")
     - .us_setup ("/us-setup")
     - .mf_recovery_codes ("/mf-recovery-codes")
+    - .change_email ("/change-email")
 
 Using the :py:data:`SECURITY_FRESHNESS` and :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` configuration variables.
 
 .. tip::
-    Freshness requires a session (cookie) be sent as part of the request. Without
-    a session, freshness will fail. If your application doesn't/can't send session cookies
-    you can disable freshness by setting ``SECURITY_FRESHNESS`` to ``timedelta(minutes=-1)``
+    The timestamp of the users last successful authentication is stored in the session
+    as well as in the authentication token. One of these must be presented or freshness
+    will fail. You can disallow using the value in the authentication token by setting
+    :py:data:`SECURITY_FRESHNESS_ALLOW_AUTH_TOKEN` to ``False``.
+    You can disable freshness by setting ``SECURITY_FRESHNESS`` to ``timedelta(minutes=-1)``
 
 .. _redirect_topic:
 

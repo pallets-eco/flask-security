@@ -6,7 +6,7 @@ Copyright 2020-2024 by J. Christopher Wagner (jwag). All rights reserved.
 
 from datetime import datetime, timezone
 
-from flask import Blueprint, abort, current_app, jsonify
+from flask import Blueprint, abort, current_app, jsonify, session
 from flask_security import auth_required
 
 from app import SmsCaptureSender
@@ -39,3 +39,16 @@ def popsms():
     if msg:
         return jsonify(sms=msg)
     abort(400)
+
+
+@api.route("/resetfresh", methods=["GET"])
+def resetfresh():
+    # This resets the callers session freshness field - just for testing
+    old_paa = (
+        session["fs_paa"]
+        - current_app.config["SECURITY_FRESHNESS"].total_seconds()
+        - 100
+    )
+    session["fs_paa"] = old_paa
+    session.pop("fs_gexp", None)
+    return jsonify()

@@ -1407,29 +1407,24 @@ def test_no_sms(app, get_message):
     app.security = Security(app, datastore=ds)
 
     with app.app_context():
-        client = app.test_client()
-
         ds.create_user(
             email="trp@lp.com",
             password=hash_password("password"),
         )
         ds.commit()
 
-        data = dict(email="trp@lp.com", password="password")
-        client.post("/login", data=data, follow_redirects=True)
+    client = app.test_client()
+    data = dict(email="trp@lp.com", password="password")
+    client.post("/login", data=data, follow_redirects=True)
 
-        response = client.post(
-            "/tf-setup", data=dict(setup="email"), follow_redirects=True
-        )
-        msg = b"Enter code to complete setup"
-        assert msg in response.data
+    response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
+    msg = b"Enter code to complete setup"
+    assert msg in response.data
 
-        code = app.mail.outbox[0].body.split()[-1]
-        # submit right token and show appropriate response
-        response = client.post(
-            "/tf-validate", data=dict(code=code), follow_redirects=True
-        )
-        assert b"You successfully changed your two-factor method" in response.data
+    code = app.mail.outbox[0].body.split()[-1]
+    # submit right token and show appropriate response
+    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    assert b"You successfully changed your two-factor method" in response.data
 
 
 @pytest.mark.settings(two_factor_post_setup_view="/post_setup_view")
