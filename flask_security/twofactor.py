@@ -102,6 +102,7 @@ def complete_two_factor_process(user, primary_method, totp_secret, is_changing):
     # if we are changing two-factor method
     dologin = False
     if is_changing:
+        # As of 5.5.0 this is the legacy path (using session data)
         completion_message = "TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL"
         tf_profile_changed.send(
             current_app._get_current_object(),

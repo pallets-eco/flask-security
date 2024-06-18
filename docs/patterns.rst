@@ -103,7 +103,7 @@ Flask-Security itself uses this as part of securing the following endpoints:
     - .mf_recovery_codes ("/mf-recovery-codes")
     - .change_email ("/change-email")
 
-Using the :py:data:`SECURITY_FRESHNESS` and :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` configuration variables.
+using the :py:data:`SECURITY_FRESHNESS` and :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` configuration variables.
 
 .. tip::
     The timestamp of the users last successful authentication is stored in the session

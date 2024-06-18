@@ -12,13 +12,14 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`956`) Add support for changing registered user's email (:py:data:`SECURITY_CHANGE_EMAIL`).
 - (:issue:`944`) Change default password hash to argon2 (was bcrypt). See below for details.
+- (:pr:`990`) Add freshness capability to auth tokens (enables /us-setup to function w/ just auth tokens).
+- (:pr:`xxx`) Add support /tf-setup to not require sessions (use a state token).
 
 Fixes
 +++++
 - (:pr:`972`) Set :py:data:`SECURITY_CSRF_COOKIE` at beginning (GET /login) of authentication
   ritual - just as we return the CSRF token. (thanks @e-goto)
-- (:issue:`973`) login and unified sign in should handle GET for authenticated user consistently
-- (:pr:`990`) Add freshness capability to auth tokens (enables /us-setup to function w/ just auth tokens)
+- (:issue:`973`) login and unified sign in should handle GET for authenticated user consistently.
 
 Docs and Chores
 +++++++++++++++
@@ -29,8 +30,11 @@ Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 - Notes around the change to argon2 as the default password hash:
     - applications should add the argon2_cffi package to their requirements (it is included in the flask_security[common] extras).
-    - leave bcrypt installed to that old passwords still work.
+    - leave bcrypt installed so that old passwords still work.
     - the default configuration will re-hash passwords with argon2 upon first use.
+- Changes to /tf-setup
+    The old path - using state set in the session still works as before. The new path is
+    just for the case an authenticated user wants to change their 2FA setup.
 
 Version 5.4.3
 -------------

@@ -668,6 +668,9 @@ Core - rarely need changing
 .. py:data:: SECURITY_WAN_SALT
 
     Default: ``"wan-salt"``
+.. py:data:: SECURITY_TWO_FACTOR_SETUP_SALT
+
+    Default: ``"tf-setup-salt"``
 
 .. py:data:: SECURITY_EMAIL_PLAINTEXT
 
@@ -1221,6 +1224,14 @@ Configuration related to the two-factor authentication feature.
     Specifies the number of seconds access token is valid.
 
     Default: ``120``.
+.. py:data:: SECURITY_TWO_FACTOR_SETUP_WITHIN
+
+    Specifies the amount of time a user has before their two factor setup
+    token expires. Always pluralize the time unit for this value.
+
+    Default: ``"30 minutes"``
+
+    .. versionadded:: 5.5.0
 .. py:data:: SECURITY_TWO_FACTOR_RESCUE_MAIL
 
     Specifies the email address users send mail to when they can't complete the
@@ -1952,6 +1963,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_TWO_FACTOR_CHANGE_METHOD_SUCCESSFUL``
 * ``SECURITY_MSG_TWO_FACTOR_PERMISSION_DENIED``
 * ``SECURITY_MSG_TWO_FACTOR_METHOD_NOT_AVAILABLE``
+* ``SECURITY_MSG_TWO_FACTOR_SETUP_EXPIRED``
 * ``SECURITY_MSG_TWO_FACTOR_DISABLED``
 * ``SECURITY_MSG_UNAUTHORIZED``
 * ``SECURITY_MSG_UNAUTHENTICATED``

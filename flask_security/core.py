@@ -244,6 +244,8 @@ _default_config: dict[str, t.Any] = {
         "secure": False,
         "samesite": "Strict",
     },
+    "TWO_FACTOR_SETUP_SALT": "tf-setup-salt",
+    "TWO_FACTOR_SETUP_WITHIN": "30 minutes",
     "TWO_FACTOR_RESCUE_EMAIL": True,
     "MULTI_FACTOR_RECOVERY_CODES": False,
     "MULTI_FACTOR_RECOVERY_CODES_N": 5,
@@ -538,6 +540,10 @@ _default_messages = {
     "TWO_FACTOR_DISABLED": (
         _("You successfully disabled two factor authorization."),
         "success",
+    ),
+    "TWO_FACTOR_SETUP_EXPIRED": (
+        _("Setup must be completed within %(within)s. Please start over."),
+        "error",
     ),
     "US_CURRENT_METHODS": (
         _("Currently active sign in options: %(method_list)s."),
@@ -1296,6 +1302,7 @@ class Security:
         self.change_email_serializer: URLSafeTimedSerializer
         self.confirm_serializer: URLSafeTimedSerializer
         self.us_setup_serializer: URLSafeTimedSerializer
+        self.tf_setup_serializer: URLSafeTimedSerializer
         self.tf_validity_serializer: URLSafeTimedSerializer
         self.wan_serializer: URLSafeTimedSerializer
         self.principal: Principal
@@ -1477,6 +1484,7 @@ class Security:
         self.change_email_serializer = _get_serializer(app, "change_email")
         self.confirm_serializer = _get_serializer(app, "confirm")
         self.us_setup_serializer = _get_serializer(app, "us_setup")
+        self.tf_setup_serializer = _get_serializer(app, "two_factor_setup")
         self.tf_validity_serializer = _get_serializer(app, "two_factor_validity")
         self.wan_serializer = _get_serializer(app, "wan")
         self.principal = _get_principal(app)
