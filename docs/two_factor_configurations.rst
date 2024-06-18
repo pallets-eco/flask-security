@@ -147,8 +147,10 @@ Theory of Operation
 +++++++++++++++++++++
 
 .. note::
-    The Two-factor feature requires that session cookies be received and sent as part of the API.
+    Confirming a code as part of user authentication requires that session cookies be received and sent as part of the API.
     This is true regardless of whether the application uses forms or JSON.
+    The ``/tf-setup`` endpoint requires freshness information which (as of 5.5.0) is available from the authentication token
+    (as well as the session) - so changing a user's 2FA method can be done without cookies.
 
 The Two-factor (2FA) API has four paths:
 
@@ -172,11 +174,11 @@ Changing 2FA Setup
 An authenticated user can change their 2FA configuration (primary_method, phone number, etc.). In order to prevent a user from being
 locked out, the new configuration must be validated before it is stored permanently. The user starts with a GET on ``/tf-setup``. This will return
 a list of configured 2FA methods the user can choose from, and the existing configuration. This must be followed with a POST on ``/tf-setup`` with the new primary
-method (and phone number if SMS). In the case of SMS, a code will be sent to the phone/device and again use ``/tf-validate`` to confirm code.
+method (and phone number if SMS). In the case of SMS or email, a code will be sent. In addition, a state_token will be returned in the response to
+the POST - this should be used to POST the code to ``/tf-setup/<state_token>``.
 In the case of setting up an authenticator app, the response to the POST will contain the QRcode image as well
 as the required information for manual entry.
-Once the code  has been successfully
-entered, the new configuration will be permanently stored.
+Once the code has been successfully entered, the new configuration will be permanently stored.
 
 Initial login/registration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

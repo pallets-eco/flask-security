@@ -1049,20 +1049,6 @@ paths:
         required: true
         schema:
           type: string
-    get:
-      summary: Validate unified sign in setup request.
-      description: >
-        This does nothing but redirect back to the setup form.
-      responses:
-        200:
-          description: Get form.
-          content:
-            text/html:
-              schema:
-                type: string
-                description: render_template(SECURITY_US_SETUP_TEMPLATE)
-                example: render_template(SECURITY_US_SETUP_TEMPLATE)
-
     post:
       summary: Validate passcode sent and store setup method.
       requestBody:
@@ -1082,15 +1068,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/UsSetupValidateJsonResponse"
         302:
-          description: Successfully validated and persisted sign in method.
+          description: Redirect based on success or failure.
           headers:
             Location:
               description: |
                 On form-success: SECURITY_US_POST_SETUP_VIEW
+
+                On form-error: .us-setup
+
+                Form errors include bad code, expired token, bad token.
               schema:
                 type: string
         400:
-          description: Validation failed.
+          description: Failed - bad code, expired token, bad token.
           content:
             application/json:
               schema:
@@ -1182,11 +1172,10 @@ paths:
 
         3) An authenticated user wishes to enable or disable 2FA (assuming SECURITY_TWO_FACTOR_REQUIRED is False).
 
-
         Allowed 2FA methods are controlled via the configuration SECURITY_TWO_FACTOR_ENABLED_METHODS.
 
-
-        This endpoint is protected by a 'freshness' check - meaning the caller will be required to have authenticated recently. In addition, to ensure correctness, the newly setup method must be verified by sending and entering a code prior to it being permanently stored.
+        This endpoint is protected by a 'freshness' check - meaning the caller will be required to have authenticated recently.
+        In addition, to ensure correctness, the newly setup method must be verified by sending and entering a code prior to it being permanently stored.
       requestBody:
         required: true
         content:
@@ -1226,6 +1215,49 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
         500:
           description: Error when trying to send code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /tf-setup/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Validate code sent and store setup method.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TfSetupValidateRequest"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/TfSetupValidateRequest"
+      responses:
+        200:
+          description: Successfully validated and persisted two factor method.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TfSetupValidateJsonResponse"
+        302:
+          description: Success or Failure.
+          headers:
+            Location:
+              description: |
+                On form-success: SECURITY_TWO_FACTOR_POST_SETUP_VIEW
+
+                On form-error: .tf-setup
+
+                Form errors include bad code, expired token, bad token.
+              schema:
+                type: string
+        400:
+          description: Failed - bad code, expired token, bad token.
           content:
             application/json:
               schema:
@@ -2324,7 +2356,14 @@ components:
                   description: >
                     Current state of Two Factor configuration. Not present when disabling 2FA. This will be set to 'validating_profile'
                     indicating the caller needs to call '/tf-validate' with the correct code.
+                    N.B. as of 5.5.0 this is only used for setting up as part of initial login when 2FA is required.
+                    See tf_state_token below for use when an authenticated user wants to change their 2FA method.
                   example: validating_profile
+                tf_state_token:
+                  type: string
+                  description: >
+                    Timed and signed token containing necessary state to complete the setup. To validate the method POST
+                    the code to '/tf-setup/<tf_state_token>'.
                 tf_primary_method:
                   type: string
                   description: Current method being configured (deprecated).
@@ -2382,7 +2421,30 @@ components:
                   tf_signin_url:
                     type: string
                     description: The value of SECURITY_WAN_SIGNIN_URL
-
+    TfSetupValidateRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: Code as received from method being setup.
+    TfSetupValidateJsonResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseJsonResponse'
+        - type: object
+          properties:
+            response:
+              type: object
+              properties:
+                tf_method:
+                  type: string
+                  description: The method as passed into API.
+                tf_primary_method:
+                  type: string
+                  description: The method as passed into API.
+                tf_phone:
+                  type: string
+                  description: Phone number if set.
     WanRegister:
       type: object
       required: [ name, usage ]

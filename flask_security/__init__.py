@@ -70,6 +70,8 @@ from .recovery_codes import (
     MfRecoveryCodesForm,
 )
 from .signals import (
+    change_email_confirmed,
+    change_email_instructions_sent,
     confirm_instructions_sent,
     login_instructions_sent,
     password_changed,

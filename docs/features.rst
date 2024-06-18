@@ -109,7 +109,8 @@ value set.
 .. note::
     While every Flask-Security endpoint will accept an authentication token header,
     there are some endpoints that require session information (e.g. a session cookie).
-    Please read :ref:`freshness_topic` and :ref:`csrf_topic`
+    This includes entering in a second factor and handling of :ref:`CSRF<csrf_topic>`.
+    As of release 5.5.0, authentication tokens by default carry freshness information.
 
 User Registration
 -----------------
