@@ -12,7 +12,6 @@
 
 from __future__ import annotations
 import collections.abc as cabc
-import sys
 
 try:
     from authlib.integrations.flask_client import OAuth
@@ -37,10 +36,7 @@ from .utils import (
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
 
-if sys.version_info >= (3, 9):
-    OauthCbType = cabc.Callable[["OAuth", t.Any], tuple[str, t.Any]]
-else:
-    OauthCbType = t.Callable[["OAuth", t.Any], t.Tuple[str, t.Any]]  # pragma: no cover
+OauthCbType = cabc.Callable[["OAuth", t.Any], tuple[str, t.Any]]
 
 
 class FsOAuthProvider:

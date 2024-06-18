@@ -13,7 +13,7 @@ Features & Improvements
 - (:issue:`956`) Add support for changing registered user's email (:py:data:`SECURITY_CHANGE_EMAIL`).
 - (:issue:`944`) Change default password hash to argon2 (was bcrypt). See below for details.
 - (:pr:`990`) Add freshness capability to auth tokens (enables /us-setup to function w/ just auth tokens).
-- (:pr:`xxx`) Add support /tf-setup to not require sessions (use a state token).
+- (:pr:`991`) Add support /tf-setup to not require sessions (use a state token).
 
 Fixes
 +++++
@@ -25,6 +25,7 @@ Docs and Chores
 +++++++++++++++
 - (:pr:`979`) Update Russian translations (ademaro)
 - (:pr:`981` and :pr:`956`) Improve docs
+- (:pr:`xx`) The long deprecated `get_token_status` is no longer exported
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

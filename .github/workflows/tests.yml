@@ -21,8 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: '3.8', tox: 'py38-release'}
-          - {python: '3.8', tox: 'py38-low'}
           - {python: '3.9', tox: 'py39-release'}
           - {python: '3.9', tox: 'py39-low'}
           - {python: '3.10', tox: 'py310-release'}
@@ -122,7 +120,7 @@ jobs:
         - uses: actions/checkout@v4
         - uses: actions/setup-python@v5
           with:
-            python-version: "3.9"
+            python-version: "3.11"
         - name: update pip
           run: |
             python -m pip install -U pip
