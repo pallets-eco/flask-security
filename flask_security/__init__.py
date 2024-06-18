@@ -108,7 +108,6 @@ from .utils import (
     check_and_get_token_status,
     get_hmac,
     get_request_attr,
-    get_token_status,
     get_url,
     hash_password,
     check_and_update_authn_fresh,
@@ -139,4 +138,4 @@ from .webauthn import (
 )
 from .webauthn_util import WebauthnUtil
 
-__version__ = "5.4.4"
+__version__ = "5.5.0"

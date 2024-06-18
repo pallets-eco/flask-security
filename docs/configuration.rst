@@ -77,137 +77,6 @@ These configuration keys are used globally across all features.
         "builtin" is a special name which will be interpreted as the ``translations``
         directory within the installation of Flask-Security.
 
-.. py:data:: SECURITY_PASSWORD_HASH
-
-    Specifies the password hash algorithm to use when hashing passwords.
-    Recommended values for production systems are ``argon2``, ``bcrypt``, or
-    ``pbkdf2_sha512``. Some algorithms require the installation  of a backend package (e.g. `bcrypt`_, `argon2`_).
-
-    Default: ``"argon2"``.
-
-.. py:data:: SECURITY_PASSWORD_SCHEMES
-
-    List of supported password hash algorithms. ``SECURITY_PASSWORD_HASH``
-    must be from this list. Passwords encrypted with any of these schemes will be honored.
-
-.. py:data:: SECURITY_DEPRECATED_PASSWORD_SCHEMES
-
-    List of password hash algorithms that are considered weak and
-    will be accepted, however on first use, will be re-hashed to the current
-    setting of ``SECURITY_PASSWORD_HASH``.
-
-    Default: ``["auto"]`` which means any password found that wasn't
-    hashed using ``SECURITY_PASSWORD_HASH`` will be re-hashed.
-
-.. py:data:: SECURITY_PASSWORD_SALT
-
-    Specifies the HMAC salt. This is required for all schemes that
-    are configured for double hashing. A good salt can be generated using:
-    ``secrets.SystemRandom().getrandbits(128)``.
-
-    Default: ``None``.
-
-.. py:data:: SECURITY_PASSWORD_SINGLE_HASH
-
-    A list of schemes that should not be hashed twice. By default, passwords are
-    hashed twice, first with :py:data:`SECURITY_PASSWORD_SALT`, and then with a random salt.
-
-    Default: a list of known schemes not working with double hashing (`django_{digest}`, `plaintext`).
-
-.. py:data:: SECURITY_HASHING_SCHEMES
-
-    List of algorithms used for encrypting/hashing sensitive data within a token
-    (Such as is sent with confirmation or reset password).
-
-    Default: ``["sha256_crypt", "hex_md5"]``.
-.. py:data:: SECURITY_DEPRECATED_HASHING_SCHEMES
-
-    List of deprecated algorithms used for creating and validating tokens.
-
-    Default: ``["hex_md5"]``.
-
-.. py:data:: SECURITY_PASSWORD_HASH_OPTIONS
-
-    Specifies additional options to be passed to the hashing method. This is deprecated as of passlib 1.7.
-
-    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS`
-
-.. py:data:: SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS
-
-    Pass additional options through ``passlib`` to the various hashing methods.
-    This is a dict of the form ``{<scheme>__<option>: <value>, ..}``
-    e.g. {"argon2__time_cost": 3}.
-
-    Default: ``{}``
-
-    .. versionadded:: 3.3.1
-
-.. py:data:: SECURITY_PASSWORD_LENGTH_MIN
-
-    Minimum required length for passwords.
-
-    Default: ``8``
-
-    .. versionadded:: 3.4.0
-.. py:data:: SECURITY_PASSWORD_COMPLEXITY_CHECKER
-
-    Set to complexity checker to use (Only ``zxcvbn`` supported).
-
-    Default: ``None``
-
-    .. versionadded:: 3.4.0
-.. py:data:: SECURITY_ZXCVBN_MINIMUM_SCORE
-
-    Required ``zxcvbn`` password complexity score (0-4).
-    Refer to https://github.com/dropbox/zxcvbn#usage for exact meanings of
-    different score values.
-
-    Default: ``3`` (Good or Strong)
-
-    .. versionadded:: 5.0.0
-.. py:data:: SECURITY_PASSWORD_CHECK_BREACHED
-
-    If not ``None`` new/changed passwords will be checked against the
-    database of breached passwords at https://api.pwnedpasswords.com.
-    If set to ``strict`` then if the site can't be reached, validation will fail.
-    If set to ``best-effort`` failure to reach the site will continue
-    with the rest of password validation.
-
-    Default: ``None``
-
-    .. versionadded:: 3.4.0
-.. py:data:: SECURITY_PASSWORD_BREACHED_COUNT
-
-    Passwords with counts greater than or equal to this value are considered breached.
-
-    Default: 1  - which might be to burdensome for some applications.
-
-    .. versionadded:: 3.4.0
-
-.. py:data:: SECURITY_PASSWORD_NORMALIZE_FORM
-
-    Passwords are normalized prior to changing or comparing. This satisfies
-    the NIST requirement: `5.1.1.2 Memorized Secret Verifiers`_.
-    Normalization is performed using the Python unicodedata.normalize() method.
-
-    Default: ``"NFKD"``
-
-    .. versionadded:: 4.0.0
-
-.. _5.1.1.2 Memorized Secret Verifiers: https://pages.nist.gov/800-63-3/sp800-63b.html#sec5
-
-.. py:data:: SECURITY_PASSWORD_REQUIRED
-
-    If set to ``False`` then a user can register with an empty password.
-    This requires :py:data:`SECURITY_UNIFIED_SIGNIN` to be enabled. By
-    default, the user will be able to authenticate using an email link.
-    Please note: this does not mean a user can sign in with an empty
-    password - it means that they must have some OTHER means of authenticating.
-
-    Default: ``True``
-
-    .. versionadded:: 5.0.0
-
 .. py:data:: SECURITY_TOKEN_AUTHENTICATION_KEY
 
     Specifies the query string parameter to read when using token authentication.
@@ -469,66 +338,6 @@ These configuration keys are used globally across all features.
 
     .. versionadded:: 5.0.0
 
-Core - Multi-factor
--------------------
-These are used by the Two-Factor and Unified Signin features.
-
-.. py:data:: SECURITY_TOTP_SECRETS
-
-    Secret used to encrypt the totp_password both into DB and into the session cookie.
-    Best practice is to set this to:
-
-    .. code-block:: python
-
-        from passlib import totp
-        "{1: <result of totp.generate_secret()>}"
-
-    See: `Totp`_ for details.
-
-    .. versionadded:: 3.4.0
-
-.. py:data:: SECURITY_TOTP_ISSUER
-
-    Specifies the name of the service or application that the user is authenticating to.
-    This will be the name displayed by most authenticator apps.
-
-    Default: ``None``.
-
-    .. versionadded:: 3.4.0
-
-.. py:data:: SECURITY_SMS_SERVICE
-
-    Specifies the name of the sms service provider. Out of the box
-    "Twilio" is supported. For other sms service providers you will need
-    to subclass :class:`.SmsSenderBaseClass` and register it:
-
-    .. code-block:: python
-
-        SmsSenderFactory.senders[<service-name>] = <service-class>
-
-    Default: ``Dummy`` which does nothing.
-
-    .. versionadded:: 3.4.0
-
-.. py:data:: SECURITY_SMS_SERVICE_CONFIG
-
-    Specifies a dictionary of basic configurations needed for use of a sms service.
-    For "Twilio" the following keys are required (fill in from your Twilio dashboard):
-
-    Default: ``{'ACCOUNT_SID': NONE, 'AUTH_TOKEN': NONE, 'PHONE_NUMBER': NONE}``
-
-    .. versionadded:: 3.4.0
-
-.. py:data:: SECURITY_PHONE_REGION_DEFAULT
-
-    Assigns a default 'region' for phone numbers used for two-factor or
-    unified sign in. All other phone numbers will require a region prefix to
-    be accepted.
-
-    Default: ``"US"``
-
-    .. versionadded:: 3.4.0
-
 .. py:data:: SECURITY_FRESHNESS
 
     A timedelta used to protect endpoints that alter sensitive information.
@@ -589,6 +398,202 @@ These are used by the Two-Factor and Unified Signin features.
 
 
     .. versionadded:: 5.5.0
+
+Core - Passwords and Tokens
+----------------------------
+.. py:data:: SECURITY_PASSWORD_HASH
+
+    Specifies the password hash algorithm to use when hashing passwords.
+    Recommended values for production systems are ``argon2``, ``bcrypt``, or
+    ``pbkdf2_sha512``. Some algorithms require the installation  of a backend package (e.g. `bcrypt`_, `argon2`_).
+
+    Default: ``"argon2"``.
+
+    .. versionchanged:: 5.5.0
+        Default changed from ``bcrypt`` to ``argon2``.
+
+.. py:data:: SECURITY_PASSWORD_SCHEMES
+
+    List of supported password hash algorithms. ``SECURITY_PASSWORD_HASH``
+    must be from this list. Passwords encrypted with any of these schemes will be honored.
+
+.. py:data:: SECURITY_DEPRECATED_PASSWORD_SCHEMES
+
+    List of password hash algorithms that are considered weak and
+    will be accepted, however on first use, will be re-hashed to the current
+    setting of ``SECURITY_PASSWORD_HASH``.
+
+    Default: ``["auto"]`` which means any password found that wasn't
+    hashed using ``SECURITY_PASSWORD_HASH`` will be re-hashed.
+
+.. py:data:: SECURITY_PASSWORD_SALT
+
+    Specifies the HMAC salt. This is required for all schemes that
+    are configured for double hashing. A good salt can be generated using:
+    ``secrets.SystemRandom().getrandbits(128)``.
+
+    Default: ``None``.
+
+.. py:data:: SECURITY_PASSWORD_SINGLE_HASH
+
+    A list of schemes that should not be hashed twice. By default, passwords are
+    hashed twice, first with :py:data:`SECURITY_PASSWORD_SALT`, and then with a random salt.
+
+    Default: a list of known schemes not working with double hashing (`django_{digest}`, `plaintext`).
+
+.. py:data:: SECURITY_HASHING_SCHEMES
+
+    List of algorithms used for encrypting/hashing sensitive data within a token
+    (Such as is sent with confirmation or reset password).
+
+    Default: ``["sha256_crypt", "hex_md5"]``.
+.. py:data:: SECURITY_DEPRECATED_HASHING_SCHEMES
+
+    List of deprecated algorithms used for creating and validating tokens.
+
+    Default: ``["hex_md5"]``.
+
+.. py:data:: SECURITY_PASSWORD_HASH_OPTIONS
+
+    Specifies additional options to be passed to the hashing method. This is deprecated as of passlib 1.7.
+
+    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS`
+
+.. py:data:: SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS
+
+    Pass additional options through ``passlib`` to the various hashing methods.
+    This is a dict of the form ``{<scheme>__<option>: <value>, ..}``
+    e.g. {"argon2__time_cost": 3}.
+
+    Default: ``{}``
+
+    .. versionadded:: 3.3.1
+
+.. py:data:: SECURITY_PASSWORD_LENGTH_MIN
+
+    Minimum required length for passwords.
+
+    Default: ``8``
+
+    .. versionadded:: 3.4.0
+.. py:data:: SECURITY_PASSWORD_COMPLEXITY_CHECKER
+
+    Set to complexity checker to use (Only ``zxcvbn`` supported).
+
+    Default: ``None``
+
+    .. versionadded:: 3.4.0
+.. py:data:: SECURITY_ZXCVBN_MINIMUM_SCORE
+
+    Required ``zxcvbn`` password complexity score (0-4).
+    Refer to https://github.com/dropbox/zxcvbn#usage for exact meanings of
+    different score values.
+
+    Default: ``3`` (Good or Strong)
+
+    .. versionadded:: 5.0.0
+.. py:data:: SECURITY_PASSWORD_CHECK_BREACHED
+
+    If not ``None`` new/changed passwords will be checked against the
+    database of breached passwords at https://api.pwnedpasswords.com.
+    If set to ``strict`` then if the site can't be reached, validation will fail.
+    If set to ``best-effort`` failure to reach the site will continue
+    with the rest of password validation.
+
+    Default: ``None``
+
+    .. versionadded:: 3.4.0
+.. py:data:: SECURITY_PASSWORD_BREACHED_COUNT
+
+    Passwords with counts greater than or equal to this value are considered breached.
+
+    Default: 1  - which might be to burdensome for some applications.
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_PASSWORD_NORMALIZE_FORM
+
+    Passwords are normalized prior to changing or comparing. This satisfies
+    the NIST requirement: `5.1.1.2 Memorized Secret Verifiers`_.
+    Normalization is performed using the Python unicodedata.normalize() method.
+
+    Default: ``"NFKD"``
+
+    .. versionadded:: 4.0.0
+
+.. _5.1.1.2 Memorized Secret Verifiers: https://pages.nist.gov/800-63-3/sp800-63b.html#sec5
+
+.. py:data:: SECURITY_PASSWORD_REQUIRED
+
+    If set to ``False`` then a user can register with an empty password.
+    This requires :py:data:`SECURITY_UNIFIED_SIGNIN` to be enabled. By
+    default, the user will be able to authenticate using an email link.
+    Please note: this does not mean a user can sign in with an empty
+    password - it means that they must have some OTHER means of authenticating.
+
+    Default: ``True``
+
+    .. versionadded:: 5.0.0
+
+Core - Multi-factor
+-------------------
+These are used by the Two-Factor and Unified Signin features.
+
+.. py:data:: SECURITY_TOTP_SECRETS
+
+    Secret used to encrypt the totp_password both into DB and into the session cookie.
+    Best practice is to set this to:
+
+    .. code-block:: python
+
+        from passlib import totp
+        "{1: <result of totp.generate_secret()>}"
+
+    See: `Totp`_ for details.
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_TOTP_ISSUER
+
+    Specifies the name of the service or application that the user is authenticating to.
+    This will be the name displayed by most authenticator apps.
+
+    Default: ``None``.
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_SMS_SERVICE
+
+    Specifies the name of the sms service provider. Out of the box
+    "Twilio" is supported. For other sms service providers you will need
+    to subclass :class:`.SmsSenderBaseClass` and register it:
+
+    .. code-block:: python
+
+        SmsSenderFactory.senders[<service-name>] = <service-class>
+
+    Default: ``Dummy`` which does nothing.
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_SMS_SERVICE_CONFIG
+
+    Specifies a dictionary of basic configurations needed for use of a sms service.
+    For "Twilio" the following keys are required (fill in from your Twilio dashboard):
+
+    Default: ``{'ACCOUNT_SID': NONE, 'AUTH_TOKEN': NONE, 'PHONE_NUMBER': NONE}``
+
+    .. versionadded:: 3.4.0
+
+.. py:data:: SECURITY_PHONE_REGION_DEFAULT
+
+    Assigns a default 'region' for phone numbers used for two-factor or
+    unified sign in. All other phone numbers will require a region prefix to
+    be accepted.
+
+    Default: ``"US"``
+
+    .. versionadded:: 3.4.0
 
 Core - Compatibility
 ---------------------
@@ -671,6 +676,11 @@ Core - rarely need changing
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_SALT
 
     Default: ``"tf-setup-salt"``
+.. py:data:: SECURITY_EMAIL_CHANGE_SALT
+
+    Specifies the salt value when generating change email confirmation links/tokens.
+
+    Default: ``"change-email-salt"``.
 
 .. py:data:: SECURITY_EMAIL_PLAINTEXT
 
@@ -943,8 +953,8 @@ Confirmable
 .. py:data:: SECURITY_AUTO_LOGIN_AFTER_CONFIRM
 
     If ``True``, then the user corresponding to the confirmation token will be automatically signed in.
-    If ``False`` (the default) then the user will be requires to authenticate using the usual mechanism(s).
-    Note that the confirmation token is not valid after being used once. This is not recommended by OWASP
+    If ``False`` (the default) then the user will be required to authenticate using the usual mechanism(s).
+    Note that the confirmation token is single-use. This is not recommended by OWASP
     however an application that is by invite only (no self-registration) might find this useful.
 
     Default: ``False``.
@@ -1157,11 +1167,6 @@ Change-Email
     only endpoint (accessed via a link in an email).
 
     Default: ``"/change-email-confirm"``.
-.. py:data:: SECURITY_EMAIL_CHANGE_SALT
-
-    Specifies the salt value when generating change email confirmation links/tokens.
-
-    Default: ``"change-email-salt"``.
 
 Additional relevant configuration variables:
 
