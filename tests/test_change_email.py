@@ -47,7 +47,9 @@ def capture_change_email_requests():
 
 
 @pytest.mark.settings(change_email_error_view="/change-email")
-def test_ce(app, client, get_message):
+def test_ce(app, clients, get_message):
+    client = clients
+
     @change_email_confirmed.connect_via(app)
     def _on(app, **kwargs):
         assert kwargs["old_email"] == "matt@lp.com"

@@ -399,7 +399,7 @@ def test_modify_permissions_multi(app, datastore):
 
 def test_uuid(app, request, tmpdir, realdburl):
     """Test that UUID extension of postgresql works as a primary id for users"""
-    importorskip("sqlalchemy")
+    importorskip("flask_sqlalchemy")
     import uuid
     from flask_sqlalchemy import SQLAlchemy
     from sqlalchemy import Boolean, Column, DateTime, Integer, ForeignKey, String
@@ -592,6 +592,7 @@ def test_mf_recovery_codes(app, datastore):
 
 def test_permissions_fsqla_v2(app):
     importorskip("sqlalchemy")
+    importorskip("flask_sqlalchemy")
     # Make sure folks with fsqla_v2 work with new AsList column type
     from sqlalchemy import insert
     from flask_sqlalchemy import SQLAlchemy
@@ -641,6 +642,7 @@ def test_permissions_fsqla_v2(app):
 
 def test_permissions_41(request, app, realdburl):
     importorskip("sqlalchemy")
+    importorskip("flask_sqlalchemy")
     # Check compatibility with 4.1 DB
     from sqlalchemy import Column, insert
     from flask_sqlalchemy import SQLAlchemy

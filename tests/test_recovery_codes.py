@@ -4,7 +4,7 @@
 
     recovery code tests
 
-    :copyright: (c) 2022-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -24,9 +24,10 @@ pytestmark = pytest.mark.two_factor()
 
 
 @pytest.mark.settings(multi_factor_recovery_codes=True)
-def test_rc_json(app, client, get_message):
+def test_rc_json(app, clients, get_message):
     # Test recovery codes
     # gal has two-factor already setup for 'sms'
+    client = clients
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     tf_authenticate(app, client)
 
