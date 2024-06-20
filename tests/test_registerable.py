@@ -517,7 +517,8 @@ def test_form_error(app, client, get_message):
 
 @pytest.mark.settings(username_enable=True)
 @pytest.mark.unified_signin()
-def test_username(app, client, get_message):
+def test_username(app, clients, get_message):
+    client = clients
     data = dict(
         email="dude@lp.com",
         username="dude",

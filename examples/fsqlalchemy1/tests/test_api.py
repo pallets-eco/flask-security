@@ -1,4 +1,8 @@
 # Copyright 2019-2022 by J. Christopher Wagner (jwag). All rights reserved.
+# flake8: noqa: F402
+import pytest
+
+pytest.importorskip("flask_sqlalchemy")
 
 from fsqlalchemy1.app import Blog
 

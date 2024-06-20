@@ -717,7 +717,8 @@ def test_verify_link_spa(app, client, get_message):
     assert is_authenticated(client, get_message)
 
 
-def test_setup(app, client, get_message):
+def test_setup(app, clients, get_message):
+    client = clients
     set_email(app)
     us_authenticate(client)
     response = client.get("us-setup")
@@ -1005,7 +1006,8 @@ def test_unique_phone(app, client, get_message):
 
 
 @pytest.mark.settings(freshness=timedelta(minutes=0))
-def test_verify(app, client, get_message):
+def test_verify(app, clients, get_message):
+    client = clients
     # Test setup when re-authenticate required
     # With  freshness set to 0 - the first call should require reauth (by
     # redirecting); but the second should work due to grace period.
@@ -1659,6 +1661,7 @@ def test_bad_sender(app, client, get_message):
 @pytest.mark.registerable()
 def test_replace_send_code(app, get_message):
     pytest.importorskip("sqlalchemy")
+    pytest.importorskip("flask_sqlalchemy")
 
     from flask_sqlalchemy import SQLAlchemy
     from flask_security.models import fsqla_v2 as fsqla

@@ -75,10 +75,10 @@ jobs:
         - name: update pip
           run: |
             python -m pip install -U pip
-        - name: nobabel, nowebauthn, noauthlib, async
+        - name: nobabel, nowebauthn, noauthlib, noflasksqlalchemy, async
           run: |
             pip install tox
-            tox -e nobabel,nowebauthn,noauthlib,async
+            tox -e nobabel,nowebauthn,noauthlib,noflasksqlalchemy,async
   cov:
       runs-on: ubuntu-latest
       steps:

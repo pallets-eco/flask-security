@@ -34,7 +34,8 @@ from tests.test_utils import (
 pytestmark = pytest.mark.changeable()
 
 
-def test_changeable_flag(app, client, get_message):
+def test_changeable_flag(app, clients, get_message):
+    client = clients
     recorded = []
 
     @password_changed.connect_via(app)
@@ -259,6 +260,8 @@ def test_change_invalidates_auth_token(app, client):
 
 
 def test_auth_uniquifier(app):
+    pytest.importorskip("sqlalchemy")
+    pytest.importorskip("flask_sqlalchemy")
     # If add fs_token_uniquifier to user model - change password shouldn't invalidate
     # auth tokens.
     from sqlalchemy import Column, String

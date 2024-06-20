@@ -305,9 +305,10 @@ def test_two_factor_illegal_state(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_two_factor_flag(app, client, get_message):
+def test_two_factor_flag(app, clients, get_message):
     # trying to verify code without going through two-factor
     # first login function
+    client = clients
     wrong_code = b"000000"
     response = client.post(
         "/tf-validate", data=dict(code=wrong_code), follow_redirects=True
@@ -1113,8 +1114,9 @@ def test_admin_setup_reset(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_datastore(app, client, get_message):
+def test_datastore(app, clients, get_message):
     # Test that user record is properly set after proper 2FA setup.
+    client = clients
     sms_sender = SmsSenderFactory.createSender("test")
     data = dict(email="gene@lp.com", password="password")
     response = client.post(
@@ -1335,6 +1337,7 @@ def test_bad_sender(app, client, get_message):
 
 def test_replace_send_code(app, get_message):
     pytest.importorskip("sqlalchemy")
+    pytest.importorskip("flask_sqlalchemy")
 
     # replace tf_send_code - and have it return an error to check that.
     from flask_sqlalchemy import SQLAlchemy
@@ -1489,6 +1492,7 @@ def test_setup_nofresh(app, client, get_message):
 @pytest.mark.settings(two_factor_enabled_methods=["email"])
 def test_no_sms(app, get_message):
     pytest.importorskip("sqlalchemy")
+    pytest.importorskip("flask_sqlalchemy")
 
     # Make sure that don't require tf_phone_number if SMS isn't an option.
     from sqlalchemy import (
