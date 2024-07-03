@@ -20,11 +20,21 @@ which are a bit of a pain. To make things easier - Flask-Security includes mixin
 contain ALL the fields and tables required for all features. They also contain
 various `best practice` fields - such as update and create times. These mixins can
 be easily extended to add any sort of custom fields and can be found in the
-`models` module (today there is just one for using Flask-SQLAlchemy).
+`models` module.
 
 The provided models are versioned since they represent actual DB models, and any
 changes require a schema migration (and perhaps a data migration). Applications
 must specifically import the version they want (and handle any required migration).
+
+There are 2 available models - one when using Flask-SQLAlchemy and one when
+using 'raw' sqlalchemy or Flask-SQLAlchemy-Lite.
+
+.. note::
+    Using these models, you can override the tables names (and provide them to .set_db_info()
+    however your model class names MUST be `User`, `Role`, and `WebAuthn`.
+
+Flask-SQLAlchemy
+^^^^^^^^^^^^^^^^
 Your application code should import just the required version e.g.::
 
     from flask_security.models import fsqla_v3 as fsqla
@@ -32,6 +42,15 @@ Your application code should import just the required version e.g.::
 
 A single method ``fsqla.FsModels.set_db_info`` is provided to glue the supplied models to your
 DB instance. This is only needed if you use the packaged models.
+
+Flask-SQLAlchemy-Lite
+^^^^^^^^^^^^^^^^^^^^^
+Your application code should import just the required version e.g.::
+
+    from flask_security.models import sqla as sqla
+
+A single method ``sqla.FsModels.set_db_info`` is provided to glue the supplied mixins to your
+models. This is only needed if you use the packaged models.
 
 Model Specification
 -------------------
@@ -176,18 +195,18 @@ the User record (since we need to look up the ``User`` based on a WebAuthn ``cre
     Add the following to the WebAuthn model (assuming your primary key is named ``id``):
 
         @declared_attr
-        def user_id(cls):
-            return Column(
-                Integer,
-                ForeignKey("user.id", ondelete="CASCADE"),
-                nullable=False,
+        def user_id(cls) -> Mapped[int]:
+            return mapped_column(
+                ForeignKey("user.id", ondelete="CASCADE")
             )
 
     Add the following to the User model:
 
         @declared_attr
         def webauthn(cls):
-            return relationship("WebAuthn", backref="users", cascade="all, delete")
+            return relationship(
+                "WebAuthn", back_populates="user", cascade="all, delete"
+            )
 
 **For mongoengine**::
 
@@ -244,12 +263,7 @@ serializable object:
 .. code-block:: python
 
     class User(db.Model, UserMixin):
-        id = db.Column(db.Integer, primary_key=True)
-        email = TextField()
-        password = TextField()
-        active = BooleanField(default=True)
-        confirmed_at = DateTimeField(null=True)
-        name = db.Column(db.String(80))
+        # ... define columns ...
 
         # Custom User Payload
         def get_security_payload(self):

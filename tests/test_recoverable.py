@@ -354,7 +354,7 @@ def test_bad_reset_token(client, get_message):
     assert get_message("INVALID_RESET_PASSWORD_TOKEN") in response.data
 
 
-def test_reset_token_deleted_user(app, client, get_message, sqlalchemy_datastore):
+def test_reset_token_deleted_user(app, client, get_message):
     with capture_reset_password_requests() as requests:
         client.post("/reset", data=dict(email="gene@lp.com"), follow_redirects=True)
 
@@ -364,8 +364,8 @@ def test_reset_token_deleted_user(app, client, get_message, sqlalchemy_datastore
     with app.app_context():
         # load user (and role) to get into session so cascade delete works.
         user = app.security.datastore.find_user(email="gene@lp.com")
-        sqlalchemy_datastore.delete(user)
-        sqlalchemy_datastore.commit()
+        app.security.datastore.delete(user)
+        app.security.datastore.commit()
 
     response = client.post(
         "/reset/" + token,

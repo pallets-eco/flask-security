@@ -127,6 +127,10 @@ intersphinx_mapping = {
     "wtforms": ("https://wtforms.readthedocs.io/", None),
     "flask_wtforms": ("https://flask-wtf.readthedocs.io", None),
     "flask_sqlalchemy": ("https://flask-sqlalchemy.palletsprojects.com/", None),
+    "flask_sqlalchemy_lite": (
+        "https://flask-sqlalchemy-lite.readthedocs.io/en/latest/",
+        None,
+    ),
     "flask_login": ("https://flask-login.readthedocs.io/en/latest/", None),
     "passlib": ("https://passlib.readthedocs.io/en/stable", None),
     "authlib": ("https://docs.authlib.org/en/latest/", None),

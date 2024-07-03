@@ -14,6 +14,8 @@ Features & Improvements
 - (:issue:`944`) Change default password hash to argon2 (was bcrypt). See below for details.
 - (:pr:`990`) Add freshness capability to auth tokens (enables /us-setup to function w/ just auth tokens).
 - (:pr:`991`) Add support /tf-setup to not require sessions (use a state token).
+- (:issue:`xxx`) Add support for Flask-SQLAlchemy-Lite - including new all-inclusive models
+  that confirm to sqlalchemy latest best-practice (type-annotated).
 
 Fixes
 +++++
