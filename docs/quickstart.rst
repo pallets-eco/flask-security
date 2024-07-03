@@ -23,7 +23,8 @@ There are some complete (but simple) examples available in the *examples* direct
 
 .. _argon_cffi: https://pypi.org/project/argon2-cffi/
 
-* :ref:`basic-sqlalchemy-application`
+* :ref:`basic-flask-sqlalchemy-application`
+* :ref:`basic-flask-sqlalchemy-lite-application`
 * :ref:`basic-sqlalchemy-application-with-session`
 * :ref:`basic-mongoengine-application`
 * :ref:`basic-peewee-application`
@@ -31,13 +32,13 @@ There are some complete (but simple) examples available in the *examples* direct
 * :ref:`proxy-configuration`
 * :ref:`unit-testing`
 
-.. _basic-sqlalchemy-application:
+.. _basic-flask-sqlalchemy-application:
 
-Basic SQLAlchemy Application
-----------------------------
+Basic Flask-SQLAlchemy Application
+-----------------------------------
 
-SQLAlchemy Install requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Flask-SQLAlchemy Install requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -46,8 +47,8 @@ SQLAlchemy Install requirements
      $ pip install flask-security-too[fsqla,common]
 
 
-SQLAlchemy Application
-~~~~~~~~~~~~~~~~~~~~~~
+Flask-SQLAlchemy Application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following code sample illustrates how to get started as quickly as
 possible using Flask-SQLAlchemy and the built-in model mixins:
@@ -111,6 +112,105 @@ possible using Flask-SQLAlchemy and the built-in model mixins:
     with app.app_context():
         # Create User to test with
         db.create_all()
+        if not app.security.datastore.find_user(email="test@me.com"):
+            app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
+        db.session.commit()
+
+    if __name__ == '__main__':
+        app.run()
+
+You can run this either with::
+
+    flask run
+
+or::
+
+    python app.py
+
+.. _basic-flask-sqlalchemy-lite-application:
+
+Basic Flask-SQLAlchemy-Lite Application
+----------------------------------------
+
+Flask-SQLAlchemy Install requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This requires python >= 3.10::
+
+     $ python3 -m venv pymyenv
+     $ . pymyenv/bin/activate
+     $ pip install flask-security-too[common] sqlalchemy flask-sqlalchemy-lite
+
+Flask-SQLAlchemy-Lite Application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following code sample illustrates how to get started as quickly as
+possible using Flask-SQLAlchemy-Lite and the built-in model mixins.
+Note that Flask-SQLAlchemy-Lite is a very thin wrapper above sqlalchemy.orm
+and just provides session and engine initialization. Everything else is
+pure sqlalchemy (unlike Flask-SQLAlchemy).
+
+::
+
+    import os
+
+    from flask import Flask, render_template_string
+    from flask_sqlalchemy_lite import SQLAlchemy
+    from flask_security import Security, SQLAlchemyUserDatastore, auth_required, hash_password
+    from flask_security.models import sqla as sqla
+
+    # Create app
+    app = Flask(__name__)
+    app.config['DEBUG'] = True
+
+    # Generate a nice key using secrets.token_urlsafe()
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", 'pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw')
+    # Generate a good salt for password hashing using: secrets.SystemRandom().getrandbits(128)
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
+
+    # have session and remember cookie be samesite (flask/flask_login)
+    app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
+    app.config["SESSION_COOKIE_SAMESITE"] = "strict"
+
+    # Use an in-memory db
+    app.config |= {
+        "SQLALCHEMY_ENGINES": {
+            "default": {"url": "sqlite:///:memory:", "pool_pre_ping": True},
+        },
+    }
+
+    # Create database connection object
+    db = SQLAlchemy(app)
+
+    # Define models
+    class Model(DeclarativeBase):
+        pass
+
+    # NOTE: call this PRIOR to declaring models
+    sqla.FsModels.set_db_info(base_model=Model)
+
+    class Role(Model, sqla.FsRoleMixin):
+        __tablename__ = "Role"
+        pass
+
+    class User(Model, sqla.FsUserMixin):
+        __tablename__ = "User"
+        pass
+
+    # Setup Flask-Security
+    user_datastore = FSQLALiteUserDatastore(db, User, Role)
+    app.security = Security(app, user_datastore)
+
+    # Views
+    @app.route("/")
+    @auth_required()
+    def home():
+        return render_template_string("Hello {{ current_user.email }}")
+
+    # one time setup
+    with app.app_context():
+        # Create User to test with
+        Model.metadata.create_all(db.engine)
         if not app.security.datastore.find_user(email="test@me.com"):
             app.security.datastore.create_user(email="test@me.com", password=hash_password("password"))
         db.session.commit()

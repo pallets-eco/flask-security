@@ -701,3 +701,51 @@ def test_permissions_41(request, app, realdburl):
     with app.app_context():
         r1 = ds.find_role("r1")
         assert r1.get_permissions() == {"read", "write"}
+
+
+def test_fsqlalite_table_name(app):
+    importorskip("flask_sqlalchemy_lite")
+    from flask_sqlalchemy_lite import SQLAlchemy
+    from sqlalchemy.orm import DeclarativeBase
+    from flask_security.models import sqla as sqla
+    from flask_security import FSQLALiteUserDatastore
+
+    app.config |= {
+        "SQLALCHEMY_ENGINES": {
+            "default": "sqlite:///:memory:",
+        },
+    }
+    db = SQLAlchemy(app)
+
+    class Model(DeclarativeBase):
+        pass
+
+    sqla.FsModels.set_db_info(
+        base_model=Model,
+        user_table_name="myuser",
+        role_table_name="myrole",
+        webauthn_table_name="mywebauthn",
+    )
+
+    class Role(Model, sqla.FsRoleMixin):
+        __tablename__ = "myrole"
+
+    class WebAuthn(Model, sqla.FsWebAuthnMixin):
+        __tablename__ = "mywebauthn"
+
+    class User(Model, sqla.FsUserMixin):
+        __tablename__ = "myuser"
+
+    with app.app_context():
+        Model.metadata.create_all(db.engine)
+
+    ds = FSQLALiteUserDatastore(db, User, Role, WebAuthn)
+    app.security = Security(app, datastore=ds)
+
+    with app.app_context():
+        ds.create_role(name="r1")
+        ds.create_user(email="me@lp.com", roles=["r1"])
+        ds.commit()
+        user = ds.find_user(email="me@lp.com")
+        assert user
+        Model.metadata.drop_all(db.engine)

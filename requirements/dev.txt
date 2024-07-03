@@ -7,7 +7,7 @@ psycopg2-binary
 pymysql
 pre-commit
 tox
-sqlalchemy[mypy]
+sqlalchemy
 types-requests
 
 # for dev - might not install Flask-Security - list those dependencies here

@@ -27,7 +27,6 @@ import os
 import typing as t
 
 from flask import Flask, flash, render_template_string, request, session
-from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 
 from flask_security import (
@@ -37,8 +36,8 @@ from flask_security import (
     auth_required,
     current_user,
     SQLAlchemyUserDatastore,
+    FSQLALiteUserDatastore,
 )
-from flask_security.models import fsqla_v3 as fsqla
 from flask_security.signals import (
     us_security_token_sent,
     tf_security_token_sent,
@@ -77,6 +76,76 @@ class FlashMailUtil(MailUtil):
 
 
 SET_LANG = False
+
+
+def fsqla_datastore(app):
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_security.models import fsqla_v3 as fsqla
+    from sqlalchemy_utils import database_exists, create_database
+
+    # Create database models and hook up.
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
+    db = SQLAlchemy(app)
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        pass
+
+    class WebAuthn(db.Model, fsqla.FsWebAuthnMixin):
+        pass
+
+    with app.app_context():
+        if not database_exists(db.engine.url):
+            create_database(db.engine.url)
+        db.create_all()
+    return SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
+
+
+def fsqla_lite_datastore(app):
+    from sqlalchemy.orm import DeclarativeBase
+    from flask_sqlalchemy_lite import SQLAlchemy
+    from flask_security.models import sqla as sqla
+    from sqlalchemy_utils import database_exists, create_database
+
+    # Create database models and hook up.
+    app.config.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
+
+    app.config |= {
+        "SQLALCHEMY_ENGINES": {
+            "default": {
+                "url": app.config["SQLALCHEMY_DATABASE_URI"],
+                "pool_pre_ping": True,
+            },
+        },
+    }
+    db = SQLAlchemy(app)
+
+    class Model(DeclarativeBase):
+        pass
+
+    sqla.FsModels.set_db_info(base_model=Model)
+
+    class Role(Model, sqla.FsRoleMixin):
+        __tablename__ = "role"
+        pass
+
+    class User(Model, sqla.FsUserMixin):
+        __tablename__ = "user"
+        pass
+
+    class WebAuthn(Model, sqla.FsWebAuthnMixin):
+        __tablename__ = "web_authn"  # N.B. this is name that Flask-SQLAlchemy gives.
+        pass
+
+    with app.app_context():
+        if not database_exists(db.engine.url):
+            create_database(db.engine.url)
+        Model.metadata.create_all(db.engine)
+    return FSQLALiteUserDatastore(db, User, Role, WebAuthn)
 
 
 def create_app():
@@ -160,23 +229,11 @@ def create_app():
             app.config[ev] = _find_bool(os.environ.get(ev))
 
     CSRFProtect(app)
-    # Create database models and hook up.
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
-    db = SQLAlchemy(app)
-    fsqla.FsModels.set_db_info(db)
-
-    class Role(db.Model, fsqla.FsRoleMixin):
-        pass
-
-    class User(db.Model, fsqla.FsUserMixin):
-        pass
-
-    class WebAuthn(db.Model, fsqla.FsWebAuthnMixin):
-        pass
 
     # Setup Flask-Security
-    user_datastore = SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
+    # user_datastore = fsqla_datastore(app)
+    user_datastore = fsqla_lite_datastore(app)
+
     app.security = Security(
         app,
         user_datastore,
@@ -289,7 +346,6 @@ if __name__ == "__main__":
     myapp = create_app()
 
     with myapp.app_context():
-        myapp.security.datastore.db.create_all()
         test_acct = "test@test.com"
         if not myapp.security.datastore.find_user(email=test_acct):
             add_user(myapp.security.datastore, test_acct, "password", ["admin"])

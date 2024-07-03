@@ -22,6 +22,7 @@ from .core import (
     current_user,
 )
 from .datastore import (
+    FSQLALiteUserDatastore,
     UserDatastore,
     SQLAlchemyUserDatastore,
     AsaList,

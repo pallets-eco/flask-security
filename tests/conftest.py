@@ -26,7 +26,13 @@ from flask import request as flask_request
 from flask_mailman import Mail
 from flask_wtf import CSRFProtect
 
+try:
+    from sqlalchemy.orm import Mapped
+except ImportError:
+    pass
+
 from flask_security import (
+    FSQLALiteUserDatastore,
     MongoEngineUserDatastore,
     PeeweeUserDatastore,
     PonyUserDatastore,
@@ -500,6 +506,63 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
 
 
 @pytest.fixture()
+def fsqlalite_datastore(request, app, tmpdir, realdburl):
+    return fsqlalite_setup(request, app, tmpdir, realdburl)
+
+
+def fsqlalite_setup(request, app, tmpdir, realdburl):
+    pytest.importorskip("flask_sqlalchemy_lite")
+    from flask_sqlalchemy_lite import SQLAlchemy
+    from sqlalchemy.orm import DeclarativeBase, mapped_column
+    from flask_security.models import sqla as sqla
+
+    if realdburl:
+        db_url, db_info = _setup_realdb(realdburl)
+    else:
+        db_url = "sqlite:///:memory:"
+    app.config |= {
+        "SQLALCHEMY_ENGINES": {
+            "default": {"url": db_url, "pool_pre_ping": True},
+        },
+    }
+    db = SQLAlchemy(app)
+
+    class Model(DeclarativeBase):
+        pass
+
+    sqla.FsModels.set_db_info(base_model=Model)
+
+    class Role(Model, sqla.FsRoleMixin):
+        __tablename__ = "role"
+
+    class WebAuthn(Model, sqla.FsWebAuthnMixin):
+        __tablename__ = "webauthn"
+
+    class User(Model, sqla.FsUserMixin):
+        __tablename__ = "user"
+        security_number: Mapped[t.Optional[int]] = mapped_column(  # type: ignore
+            unique=True
+        )
+
+        def get_security_payload(self) -> dict[str, t.Any]:
+            # Make sure we still properly hook up to flask's JSON extension
+            # which handles datetime
+            return {"email": str(self.email), "last_update": self.update_datetime}
+
+    with app.app_context():
+        Model.metadata.create_all(db.engine)
+
+    def tear_down():
+        with app.app_context():
+            Model.metadata.drop_all(db.engine)
+            if realdburl:
+                _teardown_realdb(db_info)
+
+    request.addfinalizer(tear_down)
+    return FSQLALiteUserDatastore(db, User, Role, WebAuthn)
+
+
+@pytest.fixture()
 def sqlalchemy_session_datastore(request, app, tmpdir, realdburl):
     return sqlalchemy_session_setup(request, app, tmpdir, realdburl)
 
@@ -877,6 +940,17 @@ def sqlalchemy_app(
 
 
 @pytest.fixture()
+def fsqlalite_app(
+    app: SecurityFixture, fsqlalite_datastore: FSQLALiteUserDatastore
+) -> t.Callable[[], SecurityFixture]:
+    def create() -> SecurityFixture:
+        app.security = Security(app, datastore=fsqlalite_datastore)
+        return app
+
+    return create
+
+
+@pytest.fixture()
 def sqlalchemy_session_app(app, sqlalchemy_session_datastore):
     def create():
         app.security = Security(app, datastore=sqlalchemy_session_datastore)
@@ -928,7 +1002,7 @@ def client_nc(request, sqlalchemy_app):
     return app.test_client(use_cookies=False)
 
 
-@pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo", "cl-peewee"])
+@pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo", "cl-peewee", "cl-fsqlalite"])
 def clients(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "cl-sqlalchemy":
         ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
@@ -941,6 +1015,9 @@ def clients(request, app, tmpdir, realdburl, realmongodburl):
     elif request.param == "cl-pony":
         # Not working yet.
         ds = pony_setup(request, app, tmpdir, realdburl)
+    elif request.param == "cl-fsqlalite":
+        ds = fsqlalite_setup(request, app, tmpdir, realdburl)
+
     app.security = Security(app, datastore=ds)
     populate_data(app)
     if request.param == "cl-peewee":
@@ -974,7 +1051,14 @@ def get_message_local(app):
 
 
 @pytest.fixture(
-    params=["sqlalchemy", "sqlalchemy-session", "mongoengine", "peewee", "pony"]
+    params=[
+        "sqlalchemy",
+        "sqlalchemy-session",
+        "mongoengine",
+        "peewee",
+        "pony",
+        "fsqlalite",
+    ]
 )
 def datastore(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "sqlalchemy":
@@ -987,6 +1071,8 @@ def datastore(request, app, tmpdir, realdburl, realmongodburl):
         rv = peewee_setup(request, app, tmpdir, realdburl)
     elif request.param == "pony":
         rv = pony_setup(request, app, tmpdir, realdburl)
+    elif request.param == "fsqlalite":
+        rv = fsqlalite_setup(request, app, tmpdir, realdburl)
     return rv
 
 

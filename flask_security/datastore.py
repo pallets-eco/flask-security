@@ -863,6 +863,111 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
         super().commit()
 
 
+class FSQLALiteUserDatastore(SQLAlchemyDatastore, UserDatastore):
+    """A UserDatastore implementation that assumes the use of
+    `Flask-SQLAlchemy-Lite <https://pypi.python.org/pypi/flask-sqlalchemy-lite/>`_
+    for datastore transactions.
+
+    :param db:
+    :param user_model: See :ref:`Models <models_topic>`.
+    :param role_model: See :ref:`Models <models_topic>`.
+    :param webauthn_model: See :ref:`Models <models_topic>`.
+    """
+
+    if t.TYPE_CHECKING:  # pragma: no cover
+        from flask_sqlalchemy_lite import SQLAlchemy
+
+    def __init__(
+        self,
+        db: SQLAlchemy,
+        user_model: t.Type[User],
+        role_model: t.Type[Role],
+        webauthn_model: t.Type[WebAuthn] | None = None,
+    ):
+        SQLAlchemyDatastore.__init__(self, db)
+        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
+
+    def find_user(self, case_insensitive: bool = False, **kwargs: t.Any) -> User | None:
+        from sqlalchemy import func, select
+        from sqlalchemy.orm import joinedload
+
+        attr, value = kwargs.popitem()  # only a single query attribute accepted
+        val = getattr(self.user_model, attr)
+        stmt = select(self.user_model)
+
+        if cv("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
+            stmt = stmt.options(joinedload(self.user_model.roles))  # type: ignore
+        if case_insensitive:
+            # While it is of course possible to pass in multiple keys to filter on
+            # that isn't the normal use case. If caller asks for case_insensitive
+            # AND gives multiple keys - throw an error.
+            if len(kwargs) > 0:
+                raise ValueError("Case insensitive option only supports single key")
+            stmt = stmt.where(
+                func.lower(val) == func.lower(value)  # type: ignore[arg-type]
+            )
+        else:
+            stmt = stmt.where(val == value)  # type: ignore[arg-type]
+        return self.db.session.scalar(stmt)
+
+    def find_role(self, role: str) -> Role | None:
+        from sqlalchemy import select
+
+        return self.db.session.scalar(
+            select(self.role_model).where(self.role_model.name == role)  # type: ignore
+        )
+
+    def find_webauthn(self, credential_id: bytes) -> WebAuthn | None:
+        from sqlalchemy import select
+
+        if not self.webauthn_model:  # pragma: no cover
+            raise NotImplementedError
+
+        return self.db.session.scalar(
+            select(self.webauthn_model).where(
+                self.webauthn_model.credential_id == credential_id  # type: ignore
+            )
+        )
+
+    def create_webauthn(
+        self,
+        user: User,
+        credential_id: bytes,
+        public_key: bytes,
+        name: str,
+        sign_count: int,
+        usage: str,
+        device_type: str,
+        backup_state: bool,
+        transports: list[str] | None = None,
+        extensions: str | None = None,
+        **kwargs: t.Any,
+    ) -> None:
+        from .proxies import _security
+
+        if (
+            not hasattr(self, "webauthn_model") or not self.webauthn_model
+        ):  # pragma: no cover
+            raise NotImplementedError
+
+        webauthn = self.webauthn_model(
+            credential_id=credential_id,
+            public_key=public_key,
+            name=name,
+            sign_count=sign_count,
+            usage=usage,
+            device_type=device_type,
+            backup_state=backup_state,
+            transports=transports,
+            extensions=extensions,
+            lastuse_datetime=_security.datetime_factory(),
+            **kwargs,
+        )
+        user.webauthn.append(webauthn)
+        self.put(webauthn)
+        self.put(user)
+
+
 class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
     """A UserDatastore implementation that assumes the
     use of
