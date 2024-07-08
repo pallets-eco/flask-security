@@ -446,10 +446,17 @@ Core - Passwords and Tokens
     List of algorithms used for encrypting/hashing sensitive data within a token
     (Such as is sent with confirmation or reset password).
 
+    Read the note below before removing the `hex_md5`.
+
     Default: ``["sha256_crypt", "hex_md5"]``.
+
 .. py:data:: SECURITY_DEPRECATED_HASHING_SCHEMES
 
-    List of deprecated algorithms used for creating and validating tokens.
+    List of algorithms considered "deprecated" by the `passlib.context`.
+
+    `["auto"]` deprecates all supported schemes except of the default one.
+
+    Must be changed to `["auto"]` or empty list `[]` if you remove `hex_md5` from the `SECURITY_HASHING_SCHEMES`.
 
     Default: ``["hex_md5"]``.
 
