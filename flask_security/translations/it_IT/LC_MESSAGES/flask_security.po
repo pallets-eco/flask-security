@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 5.4.1\n"
+"Project-Id-Version: Flask-Security 5.4.3\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2024-06-17 20:54-0700\n"
-"PO-Revision-Date: 2024-02-27 13:54+0100\n"
+"PO-Revision-Date: 2024-07-08 15:04+0200\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: it_IT\n"
 "Language-Team: \n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: flask_security/core.py:235
 msgid "Confirm your new email address"
-msgstr ""
+msgstr "Conferma il tuo nuovo indirizzo email"
 
 #: flask_security/core.py:281
 msgid "Login Required"
@@ -462,10 +462,12 @@ msgstr "La credenziale dell'utente non corrisponde"
 #, python-format
 msgid "Confirmation must be completed within %(within)s. Please start over."
 msgstr ""
+"La conferma deve essere completata entro %(within)s. Per favore "
+"ricomincia."
 
 #: flask_security/core.py:633
 msgid "Change of email address confirmed"
-msgstr ""
+msgstr "Cambio di indirizzo email confermato"
 
 #: flask_security/core.py:637
 #, python-format
@@ -473,6 +475,8 @@ msgid ""
 "Instructions to confirm your new email address have been sent to "
 "%(email)s."
 msgstr ""
+"Le istruzioni per confermare il tuo nuovo indirizzo email sono state "
+"inviate a %(email)s."
 
 #: flask_security/forms.py:62
 msgid "Email Address"
@@ -715,7 +719,7 @@ msgstr "Esci"
 
 #: flask_security/templates/security/_menu.html:17
 msgid "Change Registered Email"
-msgstr ""
+msgstr "Cambia email registrata"
 
 #: flask_security/templates/security/_menu.html:22
 msgid "Two Factor Setup"
@@ -743,13 +747,13 @@ msgstr "Conferma account"
 
 #: flask_security/templates/security/change_email.html:6
 msgid "Change email"
-msgstr ""
+msgstr "Cambia email"
 
 #: flask_security/templates/security/change_email.html:7
 msgid ""
 "Once submitted, an email confirmation will be sent to this new email "
 "address."
-msgstr ""
+msgstr "Un messaggio di conferma sarà mandato a questo nuovo indirizzo email."
 
 #: flask_security/templates/security/change_password.html:6
 msgid "Change password"
@@ -975,27 +979,27 @@ msgstr ""
 
 #: flask_security/templates/security/email/change_email_instructions.html:8
 msgid "Please confirm your new email address by clicking on the link below:"
-msgstr ""
+msgstr "Conferma il tuo nuovo indirizzo email tramite il link sottostante:"
 
 #: flask_security/templates/security/email/change_email_instructions.html:10
 msgid "Confirm my new email"
-msgstr ""
+msgstr "Conferma la mia nuova email"
 
 #: flask_security/templates/security/email/change_email_instructions.html:12
 #: flask_security/templates/security/email/change_email_instructions.txt:11
 #, python-format
 msgid "This link will expire in %(within)s."
-msgstr ""
+msgstr "Questo link scadrá entro %(within)s."
 
 #: flask_security/templates/security/email/change_email_instructions.html:13
 #: flask_security/templates/security/email/change_email_instructions.txt:13
 #, python-format
 msgid "Your currently registered email is %(email)s."
-msgstr ""
+msgstr "La tua email registrata attualmente è %(email)s."
 
 #: flask_security/templates/security/email/change_email_instructions.txt:8
 msgid "Please confirm your new email through the link below:"
-msgstr ""
+msgstr "Conferma la tua nuova email tramite il link sottostante:"
 
 #: flask_security/templates/security/email/change_notice.html:1
 #: flask_security/templates/security/email/change_notice.txt:1
