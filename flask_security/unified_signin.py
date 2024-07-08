@@ -765,7 +765,9 @@ def us_setup() -> ResponseValue:
     setup_methods = _compute_setup_methods()
     active_methods = _compute_active_methods(current_user)
     form.chosen_method.choices = [
-        c for c in form.setup_choices if c[0] not in active_methods
+        c
+        for c in form.setup_choices
+        if c[0] not in active_methods and c[0] in setup_methods
     ]
     form.delete_method.choices = [
         c for c in form.delete_choices if c[0] in active_methods
@@ -803,7 +805,9 @@ def us_setup() -> ResponseValue:
                 "US_CURRENT_METHODS", method_list=current_methods
             )[0]
             form.chosen_method.choices = [
-                c for c in form.setup_choices if c[0] not in active_methods
+                c
+                for c in form.setup_choices
+                if c[0] not in active_methods and c[0] in setup_methods
             ]
             form.delete_method.choices = [
                 c for c in form.delete_choices if c[0] in active_methods
@@ -900,6 +904,10 @@ def us_setup() -> ResponseValue:
             **_security._run_ctx_processor("us_setup"),
         )
 
+    phone_number = None
+    if "sms" in cv("US_ENABLED_METHODS"):
+        phone_number = current_user.us_phone_number
+
     # Get here on initial new setup (GET)
     # Or failure of POST
     if _security._want_json(request):
@@ -908,12 +916,12 @@ def us_setup() -> ResponseValue:
             "available_methods": cv("US_ENABLED_METHODS"),
             "active_methods": active_methods,
             "setup_methods": setup_methods,
-            "phone": current_user.us_phone_number,
+            "phone": phone_number,
         }
         return base_render_json(form, include_user=False, additional=payload)
 
     # Show user existing phone number
-    form.phone.data = current_user.us_phone_number
+    form.phone.data = phone_number
     form.chosen_method.data = None
     form.delete_method.data = None
     return _security.render_template(
@@ -970,12 +978,13 @@ def us_setup_validate(token: str) -> ResponseValue:
             delete=False,
         )
         if _security._want_json(request):
+            phone_number = None
+            if "sms" in cv("US_ENABLED_METHODS"):
+                phone_number = current_user.us_phone_number
             return base_render_json(
                 form,
                 include_user=False,
-                additional=dict(
-                    chosen_method=method, phone=current_user.us_phone_number
-                ),
+                additional=dict(chosen_method=method, phone=phone_number),
             )
         else:
             do_flash(*get_message("US_SETUP_SUCCESSFUL"))

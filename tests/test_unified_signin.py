@@ -2307,3 +2307,75 @@ def test_csrf_2fa_us_cookie(app, client):
     )
     assert response.status_code == 200
     assert response.json["label"] == "label"
+
+
+@pytest.mark.settings(us_enabled_methods=["password", "email"])
+def test_us_setup_email(app, client, get_message):
+    set_email(app)
+    us_authenticate(client)
+    chosen_methods_choices = []
+
+    def recorder(template, us_setup_form, **kwargs):
+        chosen_methods_choices.extend(us_setup_form.chosen_method.choices)
+        return "ok"
+
+    app.security.render_template = recorder
+
+    client.get("/us-setup")
+
+    assert len(chosen_methods_choices) == 0
+
+
+@pytest.mark.settings(us_enabled_methods=["email", "authenticator"])
+def test_us_setup_authenticator(app, client, get_message):
+    set_email(app)
+    us_authenticate(client)
+    chosen_methods_choices = []
+
+    def recorder(template, us_setup_form, **kwargs):
+        chosen_methods_choices.extend(us_setup_form.chosen_method.choices)
+        return "ok"
+
+    app.security.render_template = recorder
+
+    client.get("/us-setup")
+
+    assert len(chosen_methods_choices) == 1
+    assert chosen_methods_choices[0][0] == "authenticator"
+
+
+@pytest.mark.settings(us_enabled_methods=["email", "sms"])
+def test_us_setup_sms(app, client, get_message):
+    set_email(app)
+    us_authenticate(client)
+    chosen_methods_choices = []
+
+    def recorder(template, us_setup_form, **kwargs):
+        chosen_methods_choices.extend(us_setup_form.chosen_method.choices)
+        return "ok"
+
+    app.security.render_template = recorder
+
+    client.get("/us-setup")
+
+    assert len(chosen_methods_choices) == 1
+    assert chosen_methods_choices[0][0] == "sms"
+
+
+@pytest.mark.settings(us_enabled_methods=["email", "sms", "authenticator"])
+def test_us_setup_authenticator_sms(app, client, get_message):
+    set_email(app)
+    us_authenticate(client)
+    chosen_methods_choices = []
+
+    def recorder(template, us_setup_form, **kwargs):
+        chosen_methods_choices.extend(us_setup_form.chosen_method.choices)
+        return "ok"
+
+    app.security.render_template = recorder
+
+    client.get("/us-setup")
+
+    assert len(chosen_methods_choices) == 2
+    assert chosen_methods_choices[0][0] == "authenticator"
+    assert chosen_methods_choices[1][0] == "sms"
