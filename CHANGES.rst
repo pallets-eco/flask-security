@@ -14,20 +14,24 @@ Features & Improvements
 - (:issue:`944`) Change default password hash to argon2 (was bcrypt). See below for details.
 - (:pr:`990`) Add freshness capability to auth tokens (enables /us-setup to function w/ just auth tokens).
 - (:pr:`991`) Add support /tf-setup to not require sessions (use a state token).
-- (:issue:`xxx`) Add support for Flask-SQLAlchemy-Lite - including new all-inclusive models
-  that confirm to sqlalchemy latest best-practice (type-annotated).
+- (:issue:`994`) Add support for Flask-SQLAlchemy-Lite - including new all-inclusive models
+  that conform to sqlalchemy latest best-practice (type-annotated).
+- (:pr:`xxx`) Convert other sqlalchemy-based datastores from legacy 'model.query' to best-practice 'select'
 
 Fixes
 +++++
 - (:pr:`972`) Set :py:data:`SECURITY_CSRF_COOKIE` at beginning (GET /login) of authentication
   ritual - just as we return the CSRF token. (thanks @e-goto)
 - (:issue:`973`) login and unified sign in should handle GET for authenticated user consistently.
+- (:pr:`995`) Don't show sms options if not defined in US_ENABLED_METHODS. (fredipevcin)
 
 Docs and Chores
 +++++++++++++++
 - (:pr:`979`) Update Russian translations (ademaro)
-- (:pr:`981` and :pr:`956`) Improve docs
-- (:pr:`xx`) The long deprecated `get_token_status` is no longer exported
+- (:pr:`1004`) Update ES and IT translations (gissimo)
+- (:pr:`981` and :pr:`977`) Improve docs
+- (:pr:`992`) The long deprecated `get_token_status` is no longer exported
+- (:pr:`992`) Drop Python 3.8 support.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -38,6 +42,10 @@ Backwards Compatibility Concerns
 - Changes to /tf-setup
     The old path - using state set in the session still works as before. The new path is
     just for the case an authenticated user wants to change their 2FA setup.
+- Changes to sqlalchemy-based datastores
+    Flask-Security no longer uses the legacy model.query - all DB access is done via
+    `select(xx).where(xx)`. As a result the find_user() method now only takes a SINGLE
+    column:value from its kwargs - in prior releases all kwargs were passed into the query.filter.
 
 Version 5.4.3
 -------------

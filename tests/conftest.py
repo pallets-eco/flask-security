@@ -16,6 +16,7 @@ import tempfile
 import time
 import typing as t
 from datetime import datetime
+import sys
 from urllib.parse import urlsplit
 
 from passlib.ifc import PasswordHash
@@ -46,7 +47,6 @@ from flask_security import (
     auth_token_required,
     http_auth_required,
     get_request_attr,
-    naive_utcnow,
     roles_accepted,
     roles_required,
     permissions_accepted,
@@ -564,6 +564,8 @@ def fsqlalite_setup(request, app, tmpdir, realdburl):
 
 @pytest.fixture()
 def sqlalchemy_session_datastore(request, app, tmpdir, realdburl):
+    if sys.version_info < (3, 10):
+        pytest.skip("requires python3.10 or higher")
     return sqlalchemy_session_setup(request, app, tmpdir, realdburl)
 
 
@@ -574,78 +576,48 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
     pytest.importorskip("sqlalchemy")
     from sqlalchemy import create_engine
     from sqlalchemy.orm import (
+        mapped_column,
         scoped_session,
         sessionmaker,
-        relationship,
-        backref,
         declarative_base,
     )
     from sqlalchemy.ext.declarative import declared_attr
-    from sqlalchemy.ext.mutable import MutableList
-    from sqlalchemy.sql import func
     from sqlalchemy import (
-        Boolean,
-        DateTime,
         Column,
         Integer,
-        LargeBinary,
-        String,
-        Text,
         ForeignKey,
     )
-    from flask_security import AsaList
+    from flask_security.models import sqla as sqla
 
-    f, path = tempfile.mkstemp(
-        prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)
-    )
+    if realdburl:
+        db_url, db_info = _setup_realdb(realdburl)
+        engine = db_info["engine"]
+    else:
+        db_url = "sqlite:///:memory:"
+        engine = create_engine(db_url, **engine_kwargs)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + path
-
-    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], **engine_kwargs)
     db_session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine)
     )
     app.teardown_appcontext(lambda exc: db_session.close())
     Base = declarative_base()
-    Base.query = db_session.query_property()
+    # Note that in this case we don't call set_db_info since we are using
+    # normal table names AND we need our own RolesUsers table since we modified the
+    # PK names.
 
-    class WebAuthn(Base, WebAuthnMixin):
+    class WebAuthn(Base, sqla.FsWebAuthnMixin):
         __tablename__ = "webauthn"
 
-        id = Column(Integer, primary_key=True)
-        credential_id = Column(
-            LargeBinary(1024), index=True, unique=True, nullable=False
-        )
-        public_key = Column(LargeBinary, nullable=False)
-        sign_count = Column(Integer, default=0)
-        transports = Column(MutableList.as_mutable(AsaList()), nullable=True)
-
-        # a JSON string as returned from registration
-        extensions = Column(String(255), nullable=True)
-        create_datetime = Column(
-            type_=DateTime, nullable=False, server_default=func.now()
-        )
-        lastuse_datetime = Column(type_=DateTime, nullable=False)
-        # name is provided by user - we make sure is unique per user
-        name = Column(String(64), nullable=False)
-        usage = Column(String(64), nullable=False)
-        backup_state = Column(Boolean, nullable=False)  # Upcoming post V3 spec
-        device_type = Column(String(64), nullable=False)
-
         @declared_attr
-        def myuser_id(cls):
-            return Column(
-                Integer,
-                ForeignKey("user.myuserid", ondelete="CASCADE"),
-                nullable=False,
-            )
+        def user_id(self) -> Mapped[int]:
+            return mapped_column(ForeignKey("user.myuserid", ondelete="CASCADE"))
 
         def get_user_mapping(self) -> dict[str, t.Any]:
             """
             Return the filter needed by find_user() to get the user
             associated with this webauthn credential.
             """
-            return dict(myuserid=self.myuser_id)
+            return dict(myuserid=self.user_id)
 
     class RolesUsers(Base):
         __tablename__ = "roles_users"
@@ -653,56 +625,18 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
         user_id = Column("user_id", Integer(), ForeignKey("user.myuserid"))
         role_id = Column("role_id", Integer(), ForeignKey("role.myroleid"))
 
-    class Role(Base, RoleMixin):
+    class Role(Base, sqla.FsRoleMixin):
         __tablename__ = "role"
-        myroleid = Column(Integer(), primary_key=True)
-        name = Column(String(80), unique=True)
-        description = Column(String(255))
-        permissions = Column(MutableList.as_mutable(AsaList()), nullable=True)
-        update_datetime = Column(
-            DateTime,
-            nullable=False,
-            server_default=func.now(),
-            onupdate=naive_utcnow,
-        )
+        myroleid: Mapped[int] = mapped_column(primary_key=True)  # type: ignore
+        id: Mapped[int] = mapped_column(nullable=True)  # type: ignore
 
-    class User(Base, UserMixin):
+    class User(Base, sqla.FsUserMixin):
         __tablename__ = "user"
-        myuserid = Column(Integer, primary_key=True)
-        fs_uniquifier = Column(String(64), unique=True, nullable=False)
-        fs_webauthn_user_handle = Column(String(64), unique=True, nullable=True)
-        email = Column(String(255), unique=True)
-        username = Column(String(255), unique=True, nullable=True)
-        password = Column(String(255))
-        security_number = Column(Integer, unique=True)
-        last_login_at = Column(DateTime())
-        current_login_at = Column(DateTime())
-        tf_primary_method = Column(String(255), nullable=True)
-        tf_totp_secret = Column(String(255), nullable=True)
-        tf_phone_number = Column(String(255), nullable=True)
-        mf_recovery_codes = Column(MutableList.as_mutable(AsaList()), nullable=True)
-        us_totp_secrets = Column(Text, nullable=True)
-        us_phone_number = Column(String(64), nullable=True, unique=True)
-        last_login_ip = Column(String(100))
-        current_login_ip = Column(String(100))
-        login_count = Column(Integer)
-        active = Column(Boolean())
-        confirmed_at = Column(DateTime())
-        roles = relationship(
-            "Role",
-            secondary="roles_users",
-            backref=backref("users", lazy="dynamic", cascade_backrefs=False),
+        myuserid: Mapped[int] = mapped_column(primary_key=True)  # type: ignore
+        id: Mapped[int] = mapped_column(nullable=True)  # type: ignore
+        security_number: Mapped[t.Optional[int]] = mapped_column(  # type: ignore
+            unique=True
         )
-        update_datetime = Column(
-            DateTime,
-            nullable=False,
-            server_default=func.now(),
-            onupdate=naive_utcnow,
-        )
-
-        @declared_attr
-        def webauthn(cls):
-            return relationship("WebAuthn", backref="users", cascade="all, delete")
 
         def get_security_payload(self):
             # Make sure we still properly hook up to flask's JSON extension
@@ -713,9 +647,10 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
         Base.metadata.create_all(bind=engine)
 
     def tear_down():
-        db_session.close()
-        os.close(f)
-        os.remove(path)
+        with app.app_context():
+            Base.metadata.drop_all(bind=engine)
+            if realdburl:
+                _teardown_realdb(db_info)
 
     request.addfinalizer(tear_down)
 
@@ -1002,11 +937,21 @@ def client_nc(request, sqlalchemy_app):
     return app.test_client(use_cookies=False)
 
 
-@pytest.fixture(params=["cl-sqlalchemy", "c2", "cl-mongo", "cl-peewee", "cl-fsqlalite"])
+@pytest.fixture(
+    params=[
+        "cl-fsqlalchemy",
+        "cl-sqla-session",
+        "cl-mongo",
+        "cl-peewee",
+        "cl-fsqlalite",
+    ]
+)
 def clients(request, app, tmpdir, realdburl, realmongodburl):
-    if request.param == "cl-sqlalchemy":
+    if request.param == "cl-fsqlalchemy":
         ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
-    elif request.param == "c2":
+    elif request.param == "cl-sqla-session":
+        if sys.version_info < (3, 10):
+            pytest.skip("requires python3.10 or higher")
         ds = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
     elif request.param == "cl-mongo":
         ds = mongoengine_setup(request, app, tmpdir, realmongodburl)
@@ -1064,6 +1009,8 @@ def datastore(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "sqlalchemy":
         rv = sqlalchemy_setup(request, app, tmpdir, realdburl)
     elif request.param == "sqlalchemy-session":
+        if sys.version_info < (3, 10):
+            pytest.skip("requires python3.10 or higher")
         rv = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
     elif request.param == "mongoengine":
         rv = mongoengine_setup(request, app, tmpdir, realmongodburl)

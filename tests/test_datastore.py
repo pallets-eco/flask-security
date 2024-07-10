@@ -9,8 +9,9 @@
     :license: MIT, see LICENSE for more details.
 """
 
+import pytest
 from pytest import raises, skip, importorskip
-from tests.test_utils import init_app_with_options, get_num_queries, is_sqlalchemy
+from tests.test_utils import init_app_with_options, capture_queries
 
 from flask_security import (
     RoleMixin,
@@ -97,31 +98,42 @@ def test_activate_returns_false_if_already_true():
     assert not datastore.activate_user(user)
 
 
-def test_find_user(app, datastore):
-    init_app_with_options(app, datastore)
+@pytest.mark.parametrize(
+    "ds",
+    ["sqlalchemy_datastore", "fsqlalite_datastore", "sqlalchemy_session_datastore"],
+)
+def test_find_user(request, app, ds):
+    ds = request.getfixturevalue(ds)
+    init_app_with_options(app, ds)
 
     with app.app_context():
-        user_id = datastore.find_user(email="gene@lp.com").fs_uniquifier
+        user_id = ds.find_user(email="gene@lp.com").fs_uniquifier
 
-        current_nqueries = get_num_queries(datastore)
-        assert user_id == datastore.find_user(security_number=889900).fs_uniquifier
-        end_nqueries = get_num_queries(datastore)
-        if current_nqueries is not None:
-            if is_sqlalchemy(datastore):
-                # This should have done just 1 query across all attrs.
-                assert end_nqueries == (current_nqueries + 1)
+        with capture_queries(ds) as queries:
+            assert user_id == ds.find_user(security_number=889900).fs_uniquifier
+        assert len(queries) == 1
+        assert queries[0].is_select
 
-        assert user_id == datastore.find_user(username="gene").fs_uniquifier
+        assert user_id == ds.find_user(username="gene").fs_uniquifier
 
 
-def test_find_user_multikey(app, datastore):
-    init_app_with_options(app, datastore)
+@pytest.mark.parametrize(
+    "ds",
+    ["sqlalchemy_datastore", "fsqlalite_datastore", "sqlalchemy_session_datastore"],
+)
+@pytest.mark.settings(join_user_roles=False)
+def test_find_user_no_joined_load(request, app, ds):
+    ds = request.getfixturevalue(ds)
+    init_app_with_options(app, ds)
 
     with app.app_context():
-        with raises(ValueError):
-            datastore.find_user(
-                case_insensitive=True, email="gene@lp.com", security_number=889900
-            )
+        with capture_queries(ds) as queries:
+            user = ds.find_user(security_number=889900)
+            assert len(user.roles) == 1
+        assert len(queries) == 2
+        assert queries[0].is_select
+        assert queries[0].statement.column_descriptions[0]["name"] == "User"
+        assert queries[1].statement.column_descriptions[0]["name"] == "Role"
 
 
 def test_find_role(app, datastore):
@@ -151,23 +163,25 @@ def test_add_role_to_user(app, datastore):
         assert datastore.remove_role_from_user(user, "editor") is False
 
 
-def test_create_user_with_roles(app, datastore):
-    init_app_with_options(app, datastore)
+@pytest.mark.parametrize(
+    "ds",
+    ["sqlalchemy_datastore", "fsqlalite_datastore", "sqlalchemy_session_datastore"],
+)
+def test_create_user_with_roles(request, app, ds):
+    ds = request.getfixturevalue(ds)
+    init_app_with_options(app, ds)
 
     with app.app_context():
-        role = datastore.find_role("admin")
-        datastore.commit()
-
-        user = datastore.create_user(
+        role = ds.find_role("admin")
+        user = ds.create_user(
             email="dude@lp.com", username="dude", password="password", roles=[role]
         )
-        datastore.commit()
-        current_nqueries = get_num_queries(datastore)
-        user = datastore.find_user(email="dude@lp.com")
-        assert user.has_role("admin") is True
-        end_nqueries = get_num_queries(datastore)
-        # Verify that getting user and role is just one DB query
-        assert current_nqueries is None or end_nqueries == (current_nqueries + 1)
+        ds.commit()
+        with capture_queries(ds) as queries:
+            user = ds.find_user(email="dude@lp.com")
+            assert user.has_role("admin") is True
+        assert len(queries) == 1
+        assert queries[0].is_select
 
 
 def test_create_user_no_side_effects(app, datastore):

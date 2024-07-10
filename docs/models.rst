@@ -52,6 +52,9 @@ Your application code should import just the required version e.g.::
 A single method ``sqla.FsModels.set_db_info`` is provided to glue the supplied mixins to your
 models. This is only needed if you use the packaged models.
 
+.. note::
+    This model requires Python >= 3.10.
+
 Model Specification
 -------------------
 
@@ -61,7 +64,7 @@ foreign relationship between `User` and `Role`. The `WebAuthn` model also
 references this primary key (which can be overridden by providing a
 suitable implementation of :py:meth:`flask_security.WebAuthnMixin.get_user_mapping`).
 
-At the bare minimum your `User` and `Role` model should include the following fields:
+At the bare minimum your `User` and `Role` model must include the following fields:
 
 **User**
 

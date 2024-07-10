@@ -11,9 +11,13 @@ There are some complete (but simple) examples available in the *examples* direct
     and will need to be added to your requirements.txt (or equivalent) file.
     Flask-Security does some configuration validation and will output error messages to the console
     for some missing packages.
+.. note::
+    The sqlalchemy based quickstarts all use the pre-packaged models - because, well, that's
+    the quickest and easiest way to get started. There is NO REQUIREMENT that your application
+    use these - as long as the required fields are in your models.
 
 .. note::
-    The default :data:`SECURITY_PASSWORD_HASH` is "argon2" - so be sure to install `argon_cffi`_.
+    The default :data:`SECURITY_PASSWORD_HASH` is "argon2" - so be sure to install `argon2_cffi`_.
     If you opt for a different hash e.g. "bcrypt" you will need to install the appropriate package.
 .. danger::
    The examples below place secrets in source files. Never do this for your application
@@ -21,7 +25,7 @@ There are some complete (but simple) examples available in the *examples* direct
    securely will depend on your deployment model - however in most cases (e.g. docker, lambda)
    using environment variables will be the easiest.
 
-.. _argon_cffi: https://pypi.org/project/argon2-cffi/
+.. _argon2_cffi: https://pypi.org/project/argon2-cffi/
 
 * :ref:`basic-flask-sqlalchemy-application`
 * :ref:`basic-flask-sqlalchemy-lite-application`
@@ -234,7 +238,7 @@ Basic SQLAlchemy Application with session
 SQLAlchemy Install requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+This requires python >= 3.10::
 
      $ python3 -m venv pymyenv
      $ . pymyenv/bin/activate
@@ -312,13 +316,17 @@ and models.py.
     from sqlalchemy import create_engine
     from sqlalchemy.orm import scoped_session, sessionmaker
     from sqlalchemy.ext.declarative import declarative_base
+    from flask_security.models import sqla
 
     engine = create_engine('sqlite:////tmp/test.db')
     db_session = scoped_session(sessionmaker(autocommit=False,
                                              autoflush=False,
                                              bind=engine))
     Base = declarative_base()
-    Base.query = db_session.query_property()
+    # This creates the RolesUser table and is where
+    # you would pass in non-standard tables names.
+    sqla.FsModels.set_db_info(base_model=Base)
+
 
     def init_db():
         # import all modules here that might define models so that
@@ -330,41 +338,13 @@ and models.py.
 - models.py ::
 
     from database import Base
-    from flask_security import UserMixin, RoleMixin, AsaList
-    from sqlalchemy.orm import relationship, backref
-    from sqlalchemy.ext.mutable import MutableList
-    from sqlalchemy import Boolean, DateTime, Column, Integer, \
-                        String, ForeignKey
+    from flask_security.models import sqla as sqla
 
-    class RolesUsers(Base):
-        __tablename__ = 'roles_users'
-        id = Column(Integer(), primary_key=True)
-        user_id = Column('user_id', Integer(), ForeignKey('user.id'))
-        role_id = Column('role_id', Integer(), ForeignKey('role.id'))
-
-    class Role(Base, RoleMixin):
+    class Role(Base, sqla.FsRoleMixin):
         __tablename__ = 'role'
-        id = Column(Integer(), primary_key=True)
-        name = Column(String(80), unique=True)
-        description = Column(String(255))
-        permissions = Column(MutableList.as_mutable(AsaList()), nullable=True)
 
-    class User(Base, UserMixin):
+    class User(Base, sqla.FsUserMixin):
         __tablename__ = 'user'
-        id = Column(Integer, primary_key=True)
-        email = Column(String(255), unique=True)
-        username = Column(String(255), unique=True, nullable=True)
-        password = Column(String(255), nullable=False)
-        last_login_at = Column(DateTime())
-        current_login_at = Column(DateTime())
-        last_login_ip = Column(String(100))
-        current_login_ip = Column(String(100))
-        login_count = Column(Integer)
-        active = Column(Boolean())
-        fs_uniquifier = Column(String(64), unique=True, nullable=False)
-        confirmed_at = Column(DateTime())
-        roles = relationship('Role', secondary='roles_users',
-                             backref=backref('users', lazy='dynamic'))
 
 You can run this either with::
 
