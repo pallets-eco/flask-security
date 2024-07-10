@@ -18,10 +18,6 @@ from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
 
 from flask_security import Security, SmsSenderBaseClass, SmsSenderFactory, UserMixin
-from flask_security.datastore import (
-    SQLAlchemyUserDatastore,
-    SQLAlchemySessionUserDatastore,
-)
 from flask_security.signals import (
     login_instructions_sent,
     reset_password_instructions_sent,
@@ -295,21 +291,17 @@ def init_app_with_options(app, datastore, **options):
     populate_data(app)
 
 
-def get_num_queries(datastore):
-    """Return # of queries executed during test.
-    return None if datastore doesn't support this.
-    """
-    if is_sqlalchemy(datastore):
-        from flask_sqlalchemy.record_queries import get_recorded_queries
+@contextmanager
+def capture_queries(datastore):
+    from sqlalchemy import event
 
-        return len(get_recorded_queries())
-    return None
+    queries = []
 
+    @event.listens_for(datastore.db.session, "do_orm_execute")
+    def _do_orm_execute(orm_execute_state):
+        queries.append(orm_execute_state)
 
-def is_sqlalchemy(datastore):
-    return isinstance(datastore, SQLAlchemyUserDatastore) and not isinstance(
-        datastore, SQLAlchemySessionUserDatastore
-    )
+    yield queries
 
 
 class SmsTestSender(SmsSenderBaseClass):

@@ -24,11 +24,11 @@ from freezegun import freeze_time
 from tests.test_utils import (
     authenticate,
     capture_flashes,
+    capture_queries,
     check_location,
     get_auth_token_version_3x,
     get_form_action,
     get_form_input,
-    get_num_queries,
     hash_password,
     init_app_with_options,
     is_authenticated,
@@ -1182,18 +1182,16 @@ def test_null_token_uniquifier(app):
 def test_token_query(app, client_nc):
     # Verify that when authenticating with auth token (and not session)
     # that there is just one DB query to get user.
-    with app.app_context():
+    with capture_queries(app.security.datastore) as queries:
         response = json_authenticate(client_nc)
+        assert len(queries) == 1
         token = response.json["response"]["user"]["authentication_token"]
-        assert get_num_queries(app.security.datastore) == 1
-
-    with app.app_context():
         response = client_nc.get(
             "/token",
             headers={"Content-Type": "application/json", "Authentication-Token": token},
         )
         assert response.status_code == 200
-        assert get_num_queries(app.security.datastore) == 1
+    assert len(queries) == 2
 
 
 def test_session_query(in_app_context):
@@ -1208,15 +1206,13 @@ def test_session_query(in_app_context):
 
     response = json_authenticate(myclient)
     token = response.json["response"]["user"]["authentication_token"]
-    current_nqueries = get_num_queries(myapp.security.datastore)
-
-    response = myclient.get(
-        "/token",
-        headers={"Content-Type": "application/json", "Authentication-Token": token},
-    )
-    assert response.status_code == 200
-    end_nqueries = get_num_queries(myapp.security.datastore)
-    assert current_nqueries is None or end_nqueries == (current_nqueries + 2)
+    with capture_queries(myapp.security.datastore) as queries:
+        response = myclient.get(
+            "/token",
+            headers={"Content-Type": "application/json", "Authentication-Token": token},
+        )
+        assert response.status_code == 200
+    assert len(queries) == 2
 
 
 @pytest.mark.changeable()

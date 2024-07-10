@@ -65,6 +65,9 @@ Datastores
 .. autoclass:: flask_security.SQLAlchemyUserDatastore
     :show-inheritance:
 
+.. autoclass:: flask_security.FSQLALiteUserDatastore
+    :show-inheritance:
+
 .. autoclass:: flask_security.SQLAlchemySessionUserDatastore
     :show-inheritance:
 
@@ -111,6 +114,8 @@ Datastores
 Packaged Models
 ---------------
 .. autoclass:: flask_security.models.fsqla.FsModels
+   :members:
+.. autoclass:: flask_security.models.sqla.FsModels
    :members:
 
 Utils

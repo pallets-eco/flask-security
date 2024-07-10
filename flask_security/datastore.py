@@ -21,6 +21,7 @@ from .utils import config_value as cv
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask_sqlalchemy
+    import flask_sqlalchemy_lite
     import mongoengine
     import sqlalchemy.orm.scoping
 
@@ -223,10 +224,11 @@ class UserDatastore:
 
         return kwargs
 
-    def find_user(self, **kwargs: t.Any) -> User | None:
+    def find_user(self, case_insensitive: bool = False, **kwargs: t.Any) -> User | None:
         """Returns a user matching the provided parameters.
-        Besides keyword arguments used to filter the results,
-        'case_insensitive' can be passed (defaults to False)
+        A single kwarg will be poped and used to filter results. This should
+        be a unique/primary key in the User model since only a single result is
+        returned.
         """
         raise NotImplementedError
 
@@ -760,35 +762,41 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         UserDatastore.__init__(self, user_model, role_model, webauthn_model)
 
     def find_user(self, case_insensitive: bool = False, **kwargs: t.Any) -> User | None:
-        from sqlalchemy import func as alchemyFn
+        from sqlalchemy import func, select
+        from sqlalchemy.orm import joinedload
 
-        query = self.user_model.query
+        attr, value = kwargs.popitem()  # only a single query attribute accepted
+        val = getattr(self.user_model, attr)
+        stmt = select(self.user_model)
+
         if cv("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
-            from sqlalchemy.orm import joinedload
-
-            query = query.options(joinedload(self.user_model.roles))  # type: ignore
-
+            stmt = stmt.options(joinedload(self.user_model.roles))  # type: ignore
         if case_insensitive:
-            # While it is of course possible to pass in multiple keys to filter on
-            # that isn't the normal use case. If caller asks for case_insensitive
-            # AND gives multiple keys - throw an error.
-            if len(kwargs) > 1:
-                raise ValueError("Case insensitive option only supports single key")
-            attr, identifier = kwargs.popitem()
-            subquery = alchemyFn.lower(
-                getattr(self.user_model, attr)
-            ) == alchemyFn.lower(identifier)
-            return query.filter(subquery).first()
+            stmt = stmt.where(
+                func.lower(val) == func.lower(value)  # type: ignore[arg-type]
+            )
         else:
-            return query.filter_by(**kwargs).first()
+            stmt = stmt.where(val == value)  # type: ignore[arg-type]
+        return self.db.session.scalar(stmt)
 
     def find_role(self, role: str) -> Role | None:
-        return self.role_model.query.filter_by(name=role).first()  # type: ignore
+        from sqlalchemy import select
+
+        return self.db.session.scalar(
+            select(self.role_model).where(self.role_model.name == role)  # type: ignore
+        )
 
     def find_webauthn(self, credential_id: bytes) -> WebAuthn | None:
-        return self.webauthn_model.query.filter_by(  # type: ignore
-            credential_id=credential_id
-        ).first()
+        from sqlalchemy import select
+
+        if not self.webauthn_model:  # pragma: no cover
+            raise NotImplementedError
+
+        return self.db.session.scalar(
+            select(self.webauthn_model).where(
+                self.webauthn_model.credential_id == credential_id  # type: ignore
+            )
+        )
 
     def create_webauthn(
         self,
@@ -859,11 +867,8 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
             webauthn_model,
         )
 
-    def commit(self):
-        super().commit()
 
-
-class FSQLALiteUserDatastore(SQLAlchemyDatastore, UserDatastore):
+class FSQLALiteUserDatastore(SQLAlchemyUserDatastore, UserDatastore):
     """A UserDatastore implementation that assumes the use of
     `Flask-SQLAlchemy-Lite <https://pypi.python.org/pypi/flask-sqlalchemy-lite/>`_
     for datastore transactions.
@@ -879,93 +884,18 @@ class FSQLALiteUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
     def __init__(
         self,
-        db: SQLAlchemy,
+        db: flask_sqlalchemy_lite.SQLAlchemy,
         user_model: t.Type[User],
         role_model: t.Type[Role],
         webauthn_model: t.Type[WebAuthn] | None = None,
     ):
-        SQLAlchemyDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
-
-    def find_user(self, case_insensitive: bool = False, **kwargs: t.Any) -> User | None:
-        from sqlalchemy import func, select
-        from sqlalchemy.orm import joinedload
-
-        attr, value = kwargs.popitem()  # only a single query attribute accepted
-        val = getattr(self.user_model, attr)
-        stmt = select(self.user_model)
-
-        if cv("JOIN_USER_ROLES") and hasattr(self.user_model, "roles"):
-            stmt = stmt.options(joinedload(self.user_model.roles))  # type: ignore
-        if case_insensitive:
-            # While it is of course possible to pass in multiple keys to filter on
-            # that isn't the normal use case. If caller asks for case_insensitive
-            # AND gives multiple keys - throw an error.
-            if len(kwargs) > 0:
-                raise ValueError("Case insensitive option only supports single key")
-            stmt = stmt.where(
-                func.lower(val) == func.lower(value)  # type: ignore[arg-type]
-            )
-        else:
-            stmt = stmt.where(val == value)  # type: ignore[arg-type]
-        return self.db.session.scalar(stmt)
-
-    def find_role(self, role: str) -> Role | None:
-        from sqlalchemy import select
-
-        return self.db.session.scalar(
-            select(self.role_model).where(self.role_model.name == role)  # type: ignore
+        SQLAlchemyUserDatastore.__init__(
+            self,
+            db,  # type: ignore
+            user_model,
+            role_model,
+            webauthn_model,
         )
-
-    def find_webauthn(self, credential_id: bytes) -> WebAuthn | None:
-        from sqlalchemy import select
-
-        if not self.webauthn_model:  # pragma: no cover
-            raise NotImplementedError
-
-        return self.db.session.scalar(
-            select(self.webauthn_model).where(
-                self.webauthn_model.credential_id == credential_id  # type: ignore
-            )
-        )
-
-    def create_webauthn(
-        self,
-        user: User,
-        credential_id: bytes,
-        public_key: bytes,
-        name: str,
-        sign_count: int,
-        usage: str,
-        device_type: str,
-        backup_state: bool,
-        transports: list[str] | None = None,
-        extensions: str | None = None,
-        **kwargs: t.Any,
-    ) -> None:
-        from .proxies import _security
-
-        if (
-            not hasattr(self, "webauthn_model") or not self.webauthn_model
-        ):  # pragma: no cover
-            raise NotImplementedError
-
-        webauthn = self.webauthn_model(
-            credential_id=credential_id,
-            public_key=public_key,
-            name=name,
-            sign_count=sign_count,
-            usage=usage,
-            device_type=device_type,
-            backup_state=backup_state,
-            transports=transports,
-            extensions=extensions,
-            lastuse_datetime=_security.datetime_factory(),
-            **kwargs,
-        )
-        user.webauthn.append(webauthn)
-        self.put(webauthn)
-        self.put(user)
 
 
 class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
