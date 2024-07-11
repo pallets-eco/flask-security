@@ -13,6 +13,9 @@ BE AWARE: Once any version of this is shipped no changes can be made - instead
 a new version needs to be created.
 """
 
+# mypy: disable-error-code="assignment"
+# pyright: reportAssignmentType = false, reportIncompatibleVariableOverride=false
+
 from __future__ import annotations
 
 import datetime

@@ -12,6 +12,20 @@ and `Role` data model. The fields on your models must follow a particular conven
 depending on the functionality your app requires. Aside from this, you're free
 to add any additional fields to your model(s) if you want.
 
+.. note::
+    The User, Role, and WebAuthn models MUST subclass their respective mixin (along
+    with any other mixin the datastore requires). The pre-packaged models described
+    below do this for you.
+
+    .. code-block:: python
+
+        from flask_security import UserMixin, RoleMixin, WebAuthMixin
+
+        class User(<db specific base>, UserMixin):
+            ... define columns here
+
+        ... same for Role and WebAuthn
+
 Packaged Models
 ----------------
 As more features are added to Flask-Security, the list of required fields and tables grow.
@@ -38,6 +52,18 @@ Flask-SQLAlchemy
 Your application code should import just the required version e.g.::
 
     from flask_security.models import fsqla_v3 as fsqla
+    from flask_sqlalchemy import SQLAlchemy
+
+    db = SQLAlchemy(app)
+
+    # Define models
+    fsqla.FsModels.set_db_info(db)
+
+    class Role(db.Model, fsqla.FsRoleMixin):
+        pass
+
+    class User(db.Model, fsqla.FsUserMixin):
+        pass
 
 
 A single method ``fsqla.FsModels.set_db_info`` is provided to glue the supplied models to your
@@ -48,6 +74,24 @@ Flask-SQLAlchemy-Lite
 Your application code should import just the required version e.g.::
 
     from flask_security.models import sqla as sqla
+    from flask_sqlalchemy_lite import SQLAlchemy
+
+    db = SQLAlchemy(app)
+
+    # Define models
+    class Model(DeclarativeBase):
+        pass
+
+    # NOTE: call this PRIOR to declaring models
+    sqla.FsModels.set_db_info(base_model=Model)
+
+    class Role(Model, sqla.FsRoleMixin):
+        __tablename__ = "Role"
+        pass
+
+    class User(Model, sqla.FsUserMixin):
+        __tablename__ = "User"
+        pass
 
 A single method ``sqla.FsModels.set_db_info`` is provided to glue the supplied mixins to your
 models. This is only needed if you use the packaged models.

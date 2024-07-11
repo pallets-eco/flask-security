@@ -1,4 +1,4 @@
-# Copyright 2021 by J. Christopher Wagner (jwag). All rights reserved.
+# Copyright 2021-2024 by J. Christopher Wagner (jwag). All rights reserved.
 
 import typing as t
 
@@ -7,15 +7,14 @@ from werkzeug.local import LocalProxy
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from passlib.context import CryptContext
-    from .core import Security
-    from .datastore import CanonicalUserDatastore
+    from .core import Security, UserDatastore
 
 # Convenient references
 _security: "Security" = LocalProxy(  # type: ignore
     lambda: current_app.extensions["security"]
 )
 
-_datastore: "CanonicalUserDatastore" = LocalProxy(  # type:ignore
+_datastore: "UserDatastore" = LocalProxy(  # type:ignore
     lambda: _security.datastore
 )
 

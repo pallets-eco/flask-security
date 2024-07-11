@@ -32,6 +32,8 @@ from flask_wtf import CSRFProtect
 from flask_security import (
     MailUtil,
     Security,
+    UserDatastore,
+    UserMixin,
     WebauthnUtil,
     auth_required,
     current_user,
@@ -105,7 +107,7 @@ def fsqla_datastore(app):
     return SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
 
 
-def fsqla_lite_datastore(app):
+def fsqla_lite_datastore(app: Flask) -> FSQLALiteUserDatastore:
     from sqlalchemy.orm import DeclarativeBase
     from flask_sqlalchemy_lite import SQLAlchemy
     from flask_security.models import sqla as sqla
@@ -148,7 +150,7 @@ def fsqla_lite_datastore(app):
     return FSQLALiteUserDatastore(db, User, Role, WebAuthn)
 
 
-def create_app():
+def create_app() -> Flask:
     # Use real templates - not test templates...
     app = Flask("view_scaffold", template_folder="../")
     app.config["DEBUG"] = True
@@ -234,7 +236,7 @@ def create_app():
     # user_datastore = fsqla_datastore(app)
     user_datastore = fsqla_lite_datastore(app)
 
-    app.security = Security(
+    security = Security(
         app,
         user_datastore,
         webauthn_util_cls=TestWebauthnUtil,
@@ -267,7 +269,9 @@ def create_app():
         pass
 
     @user_registered.connect_via(app)
-    def on_user_registered(myapp, user, confirm_token, **extra):
+    def on_user_registered(
+        myapp: Flask, user: UserMixin, confirm_token: str, **extra: dict[str, t.Any]
+    ) -> None:
         flash(f"To confirm {user.email} - go to /confirm/{confirm_token}")
 
     @user_not_registered.connect_via(app)
@@ -313,7 +317,7 @@ def create_app():
             {% include "security/_menu.html" %}
             """,
             email=current_user.email,
-            security=app.security,
+            security=security,
         )
 
     @app.route("/basicauth")
@@ -329,9 +333,11 @@ def create_app():
     return app
 
 
-def add_user(ds, email, password, roles):
+def add_user(
+    ds: UserDatastore, email: str, password: str, role_names: list[str]
+) -> None:
     pw = hash_password(password)
-    roles = [ds.find_or_create_role(rn) for rn in roles]
+    roles = [ds.find_or_create_role(rn) for rn in role_names]
     ds.commit()
     user = ds.create_user(
         email=email, password=pw, active=True, confirmed_at=naive_utcnow()
@@ -344,11 +350,12 @@ def add_user(ds, email, password, roles):
 
 if __name__ == "__main__":
     myapp = create_app()
+    security: Security = myapp.extensions["security"]
 
     with myapp.app_context():
         test_acct = "test@test.com"
-        if not myapp.security.datastore.find_user(email=test_acct):
-            add_user(myapp.security.datastore, test_acct, "password", ["admin"])
+        if not security.datastore.find_user(email=test_acct):
+            add_user(security.datastore, test_acct, "password", ["admin"])
             print("Created User: {} with password {}".format(test_acct, "password"))
 
     myapp.run(port=5001)

@@ -109,8 +109,7 @@ from .utils import (
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask
     from flask.typing import ResponseValue
-    from .core import Security
-    from .datastore import User, WebAuthn
+    from flask_security import Security, UserMixin, WebAuthnMixin
 
 if get_quart_status():  # pragma: no cover
     from quart import redirect
@@ -218,7 +217,7 @@ class WebAuthnSigninForm(Form, NextFormMixin):
     remember = BooleanField(get_form_field_label("remember_me"))
     submit = SubmitField(label=get_form_field_xlate(_("Start")), id="wan_signin")
 
-    user: User | None = None
+    user: UserMixin | None = None
     # set by caller - is this a second factor authentication?
     is_secondary: bool
 
@@ -260,8 +259,8 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
     is_verify: bool
     # returned to caller
     authentication_verification: VerifiedAuthentication
-    user: User | None = None
-    cred: WebAuthn | None = None
+    user: UserMixin | None = None
+    cred: WebAuthnMixin | None = None
     # Set to True if this authentication qualifies as 'multi-factor'
     mf_check: bool = False
 
@@ -373,7 +372,7 @@ class WebAuthnDeleteForm(Form):
 class WebAuthnVerifyForm(Form):
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_verify")
 
-    user: User
+    user: UserMixin
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
@@ -464,7 +463,7 @@ def webauthn_register() -> ResponseValue:
         )
 
     current_creds = []
-    cred: WebAuthn
+    cred: WebAuthnMixin
     for cred in current_user.webauthn:
         cl = {
             "name": cred.name,
@@ -568,7 +567,7 @@ def webauthn_register_response(token: str) -> ResponseValue:
     return redirect(url_for_security("wan_register"))
 
 
-def _signin_common(user: User | None, usage: list[str]) -> tuple[t.Any, str]:
+def _signin_common(user: UserMixin | None, usage: list[str]) -> tuple[t.Any, str]:
     """
     Common code between signin and verify - once form has been verified.
     """
@@ -875,7 +874,7 @@ def webauthn_verify_response(token: str) -> ResponseValue:
     return redirect(url_for_security("wan_verify"))
 
 
-def is_cred_usable(cred: WebAuthn, usage: str | list[str]) -> bool:
+def is_cred_usable(cred: WebAuthnMixin, usage: str | list[str]) -> bool:
     # Return True is cred can be used for the requested usage/verify
     if not isinstance(usage, list):
         usage = [usage]
@@ -883,7 +882,7 @@ def is_cred_usable(cred: WebAuthn, usage: str | list[str]) -> bool:
     return cred.usage in usage
 
 
-def has_webauthn(user: User, usage: str | list[str]) -> bool:
+def has_webauthn(user: UserMixin, usage: str | list[str]) -> bool:
     # Return True if ``user`` has one or more keys with requested usage.
     # Usage: either "first" or "secondary"
     if not isinstance(usage, list):
@@ -896,7 +895,7 @@ def has_webauthn(user: User, usage: str | list[str]) -> bool:
 
 
 def create_credential_list(
-    user: User, usage: list[str]
+    user: UserMixin, usage: list[str]
 ) -> list[PublicKeyCredentialDescriptor]:
     # Return a list of registered credentials - filtered by whether they apply to our
     # authentication state (first or secondary)
@@ -930,13 +929,13 @@ class WebAuthnTfPlugin(TfPluginBase):
         """
         pass
 
-    def get_setup_methods(self, user: User) -> list[str]:
+    def get_setup_methods(self, user: UserMixin) -> list[str]:
         if has_webauthn(user, "secondary"):
             return [_("webauthn")]
         return []
 
     def tf_login(
-        self, user: User, json_payload: dict[str, t.Any], next_loc: str | None
+        self, user: UserMixin, json_payload: dict[str, t.Any], next_loc: str | None
     ) -> ResponseValue:
         session["tf_state"] = "ready"
         if not _security._want_json(request):

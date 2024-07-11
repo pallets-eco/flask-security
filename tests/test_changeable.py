@@ -4,7 +4,7 @@
 
     Changeable tests
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -14,10 +14,8 @@ import pytest
 from flask import Flask
 import markupsafe
 
-from flask_security.core import UserMixin
+from flask_security import PasswordUtil, UserMixin, password_changed, user_authenticated
 from flask_security.forms import _default_field_labels
-from flask_security.password_util import PasswordUtil
-from flask_security.signals import password_changed, user_authenticated
 from flask_security.utils import localize_callback
 from tests.test_utils import (
     authenticate,

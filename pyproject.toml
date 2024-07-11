@@ -96,3 +96,8 @@ version = {attr = "flask_security.__version__"}
 
 [tool.djlint]
     ignore="H005,H006"  # lang, img height/width
+
+[tool.pyright]
+    include=["flask_security", "tests/view_scaffold.py"]
+    analyzeUnannotatedFunctions = "none"
+    reportMissingImports = false

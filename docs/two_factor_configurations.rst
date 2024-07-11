@@ -97,7 +97,7 @@ possible using SQLAlchemy:
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    app.security = Security(app, user_datastore)
+    security = Security(app, user_datastore)
 
     mail = Mail(app)
 
@@ -111,8 +111,8 @@ possible using SQLAlchemy:
     with app.app_context():
         # Create a user to test with
         db.create_all()
-        if not app.security.datastore.find_user(email='test@me.com'):
-            app.security.datastore.create_user(email='test@me.com', password='password')
+        if not security.datastore.find_user(email='test@me.com'):
+            security.datastore.create_user(email='test@me.com', password='password')
         db.session.commit()
 
     if __name__ == '__main__':

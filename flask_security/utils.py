@@ -54,7 +54,7 @@ from .signals import user_authenticated
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask import Flask
     from flask.typing import ResponseValue
-    from .datastore import User
+    from flask_security import UserMixin
 
 localize_callback = LocalProxy(lambda: _security.i18n_domain.gettext)
 
@@ -140,7 +140,7 @@ def find_csrf_field_name():
     return None
 
 
-def is_user_authenticated(user: User | None) -> bool:
+def is_user_authenticated(user: UserMixin | None) -> bool:
     """
     return True if user is authenticated.
 
@@ -160,7 +160,7 @@ def is_user_authenticated(user: User | None) -> bool:
 
 
 def login_user(
-    user: User,
+    user: UserMixin,
     remember: bool | None = None,
     authn_via: list[str] | None = None,
 ) -> bool:
@@ -362,7 +362,7 @@ def verify_password(password: str | bytes, password_hash: str | bytes) -> bool:
     return _pwd_context.verify(password, password_hash)
 
 
-def verify_and_update_password(password: str | bytes, user: User) -> bool:
+def verify_and_update_password(password: str | bytes, user: UserMixin) -> bool:
     """Returns ``True`` if the password is valid for the specified user.
 
     Additionally, the hashed password in the database is updated if the
@@ -387,7 +387,7 @@ def verify_and_update_password(password: str | bytes, user: User) -> bool:
         # Try with original password.
         verified = _pwd_context.verify(password, user.password)
 
-    if verified and _pwd_context.needs_update(user.password):
+    if verified and (user.password is None or _pwd_context.needs_update(user.password)):
         user.password = hash_password(password)
         _datastore.put(user)
     return verified
