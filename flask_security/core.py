@@ -160,6 +160,7 @@ _default_config: dict[str, t.Any] = {
         # And always last one...
         "plaintext",
     ],
+    "DEPRECATED_PASSWORD_SCHEMES": ["auto"],
     "PASSWORD_HASH_OPTIONS": {},  # Deprecated at passlib 1.7
     "PASSWORD_HASH_PASSLIB_OPTIONS": {},  # passlib >= 1.7.1 method to pass options
     # (as part of CryptoContext.using)
@@ -169,7 +170,8 @@ _default_config: dict[str, t.Any] = {
     "PASSWORD_BREACHED_COUNT": 1,
     "PASSWORD_NORMALIZE_FORM": "NFKD",
     "PASSWORD_REQUIRED": True,
-    "DEPRECATED_PASSWORD_SCHEMES": ["auto"],
+    "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
+    "DEPRECATED_HASHING_SCHEMES": ["auto"],
     "LOGIN_URL": "/login",
     "LOGOUT_URL": "/logout",
     "REGISTER_URL": "/register",
@@ -297,8 +299,6 @@ _default_config: dict[str, t.Any] = {
     "FRESHNESS_GRACE_PERIOD": timedelta(hours=1),
     "FRESHNESS_ALLOW_AUTH_TOKEN": True,
     "API_ENABLED_METHODS": ["session", "token"],
-    "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
-    "DEPRECATED_HASHING_SCHEMES": ["hex_md5"],
     "DATETIME_FACTORY": naive_utcnow,
     "TOTP_SECRETS": None,
     "TOTP_ISSUER": None,
