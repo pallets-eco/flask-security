@@ -114,7 +114,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
     import flask_login.mixins
     from authlib.integrations.flask_client import OAuth
-    from .datastore import Role, User, UserDatastore
+    from .datastore import UserDatastore
 
 
 # List of authentication mechanisms supported.
@@ -815,9 +815,13 @@ class RoleMixin:
     """Mixin for `Role` model definitions"""
 
     if t.TYPE_CHECKING:  # pragma: no cover
+        id: int
+        name: str
+        description: str | None
+        permissions: list[str] | None
+        update_datetime: datetime
 
-        def __init__(self) -> None:
-            self.permissions: list[str] | None
+        def __init__(self, **kwargs): ...
 
     def __eq__(self, other):
         return self.name == other or self.name == getattr(other, "name", None)
@@ -841,6 +845,35 @@ class RoleMixin:
 
 class UserMixin(BaseUserMixin):
     """Mixin for `User` model definitions"""
+
+    if t.TYPE_CHECKING:  # pragma: no cover
+        # These are defined in the applications Model files.
+        id: int
+        email: str
+        username: str | None
+        password: str | None
+        active: bool
+        fs_uniquifier: str
+        fs_token_uniquifier: str
+        fs_webauthn_user_handle: str
+        confirmed_at: datetime | None
+        last_login_at: datetime
+        current_login_at: datetime
+        last_login_ip: str | None
+        current_login_ip: str | None
+        login_count: int
+        tf_primary_method: str | None
+        tf_totp_secret: str | None
+        tf_phone_number: str | None
+        mf_recovery_codes: list[str] | None
+        us_phone_number: str | None
+        us_totp_secrets: str | bytes | None
+        create_datetime: datetime
+        update_datetime: datetime
+        roles: list[RoleMixin]
+        webauthn: list[WebAuthnMixin]
+
+        def __init__(self, **kwargs): ...
 
     def get_id(self) -> str:
         """Returns the user identification attribute. 'Alternative-token' for
@@ -924,7 +957,7 @@ class UserMixin(BaseUserMixin):
         """
         return True
 
-    def has_role(self, role: str | Role) -> bool:
+    def has_role(self, role: str | RoleMixin) -> bool:
         """Returns `True` if the user identifies with the specified role.
 
         :param role: A role name or `Role` instance"""
@@ -1049,6 +1082,22 @@ class UserMixin(BaseUserMixin):
 
 
 class WebAuthnMixin:
+    if t.TYPE_CHECKING:  # pragma: no cover
+        # These are defined in the applications Model files.
+        id: int
+        name: str
+        credential_id: bytes
+        public_key: bytes
+        sign_count: int
+        transports: list[str] | None
+        backup_state: bool
+        device_type: str
+        extensions: str | None
+        lastuse_datetime: datetime
+        usage: str
+
+        def __init__(self, **kwargs): ...
+
     def get_user_mapping(self) -> dict[str, t.Any]:
         """
         Return the filter needed by find_user() to get the user
@@ -1290,7 +1339,7 @@ class Security:
             default_unauthz_handler
         )
         self._render_json: t.Callable[
-            [dict[str, t.Any], int, dict[str, str] | None, User | None],
+            [dict[str, t.Any], int, dict[str, str] | None, UserMixin | None],
             ResponseValue,
         ] = default_render_json
         self._want_json: t.Callable[[Request], bool] = default_want_json
@@ -1324,6 +1373,7 @@ class Security:
         self._password_util: PasswordUtil
         self._totp_factory: Totp
         self._username_util: UsernameUtil
+        self._webauthn_util: WebauthnUtil
         self._mf_recovery_codes_util: MfRecoveryCodesUtil
 
         # Add necessary attributes here to keep mypy happy
@@ -1788,7 +1838,7 @@ class Security:
     def render_json(
         self,
         cb: t.Callable[
-            [dict[str, t.Any], int, dict[str, str] | None, User | None],
+            [dict[str, t.Any], int, dict[str, str] | None, UserMixin | None],
             ResponseValue,
         ],
     ) -> None:

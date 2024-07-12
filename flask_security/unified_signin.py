@@ -94,7 +94,7 @@ from .webauthn import has_webauthn
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
-    from .datastore import User
+    from flask_security import UserMixin
 
 if get_quart_status():  # pragma: no cover
     from quart import redirect
@@ -147,7 +147,7 @@ class _UnifiedPassCodeForm(Form):
     """Common form for signin and verify/reauthenticate."""
 
     # filled in by caller
-    user: User
+    user: UserMixin
 
     # Filled in here
     authn_via: str
@@ -364,7 +364,7 @@ class UnifiedSigninSetupValidateForm(Form):
     """The unified sign in setup validation form"""
 
     # These 2 filled in by view
-    user: User
+    user: UserMixin
     totp_secret: str
 
     passcode = StringField(

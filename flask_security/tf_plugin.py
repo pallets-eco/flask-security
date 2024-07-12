@@ -45,8 +45,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
     import flask
     from flask.typing import ResponseValue
     from flask import Response
-    from .core import Security
-    from .datastore import User
+    from flask_security import Security, UserMixin
 
 
 class TwoFactorSelectForm(Form):
@@ -116,14 +115,14 @@ class TfPluginBase:  # pragma no cover
     ) -> None:
         raise NotImplementedError
 
-    def get_setup_methods(self, user: User) -> list[str]:
+    def get_setup_methods(self, user: UserMixin) -> list[str]:
         """
         Return a list of methods that ``user`` has setup for this second factor
         """
         raise NotImplementedError
 
     def tf_login(
-        self, user: User, json_payload: dict[str, t.Any], next_loc: str | None
+        self, user: UserMixin, json_payload: dict[str, t.Any], next_loc: str | None
     ) -> ResponseValue:
         """
         Called from first/primary authenticated views if the user successfully
@@ -169,7 +168,7 @@ class TfPlugin:
                 endpoint="tf_select",
             )(tf_select)
 
-    def method_to_impl(self, user: User, method: str) -> TfPluginBase | None:
+    def method_to_impl(self, user: UserMixin, method: str) -> TfPluginBase | None:
         # reverse map a method to the implementation.
         # N.B. again - requires that methods be unique across all implementations.
         # There is a small window that a previously setup method was removed.
@@ -179,7 +178,7 @@ class TfPlugin:
                 return impl
         return None  # pragma no cover
 
-    def get_setup_tf_methods(self, user: User) -> list[str]:
+    def get_setup_tf_methods(self, user: UserMixin) -> list[str]:
         # Return list of methods that user has setup
         methods = []
         for impl in self._tf_impls.values():
@@ -188,7 +187,7 @@ class TfPlugin:
 
     def tf_enter(
         self,
-        user: User,
+        user: UserMixin,
         remember_me: bool,
         primary_authn_via: str,
         next_loc: str | None,
@@ -246,7 +245,7 @@ class TfPlugin:
                         return simple_render_json(json_payload)
         return None
 
-    def tf_complete(self, user: User, dologin: bool) -> str | None:
+    def tf_complete(self, user: UserMixin, dologin: bool) -> str | None:
         remember = session.pop("tf_remember_login", None)
 
         if dologin:
@@ -314,7 +313,7 @@ def tf_set_validity_token_cookie(response: Response, token: str) -> Response:
     return response
 
 
-def tf_check_state(allowed_states: list[str]) -> User | None:
+def tf_check_state(allowed_states: list[str]) -> UserMixin | None:
     if (
         not all(k in session for k in ["tf_user_id", "tf_state"])
         or session["tf_state"] not in allowed_states

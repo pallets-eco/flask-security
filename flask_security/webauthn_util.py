@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask
-    from .datastore import User
+    from flask_security import UserMixin
 
 
 class WebauthnUtil:
@@ -60,7 +60,7 @@ class WebauthnUtil:
         return request.host_url.rstrip("/")
 
     def registration_options(
-        self, user: User, usage: str, existing_options: dict[str, t.Any]
+        self, user: UserMixin, usage: str, existing_options: dict[str, t.Any]
     ) -> dict[str, t.Any]:
         """
         :param user: User object - could be used to configure on a per-user basis.
@@ -76,7 +76,7 @@ class WebauthnUtil:
         return existing_options
 
     def authenticator_selection(
-        self, user: User, usage: str
+        self, user: UserMixin, usage: str
     ) -> AuthenticatorSelectionCriteria:
         """
         :param user: User object - could be used to configure on a per-user basis.
@@ -120,7 +120,7 @@ class WebauthnUtil:
 
     def authentication_options(
         self,
-        user: User | None,
+        user: UserMixin | None,
         usage: list[str],
         existing_options: dict[str, t.Any],
     ) -> dict[str, t.Any]:
@@ -138,7 +138,7 @@ class WebauthnUtil:
         return existing_options
 
     def user_verification(
-        self, user: User | None, usage: list[str]
+        self, user: UserMixin | None, usage: list[str]
     ) -> UserVerificationRequirement:
         """
         As part of signin - do we want/need user verification.

@@ -18,7 +18,7 @@ from passlib.totp import TOTP, TokenError, TotpMatch
 from passlib.pwd import genword
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from .datastore import User
+    from flask_security import UserMixin
 
 
 class Totp:
@@ -35,7 +35,7 @@ class Totp:
 
     """
 
-    def __init__(self, secrets: dict[str | int, str], issuer: str):
+    def __init__(self, secrets: dict[str, str] | dict[int, str], issuer: str):
         """Initialize a totp factory.
         secrets are used to encrypt the per-user totp_secret on disk.
         """
@@ -48,7 +48,8 @@ class Totp:
         """Get time-based one-time password on the basis of given secret and time
         :param totp_secret: the unique shared secret of the user
         """
-        return self._totp.from_source(totp_secret).generate().token
+        tt = self._totp.from_source(totp_secret).generate()
+        return tt.token  # type: ignore[return-value]
 
     def generate_totp_secret(self) -> str:
         """Create new user-unique totp_secret.
@@ -60,7 +61,7 @@ class Totp:
         return self._totp.new().to_json(encrypt=True)
 
     def verify_totp(
-        self, token: str, totp_secret: str, user: User, window: int = 0
+        self, token: str, totp_secret: str, user: UserMixin, window: int = 0
     ) -> bool:
         """Verifies token for specific user.
 
@@ -110,7 +111,7 @@ class Totp:
         tp = self._totp.from_source(totp_secret)
         return tp.pretty_key()
 
-    def fetch_setup_values(self, totp: str, user: User) -> dict[str, str]:
+    def fetch_setup_values(self, totp: str, user: UserMixin) -> dict[str, str]:
         """Generate various values user needs to setup authenticator app.
             Returns dict with keys:
                 'key': totp key
@@ -126,6 +127,7 @@ class Totp:
         # By convention, the URI should have the username that the user
         # logs in with.
         username = user.calc_username() or "Unknown"
+        assert self._totp.issuer
         r["username"] = username
         r["key"] = self.get_totp_pretty_key(totp)
         r["issuer"] = self._totp.issuer
@@ -176,7 +178,7 @@ class Totp:
             )
         return spwds
 
-    def get_last_counter(self, user: User) -> TotpMatch | None:
+    def get_last_counter(self, user: UserMixin) -> int | None:
         """Implement this to fetch stored last_counter from cache.
 
         :param user: User model
@@ -184,7 +186,7 @@ class Totp:
         """
         return None
 
-    def set_last_counter(self, user: User, tmatch: TotpMatch) -> None:
+    def set_last_counter(self, user: UserMixin, tmatch: TotpMatch) -> None:
         """Implement this to cache last_counter.
 
         :param user: User model

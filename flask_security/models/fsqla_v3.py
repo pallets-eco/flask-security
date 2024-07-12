@@ -16,6 +16,9 @@ This is Version 3:
     - Add support for list types.
 """
 
+# mypy: disable-error-code="assignment"
+# pyright: reportAssignmentType = false, reportIncompatibleVariableOverride=false
+
 from sqlalchemy import (
     Boolean,
     Column,

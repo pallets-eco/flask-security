@@ -13,6 +13,9 @@ This is Version 2:
     - Make username unique (but not required).
 """
 
+# mypy: disable-error-code="assignment"
+# pyright: reportAssignmentType = false, reportIncompatibleVariableOverride=false
+
 from sqlalchemy import Column, String, Text
 from sqlalchemy.ext.declarative import declared_attr
 

@@ -41,7 +41,7 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from cryptography.fernet import MultiFernet
     import flask
     from flask.typing import ResponseValue
-    from .datastore import User
+    from flask_security import UserMixin
 
 
 class MfRecoveryCodesUtil:
@@ -71,7 +71,7 @@ class MfRecoveryCodesUtil:
             cryptors.append(Fernet(key))
         self.cryptor = MultiFernet(cryptors)
 
-    def create_recovery_codes(self, user: User) -> list[str]:
+    def create_recovery_codes(self, user: UserMixin) -> list[str]:
         """Create :data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_N` new recovery codes and
         store in user record.
         If configured (:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS`),
@@ -83,18 +83,18 @@ class MfRecoveryCodesUtil:
         _datastore.mf_set_recovery_codes(user, self._encrypt_codes(new_codes))
         return new_codes
 
-    def get_recovery_codes(self, user: User) -> list[str]:
+    def get_recovery_codes(self, user: UserMixin) -> list[str]:
         """Return list of (unencrypted) recovery codes"""
         ecodes = _datastore.mf_get_recovery_codes(user)
         return self._decrypt_codes(ecodes)
 
-    def check_recovery_code(self, user: User, code: str) -> bool:
+    def check_recovery_code(self, user: UserMixin, code: str) -> bool:
         """Verify code is valid"""
         codes = _datastore.mf_get_recovery_codes(user)
         dcodes = self._decrypt_codes(codes)
         return code in dcodes
 
-    def delete_recovery_code(self, user: User, code: str) -> bool:
+    def delete_recovery_code(self, user: UserMixin, code: str) -> bool:
         """codes are single use - so delete after use.
         encrypting code gives different answer due to time stamp.
         we don't want to re-encrypt other codes.
@@ -165,7 +165,7 @@ class MfRecoveryForm(Form):
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
         # filled by view
-        self.user: User | None = None
+        self.user: UserMixin | None = None
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover

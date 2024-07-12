@@ -22,7 +22,7 @@ from .signals import password_changed
 from .utils import config_value as cv, hash_password, login_user, send_mail
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from .datastore import User
+    from flask_security import UserMixin
 
 
 def send_password_changed_notice(user):
@@ -36,7 +36,7 @@ def send_password_changed_notice(user):
 
 
 def change_user_password(
-    user: User, password: str | None, notify: bool = True, autologin: bool = True
+    user: UserMixin, password: str | None, notify: bool = True, autologin: bool = True
 ) -> None:
     """Change the specified user's password
 
@@ -73,7 +73,9 @@ def change_user_password(
     )
 
 
-def admin_change_password(user: User, new_passwd: str, notify: bool = True) -> None:
+def admin_change_password(
+    user: UserMixin, new_passwd: str, notify: bool = True
+) -> None:
     """
     Administratively change a user's password.
     Note that this will immediately render the user's existing sessions (and possibly

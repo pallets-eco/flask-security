@@ -18,15 +18,13 @@ from tests.test_utils import (
     logout,
 )
 
-from flask_security import Security
-from flask_security.core import UserMixin
+from flask_security import Security, UserMixin, user_registered, user_not_registered
 from flask_security.forms import (
     ConfirmRegisterForm,
     RegisterForm,
     StringField,
     _default_field_labels,
 )
-from flask_security.signals import user_registered, user_not_registered
 from flask_security.utils import localize_callback
 
 pytestmark = pytest.mark.registerable()
