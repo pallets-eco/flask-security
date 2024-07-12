@@ -16,7 +16,7 @@ Features & Improvements
 - (:pr:`991`) Add support /tf-setup to not require sessions (use a state token).
 - (:issue:`994`) Add support for Flask-SQLAlchemy-Lite - including new all-inclusive models
   that conform to sqlalchemy latest best-practice (type-annotated).
-- (:pr:`xxx`) Convert other sqlalchemy-based datastores from legacy 'model.query' to best-practice 'select'
+- (:pr:`1007`) Convert other sqlalchemy-based datastores from legacy 'model.query' to best-practice 'select'
 
 Fixes
 +++++
@@ -24,6 +24,7 @@ Fixes
   ritual - just as we return the CSRF token. (thanks @e-goto)
 - (:issue:`973`) login and unified sign in should handle GET for authenticated user consistently.
 - (:pr:`995`) Don't show sms options if not defined in US_ENABLED_METHODS. (fredipevcin)
+- (:pr:`xxx`) Change :py:data:`SECURITY_DEPRECATED_HASHING_SCHEMES` to ``["auto"]``.
 
 Docs and Chores
 +++++++++++++++
@@ -32,6 +33,7 @@ Docs and Chores
 - (:pr:`981` and :pr:`977`) Improve docs
 - (:pr:`992`) The long deprecated `get_token_status` is no longer exported
 - (:pr:`992`) Drop Python 3.8 support.
+- (:issue:`1001`) Try a different approach to typing User and Role models.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

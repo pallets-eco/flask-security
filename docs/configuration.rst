@@ -416,12 +416,14 @@ Core - Passwords and Tokens
 
     List of supported password hash algorithms. ``SECURITY_PASSWORD_HASH``
     must be from this list. Passwords encrypted with any of these schemes will be honored.
+    This is passed directly to `passlib's CryptoContext`_.
 
 .. py:data:: SECURITY_DEPRECATED_PASSWORD_SCHEMES
 
     List of password hash algorithms that are considered weak and
     will be accepted, however on first use, will be re-hashed to the current
     setting of ``SECURITY_PASSWORD_HASH``.
+    This is passed directly to `passlib's CryptoContext`_.
 
     Default: ``["auto"]`` which means any password found that wasn't
     hashed using ``SECURITY_PASSWORD_HASH`` will be re-hashed.
@@ -445,13 +447,18 @@ Core - Passwords and Tokens
 
     List of algorithms used for encrypting/hashing sensitive data within a token
     (Such as is sent with confirmation or reset password).
+    This is passed directly to `passlib's CryptoContext`_.
 
     Default: ``["sha256_crypt", "hex_md5"]``.
 .. py:data:: SECURITY_DEPRECATED_HASHING_SCHEMES
 
     List of deprecated algorithms used for creating and validating tokens.
+    This is passed directly to `passlib's CryptoContext`_.
 
-    Default: ``["hex_md5"]``.
+    Default: ``["auto"]``.
+
+.. versionchanged:: 5.5.0
+        Default changed from ``hex_md5`` to ``auto``.
 
 .. py:data:: SECURITY_PASSWORD_HASH_OPTIONS
 
@@ -1995,3 +2002,5 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_WEBAUTHN_NO_VERIFY``
 * ``SECURITY_MSG_WEBAUTHN_CREDENTIAL_WRONG_USAGE``
 * ``SECURITY_MSG_WEBAUTHN_MISMATCH_USER_HANDLE``
+
+.. _passlib's CryptoContext: https://passlib.readthedocs.io/en/stable/lib/passlib.context.html
