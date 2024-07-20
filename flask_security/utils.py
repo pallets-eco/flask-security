@@ -582,7 +582,14 @@ def url_for_security(endpoint: str, **values: t.Any) -> str:
 
 
 def validate_redirect_url(url: str) -> bool:
-    """Validate that the URL for redirect is relative."""
+    """Validate redirect URL
+    In the default configuration only redirects to the same domain (and scheme)
+    are allowed.
+    The REDIRECT_ALLOW_SUBDOMAINS allows ANY subdomain of SERVER_NAME
+     to be a redirect target.
+    The REDIRECT_BASE_DOMAIN and REDIRECT_ALLOWED_SUBDOMAINS allow specifying 'side'
+    redirects.
+    """
 
     if url is None or url.strip() == "":
         return False
@@ -599,8 +606,14 @@ def validate_redirect_url(url: str) -> bool:
             )
         ):
             return True
-        else:
-            return False
+        base_domain = config_value("REDIRECT_BASE_DOMAIN")
+        if base_domain:
+            allowable = [
+                f"{sub}.{base_domain}"
+                for sub in config_value("REDIRECT_ALLOWED_SUBDOMAINS")
+            ]
+            return url_next.netloc in allowable
+        return False
     return True
 
 
@@ -1038,7 +1051,7 @@ def csrf_cookie_handler(response: Response) -> Response:
     elif current_app.config["WTF_CSRF_TIME_LIMIT"]:
         current_cookie = request.cookies.get(csrf_cookie_name, None)
         if current_cookie:
-            # Lets make sure it isn't expired if app doesn't set TIME_LIMIT to None.
+            # Let's make sure it isn't expired if app doesn't set TIME_LIMIT to None.
             try:
                 csrf.validate_csrf(current_cookie)
             except ValidationError:
