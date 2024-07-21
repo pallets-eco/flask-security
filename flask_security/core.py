@@ -203,6 +203,8 @@ _default_config: dict[str, t.Any] = {
     "REDIRECT_HOST": None,
     "REDIRECT_BEHAVIOR": None,
     "REDIRECT_ALLOW_SUBDOMAINS": False,
+    "REDIRECT_BASE_DOMAIN": None,
+    "REDIRECT_ALLOWED_SUBDOMAINS": [],
     "FORGOT_PASSWORD_TEMPLATE": "security/forgot_password.html",
     "LOGIN_USER_TEMPLATE": "security/login_user.html",
     "REGISTER_USER_TEMPLATE": "security/register_user.html",
@@ -231,8 +233,8 @@ _default_config: dict[str, t.Any] = {
     "CHANGE_EMAIL_WITHIN": "2 hours",
     "CHANGE_EMAIL_URL": "/change-email",
     "CHANGE_EMAIL_CONFIRM_URL": "/change-email-confirm",
-    "CHANGE_EMAIL_ERROR_VIEW": None,
-    "POST_CHANGE_EMAIL_VIEW": None,
+    "CHANGE_EMAIL_ERROR_VIEW": None,  # spa
+    "POST_CHANGE_EMAIL_VIEW": None,  # spa
     "CHANGE_EMAIL_SALT": "change-email-salt",
     "CHANGE_EMAIL_SUBJECT": _("Confirm your new email address"),
     "TWO_FACTOR_AUTHENTICATOR_VALIDITY": 120,

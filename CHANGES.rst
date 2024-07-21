@@ -17,6 +17,7 @@ Features & Improvements
 - (:issue:`994`) Add support for Flask-SQLAlchemy-Lite - including new all-inclusive models
   that conform to sqlalchemy latest best-practice (type-annotated).
 - (:pr:`1007`) Convert other sqlalchemy-based datastores from legacy 'model.query' to best-practice 'select'
+- (:issue:`983`) Allow applications more flexibility defining redirects.
 
 Fixes
 +++++
@@ -24,7 +25,7 @@ Fixes
   ritual - just as we return the CSRF token. (thanks @e-goto)
 - (:issue:`973`) login and unified sign in should handle GET for authenticated user consistently.
 - (:pr:`995`) Don't show sms options if not defined in US_ENABLED_METHODS. (fredipevcin)
-- (:pr:`xxx`) Change :py:data:`SECURITY_DEPRECATED_HASHING_SCHEMES` to ``["auto"]``.
+- (:pr:`1009`) Change :py:data:`SECURITY_DEPRECATED_HASHING_SCHEMES` to ``["auto"]``.
 
 Docs and Chores
 +++++++++++++++

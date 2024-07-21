@@ -182,12 +182,40 @@ These configuration keys are used globally across all features.
 
     If ``True`` then subdomains (and the root domain) of the top-level host set
     by Flask's ``SERVER_NAME`` configuration will be allowed as post-view redirect targets.
-    This is beneficial if you wish to place your authentiation on one subdomain and
+    This is beneficial if you wish to place your authentication on one subdomain and
     authenticated content on another, for example ``auth.domain.tld`` and ``app.domain.tld``.
 
     Default: ``False``.
 
     .. versionadded:: 4.0.0
+
+.. py:data:: SECURITY_REDIRECT_BASE_DOMAIN
+
+    Set the base domain for checking allowable redirects. The intent here is to
+    allow an application to be server on e.g. "flaskapp.my.org" and redirect
+    to "myservice.my.org" (which maybe isn't a Flask app). Flask's SERVER_NAME
+    can't be used to verify redirects in this case. Note that in most cases
+    the application will want to set Flask's SESSION_COOKIE_DOMAIN to be this base domain -
+    otherwise authorization information won't be sent.
+
+    Default: ``None``
+
+    .. versionadded:: 5.5.0
+
+.. py:data:: SECURITY_REDIRECT_ALLOWED_SUBDOMAINS
+
+    A list of subdomains. Each will be prepended to
+    ``SECURITY_REDIRECT_BASE_DOMAIN`` and checked against the requested redirect.
+
+    Default: ``[]``
+
+    .. versionadded:: 5.5.0
+
+
+.. note::
+    The above 4 config options apply BOTH to the handling of ``next`` parameter
+    as well as all the ``XXX_VIEW`` URL configuration options
+    for those views that perform a redirect after processing.
 
 .. py:data:: SECURITY_CSRF_PROTECT_MECHANISMS
 

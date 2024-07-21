@@ -152,15 +152,17 @@ def test_authenticate_with_subdomain_next(app, client, get_message):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=http://sub.lp.com", data=data)
     assert response.status_code == 302
+    assert response.location == "http://sub.lp.com"
 
 
+@pytest.mark.settings(subdomain="auth")
 def test_authenticate_with_root_domain_next(app, client, get_message):
     app.config["SERVER_NAME"] = "lp.com"
-    app.config["SECURITY_SUBDOMAIN"] = "auth"
     app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
     data = dict(email="matt@lp.com", password="password")
-    response = client.post("/login?next=http://lp.com", data=data)
+    response = client.post("http://auth.lp.com/login?next=http://lp.com", data=data)
     assert response.status_code == 302
+    assert response.location == "http://lp.com"
 
 
 def test_authenticate_with_invalid_subdomain_next(app, client, get_message):
@@ -176,6 +178,44 @@ def test_authenticate_with_subdomain_next_default_config(app, client, get_messag
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=http://sub.lp.com", data=data)
     assert get_message("INVALID_REDIRECT") in response.data
+
+
+@pytest.mark.settings(
+    redirect_base_domain="bigidea.org", redirect_allowed_subdomains=["my.photo", "blog"]
+)
+def test_allow_subdomains(app, client, get_message):
+    app.config["SERVER_NAME"] = "app.bigidea.org"
+    data = dict(email="matt@lp.com", password="password")
+    # not in subdomain allowed list
+    response = client.post("/login?next=http://blog2.bigidea.org", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+
+    response = client.post("/login?next=http://my.photo.bigidea.org/image", data=data)
+    assert response.location == "http://my.photo.bigidea.org/image"
+
+
+@pytest.mark.settings(
+    redirect_base_domain="bigidea.org", redirect_allowed_subdomains=[]
+)
+def test_redirect_allow_subdomains(app, client, get_message):
+    app.config["SERVER_NAME"] = "bigidea.org"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://blog2.bigidea.org", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+    response = client.post("/login?next=http://bigidea.org/imin", data=data)
+    assert response.location == "http://bigidea.org/imin"
+
+
+@pytest.mark.settings(
+    post_login_view="http://blog.bigidea.org/post_login",
+    redirect_base_domain="bigidea.org",
+    redirect_allowed_subdomains=["my.photo", "blog"],
+)
+def test_view_redirect(app, client, get_message):
+    app.config["SERVER_NAME"] = "bigidea.org"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login", data=data)
+    assert response.location == "http://blog.bigidea.org/post_login"
 
 
 def test_authenticate_case_insensitive_email(app, client):
