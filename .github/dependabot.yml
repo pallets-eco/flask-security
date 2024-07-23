@@ -1,6 +1,18 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/requirements/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "daily"
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+  - package-ecosystem: pip
+    directory: /requirements/
+    schedule:
+      interval: weekly
+    groups:
+      python-requirements:
+        patterns:
+          - '*'
