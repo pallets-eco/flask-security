@@ -6,18 +6,18 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.5.0
 -------------
 
-Released TBD
+Released July 23, 2024
 
 Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`956`) Add support for changing registered user's email (:py:data:`SECURITY_CHANGE_EMAIL`).
 - (:issue:`944`) Change default password hash to argon2 (was bcrypt). See below for details.
 - (:pr:`990`) Add freshness capability to auth tokens (enables /us-setup to function w/ just auth tokens).
-- (:pr:`991`) Add support /tf-setup to not require sessions (use a state token).
+- (:pr:`991`) Add support to /tf-setup to not require sessions (use a state token).
 - (:issue:`994`) Add support for Flask-SQLAlchemy-Lite - including new all-inclusive models
   that conform to sqlalchemy latest best-practice (type-annotated).
 - (:pr:`1007`) Convert other sqlalchemy-based datastores from legacy 'model.query' to best-practice 'select'
-- (:issue:`983`) Allow applications more flexibility defining redirects.
+- (:issue:`983`) Allow applications more flexibility defining allowable redirects.
 
 Fixes
 +++++
@@ -61,7 +61,7 @@ Fixes
 - (:issue:`954`) CSRF not properly ignored for application forms using :py:data:`SECURITY_CSRF_PROTECT_MECHANISMS`.
 - (:pr:`957`) Improve jp translations (e-goto)
 - (:issue:`959`) Regression - datetime_factory should still be an attribute (thanks TimotheeJeannin)
-- (:issue:`942`) :py:data:`SECURITY_RETURN_GENERIC_RESPONSES` hide email validation/syntax errors.
+- (:issue:`942`) :py:data:`SECURITY_RETURN_GENERIC_RESPONSES` hid email validation/syntax errors.
 
 Version 5.4.2
 -------------
@@ -158,7 +158,7 @@ Backwards Compatibility Concerns
     - Flask-Login's FORCE_HOST_FOR_REDIRECTS configuration isn't honored
     - Flask-Login's USE_SESSION_FOR_NEXT configuration isn't honored
     - The flashed message is SECURITY_MSG_UNAUTHENTICATED rather than SECURITY_MSG_LOGIN.
-      Furthermore SECURITY_MSG_UNAUTHENTICATED was reworded to read better.
+      Furthermore, SECURITY_MSG_UNAUTHENTICATED was reworded to read better.
     - Flask-Login uses `urlencode` to encode the `next` query param - which quotes the '/' character.
       Werkzeug (which Flask-Security uses to build the URL) uses `quote`
       which considers '/' a safe character and isn't encoded.
