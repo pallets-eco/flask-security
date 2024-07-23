@@ -41,7 +41,7 @@ jobs:
         run: |
           python -m pip install -U pip
       - name: cache pip
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
@@ -125,7 +125,7 @@ jobs:
           run: |
             python -m pip install -U pip
         - name: cache pip
-          uses: actions/cache@v3
+          uses: actions/cache@v4
           with:
             path: ~/.cache/pip
             key: pip-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
