@@ -12,15 +12,15 @@ info:
     if you render the form from your Flask application. If you send JSON, then you must include a request header (configured via __SECURITY_CSRF_HEADER__).
     Please read the online documentation to find out details on how CSRF can be configured.
 
-    You can download the latest spec from: https://github.com/Flask-Middleware/flask-security/blob/master/docs/openapi.yaml
+    You can download the latest spec from: https://github.com/pallets-eco/flask-security/blob/main/docs/openapi.yaml
   version: 2.0.0
   title: "Flask-Security External API"
   contact:
-    name: Flask-Security-Too
-    url: https://github.com/Flask-Middleware/flask-security
+    name: Flask-Security
+    url: https://github.com/pallets-eco/flask-security
   license:
     name: MIT
-    url: https://github.com/Flask-Middleware/flask-security/blob/master/LICENSE
+    url: https://github.com/pallets-eco/flask-security/blob/main/LICENSE
 paths:
   /login:
     get:

@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Flask-Security-Too"
+name = "Flask-Security"
 description = "Quickly add security features to your Flask application."
 readme.content-type = "text/x-rst"
 readme.file = "README.rst"
@@ -12,11 +12,11 @@ keywords = ["flask security"]
 maintainers = [{ name = "Chris Wagner", email = "jwag.wagner+github@gmail.com"}]
 authors = [{ name = "Matt Wright"}, { name = "Chris Wagner", email = "jwag.wagner+github@gmail.com"}]
 requires-python = ">=3.9"
-urls.Documentation = "https://flask-security-too.readthedocs.io"
-urls.Homepage = "https://github.com/Flask-Middleware/flask-security"
-urls.Source = "https://github.com/Flask-Middleware/flask-security"
-urls.Tracker = "https://github.com/Flask-Middleware/flask-security/issues"
-urls.Releases = "https://pypi.org/project/Flask-Security-Too/"
+urls.Documentation = "https://flask-security.readthedocs.io"
+urls.Homepage = "https://github.com/pallets-eco/flask-security"
+urls.Source = "https://github.com/pallets-eco/flask-security"
+urls.Tracker = "https://github.com/pallets-eco/flask-security/issues"
+urls.Releases = "https://pypi.org/project/Flask-Security/"
 classifiers=[
     "Environment :: Web Environment",
     "Framework :: Flask",

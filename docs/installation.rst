@@ -1,9 +1,9 @@
 Installation
 =============
 
-Installing Flask-Security-Too using::
+Installing Flask-Security using::
 
-    pip install flask-security-too
+    pip install flask-security
 
 will install the basic package along with its required dependencies:
 
@@ -18,11 +18,11 @@ will install the basic package along with its required dependencies:
 
 These are not sufficient for a complete application - other packages are
 required based on features desired, password hash algorithms, storage backend, etc.
-Flask-Security-Too has additional distribution 'extras' that can reduce the hassle
+Flask-Security has additional distribution 'extras' that can reduce the hassle
 of figuring out all the required packages. You can install these using the
 standard pip syntax::
 
-    pip install flask-security-too[extra1,extra2, ...]
+    pip install flask-security[extra1,extra2, ...]
 
 Supported extras are:
 

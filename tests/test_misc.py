@@ -1390,7 +1390,7 @@ def test_nodatastore(app):
 
 @pytest.mark.filterwarnings("ignore:.*Replacing login_manager.*:DeprecationWarning")
 def test_reuse_security_object(sqlalchemy_datastore):
-    # See: https://github.com/Flask-Middleware/flask-security/issues/518
+    # See: https://github.com/pallets-eco/flask-security/issues/518
     # Let folks re-use the Security object (mostly for testing).
     security = Security(datastore=sqlalchemy_datastore)
 
