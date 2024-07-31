@@ -55,6 +55,7 @@ this project, please reach out on `the Pallets Discord server <https://discord.g
 
 Goals
 +++++
+
 * Use `OWASP <https://github.com/OWASP/ASVS>`_ to guide best practice and default configurations.
 * Be more opinionated and 'batteries' included by reducing reliance on abandoned projects and
   bundling in support for common use cases.
