@@ -22,7 +22,7 @@ SQLAlchemy Install requirements
 
      $ python3 -m venv pymyenv
      $ . pymyenv/bin/activate
-     $ pip install flask-security-too[common,mfa,fsqla]
+     $ pip install flask-security[common,mfa,fsqla]
 
 
 Two-factor Application

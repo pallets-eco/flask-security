@@ -8,7 +8,7 @@ Welcome to Flask-Security
     :alt: Flask-Security: add a drop of security to your Flask application.
     :align: left
     :width: 100%
-    :target: https://github.com/Flask-Middleware/flask-security
+    :target: https://github.com/pallets-eco/flask-security
 
 
 Flask-Security allows you to quickly add common security mechanisms to your

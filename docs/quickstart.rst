@@ -48,7 +48,7 @@ Flask-SQLAlchemy Install requirements
 
      $ python3 -m venv pymyenv
      $ . pymyenv/bin/activate
-     $ pip install flask-security-too[fsqla,common]
+     $ pip install flask-security[fsqla,common]
 
 
 Flask-SQLAlchemy Application
@@ -143,7 +143,7 @@ This requires python >= 3.10::
 
      $ python3 -m venv pymyenv
      $ . pymyenv/bin/activate
-     $ pip install flask-security-too[common] sqlalchemy flask-sqlalchemy-lite
+     $ pip install flask-security[common] sqlalchemy flask-sqlalchemy-lite
 
 Flask-SQLAlchemy-Lite Application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -242,7 +242,7 @@ This requires python >= 3.10::
 
      $ python3 -m venv pymyenv
      $ . pymyenv/bin/activate
-     $ pip install flask-security-too[common] sqlalchemy
+     $ pip install flask-security[common] sqlalchemy
 
 SQLAlchemy Application (w/o Flask-SQLAlchemy)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -369,7 +369,7 @@ MongoEngine Install requirements
 
     $ python3 -m venv pymyenv
     $ . pymyenv/bin/activate
-    $ pip install flask-security-too[common] mongoengine
+    $ pip install flask-security[common] mongoengine
 
 MongoEngine Application
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -469,7 +469,7 @@ Peewee Install requirements
 
     $ python3 -m venv pymyenv
     $ . pymyenv/bin/activate
-    $ pip install flask-security-too[common] peewee
+    $ pip install flask-security[common] peewee
 
 Peewee Application
 ~~~~~~~~~~~~~~~~~~
@@ -626,4 +626,4 @@ You also might want to set the following configurations in your conftest.py:
     # Make this plaintext for most tests - reduces unit test time by 50%
     app.config["SECURITY_PASSWORD_HASH"] = "plaintext"
 
-.. _Flask-Security repo: https://github.com/Flask-Middleware/flask-security
+.. _Flask-Security repo: https://github.com/pallets-eco/flask-security

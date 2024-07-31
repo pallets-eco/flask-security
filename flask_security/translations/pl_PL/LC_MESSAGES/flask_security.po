@@ -1,4 +1,4 @@
-# Polish translation for Flask-Security-Too
+# Polish translation for Flask-Security
 # Copyright (C) 2020 Kamil Daniewski <kamil.daniewski@gmail.com>
 # This file is distributed under the same license as the Flask-Security
 # project.
@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2024-07-22 16:40-0700\n"
+"POT-Creation-Date: 2024-07-30 16:04-0700\n"
 "PO-Revision-Date: 2020-11-28 10:19+0100\n"
 "Last-Translator: Kamil Daniewski <kamil.daniewski@gmail.com>\n"
 "Language: pl_PL\n"

@@ -109,7 +109,7 @@ webserver. A couple of deployment options and their configurations will be descr
 
 Nginx
 ~~~~~
-When serving a SPA from a Nginx webserver the Flask backend, with Flask-Security-Too, will probably be served via
+When serving a SPA from a Nginx webserver the Flask backend, with Flask-Security, will probably be served via
 Nginx's reverse proxy feature. The javascript is served from Nginx itself and all calls to a certain path will be routed
 to the reversed proxy. The example below routes all http requests to *"/api/"* to the Flask backend and handles all other
 requests directly from javascript. This has a couple of benefits as all the requests happen within the same domain so you

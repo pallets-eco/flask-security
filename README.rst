@@ -1,26 +1,30 @@
 Flask-Security
 ===================
 
-.. image:: https://github.com/Flask-Middleware/flask-security/workflows/tests/badge.svg?branch=master&event=push
-    :target: https://github.com/Flask-Middleware/flask-security
+.. image:: https://github.com/pallets-eco/flask-security/workflows/tests/badge.svg?branch=main&event=push
+    :target: https://github.com/pallets-eco/flask-security
 
-.. image:: https://codecov.io/gh/Flask-Middleware/flask-security/branch/master/graph/badge.svg?token=U02MUQJ7BM
-    :target: https://codecov.io/gh/Flask-Middleware/flask-security
+.. image:: https://codecov.io/gh/pallets-eco/flask-security/graph/badge.svg?token=ZYS0AST5M3
+    :target: https://codecov.io/gh/pallets-eco/flask-security
     :alt: Coverage!
 
-.. image:: https://img.shields.io/github/tag/Flask-Middleware/flask-security.svg
-    :target: https://github.com/Flask-Middleware/flask-security/releases
+.. image:: https://img.shields.io/github/tag/pallets-eco/flask-security.svg
+    :target: https://github.com/pallets-eco/flask-security/releases
+
+.. image:: https://img.shields.io/pypi/dm/flask-security.svg
+    :target: https://pypi.python.org/pypi/flask-security
+    :alt: Downloads
 
 .. image:: https://img.shields.io/pypi/dm/flask-security-too.svg
     :target: https://pypi.python.org/pypi/flask-security-too
     :alt: Downloads
 
-.. image:: https://img.shields.io/github/license/Flask-Middleware/flask-security.svg
-    :target: https://github.com/Flask-Middleware/flask-security/blob/master/LICENSE
+.. image:: https://img.shields.io/github/license/pallets-eco/flask-security.svg
+    :target: https://github.com/pallets-eco/flask-security/blob/main/LICENSE
     :alt: License
 
-.. image:: https://readthedocs.org/projects/flask-security-too/badge/?version=latest
-    :target: https://flask-security-too.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/flask-security/badge/?version=latest
+    :target: https://flask-security.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -34,18 +38,23 @@ Quickly add security features to your Flask application.
 
 Notes on this repo
 ------------------
-This is an independently maintained version of Flask-Security forked from the 3.0.0
+As of 7/30/2024, the independent fork Flask-Security-Too replaced the archived
+Flask-Security repo (now called Flask-Security-3.0). This repo is published at PyPI at
+both Flask-Security and Flask-Security-Too.
+
+Flask-Security-Too was a fork from the 3.0.0
 version of the `Original <https://github.com/mattupstate/flask-security>`_
+
+Pallets Community Ecosystem
+----------------------------
+
+This project is part of the Pallets Community Ecosystem. Pallets is the open
+source organization that maintains Flask; Pallets-Eco enables community
+maintenance of related projects. If you are interested in helping maintain
+this project, please reach out on `the Pallets Discord server <https://discord.gg/pallets>`.
 
 Goals
 +++++
-* Regain momentum for this critical piece of the Flask eco-system. To that end the
-  plan is to put out small, frequent releases starting with pulling the simplest
-  and most obvious changes that have already been vetted in the upstream version, as
-  well as other pull requests. This was completed with the June 29 2019 3.2.0 release.
-* Continue work to get Flask-Security to be usable from Single Page Applications,
-  such as those built with Vue and Angular, that have no html forms. This is true as of the 3.3.0
-  release.
 * Use `OWASP <https://github.com/OWASP/ASVS>`_ to guide best practice and default configurations.
 * Be more opinionated and 'batteries' included by reducing reliance on abandoned projects and
   bundling in support for common use cases.
@@ -63,11 +72,10 @@ Goals
 
 Contributing
 ++++++++++++
-Issues and pull requests are welcome. Other maintainers are also welcome. Unlike
-the original Flask-Security - issue pull requests against the *master* branch.
+Issues and pull requests are welcome. Other maintainers are also welcome.
 Please consult these `contributing`_ guidelines.
 
-.. _contributing: https://github.com/Flask-Middleware/flask-security/blob/master/CONTRIBUTING.rst
+.. _contributing: https://github.com/pallets-eco/flask-security/blob/main/CONTRIBUTING.rst
 
 Installing
 ----------
@@ -75,13 +83,13 @@ Install and update using `pip <https://pip.pypa.io/en/stable/quickstart/>`_:
 
 ::
 
-    pip install -U Flask-Security-Too
+    pip install -U Flask-Security
 
 
 Resources
 ---------
 
-- `Documentation <https://flask-security-too.readthedocs.io/>`_
-- `Releases <https://pypi.org/project/Flask-Security-Too/>`_
-- `Issue Tracker <https://github.com/Flask-Middleware/flask-security/issues>`_
-- `Code <https://github.com/Flask-Middleware/flask-security/>`_
+- `Documentation <https://flask-security.readthedocs.io/>`_
+- `Releases <https://pypi.org/project/Flask-Security/>`_
+- `Issue Tracker <https://github.com/pallets-eco/flask-security/issues>`_
+- `Code <https://github.com/pallets-eco/flask-security/>`_

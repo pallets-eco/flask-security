@@ -20,7 +20,7 @@ useful - if your feature has limited applicability, consider making a small
 change that ENABLES your feature, rather than trying to get the entire feature
 into Flask-Security.
 
-.. _bug reports: https://github.com/Flask-Middleware/flask-security/issues
+.. _bug reports: https://github.com/pallets-eco/flask-security/issues
 
 
 Checklist
@@ -38,22 +38,22 @@ Getting the code
 ----------------
 
 The code is hosted on a GitHub repo at
-https://github.com/Flask-Middleware/flask-security.  To get a working environment, follow
+https://github.com/pallets-eco/flask-security.  To get a working environment, follow
 these steps:
 
   #. (Optional, but recommended) Create a Python 3.6 (or greater) virtualenv to work in,
      and activate it.
 
-  #. Fork the repo `Flask-Security <https://github.com/Flask-Middleware/flask-security>`_
+  #. Fork the repo `Flask-Security <https://github.com/pallets-eco/flask-security>`_
       (look for the "Fork" button).
 
   #. Clone your fork locally::
 
         $ git clone https://github.com/<your-username>/flask-security
 
-  #. Change directory to flask_security::
+  #. Change directory to flask-security::
 
-        $ cd flask_security
+        $ cd flask-security
 
   #. Install the requirements::
 

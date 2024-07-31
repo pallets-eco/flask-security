@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.5.1
+-------------
+
+Released xxx
+
+I am pleased to announce that Flask-Security-Too is now part of pallets-eco and has returned
+to be released as 'Flask-Security'. For the foreseeable future, we will publish the same release to both
+Flask-Security and Flask-Security-Too on PyPI.
+
 Version 5.5.0
 -------------
 
@@ -336,7 +345,7 @@ Fixes
 Known Issues
 ++++++++++++
 
-- Flask-mongoengine hasn't released in a while and currently will not work with latest Flask and Flask-Security-Too
+- Flask-mongoengine hasn't released in a while and currently will not work with latest Flask and Flask-Security-Too/Flask-Security
   (this is due to the JSONEncoder being deprecated and removed).
 
 Backwards Compatibility Concerns
@@ -905,8 +914,8 @@ using an authenticator app b) the qrcode is only available during the time
 the user is first setting up their authentication app.
 The QRcode issue has been fixed in 4.0.
 
-.. _qrcode: https://github.com/Flask-Middleware/flask-security/issues/418
-.. _login: https://github.com/Flask-Middleware/flask-security/issues/421
+.. _qrcode: https://github.com/pallets-eco/flask-security/issues/418
+.. _login: https://github.com/pallets-eco/flask-security/issues/421
 
 Fixed
 +++++

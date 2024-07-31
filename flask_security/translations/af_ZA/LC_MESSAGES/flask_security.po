@@ -1,14 +1,14 @@
-# Afrikaans (South Africa) translations for Flask-Security-Too.
+# Afrikaans (South Africa) translations for Flask-Security.
 # Copyright (C) 2021 Lonely Viking
-# This file is distributed under the same license as the Flask-Security-Too
+# This file is distributed under the same license as the Flask-Security
 # project.
 # Michael Bosch <michael@lonelyviking.com>, 2021.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security-Too 4.0.0\n"
+"Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2024-07-22 16:40-0700\n"
+"POT-Creation-Date: 2024-07-30 16:04-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Michael Bosch <michael@lonelyviking.com>\n"
 "Language: af_ZA\n"
