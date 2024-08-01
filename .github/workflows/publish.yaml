@@ -18,7 +18,7 @@ jobs:
       # Use the commit date instead of the current date during the build.
       - run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
       - name: Create dist
-        run: >
+        run: |
           python -m pip install -U pip
           pip install tox
           tox -e makedist
