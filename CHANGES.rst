@@ -6,11 +6,17 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.5.1
 -------------
 
-Released xxx
+Released August 1, 2024
 
 I am pleased to announce that Flask-Security-Too is now part of pallets-eco and has returned
 to be released as 'Flask-Security'. For the foreseeable future, we will publish the same release to both
 Flask-Security and Flask-Security-Too on PyPI.
+
+There are no code changes.
+
+Docs and Chores
++++++++++++++++
+- (:pr:`1015`) Convert docs, links, badges, etc to pallets-eco
 
 Version 5.5.0
 -------------
