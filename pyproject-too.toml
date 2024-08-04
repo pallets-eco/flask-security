@@ -1,5 +1,5 @@
 [project]
-name = "Flask-Security"
+name = "Flask-Security-Too"
 description = "Quickly add security features to your Flask application."
 readme.content-type = "text/x-rst"
 readme.file = "README.rst"

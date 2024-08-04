@@ -1,7 +1,7 @@
 -r docs.txt
 -r tests.txt
 mypy
-build
+flit
 check-wheel-contents
 psycopg2-binary
 pymysql
