@@ -3,6 +3,19 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.5.2
+-------------
+
+Released August 5, 2024
+
+More attempts to upload to pypi both flask-security and flask-security-too.
+No code changes - however the build manifest changed so the source distribution
+contents might be slightly different.
+
+Docs and Chores
++++++++++++++++
+- (:pr:`1019`) Separate publish workflows for each pypi package
+
 Version 5.5.1
 -------------
 
