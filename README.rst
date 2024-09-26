@@ -1,7 +1,7 @@
 Flask-Security
 ===================
 
-.. image:: https://github.com/pallets-eco/flask-security/workflows/tests/badge.svg?branch=main&event=push
+.. image:: https://github.com/pallets-eco/flask-security/actions/workflows/tests.yml/badge.svg?branch=main&event=push
     :target: https://github.com/pallets-eco/flask-security
 
 .. image:: https://codecov.io/gh/pallets-eco/flask-security/graph/badge.svg?token=ZYS0AST5M3
@@ -40,7 +40,8 @@ Notes on this repo
 ------------------
 As of 7/30/2024, the independent fork Flask-Security-Too replaced the archived
 Flask-Security repo (now called Flask-Security-3.0). This repo is published at PyPI at
-both Flask-Security and Flask-Security-Too.
+both Flask-Security and Flask-Security-Too. Please consider changing your
+requirements file to point to flask-security.
 
 Flask-Security-Too was a fork from the 3.0.0
 version of the `Original <https://github.com/mattupstate/flask-security>`_
