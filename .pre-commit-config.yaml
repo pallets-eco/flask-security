@@ -24,14 +24,14 @@ repos:
     hooks:
     -   id: black
 -   repo: https://github.com/pycqa/flake8
-    rev: 7.1.0
+    rev: 7.1.1
     hooks:
       - id: flake8
         additional_dependencies:
           - flake8-bugbear
           - flake8-implicit-str-concat
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.34.1
+    rev: v1.35.2
     hooks:
       - id: djlint-jinja
         files: "\\.html"
