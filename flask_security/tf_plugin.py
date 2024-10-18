@@ -188,7 +188,7 @@ class TfPlugin:
     def tf_enter(
         self,
         user: UserMixin,
-        remember_me: bool,
+        remember_me: bool | None,
         primary_authn_via: str,
         next_loc: str | None,
     ) -> ResponseValue | None:
