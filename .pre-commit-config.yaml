@@ -15,7 +15,7 @@ repos:
     -   id: check-merge-conflict
     -   id: fix-byte-order-marker
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.18.0
+    rev: v3.19.0
     hooks:
     -   id: pyupgrade
         args: [--py39-plus]
@@ -31,7 +31,7 @@ repos:
           - flake8-bugbear
           - flake8-implicit-str-concat
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.35.2
+    rev: v1.36.1
     hooks:
       - id: djlint-jinja
         files: "\\.html"
