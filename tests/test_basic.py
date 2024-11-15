@@ -157,6 +157,8 @@ def test_authenticate_with_subdomain_next(app, client, get_message):
 
 @pytest.mark.settings(subdomain="auth")
 def test_authenticate_with_root_domain_next(app, client, get_message):
+    # As of Flask 3.1 this must be explicitly set.
+    app.subdomain_matching = True
     app.config["SERVER_NAME"] = "lp.com"
     app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
     data = dict(email="matt@lp.com", password="password")
