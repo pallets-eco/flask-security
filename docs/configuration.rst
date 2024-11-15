@@ -19,10 +19,8 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECRET_KEY_FALLBACKS
 
-    This is a list of old secret keys that can still be used to unsign tokens
-    that were created with previous secret keys.
-
-    Default: ``None``.
+    This is part of Flask (>=3.1) but can be used by Flask-Security to unsign tokens.
+    See Flask documentation https://flask.palletsprojects.com/en/stable/config/#SECRET_KEY_FALLBACKS
 
     .. versionadded:: 5.6.0
 
