@@ -3,6 +3,13 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.6.0
+-------------
+
+Features & Improvements
++++++++++++++++++++++++
+- (:issue:`1038`) Add support for 'secret_key' rotation
+
 Version 5.5.2
 -------------
 

@@ -19,6 +19,7 @@ import typing as t
 
 import pytest
 
+from itsdangerous import BadTimeSignature
 from wtforms.validators import DataRequired, Length
 
 from tests.test_utils import (
@@ -67,6 +68,7 @@ from flask_security.utils import (
     uia_phone_mapper,
     verify_hash,
 )
+from flask_security.core import _get_serializer
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.testing import FlaskClient
@@ -1521,3 +1523,32 @@ def test_simplify_url():
     assert s == "/login"
     s = simplify_url("https:/myhost/profile", "https://localhost/login")
     assert s == "https://localhost/login"
+
+
+@pytest.mark.parametrize(
+    "verify_secret_key, verify_fallbacks, should_pass",
+    [
+        ("new_secret", [], False),  # Should fail - only new key
+        ("new_secret", ["old_secret"], True),  # Should pass - has fallback
+        ("old_secret", [], True),  # Should pass - using original key
+        ("wrong_secret", ["also_wrong"], False),  # Should fail - no valid keys
+    ],
+    ids=["new-key-only", "with-fallback", "original-key", "wrong-keys"],
+)
+def test_secret_key_fallbacks(app, verify_secret_key, verify_fallbacks, should_pass):
+    # Create token with original key
+    app.config["SECRET_KEY"] = "old_secret"
+    serializer = _get_serializer(app, "CONFIRM")
+    token = serializer.dumps({"data": "test"})
+
+    # Attempt verification with different key configurations
+    app.config["SECRET_KEY"] = verify_secret_key
+    app.config["SECRET_KEY_FALLBACKS"] = verify_fallbacks
+    serializer = _get_serializer(app, "CONFIRM")
+
+    if should_pass:
+        data = serializer.loads(token)
+        assert data["data"] == "test"
+    else:
+        with pytest.raises(BadTimeSignature):
+            serializer.loads(token)
