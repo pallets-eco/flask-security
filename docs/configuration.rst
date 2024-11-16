@@ -17,6 +17,13 @@ These configuration keys are used globally across all features.
     This is actually part of Flask - but is used by Flask-Security to sign all tokens.
     It is critical this is set to a strong value. For python3 consider using: ``secrets.token_urlsafe()``
 
+.. py:data:: SECRET_KEY_FALLBACKS
+
+    This is part of Flask (>=3.1) but can be used by Flask-Security to unsign tokens.
+    See Flask documentation https://flask.palletsprojects.com/en/stable/config/#SECRET_KEY_FALLBACKS
+
+    .. versionadded:: 5.6.0
+
 .. py:data:: SECURITY_BLUEPRINT_NAME
 
     Specifies the name for the Flask-Security blueprint.

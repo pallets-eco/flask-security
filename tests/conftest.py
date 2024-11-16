@@ -118,6 +118,7 @@ def app(request: pytest.FixtureRequest) -> SecurityFixture:
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     app.config["SECURITY_PASSWORD_SALT"] = "salty"
+    app.config["SECURITY_CONFIRM_SALT"] = "confirm-salty"
     # Make this fasthash for most tests - reduces unit test time by 50%
     app.config["SECURITY_PASSWORD_SCHEMES"] = ["fasthash", "argon2", "bcrypt"]
     app.config["SECURITY_PASSWORD_HASH"] = "fasthash"
