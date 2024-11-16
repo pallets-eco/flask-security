@@ -801,8 +801,13 @@ def _get_hashing_context(app: flask.Flask) -> CryptContext:
 
 def _get_serializer(app, name):
     secret_key = app.config.get("SECRET_KEY")
+    derived_keys = app.config.get("SECRET_KEY_FALLBACKS")
+
+    secret_keys = [secret_key] + (
+        derived_keys if isinstance(derived_keys, list) else []
+    )
     salt = cv(f"{name.upper()}_SALT", app=app)
-    return URLSafeTimedSerializer(secret_key=secret_key, salt=salt)
+    return URLSafeTimedSerializer(secret_keys, salt=salt)
 
 
 def _context_processor():
