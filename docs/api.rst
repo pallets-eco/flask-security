@@ -256,6 +256,7 @@ Forms
 .. autoclass:: flask_security.WebAuthnVerifyForm
 .. autoclass:: flask_security.Form
 .. autoclass:: flask_security.FormInfo
+.. autoclass:: flask_security.UsernameRecoveryForm
 
 .. _signals_topic:
 
@@ -384,6 +385,13 @@ sends the following signals.
     (which is the sender), it is passed `user`, `method`, `login_token` and `token` (deprecated) arguments.
 
     .. versionadded:: 3.3.0
+
+.. data:: username_recovery_email_sent
+
+    Sent when a username is successfully recovered and sent over email. In addition to the
+    app (which is the sender), it is passed the `user` argument.
+
+    .. versionadded:: 5.6.0
 
 .. data:: us_security_token_sent
 

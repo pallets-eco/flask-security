@@ -11,7 +11,11 @@
 
 from flask import current_app
 from .proxies import _security, _datastore
-from .signals import password_reset, reset_password_instructions_sent
+from .signals import (
+    password_reset,
+    reset_password_instructions_sent,
+    username_recovery_email_sent,
+)
 from .utils import (
     config_value,
     get_token_status,
@@ -114,3 +118,22 @@ def update_password(user, password):
         _async_wrapper=current_app.ensure_sync,
         user=user,
     )
+
+
+def send_username_recovery_email(user):
+    """Sends the username recovery email for the specified user.
+    :param user: The user requesting username recovery
+    """
+    if config_value("USERNAME_RECOVERY"):
+        send_mail(
+            config_value("EMAIL_SUBJECT_USERNAME_RECOVERY"),
+            user.email,
+            "username_recovery",
+            user=user,
+            username=user.username,
+        )
+        username_recovery_email_sent.send(
+            current_app._get_current_object(),
+            _async_wrapper=current_app.ensure_sync,
+            user=user,
+        )

@@ -1155,6 +1155,38 @@ Recoverable
 
     Default: ``_("Your password has been reset")``.
 
+.. py:data:: SECURITY_USERNAME_RECOVERY
+
+   Specifies whether username recovery is enabled.
+
+   Default: ``True``.
+
+   .. versionadded:: 5.6.0
+
+.. py:data:: SECURITY_USERNAME_RECOVERY_URL
+
+    Specifies the username recovery URL.
+
+    Default: ``"/recover-username"``.
+
+    .. versionadded:: 5.6.0
+
+.. py:data:: SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY
+
+   Sets subject for the username recovery email.
+
+   Default: ``_("Your requested username")``
+
+   .. versionadded:: 5.6.0
+
+.. py:data:: SECURITY_USERNAME_RECOVERY_TEMPLATE
+
+   Specifies the path to the template for the username recovery page.
+
+   Default: ``"security/recover_username.html"``
+
+   .. versionadded:: 5.6.0
+
 Change-Email
 ------------
 .. versionadded:: 5.5.0
@@ -1935,6 +1967,7 @@ A list of all templates:
 * :py:data:`SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE`
 * :py:data:`SECURITY_TWO_FACTOR_SELECT_TEMPLATE`
 * :py:data:`SECURITY_TWO_FACTOR_SETUP_TEMPLATE`
+* :py:data:`SECURITY_USERNAME_RECOVERY_TEMPLATE`
 * :py:data:`SECURITY_US_SIGNIN_TEMPLATE`
 * :py:data:`SECURITY_US_SETUP_TEMPLATE`
 * :py:data:`SECURITY_US_VERIFY_TEMPLATE`

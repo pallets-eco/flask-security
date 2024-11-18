@@ -53,3 +53,5 @@ wan_deleted = signals.signal("wan-deleted")
 change_email_instructions_sent = signals.signal("change-email-instructions-sent")
 
 change_email_confirmed = signals.signal("change-email")
+
+username_recovery_email_sent = signals.signal("username-recovery-email-sent")
