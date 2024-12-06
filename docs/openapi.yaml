@@ -646,6 +646,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
+  /recover-username:
+    get:
+      summary: GET username recovery form
+      responses:
+        200:
+          description: Username recovery form
+          content:
+            text/html:
+              schema:
+                type: string
+                description: render_template(SECURITY_USERNAME_RECOVERY_TEMPLATE)
+                example: render_template(SECURITY_USERNAME_RECOVERY_TEMPLATE)
+    post:
+      summary: Request username recovery
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address associated with the account
+              required:
+                - email
+      responses:
+        200:
+          description: Send username recovery email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: render_template(SECURITY_USERNAME_RECOVERY_REQUEST)
+                    example: render_template(SECURITY_USERNAME_RECOVERY_REQUEST)
   /confirm:
     get:
       summary: GET send confirmation form
