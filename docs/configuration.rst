@@ -1159,7 +1159,7 @@ Recoverable
 
    Specifies whether username recovery is enabled.
 
-   Default: ``True``.
+   Default: ``False``.
 
    .. versionadded:: 5.6.0
 
@@ -1175,7 +1175,7 @@ Recoverable
 
    Sets subject for the username recovery email.
 
-   Default: ``_("Your requested username")``
+   Default: ``_("Your requested username")``.
 
    .. versionadded:: 5.6.0
 
@@ -1183,7 +1183,7 @@ Recoverable
 
    Specifies the path to the template for the username recovery page.
 
-   Default: ``"security/recover_username.html"``
+   Default: ``"security/recover_username.html"``.
 
    .. versionadded:: 5.6.0
 

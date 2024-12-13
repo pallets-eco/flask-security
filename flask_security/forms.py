@@ -34,7 +34,7 @@ from wtforms import (
 )
 
 from werkzeug.datastructures import MultiDict
-from wtforms.validators import Optional, StopValidation, Email
+from wtforms.validators import Optional, StopValidation
 
 from .babel import is_lazy_string, make_lazy_string
 from .confirmable import requires_confirmation
@@ -871,11 +871,10 @@ class TwoFactorRescueForm(Form):
     submit = SubmitField(get_form_field_label("submit"))
 
 
-class UsernameRecoveryForm(Form):
+class UsernameRecoveryForm(Form, UserEmailFormMixin):
     """The username recovery form"""
 
-    email = StringField(get_form_field_label("Email"), validators=[Required(), Email()])
-    submit = SubmitField(get_form_field_label("recover_password"))
+    submit = SubmitField(get_form_field_label("recover_username"))
 
 
 class DummyForm(Form):

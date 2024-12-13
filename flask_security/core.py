@@ -327,7 +327,7 @@ _default_config: dict[str, t.Any] = {
         "webauthn": "flask_security.webauthn.WebAuthnTfPlugin",
     },
     "UNIFIED_SIGNIN": False,
-    "USERNAME_RECOVERY": True,
+    "USERNAME_RECOVERY": False,
     "USERNAME_RECOVERY_TEMPLATE": "security/recover_username.html",
     "USERNAME_RECOVERY_URL": "/recover-username",
     "US_SETUP_SALT": "us-setup-salt",

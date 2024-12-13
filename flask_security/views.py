@@ -38,7 +38,6 @@ from flask import (
     after_this_request,
     current_app,
     jsonify,
-    render_template,
     request,
     session,
 )
@@ -1162,9 +1161,12 @@ def recover_username():
             send_username_recovery_email(user)
 
         do_flash(*get_message("USERNAME_RECOVERY_REQUEST", email=form.email.data))
+
+        if _security._want_json(request):
+            return base_render_json(form, include_auth_token=True)
         return redirect(url_for_security("login"))
 
-    return render_template(
+    return _security.render_template(
         cv("USERNAME_RECOVERY_TEMPLATE"), username_recovery_form=form
     )
 
@@ -1286,9 +1288,12 @@ def create_blueprint(app, state, import_name):
             methods=["GET", "POST"],
             endpoint="reset_password",
         )(reset_password)
-        bp.route(
-            username_recovery_url, methods=["GET", "POST"], endpoint="recover_username"
-        )(recover_username)
+        if cv("USERNAME_RECOVERY", app=app):
+            bp.route(
+                username_recovery_url,
+                methods=["GET", "POST"],
+                endpoint="recover_username",
+            )(recover_username)
 
     if state.changeable:
         bp.route(
