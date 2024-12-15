@@ -65,6 +65,7 @@ from .forms import (
     TwoFactorVerifyCodeForm,
     TwoFactorSetupForm,
     TwoFactorRescueForm,
+    UsernameRecoveryForm,
 )
 from .passwordless import login_token_status, send_login_instructions
 from .proxies import _security, _datastore
@@ -83,6 +84,7 @@ from .recoverable import (
     reset_password_token_status,
     send_reset_password_instructions,
     update_password,
+    send_username_recovery_email,
 )
 from .registerable import register_user, register_existing
 from .recovery_codes import mf_recovery, mf_recovery_codes
@@ -1144,6 +1146,31 @@ def two_factor_rescue():
     )
 
 
+@anonymous_user_required
+@unauth_csrf()
+def recover_username():
+    """View function for username recovery"""
+
+    form = t.cast(
+        UsernameRecoveryForm, build_form_from_request("username_recovery_form")
+    )
+
+    if form.validate_on_submit():
+        user = _datastore.find_user(email=form.email.data)
+        if user:
+            send_username_recovery_email(user)
+
+        do_flash(*get_message("USERNAME_RECOVERY_REQUEST", email=form.email.data))
+
+        if _security._want_json(request):
+            return base_render_json(form, include_auth_token=True)
+        return redirect(url_for_security("login"))
+
+    return _security.render_template(
+        cv("USERNAME_RECOVERY_TEMPLATE"), username_recovery_form=form
+    )
+
+
 def create_blueprint(app, state, import_name):
     """Creates the security extension blueprint"""
 
@@ -1252,6 +1279,7 @@ def create_blueprint(app, state, import_name):
 
     if state.recoverable:
         reset_url = cv("RESET_URL", app=app)
+        username_recovery_url = cv("USERNAME_RECOVERY_URL", app=app)
         bp.route(reset_url, methods=["GET", "POST"], endpoint="forgot_password")(
             forgot_password
         )
@@ -1260,6 +1288,12 @@ def create_blueprint(app, state, import_name):
             methods=["GET", "POST"],
             endpoint="reset_password",
         )(reset_password)
+        if cv("USERNAME_RECOVERY", app=app):
+            bp.route(
+                username_recovery_url,
+                methods=["GET", "POST"],
+                endpoint="recover_username",
+            )(recover_username)
 
     if state.changeable:
         bp.route(

@@ -1,0 +1,8 @@
+{# This template receives the following context:
+  user - the entire user model object
+#}
+
+<p>{{ _fsdomain("Hello,") }}</p>
+<p>{{ _fsdomain("You recently requested to recover your username.") }}</p>
+<p>{{ _fsdomain("Your username is: %(username)s", username=user.username) }}</p>
+<p>{{ _fsdomain("If you did not initiate this request, you can safely ignore this email.") }}</p>

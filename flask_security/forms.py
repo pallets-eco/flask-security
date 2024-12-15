@@ -871,6 +871,12 @@ class TwoFactorRescueForm(Form):
     submit = SubmitField(get_form_field_label("submit"))
 
 
+class UsernameRecoveryForm(Form, UserEmailFormMixin):
+    """The username recovery form"""
+
+    submit = SubmitField(get_form_field_label("recover_username"))
+
+
 class DummyForm(Form):
     """A dummy form for json responses"""
 

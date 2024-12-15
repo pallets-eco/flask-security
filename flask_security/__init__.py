@@ -58,6 +58,7 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorVerifyCodeForm,
     VerifyForm,
+    UsernameRecoveryForm,
     unique_identity_attribute,
 )
 from .mail_util import MailUtil, EmailValidateException
@@ -87,6 +88,7 @@ from .signals import (
     user_confirmed,
     user_registered,
     user_not_registered,
+    username_recovery_email_sent,
     us_security_token_sent,
     us_profile_changed,
     wan_deleted,

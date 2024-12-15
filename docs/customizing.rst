@@ -18,6 +18,7 @@ following is a list of view templates:
 * `security/login_user.html`
 * `security/mf_recovery.html`
 * `security/mf_recovery_codes.html`
+* `security/recover_username.html`
 * `security/register_user.html`
 * `security/reset_password.html`
 * `security/change_password.html`
@@ -178,6 +179,7 @@ The following is a list of all the available form overrides:
 * ``us_setup_form``: Unified sign in setup form
 * ``us_setup_validate_form``: Unified sign in setup validation form
 * ``us_verify_form``: Unified sign in verify form
+* ``username_recovery_form``: Username recovery form
 * ``wan_delete_form``: WebAuthn delete a registered key form
 * ``wan_register_form``: WebAuthn initiate registration ceremony form
 * ``wan_register_response_form``: WebAuthn registration ceremony form
@@ -366,6 +368,8 @@ The following is a list of email templates:
 * `security/email/confirmation_instructions.txt`
 * `security/email/login_instructions.html`
 * `security/email/login_instructions.txt`
+* `security/email/username_recovery.html`
+* `security/email/username_recovery.txt`
 * `security/email/reset_instructions.html`
 * `security/email/reset_instructions.txt`
 * `security/email/reset_notice.html`
@@ -448,6 +452,7 @@ welcome_existing                SECURITY_SEND_REGISTER_EMAIL         SECURITY_EM
                                 SECURITY_RETURN_GENERIC_RESPONSES                                                      - recovery_link
 welcome_existing_username       SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - email                user_not_registered
                                 SECURITY_RETURN_GENERIC_RESPONSES                                                      - username
+username_recovery               SECURITY_USERNAME_RECOVERY           SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY          - user                 username_recovery_email_sent
 =============================   ==================================   =============================================     ====================== ===============================
 
 When sending an email, Flask-Security goes through the following steps:

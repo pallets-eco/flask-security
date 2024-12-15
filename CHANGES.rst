@@ -9,6 +9,7 @@ Version 5.6.0
 Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`1038`) Add support for 'secret_key' rotation
+- (:issue:`980`) Add support for username recovery in simple login flows
 
 Version 5.5.2
 -------------
