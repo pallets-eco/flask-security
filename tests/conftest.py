@@ -127,6 +127,8 @@ def app(request: pytest.FixtureRequest) -> SecurityFixture:
     # Make this hex_md5 for token tests
     app.config["SECURITY_HASHING_SCHEMES"] = ["hex_md5"]
     app.config["SECURITY_DEPRECATED_HASHING_SCHEMES"] = []
+    # Enable username recovery for tests
+    app.config["SECURITY_USERNAME_RECOVERY"] = True
 
     for opt in [
         "changeable",

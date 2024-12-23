@@ -836,6 +836,14 @@ def test_username_recovery_valid_email(app, clients, get_message):
     email = app.mail.outbox[1]
     assert "Your username is: joe" in email.body
 
+    # Test JSON responses
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="joe@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+
 
 def test_username_recovery_invalid_email(app, clients):
     response = clients.post(
@@ -844,3 +852,68 @@ def test_username_recovery_invalid_email(app, clients):
 
     assert not app.mail.outbox
     assert response.status_code == 200
+
+    # Test JSON responses
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="bogus@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.settings(return_generic_responses=True)
+def test_username_recovery_generic_responses(app, clients, get_message):
+    recorded_recovery_sent = []
+
+    @username_recovery_email_sent.connect_via(app)
+    def on_email_sent(app, **kwargs):
+        recorded_recovery_sent.append(kwargs["user"])
+
+    # Test with valid email
+    with capture_flashes() as flashes:
+        response = clients.post(
+            "/recover-username",
+            data=dict(email="joe@lp.com"),
+            follow_redirects=True,
+        )
+    assert len(flashes) == 1
+    assert get_message("USERNAME_RECOVERY_REQUEST") == flashes[0]["message"].encode(
+        "utf-8"
+    )
+    assert len(recorded_recovery_sent) == 1
+    assert len(app.mail.outbox) == 1
+    assert response.status_code == 200
+
+    # Test with non-existant email (should still return 200)
+    with capture_flashes() as flashes:
+        response = clients.post(
+            "/recover-username",
+            data=dict(email="bogus@lp.com"),
+            follow_redirects=True,
+        )
+    assert len(flashes) == 1
+    assert get_message("USERNAME_RECOVERY_REQUEST") == flashes[0]["message"].encode(
+        "utf-8"
+    )
+    # Validate no email was sent (there should only be one from the previous test)
+    assert len(recorded_recovery_sent) == 1
+    assert len(app.mail.outbox) == 1
+    assert response.status_code == 200
+
+    # Test JSON responses - valid email
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="joe@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+
+    # Test JSON responses - invalid email
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="bogus@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])

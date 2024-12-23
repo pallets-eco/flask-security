@@ -1160,10 +1160,21 @@ def recover_username():
         if user:
             send_username_recovery_email(user)
 
-        do_flash(*get_message("USERNAME_RECOVERY_REQUEST", email=form.email.data))
+        if not _security._want_json(request):
+            do_flash(*get_message("USERNAME_RECOVERY_REQUEST", email=form.email.data))
+    elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
+        rinfo = dict(email=dict())
+        form_errors_munge(form, rinfo)
+        if not form.errors:
+            if not _security._want_json(request):
+                do_flash(
+                    *get_message("USERNAME_RECOVERY_REQUEST", email=form.email.data)
+                )
 
-        if _security._want_json(request):
-            return base_render_json(form, include_auth_token=True)
+    if _security._want_json(request):
+        return base_render_json(form, include_user=False)
+
+    if form.validate_on_submit():
         return redirect(url_for_security("login"))
 
     return _security.render_template(
