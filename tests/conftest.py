@@ -338,6 +338,12 @@ def app(request):
                 if hasattr(app.security.forms[form_name].cls, "username"):
                     del app.security.forms[form_name].cls.username
 
+        from flask_security import RegisterFormV2
+
+        for attr in ["username", "password", "password_confirm"]:
+            if hasattr(RegisterFormV2, attr):
+                delattr(RegisterFormV2, attr)
+
     request.addfinalizer(revert_forms)
     yield app
     # help find tests that don't clean up - note that pony leaves a connection so

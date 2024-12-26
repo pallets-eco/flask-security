@@ -8,7 +8,9 @@
     {{ register_user_form.hidden_tag() }}
     {{ render_form_errors(register_user_form) }}
     {{ render_field_with_errors(register_user_form.email) }}
-    {% if config["SECURITY_USERNAME_ENABLE"] %}{{ render_field_with_errors(register_user_form.username) }}{% endif %}
+    {% if register_user_form.username %}
+      {{ render_field_with_errors(register_user_form.username) }}
+    {% endif %}
     {{ render_field_with_errors(register_user_form.password) }}
     {% if register_user_form.password_confirm %}
       {{ render_field_with_errors(register_user_form.password_confirm) }}

@@ -12,7 +12,8 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`1038`) Add support for 'secret_key' rotation
 - (:issue:`980`) Add support for username recovery in simple login flows
-- (:pr:`xx`) Add support for Python 3.13
+- (:pr:`1048`) Add support for Python 3.13
+- (:issue:`1043`) Unify Register forms (and split out re-type password option)
 
 Notes
 +++++
@@ -21,8 +22,12 @@ part of its safe_crypt() method (fallback is to return None).
 However - that method only appears to be called in a few crypt handlers and
 for bcrypt - only for the built-in bcrypt - not if the bcrypt package is installed.
 passlib is not maintained - a new fork (10/1/2024) (https://pypi.org/project/libpass/)
-seems promising and has been tested with python 3.13. If that fork matures we will
+seems promising and has been tested with python 3.13 and Flask-Security. If that fork matures we will
 change the dependencies appropriately.
+
+The register forms have been combined - or more accurately - there is a new RegisterFormV2
+that subsumes the features of both the old RegisterForm and ConfirmRegisterForm.
+Please read :ref:`register_form_migration`.
 
 Version 5.5.2
 -------------

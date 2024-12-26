@@ -46,6 +46,7 @@ from .forms import (
     PasswordlessLoginForm,
     RegisterForm,
     RegisterFormMixin,
+    RegisterFormV2,
     ResetPasswordForm,
     SendConfirmationForm,
     TwoFactorVerifyCodeForm,
@@ -53,7 +54,8 @@ from .forms import (
     TwoFactorRescueForm,
     UsernameRecoveryForm,
     VerifyForm,
-    get_register_username_field,
+    build_register_username_field,
+    build_register_form,
     login_username_field,
 )
 from .json import setup_json
@@ -134,6 +136,7 @@ _default_config: dict[str, t.Any] = {
     "SUBDOMAIN": None,
     "FLASH_MESSAGES": True,
     "RETURN_GENERIC_RESPONSES": False,
+    "USE_REGISTER_V2": False,
     "I18N_DOMAIN": "flask_security",
     "I18N_DIRNAME": "builtin",
     "EMAIL_VALIDATOR_ARGS": None,
@@ -171,6 +174,7 @@ _default_config: dict[str, t.Any] = {
     "PASSWORD_BREACHED_COUNT": 1,
     "PASSWORD_NORMALIZE_FORM": "NFKD",
     "PASSWORD_REQUIRED": True,
+    "PASSWORD_CONFIRM_REQUIRED": True,  # for RegisterFormV2
     "HASHING_SCHEMES": ["sha256_crypt", "hex_md5"],
     "DEPRECATED_HASHING_SCHEMES": ["auto"],
     "LOGIN_URL": "/login",
@@ -669,7 +673,7 @@ class FormInfo:
     The default instantiator simply uses the class constructor - however
     applications can provide their OWN instantiator which can do pretty much anything
     as long as it returns an instantiated form. The 'cls' argument is optional since
-    the instantiator COULD be form specific.
+    the instantiator COULD be form agnostic (using the form name to differentiate).
 
     The instantiator callable will always be called from a flask request context
     and receive the following arguments::
@@ -1243,6 +1247,8 @@ class Security:
         json_encoder_cls is no longer honored since Flask 2.2 has deprecated it.
     .. deprecated:: 5.3.1
         Passing in an anonymous_user class. Removed in 5.4.0
+    .. deprecated:: 5.6.0
+        Passing in a confirm_register_form class.
     """
 
     def __init__(
@@ -1255,7 +1261,7 @@ class Security:
         verify_form: t.Type[VerifyForm] = VerifyForm,
         change_email_form: t.Type[ChangeEmailForm] = ChangeEmailForm,
         confirm_register_form: t.Type[ConfirmRegisterForm] = ConfirmRegisterForm,
-        register_form: t.Type[RegisterForm] = RegisterForm,
+        register_form: t.Type[RegisterForm] | t.Type[RegisterFormV2] = RegisterForm,
         forgot_password_form: t.Type[ForgotPasswordForm] = ForgotPasswordForm,
         reset_password_form: t.Type[ResetPasswordForm] = ResetPasswordForm,
         change_password_form: t.Type[ChangePasswordForm] = ChangePasswordForm,
@@ -1498,6 +1504,39 @@ class Security:
             ):
                 self.forms[form_name].cls = form_cls
 
+        self._use_confirm_form = True
+        # deprecate confirm_register_form, ConfirmRegisterForm and RegisterForm
+        if self.forms["confirm_register_form"].cls != ConfirmRegisterForm:
+            warnings.warn(
+                "The ConfirmRegisterForm and the confirm_register_form"
+                " option are"
+                " deprecated as of version 5.6.0 and will be removed in a future"
+                " release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if (
+            self.forms["register_form"].cls
+            and self.forms["register_form"].cls != RegisterForm
+            and issubclass(self.forms["register_form"].cls, RegisterForm)
+        ):
+            warnings.warn(
+                "The RegisterForm is"
+                " deprecated as of version 5.6.0 and will be removed in a future"
+                " release. The form RegisterFormV2 should be sub-classed instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if cv("USE_REGISTER_V2", app=app):
+            # Only do this is they haven't subclassed
+            if self.forms["register_form"].cls == RegisterForm:
+                self.forms["register_form"].cls = RegisterFormV2
+                self.forms["confirm_register_form"].cls = None
+        if self.forms["register_form"].cls and issubclass(
+            self.forms["register_form"].cls, RegisterFormV2
+        ):
+            self._use_confirm_form = False
+
         # The following will be set as attributes and initialized from either
         # kwargs or config.
         attr_names = [
@@ -1619,13 +1658,18 @@ class Security:
             # Add dynamic fields - probably overkill to check if these are our forms.
             fcls = self.forms["register_form"].cls
             if fcls and issubclass(fcls, RegisterFormMixin):
-                fcls.username = get_register_username_field(app)
+                fcls.username = build_register_username_field(app)
             fcls = self.forms["confirm_register_form"].cls
             if fcls and issubclass(fcls, RegisterFormMixin):
-                fcls.username = get_register_username_field(app)
+                fcls.username = build_register_username_field(app)
             fcls = self.forms["login_form"].cls
             if fcls and issubclass(fcls, LoginForm):
                 fcls.username = login_username_field
+
+        # new unified RegisterForm
+        fcls = self.forms["register_form"].cls
+        if fcls and issubclass(fcls, RegisterFormV2):
+            build_register_form(app=app, fcls=fcls)
 
         # initialize two-factor plugins. Note that each implementation likely
         # has its own feature flag which will control whether it is active or not.

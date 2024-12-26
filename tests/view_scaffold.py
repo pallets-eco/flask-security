@@ -247,6 +247,8 @@ def create_app() -> Flask:
     def get_locale():
         # For a given session - set lang based on first request.
         # Honor explicit url request first
+        if not session:  # if running CLI
+            return
         global SET_LANG
         if not SET_LANG:
             session.pop("lang", None)

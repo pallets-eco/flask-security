@@ -292,7 +292,7 @@ def register() -> ResponseValue:
     # (via email) then you need to type in your password twice. That might
     # make sense if you can't reset your password but in modern (2020) UX models
     # don't ask twice.
-    if _security.confirmable or request.is_json:
+    if (_security.confirmable or request.is_json) and _security._use_confirm_form:
         form_name = "confirm_register_form"
     else:
         form_name = "register_form"

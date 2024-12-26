@@ -355,6 +355,30 @@ class PasswordConfirmFormMixin:
     )
 
 
+def build_password_field(is_confirm=False, autocomplete="new-password", app=None):
+    # Based on configuration return PasswordField with appropriate validators
+    # Note that length and breached validators are done as part of form.
+    validators = list()
+    render_kw = {"autocomplete": autocomplete}
+    if cv("PASSWORD_REQUIRED", app) or not cv("UNIFIED_SIGNIN", app):
+        validators.append(password_required)
+
+    if is_confirm:
+        validators.append(EqualTo("password", message="RETYPE_PASSWORD_MISMATCH"))
+        return PasswordField(
+            label=get_form_field_label("retype_password"),
+            render_kw=render_kw,
+            validators=validators,
+        )
+
+    # normal password field
+    return PasswordField(
+        label=get_form_field_label("password"),
+        render_kw=render_kw,
+        validators=validators,
+    )
+
+
 class NextFormMixin:
     next = HiddenField()
 
@@ -377,7 +401,7 @@ class CodeFormMixin:
     )
 
 
-def get_register_username_field(app):
+def build_register_username_field(app):
     if cv("USERNAME_REQUIRED", app=app):
         validators = [
             Required(message="USERNAME_NOT_PROVIDED"),
@@ -698,8 +722,104 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.next.data:
+        if request and not self.next.data:
             self.next.data = request.args.get("next", "")
+
+
+class RegisterFormV2(Form, UniqueEmailFormMixin, NextFormMixin):
+    """This form is used for registering.
+
+    The following fields are defined:
+        * email (required)
+        * password (required if :py:data:`SECURITY_PASSWORD_REQUIRED` is ``True``
+          OR :py:data:`SECURITY_UNIFIED_SIGNIN` is ``False``)
+        * password_confirm (based on :py:data:`SECURITY_PASSWORD_CONFIRM_REQUIRED`)
+        * username (based on :py:data:`SECURITY_USERNAME_ENABLE`)
+        * next
+
+    Since there are many configuration options that alter which fields and
+    which validators (e.g. Required), some fields are added dynamically at
+    Security init_app() time by calling the internal method build_register_form().
+
+    We want to support OWASP best-practice around mitigating user enumeration.
+    To that end we run through the entire validation regardless - this allows us
+    to still return important bad-password messages.
+    In the case of an existing email or username - we set form.existing_xx so that
+    the view can decide how to match responses (e.g. json responses always return 200).
+
+    .. versionadded:: 5.6
+    """
+
+    submit = SubmitField(get_form_field_label("register"))
+    username: t.ClassVar[Field]
+    password: t.ClassVar[Field]
+    password_confirm: t.ClassVar[Field]
+
+    def to_dict(self, only_user):
+        """
+        Return form data as dictionary
+        :param only_user: bool, if True then only fields that have
+        corresponding members in UserModel are returned
+        :return: dict
+        """
+
+        def is_field_and_user_attr(member):
+            if not isinstance(member, Field):
+                return False
+
+            # If only fields recorded on UserModel should be returned,
+            # perform check on user model, else return True
+            if only_user is True:
+                return hasattr(_datastore.user_model, member.name)
+            else:
+                return True
+
+        fields = inspect.getmembers(self, is_field_and_user_attr)
+        return {key: value.data for key, value in fields}
+
+    def validate(self, **kwargs: t.Any) -> bool:
+        failed = False
+        if not super().validate(**kwargs):
+            failed = True
+
+        if self.password.data:
+            # We do explicit validation here for passwords
+            # (rather than write a validator class) for 2 reasons:
+            # 1) We want to control which fields are passed -
+            #    sometimes that's current_user
+            #    other times it's the registration fields.
+            # 2) We want to be able to return multiple error messages.
+            rfields = {}
+            for k, v in self.data.items():
+                if hasattr(_datastore.user_model, k):
+                    rfields[k] = v
+            del rfields["password"]
+            pbad, self.password.data = _security._password_util.validate(
+                self.password.data, True, **rfields
+            )
+            if pbad:
+                self.password.errors.extend(pbad)
+                failed = True
+        return not failed
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.existing_username_user = None
+        self.existing_email_user = None
+        if request and not self.next.data:
+            self.next.data = request.args.get("next", "")
+
+
+def build_register_form(app, fcls):
+    # Based on app configuration, add optional/configurable fields to the register form
+    # Allow app to override the field using mixins
+    if not (hasattr(fcls, "password") and fcls.password):
+        fcls.password = build_password_field(app=app)
+    if cv("PASSWORD_CONFIRM_REQUIRED", app=app):
+        if not (hasattr(fcls, "password_confirm") and fcls.password_confirm):
+            fcls.password_confirm = build_password_field(app=app, is_confirm=True)
+    if cv("USERNAME_ENABLE", app):
+        fcls.username = build_register_username_field(app=app)
 
 
 class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):

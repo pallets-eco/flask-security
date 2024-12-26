@@ -49,6 +49,7 @@ from flask_security.forms import (
     PasswordField,
     PasswordlessLoginForm,
     RegisterForm,
+    RegisterFormV2,
     Required,
     ResetPasswordForm,
     SendConfirmationForm,
@@ -115,6 +116,9 @@ def test_register_blueprint_flag(app, sqlalchemy_datastore):
         {"username": {"mapper": lambda x: x}},
     ]
 )
+@pytest.mark.filterwarnings(
+    "ignore:.*The RegisterForm is deprecated.*:DeprecationWarning"
+)
 def test_basic_custom_forms(app, sqlalchemy_datastore):
     class MyLoginForm(LoginForm):
         username = StringField("My Login Username Field")
@@ -171,6 +175,7 @@ def test_basic_custom_forms(app, sqlalchemy_datastore):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
+@pytest.mark.filterwarnings("ignore:.*The ConfirmRegisterForm.*:DeprecationWarning")
 def test_confirmable_custom_form(app, sqlalchemy_datastore):
     app.config["SECURITY_REGISTERABLE"] = True
     app.config["SECURITY_CONFIRMABLE"] = True
@@ -360,7 +365,7 @@ def test_custom_forms_via_config(app, sqlalchemy_datastore):
     class MyLoginForm(LoginForm):
         email = StringField("My Login Email Address Field")
 
-    class MyRegisterForm(RegisterForm):
+    class MyRegisterForm(RegisterFormV2):
         email = StringField("My Register Email Address Field")
 
     app.config["SECURITY_LOGIN_FORM"] = MyLoginForm
