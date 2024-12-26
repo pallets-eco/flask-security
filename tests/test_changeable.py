@@ -21,7 +21,7 @@ from tests.test_utils import (
     authenticate,
     check_location,
     check_xlation,
-    get_form_input,
+    get_form_input_value,
     get_session,
     hash_password,
     init_app_with_options,
@@ -688,7 +688,7 @@ def test_csrf(app, client):
     assert b"The CSRF token is missing" in response.data
     # Note that we get a CSRF token EVEN for errors - this seems odd
     # but can't find anything that says its a security issue
-    csrf_token = get_form_input(response, "csrf_token")
+    csrf_token = get_form_input_value(response, "csrf_token")
 
     data["csrf_token"] = csrf_token
     response = client.post("/change", data=data)

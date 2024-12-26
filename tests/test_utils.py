@@ -50,7 +50,7 @@ def authenticate(
     data = dict(email=email, password=password, remember="y")
     if csrf:
         response = client.get(endpoint or "/login")
-        data["csrf_token"] = get_form_input(response, "csrf_token")
+        data["csrf_token"] = get_form_input_value(response, "csrf_token")
     return client.post(endpoint or "/login", data=data, **kwargs)
 
 
@@ -203,9 +203,7 @@ def get_form_action(response, ordinal=0):
     return matcher[ordinal]
 
 
-def get_form_input(response, field_id):
-    # return value of field with the id == field_id or None if not found
-    rex = f'<input [^>]*id="{field_id}"[^>]*value="([^"]*)">'
+def _parse_form_input(response, rex):
     matcher = re.findall(
         rex,
         response.data.decode("utf-8"),
@@ -214,6 +212,18 @@ def get_form_input(response, field_id):
     if matcher:
         return matcher[0]
     return None
+
+
+def get_form_input(response, field_id):
+    # return entire input field for field with the id == field_id or None if not found
+    return _parse_form_input(response, f'<input ([^>]*id="{field_id}"[^>]*)">')
+
+
+def get_form_input_value(response, field_id):
+    # return 'value' of field with the id == field_id or None if not found
+    return _parse_form_input(
+        response, f'<input [^>]*id="{field_id}"[^>]*value="([^"]*)">'
+    )
 
 
 def check_xlation(app, locale):
