@@ -158,9 +158,10 @@ pure sqlalchemy (unlike Flask-SQLAlchemy).
 
     import os
 
+    from sqlalchemy.orm import DeclarativeBase
     from flask import Flask, render_template_string
     from flask_sqlalchemy_lite import SQLAlchemy
-    from flask_security import Security, SQLAlchemyUserDatastore, auth_required, hash_password
+    from flask_security import Security, FSQLALiteUserDatastore, auth_required, hash_password
     from flask_security.models import sqla as sqla
 
     # Create app
@@ -194,11 +195,11 @@ pure sqlalchemy (unlike Flask-SQLAlchemy).
     sqla.FsModels.set_db_info(base_model=Model)
 
     class Role(Model, sqla.FsRoleMixin):
-        __tablename__ = "Role"
+        __tablename__ = "role"
         pass
 
     class User(Model, sqla.FsUserMixin):
-        __tablename__ = "User"
+        __tablename__ = "user"
         pass
 
     # Setup Flask-Security
