@@ -658,33 +658,38 @@ paths:
                 type: string
                 description: render_template(SECURITY_USERNAME_RECOVERY_TEMPLATE)
                 example: render_template(SECURITY_USERNAME_RECOVERY_TEMPLATE)
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponseNoUser"
     post:
       summary: Request username recovery
       requestBody:
         required: true
         content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoverUsername"
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: Email address associated with the account
-              required:
-                - email
+              $ref: "#/components/schemas/RecoverUsername"
       responses:
         200:
           description: Send username recovery email
           content:
+            text/html:
+              schema:
+                type: string
+                description: render_template(SECURITY_USERNAME_RECOVERY_TEMPLATE)
+                example: render_template(SECURITY_USERNAME_RECOVERY_TEMPLATE)
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: render_template(SECURITY_USERNAME_RECOVERY_REQUEST)
-                    example: render_template(SECURITY_USERNAME_RECOVERY_REQUEST)
+                $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+        400:
+          description: Error when trying to send recovery email (e.g. user doesn't exist)
+          content:
+            application/json:
+              schema:
+                $ref: "#components/schemas/DefaultJsonErrorResponse"
   /confirm:
     get:
       summary: GET send confirmation form
@@ -2270,6 +2275,14 @@ components:
           type: string
           description: >
             Email address to send link email to.
+    RecoverUsername:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          description: >
+            Email address associated with the account.
     UsSignin:
       type: object
       required: [identity, passcode]

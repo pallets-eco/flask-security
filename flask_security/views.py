@@ -1156,29 +1156,28 @@ def recover_username():
     )
 
     if form.validate_on_submit():
-        user = _datastore.find_user(email=form.email.data)
-        if user:
-            send_username_recovery_email(user)
+        send_username_recovery_email(form.user)
 
-        if not _security._want_json(request):
-            do_flash(*get_message("USERNAME_RECOVERY_REQUEST", email=form.email.data))
+        if _security._want_json(request):
+            return base_render_json(form, include_user=False)
+
+        do_flash(*get_message("USERNAME_RECOVERY_REQUEST"))
+
+        return redirect(url_for_security("login"))
     elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
         rinfo = dict(email=dict())
         form_errors_munge(form, rinfo)
         if not form.errors:
             if not _security._want_json(request):
-                do_flash(
-                    *get_message("USERNAME_RECOVERY_REQUEST", email=form.email.data)
-                )
+                do_flash(*get_message("USERNAME_RECOVERY_REQUEST"))
 
     if _security._want_json(request):
         return base_render_json(form, include_user=False)
 
-    if form.validate_on_submit():
-        return redirect(url_for_security("login"))
-
     return _security.render_template(
-        cv("USERNAME_RECOVERY_TEMPLATE"), username_recovery_form=form
+        cv("USERNAME_RECOVERY_TEMPLATE"),
+        username_recovery_form=form,
+        **_ctx("recover_username"),
     )
 
 

@@ -231,6 +231,8 @@ Forms
 .. autoclass:: flask_security.ChangeEmailForm
 .. autoclass:: flask_security.ChangePasswordForm
 .. autoclass:: flask_security.ConfirmRegisterForm
+.. autoclass:: flask_security.Form
+.. autoclass:: flask_security.FormInfo
 .. autoclass:: flask_security.ForgotPasswordForm
 .. autoclass:: flask_security.LoginForm
 .. autoclass:: flask_security.MfRecoveryCodesForm
@@ -239,24 +241,22 @@ Forms
 .. autoclass:: flask_security.RegisterForm
 .. autoclass:: flask_security.ResetPasswordForm
 .. autoclass:: flask_security.SendConfirmationForm
-.. autoclass:: flask_security.TwoFactorVerifyCodeForm
-.. autoclass:: flask_security.TwoFactorSetupForm
-.. autoclass:: flask_security.TwoFactorSelectForm
 .. autoclass:: flask_security.TwoFactorRescueForm
+.. autoclass:: flask_security.TwoFactorSelectForm
+.. autoclass:: flask_security.TwoFactorSetupForm
+.. autoclass:: flask_security.TwoFactorVerifyCodeForm
 .. autoclass:: flask_security.UnifiedSigninForm
 .. autoclass:: flask_security.UnifiedSigninSetupForm
 .. autoclass:: flask_security.UnifiedSigninSetupValidateForm
 .. autoclass:: flask_security.UnifiedVerifyForm
+.. autoclass:: flask_security.UsernameRecoveryForm
 .. autoclass:: flask_security.VerifyForm
+.. autoclass:: flask_security.WebAuthnDeleteForm
 .. autoclass:: flask_security.WebAuthnRegisterForm
 .. autoclass:: flask_security.WebAuthnRegisterResponseForm
 .. autoclass:: flask_security.WebAuthnSigninForm
 .. autoclass:: flask_security.WebAuthnSigninResponseForm
-.. autoclass:: flask_security.WebAuthnDeleteForm
 .. autoclass:: flask_security.WebAuthnVerifyForm
-.. autoclass:: flask_security.Form
-.. autoclass:: flask_security.FormInfo
-.. autoclass:: flask_security.UsernameRecoveryForm
 
 .. _signals_topic:
 

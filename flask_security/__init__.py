@@ -45,21 +45,21 @@ from .decorators import (
     unauth_csrf,
 )
 from .forms import (
-    Form,
     ChangePasswordForm,
+    ConfirmRegisterForm,
+    Form,
     ForgotPasswordForm,
     LoginForm,
+    PasswordlessLoginForm,
     RegisterForm,
     ResetPasswordForm,
-    PasswordlessLoginForm,
-    ConfirmRegisterForm,
     SendConfirmationForm,
     TwoFactorRescueForm,
     TwoFactorSetupForm,
     TwoFactorVerifyCodeForm,
-    VerifyForm,
-    UsernameRecoveryForm,
     unique_identity_attribute,
+    UsernameRecoveryForm,
+    VerifyForm,
 )
 from .mail_util import MailUtil, EmailValidateException
 from .oauth_glue import OAuthGlue

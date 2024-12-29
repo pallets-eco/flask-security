@@ -800,6 +800,7 @@ def test_csrf(app, client, get_message):
     assert check_location(app, response.location, "/post_reset_view")
 
 
+@pytest.mark.username_recovery()
 def test_username_recovery_valid_email(app, clients, get_message):
     recorded_recovery_sent = []
 
@@ -843,8 +844,10 @@ def test_username_recovery_valid_email(app, clients, get_message):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/json"
 
 
+@pytest.mark.username_recovery()
 def test_username_recovery_invalid_email(app, clients):
     response = clients.post(
         "/recover-username", data=dict(email="bogus@lp.com"), follow_redirects=True
@@ -860,8 +863,15 @@ def test_username_recovery_invalid_email(app, clients):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 400
+    assert response.headers["Content-Type"] == "application/json"
+    assert len(response.json["response"]["errors"]) == 1
+    assert (
+        "Specified user does not exist"
+        in response.json["response"]["field_errors"]["email"][0]
+    )
 
 
+@pytest.mark.username_recovery()
 @pytest.mark.settings(return_generic_responses=True)
 def test_username_recovery_generic_responses(app, clients, get_message):
     recorded_recovery_sent = []
@@ -908,6 +918,7 @@ def test_username_recovery_generic_responses(app, clients, get_message):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/json"
 
     # Test JSON responses - invalid email
     response = clients.post(
@@ -916,4 +927,5 @@ def test_username_recovery_generic_responses(app, clients, get_message):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/json"
     assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
