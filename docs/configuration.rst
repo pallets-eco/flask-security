@@ -1155,38 +1155,6 @@ Recoverable
 
     Default: ``_("Your password has been reset")``.
 
-.. py:data:: SECURITY_USERNAME_RECOVERY
-
-   Specifies whether username recovery is enabled.
-
-   Default: ``False``.
-
-   .. versionadded:: 5.6.0
-
-.. py:data:: SECURITY_USERNAME_RECOVERY_URL
-
-    Specifies the username recovery URL.
-
-    Default: ``"/recover-username"``.
-
-    .. versionadded:: 5.6.0
-
-.. py:data:: SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY
-
-   Sets subject for the username recovery email.
-
-   Default: ``_("Your requested username")``.
-
-   .. versionadded:: 5.6.0
-
-.. py:data:: SECURITY_USERNAME_RECOVERY_TEMPLATE
-
-   Specifies the path to the template for the username recovery page.
-
-   Default: ``"security/recover_username.html"``.
-
-   .. versionadded:: 5.6.0
-
 Change-Email
 ------------
 .. versionadded:: 5.5.0
@@ -1577,6 +1545,35 @@ Additional relevant configuration variables:
     * :py:data:`SECURITY_FRESHNESS` - Used to protect /us-setup.
     * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /us-setup.
 
+Username-Recovery
+-----------------
+
+    .. versionadded:: 5.6.0
+
+.. py:data:: SECURITY_USERNAME_RECOVERY
+
+   Specifies whether username recovery is enabled.
+
+   Default: ``False``.
+
+.. py:data:: SECURITY_USERNAME_RECOVERY_URL
+
+    Specifies the username recovery URL.
+
+    Default: ``"/recover-username"``.
+
+.. py:data:: SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY
+
+   Sets subject for the username recovery email.
+
+   Default: ``_("Your requested username")``.
+
+.. py:data:: SECURITY_USERNAME_RECOVERY_TEMPLATE
+
+   Specifies the path to the template for the username recovery page.
+
+   Default: ``"security/recover_username.html"``.
+
 Passwordless
 -------------
 
@@ -1897,6 +1894,7 @@ All feature flags. By default all are 'False'/not enabled.
 * :py:data:`SECURITY_CHANGEABLE`
 * :py:data:`SECURITY_TWO_FACTOR`
 * :py:data:`SECURITY_UNIFIED_SIGNIN`
+* :py:data:`SECURITY_USERNAME_RECOVERY`
 * :py:data:`SECURITY_WEBAUTHN`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
 * :py:data:`SECURITY_OAUTH_ENABLE`
@@ -1936,6 +1934,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_RESET_VIEW`
 * :py:data:`SECURITY_RESET_ERROR_VIEW`
 * :py:data:`SECURITY_LOGIN_ERROR_VIEW`
+* :py:data:`SECURITY_USERNAME_RECOVERY_URL`
 * :py:data:`SECURITY_US_SIGNIN_URL`
 * :py:data:`SECURITY_US_SETUP_URL`
 * :py:data:`SECURITY_US_SIGNIN_SEND_CODE_URL`
@@ -2058,6 +2057,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_USERNAME_DISALLOWED_CHARACTERS``
 * ``SECURITY_MSG_USERNAME_NOT_PROVIDED``
 * ``SECURITY_MSG_USERNAME_ALREADY_ASSOCIATED``
+* ``SECURITY_MSG_USERNAME_RECOVERY_REQUEST``
 * ``SECURITY_MSG_WEBAUTHN_EXPIRED``
 * ``SECURITY_MSG_WEBAUTHN_NAME_REQUIRED``
 * ``SECURITY_MSG_WEBAUTHN_NAME_INUSE``

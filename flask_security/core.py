@@ -2039,6 +2039,11 @@ class Security:
     ) -> None:
         self._add_ctx_processor("change_password", fn)
 
+    def recover_username_context_processor(
+        self, fn: t.Callable[[], dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("recover_username", fn)
+
     def send_confirmation_context_processor(
         self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
