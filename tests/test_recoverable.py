@@ -293,8 +293,8 @@ def test_recover_invalidates_session(app, client):
     assert response.location == "/login?next=/profile"
 
 
-def test_login_form_description(sqlalchemy_app):
-    app = sqlalchemy_app()
+def test_login_form_description(app, sqlalchemy_datastore):
+    app.security = Security(app, datastore=sqlalchemy_datastore)
     with app.test_request_context("/login"):
         login_form = LoginForm()
         expected = '<a href="/reset">Forgot password?</a>'

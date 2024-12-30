@@ -26,6 +26,8 @@ def test_monitor_404(myapp):
         headers={myapp.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"]: "token"},
     )
     assert resp.status_code == 403
+    with myapp.app_context():
+        ds.db.engine.dispose()
 
 
 def test_blog_write(myapp):
@@ -50,3 +52,6 @@ def test_blog_write(myapp):
     )
     assert resp.status_code == 200
     assert b"Yes, unittest@me.com can update blog" == resp.data
+
+    with myapp.app_context():
+        ds.db.engine.dispose()

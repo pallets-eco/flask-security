@@ -1173,6 +1173,9 @@ def test_change_token_uniquifier(app):
     token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
 
+    with app.app_context():
+        db.engine.dispose()
+
 
 def test_null_token_uniquifier(app):
     pytest.importorskip("sqlalchemy")
@@ -1214,11 +1217,14 @@ def test_null_token_uniquifier(app):
         ds.put(user)
         ds.commit()
 
-        client_nc = app.test_client(use_cookies=False)
+    client_nc = app.test_client(use_cookies=False)
 
-        response = json_authenticate(client_nc)
-        token = response.json["response"]["user"]["authentication_token"]
-        verify_token(client_nc, token)
+    response = json_authenticate(client_nc)
+    token = response.json["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)
+
+    with app.app_context():
+        db.engine.dispose()
 
 
 def test_token_query(app, client_nc):

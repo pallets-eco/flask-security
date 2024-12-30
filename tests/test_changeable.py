@@ -291,31 +291,34 @@ def test_auth_uniquifier(app):
         )
         ds.commit()
 
-        client = app.test_client()
+    client = app.test_client()
 
-        # standard login with auth token
-        response = json_authenticate(client)
-        token = response.json["response"]["user"]["authentication_token"]
-        headers = {"Authentication-Token": token}
-        # make sure can access restricted page
-        response = client.get("/token", headers=headers)
-        assert b"Token Authentication" in response.data
+    # standard login with auth token
+    response = json_authenticate(client)
+    token = response.json["response"]["user"]["authentication_token"]
+    headers = {"Authentication-Token": token}
+    # make sure can access restricted page
+    response = client.get("/token", headers=headers)
+    assert b"Token Authentication" in response.data
 
-        # change password
-        response = client.post(
-            "/change",
-            data={
-                "password": "password",
-                "new_password": "new strong password",
-                "new_password_confirm": "new strong password",
-            },
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
+    # change password
+    response = client.post(
+        "/change",
+        data={
+            "password": "password",
+            "new_password": "new strong password",
+            "new_password_confirm": "new strong password",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
 
-        # authtoken should still be valid
-        response = client.get("/token", headers=headers)
-        assert response.status_code == 200
+    # authtoken should still be valid
+    response = client.get("/token", headers=headers)
+    assert response.status_code == 200
+
+    with app.app_context():
+        db.engine.dispose()
 
 
 @pytest.mark.app_settings(babel_default_locale="fr_FR")
