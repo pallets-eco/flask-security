@@ -251,7 +251,7 @@ def test_create_user_with_roles_and_permissions(app, datastore):
     ds = datastore
     if not hasattr(ds.role_model, "permissions"):
         return
-    init_app_with_options(app, datastore)
+    init_app_with_options(app, ds)
 
     with app.app_context():
         role = ds.create_role(name="test1", permissions={"read"})
@@ -260,9 +260,9 @@ def test_create_user_with_roles_and_permissions(app, datastore):
         user = ds.create_user(
             email="dude@lp.com", username="dude", password="password", roles=[role]
         )
-        datastore.commit()
+        ds.commit()
 
-        user = datastore.find_user(email="dude@lp.com")
+        user = ds.find_user(email="dude@lp.com")
         assert user.has_role("test1") is True
         assert user.has_permission("read") is True
         assert user.has_permission("write") is False
@@ -652,6 +652,8 @@ def test_permissions_fsqla_v2(app):
 
         t5 = ds.find_role("test5")
         assert {"read"} == t5.get_permissions()
+    with app.app_context():
+        db.engine.dispose()
 
 
 def test_permissions_41(request, app, realdburl):
@@ -715,6 +717,8 @@ def test_permissions_41(request, app, realdburl):
     with app.app_context():
         r1 = ds.find_role("r1")
         assert r1.get_permissions() == {"read", "write"}
+    with app.app_context():
+        db.engine.dispose()
 
 
 def test_fsqlalite_table_name(app):
@@ -762,4 +766,6 @@ def test_fsqlalite_table_name(app):
         ds.commit()
         user = ds.find_user(email="me@lp.com")
         assert user
+    with app.app_context():
         Model.metadata.drop_all(db.engine)
+        db.engine.dispose()

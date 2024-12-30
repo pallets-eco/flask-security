@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import sqlite3
+import gc
 import os
 import tempfile
 import time
@@ -63,9 +65,6 @@ try:
 except ImportError:
     NO_BABEL = True
 
-if t.TYPE_CHECKING:  # pragma: no cover
-    from flask.testing import FlaskClient
-
 
 class FastHash(PasswordHash):
     """Our own 'hasher'. For testing
@@ -95,14 +94,19 @@ class FastHash(PasswordHash):
         return type("fasthash2", (cls,), {})
 
 
-class SecurityFixture(Flask):
-    security: Security
-    mail: Mail
+# python 3.13 is strict about not closing sqlite3 db connections.
+def find_sqlite_connections():
+    connections = []
+    for obj in gc.get_objects():
+        if isinstance(obj, sqlite3.Connection):
+            connections.append(obj)
+    return connections
 
 
 @pytest.fixture()
-def app(request: pytest.FixtureRequest) -> SecurityFixture:
-    app = SecurityFixture(__name__)
+def app(request):
+    # assert not find_sqlite_connections()  # hopefully find tests that don't clean up
+    app = Flask(__name__)
     app.response_class = Response
     app.debug = True
     app.config["SECRET_KEY"] = "secret"
@@ -335,15 +339,20 @@ def app(request: pytest.FixtureRequest) -> SecurityFixture:
                     del app.security.forms[form_name].cls.username
 
     request.addfinalizer(revert_forms)
-    return app
+    yield app
+    # help find tests that don't clean up - note that pony leaves a connection so
+    # we can't use this in 'production'...
+    # assert not find_sqlite_connections()
 
 
 @pytest.fixture()
-def mongoengine_datastore(request, app, tmpdir, realmongodburl):
-    return mongoengine_setup(request, app, tmpdir, realmongodburl)
+def mongoengine_datastore(app, tmpdir, realmongodburl):
+    ds, td = mongoengine_setup(app, tmpdir, realmongodburl)
+    yield ds
+    td()
 
 
-def mongoengine_setup(request, app, tmpdir, realmongodburl):
+def mongoengine_setup(app, tmpdir, realmongodburl):
     # To run against a realdb: mongod --dbpath <somewhere>
     import pymongo
     import mongomock
@@ -442,17 +451,17 @@ def mongoengine_setup(request, app, tmpdir, realmongodburl):
             db.drop_database(db_name)
             disconnect_all()
 
-    request.addfinalizer(tear_down)
-
-    return MongoEngineUserDatastore(db, User, Role, WebAuthn)
+    return MongoEngineUserDatastore(db, User, Role, WebAuthn), tear_down
 
 
 @pytest.fixture()
-def sqlalchemy_datastore(request, app, tmpdir, realdburl):
-    return sqlalchemy_setup(request, app, tmpdir, realdburl)
+def sqlalchemy_datastore(app, tmpdir, realdburl):
+    ds, td = sqlalchemy_setup(app, tmpdir, realdburl)
+    yield ds
+    td()
 
 
-def sqlalchemy_setup(request, app, tmpdir, realdburl):
+def sqlalchemy_setup(app, tmpdir, realdburl):
     pytest.importorskip("flask_sqlalchemy")
     from flask_sqlalchemy import SQLAlchemy
     from sqlalchemy import Column, Integer
@@ -497,22 +506,24 @@ def sqlalchemy_setup(request, app, tmpdir, realdburl):
         db.create_all()
 
     def tear_down():
-        if realdburl:
-            with app.app_context():
+        with app.app_context():
+            if realdburl:
                 db.drop_all()
                 _teardown_realdb(db_info)
+            engine = db.engine
+            engine.dispose()
 
-    request.addfinalizer(tear_down)
-
-    return SQLAlchemyUserDatastore(db, User, Role, WebAuthn)
+    return SQLAlchemyUserDatastore(db, User, Role, WebAuthn), tear_down
 
 
 @pytest.fixture()
-def fsqlalite_datastore(request, app, tmpdir, realdburl):
-    return fsqlalite_setup(request, app, tmpdir, realdburl)
+def fsqlalite_datastore(app, tmpdir, realdburl):
+    ds, td = fsqlalite_setup(app, tmpdir, realdburl)
+    yield ds
+    td()
 
 
-def fsqlalite_setup(request, app, tmpdir, realdburl):
+def fsqlalite_setup(app, tmpdir, realdburl):
     pytest.importorskip("flask_sqlalchemy_lite")
     from flask_sqlalchemy_lite import SQLAlchemy
     from sqlalchemy.orm import DeclarativeBase, mapped_column
@@ -557,21 +568,24 @@ def fsqlalite_setup(request, app, tmpdir, realdburl):
     def tear_down():
         with app.app_context():
             Model.metadata.drop_all(db.engine)
+            engine = db.engine
+            engine.dispose()
             if realdburl:
                 _teardown_realdb(db_info)
 
-    request.addfinalizer(tear_down)
-    return FSQLALiteUserDatastore(db, User, Role, WebAuthn)
+    return FSQLALiteUserDatastore(db, User, Role, WebAuthn), tear_down
 
 
 @pytest.fixture()
-def sqlalchemy_session_datastore(request, app, tmpdir, realdburl):
+def sqlalchemy_session_datastore(app, tmpdir, realdburl):
     if sys.version_info < (3, 10):
         pytest.skip("requires python3.10 or higher")
-    return sqlalchemy_session_setup(request, app, tmpdir, realdburl)
+    ds, td = sqlalchemy_session_setup(app, tmpdir, realdburl)
+    yield ds
+    td()
 
 
-def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
+def sqlalchemy_session_setup(app, tmpdir, realdburl, **engine_kwargs):
     """
     Note that we test having a different user id column name here.
     """
@@ -651,20 +665,21 @@ def sqlalchemy_session_setup(request, app, tmpdir, realdburl, **engine_kwargs):
     def tear_down():
         with app.app_context():
             Base.metadata.drop_all(bind=engine)
+            engine.dispose()
             if realdburl:
                 _teardown_realdb(db_info)
 
-    request.addfinalizer(tear_down)
-
-    return SQLAlchemySessionUserDatastore(db_session, User, Role, WebAuthn)
+    return SQLAlchemySessionUserDatastore(db_session, User, Role, WebAuthn), tear_down
 
 
 @pytest.fixture()
-def peewee_datastore(request, app, tmpdir, realdburl):
-    return peewee_setup(request, app, tmpdir, realdburl)
+def peewee_datastore(app, tmpdir, realdburl):
+    ds, td = peewee_setup(app, tmpdir, realdburl)
+    yield ds
+    td()
 
 
-def peewee_setup(request, app, tmpdir, realdburl):
+def peewee_setup(app, tmpdir, realdburl):
     pytest.importorskip("peewee")
     from peewee import (
         TextField,
@@ -790,17 +805,17 @@ def peewee_setup(request, app, tmpdir, realdburl):
             os.close(f)
             os.remove(path)
 
-    request.addfinalizer(tear_down)
-
-    return PeeweeUserDatastore(db, User, Role, UserRoles, WebAuthn)
+    return PeeweeUserDatastore(db, User, Role, UserRoles, WebAuthn), tear_down
 
 
 @pytest.fixture()
-def pony_datastore(request, app, tmpdir, realdburl):
-    return pony_setup(request, app, tmpdir, realdburl)
+def pony_datastore(app, tmpdir, realdburl):
+    ds, td = pony_setup(app, tmpdir, realdburl)
+    yield ds
+    td()
 
 
-def pony_setup(request, app, tmpdir, realdburl):
+def pony_setup(app, tmpdir, realdburl):
     pytest.importorskip("pony")
     from pony.orm import Database, Optional, Required, Set
     from pony.orm.core import SetInstance
@@ -856,85 +871,25 @@ def pony_setup(request, app, tmpdir, realdburl):
     db.generate_mapping(create_tables=True)
 
     def tear_down():
+        db.disconnect()
         if realdburl:
             _teardown_realdb(db_info)
 
-    request.addfinalizer(tear_down)
-
-    return PonyUserDatastore(db, User, Role)
+    return PonyUserDatastore(db, User, Role), tear_down
 
 
 @pytest.fixture()
-def sqlalchemy_app(
-    app: SecurityFixture, sqlalchemy_datastore: SQLAlchemyUserDatastore
-) -> t.Callable[[], SecurityFixture]:
-    def create() -> SecurityFixture:
-        security = Security(app, datastore=sqlalchemy_datastore)
-        app.security = security
-        return app
-
-    return create
-
-
-@pytest.fixture()
-def fsqlalite_app(
-    app: SecurityFixture, fsqlalite_datastore: FSQLALiteUserDatastore
-) -> t.Callable[[], SecurityFixture]:
-    def create() -> SecurityFixture:
-        app.security = Security(app, datastore=fsqlalite_datastore)
-        return app
-
-    return create
-
-
-@pytest.fixture()
-def sqlalchemy_session_app(app, sqlalchemy_session_datastore):
-    def create():
-        app.security = Security(app, datastore=sqlalchemy_session_datastore)
-        return app
-
-    return create
-
-
-@pytest.fixture()
-def peewee_app(app, peewee_datastore):
-    def create():
-        app.security = Security(app, datastore=peewee_datastore)
-        return app
-
-    return create
-
-
-@pytest.fixture()
-def mongoengine_app(app, mongoengine_datastore):
-    def create():
-        app.security = Security(app, datastore=mongoengine_datastore)
-        return app
-
-    return create
-
-
-@pytest.fixture()
-def pony_app(app, pony_datastore):
-    def create():
-        app.security = Security(app, datastore=pony_datastore)
-        return app
-
-    return create
-
-
-@pytest.fixture()
-def client(request: pytest.FixtureRequest, sqlalchemy_app: t.Callable) -> FlaskClient:
-    app = sqlalchemy_app()
+def client(request, app, sqlalchemy_datastore):
+    app.security = Security(app, datastore=sqlalchemy_datastore)
     populate_data(app)
     return app.test_client()
 
 
 @pytest.fixture()
-def client_nc(request, sqlalchemy_app):
+def client_nc(request, app, sqlalchemy_datastore):
     # useful for testing token auth.
     # No Cookies for You!
-    app = sqlalchemy_app()
+    app.security = Security(app, datastore=sqlalchemy_datastore)
     populate_data(app)
     return app.test_client(use_cookies=False)
 
@@ -950,32 +905,33 @@ def client_nc(request, sqlalchemy_app):
 )
 def clients(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "cl-fsqlalchemy":
-        ds = sqlalchemy_setup(request, app, tmpdir, realdburl)
+        ds, td = sqlalchemy_setup(app, tmpdir, realdburl)
     elif request.param == "cl-sqla-session":
         if sys.version_info < (3, 10):
             pytest.skip("requires python3.10 or higher")
-        ds = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
+        ds, td = sqlalchemy_session_setup(app, tmpdir, realdburl)
     elif request.param == "cl-mongo":
-        ds = mongoengine_setup(request, app, tmpdir, realmongodburl)
+        ds, td = mongoengine_setup(app, tmpdir, realmongodburl)
     elif request.param == "cl-peewee":
-        ds = peewee_setup(request, app, tmpdir, realdburl)
+        ds, td = peewee_setup(app, tmpdir, realdburl)
     elif request.param == "cl-pony":
         # Not working yet.
-        ds = pony_setup(request, app, tmpdir, realdburl)
+        ds, td = pony_setup(app, tmpdir, realdburl)
     elif request.param == "cl-fsqlalite":
-        ds = fsqlalite_setup(request, app, tmpdir, realdburl)
+        ds, td = fsqlalite_setup(app, tmpdir, realdburl)
 
     app.security = Security(app, datastore=ds)
     populate_data(app)
     if request.param == "cl-peewee":
         # peewee is insistent on a single connection?
         ds.db.close_db(None)
-    return app.test_client()
+    yield app.test_client()
+    td()
 
 
 @pytest.fixture()
-def in_app_context(request, sqlalchemy_app):
-    app = sqlalchemy_app()
+def in_app_context(request, app, sqlalchemy_datastore):
+    app.security = Security(app, datastore=sqlalchemy_datastore)
     with app.app_context():
         yield app
 
@@ -1009,20 +965,23 @@ def get_message_local(app):
 )
 def datastore(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "sqlalchemy":
-        rv = sqlalchemy_setup(request, app, tmpdir, realdburl)
+        ds, td = sqlalchemy_setup(app, tmpdir, realdburl)
     elif request.param == "sqlalchemy-session":
         if sys.version_info < (3, 10):
             pytest.skip("requires python3.10 or higher")
-        rv = sqlalchemy_session_setup(request, app, tmpdir, realdburl)
+        ds, td = sqlalchemy_session_setup(app, tmpdir, realdburl)
     elif request.param == "mongoengine":
-        rv = mongoengine_setup(request, app, tmpdir, realmongodburl)
+        ds, td = mongoengine_setup(app, tmpdir, realmongodburl)
     elif request.param == "peewee":
-        rv = peewee_setup(request, app, tmpdir, realdburl)
+        ds, td = peewee_setup(app, tmpdir, realdburl)
     elif request.param == "pony":
-        rv = pony_setup(request, app, tmpdir, realdburl)
+        if sys.version_info > (3, 12):
+            pytest.skip("requires python3.12 or lower")
+        ds, td = pony_setup(app, tmpdir, realdburl)
     elif request.param == "fsqlalite":
-        rv = fsqlalite_setup(request, app, tmpdir, realdburl)
-    return rv
+        ds, td = fsqlalite_setup(app, tmpdir, realdburl)
+    yield ds
+    td()
 
 
 @pytest.fixture()
@@ -1095,7 +1054,7 @@ def realmongodburl(request):
 def _setup_realdb(realdburl):
     """
     Called when we want to run unit tests against a real DB.
-    This is useful since different DB drivers are pickier about queries etc
+    This is useful since different DB drivers are pickier about queries etc.
     (such as pyscopg2 and postgres)
     """
     from sqlalchemy import create_engine

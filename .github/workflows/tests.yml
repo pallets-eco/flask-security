@@ -29,6 +29,7 @@ jobs:
           - {python: '3.11', tox: 'py311-low'}
           - {python: '3.12', tox: 'py312-release' }
           - {python: '3.12', tox: 'py312-low' }
+          - {python: '3.13', tox: 'py313-release' }
           - {python: 'pypy-3.9', tox: 'pypy39-release'}
           - {python: 'pypy-3.9', tox: 'pypy39-low'}
 

@@ -6,10 +6,23 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.6.0
 -------------
 
+Released TBD
+
 Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`1038`) Add support for 'secret_key' rotation
 - (:issue:`980`) Add support for username recovery in simple login flows
+- (:pr:`xx`) Add support for Python 3.13
+
+Notes
++++++
+Python 3.13 removed ``crypt``, which passlib attempts to import and use as
+part of its safe_crypt() method (fallback is to return None).
+However - that method only appears to be called in a few crypt handlers and
+for bcrypt - only for the built-in bcrypt - not if the bcrypt package is installed.
+passlib is not maintained - a new fork (10/1/2024) (https://pypi.org/project/libpass/)
+seems promising and has been tested with python 3.13. If that fork matures we will
+change the dependencies appropriately.
 
 Version 5.5.2
 -------------

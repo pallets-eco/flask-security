@@ -1699,6 +1699,9 @@ def test_replace_send_code(app, get_message):
     response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
     assert b"Code has been sent" in response.data
 
+    with app.app_context():
+        db.engine.dispose()  # sqlite wants everything cleaned up
+
 
 @pytest.mark.settings(us_enabled_methods=["password"])
 def test_only_passwd(app, client, get_message):

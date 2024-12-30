@@ -1375,20 +1375,20 @@ def test_replace_send_code(app, get_message):
         )
         ds.commit()
 
-        data = dict(email="trp@lp.com", password="password")
-        response = client.post("/login", data=data, follow_redirects=True)
-        assert b"Please enter your authentication code" in response.data
-        rescue_data = dict(help_setup="email")
-        response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
-        assert b"That didnt work out as we planned" in response.data
+    data = dict(email="trp@lp.com", password="password")
+    response = client.post("/login", data=data, follow_redirects=True)
+    assert b"Please enter your authentication code" in response.data
+    rescue_data = dict(help_setup="email")
+    response = client.post("/tf-rescue", data=rescue_data, follow_redirects=True)
+    assert b"That didnt work out as we planned" in response.data
 
-        # Test JSON
-        headers = {"Accept": "application/json", "Content-Type": "application/json"}
-        response = client.post("/tf-rescue", json=rescue_data, headers=headers)
-        assert response.status_code == 500
-        assert (
-            response.json["response"]["field_errors"]["help_setup"][0] == "Failed Again"
-        )
+    # Test JSON
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.post("/tf-rescue", json=rescue_data, headers=headers)
+    assert response.status_code == 500
+    assert response.json["response"]["field_errors"]["help_setup"][0] == "Failed Again"
+    with app.app_context():
+        db.engine.dispose()
 
 
 def test_propagate_next(app, client):
@@ -1556,6 +1556,9 @@ def test_no_sms(app, get_message):
     # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed your two-factor method" in response.data
+
+    with app.app_context():
+        db.engine.dispose()
 
 
 @pytest.mark.settings(two_factor_post_setup_view="/post_setup_view")
