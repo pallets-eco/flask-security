@@ -59,36 +59,37 @@ if t.TYPE_CHECKING:  # pragma: no cover
     from flask_security import UserMixin
 
 _default_field_labels = {
-    "email": _("Email Address"),
-    "password": _("Password"),
-    "remember_me": _("Remember Me"),
-    "login": _("Login"),
-    "signin": _("Sign In"),
-    "register": _("Register"),
-    "send_confirmation": _("Resend Confirmation Instructions"),
-    "recover_password": _("Recover Password"),
-    "reset_password": _("Reset Password"),
-    "retype_password": _("Retype Password"),
-    "new_password": _("New Password"),
-    "change_password": _("Change Password"),
-    "send_login_link": _("Send Login Link"),
-    "verify_password": _("Verify Password"),
-    "change_method": _("Change Method"),
-    "phone": _("Phone Number"),
-    "code": _("Authentication Code"),
-    "submit": _("Submit"),
-    "submitcode": _("Submit Code"),
-    "error": _("Error(s)"),
-    "identity": _("Identity"),
-    "sendcode": _("Send Code"),
-    "passcode": _("Passcode"),
-    "username": _("Username"),
-    "delete": _("Delete"),
-    "email_method": _("Set up using email"),
     "authapp_method": _(
         "Set up using an authenticator app (e.g. google, lastpass, authy)"
     ),
+    "change_method": _("Change Method"),
+    "change_password": _("Change Password"),
+    "code": _("Authentication Code"),
+    "delete": _("Delete"),
+    "email": _("Email Address"),
+    "email_method": _("Set up using email"),
+    "error": _("Error(s)"),
+    "identity": _("Identity"),
+    "login": _("Login"),
+    "new_password": _("New Password"),
+    "passcode": _("Passcode"),
+    "password": _("Password"),
+    "phone": _("Phone Number"),
+    "recover_password": _("Recover Password"),
+    "recover_username": _("Recover Username"),
+    "register": _("Register"),
+    "remember_me": _("Remember Me"),
+    "reset_password": _("Reset Password"),
+    "retype_password": _("Retype Password"),
+    "send_confirmation": _("Resend Confirmation Instructions"),
+    "send_login_link": _("Send Login Link"),
+    "sendcode": _("Send Code"),
+    "signin": _("Sign In"),
     "sms_method": _("Set up using SMS"),
+    "submit": _("Submit"),
+    "submitcode": _("Submit Code"),
+    "username": _("Username"),
+    "verify_password": _("Verify Password"),
 }
 
 # translated methods for two-factor and us-signin. keyed by form 'choices'
@@ -869,6 +870,12 @@ class TwoFactorRescueForm(Form):
         ],
     )
     submit = SubmitField(get_form_field_label("submit"))
+
+
+class UsernameRecoveryForm(Form, UserEmailFormMixin):
+    """The username recovery form"""
+
+    submit = SubmitField(get_form_field_label("recover_username"))
 
 
 class DummyForm(Form):

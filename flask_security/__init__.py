@@ -45,20 +45,21 @@ from .decorators import (
     unauth_csrf,
 )
 from .forms import (
-    Form,
     ChangePasswordForm,
+    ConfirmRegisterForm,
+    Form,
     ForgotPasswordForm,
     LoginForm,
+    PasswordlessLoginForm,
     RegisterForm,
     ResetPasswordForm,
-    PasswordlessLoginForm,
-    ConfirmRegisterForm,
     SendConfirmationForm,
     TwoFactorRescueForm,
     TwoFactorSetupForm,
     TwoFactorVerifyCodeForm,
-    VerifyForm,
     unique_identity_attribute,
+    UsernameRecoveryForm,
+    VerifyForm,
 )
 from .mail_util import MailUtil, EmailValidateException
 from .oauth_glue import OAuthGlue
@@ -87,6 +88,7 @@ from .signals import (
     user_confirmed,
     user_registered,
     user_not_registered,
+    username_recovery_email_sent,
     us_security_token_sent,
     us_profile_changed,
     wan_deleted,

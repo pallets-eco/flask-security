@@ -131,13 +131,14 @@ def app(request: pytest.FixtureRequest) -> SecurityFixture:
     for opt in [
         "changeable",
         "change_email",
+        "confirmable",
+        "passwordless",
         "recoverable",
         "registerable",
         "trackable",
-        "passwordless",
-        "confirmable",
         "two_factor",
         "unified_signin",
+        "username_recovery",
         "webauthn",
     ]:
         app.config["SECURITY_" + opt.upper()] = opt in request.keywords

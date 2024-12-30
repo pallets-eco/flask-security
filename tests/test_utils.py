@@ -17,13 +17,19 @@ import time
 from flask.json.tag import TaggedJSONSerializer
 from flask.signals import message_flashed
 
-from flask_security import Security, SmsSenderBaseClass, SmsSenderFactory, UserMixin
+from flask_security import (
+    Security,
+    SmsSenderBaseClass,
+    SmsSenderFactory,
+    UserMixin,
+)
 from flask_security.signals import (
     login_instructions_sent,
     reset_password_instructions_sent,
     tf_security_token_sent,
     user_registered,
     us_security_token_sent,
+    username_recovery_email_sent,
 )
 from flask_security.utils import hash_data, hash_password
 
@@ -379,6 +385,22 @@ def capture_reset_password_requests(reset_password_sent_at=None):
         yield reset_requests
     finally:
         reset_password_instructions_sent.disconnect(_on)
+
+
+@contextmanager
+def capture_username_recovery_requests():
+    """Testing utility for capturing username recovery requests."""
+    recovery_requests = []
+
+    def _on(app, **data):
+        recovery_requests.append(data)
+
+    username_recovery_email_sent.connect(_on)
+
+    try:
+        yield recovery_requests
+    finally:
+        username_recovery_email_sent.disconnect(_on)
 
 
 @contextmanager

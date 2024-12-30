@@ -51,6 +51,7 @@ from .forms import (
     TwoFactorVerifyCodeForm,
     TwoFactorSetupForm,
     TwoFactorRescueForm,
+    UsernameRecoveryForm,
     VerifyForm,
     get_register_username_field,
     login_username_field,
@@ -289,6 +290,7 @@ _default_config: dict[str, t.Any] = {
     "EMAIL_SUBJECT_PASSWORD_NOTICE": _("Your password has been reset"),
     "EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE": _("Your password has been changed"),
     "EMAIL_SUBJECT_PASSWORD_RESET": _("Password reset instructions"),
+    "EMAIL_SUBJECT_USERNAME_RECOVERY": _("Your requested username"),
     "EMAIL_PLAINTEXT": True,
     "EMAIL_HTML": True,
     "EMAIL_SUBJECT_TWO_FACTOR": _("Two-factor Login"),
@@ -325,6 +327,9 @@ _default_config: dict[str, t.Any] = {
         "webauthn": "flask_security.webauthn.WebAuthnTfPlugin",
     },
     "UNIFIED_SIGNIN": False,
+    "USERNAME_RECOVERY": False,
+    "USERNAME_RECOVERY_TEMPLATE": "security/recover_username.html",
+    "USERNAME_RECOVERY_URL": "/recover-username",
     "US_SETUP_SALT": "us-setup-salt",
     "US_SIGNIN_URL": "/us-signin",
     "US_SIGNIN_SEND_CODE_URL": "/us-signin/send-code",
@@ -641,6 +646,10 @@ _default_messages = {
             " been sent to %(email)s."
         ),
         "success",
+    ),
+    "USERNAME_RECOVERY_REQUEST": (
+        _("If registered, your username will be sent to your email."),
+        "info",
     ),
 }
 
@@ -1151,6 +1160,7 @@ class Security:
     :param two_factor_select_form: set form for selecting between active 2FA methods
     :param mf_recovery_codes_form: set form for retrieving and setting recovery codes
     :param mf_recovery_form: set form for multi factor recovery
+    :param username_recovery_form: set form for the username recovery view
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
     :param us_setup_validate_form: set form for the unified sign in setup validate view
@@ -1220,6 +1230,8 @@ class Security:
     .. versionadded:: 5.5.0
         ``change_email_form`` in support of the
          :ref:`Change-Email<configuration:change-email>` feature.
+    .. versionadded:: 5.6.0
+        ``username_recovery_form``
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
@@ -1278,6 +1290,7 @@ class Security:
         phone_util_cls: t.Type[PhoneUtil] = PhoneUtil,
         render_template: t.Callable[..., str] = default_render_template,
         totp_cls: t.Type[Totp] = Totp,
+        username_recovery_form: t.Type[UsernameRecoveryForm] = UsernameRecoveryForm,
         username_util_cls: t.Type[UsernameUtil] = UsernameUtil,
         webauthn_util_cls: t.Type[WebauthnUtil] = WebauthnUtil,
         mf_recovery_codes_util_cls: t.Type[MfRecoveryCodesUtil] = MfRecoveryCodesUtil,
@@ -1325,6 +1338,7 @@ class Security:
             "two_factor_select_form": FormInfo(cls=two_factor_select_form),
             "mf_recovery_codes_form": FormInfo(cls=mf_recovery_codes_form),
             "mf_recovery_form": FormInfo(cls=mf_recovery_form),
+            "username_recovery_form": FormInfo(cls=username_recovery_form),
             "us_signin_form": FormInfo(cls=us_signin_form),
             "us_setup_form": FormInfo(cls=us_setup_form),
             "us_setup_validate_form": FormInfo(cls=us_setup_validate_form),
@@ -1466,6 +1480,7 @@ class Security:
             "two_factor_select_form",
             "mf_recovery_form",
             "mf_recovery_codes_form",
+            "username_recovery_form",
             "us_signin_form",
             "us_setup_form",
             "us_setup_validate_form",
@@ -2023,6 +2038,11 @@ class Security:
         self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("change_password", fn)
+
+    def recover_username_context_processor(
+        self, fn: t.Callable[[], dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("recover_username", fn)
 
     def send_confirmation_context_processor(
         self, fn: t.Callable[[], dict[str, t.Any]]

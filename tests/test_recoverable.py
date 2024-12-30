@@ -29,7 +29,11 @@ from tests.test_utils import (
 
 from flask_security.core import Security, UserMixin
 from flask_security.forms import ForgotPasswordForm, LoginForm
-from flask_security.signals import password_reset, reset_password_instructions_sent
+from flask_security.signals import (
+    password_reset,
+    reset_password_instructions_sent,
+    username_recovery_email_sent,
+)
 
 pytestmark = pytest.mark.recoverable()
 
@@ -794,3 +798,134 @@ def test_csrf(app, client, get_message):
     data["csrf_token"] = csrf_token
     response = client.post(f"/reset/{token}", data=data)
     assert check_location(app, response.location, "/post_reset_view")
+
+
+@pytest.mark.username_recovery()
+def test_username_recovery_valid_email(app, clients, get_message):
+    recorded_recovery_sent = []
+
+    @username_recovery_email_sent.connect_via(app)
+    def on_email_sent(app, **kwargs):
+        assert isinstance(app, Flask)
+        assert isinstance(kwargs["user"], UserMixin)
+        recorded_recovery_sent.append(kwargs["user"])
+
+    # Test the username recovery view
+    response = clients.get("/recover-username")
+    assert b"<h1>Username recovery</h1>" in response.data
+
+    response = clients.post(
+        "/recover-username", data=dict(email="joe@lp.com"), follow_redirects=True
+    )
+
+    assert len(recorded_recovery_sent) == 1
+    assert len(app.mail.outbox) == 1
+    assert response.status_code == 200
+
+    with capture_flashes() as flashes:
+        response = clients.post(
+            "/recover-username",
+            data=dict(email="joe@lp.com"),
+            follow_redirects=True,
+        )
+    assert len(flashes) == 1
+    assert get_message("USERNAME_RECOVERY_REQUEST") == flashes[0]["message"].encode(
+        "utf-8"
+    )
+
+    # Validate the emailed username
+    email = app.mail.outbox[1]
+    assert "Your username is: joe" in email.body
+
+    # Test JSON responses
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="joe@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/json"
+
+
+@pytest.mark.username_recovery()
+def test_username_recovery_invalid_email(app, clients):
+    response = clients.post(
+        "/recover-username", data=dict(email="bogus@lp.com"), follow_redirects=True
+    )
+
+    assert not app.mail.outbox
+    assert response.status_code == 200
+
+    # Test JSON responses
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="bogus@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400
+    assert response.headers["Content-Type"] == "application/json"
+    assert len(response.json["response"]["errors"]) == 1
+    assert (
+        "Specified user does not exist"
+        in response.json["response"]["field_errors"]["email"][0]
+    )
+
+
+@pytest.mark.username_recovery()
+@pytest.mark.settings(return_generic_responses=True)
+def test_username_recovery_generic_responses(app, clients, get_message):
+    recorded_recovery_sent = []
+
+    @username_recovery_email_sent.connect_via(app)
+    def on_email_sent(app, **kwargs):
+        recorded_recovery_sent.append(kwargs["user"])
+
+    # Test with valid email
+    with capture_flashes() as flashes:
+        response = clients.post(
+            "/recover-username",
+            data=dict(email="joe@lp.com"),
+            follow_redirects=True,
+        )
+    assert len(flashes) == 1
+    assert get_message("USERNAME_RECOVERY_REQUEST") == flashes[0]["message"].encode(
+        "utf-8"
+    )
+    assert len(recorded_recovery_sent) == 1
+    assert len(app.mail.outbox) == 1
+    assert response.status_code == 200
+
+    # Test with non-existant email (should still return 200)
+    with capture_flashes() as flashes:
+        response = clients.post(
+            "/recover-username",
+            data=dict(email="bogus@lp.com"),
+            follow_redirects=True,
+        )
+    assert len(flashes) == 1
+    assert get_message("USERNAME_RECOVERY_REQUEST") == flashes[0]["message"].encode(
+        "utf-8"
+    )
+    # Validate no email was sent (there should only be one from the previous test)
+    assert len(recorded_recovery_sent) == 1
+    assert len(app.mail.outbox) == 1
+    assert response.status_code == 200
+
+    # Test JSON responses - valid email
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="joe@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/json"
+
+    # Test JSON responses - invalid email
+    response = clients.post(
+        "/recover-username",
+        json=dict(email="bogus@lp.com"),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/json"
+    assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
