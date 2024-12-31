@@ -5,7 +5,7 @@
     Command Line Interface for managing accounts and roles.
 
     :copyright: (c) 2016 by CERN.
-    :copyright: (c) 2019-2022 by J. Christopher Wagner
+    :copyright: (c) 2019-2024 by J. Christopher Wagner
     :license: MIT, see LICENSE for more details.
 """
 
@@ -88,13 +88,11 @@ def roles():
 
 @users.command(
     "create",
-    short_help=(
-        "Create a new user with one or more attributes using the syntax:"
-        " attr:value. If attr isn't set 'email' is presumed."
-        " Identity attribute values will be validated using the configured"
-        " confirm_register_form;"
-        " however, any ADDITIONAL attribute:value pairs will be sent to"
-        " datastore.create_user"
+    epilog=(
+        "Example: users create me@me.com --password 'battery staple' --active"
+        "\n"
+        "Example: users create me2@me.cmo --password 'battery staple' --active"
+        "   --username mememe us_phone_number:6505551212"
     ),
 )
 @click.argument(
@@ -102,11 +100,32 @@ def roles():
     nargs=-1,
 )
 @click.password_option()
-@click.option("-a", "--active", default=False, is_flag=True)
+@click.option(
+    "-a", "--active", default=False, is_flag=True, help="Mark new user as active"
+)
+@click.option(
+    "-u",
+    "--username",
+    required=False,
+    default=None,
+    help="Available only if SECURITY_USERNAME_ENABLE is set",
+)
 @with_appcontext
 @commit
-def users_create(attributes, password, active):
-    """Create a user."""
+def users_create(attributes, password, active, username):
+    """Create a user.
+
+    Create a new user with one or more attributes using the syntax:
+    ``attribute:value``. If attr isn't set 'email' is presumed.
+    Identity attribute values will be validated using the configured
+    confirm_register_form;
+    however, any ADDITIONAL attribute:value pairs will be sent directly to
+    datastore.create_user().
+
+    Note that unless the ``--active`` option is set, the new user won't ba able
+    to sign in or perform any other action
+
+    """
     kwargs = {}
 
     identity_attributes = get_identity_attributes()
@@ -121,13 +140,23 @@ def users_create(attributes, password, active):
             idata = details["mapper"](attrarg)
             if not idata:
                 raise click.UsageError(
-                    f"Attr {attr} with value {attrarg} wasn't accepted by mapper"
+                    f"Attr {attr} with value {attrarg} wasn't accepted by"
+                    f" ``SECURITY_USER_IDENTITY_ATTRIBUTES``"
                 )
 
         kwargs[attr] = attrarg
-    kwargs.update(**{"password": password})
+    kwargs.update(**{"password": password, "username": username})
 
-    form = build_form("confirm_register_form", meta={"csrf": False}, **kwargs)
+    # We always add password_confirm here - if user used the CLI in input mode -
+    # it already asked for confirmation.
+    # if they used inline keywords, there really isn't any reason to make them type
+    # it in twice.
+    form = build_form(
+        "confirm_register_form" if _security._use_confirm_form else "register_form",
+        meta={"csrf": False},
+        **kwargs,
+        password_confirm=password,
+    )
 
     if form.validate():
         # We don't use the form directly to provide values so that this CLI can actually
@@ -138,7 +167,11 @@ def users_create(attributes, password, active):
         # echo normalized email...
         if "email" in kwargs:
             kwargs["email"] = form.email.data
-        _datastore.create_user(**kwargs)
+        # Exceptions could be an attribute given that isn't in user store
+        try:
+            _datastore.create_user(**kwargs)
+        except TypeError as e:
+            raise click.exceptions.BadParameter(e)
         click.secho("User created successfully.", fg="green")
         kwargs["password"] = "****"
         click.echo(kwargs)

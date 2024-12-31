@@ -45,7 +45,7 @@ def test_cli_createuser(script_info):
     )
     assert result.exit_code == 0
 
-    # create user with email and username
+    # create user with email and phone number
     result = runner.invoke(
         users_create,
         [
@@ -58,7 +58,7 @@ def test_cli_createuser(script_info):
     )
     assert result.exit_code == 0
 
-    # try to activate using username
+    # try to activate using phone number
     result = runner.invoke(users_activate, "5551212", obj=script_info)
     assert result.exit_code == 0
 
@@ -82,6 +82,33 @@ def test_cli_createuser_extraargs(script_info):
     result = runner.invoke(users_activate, ["email1@example.tld"], obj=script_info)
     assert result.exit_code == 0
     assert "was already activated" in result.output
+
+    app = script_info.load_app()
+    with app.app_context():
+        user = app.security.datastore.find_user(email="email1@example.tld")
+        assert user.security_number == 666
+
+
+def test_cli_createuser_unknown_extraargs(script_info):
+    # Test that passing attributes that aren't part of registration form
+    # and aren't part of user model raise an error
+    runner = CliRunner()
+    result = runner.invoke(
+        users_create,
+        [
+            "email1@example.tld",
+            "mysecretnumber:666",
+            "--password",
+            "battery staple",
+            "--active",
+        ],
+        obj=script_info,
+    )
+    assert result.exit_code == 2
+    assert (
+        "Error: Invalid value: 'mysecretnumber' is an invalid keyword argument"
+        in result.output
+    )
 
 
 def test_cli_createuser_normalize(script_info):
@@ -356,3 +383,41 @@ def test_cli_change_password(script_info):
     )
     assert result.exit_code == 2
     assert "User not found" in result.output
+
+
+@pytest.mark.settings(use_register_v2=True)
+def test_cli_createuserV2(script_info):
+    """Test create user CLI."""
+    runner = CliRunner()
+
+    # Create user
+    result = runner.invoke(
+        users_create,
+        ["email@example.tld", "--password", "battery staple"],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+
+
+@pytest.mark.settings(use_register_v2=True)
+def test_cli_createuserV2attr(script_info):
+    """Test create user CLI passing attr that is in User but not in form."""
+    runner = CliRunner()
+
+    # Create user
+    result = runner.invoke(
+        users_create,
+        [
+            "email@example.tld",
+            "--password",
+            "battery staple",
+            "us_phone_number:5551212",
+        ],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+
+    app = script_info.load_app()
+    with app.app_context():
+        user = app.security.datastore.find_user(email="email@example.tld")
+        assert user.us_phone_number == "5551212"

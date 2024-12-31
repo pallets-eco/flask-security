@@ -12,6 +12,7 @@ import markupsafe
 from tests.test_utils import (
     authenticate,
     check_xlation,
+    get_form_input_value,
     get_form_input,
     init_app_with_options,
     json_authenticate,
@@ -22,6 +23,7 @@ from flask_security import Security, UserMixin, user_registered, user_not_regist
 from flask_security.forms import (
     ConfirmRegisterForm,
     RegisterForm,
+    RegisterFormV2,
     StringField,
     _default_field_labels,
 )
@@ -38,8 +40,8 @@ def test_registerable_flag(clients, app, get_message):
     response = clients.get("/register")
     assert b"<h1>Register</h1>" in response.data
     assert re.search(b'<input[^>]*type="email"[^>]*>', response.data)
-    assert get_form_input(response, "email") is not None
-    assert not get_form_input(response, "username")
+    assert get_form_input_value(response, "email") is not None
+    assert not get_form_input_value(response, "username")
 
     # Test registering is successful, sends email, and fires signal
     @user_registered.connect_via(app)
@@ -138,7 +140,7 @@ def test_form_csrf(app, client):
     assert b"The CSRF token is missing" in response.data
 
     response = client.get("/register")
-    csrf_token = get_form_input(response, "csrf_token")
+    csrf_token = get_form_input_value(response, "csrf_token")
     response = client.post(
         "/register",
         data=dict(
@@ -329,6 +331,7 @@ def test_two_factor_json(app, client, get_message):
     )
 
 
+@pytest.mark.filterwarnings("ignore:.*The RegisterForm.*:DeprecationWarning")
 def test_form_data_is_passed_to_user_registered_signal(app, sqlalchemy_datastore):
     class MyRegisterForm(RegisterForm):
         additional_field = StringField("additional_field")
@@ -364,6 +367,7 @@ def test_form_data_is_passed_to_user_registered_signal(app, sqlalchemy_datastore
 
 
 @pytest.mark.settings(password_complexity_checker="zxcvbn")
+@pytest.mark.filterwarnings("ignore:.*The ConfirmRegisterForm.*:DeprecationWarning")
 def test_easy_password(app, sqlalchemy_datastore):
     class MyRegisterForm(ConfirmRegisterForm):
         username = StringField("Username")
@@ -589,7 +593,7 @@ def test_username(app, clients, get_message):
 def test_username_template(app, client):
     # verify template displays username option
     response = client.get("/register")
-    username_field = get_form_input(response, "username")
+    username_field = get_form_input_value(response, "username")
     assert username_field is not None
 
 
@@ -676,6 +680,9 @@ def test_username_not_enabled(app, client, get_message):
     assert not hasattr(RegisterForm, "username")
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*The RegisterForm is deprecated.*:DeprecationWarning"
+)
 def test_legacy_style_login(app, sqlalchemy_datastore, get_message):
     # Show how to setup LoginForm to mimic legacy behavior of
     # allowing any identity in the email field.
@@ -912,10 +919,10 @@ def test_subclass(app, sqlalchemy_datastore):
             ],
         )
 
-    class MyRegisterForm(NewPasswordFormMixinEx, ConfirmRegisterForm):
+    class MyRegisterForm(NewPasswordFormMixinEx, RegisterFormV2):
         pass
 
-    app.config["SECURITY_CONFIRM_REGISTER_FORM"] = MyRegisterForm
+    app.config["SECURITY_REGISTER_FORM"] = MyRegisterForm
     security = Security(datastore=sqlalchemy_datastore)
     security.init_app(app)
 
@@ -955,3 +962,166 @@ def test_my_mail_util(app, sqlalchemy_datastore):
     client = app.test_client()
     response = client.post("/register", data=data)
     assert b"No mikes allowed" in response.data
+
+
+@pytest.mark.settings(
+    register_form=RegisterFormV2,
+    post_register_view="/post_register",
+)
+def test_regv2(app, client, get_message):
+    # default config should require password, password_confirm and not allow username
+    response = client.get("/register")
+    assert b"<h1>Register</h1>" in response.data
+    email = get_form_input(response, "email")
+    assert all(s in email for s in ["required", 'type="email"'])
+    pw = get_form_input(response, "password")
+    assert all(s in pw for s in ["required", 'type="password"'])
+    pwc = get_form_input(response, "password_confirm")
+    assert all(s in pwc for s in ["required", 'type="password"'])
+
+    assert not get_form_input(response, "username")
+
+    # check password required
+    data = dict(
+        email="dude@lp.com",
+        password="",
+        password_confirm="battery staple",
+        next="",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("PASSWORD_NOT_PROVIDED") in response.data
+
+    # check confirm required
+    data = dict(
+        email="dude@lp.com",
+        password="battery staple",
+        password_confirm="",
+        next="",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("PASSWORD_NOT_PROVIDED") in response.data
+
+    # JSON also required password_confirm in V2
+    response = client.post("/register", json=data)
+    assert (
+        get_message("PASSWORD_NOT_PROVIDED")
+        == response.json["response"]["errors"][0].encode()
+    )
+
+    # check confirm matches
+    data = dict(
+        email="dude@lp.com",
+        password="battery staple",
+        password_confirm="batery staple",
+        next="",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("RETYPE_PASSWORD_MISMATCH") in response.data
+
+    data = dict(
+        email="dude@lp.com",
+        password="battery staple",
+        password_confirm="battery staple",
+        next="",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Post Register" in response.data
+
+
+@pytest.mark.settings(
+    register_form=RegisterFormV2,
+    post_register_view="/post_register",
+    password_confirm_required=False,
+)
+def test_regv2_no_confirm(app, client, get_message):
+    # Test password confirm not required
+    response = client.get("/register")
+    assert b"<h1>Register</h1>" in response.data
+    email = get_form_input(response, "email")
+    assert all(s in email for s in ["required", 'type="email"'])
+    pw = get_form_input(response, "password")
+    assert all(s in pw for s in ["required", 'type="password"'])
+
+    assert not get_form_input(response, "password_confirm")
+    assert not get_form_input(response, "username")
+
+    data = dict(
+        email="dude@lp.com",
+        password="abc",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("PASSWORD_INVALID_LENGTH", length=8) in response.data
+
+    data = dict(
+        email="dude@lp.com",
+        password="battery staple",
+        password_confirm="battery terminal",  # Ignored
+        next="/my_next_idea",
+    )
+    response = client.post("/register", data=data, follow_redirects=False)
+    assert response.location == "/my_next_idea"
+
+
+@pytest.mark.settings(
+    use_register_v2=True,
+    post_register_view="/post_register",
+    password_confirm_required=False,
+    username_enable=True,
+    username_required=True,
+)
+def test_regv2_no_confirm_username(app, client, get_message):
+    # Test password confirm not required but username is
+    response = client.get("/register")
+    assert b"<h1>Register</h1>" in response.data
+    email = get_form_input(response, "email")
+    assert all(s in email for s in ["required", 'type="email"'])
+    pw = get_form_input(response, "password")
+    assert all(s in pw for s in ["required", 'type="password"'])
+
+    assert not get_form_input(response, "password_confirm")
+
+    us = get_form_input(response, "username")
+    assert all(s in us for s in ["required", 'type="text"'])
+
+    data = dict(
+        email="dude@lp.com",
+        password="battery staple",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("USERNAME_NOT_PROVIDED") in response.data
+
+    data = dict(
+        email="dude@lp.com",
+        password="battery staple",
+        username="dude",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert b"Post Register" in response.data
+
+
+@pytest.mark.settings(
+    use_register_v2=True,
+    password_confirm_required=False,
+)
+def test_subclass_v2(app, sqlalchemy_datastore):
+    # Test that is create our own RegisterForm the USE_REGISTER_V2 config is ignored
+    class MyRegisterForm(RegisterFormV2):
+        from wtforms.validators import Length
+
+        myfield = StringField(label="My field", validators=[Length(min=8)])
+
+    app.config["SECURITY_REGISTER_FORM"] = MyRegisterForm
+    security = Security(datastore=sqlalchemy_datastore)
+    security.init_app(app)
+
+    client = app.test_client()
+    data = dict(
+        email="dude@lp.com",
+        password="battery staple",
+        myfield="short",
+    )
+    response = client.post("/register", json=data)
+    assert (
+        response.json["response"]["errors"][0]
+        == "Field must be at least 8 characters long."
+    )

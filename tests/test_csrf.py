@@ -19,7 +19,7 @@ from freezegun import freeze_time
 from flask import render_template_string
 
 from flask_security import Security, auth_required
-from tests.test_utils import get_form_input, get_session, logout
+from tests.test_utils import get_form_input_value, get_session, logout
 
 
 REAL_VALIDATE_CSRF = None
@@ -108,7 +108,7 @@ def test_login_csrf(app, client):
     assert response.status_code == 200
     assert b"The CSRF token is missing." in response.data
 
-    data["csrf_token"] = get_form_input(response, "csrf_token")
+    data["csrf_token"] = get_form_input_value(response, "csrf_token")
     response = client.post("/login", data=data, follow_redirects=True)
     assert response.status_code == 200
     assert b"Welcome matt" in response.data

@@ -32,7 +32,7 @@ from tests.test_utils import (
     check_location,
     check_xlation,
     get_form_action,
-    get_form_input,
+    get_form_input_value,
     get_session,
     is_authenticated,
     json_authenticate,
@@ -1608,7 +1608,7 @@ def test_setup_csrf(app, client):
     tf_authenticate(app, client)
     response = client.get("tf-setup")
     assert b"Disable" in response.data
-    csrf_token = get_form_input(response, "csrf_token")
+    csrf_token = get_form_input_value(response, "csrf_token")
 
     response = client.post("tf-setup", data=dict(setup="disable"))
     assert b"The CSRF token is missing" in response.data

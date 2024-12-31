@@ -21,7 +21,7 @@ from tests.test_utils import (
     check_location,
     get_csrf_token,
     get_form_action,
-    get_form_input,
+    get_form_input_value,
     get_session,
     init_app_with_options,
     is_authenticated,
@@ -85,7 +85,7 @@ def test_github(app, sqlalchemy_datastore, get_message):
     client = app.test_client()
     response = client.get("/login")
     github_url = get_form_action(response, 1)
-    csrf_token = get_form_input(response, field_id="github_csrf_token")
+    csrf_token = get_form_input_value(response, field_id="github_csrf_token")
 
     # make sure required CSRF
     response = client.post(github_url, follow_redirects=False)

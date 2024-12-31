@@ -25,7 +25,7 @@ from tests.test_utils import (
     check_location,
     get_existing_session,
     get_form_action,
-    get_form_input,
+    get_form_input_value,
     is_authenticated,
     json_authenticate,
     logout,
@@ -305,8 +305,8 @@ def test_basic(app, clients, get_message):
     response = clients.get("/wan-register")
     # default config allows for both primary and secondary usage
     # so form should have selector
-    assert get_form_input(response, "usage-0")
-    assert get_form_input(response, "usage-1")
+    assert get_form_input_value(response, "usage-0")
+    assert get_form_input_value(response, "usage-1")
 
     # post with no name
     response = clients.post("/wan-register", data=dict())
@@ -1677,7 +1677,7 @@ def test_login_next(app, client, get_message):
     )
     response_url = get_form_action(response)
 
-    next_loc = get_form_input(response, "next")
+    next_loc = get_form_input_value(response, "next")
     response = client.post(
         response_url,
         data=dict(credential=json.dumps(SIGNIN_DATA1), next=next_loc),
@@ -1739,7 +1739,7 @@ def test_async(app, client, get_message):
 )
 def test_csrf(app, client, get_message):
     response = client.get("/login")
-    csrf_token = get_form_input(response, "csrf_token")
+    csrf_token = get_form_input_value(response, "csrf_token")
     authenticate(client, csrf=True)
 
     register_options, response_url = _register_start(
@@ -1763,7 +1763,7 @@ def test_csrf(app, client, get_message):
     assert b"The CSRF tokens do not match." in response.data
 
     response = client.get("/wan-signin")
-    csrf_token = get_form_input(response, "csrf_token")
+    csrf_token = get_form_input_value(response, "csrf_token")
     signin_options, response_url = _signin_start(
         client, "matt@lp.com", csrf_token=csrf_token
     )

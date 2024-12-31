@@ -142,6 +142,7 @@ careful about the order of the inherited classes::
 
     from wtforms import PasswordField, ValidationError
     from wtforms.validators import DataRequired
+    from flask_security import RegisterFormV2
 
     def password_validator(form, field):
         if field.data.startswith("PASS"):
@@ -152,17 +153,17 @@ careful about the order of the inherited classes::
                                  validators=[DataRequired(message="PASSWORD_NOT_PROVIDED"),
                                              password_validator])
 
-    class MyRegisterForm(NewPasswordFormMixinEx, ConfirmRegisterForm):
+    class MyRegisterForm(NewPasswordFormMixinEx, RegisterFormV2):
         pass
 
-    app.config["SECURITY_CONFIRM_REGISTER_FORM"] = MyRegisterForm
+    app.config["SECURITY_REGISTER_FORM"] = MyRegisterForm
 
 The following is a list of all the available form overrides:
 
-* ``login_form``: Login form
+* ``login_form``: Login form (:py:class:`flask_security.LoginForm`)
 * ``verify_form``: Verify form
-* ``confirm_register_form``: Confirmable register form
-* ``register_form``: Register form
+* ``confirm_register_form``: Confirmable register form (:py:class:`flask_security.ConfirmRegisterForm`) (deprecated)
+* ``register_form``: Register form (:py:class:`flask_security.RegisterForm` (deprecated) OR (:py:class:`flask_security.RegisterFormV2`)
 * ``forgot_password_form``: Forgot password form
 * ``reset_password_form``: Reset password form
 * ``change_password_form``: Change password form
@@ -190,6 +191,30 @@ The following is a list of all the available form overrides:
 .. tip::
     Changing/extending the form class won't directly change how it is displayed.
     You need to ALSO provide your own template and explicitly add the new fields you want displayed.
+
+.. _register_form_migration:
+
+Register Form Migration
+++++++++++++++++++++++++
+Since early in Flask Security releases, there have been 2 different forms used for
+registration: RegisterForm and ConfirmRegisterForm. The difference between them is only
+that the ConfirmRegisterForm doesn't require password confirmation (i.e. asking the user to
+re-type their password). This wasn't a config option but rather based on whether :py:data:`SECURITY_CONFIRMABLE` was
+set or whether the request was form-based or JSON. This has always been a huge source of
+confusion. A new :py:class:`flask_security.RegisterFormV2` has been introduced that replaces both
+of the older forms. Since this is a breaking change, it is being implemented in phases.
+
+In release 5.6 the new form: RegisterFormV2 is available for use. By default the existing
+forms are used - so there are no backwards compatibility issues. However, subclassing RegisterForm or
+ConfirmRegisterForm will raise a deprecation warning. The new RegisterFormV2 can be used in one of 2 ways:
+
+    - set :py:data:`SECURITY_USE_REGISTER_V2` to ``True``
+    - subclass RegisterFormV2 and use that as the 'register_form` argument to the
+      Flask Security constructor.
+
+The new RegisterFormV2 will add a ``password_confirm`` field if :py:data:`SECURITY_PASSWORD_CONFIRM_REQUIRED`
+is set to ``True`` (the default). Additionally, JSON requests will need to provide a value for ``password_confirm``
+if configured.
 
 .. _form_instantiation:
 

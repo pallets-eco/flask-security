@@ -239,6 +239,7 @@ Forms
 .. autoclass:: flask_security.MfRecoveryForm
 .. autoclass:: flask_security.PasswordlessLoginForm
 .. autoclass:: flask_security.RegisterForm
+.. autoclass:: flask_security.RegisterFormV2
 .. autoclass:: flask_security.ResetPasswordForm
 .. autoclass:: flask_security.SendConfirmationForm
 .. autoclass:: flask_security.TwoFactorRescueForm

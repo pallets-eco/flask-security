@@ -22,7 +22,7 @@ from tests.test_utils import (
     capture_flashes,
     capture_reset_password_requests,
     check_location,
-    get_form_input,
+    get_form_input_value,
     logout,
     populate_data,
 )
@@ -778,7 +778,7 @@ def test_recoverable_json_async(app, client, get_message):
 @pytest.mark.settings(post_reset_view="/post_reset_view")
 def test_csrf(app, client, get_message):
     response = client.get("/reset")
-    csrf_token = get_form_input(response, "csrf_token")
+    csrf_token = get_form_input_value(response, "csrf_token")
     with capture_reset_password_requests() as requests:
         client.post(
             "/reset",

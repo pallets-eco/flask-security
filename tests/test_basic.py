@@ -28,7 +28,7 @@ from tests.test_utils import (
     check_location,
     get_auth_token_version_3x,
     get_form_action,
-    get_form_input,
+    get_form_input_value,
     hash_password,
     init_app_with_options,
     is_authenticated,
@@ -899,7 +899,7 @@ def test_http_auth_csrf(client, get_message):
 
     # grab a csrf_token
     response = client.get("/login")
-    csrf_token = get_form_input(response, "csrf_token")
+    csrf_token = get_form_input_value(response, "csrf_token")
     headers["X-CSRF-Token"] = csrf_token
     response = client.post(
         "/http",

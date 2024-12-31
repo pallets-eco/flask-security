@@ -577,6 +577,15 @@ Core - Passwords and Tokens
 
     .. versionadded:: 5.0.0
 
+.. py:data:: SECURITY_PASSWORD_CONFIRM_REQUIRED
+
+    If set to ``True`` then during registration a 'password confirmation' field is presented.
+    N.B. this just applies to the new(er) RegisterFormV2 (see :py:data:`SECURITY_USE_REGISTER_V2`)
+
+    Default: ``True``
+
+    .. versionadded:: 5.6.0
+
 Core - Multi-factor
 -------------------
 These are used by the Two-Factor and Unified Signin features.
@@ -944,6 +953,19 @@ Registerable
     Default: ``"NFKD"``
 
     .. versionadded:: 4.1.0
+
+.. py:data:: SECURITY_USE_REGISTER_V2
+
+    The :py:class:`flask_security.RegisterFormV2` is a single form used for registration. This is replacing the
+    RegisterForm and ConfirmRegisterForm (over a few releases). Setting this option
+    to ``True`` will set both registration forms to RegisterFormV2. Note that this
+    option is ignored if the application has sub-classed the registration form.
+
+    Default: ``False``
+
+    .. versionadded:: 5.6.0
+
+
 
 Confirmable
 -----------

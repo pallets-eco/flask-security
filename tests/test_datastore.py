@@ -18,7 +18,7 @@ from flask_security import (
     Security,
     UserMixin,
     LoginForm,
-    RegisterForm,
+    RegisterFormV2,
     naive_utcnow,
 )
 from flask_security.datastore import Datastore, UserDatastore
@@ -230,7 +230,7 @@ def test_init_app_kwargs_override_constructor_kwargs(app, datastore):
     class ConLoginForm(LoginForm):
         pass
 
-    class ConRegisterForm(RegisterForm):
+    class ConRegisterForm(RegisterFormV2):
         pass
 
     class InitLoginForm(LoginForm):
