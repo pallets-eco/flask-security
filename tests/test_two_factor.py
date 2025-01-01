@@ -1239,7 +1239,7 @@ def test_authr_identity(app, client):
 
     setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", json=setup_data, headers=headers)
-    assert response.json["response"]["tf_authr_issuer"] == "service_name"
+    assert response.json["response"]["tf_authr_issuer"] == "tests"
     assert response.json["response"]["tf_authr_username"] == "jill"
     assert response.json["response"]["tf_state"] == "validating_profile"
     assert "tf_authr_key" in response.json["response"]

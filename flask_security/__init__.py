@@ -6,7 +6,7 @@
     to Flask applications.
 
     :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner.
+    :copyright: (c) 2019-2025 by J. Christopher Wagner.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -142,4 +142,4 @@ from .webauthn import (
 )
 from .webauthn_util import WebauthnUtil
 
-__version__ = "5.5.2"
+__version__ = "5.6.0"

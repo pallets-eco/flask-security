@@ -51,7 +51,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Flask-Security"
-copyright = "2012-2024"
+copyright = "2012-2025"
 author = "Matt Wright & Chris Wagner"
 
 # The version info for the project you're documenting, acts as replacement for

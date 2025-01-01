@@ -1754,7 +1754,7 @@ def test_totp_generation(app, client, get_message):
         "us-setup", json=dict(chosen_method="authenticator"), headers=headers
     )
     assert response.status_code == 200
-    assert response.json["response"]["authr_issuer"] == "service_name"
+    assert response.json["response"]["authr_issuer"] == "tests"
     assert response.json["response"]["authr_username"] == "dave@lp.com"
     assert "authr_key" in response.json["response"]
 

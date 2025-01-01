@@ -1261,23 +1261,6 @@ Configuration related to the two-factor authentication feature.
     Specifies the default enabled methods for two-factor authentication.
 
     Default: ``['email', 'authenticator', 'sms']`` which are the only currently supported methods.
-
-.. py:data:: SECURITY_TWO_FACTOR_SECRET
-
-    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_TOTP_SECRETS`
-
-.. py:data:: SECURITY_TWO_FACTOR_URI_SERVICE_NAME
-
-    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_TOTP_ISSUER`
-
-.. py:data:: SECURITY_TWO_FACTOR_SMS_SERVICE
-
-    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_SMS_SERVICE`
-
-.. py:data:: SECURITY_TWO_FACTOR_SMS_SERVICE_CONFIG
-
-    .. deprecated:: 3.4.0 see: :py:data:`SECURITY_SMS_SERVICE_CONFIG`
-
 .. py:data:: SECURITY_TWO_FACTOR_AUTHENTICATOR_VALIDITY
 
     Specifies the number of seconds access token is valid.

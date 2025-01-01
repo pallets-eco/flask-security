@@ -22,7 +22,7 @@ from .forms import (
     get_form_field_label,
     get_form_field_xlate,
     Form,
-    Required,
+    RequiredLocalize,
     StringField,
     SubmitField,
 )
@@ -158,7 +158,7 @@ class MfRecoveryForm(Form):
 
     code = StringField(
         get_form_field_xlate(_("Recovery Code")),
-        validators=[Required()],
+        validators=[RequiredLocalize()],
     )
     submit = SubmitField(get_form_field_label("submitcode"))
 

@@ -7,7 +7,7 @@
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
     :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -317,15 +317,7 @@ _default_config: dict[str, t.Any] = {
         "PHONE_NUMBER": None,
     },
     "TWO_FACTOR_REQUIRED": False,
-    "TWO_FACTOR_SECRET": None,  # Deprecated - use TOTP_SECRETS
     "TWO_FACTOR_ENABLED_METHODS": ["email", "authenticator", "sms"],
-    "TWO_FACTOR_URI_SERVICE_NAME": "service_name",  # Deprecated - use TOTP_ISSUER
-    "TWO_FACTOR_SMS_SERVICE": "Dummy",  # Deprecated - use SMS_SERVICE
-    "TWO_FACTOR_SMS_SERVICE_CONFIG": {  # Deprecated - use SMS_SERVICE_CONFIG
-        "ACCOUNT_SID": None,
-        "AUTH_TOKEN": None,
-        "PHONE_NUMBER": None,
-    },
     "TWO_FACTOR_IMPLEMENTATIONS": {
         "code": "flask_security.twofactor.CodeTfPlugin",
         "webauthn": "flask_security.webauthn.WebAuthnTfPlugin",
@@ -1548,6 +1540,7 @@ class Security:
             "recoverable",
             "two_factor",
             "unified_signin",
+            "username_recovery",
             "passwordless",
             "webauthn",
             "mail_util_cls",
@@ -1702,16 +1695,6 @@ class Security:
             if rn := cv("CLI_ROLES_NAME", app, strict=True):
                 app.cli.add_command(roles, rn)
 
-        # Migrate from TWO_FACTOR config to generic config.
-        for newc, oldc in [
-            ("SECURITY_SMS_SERVICE", "SECURITY_TWO_FACTOR_SMS_SERVICE"),
-            ("SECURITY_SMS_SERVICE_CONFIG", "SECURITY_TWO_FACTOR_SMS_SERVICE_CONFIG"),
-            ("SECURITY_TOTP_SECRETS", "SECURITY_TWO_FACTOR_SECRET"),
-            ("SECURITY_TOTP_ISSUER", "SECURITY_TWO_FACTOR_URI_SERVICE_NAME"),
-        ]:
-            if not app.config.get(newc, None):
-                app.config[newc] = app.config.get(oldc, None)
-
         # Alternate/code authentication configuration checks and setup
         alt_auth = False
         if cv("UNIFIED_SIGNIN", app=app):
@@ -1775,7 +1758,7 @@ class Security:
         if cv("WEBAUTHN", app=app):
             self._check_modules("webauthn", "WEBAUTHN")
 
-        if cv("USERNAME_ENABLE", app=app):
+        if cv("USERNAME_ENABLE", app=app) and self.username_util_cls == UsernameUtil:
             self._check_modules("bleach", "USERNAME_ENABLE")
 
         # Register so other packages can reference our translations.

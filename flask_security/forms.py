@@ -30,11 +30,10 @@ from wtforms import (
     SubmitField,
     TelField,
     ValidationError,
-    validators,
 )
 
 from werkzeug.datastructures import MultiDict
-from wtforms.validators import Optional, StopValidation
+from wtforms.validators import Optional, StopValidation, EqualTo, DataRequired, Length
 
 from .babel import is_lazy_string, make_lazy_string
 from .confirmable import requires_confirmation
@@ -135,15 +134,15 @@ class ValidatorMixin:
         return super().__call__(form, field)
 
 
-class EqualTo(ValidatorMixin, validators.EqualTo):
+class EqualToLocalize(ValidatorMixin, EqualTo):
     pass
 
 
-class Required(ValidatorMixin, validators.DataRequired):
+class RequiredLocalize(ValidatorMixin, DataRequired):
     pass
 
 
-class Length(ValidatorMixin, validators.Length):
+class LengthLocalize(ValidatorMixin, Length):
     pass
 
 
@@ -181,8 +180,8 @@ class EmailValidation:
             raise StopValidation(msg)
 
 
-email_required = Required(message="EMAIL_NOT_PROVIDED")
-password_required = Required(message="PASSWORD_NOT_PROVIDED")
+email_required = RequiredLocalize(message="EMAIL_NOT_PROVIDED")
+password_required = RequiredLocalize(message="PASSWORD_NOT_PROVIDED")
 
 
 def _local_xlate(text):
@@ -349,7 +348,7 @@ class PasswordConfirmFormMixin:
         get_form_field_label("retype_password"),
         render_kw={"autocomplete": "new-password"},
         validators=[
-            EqualTo("password", message="RETYPE_PASSWORD_MISMATCH"),
+            EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
         ],
     )
@@ -364,7 +363,9 @@ def build_password_field(is_confirm=False, autocomplete="new-password", app=None
         validators.append(password_required)
 
     if is_confirm:
-        validators.append(EqualTo("password", message="RETYPE_PASSWORD_MISMATCH"))
+        validators.append(
+            EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH")
+        )
         return PasswordField(
             label=get_form_field_label("retype_password"),
             render_kw=render_kw,
@@ -397,14 +398,14 @@ class CodeFormMixin:
             "inputtype": "numeric",
             "pattern": "[0-9]*",
         },
-        validators=[Required()],
+        validators=[RequiredLocalize()],
     )
 
 
 def build_register_username_field(app):
     if cv("USERNAME_REQUIRED", app=app):
         validators = [
-            Required(message="USERNAME_NOT_PROVIDED"),
+            RequiredLocalize(message="USERNAME_NOT_PROVIDED"),
             username_validator,
             unique_username,
         ]
@@ -525,7 +526,19 @@ class PasswordlessLoginForm(Form):
 
 
 class LoginForm(Form, PasswordFormMixin, NextFormMixin):
-    """The default login form"""
+    """The default login form
+
+    The following fields are defined:
+        * email
+        * username (based on :py:data:`SECURITY_USERNAME_ENABLE`)
+        * password
+        * remember (checkbox)
+        * next
+
+    If a subclass wants to handle identity, it can set self.ifield to the
+    form field that it validated. That will cause the validation logic here around
+    identity to be skipped. The subclass must also set self.user to the found User.
+    """
 
     # email field - we don't use valid_user_email since for login
     # with username feature it is potentially optional.
@@ -703,8 +716,8 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
     password_confirm = PasswordField(
         get_form_field_label("retype_password"),
         validators=[
-            EqualTo("password", message="RETYPE_PASSWORD_MISMATCH"),
-            validators.Optional(),
+            EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
+            Optional(),
         ],
     )
 
@@ -859,7 +872,7 @@ class ChangePasswordForm(Form):
         get_form_field_label("retype_password"),
         render_kw={"autocomplete": "new-password"},
         validators=[
-            EqualTo("new_password", message="RETYPE_PASSWORD_MISMATCH"),
+            EqualToLocalize("new_password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
         ],
     )
