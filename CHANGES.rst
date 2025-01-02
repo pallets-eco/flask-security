@@ -10,10 +10,11 @@ Released TBD
 
 Features & Improvements
 +++++++++++++++++++++++
-- (:issue:`1038`) Add support for 'secret_key' rotation
-- (:issue:`980`) Add support for username recovery in simple login flows
+- (:issue:`1038`) Add support for 'secret_key' rotation (jamesejr)
+- (:issue:`980`) Add support for username recovery in simple login flows (jamesejr)
 - (:pr:`1048`) Add support for Python 3.13
 - (:issue:`1043`) Unify Register forms (and split out re-type password option)
+- (:pr:`xx`) Remove deprecated TWO_FACTOR configuration variables
 
 Notes
 +++++
@@ -28,6 +29,11 @@ change the dependencies appropriately.
 The register forms have been combined - or more accurately - there is a new RegisterFormV2
 that subsumes the features of both the old RegisterForm and ConfirmRegisterForm.
 Please read :ref:`register_form_migration`.
+
+The SECURITY_TWO_FACTOR_{SECRET, URI_SERVICE_NAME, SMS_SERVICE, SMS_SERVICE_CONFIG}
+have been removed (they have been deprecated for a while). Use the equivalent
+:py:data:`SECURITY_TOTP_SECRETS`, :py:data:`SECURITY_TOTP_ISSUER`, :py:data:`SECURITY_SMS_SERVICE` and
+:py:data:`SECURITY_SMS_SERVICE_CONFIG`.
 
 Version 5.5.2
 -------------

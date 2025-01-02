@@ -115,9 +115,10 @@ def app(request):
     app.config["WTF_CSRF_ENABLED"] = False
     # Our test emails/domain isn't necessarily valid
     app.config["SECURITY_EMAIL_VALIDATOR_ARGS"] = {"check_deliverability": False}
-    app.config["SECURITY_TWO_FACTOR_SECRET"] = {
+    app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
+    app.config["SECURITY_TOTP_ISSUER"] = "tests"
     app.config["SECURITY_SMS_SERVICE"] = "test"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 

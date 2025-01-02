@@ -77,7 +77,7 @@ except ImportError:  # pragma: no cover
 from .decorators import anonymous_user_required, auth_required, unauth_csrf
 from .forms import (
     Form,
-    Required,
+    RequiredLocalize,
     build_form_from_request,
     build_form,
     get_form_field_label,
@@ -120,7 +120,7 @@ else:
 class WebAuthnRegisterForm(Form):
     name = StringField(
         get_form_field_xlate(_("Nickname")),
-        validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
+        validators=[RequiredLocalize(message="WEBAUTHN_NAME_REQUIRED")],
     )
     usage = RadioField(
         get_form_field_xlate(_("Usage")),
@@ -354,7 +354,7 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
 class WebAuthnDeleteForm(Form):
     name = StringField(
         get_form_field_xlate(_("Nickname")),
-        validators=[Required(message="WEBAUTHN_NAME_REQUIRED")],
+        validators=[RequiredLocalize(message="WEBAUTHN_NAME_REQUIRED")],
     )
     submit = SubmitField(label=get_form_field_label("delete"))
 

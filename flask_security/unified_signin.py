@@ -55,7 +55,7 @@ from .forms import (
     _setup_methods_xlate,
     Form,
     NextFormMixin,
-    Required,
+    RequiredLocalize,
     build_form_from_request,
     build_form,
     form_errors_munge,
@@ -244,7 +244,7 @@ class UnifiedSigninForm(_UnifiedPassCodeForm, NextFormMixin):
 
     identity = StringField(
         get_form_field_label("identity"),
-        validators=[Required()],
+        validators=[RequiredLocalize()],
     )
     remember = BooleanField(get_form_field_label("remember_me"))
 
@@ -374,7 +374,7 @@ class UnifiedSigninSetupValidateForm(Form):
             "inputtype": "numeric",
             "pattern": "[0-9]*",
         },
-        validators=[Required()],
+        validators=[RequiredLocalize()],
     )
     submit = SubmitField(get_form_field_label("submitcode"))
 

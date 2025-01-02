@@ -50,7 +50,7 @@ from flask_security.forms import (
     PasswordlessLoginForm,
     RegisterForm,
     RegisterFormV2,
-    Required,
+    RequiredLocalize,
     ResetPasswordForm,
     SendConfirmationForm,
     StringField,
@@ -488,7 +488,7 @@ def test_custom_form_setting(app, sqlalchemy_datastore):
 
 def test_form_required(app, sqlalchemy_datastore):
     class MyLoginForm(LoginForm):
-        myfield = StringField("My Custom Field", validators=[Required()])
+        myfield = StringField("My Custom Field", validators=[RequiredLocalize()])
 
     app.config["SECURITY_LOGIN_FORM"] = MyLoginForm
 
@@ -508,7 +508,9 @@ def test_form_required_local_message(app, sqlalchemy_datastore):
     msg = "hi! did you forget me?"
 
     class MyLoginForm(LoginForm):
-        myfield = StringField("My Custom Field", validators=[Required(message=msg)])
+        myfield = StringField(
+            "My Custom Field", validators=[RequiredLocalize(message=msg)]
+        )
 
     app.config["SECURITY_LOGIN_FORM"] = MyLoginForm
 
