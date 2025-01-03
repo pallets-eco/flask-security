@@ -34,6 +34,7 @@ from tests.test_utils import (
     logout,
     populate_data,
     reset_fresh,
+    get_form_input,
 )
 from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
@@ -375,7 +376,6 @@ def test_custom_forms_via_config(app, sqlalchemy_datastore):
     security.init_app(app)
 
     client = app.test_client()
-
     response = client.get("/login")
     assert b"My Login Email Address Field" in response.data
 
@@ -1559,3 +1559,43 @@ def test_secret_key_fallbacks(app, verify_secret_key, verify_fallbacks, should_p
     else:
         with pytest.raises(BadTimeSignature):
             serializer.loads(token)
+
+
+@pytest.mark.settings(username_enable=True)
+def test_custom_login_form(app, sqlalchemy_datastore, get_message):
+    # Test custom login form that deletes email and uses username only
+    # Also test that if app leave 'email' in as a user identity attribute we
+    # will ignore it
+    class MyLoginForm(LoginForm):
+        email = None
+
+    app.security = Security(
+        app,
+        datastore=sqlalchemy_datastore,
+        login_form=MyLoginForm,
+    )
+
+    populate_data(app)
+    client = app.test_client()
+
+    response = client.get("/login", follow_redirects=False)
+    assert not get_form_input(response, "email")
+
+    response = client.post(
+        "/login", json=dict(email="jill@lp.com", password="password")
+    )
+    assert response.status_code == 400
+    assert (
+        get_message("USER_DOES_NOT_EXIST")
+        == response.json["response"]["field_errors"][""][0].encode()
+    )
+
+    response = client.post("/login", json=dict(username="jill", password="password"))
+    assert response.status_code == 200
+
+
+@pytest.mark.settings(password_required=False)
+def test_password_required_setting(app, sqlalchemy_datastore):
+    with pytest.raises(ValueError) as vex:
+        Security(app=app, datastore=sqlalchemy_datastore)
+    assert "SECURITY_PASSWORD_REQUIRED can only be" in str(vex.value)
