@@ -228,7 +228,7 @@ def test_authenticate_case_insensitive_email(app, client):
 def test_authenticate_with_invalid_input(client, get_message):
     response = client.post(
         "/login",
-        json=dict(password="password"),
+        json=dict(password="password", email="mememe@test.com"),
         headers={"Content-Type": "application/json"},
     )
     assert get_message("USER_DOES_NOT_EXIST") in response.data

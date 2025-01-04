@@ -56,7 +56,7 @@ from .forms import (
     VerifyForm,
     build_register_username_field,
     build_register_form,
-    login_username_field,
+    build_login_form,
 )
 from .json import setup_json
 from .mail_util import MailUtil
@@ -1562,6 +1562,12 @@ class Security:
         ):  # pragma: no cover
             raise ValueError("User model must contain fs_uniquifier as of 4.0.0")
 
+        if not cv("PASSWORD_REQUIRED", app=app) and not cv("UNIFIED_SIGNIN", app=app):
+            raise ValueError(
+                "SECURITY_PASSWORD_REQUIRED can only be set to False if"
+                " the SECURITY_UNIFIED_SIGNIN feature is enabled"
+            )
+
         # Check for pre-4.0 SECURITY_USER_IDENTITY_ATTRIBUTES format
         for uia in cv("USER_IDENTITY_ATTRIBUTES", app=app):  # pragma: no cover
             if not isinstance(uia, dict):
@@ -1655,9 +1661,10 @@ class Security:
             fcls = self.forms["confirm_register_form"].cls
             if fcls and issubclass(fcls, RegisterFormMixin):
                 fcls.username = build_register_username_field(app)
-            fcls = self.forms["login_form"].cls
-            if fcls and issubclass(fcls, LoginForm):
-                fcls.username = login_username_field
+
+        fcls = self.forms["login_form"].cls
+        if fcls and issubclass(fcls, LoginForm):
+            build_login_form(app=app, fcls=fcls)
 
         # new unified RegisterForm
         fcls = self.forms["register_form"].cls

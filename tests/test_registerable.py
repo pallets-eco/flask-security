@@ -1125,3 +1125,33 @@ def test_subclass_v2(app, sqlalchemy_datastore):
         response.json["response"]["errors"][0]
         == "Field must be at least 8 characters long."
     )
+
+
+@pytest.mark.unified_signin()
+@pytest.mark.confirmable()
+@pytest.mark.settings(password_required=False, use_register_v2=True)
+def test_allow_null_password_v2(client, get_message):
+    # Test password not required with new RegisterFormV2
+    response = client.get("/register")
+    data = dict(email="trp@lp.com")
+    pw = get_form_input(response, "password")
+    assert "required" not in pw
+    pwc = get_form_input(response, "password_confirm")
+    assert "required" not in pwc
+
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("CONFIRM_REGISTRATION", email="trp@lp.com") in response.data
+    logout(client)
+
+    # should be able to register with password and password_confirm
+    data = dict(email="trp2@lp.com", password="battery staple")
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("RETYPE_PASSWORD_MISMATCH") in response.data
+
+    data = dict(
+        email="trp2@lp.com",
+        password="battery staple",
+        password_confirm="battery staple",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("CONFIRM_REGISTRATION", email="trp2@lp.com") in response.data

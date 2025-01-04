@@ -340,10 +340,13 @@ def app(request):
                     del app.security.forms[form_name].cls.username
 
         from flask_security import RegisterFormV2
+        from flask_security.forms import PasswordConfirmFormMixin, NewPasswordFormMixin
 
-        for attr in ["username", "password", "password_confirm"]:
+        for attr in ["username"]:
             if hasattr(RegisterFormV2, attr):
                 delattr(RegisterFormV2, attr)
+        RegisterFormV2.password_confirm = PasswordConfirmFormMixin.password_confirm
+        RegisterFormV2.password = NewPasswordFormMixin.password
 
     request.addfinalizer(revert_forms)
     yield app

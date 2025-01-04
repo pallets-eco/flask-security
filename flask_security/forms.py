@@ -6,7 +6,7 @@
 
     :copyright: (c) 2012 by Matt Wright.
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -113,7 +113,7 @@ class ValidatorMixin:
 
     def __init__(self, *args, **kwargs):
         # If the message is available from config[MSG_xx] then it can be xlated.
-        # Otherwise it will be used as is.
+        # Otherwise, it will be used as is.
         if "message" in kwargs:
             self._original_message = kwargs["message"]
             del kwargs["message"]
@@ -193,7 +193,7 @@ def _local_xlate(text):
 
 def get_form_field_label(key):
     """This is called during import since form fields are declared as part of
-    class. Thus can't call 'localize_callback' until we need to actually
+    class. Thus, can't call 'localize_callback' until we need to actually
     translate/render form.
     """
     return make_lazy_string(_local_xlate, _default_field_labels.get(key, ""))
@@ -354,32 +354,6 @@ class PasswordConfirmFormMixin:
     )
 
 
-def build_password_field(is_confirm=False, autocomplete="new-password", app=None):
-    # Based on configuration return PasswordField with appropriate validators
-    # Note that length and breached validators are done as part of form.
-    validators = list()
-    render_kw = {"autocomplete": autocomplete}
-    if cv("PASSWORD_REQUIRED", app) or not cv("UNIFIED_SIGNIN", app):
-        validators.append(password_required)
-
-    if is_confirm:
-        validators.append(
-            EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH")
-        )
-        return PasswordField(
-            label=get_form_field_label("retype_password"),
-            render_kw=render_kw,
-            validators=validators,
-        )
-
-    # normal password field
-    return PasswordField(
-        label=get_form_field_label("password"),
-        render_kw=render_kw,
-        validators=validators,
-    )
-
-
 class NextFormMixin:
     next = HiddenField()
 
@@ -416,13 +390,6 @@ def build_register_username_field(app):
         render_kw={"autocomplete": "username"},
         validators=validators,
     )
-
-
-login_username_field = StringField(
-    get_form_field_label("username"),
-    render_kw={"autocomplete": "username"},
-    validators=[username_validator],
-)
 
 
 class RegisterFormMixin:
@@ -526,7 +493,7 @@ class PasswordlessLoginForm(Form):
 
 
 class LoginForm(Form, PasswordFormMixin, NextFormMixin):
-    """The default login form
+    """The default login form.
 
     The following fields are defined:
         * email
@@ -534,18 +501,25 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         * password
         * remember (checkbox)
         * next
+        * submit
 
-    If a subclass wants to handle identity, it can set self.ifield to the
-    form field that it validated. That will cause the validation logic here around
-    identity to be skipped. The subclass must also set self.user to the found User.
+    The following attributes might be useful for subclasses:
+        * ifield - If a subclass wants to handle identity, it can set self.ifield to the
+          form field that it validated. That will cause the validation logic here
+          around identity to be skipped.
+          The subclass must also set self.user to the found User.
+        * user - as stated above - if subclass does identity check it must set this
+          field.
     """
 
-    # email field - we don't use valid_user_email since for login
-    # with username feature it is potentially optional.
+    # email field - we don't use valid_user_email since for login we must check
+    # user_identity_attributes to ensure 'email' is listed.
+    # If USERNAME_ENABLE is set - this field will be replaced to be Optional()
+    # see build_login_form()
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[Optional(), EmailValidation(verify=False)],
+        validators=[email_required, EmailValidation(verify=False)],
     )
 
     # username is added dynamically based on USERNAME_ENABLED.
@@ -582,7 +556,9 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         # responsible to deal with USER_IDENTITY_ATTRIBUTES if it cares.
         if not self.ifield:
             uia_email = get_identity_attribute("email")
-            if uia_email and self.email.data:
+            # pedantic checks - if app subclasses form, removes email but forgets to
+            # remove "email" from identity_attributes
+            if uia_email and hasattr(self, "email") and self.email and self.email.data:
                 self.ifield = self.email
                 self.user = _datastore.find_user(
                     case_insensitive=uia_email.get("case_insensitive", False),
@@ -635,6 +611,30 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         return True
 
 
+def build_login_form(app, fcls):
+    # Based on app configuration, add optional/configurable fields to the login form
+    # Allow app to override the field using mixins.
+    # Note this is only called (from init_app()) if form is subclassed from ours.
+    # We really don't want to touch the form unless there is a specific option
+    # requested - so that subclasses can change/do what they want (including deleting
+    # email for example).
+    if cv("USERNAME_ENABLE", app):
+        fcls.username = StringField(
+            get_form_field_label("username"),
+            render_kw={"autocomplete": "username"},
+            validators=[username_validator],
+        )
+        if hasattr(fcls, "email") and fcls.email:
+            # Make field Optional()
+            # let subclass easily get rid of this
+            # Note that WTForms 'del' operator actually sets this to None
+            fcls.email = EmailField(
+                get_form_field_label("email"),
+                render_kw={"autocomplete": "email"},
+                validators=[Optional(), EmailValidation(verify=False)],
+            )
+
+
 class VerifyForm(Form, PasswordFormMixin):
     """The verify authentication form"""
 
@@ -685,7 +685,7 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
 
         # whether a password is required is a config variable (PASSWORD_REQUIRED).
         # For unified signin there are many other ways to authenticate
-        if cv("PASSWORD_REQUIRED") or not cv("UNIFIED_SIGNIN"):
+        if cv("PASSWORD_REQUIRED"):
             if not self.password.data or not self.password.data.strip():
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
                 failed = True
@@ -739,19 +739,24 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
             self.next.data = request.args.get("next", "")
 
 
-class RegisterFormV2(Form, UniqueEmailFormMixin, NextFormMixin):
+class RegisterFormV2(
+    Form,
+    UniqueEmailFormMixin,
+    NextFormMixin,
+    NewPasswordFormMixin,
+    PasswordConfirmFormMixin,
+):
     """This form is used for registering.
 
     The following fields are defined:
         * email (required)
-        * password (required if :py:data:`SECURITY_PASSWORD_REQUIRED` is ``True``
-          OR :py:data:`SECURITY_UNIFIED_SIGNIN` is ``False``)
+        * password (required if :py:data:`SECURITY_PASSWORD_REQUIRED` is ``True``)
         * password_confirm (based on :py:data:`SECURITY_PASSWORD_CONFIRM_REQUIRED`)
         * username (based on :py:data:`SECURITY_USERNAME_ENABLE`)
         * next
 
     Since there are many configuration options that alter which fields and
-    which validators (e.g. Required), some fields are added dynamically at
+    which validators (e.g. Required), some fields are added or changed at
     Security init_app() time by calling the internal method build_register_form().
 
     We want to support OWASP best-practice around mitigating user enumeration.
@@ -765,8 +770,6 @@ class RegisterFormV2(Form, UniqueEmailFormMixin, NextFormMixin):
 
     submit = SubmitField(get_form_field_label("register"))
     username: t.ClassVar[Field]
-    password: t.ClassVar[Field]
-    password_confirm: t.ClassVar[Field]
 
     def to_dict(self, only_user):
         """
@@ -826,11 +829,23 @@ class RegisterFormV2(Form, UniqueEmailFormMixin, NextFormMixin):
 def build_register_form(app, fcls):
     # Based on app configuration, add optional/configurable fields to the register form
     # Allow app to override the field using mixins
-    if not (hasattr(fcls, "password") and fcls.password):
-        fcls.password = build_password_field(app=app)
-    if cv("PASSWORD_CONFIRM_REQUIRED", app=app):
-        if not (hasattr(fcls, "password_confirm") and fcls.password_confirm):
-            fcls.password_confirm = build_password_field(app=app, is_confirm=True)
+    # Note that this occurs AFTER app might have sub-classed the form
+    if not cv("PASSWORD_REQUIRED", app):
+        # mark password field as Optional
+        fcls.password = PasswordField(
+            label=get_form_field_label("password"),
+            render_kw={"autocomplete": "new-password"},
+            validators=[Optional()],
+        )
+        fcls.password_confirm = PasswordField(
+            get_form_field_label("retype_password"),
+            render_kw={"autocomplete": "new-password"},
+            validators=[
+                EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
+            ],
+        )
+    if not cv("PASSWORD_CONFIRM_REQUIRED", app=app):
+        fcls.password_confirm = None
     if cv("USERNAME_ENABLE", app):
         fcls.username = build_register_username_field(app=app)
 
