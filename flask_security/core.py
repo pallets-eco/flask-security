@@ -1405,6 +1405,7 @@ class Security:
         self.two_factor: bool = False
         self.unified_signin: bool = False
         self.passwordless: bool = False
+        self.username_recovery: bool = False
         self.webauthn: bool = False
 
         self.support_mfa: bool = False

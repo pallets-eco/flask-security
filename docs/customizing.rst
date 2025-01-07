@@ -478,6 +478,7 @@ welcome_existing                SECURITY_SEND_REGISTER_EMAIL         SECURITY_EM
 welcome_existing_username       SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - email                user_not_registered
                                 SECURITY_RETURN_GENERIC_RESPONSES                                                      - username
 username_recovery               SECURITY_USERNAME_RECOVERY           SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY          - user                 username_recovery_email_sent
+                                                                                                                       - username
 =============================   ==================================   =============================================     ====================== ===============================
 
 When sending an email, Flask-Security goes through the following steps:

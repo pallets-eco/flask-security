@@ -120,10 +120,19 @@ This view can be overridden if your registration process requires more fields.
 User email is validated and normalized using the
 `email_validator <https://pypi.org/project/email-validator/>`_ package.
 
-The :py:data:`SECURITY_USERNAME_ENABLE` configuration option, when set to ``True``, will add
-support for the user to register a username in addition to an email. By default, the user will be
+Username Support
+-----------------
+Flask-Security supports configuring and using a ``username`` in addition to or instead of an email for
+authentication.
+
+If the :py:data:`SECURITY_USERNAME_ENABLE` configuration option is set to ``True``, ``username``
+will be added to the register and login forms.
+By default, the user will be
 able to authenticate with EITHER email or username - however that can be changed via the
 :py:data:`SECURITY_USER_IDENTITY_ATTRIBUTES`.
+
+The :py:data:`SECURITY_USERNAME_RECOVERY` option adds an endpoint that allows users
+to recover a forgotten username (via email).
 
 Email Confirmation
 ------------------
@@ -185,8 +194,6 @@ generated and downloaded one-time code (see :py:data:`SECURITY_MULTI_FACTOR_RECO
 
 Unified Sign In
 ---------------
-**This feature is in Beta - mostly due to it being brand new and little to no production soak time**
-
 If :ref:`configured<configuration:Unified Signin>`,
 a generalized login endpoint is provided that takes an `identity`
 and a `passcode`; where (based on configuration):
@@ -260,24 +267,10 @@ JSON/Ajax Support
 -----------------
 Flask-Security supports JSON/Ajax requests where appropriate. Please
 look at :ref:`csrf_topic` for details on how to work with JSON and
-Single Page Applications. More specifically
-JSON is supported for the following operations:
+Single Page Applications.
 
-* Login requests
-* Unified sign in requests
-* Registration requests
-* Change password requests
-* Change email requests
-* Confirmation requests
-* Forgot password requests
-* Passwordless login requests
-* Two-factor login requests
-* Change two-factor method requests
-* WebAuthn registration and signin requests
-* Two-Factor recovery code requests
-
-In addition, Single-Page-Applications (like those built with Vue, Angular, and
-React) are supported via customizable redirect links.
+In addition, :ref:`spa:Working With Single Page Applications`
+(like those built with Vue, Angular, and React) are supported via customizable redirect links.
 
 Note: All registration requests done through JSON/Ajax utilize the ``confirm_register_form``.
 
@@ -315,7 +308,7 @@ in the `examples` directory.
 
 .. _Click: https://palletsprojects.com/p/click/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
-.. _Flask-WTF: https://flask-wtf.readthedocs.io/en/1.0.x/csrf/
+.. _Flask-WTF: https://flask-wtf.readthedocs.io/en/1.2.x/csrf/
 .. _alternative token: https://flask-login.readthedocs.io/en/latest/#alternative-tokens
 .. _Flask-Principal: https://pypi.org/project/Flask-Principal/
 .. _documentation on this topic: http://packages.python.org/Flask-Principal/#granular-resource-protection
