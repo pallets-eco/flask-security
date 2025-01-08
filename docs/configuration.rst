@@ -1557,7 +1557,9 @@ Username-Recovery
 
 .. py:data:: SECURITY_USERNAME_RECOVERY
 
-   Specifies whether username recovery is enabled.
+    Specifies whether username recovery is enabled. If set to ``True`` the UserModel
+    must contain a column ``"username"``. Note that this feature is independent
+    of the :py:data:`SECURITY_USERNAME_ENABLE` feature.
 
    Default: ``False``.
 
@@ -1888,7 +1890,7 @@ Social Oauth
 
 Feature Flags
 -------------
-All feature flags. By default all are 'False'/not enabled.
+All feature flags. By default all are ``False``/not enabled.
 
 * :py:data:`SECURITY_CHANGE_EMAIL`
 * :py:data:`SECURITY_CONFIRMABLE`
@@ -1908,23 +1910,23 @@ URLs and Views
 --------------
 A list of all URLs and Views:
 
-* :py:data:`SECURITY_LOGIN_URL`
-* :py:data:`SECURITY_LOGOUT_URL`
-* :py:data:`SECURITY_VERIFY_URL`
-* :py:data:`SECURITY_REGISTER_URL`
-* :py:data:`SECURITY_CHANGE_EMAIL_URL`
-* :py:data:`SECURITY_CHANGE_EMAIL_CONFIRM_URL`
-* :py:data:`SECURITY_RESET_URL`
-* :py:data:`SECURITY_CHANGE_URL`
-* :py:data:`SECURITY_CONFIRM_URL`
-* :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_URL`
-* :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_URL`
-* :py:data:`SECURITY_OAUTH_START_URL`
-* :py:data:`SECURITY_OAUTH_RESPONSE_URL`
-* :py:data:`SECURITY_TWO_FACTOR_SELECT_URL`
-* :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
-* :py:data:`SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL`
-* :py:data:`SECURITY_TWO_FACTOR_RESCUE_URL`
+* :py:data:`SECURITY_LOGIN_URL` ``"/login"``
+* :py:data:`SECURITY_LOGOUT_URL` ``"/logout"``
+* :py:data:`SECURITY_VERIFY_URL` ``"/verify"``
+* :py:data:`SECURITY_REGISTER_URL` ``"/register"``
+* :py:data:`SECURITY_CHANGE_EMAIL_URL` ``"change-email"``
+* :py:data:`SECURITY_CHANGE_EMAIL_CONFIRM_URL` ``"/change-email-confirm"``
+* :py:data:`SECURITY_RESET_URL` ``"/reset"``
+* :py:data:`SECURITY_CHANGE_URL` ``"/change"``
+* :py:data:`SECURITY_CONFIRM_URL` ``"/confirm"``
+* :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_URL` ``"/mf-recovery-codes"``
+* :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_URL` ``"/mf-recovery"``
+* :py:data:`SECURITY_OAUTH_START_URL` ``"/login/oauthstart"``
+* :py:data:`SECURITY_OAUTH_RESPONSE_URL` ``"/login/oauthresponse"``
+* :py:data:`SECURITY_TWO_FACTOR_SELECT_URL` ``"/tf-select"``
+* :py:data:`SECURITY_TWO_FACTOR_SETUP_URL` ``"/tf-setup"``
+* :py:data:`SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL` ``"/tf-validate"``
+* :py:data:`SECURITY_TWO_FACTOR_RESCUE_URL` ``"/tf-rescue"``
 * :py:data:`SECURITY_TWO_FACTOR_ERROR_VIEW`
 * :py:data:`SECURITY_TWO_FACTOR_POST_SETUP_VIEW`
 * :py:data:`SECURITY_POST_LOGIN_VIEW`

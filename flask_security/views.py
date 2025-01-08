@@ -1289,7 +1289,6 @@ def create_blueprint(app, state, import_name):
 
     if state.recoverable:
         reset_url = cv("RESET_URL", app=app)
-        username_recovery_url = cv("USERNAME_RECOVERY_URL", app=app)
         bp.route(reset_url, methods=["GET", "POST"], endpoint="forgot_password")(
             forgot_password
         )
@@ -1298,12 +1297,14 @@ def create_blueprint(app, state, import_name):
             methods=["GET", "POST"],
             endpoint="reset_password",
         )(reset_password)
-        if cv("USERNAME_RECOVERY", app=app):
-            bp.route(
-                username_recovery_url,
-                methods=["GET", "POST"],
-                endpoint="recover_username",
-            )(recover_username)
+
+    if state.username_recovery:
+        username_recovery_url = cv("USERNAME_RECOVERY_URL", app=app)
+        bp.route(
+            username_recovery_url,
+            methods=["GET", "POST"],
+            endpoint="recover_username",
+        )(recover_username)
 
     if state.changeable:
         bp.route(
