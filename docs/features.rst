@@ -134,6 +134,9 @@ able to authenticate with EITHER email or username - however that can be changed
 The :py:data:`SECURITY_USERNAME_RECOVERY` option adds an endpoint that allows users
 to recover a forgotten username (via email).
 
+The :py:data:`SECURITY_CHANGE_USERNAME` option adds an endpoint that can be
+used by authenticated users to change their username.
+
 Email Confirmation
 ------------------
 If :ref:`configured<configuration:Confirmable>`, your application

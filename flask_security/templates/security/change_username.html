@@ -1,0 +1,15 @@
+{% extends "security/base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors %}
+
+{% block content %}
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain('Change Username') }}</h1>
+  <form action="{{ url_for_security('change_username') }}" method="post" name="change_username_form">
+    {{ _fsdomain('Current username is: %(username)s', username=current_username) }}
+    {{ change_username_form.hidden_tag() }}
+    {{ render_form_errors(change_username_form) }}
+    {{ render_field_with_errors(change_username_form.username) }}
+    {{ render_field_errors(change_username_form.csrf_token) }}
+    {{ render_field(change_username_form.submit) }}
+  </form>
+{% endblock content %}

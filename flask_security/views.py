@@ -5,7 +5,7 @@
     Flask-Security views module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 
     CSRF is tricky. By default all our forms have CSRF protection built in via
@@ -45,6 +45,7 @@ from flask_login import current_user
 
 from .changeable import change_user_password
 from .change_email import change_email, change_email_confirm
+from .change_username import change_username
 from .confirmable import (
     confirm_email_token_status,
     confirm_user,
@@ -1325,6 +1326,13 @@ def create_blueprint(app, state, import_name):
             methods=["GET"],
             endpoint="change_email_confirm",
         )(change_email_confirm)
+
+    if state.change_username:
+        bp.route(
+            cv("CHANGE_USERNAME_URL", app=app),
+            methods=["GET", "POST"],
+            endpoint="change_username",
+        )(change_username)
 
     if state.confirmable:
         confirm_url = cv("CONFIRM_URL", app=app)

@@ -943,6 +943,9 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
                 if len(kwargs) > 1:
                     raise ValueError("Case insensitive option only supports single key")
                 attr, identifier = kwargs.popitem()
+                # Mongo doesn't like __iexact compares with None
+                if identifier is None:
+                    return None
                 query = {f"{attr}__iexact": identifier}
                 obj = self.user_model.objects(**query).first()
             else:

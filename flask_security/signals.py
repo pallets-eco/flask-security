@@ -5,7 +5,7 @@
     Flask-Security signals module
 
     :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -55,3 +55,5 @@ change_email_instructions_sent = signals.signal("change-email-instructions-sent"
 change_email_confirmed = signals.signal("change-email")
 
 username_recovery_email_sent = signals.signal("username-recovery-email-sent")
+
+username_changed = signals.signal("username-changed")

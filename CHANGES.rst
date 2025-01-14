@@ -12,9 +12,10 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`1038`) Add support for 'secret_key' rotation (jamesejr)
 - (:issue:`980`) Add support for username recovery in simple login flows (jamesejr)
+- (:issue:`1055`) Add support for changing username
 - (:pr:`1048`) Add support for Python 3.13
 - (:issue:`1043`) Unify Register forms (and split out re-type password option)
-- (:pr:`xx`) Remove deprecated TWO_FACTOR configuration variables
+- (:pr:`1052`) Remove deprecated TWO_FACTOR configuration variables
 
 Notes
 +++++

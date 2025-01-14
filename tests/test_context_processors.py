@@ -17,6 +17,7 @@ from tests.test_utils import authenticate, capture_reset_password_requests, logo
 @pytest.mark.changeable()
 @pytest.mark.change_email()
 @pytest.mark.username_recovery()
+@pytest.mark.change_username()
 @pytest.mark.settings(
     login_without_confirmation=True,
     change_email_template="custom_security/change_email.html",
@@ -28,6 +29,7 @@ from tests.test_utils import authenticate, capture_reset_password_requests, logo
     register_user_template="custom_security/register_user.html",
     verify_template="custom_security/verify.html",
     username_recovery_template="custom_security/recover_username.html",
+    change_username_template="custom_security/change_username.html",
 )
 def test_context_processors(client, app):
     @app.security.context_processor
@@ -129,6 +131,15 @@ def test_context_processors(client, app):
     response = client.get("/recover-username")
     assert b"global" in response.data
     assert b"bar-recover-username" in response.data
+
+    @app.security.change_username_context_processor
+    def change_username():
+        return {"foo": "bar-change-username"}
+
+    authenticate(client)
+    response = client.get("/change-username")
+    assert b"global" in response.data
+    assert b"bar-change-username" in response.data
 
 
 @pytest.mark.passwordless()

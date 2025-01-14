@@ -376,7 +376,7 @@ class CodeFormMixin:
     )
 
 
-def build_register_username_field(app):
+def build_username_field(app, autocomplete="username"):
     if cv("USERNAME_REQUIRED", app=app):
         validators = [
             RequiredLocalize(message="USERNAME_NOT_PROVIDED"),
@@ -387,7 +387,7 @@ def build_register_username_field(app):
         validators = [username_validator, unique_username]
     return StringField(
         get_form_field_label("username"),
-        render_kw={"autocomplete": "username"},
+        render_kw={"autocomplete": autocomplete},
         validators=validators,
     )
 
@@ -847,7 +847,7 @@ def build_register_form(app, fcls):
     if not cv("PASSWORD_CONFIRM_REQUIRED", app=app):
         fcls.password_confirm = None
     if cv("USERNAME_ENABLE", app):
-        fcls.username = build_register_username_field(app=app)
+        fcls.username = build_username_field(app=app)
 
 
 class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):

@@ -136,6 +136,7 @@ def app(request):
     for opt in [
         "changeable",
         "change_email",
+        "change_username",
         "confirmable",
         "passwordless",
         "recoverable",
@@ -274,6 +275,10 @@ def app(request):
     def post_reset():
         return render_template("index.html", content="Post Reset")
 
+    @app.route("/post_change_username")
+    def post_change_username():
+        return render_template("index.html", content="Post Change Username")
+
     @app.route("/admin")
     @roles_required("admin")
     def admin():
@@ -335,7 +340,12 @@ def app(request):
     def revert_forms():
         # Some forms/tests have dynamic fields - be sure to revert them.
         if hasattr(app, "security"):
-            for form_name in ["login_form", "register_form", "confirm_register_form"]:
+            for form_name in [
+                "login_form",
+                "register_form",
+                "confirm_register_form",
+                "change_username_form",
+            ]:
                 if hasattr(app.security.forms[form_name].cls, "username"):
                     del app.security.forms[form_name].cls.username
 
