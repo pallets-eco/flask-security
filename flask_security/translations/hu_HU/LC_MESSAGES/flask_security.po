@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2024-07-30 16:04-0700\n"
+"POT-Creation-Date: 2025-01-14 08:09-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hu_HU\n"
@@ -17,17 +17,17 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.15.0\n"
+"Generated-By: Babel 2.16.0\n"
 
-#: flask_security/core.py:239
+#: flask_security/core.py:245
 msgid "Confirm your new email address"
 msgstr ""
 
-#: flask_security/core.py:285
+#: flask_security/core.py:296
 msgid "Login Required"
 msgstr "Bejelentkezés szükséges"
 
-#: flask_security/core.py:286
+#: flask_security/core.py:297
 #: flask_security/templates/security/email/two_factor_instructions.html:1
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
 #: flask_security/templates/security/email/us_instructions.html:9
@@ -35,49 +35,58 @@ msgstr "Bejelentkezés szükséges"
 msgid "Welcome"
 msgstr "Üdvözöljük"
 
-#: flask_security/core.py:287
+#: flask_security/core.py:298
 msgid "Please confirm your email"
 msgstr "Kérjük, erősítse meg e-mail címét"
 
-#: flask_security/core.py:288
+#: flask_security/core.py:299
 msgid "Login instructions"
 msgstr "Bejelentkezési utasítások"
 
-#: flask_security/core.py:289
+#: flask_security/core.py:300
 #: flask_security/templates/security/email/reset_notice.html:1
 #: flask_security/templates/security/email/reset_notice.txt:1
 msgid "Your password has been reset"
 msgstr "A jelszava visszaállításra került"
 
-#: flask_security/core.py:290
+#: flask_security/core.py:301
 msgid "Your password has been changed"
 msgstr "A jelszava megváltozott"
 
-#: flask_security/core.py:291
+#: flask_security/core.py:302
 msgid "Password reset instructions"
 msgstr "Jelszó visszaállítási utasítások"
 
-#: flask_security/core.py:294
+#: flask_security/core.py:303
+#: flask_security/templates/security/email/change_username_notice.txt:1
+msgid "Your username has been changed"
+msgstr ""
+
+#: flask_security/core.py:304
+msgid "Your requested username"
+msgstr ""
+
+#: flask_security/core.py:307
 msgid "Two-factor Login"
 msgstr "Kétfaktoros Bejelentkezés"
 
-#: flask_security/core.py:295
+#: flask_security/core.py:308
 msgid "Two-factor Rescue"
 msgstr "Kétfaktoros Visszaállítás"
 
-#: flask_security/core.py:342
+#: flask_security/core.py:350
 msgid "Verification Code"
 msgstr "Ellenőrző kód"
 
-#: flask_security/core.py:388
+#: flask_security/core.py:396
 msgid "Input not appropriate for requested API"
 msgstr "A bemenet nem megfelelő a kért API-hoz"
 
-#: flask_security/core.py:390
+#: flask_security/core.py:398
 msgid "Authentication failed - identity or password/passcode invalid"
 msgstr "Sikertelen hitelesítés - azonosító vagy jelszó/kód érvénytelen"
 
-#: flask_security/core.py:394
+#: flask_security/core.py:402
 msgid ""
 "If that email address is in our system, you will receive an email "
 "describing how to reset your password."
@@ -85,47 +94,47 @@ msgstr ""
 "Ha ez az e-mail cím szerepel a rendszerünkben, akkor kapni fog egy "
 "e-mailt a jelszó visszaállítási menetéről."
 
-#: flask_security/core.py:401
+#: flask_security/core.py:409
 msgid "If that identity is in our system, you were sent a code."
 msgstr "Ha ez az azonosító szerepel a rendszerünkben, akkor kódot küldtünk."
 
-#: flask_security/core.py:404
+#: flask_security/core.py:412
 msgid "You do not have permission to view this resource."
 msgstr "Nincs jogosultsága ennek az erőforrásnak a megtekintéséhez."
 
-#: flask_security/core.py:406
+#: flask_security/core.py:414
 msgid "You must sign in to view this resource."
 msgstr ""
 
-#: flask_security/core.py:410
+#: flask_security/core.py:418
 msgid "You must re-authenticate to access this endpoint"
 msgstr "A végpont eléréséhez újra hitelesíteni kell"
 
-#: flask_security/core.py:414
+#: flask_security/core.py:422
 #, python-format
 msgid ""
 "Thank you. To confirm your email address %(email)s, please click on the "
 "link in the email we have just sent to you."
 msgstr ""
 
-#: flask_security/core.py:421
+#: flask_security/core.py:429
 msgid "Thank you. Your email has been confirmed."
 msgstr "Köszönjük. E-mail címét megerősítettük."
 
-#: flask_security/core.py:422
+#: flask_security/core.py:430
 msgid "Your email has already been confirmed."
 msgstr "Az e-mail címét már megerősítették."
 
-#: flask_security/core.py:423
+#: flask_security/core.py:431
 msgid "Invalid confirmation token."
 msgstr "Érvénytelen megerősítő token."
 
-#: flask_security/core.py:425
+#: flask_security/core.py:433
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s már társítva van egy fiókhoz."
 
-#: flask_security/core.py:429
+#: flask_security/core.py:437
 #, python-format
 msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
@@ -134,69 +143,69 @@ msgstr ""
 "A \"%(attr)s\" azonosító attribútum \"%(value)s\" értékkel már társítva "
 "van egy fiókhoz."
 
-#: flask_security/core.py:436
+#: flask_security/core.py:444
 #, python-format
 msgid "Identity %(id)s not registered"
 msgstr ""
 
-#: flask_security/core.py:440
+#: flask_security/core.py:448
 #, python-format
 msgid ""
 "An error occurred while communicating with the Oauth provider: "
 "(%(exerror)s - %(exdesc)s). Please try again."
 msgstr ""
 
-#: flask_security/core.py:447
+#: flask_security/core.py:455
 msgid "Password does not match"
 msgstr "A jelszó nem egyezik"
 
-#: flask_security/core.py:448
+#: flask_security/core.py:456
 msgid "Passwords do not match"
 msgstr "A jelszavak nem egyeznek"
 
-#: flask_security/core.py:449
+#: flask_security/core.py:457
 msgid "Redirections outside the domain are forbidden"
 msgstr "A tartományon kívüli átirányítások tilosak"
 
-#: flask_security/core.py:450
+#: flask_security/core.py:458
 msgid "Recovery code invalid"
 msgstr "A helyreállítási kód érvénytelen"
 
-#: flask_security/core.py:451
+#: flask_security/core.py:459
 msgid "No recovery codes generated yet"
 msgstr ""
 
-#: flask_security/core.py:453
+#: flask_security/core.py:461
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr ""
 "A jelszó visszaállítására vonatkozó utasításokat elküldtük a következő "
 "címre: %(email)s."
 
-#: flask_security/core.py:457
+#: flask_security/core.py:465
 #, python-format
 msgid "You did not reset your password within %(within)s. "
 msgstr ""
 
-#: flask_security/core.py:460
+#: flask_security/core.py:468
 msgid "Invalid reset password token."
 msgstr "Érvénytelen jelszó-visszaállítási token."
 
-#: flask_security/core.py:461
+#: flask_security/core.py:469
 msgid "Email requires confirmation."
 msgstr "Az e-mail megerősítést igényel."
 
-#: flask_security/core.py:463
+#: flask_security/core.py:471
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr "A megerősítő utasításokat elküldtük a következő címre: %(email)s."
 
-#: flask_security/core.py:467
+#: flask_security/core.py:475
 #, python-format
 msgid "You did not confirm your email within %(within)s. "
 msgstr ""
 
-#: flask_security/core.py:471
+#: flask_security/core.py:479
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -205,170 +214,174 @@ msgstr ""
 "Nem jelentkezett be %(within)s-en belül. Új bejelentkezési utasításokat "
 "küldtünk a következő címre: %(email)s."
 
-#: flask_security/core.py:478
+#: flask_security/core.py:486
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr ""
 "A bejelentkezéshez szükséges utasításokat elküldtük a következő címre: "
 "%(email)s."
 
-#: flask_security/core.py:481
+#: flask_security/core.py:489
 msgid "Invalid login token."
 msgstr "Érvénytelen bejelentkezési token."
 
-#: flask_security/core.py:482
+#: flask_security/core.py:490
 msgid "Account is disabled."
 msgstr "A fiók le van tiltva."
 
-#: flask_security/core.py:483
+#: flask_security/core.py:491
 msgid "Email not provided"
 msgstr "E-mail nincs megadva"
 
-#: flask_security/core.py:484
+#: flask_security/core.py:492
 msgid "Invalid email address"
 msgstr "Érvénytelen e-mail cím"
 
-#: flask_security/core.py:485 flask_security/core.py:531
+#: flask_security/core.py:493 flask_security/core.py:539
 msgid "Invalid code"
 msgstr "Érvénytelen kód"
 
-#: flask_security/core.py:486
+#: flask_security/core.py:494
 msgid "Password not provided"
 msgstr "Nincs megadva a jelszó"
 
-#: flask_security/core.py:488
+#: flask_security/core.py:496
 #, python-format
 msgid "Password must be at least %(length)s characters"
 msgstr "A jelszónak legalább %(length)s karakterből kell állnia"
 
-#: flask_security/core.py:491
+#: flask_security/core.py:499
 msgid "Password not complex enough"
 msgstr "A jelszó nem elég összetett"
 
-#: flask_security/core.py:492
+#: flask_security/core.py:500
 msgid "Password on breached list"
 msgstr ""
 
-#: flask_security/core.py:494
+#: flask_security/core.py:502
 msgid "Failed to contact breached passwords site"
 msgstr ""
 
-#: flask_security/core.py:497
+#: flask_security/core.py:505
 msgid "Phone number not valid e.g. missing country code"
 msgstr "A telefonszám nem érvényes, pl. hiányzik az országkód"
 
-#: flask_security/core.py:498
+#: flask_security/core.py:506
 msgid "Specified user does not exist"
 msgstr "A megadott felhasználó nem létezik"
 
-#: flask_security/core.py:499
+#: flask_security/core.py:507
 msgid "Invalid password"
 msgstr "Érvénytelen jelszó"
 
-#: flask_security/core.py:500
+#: flask_security/core.py:508
 msgid "Password or code submitted is not valid"
 msgstr "A beküldött jelszó vagy kód érvénytelen"
 
-#: flask_security/core.py:501
+#: flask_security/core.py:509
 msgid "You have successfully logged in."
 msgstr "Sikeresen bejelentkezett."
 
-#: flask_security/core.py:502
+#: flask_security/core.py:510
 msgid "Forgot password?"
 msgstr "Elfelejtette jelszavát?"
 
-#: flask_security/core.py:504
+#: flask_security/core.py:512
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
 msgstr "Sikeresen visszaállította jelszavát, és automatikusan be is jelentkezett."
 
-#: flask_security/core.py:511
+#: flask_security/core.py:519
 msgid ""
 "You successfully reset your password. Please authenticate using your new "
 "password."
 msgstr ""
 
-#: flask_security/core.py:518
+#: flask_security/core.py:526
 msgid "Your new password must be different than your previous password."
 msgstr "Az új jelszavának különböznie kell a korábbi jelszavától."
 
-#: flask_security/core.py:521
+#: flask_security/core.py:529
 msgid "You successfully changed your password."
 msgstr "Sikeresen megváltoztatta a jelszavát."
 
-#: flask_security/core.py:522
+#: flask_security/core.py:530
 msgid "Please log in to access this page."
 msgstr "Kérjük, jelentkezzen be az oldal eléréséhez."
 
-#: flask_security/core.py:523
+#: flask_security/core.py:531
 msgid "Please reauthenticate to access this page."
 msgstr "Kérjük, hitelesítse újra az oldal eléréséhez."
 
-#: flask_security/core.py:524
+#: flask_security/core.py:532
 msgid "Reauthentication successful"
 msgstr "Az újrahitelesítés sikeres"
 
-#: flask_security/core.py:526
+#: flask_security/core.py:534
 msgid "You can only access this endpoint when not logged in."
 msgstr "\"Csak akkor érheti el ezt a végpontot, ha nincs bejelentkezve."
 
-#: flask_security/core.py:529
+#: flask_security/core.py:537
 msgid "Code has been sent."
 msgstr "A kód elküldve."
 
-#: flask_security/core.py:530
+#: flask_security/core.py:538
 msgid "Failed to send code. Please try again later"
 msgstr "Nem sikerült elküldeni a kódot. Kérjük, próbálja újra később."
 
-#: flask_security/core.py:532
+#: flask_security/core.py:540
 msgid "Your code has been confirmed"
 msgstr "A kódod megerősítésre került"
 
-#: flask_security/core.py:534
+#: flask_security/core.py:542
 msgid "You successfully changed your two-factor method."
 msgstr "Sikeresen megváltoztatta a kétfaktoros hitelesítést."
 
-#: flask_security/core.py:538
+#: flask_security/core.py:546
 msgid "You currently do not have permissions to access this page"
 msgstr "Jelenleg nincs jogosultsága az oldal eléréséhez"
 
-#: flask_security/core.py:541
+#: flask_security/core.py:549
 msgid "Marked method is not valid"
 msgstr "A megjelölt metódus nem érvényes"
 
-#: flask_security/core.py:543
+#: flask_security/core.py:551
 msgid "You successfully disabled two factor authorization."
 msgstr "Sikeresen letiltotta a kétfaktoros hitelesítést."
 
-#: flask_security/core.py:547 flask_security/core.py:556
+#: flask_security/core.py:555 flask_security/core.py:564
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
 msgstr "A telepítést %(within)s időn belül be kell fejezni. Kezdje újra."
 
-#: flask_security/core.py:551
+#: flask_security/core.py:559
 #, python-format
 msgid "Currently active sign in options: %(method_list)s."
 msgstr ""
 
-#: flask_security/core.py:554
+#: flask_security/core.py:562
 msgid "Requested method is not valid"
 msgstr "A kért metódus nem érvényes"
 
-#: flask_security/core.py:559
+#: flask_security/core.py:567
 msgid "Unified sign in setup successful"
 msgstr "Az egységes bejelentkezés beállítása sikeres"
 
-#: flask_security/core.py:560
+#: flask_security/core.py:568
 msgid "You must specify a valid identity to sign in"
 msgstr "A bejelentkezéshez érvényes azonositót kell megadnia"
 
-#: flask_security/core.py:561
+#: flask_security/core.py:569
 #, python-format
 msgid "Use this code to sign in: %(code)s."
 msgstr "Használja ezt a kódot a bejelentkezéshez: %(code)s."
 
-#: flask_security/core.py:563
+#: flask_security/core.py:570
+msgid "You successfully changed your username"
+msgstr ""
+
+#: flask_security/core.py:572
 #, python-format
 msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
@@ -377,215 +390,223 @@ msgstr ""
 "A felhasználónévnek legalább %(min)d karakterből és kevesebb mint %(max)d"
 " karakterből kell állnia"
 
-#: flask_security/core.py:570
+#: flask_security/core.py:579
 msgid "Username contains illegal characters"
 msgstr "A felhasználónév illegális karaktereket tartalmaz"
 
-#: flask_security/core.py:574
+#: flask_security/core.py:583
 msgid "Username can contain only letters and numbers"
 msgstr "A felhasználónév csak betűket és számokat tartalmazhat"
 
-#: flask_security/core.py:577
+#: flask_security/core.py:586
 msgid "Username not provided"
 msgstr "A felhasználónév nincs megadva"
 
-#: flask_security/core.py:579
+#: flask_security/core.py:588
 #, python-format
 msgid "%(username)s is already associated with an account."
 msgstr "%(username)s már hozzá van rendelve egy fiókhoz."
 
-#: flask_security/core.py:583
+#: flask_security/core.py:592
 #, python-format
 msgid "WebAuthn operation must be completed within %(within)s. Please start over."
 msgstr "A WebAuthn műveletet %(within)s időn belül be kell fejezni. Kezdje újra."
 
-#: flask_security/core.py:587
+#: flask_security/core.py:596
 msgid "Nickname for new credential is required."
 msgstr "Az új hitelesítő adatokhoz becenév szükséges."
 
-#: flask_security/core.py:591
+#: flask_security/core.py:600
 #, python-format
 msgid "%(name)s is already associated with a credential."
 msgstr "%(name)s már hozzá van rendelve egy hitelesítő adathoz."
 
-#: flask_security/core.py:595
+#: flask_security/core.py:604
 #, python-format
 msgid "%(name)s not registered with current user."
 msgstr "%(name)s nincs regisztrálva az aktuális felhasználónál."
 
-#: flask_security/core.py:599
+#: flask_security/core.py:608
 #, python-format
 msgid "Successfully deleted WebAuthn credential with name: %(name)s"
 msgstr ""
 "A WebAuthn hitelesítő adatok sikeresen törölve a következő névvel: "
 "%(name)s"
 
-#: flask_security/core.py:603
+#: flask_security/core.py:612
 #, python-format
 msgid "Successfully added WebAuthn credential with name: %(name)s"
 msgstr ""
 "Sikeresen hozzáadva a WebAuthn hitelesítő adatot a következő névvel: "
 "%(name)s"
 
-#: flask_security/core.py:607
+#: flask_security/core.py:616
 msgid "WebAuthn credential id already registered."
 msgstr "A WebAuthn hitelesítő adatazonosítója már regisztrálva."
 
-#: flask_security/core.py:611
+#: flask_security/core.py:620
 msgid "Unregistered WebAuthn credential id."
 msgstr "Nem regisztrált WebAuthn hitelesítő adat azonosítója."
 
-#: flask_security/core.py:615
+#: flask_security/core.py:624
 msgid "WebAuthn credential doesn't belong to any user."
 msgstr "A WebAuthn hitelesítő adatok nem tartoznak egyetlen felhasználóhoz sem."
 
-#: flask_security/core.py:619
+#: flask_security/core.py:628
 #, python-format
 msgid "Could not verify WebAuthn credential: %(cause)s."
 msgstr "Nem sikerült ellenőrizni a WebAuthn hitelesítő adatait: %(cause)s."
 
-#: flask_security/core.py:623
+#: flask_security/core.py:632
 msgid "Credential not registered for this use (first or secondary)"
 msgstr ""
 "A hitelesítő adat nincs regisztrálva ehhez a felhasználáshoz (első vagy "
 "másodlagos)"
 
-#: flask_security/core.py:627
+#: flask_security/core.py:636
 msgid "Credential user handle didn't match"
 msgstr ""
 
-#: flask_security/core.py:631
+#: flask_security/core.py:640
 #, python-format
 msgid "Confirmation must be completed within %(within)s. Please start over."
 msgstr ""
 
-#: flask_security/core.py:635
+#: flask_security/core.py:644
 msgid "Change of email address confirmed"
 msgstr ""
 
-#: flask_security/core.py:639
+#: flask_security/core.py:648
 #, python-format
 msgid ""
 "Instructions to confirm your new email address have been sent to "
 "%(email)s."
 msgstr ""
 
-#: flask_security/forms.py:62
+#: flask_security/core.py:655
+msgid "If registered, your username will be sent to your email."
+msgstr ""
+
+#: flask_security/forms.py:61
+msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
+msgstr "Beállítás hitelesítő alkalmazás segítségével (pl. google, lastpass, authy)"
+
+#: flask_security/forms.py:64
+msgid "Change Method"
+msgstr "Módszer módosítása"
+
+#: flask_security/forms.py:65 flask_security/templates/security/_menu.html:14
+msgid "Change Password"
+msgstr "Jelszó módosítása"
+
+#: flask_security/forms.py:66
+msgid "Authentication Code"
+msgstr "Hitelesítési kód"
+
+#: flask_security/forms.py:67
+msgid "Delete"
+msgstr "Törlés"
+
+#: flask_security/forms.py:68
 msgid "Email Address"
 msgstr "E-mail"
 
-#: flask_security/forms.py:63
-msgid "Password"
-msgstr "Jelszó"
+#: flask_security/forms.py:69
+msgid "Set up using email"
+msgstr "Beállítás e-mail használatával"
 
-#: flask_security/forms.py:64
-msgid "Remember Me"
-msgstr "Emlékezz rám"
+#: flask_security/forms.py:70
+msgid "Error(s)"
+msgstr "Hiba(k)"
 
-#: flask_security/forms.py:65 flask_security/templates/security/_menu.html:38
+#: flask_security/forms.py:71
+msgid "Identity"
+msgstr "Azonosító"
+
+#: flask_security/forms.py:72 flask_security/templates/security/_menu.html:45
 #: flask_security/templates/security/login_user.html:6
 #: flask_security/templates/security/send_login.html:6
 msgid "Login"
 msgstr "Bejelentkezés"
 
-#: flask_security/forms.py:66
+#: flask_security/forms.py:73
+msgid "New Password"
+msgstr "Új jelszó"
+
+#: flask_security/forms.py:74
+msgid "Passcode"
+msgstr "Kód"
+
+#: flask_security/forms.py:75
+msgid "Password"
+msgstr "Jelszó"
+
+#: flask_security/forms.py:76
+msgid "Phone Number"
+msgstr "Telefonszám"
+
+#: flask_security/forms.py:77
+msgid "Recover Password"
+msgstr "Jelszó helyreállítása"
+
+#: flask_security/forms.py:78 flask_security/templates/security/_menu.html:65
+msgid "Recover Username"
+msgstr ""
+
+#: flask_security/forms.py:79 flask_security/templates/security/_menu.html:55
+#: flask_security/templates/security/register_user.html:6
+msgid "Register"
+msgstr "Regisztráció"
+
+#: flask_security/forms.py:80
+msgid "Remember Me"
+msgstr "Emlékezz rám"
+
+#: flask_security/forms.py:81
+msgid "Reset Password"
+msgstr "Jelszó visszaállítása"
+
+#: flask_security/forms.py:82
+msgid "Retype Password"
+msgstr "Jelszó megerősítése"
+
+#: flask_security/forms.py:83
+msgid "Resend Confirmation Instructions"
+msgstr "Megerősítő utasítások újraküldése"
+
+#: flask_security/forms.py:84
+msgid "Send Login Link"
+msgstr "Bejelentkezési link küldése"
+
+#: flask_security/forms.py:85
+msgid "Send Code"
+msgstr "Kód küldése"
+
+#: flask_security/forms.py:86
 #: flask_security/templates/security/email/us_instructions.html:14
 #: flask_security/templates/security/us_signin.html:6
 msgid "Sign In"
 msgstr "Bejelentkezés"
 
-#: flask_security/forms.py:67 flask_security/templates/security/_menu.html:48
-#: flask_security/templates/security/register_user.html:6
-msgid "Register"
-msgstr "Regisztráció"
+#: flask_security/forms.py:87
+msgid "Set up using SMS"
+msgstr "Beállítás SMS-sel"
 
-#: flask_security/forms.py:68
-msgid "Resend Confirmation Instructions"
-msgstr "Megerősítő utasítások újraküldése"
-
-#: flask_security/forms.py:69
-msgid "Recover Password"
-msgstr "Jelszó helyreállítása"
-
-#: flask_security/forms.py:70
-msgid "Reset Password"
-msgstr "Jelszó visszaállítása"
-
-#: flask_security/forms.py:71
-msgid "Retype Password"
-msgstr "Jelszó megerősítése"
-
-#: flask_security/forms.py:72
-msgid "New Password"
-msgstr "Új jelszó"
-
-#: flask_security/forms.py:73 flask_security/templates/security/_menu.html:12
-msgid "Change Password"
-msgstr "Jelszó módosítása"
-
-#: flask_security/forms.py:74
-msgid "Send Login Link"
-msgstr "Bejelentkezési link küldése"
-
-#: flask_security/forms.py:75
-msgid "Verify Password"
-msgstr "Jelszó ellenőrzése"
-
-#: flask_security/forms.py:76
-msgid "Change Method"
-msgstr "Módszer módosítása"
-
-#: flask_security/forms.py:77
-msgid "Phone Number"
-msgstr "Telefonszám"
-
-#: flask_security/forms.py:78
-msgid "Authentication Code"
-msgstr "Hitelesítési kód"
-
-#: flask_security/forms.py:79
+#: flask_security/forms.py:88
 msgid "Submit"
 msgstr "Küldés"
 
-#: flask_security/forms.py:80
+#: flask_security/forms.py:89
 msgid "Submit Code"
 msgstr "Kód beküldése"
 
-#: flask_security/forms.py:81
-msgid "Error(s)"
-msgstr "Hiba(k)"
-
-#: flask_security/forms.py:82
-msgid "Identity"
-msgstr "Azonosító"
-
-#: flask_security/forms.py:83
-msgid "Send Code"
-msgstr "Kód küldése"
-
-#: flask_security/forms.py:84
-msgid "Passcode"
-msgstr "Kód"
-
-#: flask_security/forms.py:85
+#: flask_security/forms.py:90
 msgid "Username"
 msgstr "Felhasználónév"
 
-#: flask_security/forms.py:86
-msgid "Delete"
-msgstr "Törlés"
-
-#: flask_security/forms.py:87
-msgid "Set up using email"
-msgstr "Beállítás e-mail használatával"
-
-#: flask_security/forms.py:88
-msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
-msgstr "Beállítás hitelesítő alkalmazás segítségével (pl. google, lastpass, authy)"
-
 #: flask_security/forms.py:91
-msgid "Set up using SMS"
-msgstr "Beállítás SMS-sel"
+msgid "Verify Password"
+msgstr "Jelszó ellenőrzése"
 
 #: flask_security/forms.py:96
 msgid "Google Authenticator"
@@ -611,19 +632,19 @@ msgstr ""
 msgid "none"
 msgstr ""
 
-#: flask_security/forms.py:780 flask_security/unified_signin.py:167
+#: flask_security/forms.py:929 flask_security/unified_signin.py:167
 msgid "Available Methods"
 msgstr "Elérhető módszerek"
 
-#: flask_security/forms.py:782
+#: flask_security/forms.py:931
 msgid "Disable two factor authentication"
 msgstr "Kétfaktoros hitelesítés letiltása"
 
-#: flask_security/forms.py:866
+#: flask_security/forms.py:1015
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr ""
 
-#: flask_security/forms.py:868
+#: flask_security/forms.py:1017
 msgid "Contact Administrator"
 msgstr ""
 
@@ -699,39 +720,44 @@ msgstr ""
 msgid "webauthn"
 msgstr ""
 
-#: flask_security/templates/security/_menu.html:3
+#: flask_security/templates/security/_menu.html:5
 msgid "Menu"
 msgstr "Menü"
 
-#: flask_security/templates/security/_menu.html:8
+#: flask_security/templates/security/_menu.html:10
 msgid "Sign out"
 msgstr "Kijelentkezés"
 
-#: flask_security/templates/security/_menu.html:17
+#: flask_security/templates/security/_menu.html:19
 msgid "Change Registered Email"
 msgstr ""
 
-#: flask_security/templates/security/_menu.html:22
+#: flask_security/templates/security/_menu.html:24
+#: flask_security/templates/security/change_username.html:6
+msgid "Change Username"
+msgstr ""
+
+#: flask_security/templates/security/_menu.html:29
 msgid "Two Factor Setup"
 msgstr "Kétfaktoros beállítás"
 
-#: flask_security/templates/security/_menu.html:27
+#: flask_security/templates/security/_menu.html:34
 msgid "Unified Signin Setup"
 msgstr "Egységes bejelentkezés beállítása"
 
-#: flask_security/templates/security/_menu.html:32
+#: flask_security/templates/security/_menu.html:39
 msgid "WebAuthn Setup"
 msgstr "\"WebAuthn beállítása"
 
-#: flask_security/templates/security/_menu.html:43
+#: flask_security/templates/security/_menu.html:50
 msgid "Unified Sign In"
 msgstr "Egységes bejelentkezés"
 
-#: flask_security/templates/security/_menu.html:53
+#: flask_security/templates/security/_menu.html:60
 msgid "Forgot password"
 msgstr "Elfelejtett jelszó"
 
-#: flask_security/templates/security/_menu.html:58
+#: flask_security/templates/security/_menu.html:70
 msgid "Confirm account"
 msgstr "Fiók megerősítése"
 
@@ -753,30 +779,35 @@ msgstr "Jelszó módosítása"
 msgid "You do not currently have a password - this will add one."
 msgstr "Jelenleg nincs jelszava – ez hozzáad egyet."
 
+#: flask_security/templates/security/change_username.html:8
+#, python-format
+msgid "Current username is: %(username)s"
+msgstr ""
+
 #: flask_security/templates/security/forgot_password.html:6
 msgid "Send password reset instructions"
 msgstr "Jelszó visszaállítási utasítások küldése"
 
-#: flask_security/templates/security/login_user.html:12
+#: flask_security/templates/security/login_user.html:13
 msgid "or"
 msgstr "vagy"
 
-#: flask_security/templates/security/login_user.html:22
+#: flask_security/templates/security/login_user.html:23
 #: flask_security/templates/security/us_signin.html:25
 msgid "Use WebAuthn to Sign In"
 msgstr "A WebAuthn használata a bejelentkezéshez"
 
-#: flask_security/templates/security/login_user.html:25
+#: flask_security/templates/security/login_user.html:26
 #: flask_security/templates/security/us_signin.html:28
 msgid "Sign in with WebAuthn"
 msgstr "Bejelentkezés WebAuthn segítségével"
 
-#: flask_security/templates/security/login_user.html:31
+#: flask_security/templates/security/login_user.html:32
 #: flask_security/templates/security/us_signin.html:34
 msgid "Use Social Oauth to Sign In"
 msgstr ""
 
-#: flask_security/templates/security/login_user.html:35
+#: flask_security/templates/security/login_user.html:36
 #: flask_security/templates/security/us_signin.html:38
 msgid "Sign in with "
 msgstr ""
@@ -801,6 +832,10 @@ msgstr ""
 
 #: flask_security/templates/security/mf_recovery_codes.html:20
 msgid "Generate new Recovery Codes"
+msgstr ""
+
+#: flask_security/templates/security/recover_username.html:6
+msgid "Username recovery"
 msgstr ""
 
 #: flask_security/templates/security/reset_password.html:6
@@ -1007,6 +1042,10 @@ msgstr ""
 "Ha nem változtatta meg jelszavát, kattintson az alábbi linkre a "
 "visszaállításhoz."
 
+#: flask_security/templates/security/email/change_username_notice.html:1
+msgid "Your username has been changed."
+msgstr ""
+
 #: flask_security/templates/security/email/confirmation_instructions.html:8
 #: flask_security/templates/security/email/confirmation_instructions.txt:8
 msgid "Please confirm your email through the link below:"
@@ -1061,6 +1100,27 @@ msgstr "A következő kóddal jelentkezhet be fiókjába:"
 #: flask_security/templates/security/email/us_instructions.txt:15
 msgid "Or use the link below:"
 msgstr "Vagy használja az alábbi linket:"
+
+#: flask_security/templates/security/email/username_recovery.html:5
+#: flask_security/templates/security/email/username_recovery.txt:5
+msgid "Hello,"
+msgstr ""
+
+#: flask_security/templates/security/email/username_recovery.html:6
+#: flask_security/templates/security/email/username_recovery.txt:6
+msgid "You recently requested to recover your username."
+msgstr ""
+
+#: flask_security/templates/security/email/username_recovery.html:7
+#: flask_security/templates/security/email/username_recovery.txt:7
+#, python-format
+msgid "Your username is: %(username)s"
+msgstr ""
+
+#: flask_security/templates/security/email/username_recovery.html:8
+#: flask_security/templates/security/email/username_recovery.txt:8
+msgid "If you did not initiate this request, you can safely ignore this email."
+msgstr ""
 
 #: flask_security/templates/security/email/welcome.html:10
 #: flask_security/templates/security/email/welcome.txt:11
