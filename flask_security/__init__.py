@@ -13,6 +13,7 @@
 # flake8: noqa: F401
 from .changeable import admin_change_password
 from .change_email import ChangeEmailForm
+from .change_username import ChangeUsernameForm
 from .core import (
     Security,
     RoleMixin,
@@ -90,6 +91,7 @@ from .signals import (
     user_registered,
     user_not_registered,
     username_recovery_email_sent,
+    username_changed,
     us_security_token_sent,
     us_profile_changed,
     wan_deleted,

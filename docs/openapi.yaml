@@ -520,6 +520,73 @@ paths:
               schema:
                 type: string
 
+  /change-username:
+    get:
+      summary: GET change username form
+      responses:
+        200:
+          description: change username form
+          content:
+            text/html:
+              schema:
+                type: string
+                description: render_template(SECURITY_CHANGE_USERNAME_TEMPLATE)
+                example: render_template(SECURITY_CHANGE_USERNAME_TEMPLATE)
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/DefaultJsonResponse'
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          current_username:
+                            type: string
+                            description: Current username
+    post:
+      summary: Change username
+      parameters:
+        - name: X-XSRF-Token
+          in: header
+          schema:
+            $ref: "#/components/headers/X-CSRF-Token"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUsername"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/ChangeUsername"
+      responses:
+        200:
+          description: Change username response.
+          content:
+            text/html:
+              schema:
+                description: Form validation error.
+                type: string
+                example: render_template(SECURITY_CHANGE_USERNAME_TEMPLATE) with error values
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonResponse"
+        302:
+          description: Username has been changed (non-json)
+          headers:
+            Location:
+              description: |
+                On success: Redirect to ``SECURITY_POST_CHANGE_USERNAME_VIEW`` or
+                            ``SECURITY_POST_LOGIN_VIEW``
+              schema:
+                type: string
+        400:
+          description: Errors while validating form
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /reset:
     get:
       summary: GET reset password form
@@ -689,7 +756,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#components/schemas/DefaultJsonErrorResponse"
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /confirm:
     get:
       summary: GET send confirmation form
@@ -2266,6 +2333,13 @@ components:
         email:
           type: string
           description: New email requested
+    ChangeUsername:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+          description: New username
 
     EmailLink:
       type: object

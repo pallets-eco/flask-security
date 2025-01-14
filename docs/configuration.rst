@@ -1039,7 +1039,6 @@ Confirmable
 
 Changeable
 ----------
-Configuration variables for the ``SECURITY_CHANGEABLE`` feature:
 
 .. py:data:: SECURITY_CHANGEABLE
 
@@ -1557,17 +1556,17 @@ Username-Recovery
 
 .. py:data:: SECURITY_USERNAME_RECOVERY
 
-    Specifies whether username recovery is enabled. If set to ``True`` the UserModel
-    must contain a column ``"username"``. Note that this feature is independent
-    of the :py:data:`SECURITY_USERNAME_ENABLE` feature.
+   Specifies whether username recovery is enabled. If set to ``True`` the UserModel
+   must contain a column ``"username"``. Note that this feature is independent
+   of the :py:data:`SECURITY_USERNAME_ENABLE` feature.
 
    Default: ``False``.
 
 .. py:data:: SECURITY_USERNAME_RECOVERY_URL
 
-    Specifies the username recovery URL.
+   Specifies the username recovery URL.
 
-    Default: ``"/recover-username"``.
+   Default: ``"/recover-username"``.
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY
 
@@ -1580,6 +1579,59 @@ Username-Recovery
    Specifies the path to the template for the username recovery page.
 
    Default: ``"security/recover_username.html"``.
+
+Change Username
+-----------------
+
+    .. versionadded:: 5.6.0
+
+.. py:data:: SECURITY_CHANGE_USERNAME
+
+   Specifies whether change username feature is enabled.
+   This feature should be used in conjunction with
+   the :py:data:`SECURITY_USERNAME_ENABLE` feature.
+
+   Default: ``False``.
+
+.. py:data:: SECURITY_CHANGE_USERNAME_URL
+
+   Specifies the change username URL.
+
+   Default: ``"/change-username"``.
+
+.. py:data:: SECURITY_POST_CHANGE_USERNAME_VIEW
+
+    Specifies the view to redirect to after a user successfully changes their username.
+    This value can be set to a URL or an endpoint name.
+    If this value is ``None``, the user is redirected  to the
+    value of :data:`SECURITY_POST_LOGIN_VIEW`.
+
+    Default: ``None``.
+
+.. py:data:: SECURITY_SEND_USERNAME_CHANGE_EMAIL
+
+   If ``True`` then an email will be sent to the registered user upon
+   successful change of their username.
+
+   Default: ``True``.
+
+.. py:data:: SECURITY_EMAIL_SUBJECT_USERNAME_CHANGE_NOTICE
+
+   Sets subject for the change username email.
+
+   Default: ``_(""Your username has been changed"")``.
+
+.. py:data:: SECURITY_CHANGE_USERNAME_TEMPLATE
+
+   Specifies the path to the template for the change username page.
+
+   Default: ``"security/change_username.html"``.
+
+Additional relevant configuration variables:
+
+    * :py:data:`SECURITY_FRESHNESS` - Used to protect /change-username.
+    * :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` - Used to protect /change-username.
+
 
 Passwordless
 -------------
@@ -1893,6 +1945,7 @@ Feature Flags
 All feature flags. By default all are ``False``/not enabled.
 
 * :py:data:`SECURITY_CHANGE_EMAIL`
+* :py:data:`SECURITY_CHANGE_USERNAME`
 * :py:data:`SECURITY_CONFIRMABLE`
 * :py:data:`SECURITY_REGISTERABLE`
 * :py:data:`SECURITY_RECOVERABLE`
@@ -1916,6 +1969,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_REGISTER_URL` ``"/register"``
 * :py:data:`SECURITY_CHANGE_EMAIL_URL` ``"change-email"``
 * :py:data:`SECURITY_CHANGE_EMAIL_CONFIRM_URL` ``"/change-email-confirm"``
+* :py:data:`SECURITY_CHANGE_USERNAME_URL` ``"change-username"``
 * :py:data:`SECURITY_RESET_URL` ``"/reset"``
 * :py:data:`SECURITY_CHANGE_URL` ``"/change"``
 * :py:data:`SECURITY_CONFIRM_URL` ``"/confirm"``
@@ -1966,6 +2020,7 @@ A list of all templates:
 * :py:data:`SECURITY_RESET_PASSWORD_TEMPLATE`
 * :py:data:`SECURITY_CHANGE_PASSWORD_TEMPLATE`
 * :py:data:`SECURITY_CHANGE_EMAIL_TEMPLATE`
+* :py:data:`SECURITY_CHANGE_USERNAME_TEMPLATE`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE`
 * :py:data:`SECURITY_SEND_CONFIRMATION_TEMPLATE`
@@ -2059,6 +2114,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_US_SPECIFY_IDENTITY``
 * ``SECURITY_MSG_USE_CODE``
 * ``SECURITY_MSG_USER_DOES_NOT_EXIST``
+* ``SECURITY_MSG_USERNAME_CHANGE``
 * ``SECURITY_MSG_USERNAME_INVALID_LENGTH``
 * ``SECURITY_MSG_USERNAME_ILLEGAL_CHARACTERS``
 * ``SECURITY_MSG_USERNAME_DISALLOWED_CHARACTERS``

@@ -32,6 +32,7 @@ from werkzeug.local import LocalProxy
 
 from .babel import FsDomain
 from .change_email import ChangeEmailForm
+from .change_username import ChangeUsernameForm
 from .decorators import (
     default_reauthn_handler,
     default_unauthn_handler,
@@ -54,7 +55,7 @@ from .forms import (
     TwoFactorRescueForm,
     UsernameRecoveryForm,
     VerifyForm,
-    build_register_username_field,
+    build_username_field,
     build_register_form,
     build_login_form,
 )
@@ -242,6 +243,11 @@ _default_config: dict[str, t.Any] = {
     "POST_CHANGE_EMAIL_VIEW": None,  # spa
     "CHANGE_EMAIL_SALT": "change-email-salt",
     "CHANGE_EMAIL_SUBJECT": _("Confirm your new email address"),
+    "CHANGE_USERNAME": False,
+    "CHANGE_USERNAME_TEMPLATE": "security/change_username.html",
+    "CHANGE_USERNAME_URL": "/change-username",
+    "POST_CHANGE_USERNAME_VIEW": None,
+    "SEND_USERNAME_CHANGE_EMAIL": True,
     "TWO_FACTOR_AUTHENTICATOR_VALIDITY": 120,
     "TWO_FACTOR_MAIL_VALIDITY": 300,
     "TWO_FACTOR_SMS_VALIDITY": 120,
@@ -294,6 +300,7 @@ _default_config: dict[str, t.Any] = {
     "EMAIL_SUBJECT_PASSWORD_NOTICE": _("Your password has been reset"),
     "EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE": _("Your password has been changed"),
     "EMAIL_SUBJECT_PASSWORD_RESET": _("Password reset instructions"),
+    "EMAIL_SUBJECT_USERNAME_CHANGE_NOTICE": _("Your username has been changed"),
     "EMAIL_SUBJECT_USERNAME_RECOVERY": _("Your requested username"),
     "EMAIL_PLAINTEXT": True,
     "EMAIL_HTML": True,
@@ -560,6 +567,7 @@ _default_messages = {
     "US_SETUP_SUCCESSFUL": (_("Unified sign in setup successful"), "info"),
     "US_SPECIFY_IDENTITY": (_("You must specify a valid identity to sign in"), "error"),
     "USE_CODE": (_("Use this code to sign in: %(code)s."), "info"),
+    "USERNAME_CHANGE": (_("You successfully changed your username"), "success"),
     "USERNAME_INVALID_LENGTH": (
         _(
             "Username must be at least %(min)d characters and less than"
@@ -1148,6 +1156,7 @@ class Security:
     :param forgot_password_form: set form for the forgot password view
     :param reset_password_form: set form for the reset password view
     :param change_password_form: set form for the change password view
+    :param change_username_form: set form for the change username view
     :param send_confirmation_form: set form for the send confirmation view
     :param passwordless_login_form: set form for the passwordless login view
     :param two_factor_setup_form: set form for the 2FA setup view
@@ -1227,7 +1236,7 @@ class Security:
         ``change_email_form`` in support of the
          :ref:`Change-Email<configuration:change-email>` feature.
     .. versionadded:: 5.6.0
-        ``username_recovery_form``
+        ``username_recovery_form``, ``change_username_form``,
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
@@ -1252,6 +1261,7 @@ class Security:
         login_form: t.Type[LoginForm] = LoginForm,
         verify_form: t.Type[VerifyForm] = VerifyForm,
         change_email_form: t.Type[ChangeEmailForm] = ChangeEmailForm,
+        change_username_form: t.Type[ChangeUsernameForm] = ChangeUsernameForm,
         confirm_register_form: t.Type[ConfirmRegisterForm] = ConfirmRegisterForm,
         register_form: t.Type[RegisterForm] | t.Type[RegisterFormV2] = RegisterForm,
         forgot_password_form: t.Type[ForgotPasswordForm] = ForgotPasswordForm,
@@ -1328,6 +1338,7 @@ class Security:
             "reset_password_form": FormInfo(cls=reset_password_form),
             "change_email_form": FormInfo(cls=change_email_form),
             "change_password_form": FormInfo(cls=change_password_form),
+            "change_username_form": FormInfo(cls=change_username_form),
             "send_confirmation_form": FormInfo(cls=send_confirmation_form),
             "passwordless_login_form": FormInfo(cls=passwordless_login_form),
             "two_factor_verify_code_form": FormInfo(cls=two_factor_verify_code_form),
@@ -1398,6 +1409,7 @@ class Security:
         # Add necessary attributes here to keep mypy happy
         self.trackable: bool = False
         self.change_email: bool = False
+        self.change_username: bool = False
         self.confirmable: bool = False
         self.registerable: bool = False
         self.changeable: bool = False
@@ -1471,6 +1483,7 @@ class Security:
             "forgot_password_form",
             "reset_password_form",
             "change_password_form",
+            "change_username_form",
             "send_confirmation_form",
             "passwordless_login_form",
             "two_factor_verify_code_form",
@@ -1536,6 +1549,7 @@ class Security:
             "trackable",
             "registerable",
             "change_email",
+            "change_username",
             "confirmable",
             "changeable",
             "recoverable",
@@ -1658,10 +1672,10 @@ class Security:
             # Add dynamic fields - probably overkill to check if these are our forms.
             fcls = self.forms["register_form"].cls
             if fcls and issubclass(fcls, RegisterFormMixin):
-                fcls.username = build_register_username_field(app)
+                fcls.username = build_username_field(app)
             fcls = self.forms["confirm_register_form"].cls
             if fcls and issubclass(fcls, RegisterFormMixin):
-                fcls.username = build_register_username_field(app)
+                fcls.username = build_username_field(app)
 
         fcls = self.forms["login_form"].cls
         if fcls and issubclass(fcls, LoginForm):
@@ -1671,6 +1685,9 @@ class Security:
         fcls = self.forms["register_form"].cls
         if fcls and issubclass(fcls, RegisterFormV2):
             build_register_form(app=app, fcls=fcls)
+        fcls = self.forms["change_username_form"].cls
+        if fcls and issubclass(fcls, ChangeUsernameForm):
+            fcls.username = build_username_field(app=app, autocomplete="new-username")
 
         # initialize two-factor plugins. Note that each implementation likely
         # has its own feature flag which will control whether it is active or not.
@@ -2073,6 +2090,11 @@ class Security:
         self, fn: t.Callable[[], dict[str, t.Any]]
     ) -> None:
         self._add_ctx_processor("change_password", fn)
+
+    def change_username_context_processor(
+        self, fn: t.Callable[[], dict[str, t.Any]]
+    ) -> None:
+        self._add_ctx_processor("change_username", fn)
 
     def recover_username_context_processor(
         self, fn: t.Callable[[], dict[str, t.Any]]

@@ -23,6 +23,7 @@ following is a list of view templates:
 * `security/reset_password.html`
 * `security/change_password.html`
 * `security/change_email.html`
+* `security/change_username.html`
 * `security/send_confirmation.html`
 * `security/send_login.html`
 * `security/verify.html`
@@ -81,6 +82,7 @@ The following is a list of all the available context processor decorators:
 * ``reset_password_context_processor``: Reset password view
 * ``change_password_context_processor``: Change password view
 * ``change_email_context_processor``: Change email view
+* ``change_username_context_processor``: Change username view
 * ``send_confirmation_context_processor``: Send confirmation view
 * ``send_login_context_processor``: Send login view
 * ``mail_context_processor``: Whenever an email will be sent
@@ -168,6 +170,7 @@ The following is a list of all the available form overrides:
 * ``reset_password_form``: Reset password form
 * ``change_password_form``: Change password form
 * ``change_email_form``: Change email form
+* ``change_username_form``: Change username form (:py:class:`flask_security.ChangeUsernameForm`)
 * ``send_confirmation_form``: Send confirmation form
 * ``mf_recovery_codes_form``: Setup recovery codes form
 * ``mf_recovery_form``: Use recovery code form
@@ -403,6 +406,8 @@ The following is a list of email templates:
 * `security/email/change_notice.html`
 * `security/email/change_email_instructions.txt`
 * `security/email/change_email_instructions.html`
+* `security/email/change_username_notice.txt`
+* `security/email/change_username_notice.html`
 * `security/email/welcome.html`
 * `security/email/welcome.txt`
 * `security/email/welcome_existing.html`
@@ -444,9 +449,9 @@ to ``False`` will bypass sending of the email (they all default to ``True``).
 In most cases, in addition to an email being sent, a :ref:`Signal <signals_topic>` is sent.
 The table below summarizes all this:
 
-=============================   ==================================   =============================================     ====================== ===============================
+=============================   ===================================  =============================================     ====================== ===============================
 **Template Name**               **Gate Config**                      **Subject Config**                                **Context Vars**       **Signal Sent**
------------------------------   ----------------------------------   ---------------------------------------------     ---------------------- -------------------------------
+-----------------------------   -----------------------------------  ---------------------------------------------     ---------------------- -------------------------------
 welcome                         SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_registered
                                                                                                                        - confirmation_link
                                                                                                                        - confirmation_token
@@ -465,6 +470,8 @@ reset_instructions              SEND_PASSWORD_RESET_EMAIL            SECURITY_EM
 reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL     SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE            - user                 password_reset
 
 change_notice                   SEND_PASSWORD_CHANGE_EMAIL           SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE     - user                 password_changed
+change_username_notice          SEND_USERNAME_PASSWORD_CHANGE_EMAIL  SECURITY_EMAIL_SUBJECT_USERNAME_CHANGE_NOTICE     - user                 username_changed
+                                                                                                                       - old_username
 two_factor_instructions         N/A                                  SECURITY_EMAIL_SUBJECT_TWO_FACTOR                 - user                 tf_security_token_sent
                                                                                                                        - token
                                                                                                                        - username
@@ -479,7 +486,7 @@ welcome_existing_username       SECURITY_SEND_REGISTER_EMAIL         SECURITY_EM
                                 SECURITY_RETURN_GENERIC_RESPONSES                                                      - username
 username_recovery               SECURITY_USERNAME_RECOVERY           SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY          - user                 username_recovery_email_sent
                                                                                                                        - username
-=============================   ==================================   =============================================     ====================== ===============================
+=============================   ===================================  =============================================     ====================== ===============================
 
 When sending an email, Flask-Security goes through the following steps:
 

@@ -1,4 +1,6 @@
-{% if security.registerable or security.recoverable or security.confirmable or security.unified_signin or security.two_factor or security.webauthn %}
+{% if security.registerable or security.recoverable or security.confirmable or
+ security.unified_signin or security.two_factor or security.webauthn or security.change_username or
+  security.username_recovery %}
   <hr>
   <h2>{{ _fsdomain('Menu') }}</h2>
   <ul>
@@ -15,6 +17,11 @@
       {% if security.change_email %}
         <li>
           <a href="{{ url_for_security('change_email') }}">{{ _fsdomain("Change Registered Email") }}</a>
+        </li>
+      {% endif %}
+      {% if security.change_username %}
+        <li>
+          <a href="{{ url_for_security('change_username') }}">{{ _fsdomain("Change Username") }}</a>
         </li>
       {% endif %}
       {% if security.two_factor %}
@@ -51,6 +58,11 @@
       {% if security.recoverable %}
         <li>
           <a href="{{ url_for_security('forgot_password') }}">{{ _fsdomain('Forgot password') }}</a>
+        </li>
+      {% endif %}
+      {% if security.username_recovery %}
+        <li>
+          <a href="{{ url_for_security('recover_username') }}">{{ _fsdomain('Recover Username') }}</a>
         </li>
       {% endif %}
       {% if security.confirmable %}

@@ -1,4 +1,4 @@
-# :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -177,6 +177,7 @@ def create_app() -> Flask:
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
+    app.config["SECURITY_TOTP_ISSUER"] = "me"
     app.config["SECURITY_FRESHNESS"] = timedelta(minutes=10)
     app.config["SECURITY_FRESHNESS_GRACE_PERIOD"] = timedelta(minutes=20)
     app.config["SECURITY_USERNAME_ENABLE"] = True
@@ -206,12 +207,14 @@ def create_app() -> Flask:
     for opt in [
         "changeable",
         "change_email",
+        "change_username",
         "recoverable",
         "registerable",
         "trackable",
         "NOTpasswordless",
         "confirmable",
         "two_factor",
+        "username_recovery",
         "unified_signin",
         "webauthn",
         "multi_factor_recovery_codes",

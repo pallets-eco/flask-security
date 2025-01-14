@@ -230,6 +230,7 @@ Forms
 
 .. autoclass:: flask_security.ChangeEmailForm
 .. autoclass:: flask_security.ChangePasswordForm
+.. autoclass:: flask_security.ChangeUsernameForm
 .. autoclass:: flask_security.ConfirmRegisterForm
 .. autoclass:: flask_security.Form
 .. autoclass:: flask_security.FormInfo
@@ -386,6 +387,11 @@ sends the following signals.
     (which is the sender), it is passed `user`, `method`, `login_token` and `token` (deprecated) arguments.
 
     .. versionadded:: 3.3.0
+
+.. data:: username_changed
+
+    Sent when a username is successfully changed. In addition to the
+    app (which is the sender), it is passed the `user` and `old_username` arguments.
 
 .. data:: username_recovery_email_sent
 
