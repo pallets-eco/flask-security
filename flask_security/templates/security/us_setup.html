@@ -35,7 +35,7 @@
       <div class="fs-div">
         {{ current_methods_msg }}
       </div>
-      <h3>{{ us_setup_form.chosen_method.label }}</h3>
+      <h3>{{ us_setup_form.chosen_method.label.text }}</h3>
       <div class="fs-div">
         {% for subfield in us_setup_form.chosen_method %}{{ render_field_with_errors(subfield) }}{% endfor %}
         {{ render_field_errors(us_setup_form.chosen_method) }}

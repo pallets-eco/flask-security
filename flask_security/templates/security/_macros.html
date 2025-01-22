@@ -1,5 +1,11 @@
+{% macro field_id(field, sfx='') %}
+  {% if field and field.id %}
+    id="{{ field.id }}-{{ sfx }}"
+  {% endif %}
+{% endmacro %}
+
 {% macro render_field_with_errors(field) %}
-  <div class="fs-div" id="{{ field.id|default('fs-field') }}">
+  <div class="fs-div" {{ field_id(field, 'ctr') }}>
     {{ field.label }} {{ field(**kwargs)|safe }}
     {% if field.errors %}
       <ul>
@@ -10,11 +16,11 @@
 {% endmacro %}
 
 {% macro render_field(field) %}
-  <div class="fs-div" id="{{ field.id|default('fs-field') }}">{{ field(**kwargs)|safe }}</div>
+  <div class="fs-div" {{ field_id(field, 'ctr') }}>{{ field(**kwargs)|safe }}</div>
 {% endmacro %}
 
 {% macro render_field_errors(field) %}
-  <div class="fs-div" id="{{ field.id if field else 'fs-field' }}">
+  <div class="fs-div" {{ field_id(field, 'ctr') }}>
     {% if field and field.errors %}
       <ul>
         {% for error in field.errors %}<li class="fs-error-msg">{{ error }}</li>{% endfor %}
