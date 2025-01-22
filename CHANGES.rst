@@ -17,6 +17,10 @@ Features & Improvements
 - (:issue:`1043`) Unify Register forms (and split out re-type password option)
 - (:pr:`1052`) Remove deprecated TWO_FACTOR configuration variables
 
+Fixes
++++++
+- (:pr:`zz`) Fix duplicate HTML ids in templates.
+
 Notes
 +++++
 Python 3.13 removed ``crypt``, which passlib attempts to import and use as
