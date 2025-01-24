@@ -5,7 +5,7 @@
     Test fixtures and what not
 
     :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
     :license: MIT, see LICENSE for more details.
 """
 
@@ -182,7 +182,7 @@ def app(request):
     if request.config.option.setting:
         for s in request.config.option.setting:
             key, value = s.split("=")
-            app.config["SECURITY_" + key.upper()] = convert_bool_option(value)
+            app.config[key.upper()] = convert_bool_option(value)
 
     app.mail = Mail(app)  # type: ignore
 

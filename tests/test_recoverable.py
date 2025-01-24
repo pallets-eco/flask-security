@@ -812,7 +812,7 @@ def test_username_recovery_valid_email(app, clients, get_message):
 
     # Test the username recovery view
     response = clients.get("/recover-username")
-    assert b"<h1>Username recovery</h1>" in response.data
+    assert b"<h1>Username Recovery</h1>" in response.data
 
     response = clients.post(
         "/recover-username", data=dict(email="joe@lp.com"), follow_redirects=True

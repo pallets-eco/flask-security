@@ -369,14 +369,14 @@ class CodeFormMixin:
         get_form_field_label("code"),
         render_kw={
             "autocomplete": "one-time-code",
-            "inputtype": "numeric",
+            "type": "text",
             "pattern": "[0-9]*",
         },
         validators=[RequiredLocalize()],
     )
 
 
-def build_username_field(app, autocomplete="username"):
+def build_username_field(app):
     if cv("USERNAME_REQUIRED", app=app):
         validators = [
             RequiredLocalize(message="USERNAME_NOT_PROVIDED"),
@@ -387,7 +387,7 @@ def build_username_field(app, autocomplete="username"):
         validators = [username_validator, unique_username]
     return StringField(
         get_form_field_label("username"),
-        render_kw={"autocomplete": autocomplete},
+        render_kw={"autocomplete": "username"},
         validators=validators,
     )
 
@@ -1017,7 +1017,7 @@ class TwoFactorRescueForm(Form):
             ("help", get_form_field_xlate(_("Contact Administrator"))),
         ],
     )
-    submit = SubmitField(get_form_field_label("submit"))
+    submit = SubmitField(get_form_field_label("submit"), id="rescue")
 
 
 class UsernameRecoveryForm(Form, UserEmailFormMixin):

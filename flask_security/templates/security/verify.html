@@ -1,9 +1,10 @@
+{% set title = title|default(_fsdomain("Reauthenticate")) %}
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, prop_next %}
 
 {% block content %}
   {% include "security/_messages.html" %}
-  <h1>{{ _fsdomain("Please Reauthenticate") }}</h1>
+  <h1>{{ _fsdomain("Reauthenticate") }}</h1>
   <form action="{{ url_for_security('verify') }}{{ prop_next() }}" method="post" name="verify_form">
     {{ verify_form.hidden_tag() }}
     {{ render_field_with_errors(verify_form.password) }}

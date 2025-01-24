@@ -41,7 +41,7 @@ def test_tf_select(app, client, get_message):
         data=dict(email="matt@lp.com", password="password"),
         follow_redirects=True,
     )
-    assert b"Select Two Factor Method" in response.data
+    assert b"Select Two-Factor Method" in response.data
     tf_select_url = get_form_action(response)
     response = client.post(
         tf_select_url, data=dict(which="webauthn"), follow_redirects=True
@@ -63,7 +63,7 @@ def test_tf_select(app, client, get_message):
         data=dict(email="matt@lp.com", password="password"),
         follow_redirects=True,
     )
-    assert b"Select Two Factor Method" in response.data
+    assert b"Select Two-Factor Method" in response.data
     response = client.post("/tf-select", data=dict(which="sms"), follow_redirects=True)
     assert b"Please enter your authentication code generated via: SMS" in response.data
     code = sms_sender.messages[0].split()[-1]
