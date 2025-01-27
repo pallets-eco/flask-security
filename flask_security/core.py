@@ -1687,7 +1687,7 @@ class Security:
             build_register_form(app=app, fcls=fcls)
         fcls = self.forms["change_username_form"].cls
         if fcls and issubclass(fcls, ChangeUsernameForm):
-            fcls.username = build_username_field(app=app, autocomplete="new-username")
+            fcls.username = build_username_field(app=app)
 
         # initialize two-factor plugins. Note that each implementation likely
         # has its own feature flag which will control whether it is active or not.

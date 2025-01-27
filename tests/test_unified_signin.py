@@ -1021,7 +1021,7 @@ def test_verify(app, clients, get_message):
 
     response = client.get("us-setup", follow_redirects=True)
     form_response = response.data.decode("utf-8")
-    assert "Please Reauthenticate" in form_response
+    assert "Reauthenticate" in form_response
     send_code_url = get_form_action(response, 1)
 
     # Send unknown method

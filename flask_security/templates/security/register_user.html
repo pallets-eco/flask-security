@@ -1,3 +1,4 @@
+{% set title = title|default(_fsdomain('Register')) %}
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors, render_field_errors %}
 

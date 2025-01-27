@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.6.0
 -------------
 
-Released TBD
+Released January xx, 2025
 
 Features & Improvements
 +++++++++++++++++++++++
@@ -14,12 +14,16 @@ Features & Improvements
 - (:issue:`980`) Add support for username recovery in simple login flows (jamesejr)
 - (:issue:`1055`) Add support for changing username
 - (:pr:`1048`) Add support for Python 3.13
-- (:issue:`1043`) Unify Register forms (and split out re-type password option)
-- (:pr:`1052`) Remove deprecated TWO_FACTOR configuration variables
+- (:issue:`1043`) Unify Register forms (and split out re-type password option) Please read :ref:`register_form_migration`.
 
 Fixes
 +++++
-- (:pr:`zz`) Fix duplicate HTML ids in templates.
+- (:pr:`1062`) Fix duplicate HTML ids in templates.
+- (:issue:`xx`) Ensure templates pass W3C validation (see below)
+
+Docs and Chores
++++++++++++++++
+- (:pr:`1052`) Remove deprecated TWO_FACTOR configuration variables
 
 Notes
 +++++
@@ -39,6 +43,15 @@ The SECURITY_TWO_FACTOR_{SECRET, URI_SERVICE_NAME, SMS_SERVICE, SMS_SERVICE_CONF
 have been removed (they have been deprecated for a while). Use the equivalent
 :py:data:`SECURITY_TOTP_SECRETS`, :py:data:`SECURITY_TOTP_ISSUER`, :py:data:`SECURITY_SMS_SERVICE` and
 :py:data:`SECURITY_SMS_SERVICE_CONFIG`.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+Fixing all the templates to pass W3C validation could introduce some incompatibilities:
+
+- All templates now have a default <title> - before the <title> element was empty.
+- The HTML id of the rescue form submit button was changed to 'rescue'
+- The HTML id of the webauthn delete form name field was changed to 'delete-name'
+- Some template headings were changed to improve consistency
 
 Version 5.5.2
 -------------

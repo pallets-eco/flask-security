@@ -352,9 +352,12 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
 
 
 class WebAuthnDeleteForm(Form):
+    # Change id of name since this shows up on register form that ALSO has a name
+    # element.
     name = StringField(
         get_form_field_xlate(_("Nickname")),
         validators=[RequiredLocalize(message="WEBAUTHN_NAME_REQUIRED")],
+        id="delete-name",
     )
     submit = SubmitField(label=get_form_field_label("delete"))
 

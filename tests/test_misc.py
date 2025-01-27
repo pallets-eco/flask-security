@@ -1148,7 +1148,7 @@ def test_verify_fresh(app, client, get_message):
 
     with capture_flashes() as flashes:
         response = client.get("/fresh", follow_redirects=True)
-        assert b"Please Reauthenticate" in response.data
+        assert b"Reauthenticate" in response.data
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "REAUTHENTICATION_REQUIRED"
@@ -1161,12 +1161,12 @@ def test_verify_fresh(app, client, get_message):
 
     reset_fresh(client, app.config["SECURITY_FRESHNESS"])
     response = client.get(verify_url)
-    assert b"Please Reauthenticate" in response.data
+    assert b"Reauthenticate" in response.data
 
     response = client.post(
         verify_url, data=dict(password="not my password"), follow_redirects=False
     )
-    assert b"Please Reauthenticate" in response.data
+    assert b"Reauthenticate" in response.data
 
     response = client.post(
         verify_url, data=dict(password="password"), follow_redirects=False
@@ -1189,7 +1189,7 @@ def test_verify_fresh_json(app, client, get_message):
     assert response.json["response"]["reauth_required"]
 
     response = client.get("/verify")
-    assert b"Please Reauthenticate" in response.data
+    assert b"Reauthenticate" in response.data
 
     response = client.post(
         "/verify", json=dict(password="not my password"), headers=headers

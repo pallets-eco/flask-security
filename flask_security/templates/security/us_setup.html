@@ -21,7 +21,7 @@
     authr_username: same username as in qrcode
     authr_issuer: same issuer as in qrcode
 #}
-
+{% set title = title|default(_fsdomain('Setup Unified Sign In')) %}
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors %}
 

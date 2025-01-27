@@ -1,3 +1,4 @@
+{% set title = title|default(_fsdomain('Recovery Codes')) %}
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
 

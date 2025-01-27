@@ -1,13 +1,13 @@
 {#
   This template receives the following pieces of context in addition to the form:
 #}
-
+{% set title = title|default(_fsdomain("Setup New WebAuthn Security Key")) %}
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors %}
 
 {% block head_scripts %}
   {{ super() }}
-  <script src="{{ url_for('.static', filename='js/webauthn.js') }}" xmlns="http://www.w3.org/1999/html"></script>
+  <script src="{{ url_for('.static', filename='js/webauthn.js') }}"></script>
   <script src="{{ url_for('.static', filename='js/base64.js') }}"></script>
 {% endblock head_scripts %}
 
