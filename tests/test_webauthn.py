@@ -203,8 +203,10 @@ def _register_start(
     return register_options, response_url
 
 
-def _register_start_json(client, name="testr1", usage="secondary"):
-    response = client.post("wan-register", json=dict(name=name, usage=usage))
+def _register_start_json(client, name="testr1", usage="secondary", csrf_token=None):
+    response = client.post(
+        "wan-register", json=dict(name=name, usage=usage, csrf_token=csrf_token)
+    )
     register_options = response.json["response"]["credential_options"]
     response_url = f'wan-register/{response.json["response"]["wan_state"]}'
     return register_options, response_url
@@ -230,6 +232,20 @@ def reg_2_keys(client):
         "first": {"id": REG_DATA_UV["id"], "signin": SIGNIN_DATA_UV},
         "secondary": {"id": REG_DATA1["id"], "signin": SIGNIN_DATA1},
     }
+
+
+def reg_first_key(client, csrf_token=None):
+    # Register a primary key - assumes already authenticated
+    # This can be used by other tests outside this module.
+    register_options, response_url = _register_start_json(
+        client, name="first", usage="first", csrf_token=csrf_token
+    )
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(REG_DATA_UV), csrf_token=csrf_token),
+    )
+    assert response.status_code == 200
+    return {"id": REG_DATA_UV["id"], "signin": SIGNIN_DATA_UV}
 
 
 def _signin_start(

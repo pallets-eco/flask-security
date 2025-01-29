@@ -4,7 +4,7 @@ flask_security.unified_signin
 
 Flask-Security Unified Signin module
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 This implements a unified sign in endpoint - allowing
@@ -371,12 +371,12 @@ class UnifiedSigninSetupValidateForm(Form):
         get_form_field_label("passcode"),
         render_kw={
             "autocomplete": "one-time-code",
-            "inputtype": "numeric",
+            "type": "text",
             "pattern": "[0-9]*",
         },
         validators=[RequiredLocalize()],
     )
-    submit = SubmitField(get_form_field_label("submitcode"))
+    submit = SubmitField(get_form_field_label("submitcode"), id="submit-code")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
