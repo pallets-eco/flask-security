@@ -1,4 +1,4 @@
-""""
+"""
 Copyright 2019 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 

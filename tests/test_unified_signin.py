@@ -1,11 +1,11 @@
 """
-    test_unified_signin
-    ~~~~~~~~~~~~~~~~~~~
+test_unified_signin
+~~~~~~~~~~~~~~~~~~~
 
-    Unified signin tests
+Unified signin tests
 
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 

@@ -1,12 +1,12 @@
 """
-    flask_security.datastore
-    ~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.datastore
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This module contains an user datastore classes.
+This module contains an user datastore classes.
 
-    :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2012 by Matt Wright.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations

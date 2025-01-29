@@ -1,11 +1,11 @@
 """
-    test_recoverable
-    ~~~~~~~~~~~~~~~~
+test_recoverable
+~~~~~~~~~~~~~~~~
 
-    Recoverable functionality tests
+Recoverable functionality tests
 
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from datetime import date, timedelta

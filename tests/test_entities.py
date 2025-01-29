@@ -1,8 +1,8 @@
 """
-    test_entities
-    ~~~~~~~~~~~~~
+test_entities
+~~~~~~~~~~~~~
 
-    Entity tests
+Entity tests
 """
 
 import inspect

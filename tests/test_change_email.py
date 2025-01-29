@@ -1,11 +1,11 @@
 """
-    test_change_email
-    ~~~~~~~~~~~~~~~~~
+test_change_email
+~~~~~~~~~~~~~~~~~
 
-    Change email functionality tests
+Change email functionality tests
 
-    :copyright: (c) 2024-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2024-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from contextlib import contextmanager

@@ -1,12 +1,12 @@
 """
-    flask_security.signals
-    ~~~~~~~~~~~~~~~~~~~~~~
+flask_security.signals
+~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security signals module
+Flask-Security signals module
 
-    :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2012 by Matt Wright.
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import blinker

@@ -1,11 +1,11 @@
 """
-    test_two_factor
-    ~~~~~~~~~~~~~~~~~
+test_two_factor
+~~~~~~~~~~~~~~~~~
 
-    two_factor tests
+two_factor tests
 
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from datetime import date, timedelta

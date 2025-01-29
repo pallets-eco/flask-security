@@ -1,11 +1,11 @@
 """
-    flask_security.totp
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.totp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security TOTP (Timed-One-Time-Passwords) module
+Flask-Security TOTP (Timed-One-Time-Passwords) module
 
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations

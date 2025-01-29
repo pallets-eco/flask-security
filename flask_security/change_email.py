@@ -1,17 +1,17 @@
 """
-    flask_security.change_email
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.change_email
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security Change Email module
+Flask-Security Change Email module
 
-    :copyright: (c) 2024-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2024-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    Allow user to change their email address.
-    If CHANGE_EMAIL_CONFIRM is set then the user will receive an email
-    at the new email address with a token that can be used to verify and change
-    emails. Upon success - if CHANGE_EMAIL_NOTIFY_OLD is set, an email will be sent
-    to the old email address.
+Allow user to change their email address.
+If CHANGE_EMAIL_CONFIRM is set then the user will receive an email
+at the new email address with a token that can be used to verify and change
+emails. Upon success - if CHANGE_EMAIL_NOTIFY_OLD is set, an email will be sent
+to the old email address.
 """
 
 from __future__ import annotations

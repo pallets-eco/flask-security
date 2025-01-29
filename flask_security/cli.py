@@ -1,12 +1,12 @@
 """
-    flask_security.cli
-    ~~~~~~~~~~~~~~~~~~
+flask_security.cli
+~~~~~~~~~~~~~~~~~~
 
-    Command Line Interface for managing accounts and roles.
+Command Line Interface for managing accounts and roles.
 
-    :copyright: (c) 2016 by CERN.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2016 by CERN.
+:copyright: (c) 2019-2024 by J. Christopher Wagner
+:license: MIT, see LICENSE for more details.
 """
 
 import functools

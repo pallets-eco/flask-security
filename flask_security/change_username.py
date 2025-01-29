@@ -1,26 +1,26 @@
 """
-    flask_security.change_username
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.change_username
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security Change Username module
+Flask-Security Change Username module
 
-    :copyright: (c) 2025-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2025-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    Allow user to change their username.
-    This is really just for when username is used as an authenticating
-    identity (and therefore has to be unique).
+Allow user to change their username.
+This is really just for when username is used as an authenticating
+identity (and therefore has to be unique).
 
-    The basic feature allows an authenticated user to change their username
-    to any available username. Normalization and validation take place
-    using username_util.
-    This doesn't offer any defense against username enumeration by another user or
-    preventing a user from constantly changing their username. Applications
-    could use the UsernameUtil.check_username() method to implement this.
+The basic feature allows an authenticated user to change their username
+to any available username. Normalization and validation take place
+using username_util.
+This doesn't offer any defense against username enumeration by another user or
+preventing a user from constantly changing their username. Applications
+could use the UsernameUtil.check_username() method to implement this.
 
-    Think about: username is normally considered 'public' however as an identity
-    should we follow a change protocol more like email - require a confirmation from
-    the registered email.
+Think about: username is normally considered 'public' however as an identity
+should we follow a change protocol more like email - require a confirmation from
+the registered email.
 
 """
 

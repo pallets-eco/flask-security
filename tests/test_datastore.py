@@ -1,12 +1,12 @@
 """
-    test_datastore
-    ~~~~~~~~~~~~~~
+test_datastore
+~~~~~~~~~~~~~~
 
-    Datastore tests
+Datastore tests
 
-    :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2012 by Matt Wright.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import pytest

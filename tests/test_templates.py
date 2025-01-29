@@ -1,16 +1,16 @@
 """
-    test_templates
-    ~~~~~~~~~~
+test_templates
+~~~~~~~~~~
 
-    Test templates to be W3C valid
+Test templates to be W3C valid
 
-    :copyright: (c) 2025-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2025-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    Note that the validator definitely rate-limits us - so we don't just run
-    them all.
+Note that the validator definitely rate-limits us - so we don't just run
+them all.
 
-    To run a test pass templates="RESET,LOGIN" on the command line.
+To run a test pass templates="RESET,LOGIN" on the command line.
 """
 
 from time import sleep

@@ -1,11 +1,11 @@
 """
-    test_tf_plugin
-    ~~~~~~~~~~~~~~~~~
+test_tf_plugin
+~~~~~~~~~~~~~~~~~
 
-    tf_plugin tests
+tf_plugin tests
 
-    :copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import json

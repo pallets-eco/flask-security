@@ -1,11 +1,11 @@
 """
-    flask_security.oauth_glue
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.oauth_glue
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Class and methods to glue our login path with authlib for to support 'social' auth.
+Class and methods to glue our login path with authlib for to support 'social' auth.
 
-    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 

@@ -1,14 +1,14 @@
 """
-    flask_security.babel
-    ~~~~~~~~~~~~~~~~~~~~
+flask_security.babel
+~~~~~~~~~~~~~~~~~~~~
 
-    I18N support for Flask-Security.
+I18N support for Flask-Security.
 
-    :copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    As of Flask-Babel 2.0.0 - it supports the Flask-BabelEx Domain extension - and it
-    is maintained.  If that isn't installed fall back to a Null Domain
+As of Flask-Babel 2.0.0 - it supports the Flask-BabelEx Domain extension - and it
+is maintained.  If that isn't installed fall back to a Null Domain
 """
 
 # flake8: noqa: F811

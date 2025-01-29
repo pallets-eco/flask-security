@@ -1,11 +1,11 @@
 """
-    test_recovery_codes
-    ~~~~~~~~~~~~~~~~~
+test_recovery_codes
+~~~~~~~~~~~~~~~~~
 
-    recovery code tests
+recovery code tests
 
-    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import re

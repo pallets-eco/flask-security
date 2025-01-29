@@ -1,11 +1,11 @@
 """
-    test_utils
-    ~~~~~~~~~~
+test_utils
+~~~~~~~~~~
 
-    Test utils
+Test utils
 
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations

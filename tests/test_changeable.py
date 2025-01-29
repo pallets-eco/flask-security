@@ -1,11 +1,11 @@
 """
-    test_changeable
-    ~~~~~~~~~~~~~~~
+test_changeable
+~~~~~~~~~~~~~~~
 
-    Changeable tests
+Changeable tests
 
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import base64

@@ -1,11 +1,11 @@
 """
-    flask_security.username_util
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.username_util
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Utility class providing methods for validating and normalizing usernames.
+Utility class providing methods for validating and normalizing usernames.
 
-    :copyright: (c) 2020-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2020-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 
