@@ -22,9 +22,11 @@ from tests.test_utils import (
     authenticate,
     logout,
     capture_reset_password_requests,
+    get_form_input_value,
     reset_fresh,
     setup_tf_sms,
 )
+from tests.test_webauthn import HackWebauthnUtil, reg_first_key
 
 
 def check_message(msgs, mtype="error"):
@@ -41,11 +43,15 @@ def check_template(name, client, r):
     t = client.get(name)
     if t.status_code != 200:
         return [f"{name} error {t.status_code}"]
-    vout = r.post("https://validator.w3.org/nu/?out=json", t.data)
+    return check_template_rdata(name, r, t.data)
+
+
+def check_template_rdata(name, r, rdata):
+    vout = r.post("https://validator.w3.org/nu/?out=json", rdata)
     if vout.status_code == 429:
         # we got rate limited try again
         sleep(2.0)
-        vout = r.post("https://validator.w3.org/nu/?out=json", t.data)
+        vout = r.post("https://validator.w3.org/nu/?out=json", rdata)
         if vout.status_code != 200:
             return [f"{name} API error {vout.status_code}"]
     if vout.status_code != 200:
@@ -58,11 +64,17 @@ def check_template(name, client, r):
 @pytest.mark.changeable()
 @pytest.mark.change_email()
 @pytest.mark.change_username()
+@pytest.mark.oauth()
 @pytest.mark.username_recovery()
 @pytest.mark.unified_signin()
 @pytest.mark.webauthn()
 @pytest.mark.two_factor()
-@pytest.mark.settings(multi_factor_recovery_codes=True)
+@pytest.mark.settings(
+    multi_factor_recovery_codes=True,
+    oauth_enable=True,
+    webauthn_util_cls=HackWebauthnUtil,
+)
+@pytest.mark.csrf()
 def test_valid_html(app, client):
     # since we get rate limited - use external pytest option to specify
     totry = app.config.get("TEMPLATES", "").split(",")
@@ -90,25 +102,46 @@ def test_valid_html(app, client):
     ]
 
     # MULTI_FACTOR_RECOVERY requires tf-setup and login/password
-    # TWO_FACTOR_RESCUE has an issue with the RadioField - possibly because we
-    # change it after instantiation???
+    # TWO_FACTOR_RESCUE has an issue with the RadioField
     # TWO_FACTOR_SELECT needs special setup
-    authenticate(client)
+
+    authenticate(client, csrf=True)
+    response = client.get("/change")
+    csrf_token = get_form_input_value(response, "csrf_token")
+    reg_first_key(client, csrf_token=csrf_token)
+
     logout(client)
 
     terrors = dict()
     for t in [u for u in unauth_urls if u in totry]:
         terrors[t] = check_template(app.config[f"SECURITY_{t}_URL"], client, rsession)
 
-    authenticate(client)
+    authenticate(client, csrf=True)
     for t in [u for u in auth_urls if u in totry]:
-        terrors[t] = check_template(app.config[f"SECURITY_{t}_URL"], client, rsession)
+        if t == "US_SETUP":
+            response = client.get("/us-setup")
+            csrf_token = get_form_input_value(response, "csrf_token")
+            response = client.post(
+                "us-setup",
+                data=dict(chosen_method="authenticator", csrf_token=csrf_token),
+            )
+            terrors[t] = check_template_rdata("US_SETUP", rsession, response.data)
+            continue
+        if t == "TWO_FACTOR_SETUP":
+            response = client.get("/tf-setup")
+            csrf_token = get_form_input_value(response, "csrf_token")
+            response = client.post(
+                "tf-setup",
+                data=dict(setup="authenticator", csrf_token=csrf_token),
+            )
+            terrors[t] = check_template_rdata(
+                "TWO_FACTOR_SETUP", rsession, response.data
+            )
+            continue
+        elif t == "US_VERIFY" or t == "VERIFY":
+            reset_fresh(client, app.config["SECURITY_FRESHNESS"])
 
-    if "VERIFY" in totry:
-        reset_fresh(client, app.config["SECURITY_FRESHNESS"])
-        terrors["VERIFY"] = check_template(
-            app.config["SECURITY_VERIFY_URL"], client, rsession
-        )
+        terrors[t] = check_template(app.config[f"SECURITY_{t}_URL"], client, rsession)
 
     print(f"Validated: {totry}")
     errors = {k: v for k, v in terrors.items() if v}
@@ -116,6 +149,7 @@ def test_valid_html(app, client):
 
 
 @pytest.mark.confirmable()
+@pytest.mark.csrf()
 def test_valid_html_confirm(app, client):
     rsession = requests.session()
     rsession.headers.update({"Content-Type": "text/html; charset=utf-8"})
@@ -128,6 +162,7 @@ def test_valid_html_confirm(app, client):
 
 
 @pytest.mark.recoverable()
+@pytest.mark.csrf()
 def test_valid_html_recover(app, client):
     rsession = requests.session()
     rsession.headers.update({"Content-Type": "text/html; charset=utf-8"})
@@ -136,7 +171,9 @@ def test_valid_html_recover(app, client):
     if "RESET" in totry:
         print(f"Validated: {totry}")
         with capture_reset_password_requests() as resets:
-            client.post("/reset", data=dict(email="joe@lp.com"))
+            response = client.get("/reset")
+            csrf_token = get_form_input_value(response, "csrf_token")
+            client.post("/reset", data=dict(email="joe@lp.com", csrf_token=csrf_token))
         token = resets[0]["token"]
         terrors = check_template(
             f'{app.config[f"SECURITY_RESET_URL"]}/{token}', client, rsession
@@ -145,16 +182,19 @@ def test_valid_html_recover(app, client):
 
 
 @pytest.mark.two_factor()
+@pytest.mark.csrf()
 def test_valid_html_rescue(app, client):
     rsession = requests.session()
     rsession.headers.update({"Content-Type": "text/html; charset=utf-8"})
     # since we get rate limited - use external pytest option to specify
     totry = app.config.get("TEMPLATES", "").split(",")
     if "TWO_FACTOR_RESCUE" in totry:
-        authenticate(client)
-        setup_tf_sms(client)
+        authenticate(client, csrf=True)
+        response = client.get("/tf-setup")
+        csrf_token = get_form_input_value(response, "csrf_token")
+        setup_tf_sms(client, csrf_token=csrf_token)
         logout(client)
-        authenticate(client)
+        authenticate(client, csrf=True)
         print(f"Validated: {totry}")
         terrors = check_template(
             app.config["SECURITY_TWO_FACTOR_RESCUE_URL"], client, rsession

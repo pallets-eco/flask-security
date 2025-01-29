@@ -19,7 +19,8 @@ Features & Improvements
 Fixes
 +++++
 - (:pr:`1062`) Fix duplicate HTML ids in templates.
-- (:issue:`xx`) Ensure templates pass W3C validation (see below)
+- (:pr:`xx`) Fix more duplicate HTML ids in templates.
+- (:issue:`1064`) Ensure templates pass W3C validation (see below)
 
 Docs and Chores
 +++++++++++++++
@@ -48,10 +49,13 @@ Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 Fixing all the templates to pass W3C validation could introduce some incompatibilities:
 
-- All templates now have a default <title> - before the <title> element was empty.
+- All templates now have a default <title> - before, the <title> element was empty.
 - The HTML id of the rescue form submit button was changed to 'rescue'
 - The HTML id of the webauthn delete form name field was changed to 'delete-name'
 - Some template headings were changed to improve consistency
+- The csrf_token HTML id was changed on us_setup.html, wan_register.html, two_factor_setup.html
+  two_factor_verify_code.html, us_verify.html, verify.html for the second form on the page.
+- On us_setup.html and two_factor_setup.html the submit code button HTML id was changed.
 
 Version 5.5.2
 -------------

@@ -4,7 +4,7 @@ test_utils
 
 Test utils
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -141,17 +141,18 @@ def get_session(response):
                 return val[1]
 
 
-def setup_tf_sms(client, url_prefix=None):
+def setup_tf_sms(client, url_prefix=None, csrf_token=None):
     # Simple setup of SMS as a second factor and return the sender so caller
     # can get codes.
     SmsSenderFactory.senders["test"] = SmsTestSender
     sms_sender = SmsSenderFactory.createSender("test")
-    data = dict(setup="sms", phone="+442083661188")
+    data = dict(setup="sms", phone="+442083661188", csrf_token=csrf_token)
     response = client.post("/".join(filter(None, (url_prefix, "tf-setup"))), json=data)
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
     response = client.post(
-        "/".join(filter(None, (url_prefix, "tf-validate"))), json=dict(code=code)
+        "/".join(filter(None, (url_prefix, "tf-validate"))),
+        json=dict(code=code, csrf_token=csrf_token),
     )
     assert response.status_code == 200
     return sms_sender

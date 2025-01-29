@@ -43,3 +43,11 @@
 {% macro prop_next() -%}
   {% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}
 {%- endmacro %}
+
+  {# For forms that have multiple POST forms - explicitly render csrf_token so we can change the ID so we don't get duplicates #}
+{% macro render_csrf(form, pfx) %}
+  {% set csrf_field_name = form.meta.csrf_field_name | default %}
+  {% if form[csrf_field_name] is defined %}
+    {{ form[csrf_field_name](id=pfx~'-csrf') }}
+  {% endif %}
+{% endmacro %}

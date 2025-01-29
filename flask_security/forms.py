@@ -968,7 +968,7 @@ class TwoFactorSetupForm(Form):
 class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
     """The Two-factor token validation form"""
 
-    submit = SubmitField(get_form_field_label("submitcode"))
+    submit = SubmitField(get_form_field_label("submitcode"), id="submit-code")
 
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)

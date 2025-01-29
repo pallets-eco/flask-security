@@ -20,7 +20,8 @@
 #}
 {% set title = title|default(_fsdomain("Two-Factor Setup")) %}
 {% extends "security/base.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_no_label, render_field_errors, render_form_errors %}
+{% from "security/_macros.html" import render_field_with_errors, render_field,
+ render_field_no_label, render_field_errors, render_form_errors, render_csrf %}
 
 {% block content %}
   {% include "security/_messages.html" %}
@@ -69,7 +70,8 @@
       {% set faction = url_for_security('two_factor_token_validation') %}
     {% endif %}
     <form action="{{ faction }}" method="post" name="two_factor_verify_code_form">
-      {{ two_factor_verify_code_form.hidden_tag() }}
+      {# explicitly render csrf_token so we can change the ID so we don't get duplicates #}
+      {{ render_csrf(two_factor_verify_code_form, "code") }}
       {{ render_field_with_errors(two_factor_verify_code_form.code, placeholder=_fsdomain("enter numeric code")) }}
       <div class="fs-gap">{{ render_field(two_factor_verify_code_form.submit) }}</div>
     </form>
