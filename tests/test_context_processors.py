@@ -1,8 +1,8 @@
 """
-    test_context_processors
-    ~~~~~~~~~~~~~~~~~~~~~~~
+test_context_processors
+~~~~~~~~~~~~~~~~~~~~~~~
 
-    Context processor tests
+Context processor tests
 """
 
 import pytest

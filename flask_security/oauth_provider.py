@@ -1,12 +1,12 @@
 """
-    flask_security.oauth_provider
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.oauth_provider
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Class and methods to create providers for oauth_glue.
-    Example providers for github and google.
+Class and methods to create providers for oauth_glue.
+Example providers for github and google.
 
-    :copyright: (c) 2024-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2024-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 

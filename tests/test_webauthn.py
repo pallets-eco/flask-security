@@ -1,11 +1,11 @@
 """
-    test_webauthn
-    ~~~~~~~~~~~~~~~~~~~
+test_webauthn
+~~~~~~~~~~~~~~~~~~~
 
-    WebAuthn tests
+WebAuthn tests
 
-    :copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 

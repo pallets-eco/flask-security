@@ -1,14 +1,14 @@
 """
-    flask_security.tf_plugin
-    ~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.tf_plugin
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security Two-Factor Plugin Module
+Flask-Security Two-Factor Plugin Module
 
-    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    TODO:
-        - add localized callback for select choices.
+TODO:
+    - add localized callback for select choices.
 """
 
 from __future__ import annotations

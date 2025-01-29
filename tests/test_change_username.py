@@ -1,11 +1,11 @@
 """
-    test_change_username
-    ~~~~~~~~~~~~~~~~~~~~
+test_change_username
+~~~~~~~~~~~~~~~~~~~~
 
-    Change username tests
+Change username tests
 
-    :copyright: (c) 2025-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2025-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import pytest

@@ -1,11 +1,11 @@
 """
-    flask_security.two_factor
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.two_factor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security two_factor module
+Flask-Security two_factor module
 
-    :copyright: (c) 2016 by Gal Stainfeld, at Emedgene
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2016 by Gal Stainfeld, at Emedgene
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
 """
 
 from __future__ import annotations

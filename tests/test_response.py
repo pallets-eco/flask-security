@@ -1,11 +1,11 @@
 """
-    test_response
-    ~~~~~~~~~~~~~~~~~
+test_response
+~~~~~~~~~~~~~~~~~
 
-    Tests for validating default and plugable responses.
+Tests for validating default and plugable responses.
 
-    :copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2020 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import pytest

@@ -1,30 +1,30 @@
 """
-    flask_security.views
-    ~~~~~~~~~~~~~~~~~~~~
+flask_security.views
+~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security views module
+Flask-Security views module
 
-    :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2012 by Matt Wright.
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    CSRF is tricky. By default all our forms have CSRF protection built in via
-    Flask-WTF. This is regardless of authentication method or whether the request
-    is Form or JSON based. Form-based 'just works' since when rendering the form
-    (on GET), the CSRF token is automatically populated.
-    We want to handle:
-        - JSON requests where CSRF token is in a header (e.g. X-CSRF-Token)
-        - Option to skip CSRF when using a token to authenticate (rather than session)
-          (CSRF_PROTECT_MECHANISMS)
-        - Option to skip CSRF for 'login'/unauthenticated requests
-          (CSRF_IGNORE_UNAUTH_ENDPOINTS)
-    This is complicated by the fact that the only way to disable form CSRF is to
-    pass in meta={csrf: false} at form instantiation time.
+CSRF is tricky. By default all our forms have CSRF protection built in via
+Flask-WTF. This is regardless of authentication method or whether the request
+is Form or JSON based. Form-based 'just works' since when rendering the form
+(on GET), the CSRF token is automatically populated.
+We want to handle:
+    - JSON requests where CSRF token is in a header (e.g. X-CSRF-Token)
+    - Option to skip CSRF when using a token to authenticate (rather than session)
+      (CSRF_PROTECT_MECHANISMS)
+    - Option to skip CSRF for 'login'/unauthenticated requests
+      (CSRF_IGNORE_UNAUTH_ENDPOINTS)
+This is complicated by the fact that the only way to disable form CSRF is to
+pass in meta={csrf: false} at form instantiation time.
 
-    Be aware that for CSRF to work, caller MUST pass in session cookie. So
-    for pure API, and no session cookie - there is no way to support CSRF-Login
-    so app must set CSRF_IGNORE_UNAUTH_ENDPOINTS (or use CSRF/session cookie for logging
-    in then once they have a token, no need for cookie).
+Be aware that for CSRF to work, caller MUST pass in session cookie. So
+for pure API, and no session cookie - there is no way to support CSRF-Login
+so app must set CSRF_IGNORE_UNAUTH_ENDPOINTS (or use CSRF/session cookie for logging
+in then once they have a token, no need for cookie).
 
 """
 

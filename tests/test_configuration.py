@@ -1,8 +1,8 @@
 """
-    test_configuration
-    ~~~~~~~~~~~~~~~~~~
+test_configuration
+~~~~~~~~~~~~~~~~~~
 
-    Basic configuration tests
+Basic configuration tests
 """
 
 import base64

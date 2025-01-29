@@ -1,11 +1,11 @@
 """
-    flask_security.webauthn_util
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.webauthn_util
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Utility class providing methods controlling various aspects of webauthn.
+Utility class providing methods controlling various aspects of webauthn.
 
-    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 

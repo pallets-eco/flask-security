@@ -1,10 +1,10 @@
 """
-    Flask-Security JSON extensions.
+Flask-Security JSON extensions.
 
-    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    Pieces of this code liberally copied from flask-mongoengine.
+Pieces of this code liberally copied from flask-mongoengine.
 """
 
 

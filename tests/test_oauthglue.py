@@ -1,11 +1,11 @@
 """
-    test_oauthglue.py
-    ~~~~~~~~~~~~~~~~~
+test_oauthglue.py
+~~~~~~~~~~~~~~~~~
 
-    Oauth glue tests - oauthglue is a very thin shim between FS and authlib
+Oauth glue tests - oauthglue is a very thin shim between FS and authlib
 
-    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 import pytest

@@ -1,38 +1,38 @@
 """
-    flask_security.webauthn
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.webauthn
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security WebAuthn module
+Flask-Security WebAuthn module
 
-    :copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
+This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
 
-    Check out: https://golb.hplar.ch/2019/08/webauthn.html
-    for some ideas on recovery and adding additional authenticators.
+Check out: https://golb.hplar.ch/2019/08/webauthn.html
+for some ideas on recovery and adding additional authenticators.
 
-    For testing - you can see your YubiKey (or other) resident keys in chrome!
-    chrome://settings/securityKeys
+For testing - you can see your YubiKey (or other) resident keys in chrome!
+chrome://settings/securityKeys
 
-    Observation: if key isn't resident than Chrome for example won't let you use
-    it if it isn't part of allowedCredentials - throw error: referencing:
-    https://www.w3.org/TR/webauthn-2/#sctn-privacy-considerations-client
+Observation: if key isn't resident than Chrome for example won't let you use
+it if it isn't part of allowedCredentials - throw error: referencing:
+https://www.w3.org/TR/webauthn-2/#sctn-privacy-considerations-client
 
-    TODO:
-        - update/add examples to support webauthn
-        - should we universally add endpoint urls to JSON responses?
-        - Add a way to order registered credentials so we can return an ordered list
-          in allowCredentials.
-        - #sctn-usecase-new-device-registration - allow more than one "first" key
-          and have them not necessarily be cross-platform.. add form option?
+TODO:
+    - update/add examples to support webauthn
+    - should we universally add endpoint urls to JSON responses?
+    - Add a way to order registered credentials so we can return an ordered list
+      in allowCredentials.
+    - #sctn-usecase-new-device-registration - allow more than one "first" key
+      and have them not necessarily be cross-platform.. add form option?
 
-    Research:
-        - should we store things like user verified in 'last use'...
-        - By insisting on 2FA if user has registered a webauthn - things
-          get interesting if they try to log in on a different device....
-          How would they register a security key for a new device? They would need
-          some OTHER 2FA? Force them to register a NEW webauthn key?
+Research:
+    - should we store things like user verified in 'last use'...
+    - By insisting on 2FA if user has registered a webauthn - things
+      get interesting if they try to log in on a different device....
+      How would they register a security key for a new device? They would need
+      some OTHER 2FA? Force them to register a NEW webauthn key?
 
 """
 

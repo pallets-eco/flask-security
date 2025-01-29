@@ -1,31 +1,31 @@
 """
-    flask_security.unified_signin
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.unified_signin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security Unified Signin module
+Flask-Security Unified Signin module
 
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    This implements a unified sign in endpoint - allowing
-    authentication via identity and passcode - where identity is configured
-    via SECURITY_USER_IDENTITY_ATTRIBUTES, and allowable passcodes are
-    one of US_ENABLED_METHODS.
+This implements a unified sign in endpoint - allowing
+authentication via identity and passcode - where identity is configured
+via SECURITY_USER_IDENTITY_ATTRIBUTES, and allowable passcodes are
+one of US_ENABLED_METHODS.
 
-    Finish up:
-    - we should be able to add a phone number as part of setup even w/o any METHODS -
-      i.e. to allow login with any identity (phone) and a password.
+Finish up:
+- we should be able to add a phone number as part of setup even w/o any METHODS -
+  i.e. to allow login with any identity (phone) and a password.
 
-    Consider/Questions:
-    - Allow registering/confirming with just a phone number - this likely would require
-      a new register/confirm endpoint in order to implement verification.
-    - Right now ChangePassword won't work - it requires an existing password - so
-      if the user doesn't have one - can't change it. However ForgotPassword will in
-      fact allow the user to add a password. Is that sufficient?
-    - This also means that there is no way to REMOVE your password once it is setup,
-      although user can register without one.
-    - separate code validation times for SMS, email, authenticator?
-    - token versus code versus passcode? Confusing terminology.
+Consider/Questions:
+- Allow registering/confirming with just a phone number - this likely would require
+  a new register/confirm endpoint in order to implement verification.
+- Right now ChangePassword won't work - it requires an existing password - so
+  if the user doesn't have one - can't change it. However ForgotPassword will in
+  fact allow the user to add a password. Is that sufficient?
+- This also means that there is no way to REMOVE your password once it is setup,
+  although user can register without one.
+- separate code validation times for SMS, email, authenticator?
+- token versus code versus passcode? Confusing terminology.
 
 """
 

@@ -1,12 +1,12 @@
 """
-    conftest
-    ~~~~~~~~
+conftest
+~~~~~~~~
 
-    Test fixtures and what not
+Test fixtures and what not
 
-    :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2017 by CERN.
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations

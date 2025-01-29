@@ -1,14 +1,14 @@
 """
-    flask_security.mail_util
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.mail_util
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Utility class providing methods for validating, normalizing and sending emails.
+Utility class providing methods for validating, normalizing and sending emails.
 
-    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    While this default implementation uses Flask-Mailman - we want to make sure that
-    Flask-Mailman isn't REQUIRED (if this implementation isn't used).
+While this default implementation uses Flask-Mailman - we want to make sure that
+Flask-Mailman isn't REQUIRED (if this implementation isn't used).
 """
 
 from __future__ import annotations

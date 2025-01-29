@@ -1,14 +1,14 @@
 """
-    test_async
-    ~~~~~~~~~~
+test_async
+~~~~~~~~~~
 
-    Tests using Flask async.
+Tests using Flask async.
 
-    Make sure our decorators allow for async views
-    Make sure signal receivers can be async
+Make sure our decorators allow for async views
+Make sure signal receivers can be async
 
-    :copyright: (c) 2023-2023 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2023-2023 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 

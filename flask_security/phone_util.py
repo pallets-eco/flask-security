@@ -1,13 +1,13 @@
 """
-    flask_security.phone_util
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.phone_util
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Utility class for managing phone numbers
+Utility class for managing phone numbers
 
-    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
-    Avoid making 'phonenumbers' a required package unless needed.
+Avoid making 'phonenumbers' a required package unless needed.
 """
 
 from __future__ import annotations

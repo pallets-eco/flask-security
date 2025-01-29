@@ -1,8 +1,8 @@
 """
-    test_cli
-    ~~~~~~~~
+test_cli
+~~~~~~~~
 
-    Test command line interface.
+Test command line interface.
 """
 
 from click.testing import CliRunner

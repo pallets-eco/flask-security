@@ -1,11 +1,11 @@
 """
-    flask_security.password_util
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.password_util
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Utility class providing methods for validating and normalizing passwords.
+Utility class providing methods for validating and normalizing passwords.
 
-    :copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 
 """
 

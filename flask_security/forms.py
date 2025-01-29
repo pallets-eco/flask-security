@@ -1,13 +1,13 @@
 """
-    flask_security.forms
-    ~~~~~~~~~~~~~~~~~~~~
+flask_security.forms
+~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security forms module
+Flask-Security forms module
 
-    :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2017 by CERN.
-    :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2012 by Matt Wright.
+:copyright: (c) 2017 by CERN.
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations

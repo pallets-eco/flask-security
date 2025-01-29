@@ -1,12 +1,12 @@
 """
-    flask_security.utils
-    ~~~~~~~~~~~~~~~~~~~~
+flask_security.utils
+~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security utils module
+Flask-Security utils module
 
-    :copyright: (c) 2012-2019 by Matt Wright.
-    :copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2012-2019 by Matt Wright.
+:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations

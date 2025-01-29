@@ -1,12 +1,12 @@
 """
-    flask_security.passwordless
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.passwordless
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security passwordless module
+Flask-Security passwordless module
 
-    :copyright: (c) 2012 by Matt Wright.
-    :copyright: (c) 2021 by Chris Wagner.
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2012 by Matt Wright.
+:copyright: (c) 2021 by Chris Wagner.
+:license: MIT, see LICENSE for more details.
 """
 
 from flask import current_app as app

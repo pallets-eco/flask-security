@@ -1,14 +1,14 @@
 """
-    flask_security.quart_compat
-    ~~~~~~~~~~~~~~~~~~~~
+flask_security.quart_compat
+~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security quart compatibility modiles
+Flask-Security quart compatibility modiles
 
-    :copyright: (c) 2019 by Shinon.
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2019 by Shinon.
+:license: MIT, see LICENSE for more details.
 
-    This modules tests whether we are using quart or not
-    we can test if the name of the imported flask is: quart.flask_patch
+This modules tests whether we are using quart or not
+we can test if the name of the imported flask is: quart.flask_patch
 """
 
 import flask

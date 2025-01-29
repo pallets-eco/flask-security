@@ -1,8 +1,8 @@
 """
-    test_confirmable
-    ~~~~~~~~~~~~~~~~
+test_confirmable
+~~~~~~~~~~~~~~~~
 
-    Confirmable tests
+Confirmable tests
 """
 
 from datetime import date, timedelta

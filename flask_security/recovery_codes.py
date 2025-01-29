@@ -1,11 +1,11 @@
 """
-    flask_security.recovery_codes
-    ~~~~~~~~~~~~~~~~~~~~~~~~
+flask_security.recovery_codes
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Flask-Security Recovery Codes Module
+Flask-Security Recovery Codes Module
 
-    :copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
-    :license: MIT, see LICENSE for more details.
+:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations
