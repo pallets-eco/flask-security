@@ -2,14 +2,14 @@
 # Copyright (C) 2023 ORGANIZATION
 # This file is distributed under the same license as the Flask-Security
 # project.
-# Giorgio Stampa <giorgio.stampa@sanofi.com>, 2023.
+# Giorgio Stampa <giorgio.stampa@sanofi.com>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 5.4.3\n"
+"Project-Id-Version: Flask-Security 5.6.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2025-01-14 08:09-0800\n"
-"PO-Revision-Date: 2024-07-08 15:04+0200\n"
+"PO-Revision-Date: 2025-02-07 19:38+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: it_IT\n"
 "Language-Team: \n"
@@ -60,11 +60,11 @@ msgstr "Istruzioni per reimpostare la password"
 #: flask_security/core.py:303
 #: flask_security/templates/security/email/change_username_notice.txt:1
 msgid "Your username has been changed"
-msgstr ""
+msgstr "Il tuo nome utente è stato cambiato"
 
 #: flask_security/core.py:304
 msgid "Your requested username"
-msgstr ""
+msgstr "Il tuo nome utente richiesto"
 
 #: flask_security/core.py:307
 msgid "Two-factor Login"
@@ -387,7 +387,7 @@ msgstr "Utilizza questo codice per accedere: %(code)s."
 
 #: flask_security/core.py:570
 msgid "You successfully changed your username"
-msgstr ""
+msgstr "Hai cambiato il tuo nome utente"
 
 #: flask_security/core.py:572
 #, python-format
@@ -493,7 +493,7 @@ msgstr ""
 
 #: flask_security/core.py:655
 msgid "If registered, your username will be sent to your email."
-msgstr ""
+msgstr "Se registrato, il nome utente verrà inviato al tuo indirizzo e-mail."
 
 #: flask_security/forms.py:61
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
@@ -561,7 +561,7 @@ msgstr "Recupera password"
 
 #: flask_security/forms.py:78 flask_security/templates/security/_menu.html:65
 msgid "Recover Username"
-msgstr ""
+msgstr "Recupera il nome utente"
 
 #: flask_security/forms.py:79 flask_security/templates/security/_menu.html:55
 #: flask_security/templates/security/register_user.html:6
@@ -745,7 +745,7 @@ msgstr "Cambia email registrata"
 #: flask_security/templates/security/_menu.html:24
 #: flask_security/templates/security/change_username.html:6
 msgid "Change Username"
-msgstr ""
+msgstr "Cambia nome utente"
 
 #: flask_security/templates/security/_menu.html:29
 msgid "Two Factor Setup"
@@ -792,7 +792,7 @@ msgstr "Al momento non hai una password: ne verrà aggiunta una."
 #: flask_security/templates/security/change_username.html:8
 #, python-format
 msgid "Current username is: %(username)s"
-msgstr ""
+msgstr "Il nome utente attuale è: %(username)s"
 
 #: flask_security/templates/security/forgot_password.html:6
 msgid "Send password reset instructions"
@@ -846,7 +846,7 @@ msgstr "Genera nuovi codici di ripristino"
 
 #: flask_security/templates/security/recover_username.html:6
 msgid "Username recovery"
-msgstr ""
+msgstr "Recupero del nome utente"
 
 #: flask_security/templates/security/reset_password.html:6
 msgid "Reset password"
@@ -1057,7 +1057,7 @@ msgstr ""
 
 #: flask_security/templates/security/email/change_username_notice.html:1
 msgid "Your username has been changed."
-msgstr ""
+msgstr "Il tuo nome utente è stato cambiato."
 
 #: flask_security/templates/security/email/confirmation_instructions.html:8
 #: flask_security/templates/security/email/confirmation_instructions.txt:8
@@ -1117,23 +1117,25 @@ msgstr "Oppure tramite il link sottostante:"
 #: flask_security/templates/security/email/username_recovery.html:5
 #: flask_security/templates/security/email/username_recovery.txt:5
 msgid "Hello,"
-msgstr ""
+msgstr "Ciao,"
 
 #: flask_security/templates/security/email/username_recovery.html:6
 #: flask_security/templates/security/email/username_recovery.txt:6
 msgid "You recently requested to recover your username."
-msgstr ""
+msgstr "Di recente hai chiesto di recuperare il tuo nome utente."
 
 #: flask_security/templates/security/email/username_recovery.html:7
 #: flask_security/templates/security/email/username_recovery.txt:7
 #, python-format
 msgid "Your username is: %(username)s"
-msgstr ""
+msgstr "Il tuo nome utente è: %(username)s"
 
 #: flask_security/templates/security/email/username_recovery.html:8
 #: flask_security/templates/security/email/username_recovery.txt:8
 msgid "If you did not initiate this request, you can safely ignore this email."
 msgstr ""
+"Se non hai avviato tu questa richiesta, puoi tranquillamente ignorare "
+"questo messaggio."
 
 #: flask_security/templates/security/email/welcome.html:10
 #: flask_security/templates/security/email/welcome.txt:11

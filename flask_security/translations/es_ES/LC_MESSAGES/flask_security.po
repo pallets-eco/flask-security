@@ -4,14 +4,14 @@
 # project.
 # Mauko Quiroga <mauko.quiroga@data.gouv.fr>, 2017.
 # Martin Mozos <martinmozos@gmail.com>, 2020.
-# Giorgio Stampa <giorgio.stampa@sanofi.com>, 2023.
+# Giorgio Stampa <giorgio.stampa@sanofi.com>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 5.4.3\n"
+"Project-Id-Version: Flask-Security 5.6.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2025-01-14 08:09-0800\n"
-"PO-Revision-Date: 2024-07-08 15:04+0200\n"
+"PO-Revision-Date: 2025-02-07 19:33+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
 "Language-Team: \n"
@@ -62,11 +62,11 @@ msgstr "Instrucciones de recuperación de contraseña"
 #: flask_security/core.py:303
 #: flask_security/templates/security/email/change_username_notice.txt:1
 msgid "Your username has been changed"
-msgstr ""
+msgstr "Tu nombre de usuario ha sido cambiado"
 
 #: flask_security/core.py:304
 msgid "Your requested username"
-msgstr ""
+msgstr "Tu nombre de usuario solicitado"
 
 #: flask_security/core.py:307
 msgid "Two-factor Login"
@@ -388,7 +388,7 @@ msgstr "Utiliza este código para iniciar sesión: %(code)s."
 
 #: flask_security/core.py:570
 msgid "You successfully changed your username"
-msgstr ""
+msgstr "Has cambiado tu nombre de usuario"
 
 #: flask_security/core.py:572
 #, python-format
@@ -494,7 +494,7 @@ msgstr ""
 
 #: flask_security/core.py:655
 msgid "If registered, your username will be sent to your email."
-msgstr ""
+msgstr "Si registrado, tu nombre de usuario se enviará a tu correo electrónico."
 
 #: flask_security/forms.py:61
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
@@ -562,7 +562,7 @@ msgstr "Recuperar contraseña"
 
 #: flask_security/forms.py:78 flask_security/templates/security/_menu.html:65
 msgid "Recover Username"
-msgstr ""
+msgstr "Recuperar nombre de usuario"
 
 #: flask_security/forms.py:79 flask_security/templates/security/_menu.html:55
 #: flask_security/templates/security/register_user.html:6
@@ -746,7 +746,7 @@ msgstr "Cambiar el correo electrónico registrado"
 #: flask_security/templates/security/_menu.html:24
 #: flask_security/templates/security/change_username.html:6
 msgid "Change Username"
-msgstr ""
+msgstr "Cambiar el nombre de usuario"
 
 #: flask_security/templates/security/_menu.html:29
 msgid "Two Factor Setup"
@@ -795,7 +795,7 @@ msgstr "Actualmente no tienes una contraseña - esto añadirá una."
 #: flask_security/templates/security/change_username.html:8
 #, python-format
 msgid "Current username is: %(username)s"
-msgstr ""
+msgstr "El nombre de usuario actual es: %(username)s"
 
 #: flask_security/templates/security/forgot_password.html:6
 msgid "Send password reset instructions"
@@ -849,7 +849,7 @@ msgstr "Generar nuevos códigos de recuperación"
 
 #: flask_security/templates/security/recover_username.html:6
 msgid "Username recovery"
-msgstr ""
+msgstr "Recuperación del nombre de usuario"
 
 #: flask_security/templates/security/reset_password.html:6
 msgid "Reset password"
@@ -1063,7 +1063,7 @@ msgstr ""
 
 #: flask_security/templates/security/email/change_username_notice.html:1
 msgid "Your username has been changed."
-msgstr ""
+msgstr "Tu nombre de usuario ha sido cambiado."
 
 #: flask_security/templates/security/email/confirmation_instructions.html:8
 #: flask_security/templates/security/email/confirmation_instructions.txt:8
@@ -1123,23 +1123,23 @@ msgstr "O a través del enlace de abajo:"
 #: flask_security/templates/security/email/username_recovery.html:5
 #: flask_security/templates/security/email/username_recovery.txt:5
 msgid "Hello,"
-msgstr ""
+msgstr "Hola,"
 
 #: flask_security/templates/security/email/username_recovery.html:6
 #: flask_security/templates/security/email/username_recovery.txt:6
 msgid "You recently requested to recover your username."
-msgstr ""
+msgstr "Recientemente has solicitado recuperar tu nombre de usuario."
 
 #: flask_security/templates/security/email/username_recovery.html:7
 #: flask_security/templates/security/email/username_recovery.txt:7
 #, python-format
 msgid "Your username is: %(username)s"
-msgstr ""
+msgstr "Tu nombre de usuario es: %(username)s"
 
 #: flask_security/templates/security/email/username_recovery.html:8
 #: flask_security/templates/security/email/username_recovery.txt:8
 msgid "If you did not initiate this request, you can safely ignore this email."
-msgstr ""
+msgstr "Si no has iniciado esta solicitud, puedes ignorar este mensaje."
 
 #: flask_security/templates/security/email/welcome.html:10
 #: flask_security/templates/security/email/welcome.txt:11
