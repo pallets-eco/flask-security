@@ -188,6 +188,7 @@ class _UnifiedPassCodeForm(Form):
             # Since we have a unique totp_secret for each method - we
             # can figure out which mechanism was used.
             # Note that password check requires a string (not int or None)
+            assert isinstance(self.passcode.errors, list)
             passcode = self.passcode.data
             if not passcode:
                 self.passcode.errors.append(get_message("INVALID_PASSWORD_CODE")[0])
@@ -218,6 +219,7 @@ class _UnifiedPassCodeForm(Form):
             return True
         elif self.submit_send_code.data:
             # Send a code - chosen_method must be valid
+            assert isinstance(self.chosen_method.errors, list)
             cm = self.chosen_method.data
             if cm not in cv("US_ENABLED_METHODS"):
                 self.chosen_method.errors.append(
@@ -263,6 +265,7 @@ class UnifiedSigninForm(_UnifiedPassCodeForm, NextFormMixin):
 
         # Can't authenticate nor get a code if still required confirmation.
         self.requires_confirmation = requires_confirmation(self.user)
+        assert isinstance(self.identity.errors, list)
         if self.requires_confirmation:
             self.identity.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False
@@ -322,6 +325,10 @@ class UnifiedSigninSetupForm(Form):
         if not super().validate(**kwargs):
             return False
 
+        assert isinstance(self.chosen_method.errors, list)
+        assert isinstance(self.phone.errors, list)
+        assert isinstance(self.delete_method.errors, list)
+
         if not self.chosen_method.data and not self.delete_method.data:
             self.form_errors.append(get_message("API_ERROR")[0])
             return False
@@ -333,6 +340,9 @@ class UnifiedSigninSetupForm(Form):
                 return False
 
             if self.chosen_method.data == "sms":
+                if not self.phone.data:
+                    self.phone.errors.append(get_message("PHONE_INVALID")[0])
+                    return False
                 msg = _security._phone_util.validate_phone_number(self.phone.data)
                 if msg:
                     self.phone.errors.append(msg)
@@ -385,6 +395,8 @@ class UnifiedSigninSetupValidateForm(Form):
         if not super().validate(**kwargs):
             return False
 
+        assert isinstance(self.passcode.errors, list)
+        assert self.passcode.data is not None  # RequiredLocalize validator
         if not _security._totp_factory.verify_totp(
             token=self.passcode.data,
             totp_secret=self.totp_secret,
@@ -429,6 +441,7 @@ def us_signin_send_code() -> ResponseValue:
     if form.validate_on_submit():
         msg = _send_code_helper(form, True)
         if msg:
+            assert isinstance(form.chosen_method.errors, list)
             form.chosen_method.errors.append(msg)
 
         if _security._want_json(request):
@@ -500,6 +513,7 @@ def us_verify_send_code() -> ResponseValue:
     if form.validate_on_submit():
         msg = _send_code_helper(form, False)
         if msg:
+            assert isinstance(form.chosen_method.errors, list)
             form.chosen_method.errors.append(msg)
 
         if _security._want_json(request):
@@ -829,11 +843,10 @@ def us_setup() -> ResponseValue:
             # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
             # to send it to the user.
             # Only check phone number if SMS (see form validate)
-            phone_number = (
-                _security._phone_util.get_canonical_form(form.phone.data)
-                if add_method == "sms"
-                else None
-            )
+            phone_number = None
+            if add_method == "sms":
+                assert form.phone.data is not None
+                phone_number = _security._phone_util.get_canonical_form(form.phone.data)
             state = {
                 "totp_secret": totp,
                 "chosen_method": add_method,
@@ -846,6 +859,7 @@ def us_setup() -> ResponseValue:
             )
             if msg:
                 # sending didn't work.
+                assert isinstance(form.chosen_method.errors, list)
                 form.chosen_method.errors.append(msg)
                 if _security._want_json(request):
                     # Not authenticated yet - so don't send any user info.

@@ -77,7 +77,7 @@ def tf_select() -> ResponseValue:
         return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
 
     setup_methods = _security.two_factor_plugins.get_setup_tf_methods(user)
-    form.which.choices = setup_methods
+    form.which.choices = setup_methods  # type: ignore[assignment]
 
     if form.validate_on_submit():
         response = None
