@@ -27,6 +27,7 @@ from .utils import (
     base_render_json,
     config_value as cv,
     do_flash,
+    get_message,
     json_error_response,
     send_mail,
     url_for_security,
@@ -70,11 +71,11 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
             username=user.calc_username(),
         )
     elif method == "sms":
-        msg = f"Use this code to log in: {token_to_be_sent}"
+        m, c = get_message("USE_CODE", code=token_to_be_sent)
         from_number = cv("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
         to_number = phone_number
         sms_sender = SmsSenderFactory.createSender(cv("SMS_SERVICE"))
-        sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=msg)
+        sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=m)
 
     else:
         # password are generated automatically in the authenticator apps or not needed

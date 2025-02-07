@@ -82,16 +82,16 @@ Freshness
 ~~~~~~~~~
 A common pattern for browser-based sites is to use sessions to manage identity. This is usually
 implemented using session cookies. These cookies expire once the session (browser tab) is closed. This is very
-convenient, and keeps the users from having to constantly re-authenticate. The downside is that sessions can easily be
+convenient, and keeps the users from having to constantly reauthenticate. The downside is that sessions can easily be
 open for days or weeks. This adds to the security risk that some bad-actor or XSS gets control of the browser and then can
 do anything the user can. To mitigate that, operations that change fundamental identity characteristics (such as email, password, etc.)
 can be protected by requiring a 'fresh' or recent authentication. Flask-Security supports this with the following:
 
     - :func:`.auth_required` takes parameters that define how recent the authentication must have happened. In addition a grace
-      period can be specified so that multiple step operations don't require re-authentication in the middle.
+      period can be specified so that multiple step operations don't require reauthentication in the middle.
     - A default :meth:`.Security.reauthn_handler` that is called when a request fails the recent authentication check.
     - :py:data:`SECURITY_VERIFY_URL`, :py:data:`SECURITY_US_VERIFY_URL`, :py:data:`SECURITY_WAN_VERIFY_URL` endpoints
-      that request the user to re-authenticate.
+      that request the user to reauthenticate.
     - ``VerifyForm``, ``UsVerifyForm``, ``WebAuthnVerifyForm`` forms that can be extended.
 
 Flask-Security itself uses this as part of securing the following endpoints:

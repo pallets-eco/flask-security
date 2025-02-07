@@ -304,8 +304,8 @@ _default_config: dict[str, t.Any] = {
     "EMAIL_SUBJECT_USERNAME_RECOVERY": _("Your requested username"),
     "EMAIL_PLAINTEXT": True,
     "EMAIL_HTML": True,
-    "EMAIL_SUBJECT_TWO_FACTOR": _("Two-factor Login"),
-    "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-factor Rescue"),
+    "EMAIL_SUBJECT_TWO_FACTOR": _("Two-Factor Login"),
+    "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-Factor Rescue"),
     "USER_IDENTITY_ATTRIBUTES": [
         {"email": {"mapper": uia_email_mapper, "case_insensitive": True}}
     ],
@@ -415,7 +415,7 @@ _default_messages = {
         "error",
     ),
     "REAUTHENTICATION_REQUIRED": (
-        _("You must re-authenticate to access this endpoint"),
+        _("You must reauthenticate to access this endpoint"),
         "error",
     ),
     "CONFIRM_REGISTRATION": (
@@ -548,7 +548,7 @@ _default_messages = {
     ),
     "TWO_FACTOR_METHOD_NOT_AVAILABLE": (_("Marked method is not valid"), "error"),
     "TWO_FACTOR_DISABLED": (
-        _("You successfully disabled two factor authorization."),
+        _("You successfully disabled two-factor authorization."),
         "success",
     ),
     "TWO_FACTOR_SETUP_EXPIRED": (
@@ -566,7 +566,7 @@ _default_messages = {
     ),
     "US_SETUP_SUCCESSFUL": (_("Unified sign in setup successful"), "info"),
     "US_SPECIFY_IDENTITY": (_("You must specify a valid identity to sign in"), "error"),
-    "USE_CODE": (_("Use this code to sign in: %(code)s."), "info"),
+    "USE_CODE": (_("Use this code to sign in: %(code)s"), "info"),
     "USERNAME_CHANGE": (_("You successfully changed your username"), "success"),
     "USERNAME_INVALID_LENGTH": (
         _(
@@ -1147,7 +1147,7 @@ class Security:
     :param datastore: An instance of a user datastore.
     :param register_blueprint: to register the Security blueprint or not.
     :param login_form: set form for the login view
-    :param verify_form: set form for re-authentication due to freshness check
+    :param verify_form: set form for reauthentication due to freshness check
     :param change_email_form: set form for changing email address
     :param register_form: set form for the register view when
             :data:`SECURITY_CONFIRMABLE` is false
@@ -1169,7 +1169,7 @@ class Security:
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
     :param us_setup_validate_form: set form for the unified sign in setup validate view
-    :param us_verify_form: set form for re-authenticating due to freshness check
+    :param us_verify_form: set form for reauthenticating due to freshness check
     :param wan_register_form: set form for registering a webauthn security key
     :param wan_register_response_form: set form for registering a webauthn security key
     :param wan_signin_form: set form for authenticating with a webauthn security key
@@ -1199,7 +1199,7 @@ class Security:
         on the instance and therefore won't track any changes.
 
     .. versionadded:: 3.4.0
-        ``verify_form`` added as part of freshness/re-authentication
+        ``verify_form`` added as part of freshness/reauthentication
 
     .. versionadded:: 3.4.0
         ``us_signin_form``, ``us_setup_form``, ``us_setup_validate_form``, and

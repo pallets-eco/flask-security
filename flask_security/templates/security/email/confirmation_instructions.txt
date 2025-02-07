@@ -5,6 +5,4 @@
   user - the entire user model object
   security - the Flask-Security configuration
 #}
-{{ _fsdomain('Please confirm your email through the link below:') }}
-
-{{ confirmation_link }}
+{{ _fsdomain('Use %(confirmation_link)s to confirm your email address.', confirmation_link=confirmation_link)|safe }}

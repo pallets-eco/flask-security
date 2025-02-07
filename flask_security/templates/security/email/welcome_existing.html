@@ -17,7 +17,6 @@
 {% endif %}
 {% if recovery_link %}
   <div>
-    {{ _fsdomain('If you forgot your password you can reset it') }}
-    <a href="{{ recovery_link }}">{{ _fsdomain(' here.') }}</a>
+    {{ _fsdomain('If you forgot your password you can reset it <a href="%(recovery_link)s"> here.</a>', recovery_link=recovery_link)|safe }}
   </div>
 {% endif %}

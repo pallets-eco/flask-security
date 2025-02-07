@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2025-01-14 08:09-0800\n"
+"POT-Creation-Date: 2025-02-08 07:02-0800\n"
 "PO-Revision-Date: 2020-12-01 11:47+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hy_AM\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.16.0\n"
+"Generated-By: Babel 2.17.0\n"
 
 #: flask_security/core.py:245
 msgid "Confirm your new email address"
@@ -28,10 +28,6 @@ msgid "Login Required"
 msgstr "Անհրաժեշտ է մուտք գործել"
 
 #: flask_security/core.py:297
-#: flask_security/templates/security/email/two_factor_instructions.html:1
-#: flask_security/templates/security/email/two_factor_instructions.txt:1
-#: flask_security/templates/security/email/us_instructions.html:9
-#: flask_security/templates/security/email/us_instructions.txt:9
 msgid "Welcome"
 msgstr "Բարի գալուստ"
 
@@ -67,12 +63,12 @@ msgid "Your requested username"
 msgstr ""
 
 #: flask_security/core.py:307
-msgid "Two-factor Login"
-msgstr "Երկու գործոնով մուտք"
+msgid "Two-Factor Login"
+msgstr ""
 
 #: flask_security/core.py:308
-msgid "Two-factor Rescue"
-msgstr "Երկու գործոնով վերականգնում"
+msgid "Two-Factor Rescue"
+msgstr ""
 
 #: flask_security/core.py:350
 msgid "Verification Code"
@@ -86,7 +82,7 @@ msgstr "Մուտքը չի համապատասխանում հայցվող API֊ի�
 msgid "Authentication failed - identity or password/passcode invalid"
 msgstr "Նույնականացումը ձախողվեց. ինքնությունը կամ գաղտնաբառը/ծածկագիրը անվավեր է"
 
-#: flask_security/core.py:402
+#: flask_security/core.py:403
 msgid ""
 "If that email address is in our system, you will receive an email "
 "describing how to reset your password."
@@ -107,10 +103,10 @@ msgid "You must sign in to view this resource."
 msgstr ""
 
 #: flask_security/core.py:418
-msgid "You must re-authenticate to access this endpoint"
-msgstr "Դուք պետք է կրկին նույնականցվեք որպեսզի այստեղ մուտք գործեք"
+msgid "You must reauthenticate to access this endpoint"
+msgstr ""
 
-#: flask_security/core.py:422
+#: flask_security/core.py:423
 #, python-format
 msgid ""
 "Thank you. To confirm your email address %(email)s, please click on the "
@@ -134,7 +130,7 @@ msgstr "Հաստատման տոկենը անվավեր է։"
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s արդեն կապված է այլ օգտահաշվի հետ։"
 
-#: flask_security/core.py:437
+#: flask_security/core.py:438
 #, python-format
 msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
@@ -148,7 +144,7 @@ msgstr ""
 msgid "Identity %(id)s not registered"
 msgstr "«%(id)s» ինքնությունը գրանցված չէ"
 
-#: flask_security/core.py:448
+#: flask_security/core.py:449
 #, python-format
 msgid ""
 "An error occurred while communicating with the Oauth provider: "
@@ -203,7 +199,7 @@ msgstr "Հաստատման հրահանգները ուղարկվել են %(emai
 msgid "You did not confirm your email within %(within)s. "
 msgstr "Դուք չեք հաստատել ձեր էլ․փոստի հասցեն %(within)s-ի ընթացքում:"
 
-#: flask_security/core.py:479
+#: flask_security/core.py:480
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -282,7 +278,7 @@ msgstr "Դուք բարեհաջող մուտք էք գործել։"
 msgid "Forgot password?"
 msgstr "Մոռացել ե՞ք գաղտնաբառը"
 
-#: flask_security/core.py:512
+#: flask_security/core.py:513
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
@@ -290,7 +286,7 @@ msgstr ""
 "Դուք հաջողությամբ վերականգնել եք ձեր գաղտնաբառը եւ մուտք էք գործել "
 "համակարգ ինքնաբերաբար։"
 
-#: flask_security/core.py:519
+#: flask_security/core.py:520
 msgid ""
 "You successfully reset your password. Please authenticate using your new "
 "password."
@@ -347,8 +343,8 @@ msgid "Marked method is not valid"
 msgstr "Նշված տարբերակը վավեր չէ"
 
 #: flask_security/core.py:551
-msgid "You successfully disabled two factor authorization."
-msgstr "Դուք հաջողությամբ անջատել եք երկու գործոնի թույլտվությունը"
+msgid "You successfully disabled two-factor authorization."
+msgstr ""
 
 #: flask_security/core.py:555 flask_security/core.py:564
 #, python-format
@@ -374,14 +370,14 @@ msgstr "Մուտք գործելու համար պետք է նշեք վավեր �
 
 #: flask_security/core.py:569
 #, python-format
-msgid "Use this code to sign in: %(code)s."
-msgstr "Մուտքի համար օգտագործեք այս ծածկագիրը․ %(code)s։"
+msgid "Use this code to sign in: %(code)s"
+msgstr ""
 
 #: flask_security/core.py:570
 msgid "You successfully changed your username"
 msgstr ""
 
-#: flask_security/core.py:572
+#: flask_security/core.py:573
 #, python-format
 msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
@@ -468,7 +464,7 @@ msgstr ""
 msgid "Change of email address confirmed"
 msgstr ""
 
-#: flask_security/core.py:648
+#: flask_security/core.py:649
 #, python-format
 msgid ""
 "Instructions to confirm your new email address have been sent to "
@@ -479,7 +475,7 @@ msgstr ""
 msgid "If registered, your username will be sent to your email."
 msgstr ""
 
-#: flask_security/forms.py:61
+#: flask_security/forms.py:62
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
 "Կարգավորեք օգտագործելով վավերացման ծրագիր (ինչպիսիք են՝ google, lastpass,"
@@ -490,6 +486,8 @@ msgid "Change Method"
 msgstr "Փոխել տարբերակը"
 
 #: flask_security/forms.py:65 flask_security/templates/security/_menu.html:14
+#: flask_security/templates/security/change_password.html:1
+#: flask_security/templates/security/change_password.html:7
 msgid "Change Password"
 msgstr "Փոխել գաղտնաբառը"
 
@@ -518,8 +516,10 @@ msgid "Identity"
 msgstr "Ինքնություն"
 
 #: flask_security/forms.py:72 flask_security/templates/security/_menu.html:45
-#: flask_security/templates/security/login_user.html:6
-#: flask_security/templates/security/send_login.html:6
+#: flask_security/templates/security/login_user.html:1
+#: flask_security/templates/security/login_user.html:7
+#: flask_security/templates/security/send_login.html:1
+#: flask_security/templates/security/send_login.html:7
 msgid "Login"
 msgstr "Մուտք"
 
@@ -548,7 +548,8 @@ msgid "Recover Username"
 msgstr ""
 
 #: flask_security/forms.py:79 flask_security/templates/security/_menu.html:55
-#: flask_security/templates/security/register_user.html:6
+#: flask_security/templates/security/register_user.html:1
+#: flask_security/templates/security/register_user.html:7
 msgid "Register"
 msgstr "Գրանցվել"
 
@@ -577,8 +578,8 @@ msgid "Send Code"
 msgstr "Ուղարկել ծածկագիր"
 
 #: flask_security/forms.py:86
-#: flask_security/templates/security/email/us_instructions.html:14
-#: flask_security/templates/security/us_signin.html:6
+#: flask_security/templates/security/us_signin.html:1
+#: flask_security/templates/security/us_signin.html:7
 msgid "Sign In"
 msgstr "Մուտք գործել"
 
@@ -626,19 +627,19 @@ msgstr ""
 msgid "none"
 msgstr ""
 
-#: flask_security/forms.py:929 flask_security/unified_signin.py:167
+#: flask_security/forms.py:947 flask_security/unified_signin.py:167
 msgid "Available Methods"
 msgstr "Առկա տարբերակներ"
 
-#: flask_security/forms.py:931
-msgid "Disable two factor authentication"
-msgstr "Անջատել երկու գործոնով նույնականացումը"
+#: flask_security/forms.py:949
+msgid "Disable two-factor authentication"
+msgstr ""
 
-#: flask_security/forms.py:1015
+#: flask_security/forms.py:1040
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr ""
 
-#: flask_security/forms.py:1017
+#: flask_security/forms.py:1042
 msgid "Contact Administrator"
 msgstr ""
 
@@ -662,11 +663,11 @@ msgstr "Երկրորդ գործոնի հասանելի մեթոդներ."
 msgid "Select"
 msgstr "Ընտրել"
 
-#: flask_security/twofactor.py:135
+#: flask_security/twofactor.py:137
 msgid "Send code via email"
 msgstr ""
 
-#: flask_security/twofactor.py:147
+#: flask_security/twofactor.py:150
 msgid "Use previously downloaded recovery code"
 msgstr ""
 
@@ -682,15 +683,15 @@ msgstr "Էլ․ Փոստով"
 msgid "Via SMS"
 msgstr "SMS հաղորդագրությամբ"
 
-#: flask_security/unified_signin.py:298
+#: flask_security/unified_signin.py:301
 msgid "Setup additional sign in option"
 msgstr "Կարգավորեք մուտքի լրացուցիչ տարբերակ"
 
-#: flask_security/unified_signin.py:311
+#: flask_security/unified_signin.py:314
 msgid "Delete active sign in option"
 msgstr "Ջնջել ակտիվ մուտքի տարբերակը"
 
-#: flask_security/webauthn.py:122 flask_security/webauthn.py:356
+#: flask_security/webauthn.py:122 flask_security/webauthn.py:367
 msgid "Nickname"
 msgstr "Մականուն"
 
@@ -706,11 +707,11 @@ msgstr "Օգտագործեք որպես նույնականացման առաջի�
 msgid "Use as a secondary authentication factor"
 msgstr "Օգտագործեք որպես նույնականացման երկրորդական գործոն"
 
-#: flask_security/webauthn.py:218
+#: flask_security/webauthn.py:223
 msgid "Start"
 msgstr "Սկսել"
 
-#: flask_security/webauthn.py:934
+#: flask_security/webauthn.py:947
 msgid "webauthn"
 msgstr "webauthn"
 
@@ -727,13 +728,15 @@ msgid "Change Registered Email"
 msgstr ""
 
 #: flask_security/templates/security/_menu.html:24
-#: flask_security/templates/security/change_username.html:6
+#: flask_security/templates/security/change_username.html:1
+#: flask_security/templates/security/change_username.html:7
 msgid "Change Username"
 msgstr ""
 
 #: flask_security/templates/security/_menu.html:29
-msgid "Two Factor Setup"
-msgstr "Երկու գործոնի կարգավորում"
+#: flask_security/templates/security/two_factor_setup.html:21
+msgid "Two-Factor Setup"
+msgstr ""
 
 #: flask_security/templates/security/_menu.html:34
 msgid "Unified Signin Setup"
@@ -755,68 +758,69 @@ msgstr "Մոռացել եք գաղտնաբառը"
 msgid "Confirm account"
 msgstr "Հաստատել օգտահաշիվը"
 
-#: flask_security/templates/security/change_email.html:6
-msgid "Change email"
+#: flask_security/templates/security/change_email.html:1
+#: flask_security/templates/security/change_email.html:7
+msgid "Change Email"
 msgstr ""
 
-#: flask_security/templates/security/change_email.html:7
+#: flask_security/templates/security/change_email.html:8
 msgid ""
 "Once submitted, an email confirmation will be sent to this new email "
 "address."
 msgstr ""
 
-#: flask_security/templates/security/change_password.html:6
-msgid "Change password"
-msgstr "Փոխել գաղտնաբառը"
-
-#: flask_security/templates/security/change_password.html:13
+#: flask_security/templates/security/change_password.html:14
 msgid "You do not currently have a password - this will add one."
 msgstr "Դուք ներկայումս գաղտնաբառ չունեք, սա կավելացվի:"
 
-#: flask_security/templates/security/change_username.html:8
+#: flask_security/templates/security/change_username.html:9
 #, python-format
 msgid "Current username is: %(username)s"
 msgstr ""
 
-#: flask_security/templates/security/forgot_password.html:6
+#: flask_security/templates/security/forgot_password.html:1
+#: flask_security/templates/security/forgot_password.html:7
 msgid "Send password reset instructions"
 msgstr "Ուղարկել գաղտնաբառի վերականգնման հրահանգները"
 
-#: flask_security/templates/security/login_user.html:13
+#: flask_security/templates/security/login_user.html:14
 msgid "or"
 msgstr "կամ"
 
-#: flask_security/templates/security/login_user.html:23
-#: flask_security/templates/security/us_signin.html:25
+#: flask_security/templates/security/login_user.html:24
+#: flask_security/templates/security/us_signin.html:26
 msgid "Use WebAuthn to Sign In"
 msgstr "Օգտագործել WebAuthn մուտք գործելու համար"
 
-#: flask_security/templates/security/login_user.html:26
-#: flask_security/templates/security/us_signin.html:28
+#: flask_security/templates/security/login_user.html:27
+#: flask_security/templates/security/us_signin.html:29
 msgid "Sign in with WebAuthn"
 msgstr "Մուտք գործել WebAuthn֊ի միջոցով"
 
-#: flask_security/templates/security/login_user.html:32
-#: flask_security/templates/security/us_signin.html:34
+#: flask_security/templates/security/login_user.html:33
+#: flask_security/templates/security/us_signin.html:35
 msgid "Use Social Oauth to Sign In"
 msgstr "Օգտագործել Social Oauth մուտք գործելու համար"
 
-#: flask_security/templates/security/login_user.html:36
-#: flask_security/templates/security/us_signin.html:38
-msgid "Sign in with "
-msgstr "Մուտք գործեք "
+#: flask_security/templates/security/login_user.html:37
+#: flask_security/templates/security/us_signin.html:39
+#, python-format
+msgid "Sign in with %(provider)s"
+msgstr ""
 
-#: flask_security/templates/security/mf_recovery.html:6
+#: flask_security/templates/security/mf_recovery.html:1
+#: flask_security/templates/security/mf_recovery.html:7
 msgid "Enter Recovery Code"
 msgstr "Մուտքագրեք վերականգնման ծածկագիրը"
 
-#: flask_security/templates/security/mf_recovery_codes.html:6
-#: flask_security/templates/security/two_factor_setup.html:79
-#: flask_security/templates/security/wan_register.html:75
+#: flask_security/templates/security/mf_recovery_codes.html:1
+#: flask_security/templates/security/mf_recovery_codes.html:7
+#: flask_security/templates/security/two_factor_setup.html:81
+#: flask_security/templates/security/wan_register.html:76
 msgid "Recovery Codes"
 msgstr "Վերականգնման ծածկագրեր"
 
-#: flask_security/templates/security/mf_recovery_codes.html:12
+#: flask_security/templates/security/mf_recovery_codes.html:13
 msgid ""
 "Be sure to copy these and store in a safe place. Each code can be used "
 "only once."
@@ -824,42 +828,44 @@ msgstr ""
 "Համոզվեք, որ պատճենեք դրանք և պահեք ապահով տեղում: Յուրաքանչյուր ծածկագիր"
 " կարող է օգտագործվել միայն մեկ անգամ:"
 
-#: flask_security/templates/security/mf_recovery_codes.html:20
+#: flask_security/templates/security/mf_recovery_codes.html:21
 msgid "Generate new Recovery Codes"
 msgstr "Ստեղծեք վերականգնման նոր ծածկագրեր"
 
-#: flask_security/templates/security/recover_username.html:6
-msgid "Username recovery"
+#: flask_security/templates/security/recover_username.html:1
+#: flask_security/templates/security/recover_username.html:7
+msgid "Username Recovery"
 msgstr ""
 
-#: flask_security/templates/security/reset_password.html:6
+#: flask_security/templates/security/reset_password.html:1
+#: flask_security/templates/security/reset_password.html:7
 msgid "Reset password"
 msgstr "Վերականգնել գաղտնաբառը"
 
-#: flask_security/templates/security/send_confirmation.html:6
+#: flask_security/templates/security/send_confirmation.html:1
+#: flask_security/templates/security/send_confirmation.html:7
 msgid "Resend confirmation instructions"
 msgstr "Ուղարկել օգտահաշվի վերահաստատման հրահանգները"
 
-#: flask_security/templates/security/two_factor_select.html:6
-msgid "Select Two Factor Method"
-msgstr "Ընտրեք «երկու գործոնի» տարբերակը"
-
-#: flask_security/templates/security/two_factor_setup.html:27
-msgid "Two-factor authentication adds an extra layer of security to your account"
+#: flask_security/templates/security/two_factor_select.html:1
+#: flask_security/templates/security/two_factor_select.html:7
+msgid "Select Two-Factor Method"
 msgstr ""
-"Երկու գործոնով նույնականացումը ձեր հաշվին ավելացնում է անվտանգության "
-"լրացուցիչ շերտ"
 
 #: flask_security/templates/security/two_factor_setup.html:28
+msgid "Two-Factor authentication adds an extra layer of security to your account"
+msgstr ""
+
+#: flask_security/templates/security/two_factor_setup.html:29
 msgid "In addition to your username and password, you'll need to use a code."
 msgstr "Բացի ձեր օգտանունից և գաղտնաբառից, դուք պետք է օգտագործեք ծածկագիր:"
 
-#: flask_security/templates/security/two_factor_setup.html:32
+#: flask_security/templates/security/two_factor_setup.html:33
 #, python-format
 msgid "Currently setup two-factor method: %(method)s"
 msgstr "Ներկայիս կարգավորված երկգործոն մեթոդը. %(method)s"
 
-#: flask_security/templates/security/two_factor_setup.html:51
+#: flask_security/templates/security/two_factor_setup.html:52
 #: flask_security/templates/security/us_setup.html:61
 msgid ""
 "Open an authenticator app on your device and scan the following QRcode "
@@ -868,59 +874,61 @@ msgstr ""
 "Բացեք վավերացնող հավելվածը ձեր սարքում և սկանավորեք հետևյալ QRcode-ը (կամ"
 " մուտքագրեք ստորև նշված ծածկագիրը) ծածկագրեր ստանալու համար."
 
-#: flask_security/templates/security/two_factor_setup.html:54
-msgid "Two factor authentication code"
-msgstr "Երկու գործոն նույնականացման ծածկագիր"
+#: flask_security/templates/security/two_factor_setup.html:55
+msgid "Two-Factor authentication code"
+msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:65
+#: flask_security/templates/security/two_factor_setup.html:66
 msgid "Enter code to complete setup"
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:73
-#: flask_security/templates/security/two_factor_verify_code.html:10
+#: flask_security/templates/security/two_factor_setup.html:75
+#: flask_security/templates/security/two_factor_verify_code.html:11
 msgid "enter numeric code"
 msgstr ""
 
-#: flask_security/templates/security/two_factor_setup.html:81
-#: flask_security/templates/security/wan_register.html:77
+#: flask_security/templates/security/two_factor_setup.html:83
+#: flask_security/templates/security/wan_register.html:78
 msgid "This application supports setting up recovery codes."
 msgstr "Այս հավելվածն օժանդակում է վերականգնման ծածկագրերի կարգավորումը:"
 
-#: flask_security/templates/security/two_factor_setup.html:82
-#: flask_security/templates/security/two_factor_setup.html:90
-#: flask_security/templates/security/us_setup.html:89
-#: flask_security/templates/security/wan_register.html:78
+#: flask_security/templates/security/two_factor_setup.html:84
+#: flask_security/templates/security/two_factor_setup.html:92
+#: flask_security/templates/security/us_setup.html:90
+#: flask_security/templates/security/wan_register.html:79
 msgid "You can set them up here."
 msgstr "Դուք կարող եք դրանք կարգավորել այստեղ:"
 
-#: flask_security/templates/security/two_factor_setup.html:87
+#: flask_security/templates/security/two_factor_setup.html:89
 msgid "WebAuthn"
 msgstr "WebAuthn"
 
-#: flask_security/templates/security/two_factor_setup.html:89
-#: flask_security/templates/security/us_setup.html:88
+#: flask_security/templates/security/two_factor_setup.html:91
+#: flask_security/templates/security/us_setup.html:89
 msgid "This application supports WebAuthn security keys."
 msgstr "Այս հավելվածն օժանդակում է WebAuthn անվտանգության բանալիներին:"
 
-#: flask_security/templates/security/two_factor_verify_code.html:6
-msgid "Two-factor Authentication"
-msgstr "Երկու գործոն նույնականացում"
-
+#: flask_security/templates/security/two_factor_verify_code.html:1
 #: flask_security/templates/security/two_factor_verify_code.html:7
+msgid "Two-Factor Authentication"
+msgstr ""
+
+#: flask_security/templates/security/two_factor_verify_code.html:8
 #, python-format
 msgid "Please enter your authentication code generated via: %(method)s"
 msgstr ""
 "Խնդրում ենք մուտքագրել ձեր նույնականացման ծածկագիրը, որը ստեղծվել է "
 "%(method)s միջոցով."
 
-#: flask_security/templates/security/two_factor_verify_code.html:19
+#: flask_security/templates/security/two_factor_verify_code.html:21
 msgid "The code for authentication was sent to your email address"
 msgstr "Նույնականացման ծածկագիրն ուղարկվել է Ձեր էլ․հասցեին"
 
-#: flask_security/templates/security/two_factor_verify_code.html:22
+#: flask_security/templates/security/two_factor_verify_code.html:24
 msgid "An email was sent to us in order to reset your application account"
 msgstr ""
 
+#: flask_security/templates/security/us_setup.html:24
 #: flask_security/templates/security/us_setup.html:30
 msgid "Setup Unified Sign In"
 msgstr "Կարգավորեք միասնական մուտքը"
@@ -937,25 +945,29 @@ msgstr "Ոչ մի տարբերակի հնարավորություն տրված �
 msgid "Enter code here to complete setup"
 msgstr "Մուտքագրեք ծածկագիրն այստեղ՝ կարգավորումն ավարտելու համար"
 
-#: flask_security/templates/security/us_signin.html:15
-#: flask_security/templates/security/us_verify.html:12
+#: flask_security/templates/security/us_signin.html:16
+#: flask_security/templates/security/us_verify.html:13
 msgid "Request one-time code be sent"
 msgstr "Հայցեք միանգամյա ծածկագրի ուղարկում"
 
-#: flask_security/templates/security/us_verify.html:6
-#: flask_security/templates/security/verify.html:6
-msgid "Please Reauthenticate"
-msgstr "Խնդրում եմ նորից վերանույնականցվեք:"
+#: flask_security/templates/security/us_verify.html:1
+#: flask_security/templates/security/us_verify.html:7
+#: flask_security/templates/security/verify.html:1
+#: flask_security/templates/security/verify.html:7
+#: flask_security/templates/security/wan_verify.html:9
+msgid "Reauthenticate"
+msgstr ""
 
-#: flask_security/templates/security/us_verify.html:17
+#: flask_security/templates/security/us_verify.html:18
 msgid "Code has been sent"
 msgstr "Ծածկագիրն ուղարկվել է"
 
-#: flask_security/templates/security/us_verify.html:25
-#: flask_security/templates/security/verify.html:14
+#: flask_security/templates/security/us_verify.html:26
+#: flask_security/templates/security/verify.html:15
 msgid "Use a WebAuthn Security Key to Reauthenticate"
 msgstr "Վերանույնականցվելու համար օգտագործեք WebAuthn անվտանգության բանալին"
 
+#: flask_security/templates/security/wan_register.html:4
 #: flask_security/templates/security/wan_register.html:16
 msgid "Setup New WebAuthn Security Key"
 msgstr "Կարգավորեք նոր WebAuthn անվտանգության բանալի"
@@ -982,6 +994,10 @@ msgstr ""
 msgid "Delete Existing WebAuthn Security Key"
 msgstr "Ջնջել գոյություն ունեցող WebAuthn անվտանգության բանալին"
 
+#: flask_security/templates/security/wan_signin.html:4
+msgid "WebAuthn Security Key"
+msgstr ""
+
 #: flask_security/templates/security/wan_signin.html:17
 msgid "Sign In Using WebAuthn Security Key"
 msgstr "Մուտք գործեք՝ օգտագործելով WebAuthn անվտանգության բանալին"
@@ -991,33 +1007,29 @@ msgid "Use Your WebAuthn Security Key as a Second Factor"
 msgstr "Օգտագործեք ձեր WebAuthn անվտանգության բանալին որպես երկրորդ գործոն"
 
 #: flask_security/templates/security/wan_verify.html:21
-msgid "Please Re-Authenticate Using Your WebAuthn Security Key"
+msgid "Reauthenticate Using Your WebAuthn Security Key"
 msgstr ""
-"Խնդրում ենք վերանույնականցվեք՝ օգտագործելով ձեր WebAuthn անվտանգության "
-"բանալին"
 
 #: flask_security/templates/security/email/change_email_instructions.html:8
-msgid "Please confirm your new email address by clicking on the link below:"
+#, python-format
+msgid "Use <a href=\"%(link)s\">this link</a> to confirm your new email address."
 msgstr ""
 
-#: flask_security/templates/security/email/change_email_instructions.html:10
-msgid "Confirm my new email"
-msgstr ""
-
-#: flask_security/templates/security/email/change_email_instructions.html:12
-#: flask_security/templates/security/email/change_email_instructions.txt:11
+#: flask_security/templates/security/email/change_email_instructions.html:9
+#: flask_security/templates/security/email/change_email_instructions.txt:9
 #, python-format
 msgid "This link will expire in %(within)s."
 msgstr ""
 
-#: flask_security/templates/security/email/change_email_instructions.html:13
-#: flask_security/templates/security/email/change_email_instructions.txt:13
+#: flask_security/templates/security/email/change_email_instructions.html:10
+#: flask_security/templates/security/email/change_email_instructions.txt:10
 #, python-format
 msgid "Your currently registered email is %(email)s."
 msgstr ""
 
 #: flask_security/templates/security/email/change_email_instructions.txt:8
-msgid "Please confirm your new email through the link below:"
+#, python-format
+msgid "Use %(link)s to confirm your new email address."
 msgstr ""
 
 #: flask_security/templates/security/email/change_notice.html:1
@@ -1042,14 +1054,18 @@ msgid "Your username has been changed."
 msgstr ""
 
 #: flask_security/templates/security/email/confirmation_instructions.html:8
-#: flask_security/templates/security/email/confirmation_instructions.txt:8
-msgid "Please confirm your email through the link below:"
-msgstr "Ստորև բերված հղումով հաստատեք ձեր էլ. փոստի հասցեն․"
+#: flask_security/templates/security/email/welcome.html:10
+#, python-format
+msgid ""
+"Use <a href=\"%(confirmation_link)s\">this link</a> to confirm your email"
+" address."
+msgstr ""
 
-#: flask_security/templates/security/email/confirmation_instructions.html:10
-#: flask_security/templates/security/email/welcome.html:12
-msgid "Confirm my account"
-msgstr "Հաստատել իմ օգտահաշիվը"
+#: flask_security/templates/security/email/confirmation_instructions.txt:8
+#: flask_security/templates/security/email/welcome.txt:11
+#, python-format
+msgid "Use %(confirmation_link)s to confirm your email address."
+msgstr ""
 
 #: flask_security/templates/security/email/login_instructions.html:1
 #: flask_security/templates/security/email/login_instructions.txt:1
@@ -1076,10 +1092,19 @@ msgstr "Ձեր գաղտնաբառը վերականգնելու համար սեղ
 msgid "Click the link below to reset your password:"
 msgstr "Ձեր գաղտնաբառը վերականգնելու համար սեղմեք սեղմեք հղումին"
 
+#: flask_security/templates/security/email/two_factor_instructions.html:1
+#: flask_security/templates/security/email/two_factor_instructions.txt:1
+#: flask_security/templates/security/email/us_instructions.html:9
+#: flask_security/templates/security/email/us_instructions.txt:9
+#, python-format
+msgid "Welcome %(username)s!"
+msgstr ""
+
 #: flask_security/templates/security/email/two_factor_instructions.html:2
 #: flask_security/templates/security/email/two_factor_instructions.txt:3
-msgid "You can log into your account using the following code:"
-msgstr "Դուք կարող եք մտնել Ձեր օգտահաշիվ՝ օգտագործելով հետևյալ ծածկագիրը."
+#, python-format
+msgid "You can log into your account using the following code: %(token)s"
+msgstr ""
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
@@ -1087,14 +1112,24 @@ msgid "can not access mail account"
 msgstr "Օգտահաշիվ հնարավոր չէ մուտք գործել"
 
 #: flask_security/templates/security/email/us_instructions.html:10
-#: flask_security/templates/security/email/us_instructions.txt:11
-msgid "You can sign into your account using the following code:"
-msgstr "Կարող եք մուտք գործել Ձեր օգտահաշիվ՝ օգտագործելով հետևյալ ծածկագիրը."
+#, python-format
+msgid "You can sign in to your account using the following code: %(token)s"
+msgstr ""
 
 #: flask_security/templates/security/email/us_instructions.html:12
-#: flask_security/templates/security/email/us_instructions.txt:15
-msgid "Or use the link below:"
-msgstr "Կամ օգտագործեք ստորեւ նշված հղումը"
+#, python-format
+msgid "Or use this link: <a href=\"%(login_link)s\">Sign in</a>"
+msgstr ""
+
+#: flask_security/templates/security/email/us_instructions.txt:10
+#, python-format
+msgid "You can sign in to your account using the following code: %(token)s."
+msgstr ""
+
+#: flask_security/templates/security/email/us_instructions.txt:12
+#, python-format
+msgid "Or use this link: %(login_link)s"
+msgstr ""
 
 #: flask_security/templates/security/email/username_recovery.html:5
 #: flask_security/templates/security/email/username_recovery.txt:5
@@ -1116,11 +1151,6 @@ msgstr ""
 #: flask_security/templates/security/email/username_recovery.txt:8
 msgid "If you did not initiate this request, you can safely ignore this email."
 msgstr ""
-
-#: flask_security/templates/security/email/welcome.html:10
-#: flask_security/templates/security/email/welcome.txt:11
-msgid "You can confirm your email through the link below:"
-msgstr "Դուք կարող եք հաստատել ձեր էլ. փոստի հասցեն ստորև նշված հղումով."
 
 #: flask_security/templates/security/email/welcome_existing.html:11
 #: flask_security/templates/security/email/welcome_existing.txt:11
@@ -1147,12 +1177,11 @@ msgid ""
 msgstr "Այս հաշիվը ունի նաև հետևյալ օգտվողի անունը՝ կապված դրա հետ. %(username)s։"
 
 #: flask_security/templates/security/email/welcome_existing.html:20
-msgid "If you forgot your password you can reset it"
-msgstr "Եթե մոռացել եք ձեր գաղտնաբառը, կարող եք վերականգնել այն"
-
-#: flask_security/templates/security/email/welcome_existing.html:21
-msgid " here."
-msgstr " այստեղ։"
+#, python-format
+msgid ""
+"If you forgot your password you can reset it <a "
+"href=\"%(recovery_link)s\"> here.</a>"
+msgstr ""
 
 #: flask_security/templates/security/email/welcome_existing.txt:16
 #, python-format
@@ -1162,8 +1191,11 @@ msgid ""
 msgstr "Այս հաշիվը ունի նաև հետևյալ օգտվողի անունը՝ կապված իրա հետ. %(username)s"
 
 #: flask_security/templates/security/email/welcome_existing.txt:20
-msgid "If you forgot your password you can reset it with the following link:"
-msgstr "Եթե մոռացել եք ձեր գաղտնաբառը, կարող եք վերականգնել այն հետևյալ հղումով."
+#, python-format
+msgid ""
+"If you forgot your password you can reset it with the following link: "
+"%(recovery_link)s"
+msgstr ""
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
 #: flask_security/templates/security/email/welcome_existing_username.txt:13
@@ -1217,3 +1249,98 @@ msgstr "Խնդրում ենք վերսկսել գրանցման գործընթա
 
 #~ msgid "Thank you. Confirmation instructions have been sent to %(email)s."
 #~ msgstr "Շնորհակալություն. Հաստատման հրահանգներն ուղարկվել են %(email)s հասցեին։"
+
+#~ msgid "Two-factor Login"
+#~ msgstr "Երկու գործոնով մուտք"
+
+#~ msgid "Two-factor Rescue"
+#~ msgstr "Երկու գործոնով վերականգնում"
+
+#~ msgid "You must re-authenticate to access this endpoint"
+#~ msgstr "Դուք պետք է կրկին նույնականցվեք որպեսզի այստեղ մուտք գործեք"
+
+#~ msgid "You successfully disabled two factor authorization."
+#~ msgstr "Դուք հաջողությամբ անջատել եք երկու գործոնի թույլտվությունը"
+
+#~ msgid "Disable two factor authentication"
+#~ msgstr "Անջատել երկու գործոնով նույնականացումը"
+
+#~ msgid "Two Factor Setup"
+#~ msgstr "Երկու գործոնի կարգավորում"
+
+#~ msgid "Sign in with "
+#~ msgstr "Մուտք գործեք "
+
+#~ msgid "Username recovery"
+#~ msgstr ""
+
+#~ msgid "Select Two Factor Method"
+#~ msgstr "Ընտրեք «երկու գործոնի» տարբերակը"
+
+#~ msgid ""
+#~ "Two-factor authentication adds an extra"
+#~ " layer of security to your account"
+#~ msgstr ""
+#~ "Երկու գործոնով նույնականացումը ձեր հաշվին "
+#~ "ավելացնում է անվտանգության լրացուցիչ շերտ"
+
+#~ msgid "Two factor authentication code"
+#~ msgstr "Երկու գործոն նույնականացման ծածկագիր"
+
+#~ msgid "Two-factor Authentication"
+#~ msgstr "Երկու գործոն նույնականացում"
+
+#~ msgid "Please Reauthenticate"
+#~ msgstr "Խնդրում եմ նորից վերանույնականցվեք:"
+
+#~ msgid "Please Re-Authenticate Using Your WebAuthn Security Key"
+#~ msgstr ""
+#~ "Խնդրում ենք վերանույնականցվեք՝ օգտագործելով "
+#~ "ձեր WebAuthn անվտանգության բանալին"
+
+#~ msgid "Change email"
+#~ msgstr ""
+
+#~ msgid "Change password"
+#~ msgstr "Փոխել գաղտնաբառը"
+
+#~ msgid "Please confirm your new email address by clicking on the link below:"
+#~ msgstr ""
+
+#~ msgid "Confirm my new email"
+#~ msgstr ""
+
+#~ msgid "Confirm my account"
+#~ msgstr "Հաստատել իմ օգտահաշիվը"
+
+#~ msgid "You can log into your account using the following code:"
+#~ msgstr "Դուք կարող եք մտնել Ձեր օգտահաշիվ՝ օգտագործելով հետևյալ ծածկագիրը."
+
+#~ msgid "You can sign into your account using the following code:"
+#~ msgstr "Կարող եք մուտք գործել Ձեր օգտահաշիվ՝ օգտագործելով հետևյալ ծածկագիրը."
+
+#~ msgid "Or use the link below:"
+#~ msgstr "Կամ օգտագործեք ստորեւ նշված հղումը"
+
+#~ msgid "Please confirm your new email through the link below:"
+#~ msgstr ""
+
+#~ msgid "Please confirm your email through the link below:"
+#~ msgstr "Ստորև բերված հղումով հաստատեք ձեր էլ. փոստի հասցեն․"
+
+#~ msgid "You can confirm your email through the link below:"
+#~ msgstr "Դուք կարող եք հաստատել ձեր էլ. փոստի հասցեն ստորև նշված հղումով."
+
+#~ msgid "If you forgot your password you can reset it"
+#~ msgstr "Եթե մոռացել եք ձեր գաղտնաբառը, կարող եք վերականգնել այն"
+
+#~ msgid " here."
+#~ msgstr " այստեղ։"
+
+#~ msgid "If you forgot your password you can reset it with the following link:"
+#~ msgstr ""
+#~ "Եթե մոռացել եք ձեր գաղտնաբառը, կարող "
+#~ "եք վերականգնել այն հետևյալ հղումով."
+
+#~ msgid "Use this code to sign in: %(code)s."
+#~ msgstr "Մուտքի համար օգտագործեք այս ծածկագիրը․ %(code)s։"

@@ -4,7 +4,7 @@ test_changeable
 
 Changeable tests
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -33,7 +33,7 @@ pytestmark = pytest.mark.changeable()
 
 
 def test_changeable_flag(app, clients, get_message):
-    client = clients
+    tcl = clients
     recorded = []
 
     @password_changed.connect_via(app)
@@ -42,14 +42,14 @@ def test_changeable_flag(app, clients, get_message):
         assert isinstance(user, UserMixin)
         recorded.append(user)
 
-    authenticate(client)
+    authenticate(tcl)
 
     # Test change view
-    response = client.get("/change", follow_redirects=True)
-    assert b"Change password" in response.data
+    response = tcl.get("/change", follow_redirects=True)
+    assert b"Change Password" in response.data
 
     # Test wrong original password
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={
             "password": "notpassword",
@@ -61,7 +61,7 @@ def test_changeable_flag(app, clients, get_message):
     assert get_message("INVALID_PASSWORD") in response.data
 
     # Test mismatch
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={
             "password": "password",
@@ -73,13 +73,13 @@ def test_changeable_flag(app, clients, get_message):
     assert get_message("RETYPE_PASSWORD_MISMATCH") in response.data
 
     # Test missing password
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={"password": "   ", "new_password": "", "new_password_confirm": ""},
         follow_redirects=True,
     )
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={
             "password": "   ",
@@ -91,7 +91,7 @@ def test_changeable_flag(app, clients, get_message):
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data
 
     # Test bad password
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={"password": "password", "new_password": "a", "new_password_confirm": "a"},
         follow_redirects=True,
@@ -99,7 +99,7 @@ def test_changeable_flag(app, clients, get_message):
     assert get_message("PASSWORD_INVALID_LENGTH", length=8) in response.data
 
     # Test same as previous
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={
             "password": "password",
@@ -111,7 +111,7 @@ def test_changeable_flag(app, clients, get_message):
     assert get_message("PASSWORD_IS_THE_SAME") in response.data
 
     # Test successful submit sends email notification
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={
             "password": "password",
@@ -129,7 +129,7 @@ def test_changeable_flag(app, clients, get_message):
     assert "Your password has been changed" in outbox[0].body
 
     # Test leading & trailing whitespace not stripped
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={
             "password": "new strong password",
@@ -146,7 +146,7 @@ def test_changeable_flag(app, clients, get_message):
         '"new_password": "new stronger password2", '
         '"new_password_confirm": "new stronger password2"}'
     )
-    response = client.post(
+    response = tcl.post(
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 200
@@ -154,7 +154,7 @@ def test_changeable_flag(app, clients, get_message):
 
     # Test JSON errors
     data = '{"password": "newpassword"}'
-    response = client.post(
+    response = tcl.post(
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
@@ -333,7 +333,7 @@ def test_xlation(app, client, get_message_local):
     with app.test_request_context():
         # Check header
         assert (
-            f'<h1>{localize_callback("Change password")}</h1>'.encode() in response.data
+            f'<h1>{localize_callback("Change Password")}</h1>'.encode() in response.data
         )
         submit = localize_callback(_default_field_labels["change_password"])
         assert f'value="{submit}"'.encode() in response.data

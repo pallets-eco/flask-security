@@ -714,7 +714,7 @@ Core - rarely need changing
     Default: ``"remember-salt"``.
 .. py:data:: SECURITY_TWO_FACTOR_VALIDITY_SALT
 
-    Specifies the salt value when generating two factor validity tokens.
+    Specifies the salt value when generating two-factor validity tokens.
 
     Default: ``"tf-validity-salt"``.
 .. py:data:: SECURITY_US_SETUP_SALT
@@ -830,7 +830,7 @@ Login/Logout
 
 .. py:data:: SECURITY_VERIFY_URL
 
-    Specifies the re-authenticate URL. If :py:data:`SECURITY_FRESHNESS` evaluates to < 0; this
+    Specifies the reauthenticate URL. If :py:data:`SECURITY_FRESHNESS` evaluates to < 0; this
     endpoint won't be registered.
 
     Default: ``"/verify"``
@@ -848,9 +848,9 @@ Login/Logout
 
 .. py:data:: SECURITY_POST_VERIFY_URL
 
-    Specifies the default view to redirect to after a user successfully re-authenticates either via
+    Specifies the default view to redirect to after a user successfully reauthenticates either via
     the :py:data:`SECURITY_VERIFY_URL` or the :py:data:`SECURITY_US_VERIFY_URL`.
-    Normally this won't need to be set and after the verification/re-authentication, the referring
+    Normally this won't need to be set and after the verification/reauthentication, the referring
     view (held in the ``next`` parameter) will be redirected to.
 
     Default: ``None``.
@@ -1252,7 +1252,7 @@ Configuration related to the two-factor authentication feature.
     Default: ``False``.
 .. py:data:: SECURITY_TWO_FACTOR_REQUIRED
 
-    If set to ``True`` then all users will be required to setup and use two factor authorization.
+    If set to ``True`` then all users will be required to setup and use two-factor authorization.
 
     Default: ``False``.
 .. py:data:: SECURITY_TWO_FACTOR_ENABLED_METHODS
@@ -1277,7 +1277,7 @@ Configuration related to the two-factor authentication feature.
     Default: ``120``.
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_WITHIN
 
-    Specifies the amount of time a user has before their two factor setup
+    Specifies the amount of time a user has before their two-factor setup
     token expires. Always pluralize the time unit for this value.
 
     Default: ``"30 minutes"``
@@ -1292,14 +1292,14 @@ Configuration related to the two-factor authentication feature.
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_TWO_FACTOR
 
-    Sets the subject for the two factor feature.
+    Sets the subject for the two-factor feature.
 
-    Default: ``_("Two-factor Login")``
+    Default: ``_("Two-Factor Login")``
 .. py:data:: SECURITY_EMAIL_SUBJECT_TWO_FACTOR_RESCUE
 
-    Sets the subject for the two factor help function.
+    Sets the subject for the two-factor help function.
 
-    Default: ``_("Two-factor Rescue")``
+    Default: ``_("Two-Factor Rescue")``
 .. py:data:: SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE
 
     Specifies the path to the template for the verify code page for the two-factor authentication process.
@@ -1307,30 +1307,30 @@ Configuration related to the two-factor authentication feature.
     Default: ``"security/two_factor_verify_code.html"``.
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_TEMPLATE
 
-    Specifies the path to the template for the setup page for the two factor authentication process.
+    Specifies the path to the template for the setup page for the two-factor authentication process.
 
     Default: ``"security/two_factor_setup.html"``.
 
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_URL
 
-    Specifies the two factor setup URL.
+    Specifies the two-factor setup URL.
 
     Default: ``"/tf-setup"``.
 .. py:data:: SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL
 
-    Specifies the two factor token validation URL.
+    Specifies the two-factor token validation URL.
 
     Default: ``"/tf-validate"``.
 
 .. py:data:: SECURITY_TWO_FACTOR_RESCUE_URL
 
-    Specifies the two factor rescue URL.
+    Specifies the two-factor rescue URL.
 
     Default: ``"/tf-rescue"``.
 
 .. py:data:: SECURITY_TWO_FACTOR_SELECT_URL
 
-    Specifies the two factor select URL. This is used when the user has
+    Specifies the two-factor select URL. This is used when the user has
     setup more than one second factor.
 
     Default: ``"/tf-select"``.
@@ -1368,7 +1368,7 @@ Configuration related to the two-factor authentication feature.
 
 .. py:data:: SECURITY_TWO_FACTOR_ALWAYS_VALIDATE
 
-    Specifies whether the application should require a two factor code upon every login.
+    Specifies whether the application should require a two-factor code upon every login.
     If set to ``False`` then the 2 values below are used to determine when
     a code is required. Note that this is cookie based - so a new browser
     session will always require a fresh two-factor code.
@@ -1376,14 +1376,14 @@ Configuration related to the two-factor authentication feature.
     Default: ``True``.
 .. py:data:: SECURITY_TWO_FACTOR_LOGIN_VALIDITY
 
-    Specifies the expiration of the two factor validity cookie and verification of the token.
+    Specifies the expiration of the two-factor validity cookie and verification of the token.
 
     Default: ``"30 Days"``.
 
 
 .. py:data:: SECURITY_TWO_FACTOR_VALIDITY_COOKIE
 
-    A dictionary containing the parameters of the two factor validity cookie.
+    A dictionary containing the parameters of the two-factor validity cookie.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
     Default: ``{'httponly': True, 'secure': False, 'samesite': None}``.
@@ -1452,7 +1452,7 @@ Unified Signin
 
 .. py:data:: SECURITY_US_VERIFY_URL
 
-    This endpoint handles re-authentication, the caller must be already authenticated
+    This endpoint handles reauthentication, the caller must be already authenticated
     and then enter in their primary credentials (password/passcode) again. This is
     used when an endpoint (such as ``/us-setup``) fails freshness checks.
     This endpoint won't be registered if :py:data:`SECURITY_FRESHNESS` evaluates to < 0.
@@ -1724,7 +1724,7 @@ WebAuthn
 
 .. py:data:: SECURITY_WAN_VERIFY_URL
 
-    Endpoint for re-authenticating using a WebAuthn credential.
+    Endpoint for reauthenticating using a WebAuthn credential.
 
     Default: ``"/wan-verify"``
 

@@ -6,13 +6,8 @@
   username - username
   security - the Flask-Security configuration
 #}
-{{ _fsdomain("Welcome") }} {{ username }}!
-
-{{ _fsdomain("You can sign into your account using the following code:") }} {{ token }}
-
+{{ _fsdomain("Welcome %(username)s!", username=username) }}
+{{ _fsdomain("You can sign in to your account using the following code: %(token)s.", token=token) }}
 {% if login_link %}
-
-    {{ _fsdomain("Or use the link below:") }}
-
-    {{ login_link }}
+    {{ _fsdomain("Or use this link: %(login_link)s", login_link=login_link) }}
 {% endif %}

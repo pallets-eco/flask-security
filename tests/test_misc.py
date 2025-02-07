@@ -5,7 +5,7 @@ test_misc
 Lots of tests
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -767,7 +767,7 @@ def test_per_request_xlate(app, client):
     response = client.get("/change", follow_redirects=True)
     assert response.status_code == 200
     assert b"Nouveau mot de passe" in response.data
-    assert b"<h1>Changer de mot de passe</h1>" in response.data
+    assert b"<h1>Changer le mot de passe</h1>" in response.data
 
     # try JSON
     response = client.post(

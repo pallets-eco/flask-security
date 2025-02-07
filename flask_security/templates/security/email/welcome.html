@@ -7,8 +7,5 @@
 #}
 <p>{{ _fsdomain('Welcome %(email)s!', email=user.email) }}</p>
 {% if security.confirmable %}
-  <p>{{ _fsdomain('You can confirm your email through the link below:') }}</p>
-  <p>
-    <a href="{{ confirmation_link }}">{{ _fsdomain('Confirm my account') }}</a>
-  </p>
+  <p>{{ _fsdomain('Use <a href="%(confirmation_link)s">this link</a> to confirm your email address.', confirmation_link=confirmation_link)|safe }}</p>
 {% endif %}

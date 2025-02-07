@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.6.0
 -------------
 
-Released January xx, 2025
+Released February xx, 2025
 
 Features & Improvements
 +++++++++++++++++++++++
@@ -19,12 +19,15 @@ Features & Improvements
 Fixes
 +++++
 - (:pr:`1062`) Fix duplicate HTML ids in templates.
-- (:pr:`xx`) Fix more duplicate HTML ids in templates.
+- (:pr:`1067`) Fix more duplicate HTML ids in templates.
 - (:issue:`1064`) Ensure templates pass W3C validation (see below)
 
 Docs and Chores
 +++++++++++++++
 - (:pr:`1052`) Remove deprecated TWO_FACTOR configuration variables
+- (:pr:`1069`) Update ES and IT translations (gissimo)
+- (:pr:`1071`) Improve templates - two-factor is hyphenated, re-authenticate is not.
+  Also try to embed links into xlatable strings.
 
 Notes
 +++++
@@ -47,7 +50,7 @@ have been removed (they have been deprecated for a while). Use the equivalent
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
-Fixing all the templates to pass W3C validation could introduce some incompatibilities:
+The fixes to all the templates to pass W3C validation could introduce some incompatibilities:
 
 - All templates now have a default <title> - before, the <title> element was empty.
 - The HTML id of the rescue form submit button was changed to 'rescue'

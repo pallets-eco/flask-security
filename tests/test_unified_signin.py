@@ -4,7 +4,7 @@ test_unified_signin
 
 Unified signin tests
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 """
@@ -718,10 +718,10 @@ def test_verify_link_spa(app, client, get_message):
 
 
 def test_setup(app, clients, get_message):
-    client = clients
+    tcl = clients
     set_email(app)
-    us_authenticate(client)
-    response = client.get("us-setup")
+    us_authenticate(tcl)
+    response = tcl.get("us-setup")
     # Email should be in delete options since we just set that up.
     assert all(
         i in response.data
@@ -729,16 +729,16 @@ def test_setup(app, clients, get_message):
     )
 
     # test not supplying anything to do
-    response = client.post("us-setup", data=dict(phone="6505551212"))
+    response = tcl.post("us-setup", data=dict(phone="6505551212"))
     assert get_message("API_ERROR") in response.data
 
     # test missing phone
-    response = client.post("us-setup", data=dict(chosen_method="sms", phone=""))
+    response = tcl.post("us-setup", data=dict(chosen_method="sms", phone=""))
     assert response.status_code == 200
     assert get_message("PHONE_INVALID") in response.data
 
     # test invalid phone
-    response = client.post(
+    response = tcl.post(
         "us-setup", data=dict(chosen_method="sms", phone="NOT-A-NUMBER")
     )
     assert response.status_code == 200
@@ -746,7 +746,7 @@ def test_setup(app, clients, get_message):
     assert b"Enter code here to complete setup" not in response.data
 
     sms_sender = SmsSenderFactory.createSender("test")
-    response = client.post(
+    response = tcl.post(
         "us-setup", data=dict(chosen_method="sms", phone="650-555-1212")
     )
     assert response.status_code == 200
@@ -756,11 +756,11 @@ def test_setup(app, clients, get_message):
     verify_url = get_form_action(response, 1)
 
     # Try invalid code
-    response = client.post(verify_url, data=dict(passcode=12345), follow_redirects=True)
+    response = tcl.post(verify_url, data=dict(passcode=12345), follow_redirects=True)
     assert get_message("INVALID_PASSWORD_CODE") in response.data
 
     code = sms_sender.messages[0].split()[-1].strip(".")
-    response = client.post(verify_url, data=dict(passcode=code), follow_redirects=True)
+    response = tcl.post(verify_url, data=dict(passcode=code), follow_redirects=True)
     assert response.status_code == 200
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
@@ -1496,7 +1496,7 @@ def test_tf(app, client, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    message = b"Two-factor authentication adds an extra layer of security"
+    message = b"Two-Factor authentication adds an extra layer of security"
     assert message in response.data
     assert b"Set up using SMS" in response.data
 
@@ -1530,7 +1530,7 @@ def test_tf_link(app, client, get_message):
     magic_link = matcher.group(1)
     response = client.get(magic_link, follow_redirects=True)
     assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") not in response.data
-    message = b"Two-factor authentication adds an extra layer of security"
+    message = b"Two-Factor authentication adds an extra layer of security"
     assert message in response.data
 
 
