@@ -8,7 +8,6 @@ Registerable tests
 import pytest
 import re
 from flask import Flask
-import markupsafe
 from tests.test_utils import (
     authenticate,
     check_xlation,
@@ -162,6 +161,12 @@ def test_xlation(app, client, get_message_local):
     # Test form and email translation
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
+    confirmation_token = []
+
+    @user_registered.connect_via(app)
+    def on_user_registered(app, **kwargs):
+        confirmation_token.append(kwargs["confirmation_token"])
+
     response = client.get("/register", follow_redirects=True)
     with app.test_request_context():
         # Check header
@@ -191,16 +196,12 @@ def test_xlation(app, client, get_message_local):
             localize_callback(app.config["SECURITY_EMAIL_SUBJECT_REGISTER"])
             in outbox[0].subject
         )
-        assert (
-            str(
-                markupsafe.escape(
-                    localize_callback(
-                        "You can confirm your email through the link below:"
-                    )
-                )
-            )
-            in outbox[0].alternatives[0][0]
+        lc = localize_callback(
+            'Use <a href="%(confirmation_link)s">this link</a> to confirm your email'
+            " address.",
+            confirmation_link=f"http://localhost/confirm/{confirmation_token[0]}",
         )
+        assert lc in outbox[0].alternatives[0][0]
 
 
 @pytest.mark.confirmable()

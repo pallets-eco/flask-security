@@ -4,7 +4,7 @@ test_two_factor
 
 two_factor tests
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -239,7 +239,7 @@ def test_tf_reset_invalidates_cookie(app, client):
     data = dict(email="gal@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
 
-    assert b"Two-factor authentication adds an extra layer of security" in response.data
+    assert b"Two-Factor authentication adds an extra layer of security" in response.data
 
     client.delete_cookie("tf_validity")
     # Test JSON
@@ -344,7 +344,7 @@ def test_two_factor_flag(app, clients, get_message):
     # Test two-factor authentication first login
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
-    message = b"Two-factor authentication adds an extra layer of security"
+    message = b"Two-Factor authentication adds an extra layer of security"
     assert message in response.data
     response = client.post(
         "/tf-setup", data=dict(setup="not_a_method"), follow_redirects=True
@@ -464,7 +464,7 @@ def test_two_factor_flag(app, clients, get_message):
     # Test two-factor authentication first login
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
-    message = b"Two-factor authentication adds an extra layer of security"
+    message = b"Two-Factor authentication adds an extra layer of security"
     assert message in response.data
 
     # check availability of qrcode when this option is not picked
@@ -540,7 +540,7 @@ def test_no_rescue_email(app, client):
 def test_setup_bad_phone(app, client, get_message):
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
-    message = b"Two-factor authentication adds an extra layer of security"
+    message = b"Two-Factor authentication adds an extra layer of security"
     assert message in response.data
 
     sms_sender = SmsSenderFactory.createSender("test")
@@ -684,7 +684,7 @@ def test_rescue_json(app, client):
 
     assert outbox[0].to == ["gal2@lp.com"]
     assert outbox[0].from_email == "no-reply@localhost"
-    assert outbox[0].subject == "Two-factor Login"
+    assert outbox[0].subject == "Two-Factor Login"
     matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
     response = client.post("/tf-validate", json=dict(code=matcher.group(1)))
     assert response.status_code == 200
@@ -699,7 +699,7 @@ def test_rescue_json(app, client):
 
     assert outbox[1].to == ["helpme@myapp.com"]
     assert outbox[1].from_email == "no-reply@localhost"
-    assert outbox[1].subject == "Two-factor Rescue"
+    assert outbox[1].subject == "Two-Factor Rescue"
     assert "gal2@lp.com" in outbox[1].body
 
 
@@ -856,7 +856,7 @@ def test_opt_in(app, client, get_message):
     # Now opt back out.
     data = dict(setup="disable")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"You successfully disabled two factor authorization." in response.data
+    assert b"You successfully disabled two-factor authorization." in response.data
 
     # Log out
     logout(client)
@@ -992,7 +992,7 @@ def test_opt_in_state_token(app, client, get_message):
     assert not tf_in_session(session)
 
     response = client.get("/tf-setup")
-    assert b"Disable two factor" in response.data
+    assert b"Disable two-factor" in response.data
     assert b"Currently setup two-factor method: SMS" in response.data
 
 
@@ -1199,7 +1199,7 @@ def test_totp_secret_generation(app, client):
     # Finally opt back out and check that tf_totp_secret is None
     data = dict(setup="disable")
     response = client.post("/tf-setup", data=data, follow_redirects=True)
-    assert b"You successfully disabled two factor authorization." in response.data
+    assert b"You successfully disabled two-factor authorization." in response.data
     with app.app_context():
         user = app.security.datastore.find_user(email="jill@lp.com")
         assert user.tf_totp_secret is None
@@ -1419,7 +1419,7 @@ def test_propagate_next(app, client):
 
 @pytest.mark.settings(freshness=timedelta(minutes=0))
 def test_verify(app, client, get_message):
-    # Test setup when re-authenticate required
+    # Test setup when reauthenticate required
     authenticate(client)
     response = client.get("tf-setup", follow_redirects=False)
     assert check_location(app, response.location, "/verify?next=/tf-setup")
@@ -1457,7 +1457,7 @@ def test_verify(app, client, get_message):
 
 
 def test_verify_json(app, client, get_message):
-    # Test setup when re-authenticate required
+    # Test setup when reauthenticate required
     # N.B. with freshness=0 we never set a grace period and should never be able to
     # get to /tf-setup
     authenticate(client)

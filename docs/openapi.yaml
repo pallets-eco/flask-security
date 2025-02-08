@@ -227,13 +227,13 @@ paths:
                         description: Http status code
   /verify:
     get:
-      summary: GET verify/re-authentication form
+      summary: GET verify/reauthentication form
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
-        this endpoint will be called to request an already signed in user to re-authenticate.
+        this endpoint will be called to request an already signed in user to reauthenticate.
       responses:
         200:
-          description: Verify/re-authenticate form
+          description: Verify/reauthenticate form
           content:
             text/html:
               schema:
@@ -250,7 +250,7 @@ paths:
                       True if caller has a registered WebAuthn Key which has a `usage` that
                       is allowed by the SECURITY_WAN_ALLOW_AS_VERIFY configuration setting.
     post:
-      summary: Verify/re-authentication
+      summary: Verify/Reauthentication
       parameters:
         - $ref: "#/components/parameters/include_auth_token"
       requestBody:
@@ -264,21 +264,21 @@ paths:
               $ref: "#/components/schemas/Verify"
       responses:
         200:
-          description: Verify/re-authenticate response.
+          description: Verify/Reauthenticate response.
           content:
             application/json:
               schema:
                 allOf:
                   - description: >
-                      The user successfully re-authenticated.
+                      The user successfully reauthenticated.
                   - $ref: "#/components/schemas/JsonResponseWithToken"
             text/html:
               schema:
-                description: Unsuccessful re-authentication.
+                description: Unsuccessful reauthentication.
                 type: string
                 example: render_template(SECURITY_VERIFY_TEMPLATE) with error values
         302:
-          description: User successfully re-authenticated when using form based request.
+          description: User successfully reauthenticated when using form based request.
           headers:
             Location:
               description: Redirect to ``next`` or ``SECURITY_POST_VERIFY_VIEW``
@@ -962,13 +962,13 @@ paths:
 
   /us-verify:
     get:
-      summary: GET Unified sign in verify/re-authentication form/information
+      summary: GET Unified sign in verify/reauthentication form/information
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
-        this endpoint will be called to request an already signed in user to re-authenticate.
+        this endpoint will be called to request an already signed in user to reauthenticate.
       responses:
         200:
-          description: Verify/re-authenticate form
+          description: Verify/Reauthenticate form
           content:
             text/html:
               schema:
@@ -997,7 +997,7 @@ paths:
                       True if caller has a registered WebAuthn Key which has a `usage` that
                       is allowed by the SECURITY_WAN_ALLOW_AS_VERIFY configuration setting.
     post:
-      summary: Unified sign in verify/re-authentication
+      summary: Unified sign in verify/reauthentication
       parameters:
         - $ref: "#/components/parameters/include_auth_token"
       requestBody:
@@ -1011,21 +1011,21 @@ paths:
               $ref: "#/components/schemas/UsSigninVerify"
       responses:
         200:
-          description: Verify/re-authenticate response.
+          description: Verify/reauthenticate response.
           content:
             application/json:
               schema:
                 allOf:
                   - description: >
-                      The user successfully re-authenticated.
+                      The user successfully reauthenticated.
                   - $ref: "#/components/schemas/JsonResponseWithToken"
             text/html:
               schema:
                 type: string
-                description: Unsuccessful re-authentication - render_template(SECURITY_US_VERIFY_TEMPLATE) with error values
+                description: Unsuccessful reauthentication - render_template(SECURITY_US_VERIFY_TEMPLATE) with error values
                 example: render_template(SECURITY_US_VERIFY_TEMPLATE) with error values
         302:
-          description: User successfully re-authenticated when using form based request.
+          description: User successfully reauthenticated when using form based request.
           headers:
             Location:
               description: Redirect to ``next`` or ``SECURITY_POST_VERIFY_VIEW``
@@ -1273,7 +1273,7 @@ paths:
                     type: string
                     description: Currently configured (if any) phone number.
     post:
-      summary: Two factor setup.
+      summary: Two-Factor setup.
       description: >
         Two-factor setup can be used in three cases:
 
@@ -1299,7 +1299,7 @@ paths:
       responses:
         200:
           description: >
-            Two factor setup response. Please note that the newly setup method must be validated PRIOR to it being stored permanently.
+            Two-Factor setup response. Please note that the newly setup method must be validated PRIOR to it being stored permanently.
           content:
             application/json:
               schema:
@@ -1350,7 +1350,7 @@ paths:
               $ref: "#/components/schemas/TfSetupValidateRequest"
       responses:
         200:
-          description: Successfully validated and persisted two factor method.
+          description: Successfully validated and persisted two-factor method.
           content:
             application/json:
               schema:
@@ -1410,7 +1410,7 @@ paths:
                   example: 12345
       responses:
         200:
-          description: Two factor code validation response.
+          description: Two-Factor code validation response.
           content:
             application/json:
               schema:
@@ -1423,7 +1423,7 @@ paths:
               schema:
                 description: >
                   Unsuccessfully processed code. As above, which form is
-                  rendered depends on the state of the user's two factor configuration.
+                  rendered depends on the state of the user's two-factor configuration.
                 type: string
         302:
           description: User successfully sent code when using form based request.
@@ -1566,7 +1566,7 @@ paths:
                 type: string
                 example: render_template(SECURITY_TWO_FACTOR_SELECT_TEMPLATE) with error values
         302:
-          description: User selected which two factor to use when using form based request.
+          description: User selected which two-factor to use when using form based request.
           headers:
             Location:
               description: Redirect to ``SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL`` or ``SECURITY_WAN_SIGNIN_URL``.
@@ -1986,13 +1986,13 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /wan-verify:
     get:
-      summary: GET Re-authenticate using WebAuthn form
+      summary: GET Reauthenticate using WebAuthn form
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
-        this endpoint can be used to re-authenticate with a previously registered WebAuthn Key.
+        this endpoint can be used to reauthenticate with a previously registered WebAuthn Key.
       responses:
         200:
-          description: Verify/re-authenticate form
+          description: Verify/reauthenticate form
           content:
             text/html:
               schema:
@@ -2003,10 +2003,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/DefaultJsonResponse"
     post:
-      summary: Re-authenticate using a WebAuthn Key.
+      summary: Reauthenticate using a WebAuthn Key.
       responses:
         200:
-          description: Verify/re-authenticate response.
+          description: Verify/Reauthenticate response.
           content:
             application/json:
               schema:
@@ -2033,7 +2033,7 @@ paths:
         schema:
           type: string
     post:
-      summary: Re-authenticate using a WebAuthn Key - Part 2.
+      summary: Reauthenticate using a WebAuthn Key - Part 2.
       parameters:
         - $ref: "#/components/parameters/include_auth_token"
       requestBody:
@@ -2047,16 +2047,16 @@ paths:
               $ref: "#/components/schemas/WanSignin2"
       responses:
         200:
-          description: Verify/re-authenticate response.
+          description: Verify/Reauthenticate response.
           content:
             application/json:
               schema:
                 allOf:
                   - description: >
-                      The user successfully re-authenticated.
+                      The user successfully reauthenticated.
                   - $ref: "#/components/schemas/JsonResponseWithToken"
         302:
-          description: User successfully re-authenticated or error in validation when using form based request.
+          description: User successfully reauthenticated or error in validation when using form based request.
           headers:
             Location:
               description: >
@@ -2480,7 +2480,7 @@ components:
                 tf_state:
                   type: string
                   description: >
-                    Current state of Two Factor configuration. Not present when disabling 2FA. This will be set to 'validating_profile'
+                    Current state of Two-Factor configuration. Not present when disabling 2FA. This will be set to 'validating_profile'
                     indicating the caller needs to call '/tf-validate' with the correct code.
                     N.B. as of 5.5.0 this is only used for setting up as part of initial login when 2FA is required.
                     See tf_state_token below for use when an authenticated user wants to change their 2FA method.

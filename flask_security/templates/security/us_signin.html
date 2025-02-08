@@ -36,7 +36,7 @@
     {% for provider in security.oauthglue.provider_names %}
       <div class="fs-gap">
         <form method="post" id="{{ provider }}_form" name="{{ provider }}_form">
-          <input id="{{ provider }}" name="{{ provider }}" type="submit" value="{{ _fsdomain('Sign in with ')~provider }}" formaction="{{ url_for_security('oauthstart', name=provider) }}{{ prop_next() }}">
+          <input id="{{ provider }}" name="{{ provider }}" type="submit" value="{{ _fsdomain('Sign in with %(provider)s', provider=provider) }}" formaction="{{ url_for_security('oauthstart', name=provider) }}{{ prop_next() }}">
           {% if csrf_token is defined %}
             <input id="{{ provider }}_csrf_token" name="{{ provider }}_csrf_token" type="hidden" value="{{ csrf_token() }}">
           {% endif %}

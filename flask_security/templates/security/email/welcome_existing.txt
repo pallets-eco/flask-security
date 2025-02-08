@@ -17,6 +17,5 @@
 {% endif %}
 
 {% if recovery_link %}
-    {{ _fsdomain('If you forgot your password you can reset it with the following link:') }}
-    {{ recovery_link }}
+    {{ _fsdomain('If you forgot your password you can reset it with the following link: %(recovery_link)s', recovery_link=recovery_link) }}
 {% endif %}

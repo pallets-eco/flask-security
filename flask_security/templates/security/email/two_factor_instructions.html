@@ -1,2 +1,2 @@
-<p>{{ _fsdomain("Welcome") }} {{ username }}!</p>
-<p>{{ _fsdomain("You can log into your account using the following code:") }} {{ token }}</p>
+<p>{{ _fsdomain("Welcome %(username)s!", username=username) }}</p>
+<p>{{ _fsdomain("You can log into your account using the following code: %(token)s", token=token) }}</p>

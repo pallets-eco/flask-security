@@ -946,7 +946,7 @@ class TwoFactorSetupForm(Form):
     setup = RadioField(
         get_form_field_xlate(_("Available Methods")),
         choices=[
-            ("disable", get_form_field_xlate(_("Disable two factor authentication"))),
+            ("disable", get_form_field_xlate(_("Disable two-factor authentication"))),
             ("email", get_form_field_label("email_method")),
             (
                 "authenticator",

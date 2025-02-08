@@ -5,9 +5,6 @@
   user - the entire user model object
   security - the Flask-Security configuration
 #}
-{{ _fsdomain('Please confirm your new email through the link below:') }}
-{{ link }}
-
+{{ _fsdomain('Use %(link)s to confirm your new email address.', link=link)|safe }}
 {{ _fsdomain('This link will expire in %(within)s.', within=config["SECURITY_CHANGE_EMAIL_WITHIN"]) }}
-
 {{ _fsdomain('Your currently registered email is %(email)s.', email=user.email) }}

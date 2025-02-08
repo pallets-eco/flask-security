@@ -22,9 +22,11 @@ data and a mail sender that flashes what mail would be sent!
 """
 from __future__ import annotations
 
+import base64
 from datetime import timedelta
 import os
 import typing as t
+import webbrowser
 
 from flask import Flask, flash, render_template_string, request, session
 from flask_wtf import CSRFProtect
@@ -75,6 +77,10 @@ class FlashMailUtil(MailUtil):
         **kwargs: t.Any,
     ) -> None:
         flash(f"Email body: {body}")
+        if html:
+            hb = html.encode()
+            url = "data:text/html;base64," + base64.b64encode(hb).decode()
+            webbrowser.open(url, new=1)
 
 
 SET_LANG = False
