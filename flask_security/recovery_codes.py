@@ -171,6 +171,8 @@ class MfRecoveryForm(Form):
         if not super().validate(**kwargs):  # pragma: no cover
             return False
         assert self.user is not None
+        assert self.code.data is not None  # RequiredLocalize validator
+        assert isinstance(self.code.errors, list)
         if not _security._mf_recovery_codes_util.check_recovery_code(
             self.user, self.code.data
         ):

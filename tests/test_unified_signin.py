@@ -738,7 +738,9 @@ def test_setup(app, clients, get_message):
     assert get_message("PHONE_INVALID") in response.data
 
     # test invalid phone
-    response = client.post("us-setup", data=dict(chosen_method="sms", phone="555-1212"))
+    response = client.post(
+        "us-setup", data=dict(chosen_method="sms", phone="NOT-A-NUMBER")
+    )
     assert response.status_code == 200
     assert get_message("PHONE_INVALID") in response.data
     assert b"Enter code here to complete setup" not in response.data

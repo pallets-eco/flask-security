@@ -4,7 +4,7 @@ test_webauthn
 
 WebAuthn tests
 
-:copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2021-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 """
@@ -542,6 +542,11 @@ def test_bad_data_register(app, client, get_message):
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
     )
+    response = client.post(response_url, json=dict(credential=""))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
 
     # Now pass incorrect keys
     bad_register = copy.deepcopy(REG_DATA1)
@@ -586,6 +591,11 @@ def test_bad_data_signin(app, client, get_message):
     logout(client)
     signin_options, response_url, _ = _signin_start_json(client, "matt@lp.com")
     response = client.post(response_url, json=dict(credential='"hi there"'))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
+    response = client.post(response_url, json=dict(credential=""))
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"

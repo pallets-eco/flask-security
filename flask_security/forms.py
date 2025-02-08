@@ -438,6 +438,7 @@ class SendConfirmationForm(Form, UserEmailFormMixin):
             return False
         assert self.user is not None
         if self.user.confirmed_at is not None:
+            assert isinstance(self.email.errors, list)
             self.email.errors.append(get_message("ALREADY_CONFIRMED")[0])
             return False
         return True
@@ -457,6 +458,7 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
         if not super().validate(**kwargs):
             return False
         assert self.user is not None
+        assert isinstance(self.email.errors, list)
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
@@ -486,6 +488,7 @@ class PasswordlessLoginForm(Form):
         if not super().validate(**kwargs):
             return False
         assert self.user is not None
+        assert isinstance(self.email.errors, list)
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
@@ -549,6 +552,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         if not super().validate(**kwargs):
             return False
 
+        assert self.password.data is not None  # validator password_required
         # Stay clear of accessing 'username' unless we added that field.
         # Lots of applications have added their own.
         # To make subclassing easier - if self.ifield has been set we assume
@@ -578,9 +582,11 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
                 if uia_email:
                     self.ifield = self.email
 
+        assert isinstance(self.password.errors, list)
         if self.user is None:
             msg = get_message("USER_DOES_NOT_EXIST")[0]
             if self.ifield:
+                assert isinstance(self.ifield.errors, list)
                 self.ifield.errors.append(msg)
             else:
                 self.form_errors.append(msg)
@@ -602,6 +608,8 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         # to return detailed errors.
         self.user_authenticated = True
         self.requires_confirmation = requires_confirmation(self.user)
+        assert self.ifield is not None
+        assert isinstance(self.ifield.errors, list)
         if self.requires_confirmation:
             self.ifield.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False
@@ -648,7 +656,9 @@ class VerifyForm(Form, PasswordFormMixin):
         if not super().validate(**kwargs):  # pragma: no cover
             return False
 
+        assert self.password.data is not None
         self.password.data = _security._password_util.normalize(self.password.data)
+        assert isinstance(self.password.errors, list)
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
@@ -685,6 +695,7 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
 
         # whether a password is required is a config variable (PASSWORD_REQUIRED).
         # For unified signin there are many other ways to authenticate
+        assert isinstance(self.password.errors, list)
         if cv("PASSWORD_REQUIRED"):
             if not self.password.data or not self.password.data.strip():
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
@@ -724,6 +735,7 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
+        assert isinstance(self.password_confirm.errors, list)
         if not cv("UNIFIED_SIGNIN"):
             # password_confirm required
             if not self.password_confirm.data or not self.password_confirm.data.strip():
@@ -798,6 +810,7 @@ class RegisterFormV2(
         if not super().validate(**kwargs):
             failed = True
 
+        assert isinstance(self.password.errors, list)
         if self.password.data:
             # We do explicit validation here for passwords
             # (rather than write a validator class) for 2 reasons:
@@ -862,6 +875,8 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
         if not super().validate(**kwargs):
             return False
 
+        assert isinstance(self.password.errors, list)
+        assert self.password.data is not None
         pbad, self.password.data = _security._password_util.validate(
             self.password.data, False, user=self.user
         )
@@ -900,6 +915,8 @@ class ChangePasswordForm(Form):
 
         # If user doesn't have a password then the caller (view) has already
         # verified a current fresh session.
+        assert isinstance(self.password.errors, list)
+        assert isinstance(self.new_password.errors, list)
         if current_user.password:
             if not self.password.data or not self.password.data.strip():
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
@@ -913,6 +930,7 @@ class ChangePasswordForm(Form):
                 self.password.errors.append(get_message("PASSWORD_IS_THE_SAME")[0])
                 return False
 
+        assert self.new_password.data is not None
         pbad, self.new_password.data = _security._password_util.validate(
             self.new_password.data, False, user=current_user
         )
@@ -948,6 +966,8 @@ class TwoFactorSetupForm(Form):
         if not super().validate(**kwargs):  # pragma: no cover
             return False
         choices = list(cv("TWO_FACTOR_ENABLED_METHODS"))
+        assert isinstance(self.setup.errors, list)
+        assert isinstance(self.phone.errors, list)
         if "email" in choices:
             # backwards compat
             choices.append("mail")
@@ -957,6 +977,9 @@ class TwoFactorSetupForm(Form):
             self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
             return False
         if self.setup.data == "sms":
+            if not self.phone.data:
+                self.phone.errors.append(get_message("PHONE_INVALID")[0])
+                return False
             msg = _security._phone_util.validate_phone_number(self.phone.data)
             if msg:
                 self.phone.errors.append(msg)
@@ -995,6 +1018,8 @@ class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
 
         # verify entered code with user's totp secret
         assert self.user is not None
+        assert self.code.data is not None
+        assert isinstance(self.code.errors, list)
         if not _security._totp_factory.verify_totp(
             token=self.code.data,
             totp_secret=self.tf_totp_secret,
