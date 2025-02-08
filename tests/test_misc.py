@@ -406,6 +406,7 @@ def test_custom_form_instantiator(app, client, get_message):
         def validate(self, **kwargs: t.Any) -> bool:
             if not super().validate(**kwargs):  # pragma: no cover
                 return False
+            assert isinstance(self.email.errors, list)
             if not self.myservice(self.email.data):
                 self.email.errors.append("Not happening")
                 return False
@@ -444,6 +445,7 @@ def test_custom_form_instantiator2(app, client, get_message):
         def validate(self, **kwargs: t.Any) -> bool:
             if not super().validate(**kwargs):  # pragma: no cover
                 return False
+            assert isinstance(self.email.errors, list)
             if not self.myservice(self.email.data):
                 self.email.errors.append("Not happening")
                 return False

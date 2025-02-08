@@ -222,6 +222,7 @@ def login() -> ResponseValue:
     ):
         # Validation failed BECAUSE user needs to confirm
         assert form.user_authenticated
+        assert form.email.data  # email_required validator
         do_flash(*get_message("CONFIRMATION_REQUIRED"))
         return redirect(
             get_url(

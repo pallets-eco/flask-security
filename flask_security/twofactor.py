@@ -131,6 +131,7 @@ def set_rescue_options(form: TwoFactorRescueForm, user: UserMixin) -> dict[str, 
 
     if cv("TWO_FACTOR_RESCUE_EMAIL"):
         recovery_options["email"] = url_for_security("two_factor_rescue")
+        assert isinstance(form.help_setup.choices, list)
         form.help_setup.choices.append(
             ("email", get_form_field_xlate(_("Send code via email")))
         )
@@ -141,6 +142,7 @@ def set_rescue_options(form: TwoFactorRescueForm, user: UserMixin) -> dict[str, 
         and _datastore.mf_get_recovery_codes(user)
     ):
         recovery_options["recovery_code"] = url_for_security("mf_recovery")
+        assert isinstance(form.help_setup.choices, list)
         form.help_setup.choices.append(
             (
                 "recovery_code",

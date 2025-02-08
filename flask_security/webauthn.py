@@ -4,7 +4,7 @@ flask_security.webauthn
 
 Flask-Security WebAuthn module
 
-:copyright: (c) 2021-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2021-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
@@ -139,6 +139,7 @@ class WebAuthnRegisterForm(Form):
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
+        assert isinstance(self.name.errors, list)
         inuse = any([self.name.data == cred.name for cred in current_user.webauthn])
         if inuse:
             msg = get_message("WEBAUTHN_NAME_INUSE", name=self.name.data)[0]
@@ -166,6 +167,10 @@ class WebAuthnRegisterResponseForm(Form):
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False  # pragma: no cover
+        assert isinstance(self.credential.errors, list)
+        if not self.credential.data:
+            self.credential.errors.append(get_message("API_ERROR")[0])
+            return False
         inuse = any([self.name == cred.name for cred in current_user.webauthn])
         if inuse:
             msg = get_message("WEBAUTHN_NAME_INUSE", name=self.name)[0]
@@ -267,6 +272,10 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False  # pragma: no cover
+        assert isinstance(self.credential.errors, list)
+        if not self.credential.data:
+            self.credential.errors.append(get_message("API_ERROR")[0])
+            return False
         try:
             auth_cred = parse_authentication_credential_json(self.credential.data)
         except (
@@ -364,6 +373,7 @@ class WebAuthnDeleteForm(Form):
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
+        assert isinstance(self.name.errors, list)
         if not any([self.name.data == cred.name for cred in current_user.webauthn]):
             self.name.errors.append(
                 get_message("WEBAUTHN_NAME_NOT_FOUND", name=self.name.data)[0]
@@ -718,7 +728,7 @@ def webauthn_signin_response(token: str) -> ResponseValue:
             #   - Did this credential provide 2-factor and
             #     is WAN_ALLOW_AS_MULTI_FACTOR set
             #   - Is another 2FA setup?
-            remember_me = form.remember.data if "remember" in form else None
+            remember_me = bool(form.remember.data)
             if form.mf_check and cv("WAN_ALLOW_AS_MULTI_FACTOR"):
                 pass
             else:
