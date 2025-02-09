@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: Flask-Security 5.6.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2025-02-08 07:02-0800\n"
-"PO-Revision-Date: 2025-02-07 19:38+0100\n"
+"PO-Revision-Date: 2025-02-08 20:36+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: it_IT\n"
 "Language-Team: \n"
@@ -64,11 +64,11 @@ msgstr "Il tuo nome utente richiesto"
 
 #: flask_security/core.py:307
 msgid "Two-Factor Login"
-msgstr ""
+msgstr "Accesso a due fattori"
 
 #: flask_security/core.py:308
 msgid "Two-Factor Rescue"
-msgstr ""
+msgstr "Recupero dell'accesso a due fattori"
 
 #: flask_security/core.py:350
 msgid "Verification Code"
@@ -104,7 +104,7 @@ msgstr "È necessario accedere per accedere a questa risorsa."
 
 #: flask_security/core.py:418
 msgid "You must reauthenticate to access this endpoint"
-msgstr ""
+msgstr "È necessario riautenticarsi per accedere a questa risorsa"
 
 #: flask_security/core.py:423
 #, python-format
@@ -350,7 +350,7 @@ msgstr "Il metodo selezionato non è valido"
 
 #: flask_security/core.py:551
 msgid "You successfully disabled two-factor authorization."
-msgstr ""
+msgstr "Hai disabilitato l'autorizzazione a due fattori."
 
 #: flask_security/core.py:555 flask_security/core.py:564
 #, python-format
@@ -379,7 +379,7 @@ msgstr "Devi specificare un'identità valida per accedere"
 #: flask_security/core.py:569
 #, python-format
 msgid "Use this code to sign in: %(code)s"
-msgstr ""
+msgstr "Utilizza questo codice per accedere: %(code)s"
 
 #: flask_security/core.py:570
 msgid "You successfully changed your username"
@@ -649,7 +649,7 @@ msgstr "Metodi disponibili"
 
 #: flask_security/forms.py:949
 msgid "Disable two-factor authentication"
-msgstr ""
+msgstr "Disabilitare l'autenticazione a due fattori"
 
 #: flask_security/forms.py:1040
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
@@ -752,7 +752,7 @@ msgstr "Cambia nome utente"
 #: flask_security/templates/security/_menu.html:29
 #: flask_security/templates/security/two_factor_setup.html:21
 msgid "Two-Factor Setup"
-msgstr ""
+msgstr "Imposta autenticazione a due fattori"
 
 #: flask_security/templates/security/_menu.html:34
 msgid "Unified Signin Setup"
@@ -777,7 +777,7 @@ msgstr "Conferma account"
 #: flask_security/templates/security/change_email.html:1
 #: flask_security/templates/security/change_email.html:7
 msgid "Change Email"
-msgstr ""
+msgstr "Cambia email"
 
 #: flask_security/templates/security/change_email.html:8
 msgid ""
@@ -822,7 +822,7 @@ msgstr "Usa social OAuth per accedere"
 #: flask_security/templates/security/us_signin.html:39
 #, python-format
 msgid "Sign in with %(provider)s"
-msgstr ""
+msgstr "Accedi con %(provider)s"
 
 #: flask_security/templates/security/mf_recovery.html:1
 #: flask_security/templates/security/mf_recovery.html:7
@@ -851,7 +851,7 @@ msgstr "Genera nuovi codici di ripristino"
 #: flask_security/templates/security/recover_username.html:1
 #: flask_security/templates/security/recover_username.html:7
 msgid "Username Recovery"
-msgstr ""
+msgstr "Recupero del nome utente"
 
 #: flask_security/templates/security/reset_password.html:1
 #: flask_security/templates/security/reset_password.html:7
@@ -866,11 +866,13 @@ msgstr "Invia nuovamente istruzioni di conferma"
 #: flask_security/templates/security/two_factor_select.html:1
 #: flask_security/templates/security/two_factor_select.html:7
 msgid "Select Two-Factor Method"
-msgstr ""
+msgstr "Seleziona metodo a due fattori"
 
 #: flask_security/templates/security/two_factor_setup.html:28
 msgid "Two-Factor authentication adds an extra layer of security to your account"
 msgstr ""
+"L'autenticazione a due fattori aggiunge un ulteriore livello di sicurezza"
+" al tuo account"
 
 #: flask_security/templates/security/two_factor_setup.html:29
 msgid "In addition to your username and password, you'll need to use a code."
@@ -893,7 +895,7 @@ msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:55
 msgid "Two-Factor authentication code"
-msgstr ""
+msgstr "Codice di autenticazione a due fattori"
 
 #: flask_security/templates/security/two_factor_setup.html:66
 msgid "Enter code to complete setup"
@@ -928,7 +930,7 @@ msgstr "Questa applicazione supporta le chiavi di sicurezza WebAuthn."
 #: flask_security/templates/security/two_factor_verify_code.html:1
 #: flask_security/templates/security/two_factor_verify_code.html:7
 msgid "Two-Factor Authentication"
-msgstr ""
+msgstr "Autenticazione a due fattori"
 
 #: flask_security/templates/security/two_factor_verify_code.html:8
 #, python-format
@@ -971,7 +973,7 @@ msgstr "Richiedere l'invio del codice monouso"
 #: flask_security/templates/security/verify.html:7
 #: flask_security/templates/security/wan_verify.html:9
 msgid "Reauthenticate"
-msgstr ""
+msgstr "Autenticati nuovamente"
 
 #: flask_security/templates/security/us_verify.html:18
 msgid "Code has been sent"
@@ -1012,7 +1014,7 @@ msgstr "Elimina la chiave di sicurezza WebAuthn esistente"
 
 #: flask_security/templates/security/wan_signin.html:4
 msgid "WebAuthn Security Key"
-msgstr ""
+msgstr "Chiave di sicurezza WebAuthn"
 
 #: flask_security/templates/security/wan_signin.html:17
 msgid "Sign In Using WebAuthn Security Key"
@@ -1024,12 +1026,14 @@ msgstr "Utilizza la chiave di sicurezza WebAuthn come secondo fattore"
 
 #: flask_security/templates/security/wan_verify.html:21
 msgid "Reauthenticate Using Your WebAuthn Security Key"
-msgstr ""
+msgstr "Autenticati nuovamente utilizzando la chiave di sicurezza WebAuthn"
 
 #: flask_security/templates/security/email/change_email_instructions.html:8
 #, python-format
 msgid "Use <a href=\"%(link)s\">this link</a> to confirm your new email address."
 msgstr ""
+"Usa <a href=\"%(link)s\">questo link</a> per confermare il tuo nuovo "
+"indirizzo email."
 
 #: flask_security/templates/security/email/change_email_instructions.html:9
 #: flask_security/templates/security/email/change_email_instructions.txt:9
@@ -1046,7 +1050,7 @@ msgstr "La tua email registrata attualmente è %(email)s."
 #: flask_security/templates/security/email/change_email_instructions.txt:8
 #, python-format
 msgid "Use %(link)s to confirm your new email address."
-msgstr ""
+msgstr "Usa %(link)s per confermare il tuo nuovo indirizzo email."
 
 #: flask_security/templates/security/email/change_notice.html:1
 #: flask_security/templates/security/email/change_notice.txt:1
@@ -1078,12 +1082,14 @@ msgid ""
 "Use <a href=\"%(confirmation_link)s\">this link</a> to confirm your email"
 " address."
 msgstr ""
+"Usa <a href=\"%(confirmation_link)s\">questo link</a> per confermare il "
+"tuo nuovo indirizzo email."
 
 #: flask_security/templates/security/email/confirmation_instructions.txt:8
 #: flask_security/templates/security/email/welcome.txt:11
 #, python-format
 msgid "Use %(confirmation_link)s to confirm your email address."
-msgstr ""
+msgstr "Usa %(confirmation_link)s per confermare il tuo nuovo indirizzo email."
 
 #: flask_security/templates/security/email/login_instructions.html:1
 #: flask_security/templates/security/email/login_instructions.txt:1
@@ -1116,13 +1122,13 @@ msgstr "Clicca sul link sottostante per reimpostare la password:"
 #: flask_security/templates/security/email/us_instructions.txt:9
 #, python-format
 msgid "Welcome %(username)s!"
-msgstr ""
+msgstr "Benvenuto/a %(username)s!"
 
 #: flask_security/templates/security/email/two_factor_instructions.html:2
 #: flask_security/templates/security/email/two_factor_instructions.txt:3
 #, python-format
 msgid "You can log into your account using the following code: %(token)s"
-msgstr ""
+msgstr "Puoi accedere al tuo account utilizzando il seguente codice: %(token)s"
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
@@ -1132,22 +1138,22 @@ msgstr "impossibile accedere all'account email"
 #: flask_security/templates/security/email/us_instructions.html:10
 #, python-format
 msgid "You can sign in to your account using the following code: %(token)s"
-msgstr ""
+msgstr "Puoi accedere al tuo account utilizzando il seguente codice: %(token)s"
 
 #: flask_security/templates/security/email/us_instructions.html:12
 #, python-format
 msgid "Or use this link: <a href=\"%(login_link)s\">Sign in</a>"
-msgstr ""
+msgstr "Oppure puoi usare questo link: <a href=\"%(login_link)s\">Accedi</a>"
 
 #: flask_security/templates/security/email/us_instructions.txt:10
 #, python-format
 msgid "You can sign in to your account using the following code: %(token)s."
-msgstr ""
+msgstr "Puoi accedere al tuo account utilizzando il seguente codice: %(token)s."
 
 #: flask_security/templates/security/email/us_instructions.txt:12
 #, python-format
 msgid "Or use this link: %(login_link)s"
-msgstr ""
+msgstr "Oppure puoi usare questo link: %(login_link)s"
 
 #: flask_security/templates/security/email/username_recovery.html:5
 #: flask_security/templates/security/email/username_recovery.txt:5
@@ -1202,6 +1208,8 @@ msgid ""
 "If you forgot your password you can reset it <a "
 "href=\"%(recovery_link)s\"> here.</a>"
 msgstr ""
+"Se hai dimenticato la password puoi reimpostarla <a "
+"href=\"%(recovery_link)s\"> qui.</a>"
 
 #: flask_security/templates/security/email/welcome_existing.txt:16
 #, python-format
@@ -1216,6 +1224,8 @@ msgid ""
 "If you forgot your password you can reset it with the following link: "
 "%(recovery_link)s"
 msgstr ""
+"Se hai dimenticato la password puoi reimpostarla tramite il seguente "
+"link: %(recovery_link)s"
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
 #: flask_security/templates/security/email/welcome_existing_username.txt:13
@@ -1254,9 +1264,6 @@ msgstr ""
 
 #~ msgid "Sign in with "
 #~ msgstr "Accedi con "
-
-#~ msgid "Username recovery"
-#~ msgstr ""
 
 #~ msgid "Select Two Factor Method"
 #~ msgstr "Seleziona metodo a due fattori"
