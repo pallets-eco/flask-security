@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.6.0
 -------------
 
-Released February xx, 2025
+Released February 12, 2025
 
 Features & Improvements
 +++++++++++++++++++++++
