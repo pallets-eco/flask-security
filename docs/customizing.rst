@@ -267,59 +267,59 @@ any more, however, Flask-Security's LoginForm uses 2 different input fields (so 
 appropriate input attributes can be set)::
 
     from flask_security import (
-            RegisterForm,
-            LoginForm,
-            Security,
-            lookup_identity,
-            uia_username_mapper,
-            unique_identity_attribute,
+        RegisterForm,
+        LoginForm,
+        Security,
+        lookup_identity,
+        uia_username_mapper,
+        unique_identity_attribute,
+    )
+    from werkzeug.local import LocalProxy
+    from wtforms import StringField, ValidationError, validators
+
+    def username_validator(form, field):
+        # Side-effect - field.data is updated to normalized value.
+        # Use proxy to we can declare this prior to initializing Security.
+        _security = LocalProxy(lambda: app.extensions["security"])
+        msg, field.data = _security._username_util.validate(field.data)
+        if msg:
+            raise ValidationError(msg)
+
+    class MyRegisterForm(RegisterForm):
+        # Note that unique_identity_attribute uses the defined field 'mapper' to
+        # normalize. We validate before that to give better error messages and
+        # to set the normalized value into the form for saving.
+        username = StringField(
+            "Username",
+            validators=[
+                validators.data_required(),
+                username_validator,
+                unique_identity_attribute,
+            ],
         )
-        from werkzeug.local import LocalProxy
-        from wtforms import StringField, ValidationError, validators
 
-        def username_validator(form, field):
-            # Side-effect - field.data is updated to normalized value.
-            # Use proxy to we can declare this prior to initializing Security.
-            _security = LocalProxy(lambda: app.extensions["security"])
-            msg, field.data = _security._username_util.validate(field.data)
-            if msg:
-                raise ValidationError(msg)
+    class MyLoginForm(LoginForm):
+        email = StringField("email", [validators.data_required()])
 
-        class MyRegisterForm(RegisterForm):
-            # Note that unique_identity_attribute uses the defined field 'mapper' to
-            # normalize. We validate before that to give better error messages and
-            # to set the normalized value into the form for saving.
-            username = StringField(
-                "Username",
-                validators=[
-                    validators.data_required(),
-                    username_validator,
-                    unique_identity_attribute,
-                ],
-            )
+        def validate(self, **kwargs):
+            self.user = lookup_identity(self.email.data)
+            # Setting 'ifield' informs the default login form validation
+            # handler that the identity has already been confirmed.
+            self.ifield = self.email
+            if not super().validate(**kwargs):
+                return False
+            return True
 
-        class MyLoginForm(LoginForm):
-            email = StringField("email", [validators.data_required()])
-
-            def validate(self, **kwargs):
-                self.user = lookup_identity(self.email.data)
-                # Setting 'ifield' informs the default login form validation
-                # handler that the identity has already been confirmed.
-                self.ifield = self.email
-                if not super().validate(**kwargs):
-                    return False
-                return True
-
-        # Allow registration with email, but login only with username
-        app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
-            {"username": {"mapper": uia_username_mapper}}
-        ]
-        security = Security(
-            datastore=sqlalchemy_datastore,
-            register_form=MyRegisterForm,
-            login_form=MyLoginForm,
-        )
-        security.init_app(app)
+    # Allow registration with email, but login only with username
+    app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
+        {"username": {"mapper": uia_username_mapper}}
+    ]
+    security = Security(
+        datastore=sqlalchemy_datastore,
+        register_form=MyRegisterForm,
+        login_form=MyLoginForm,
+    )
+    security.init_app(app)
 
 Localization
 ------------
