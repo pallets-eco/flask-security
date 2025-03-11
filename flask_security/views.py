@@ -865,7 +865,7 @@ def two_factor_setup():
         )
 
     # We get here on GET and POST with failed validation.
-    choices = cv("TWO_FACTOR_ENABLED_METHODS")
+    choices = cv("TWO_FACTOR_ENABLED_METHODS")[:]
     if (not cv("TWO_FACTOR_REQUIRED")) and user.tf_primary_method is not None:
         choices.insert(0, "disable")
 
