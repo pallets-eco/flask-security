@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.6.1
+-------------
+
+Released xxx
+
+Fixes
++++++
+- (:issue:`1077`) Fix runtime modification of a config string (TWO_FACTOR_METHODS)
+
 Version 5.6.0
 -------------
 

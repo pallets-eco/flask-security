@@ -996,7 +996,7 @@ def test_opt_in_state_token(app, client, get_message):
     assert b"Currently setup two-factor method: SMS" in response.data
 
 
-def test_opt_out_json(app, client):
+def test_opt_out_json(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     tf_authenticate(app, client)
@@ -1012,8 +1012,9 @@ def test_opt_out_json(app, client):
     session = get_session(response)
     assert "tf_state" not in session
     # verify logged in
-    response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
+    response = client.get("tf-setup", headers=headers)
+    assert "disable" not in response.json["response"]["tf_available_methods"]
 
 
 @pytest.mark.filterwarnings("ignore")
