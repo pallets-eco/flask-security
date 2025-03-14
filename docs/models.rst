@@ -117,6 +117,7 @@ At the bare minimum your `User` and `Role` model must include the following fiel
 * ``password`` (string, nullable)
 * ``active`` (boolean, non-nullable)
 * ``fs_uniquifier`` (string, 64 bytes, unique, non-nullable)
+* a many-to-many relationship to table Role
 
 
 **Role**
@@ -124,6 +125,7 @@ At the bare minimum your `User` and `Role` model must include the following fiel
 * primary key
 * ``name`` (unique, non-nullable)
 * ``description`` (string)
+* a many-to-many relationship to table User
 
 
 Additional Functionality

@@ -11,6 +11,7 @@ Released xxx
 Fixes
 +++++
 - (:issue:`1077`) Fix runtime modification of a config string (TWO_FACTOR_METHODS)
+- (:issue:`1078`) Fix CLI user_create when model doesn't contain username
 
 Version 5.6.0
 -------------
