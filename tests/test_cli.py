@@ -412,6 +412,8 @@ def test_cli_createuserV2attr(script_info):
             "--password",
             "battery staple",
             "us_phone_number:5551212",
+            "--username",
+            "iamuser",
         ],
         obj=script_info,
     )
@@ -421,3 +423,22 @@ def test_cli_createuserV2attr(script_info):
     with app.app_context():
         user = app.security.datastore.find_user(email="email@example.tld")
         assert user.us_phone_number == "5551212"
+        user = app.security.datastore.find_user(username="iamuser")
+        assert user
+
+
+def test_cli_create_nousername(script_info_min):
+    """Test create user CLI passing attr that is in User but not in form."""
+    runner = CliRunner()
+
+    # Create user
+    result = runner.invoke(
+        users_create,
+        [
+            "email@example.tld",
+            "--password",
+            "battery staple",
+        ],
+        obj=script_info_min,
+    )
+    assert result.exit_code == 0

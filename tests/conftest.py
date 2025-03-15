@@ -543,12 +543,46 @@ def fsqlalite_datastore(app, tmpdir, realdburl):
     td()
 
 
-def fsqlalite_setup(app, tmpdir, realdburl):
+@pytest.fixture()
+def fsqlalite_min_datastore(app, tmpdir, realdburl):
+    pytest.importorskip("flask_sqlalchemy_lite")
+    from sqlalchemy.orm import declared_attr, mapped_column, relationship
+    from sqlalchemy import String
+
+    class FsMinUserMixin(UserMixin):
+        # flask_security basic fields
+        id: Mapped[int] = mapped_column(primary_key=True)  # type: ignore
+        email: Mapped[str] = mapped_column(String(255), unique=True)  # type: ignore
+        password: Mapped[str | None] = mapped_column(String(255))  # type: ignore
+        active: Mapped[bool] = mapped_column()  # type: ignore
+        fs_uniquifier: Mapped[str] = mapped_column(  # type: ignore
+            String(64), unique=True
+        )
+
+        @declared_attr
+        def roles(cls):
+            # The first arg is a class name, the backref is a column name
+            return relationship(
+                "Role",
+                secondary="roles_users",
+                back_populates="users",
+            )
+
+    ds, td = fsqlalite_setup(
+        app, tmpdir, realdburl, usermixin=FsMinUserMixin, use_webauthn=False
+    )
+    yield ds
+    td()
+
+
+def fsqlalite_setup(app, tmpdir, realdburl, usermixin=None, use_webauthn=True):
     pytest.importorskip("flask_sqlalchemy_lite")
     from flask_sqlalchemy_lite import SQLAlchemy
     from sqlalchemy.orm import DeclarativeBase, mapped_column
     from flask_security.models import sqla as sqla
 
+    if not usermixin:
+        usermixin = sqla.FsUserMixin
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)
     else:
@@ -568,10 +602,12 @@ def fsqlalite_setup(app, tmpdir, realdburl):
     class Role(Model, sqla.FsRoleMixin):
         __tablename__ = "role"
 
-    class WebAuthn(Model, sqla.FsWebAuthnMixin):
-        __tablename__ = "webauthn"
+    if use_webauthn:
 
-    class User(Model, sqla.FsUserMixin):
+        class WebAuthn(Model, sqla.FsWebAuthnMixin):
+            __tablename__ = "webauthn"
+
+    class User(Model, usermixin):
         __tablename__ = "user"
         security_number: Mapped[t.Optional[int]] = mapped_column(  # type: ignore
             unique=True
@@ -593,7 +629,10 @@ def fsqlalite_setup(app, tmpdir, realdburl):
             if realdburl:
                 _teardown_realdb(db_info)
 
-    return FSQLALiteUserDatastore(db, User, Role, WebAuthn), tear_down
+    return (
+        FSQLALiteUserDatastore(db, User, Role, WebAuthn if use_webauthn else None),
+        tear_down,
+    )
 
 
 @pytest.fixture()
@@ -1017,6 +1056,17 @@ def script_info(app, sqlalchemy_datastore):
 
         app.config.update(**{"SECURITY_USER_IDENTITY_ATTRIBUTES": uia})
         app.security = Security(app, datastore=sqlalchemy_datastore)
+        return app
+
+    return ScriptInfo(create_app=create_app)
+
+
+@pytest.fixture()
+def script_info_min(app, fsqlalite_min_datastore):
+    from flask.cli import ScriptInfo
+
+    def create_app():
+        app.security = Security(app, datastore=fsqlalite_min_datastore)
         return app
 
     return ScriptInfo(create_app=create_app)

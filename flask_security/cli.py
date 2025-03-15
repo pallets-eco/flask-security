@@ -145,7 +145,9 @@ def users_create(attributes, password, active, username):
                 )
 
         kwargs[attr] = attrarg
-    kwargs.update(**{"password": password, "username": username})
+    kwargs["password"] = password
+    if username:
+        kwargs["username"] = username
 
     # We always add password_confirm here - if user used the CLI in input mode -
     # it already asked for confirmation.
