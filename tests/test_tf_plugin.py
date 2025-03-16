@@ -25,9 +25,8 @@ from tests.test_webauthn import HackWebauthnUtil, wan_signin, reg_2_keys
 pytest.importorskip("webauthn")
 
 
-@pytest.mark.webauthn()
+@pytest.mark.webauthn(webauthn_util_cls=HackWebauthnUtil)
 @pytest.mark.two_factor()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf_select(app, client, get_message):
     # Test basic select mechanism when more than one 2FA has been setup
     wankeys = reg_2_keys(client)  # add a webauthn 2FA key (authenticates)
@@ -78,9 +77,8 @@ def test_tf_select(app, client, get_message):
     assert not tf_in_session(get_existing_session(client))
 
 
-@pytest.mark.webauthn()
+@pytest.mark.webauthn(webauthn_util_cls=HackWebauthnUtil)
 @pytest.mark.two_factor()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf_select_json(app, client, get_message):
     # Test basic select mechanism when more than one 2FA has been setup
     headers = {"Accept": "application/json", "Content-Type": "application/json"}

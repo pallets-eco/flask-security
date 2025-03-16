@@ -811,7 +811,7 @@ def send_mail(subject, recipient, template, **context):
     if isinstance(sender, LocalProxy):
         sender = sender._get_current_object()
 
-    _security._mail_util.send_mail(
+    _security.mail_util.send_mail(
         template,
         subject,
         recipient,
@@ -947,7 +947,7 @@ def uia_phone_mapper(identity: str) -> str | None:
 
     .. versionadded:: 3.4.0
     """
-    ph = _security._phone_util.get_canonical_form(identity)
+    ph = _security.phone_util.get_canonical_form(identity)
     return ph
 
 
@@ -964,7 +964,7 @@ def uia_email_mapper(identity: str) -> str | None:
     """
 
     try:
-        return _security._mail_util.normalize(identity)
+        return _security.mail_util.normalize(identity)
     except ValueError:
         return None
 
@@ -977,7 +977,7 @@ def uia_username_mapper(identity: str) -> str | None:
 
     .. versionadded:: 4.1.0
     """
-    return _security._username_util.normalize(identity)
+    return _security.username_util.normalize(identity)
 
 
 def use_double_hash(password_hash=None):

@@ -164,9 +164,9 @@ class EmailValidation:
 
         try:
             if self.verify:
-                field.data = _security._mail_util.validate(field.data)
+                field.data = _security.mail_util.validate(field.data)
             else:
-                field.data = _security._mail_util.normalize(field.data)
+                field.data = _security.mail_util.normalize(field.data)
         except EmailValidateException as e:
             # we stop further validators if email isn't valid.
             # TODO: email_validator provides some really nice error messages - however
@@ -228,7 +228,7 @@ def unique_user_email(form, field):
 
 def username_validator(form, field):
     # Side-effect - field.data is updated to normalized value.
-    msg, field.data = _security._username_util.validate(field.data)
+    msg, field.data = _security.username_util.validate(field.data)
     if msg:
         raise ValidationError(msg)
 
@@ -599,7 +599,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
             # Reduce timing variation between existing and non-existing users
             hash_password(self.password.data)
             return False
-        self.password.data = _security._password_util.normalize(self.password.data)
+        self.password.data = _security.password_util.normalize(self.password.data)
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
@@ -657,7 +657,7 @@ class VerifyForm(Form, PasswordFormMixin):
             return False
 
         assert self.password.data is not None
-        self.password.data = _security._password_util.normalize(self.password.data)
+        self.password.data = _security.password_util.normalize(self.password.data)
         assert isinstance(self.password.errors, list)
         if not self.user.verify_and_update_password(self.password.data):
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
@@ -713,7 +713,7 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
                 if hasattr(_datastore.user_model, k):
                     rfields[k] = v
             del rfields["password"]
-            pbad, self.password.data = _security._password_util.validate(
+            pbad, self.password.data = _security.password_util.validate(
                 self.password.data, True, **rfields
             )
             if pbad:
@@ -823,7 +823,7 @@ class RegisterFormV2(
                 if hasattr(_datastore.user_model, k):
                     rfields[k] = v
             del rfields["password"]
-            pbad, self.password.data = _security._password_util.validate(
+            pbad, self.password.data = _security.password_util.validate(
                 self.password.data, True, **rfields
             )
             if pbad:
@@ -877,7 +877,7 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
 
         assert isinstance(self.password.errors, list)
         assert self.password.data is not None
-        pbad, self.password.data = _security._password_util.validate(
+        pbad, self.password.data = _security.password_util.validate(
             self.password.data, False, user=self.user
         )
         if pbad:
@@ -922,7 +922,7 @@ class ChangePasswordForm(Form):
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
                 return False
 
-            self.password.data = _security._password_util.normalize(self.password.data)
+            self.password.data = _security.password_util.normalize(self.password.data)
             if not verify_password(self.password.data, current_user.password):
                 self.password.errors.append(get_message("INVALID_PASSWORD")[0])
                 return False
@@ -931,7 +931,7 @@ class ChangePasswordForm(Form):
                 return False
 
         assert self.new_password.data is not None
-        pbad, self.new_password.data = _security._password_util.validate(
+        pbad, self.new_password.data = _security.password_util.validate(
             self.new_password.data, False, user=current_user
         )
         if pbad:
@@ -980,7 +980,7 @@ class TwoFactorSetupForm(Form):
             if not self.phone.data:
                 self.phone.errors.append(get_message("PHONE_INVALID")[0])
                 return False
-            msg = _security._phone_util.validate_phone_number(self.phone.data)
+            msg = _security.phone_util.validate_phone_number(self.phone.data)
             if msg:
                 self.phone.errors.append(msg)
                 return False
@@ -1020,7 +1020,7 @@ class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
         assert self.user is not None
         assert self.code.data is not None
         assert isinstance(self.code.errors, list)
-        if not _security._totp_factory.verify_totp(
+        if not _security.totp_factory.verify_totp(
             token=self.code.data,
             totp_secret=self.tf_totp_secret,
             user=self.user,

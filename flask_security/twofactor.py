@@ -60,7 +60,7 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
     Flask-Security code should NOT call this directly -
     call :meth:`.UserMixin.tf_send_security_token`
     """
-    token_to_be_sent = _security._totp_factory.generate_totp_password(totp_secret)
+    token_to_be_sent = _security.totp_factory.generate_totp_password(totp_secret)
     if method == "email" or method == "mail":
         send_mail(
             cv("EMAIL_SUBJECT_TWO_FACTOR"),

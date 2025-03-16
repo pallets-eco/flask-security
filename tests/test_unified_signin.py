@@ -1868,8 +1868,7 @@ def test_us_tf_validity(app, client, get_message):
     assert response.json["response"]["tf_state"] == "ready"
 
 
-@pytest.mark.webauthn()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+@pytest.mark.webauthn(webauthn_util_cls=HackWebauthnUtil)
 def test_us_verify_wan(app, client, get_message):
     # test get correct options when requiring a reauthentication and have wan keys
     # setup.

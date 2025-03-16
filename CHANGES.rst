@@ -12,6 +12,16 @@ Fixes
 +++++
 - (:issue:`1077`) Fix runtime modification of a config string (TWO_FACTOR_METHODS)
 - (:issue:`1078`) Fix CLI user_create when model doesn't contain username
+- (:issue:`1076`) xxx_util_cls instances should be public and documented.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+As part of :issue:`1076` the following cleanup was done:
+
+- The xxx_util_cls arguments are now stored in 'private' instance variables - they are never
+  used after Flask-Security initialization and have never been documented.
+- The xxx_util_cls options should only be set as part of Flask-Security construction.
+  Setting them via init_app(kwargs) or app.config["SECURITY_XX"] has been deprecated.
 
 Version 5.6.0
 -------------

@@ -1317,14 +1317,14 @@ class Security:
         self.app = app
         self._datastore = datastore
         self._register_blueprint = register_blueprint
-        self.mail_util_cls = mail_util_cls
-        self.password_util_cls = password_util_cls
-        self.phone_util_cls = phone_util_cls
+        self._mail_util_cls = mail_util_cls
+        self._password_util_cls = password_util_cls
+        self._phone_util_cls = phone_util_cls
         self.render_template = render_template
-        self.totp_cls = totp_cls
-        self.username_util_cls = username_util_cls
-        self.webauthn_util_cls = webauthn_util_cls
-        self.mf_recovery_codes_util_cls = mf_recovery_codes_util_cls
+        self._totp_cls = totp_cls
+        self._username_util_cls = username_util_cls
+        self._webauthn_util_cls = webauthn_util_cls
+        self._mf_recovery_codes_util_cls = mf_recovery_codes_util_cls
         self._oauth = oauth
 
         # Forms - we create a list from constructor.
@@ -1543,7 +1543,7 @@ class Security:
         ):
             self._use_confirm_form = False
 
-        # The following will be set as attributes and initialized from either
+        # The following will be set as attributes and initialized from constructor or
         # kwargs or config.
         attr_names = [
             "trackable",
@@ -1558,17 +1558,32 @@ class Security:
             "username_recovery",
             "passwordless",
             "webauthn",
-            "mail_util_cls",
-            "password_util_cls",
-            "phone_util_cls",
             "render_template",
-            "totp_cls",
-            "webauthn_util_cls",
             "datetime_factory",
         ]
         for attr in attr_names:
             if ov := kwargs.get(attr, cv(attr.upper(), app, strict=False)):
                 setattr(self, attr, ov)
+
+        # Deprecated BC attrs - only settable at constructor time. Noter that newer
+        # _util classes (username_util_cls) already are this way
+        dep_attr_names = [
+            "mail_util_cls",
+            "password_util_cls",
+            "phone_util_cls",
+            "totp_cls",
+            "webauthn_util_cls",
+        ]
+        for attr in dep_attr_names:
+            if ov := kwargs.get(attr, cv(attr.upper(), app, strict=False)):
+                setattr(self, f"_{attr}", ov)
+                warnings.warn(
+                    f"Setting {attr} via kwargs or config is"
+                    " deprecated as of version 5.6.1 and will be removed in a future"
+                    " release. Use the Flask-Security constructor.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
         identity_loaded.connect_via(app)(_on_identity_loaded)
 
@@ -1597,12 +1612,12 @@ class Security:
                 )
 
         self.login_manager = _get_login_manager(app, self)
-        self._phone_util = self.phone_util_cls(app)
-        self._mail_util = self.mail_util_cls(app)
-        self._password_util = self.password_util_cls(app)
-        self._username_util = self.username_util_cls(app)
-        self._webauthn_util = self.webauthn_util_cls(app)
-        self._mf_recovery_codes_util = self.mf_recovery_codes_util_cls(app)
+        self._phone_util = self._phone_util_cls(app)
+        self._mail_util = self._mail_util_cls(app)
+        self._password_util = self._password_util_cls(app)
+        self._username_util = self._username_util_cls(app)
+        self._webauthn_util = self._webauthn_util_cls(app)
+        self._mf_recovery_codes_util = self._mf_recovery_codes_util_cls(app)
         self.remember_token_serializer = _get_serializer(app, "remember")
         self.login_serializer = _get_serializer(app, "login")
         self.reset_serializer = _get_serializer(app, "reset")
@@ -1768,14 +1783,14 @@ class Security:
                 sms_service = cv("SMS_SERVICE", app=app)
                 if sms_service == "Twilio":  # pragma: no cover
                     self._check_modules("twilio", "SMS")
-                if self.phone_util_cls == PhoneUtil:
+                if self._phone_util_cls == PhoneUtil:
                     self._check_modules("phonenumbers", "SMS")
 
             secrets = cv("TOTP_SECRETS", app=app)
             issuer = cv("TOTP_ISSUER", app=app)
             if not secrets or not issuer:
                 raise ValueError("Both TOTP_SECRETS and TOTP_ISSUER must be set")
-            self._totp_factory = self.totp_cls(secrets, issuer)
+            self._totp_factory = self._totp_cls(secrets, issuer)
 
         if cv("PASSWORD_COMPLEXITY_CHECKER", app=app) == "zxcvbn":
             self._check_modules("zxcvbn", "PASSWORD_COMPLEXITY_CHECKER")
@@ -1783,7 +1798,7 @@ class Security:
         if cv("WEBAUTHN", app=app):
             self._check_modules("webauthn", "WEBAUTHN")
 
-        if cv("USERNAME_ENABLE", app=app) and self.username_util_cls == UsernameUtil:
+        if cv("USERNAME_ENABLE", app=app) and self._username_util_cls == UsernameUtil:
             self._check_modules("bleach", "USERNAME_ENABLE")
 
         # Register so other packages can reference our translations.
@@ -2047,6 +2062,48 @@ class Security:
         .. versionadded:: 3.4.0
         """
         self._reauthn_handler = cb
+
+    @property
+    def mail_util(self) -> MailUtil:
+        """Instance of mail_util_cls created at init_app() time.
+        See :ref:`api:extendable classes`"""
+        return self._mail_util
+
+    @property
+    def password_util(self) -> PasswordUtil:
+        """Instance of password_util_cls created at init_app() time.
+        See :ref:`api:extendable classes`"""
+        return self._password_util
+
+    @property
+    def username_util(self) -> UsernameUtil:
+        """Instance of username_util_cls created at init_app() time.
+        See :ref:`api:extendable classes`"""
+        return self._username_util
+
+    @property
+    def phone_util(self) -> PhoneUtil:
+        """Instance of phone_util_cls created at init_app() time.
+        See :ref:`api:extendable classes`"""
+        return self._phone_util
+
+    @property
+    def totp_factory(self) -> Totp:
+        """Instance of totp_factory created at init_app() time.
+        See :ref:`api:extendable classes`"""
+        return self._totp_factory
+
+    @property
+    def mf_recovery_codes_util(self) -> MfRecoveryCodesUtil:
+        """Instance of mf_recovery_codes_util_cls created at init_app() time.
+        See :ref:`api:extendable classes`"""
+        return self._mf_recovery_codes_util
+
+    @property
+    def webauthn_util(self) -> WebauthnUtil:
+        """Instance of webauthn_util_cls created at init_app() time.
+        See :ref:`api:extendable classes`"""
+        return self._webauthn_util
 
     def _add_ctx_processor(
         self, endpoint: str, fn: t.Callable[[], dict[str, t.Any]]
