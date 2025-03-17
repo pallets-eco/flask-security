@@ -58,7 +58,7 @@ low = [
     "Flask==3.0.0",
     "Flask-SQLAlchemy==3.1.0",
     "Flask-SQLAlchemy-Lite==0.1.0;python_version>='3.10'",
-    "Flask-Babel==3.1.0",
+    "Flask-Babel==4.0.0",
     "Flask-Mailman==0.3.0",
     "Flask-Login==0.6.3",
     "Flask-WTF==1.1.2",

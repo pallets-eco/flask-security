@@ -933,6 +933,9 @@ def test_method_view(app, client):
 
 def test_phone_util_override(app, sqlalchemy_datastore):
     from flask_security import phone_util
+    import warnings
+
+    warnings.simplefilter("error")
 
     class MyPhoneUtil(phone_util.PhoneUtil):
         def validate_phone_number(self, input_data):
