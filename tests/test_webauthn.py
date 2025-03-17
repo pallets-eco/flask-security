@@ -41,8 +41,6 @@ from flask_security import (
     wan_deleted,
 )
 
-pytestmark = pytest.mark.webauthn()
-
 # We can't/don't test the actual client-side javascript and browser APIs - so
 # to create reproducible tests, use view_scaffold, set breakpoints in the views and
 # cut-and-paste the responses. That requires that 'challenge' and 'rp_origin' be
@@ -187,6 +185,9 @@ class HackWebauthnUtil(WebauthnUtil):
         return "http://localhost:5001"
 
 
+pytestmark = pytest.mark.webauthn(webauthn_util_cls=HackWebauthnUtil)
+
+
 def _register_start(
     client, name="testr1", usage="secondary", endpoint="wan-register", csrf_token=None
 ):
@@ -303,7 +304,6 @@ def reset_signcount(app, email, keyname):
         app.security.datastore.commit()
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_basic(app, clients, get_message):
     auths = []
 
@@ -368,7 +368,6 @@ def test_basic(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_basic_json(app, clients, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -447,7 +446,7 @@ def test_basic_json(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_user_hints=False)
+@pytest.mark.settings(wan_allow_user_hints=False)
 def test_basic_json_nohints(app, client, get_message):
     # Test that with no hints allowed, we don't get any credentials and we can still
     # sign in.
@@ -477,7 +476,6 @@ def test_basic_json_nohints(app, client, get_message):
     assert response.json["response"]["user"]["email"] == "matt@lp.com"
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_usage(app, client, get_message):
     authenticate(client)
     register_options, response_url = _register_start_json(client, usage="secondary")
@@ -496,7 +494,6 @@ def test_usage(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_constraints(app, clients, get_message):
     """Test that nickname is unique for a given user but different users
     can have the same nickname.
@@ -531,7 +528,6 @@ def test_constraints(app, clients, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_bad_data_register(app, client, get_message):
     authenticate(client)
     register_options, response_url = _register_start_json(client, name="testr3")
@@ -581,7 +577,6 @@ def test_bad_data_register(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_bad_data_signin(app, client, get_message):
     authenticate(client)
     register_options, response_url = _register_start_json(client, usage="first")
@@ -622,7 +617,6 @@ def test_bad_data_signin(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_delete(app, clients, get_message):
     @wan_deleted.connect_via(app)
     def pc(sender, user, name, **extra_args):
@@ -667,7 +661,6 @@ def test_delete(app, clients, get_message):
     assert b"testr3" not in response.data
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_delete_json(app, clients, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -696,7 +689,6 @@ def test_delete_json(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_disabled_account(app, client, get_message):
     # With USER_HINTS enabled, should get 200 on initial signin POST, but
     # not receive a list of registered credentials.
@@ -737,7 +729,6 @@ def test_disabled_account(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_unk_credid(app, client, get_message):
     authenticate(client)
 
@@ -778,10 +769,7 @@ def test_unk_credid(app, client, get_message):
     )
 
 
-@pytest.mark.settings(
-    webauthn_util_cls=HackWebauthnUtil,
-    wan_allow_as_first_factor=False,
-)
+@pytest.mark.settings(wan_allow_as_first_factor=False)
 def test_no_first_factor(app, client, get_message):
     # make sure that is app not configured to allow a webauthn key as a 'first'
     # authenticator, that the endpoint 'disappears'.
@@ -798,7 +786,6 @@ def test_no_first_factor(app, client, get_message):
 
 @pytest.mark.two_factor()
 @pytest.mark.unified_signin()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf(app, client, get_message):
     # Test using webauthn key as a second factor
     # Register 2 keys - one "first" one "secondary"
@@ -836,7 +823,6 @@ def test_tf(app, client, get_message):
 
 @pytest.mark.two_factor()
 @pytest.mark.unified_signin()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_tf_json(app, client, get_message):
     # Test using webauthn key as a second factor
     # Register 2 keys - one "first" one "secondary"
@@ -874,9 +860,7 @@ def test_tf_json(app, client, get_message):
 
 
 @pytest.mark.two_factor()
-@pytest.mark.settings(
-    webauthn_util_cls=HackWebauthnUtil, two_factor_always_validate=False
-)
+@pytest.mark.settings(two_factor_always_validate=False)
 def test_tf_validity_window(app, client, get_message):
     # Test with a two-factor validity setting - we don't get re-prompted.
     authenticate(client)
@@ -934,9 +918,7 @@ def test_tf_validity_window(app, client, get_message):
 
 
 @pytest.mark.two_factor()
-@pytest.mark.settings(
-    webauthn_util_cls=HackWebauthnUtil, two_factor_always_validate=False
-)
+@pytest.mark.settings(two_factor_always_validate=False)
 def test_tf_validity_window_json(app, client, get_message):
     # Test with a two-factor validity setting - we don't get re-prompted.
     # This also relies on the tf_validity_cookie
@@ -970,9 +952,7 @@ def test_tf_validity_window_json(app, client, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(
-    webauthn_util_cls=HackWebauthnUtil, wan_register_within="1 seconds"
-)
+@pytest.mark.settings(wan_register_within="1 seconds")
 def test_register_timeout(app, client, get_message):
     authenticate(client)
 
@@ -986,7 +966,7 @@ def test_register_timeout(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_signin_within="2 seconds")
+@pytest.mark.settings(wan_signin_within="2 seconds")
 def test_signin_timeout(app, client, get_message):
     authenticate(client)
 
@@ -1007,7 +987,6 @@ def test_signin_timeout(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_bad_token(app, client, get_message):
     authenticate(client)
 
@@ -1119,7 +1098,6 @@ def test_wan_context_processors(client, app):
 
 
 @pytest.mark.two_factor()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_alt_tf(app, client, get_message):
     # Use webauthn as primary and set up SMS as second factor
     authenticate(client)
@@ -1149,7 +1127,6 @@ def test_alt_tf(app, client, get_message):
 
 
 @pytest.mark.two_factor()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_all_in_one(app, client, get_message):
     # Use a key that supports user_verification - we should be able to
     # use that alone.
@@ -1173,7 +1150,6 @@ def test_all_in_one(app, client, get_message):
 
 
 @pytest.mark.two_factor()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_all_in_one_not_allowed(app, client, get_message):
     # now test when we don't allow a key to satisfy both factors
     authenticate(client)
@@ -1193,7 +1169,6 @@ def test_all_in_one_not_allowed(app, client, get_message):
     assert response.json["response"]["tf_required"]
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_reset(app, client):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -1215,7 +1190,6 @@ def test_reset(app, client):
     assert len(active_creds) == 0
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_user_handle(app, clients, get_message):
     """Test that we fail signin if user_handle doesn't match.
     Since we generated the SIGNIN_DATA_OH from view_scaffold - the user_handle
@@ -1255,7 +1229,6 @@ def test_user_handle(app, clients, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_autogen_user_handle(app, client, get_message):
     # Test that is an existing user doesn't have a fs_webauthn_user_handle - it will
     # be generated.
@@ -1278,7 +1251,6 @@ def test_autogen_user_handle(app, client, get_message):
         assert b64_user_handle == register_options["user"]["id"]
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_verify_json(app, client, get_message):
     # Test can re-authenticate using existing webauthn key.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -1315,7 +1287,6 @@ def test_verify_json(app, client, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_verify(app, client, get_message):
     # Test can re-authenticate using existing webauthn key.
     # Forms version - verify that the 'next' qparam is properly maintained during the
@@ -1345,7 +1316,7 @@ def test_verify(app, client, get_message):
         assert sess["fs_paa"] > old_paa
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_signin_within="2 seconds")
+@pytest.mark.settings(wan_signin_within="2 seconds")
 def test_verify_timeout(app, client, get_message):
     authenticate(client)
     register_options, response_url = _register_start_json(client, name="testr3")
@@ -1362,7 +1333,6 @@ def test_verify_timeout(app, client, get_message):
     )
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_verify_validate_error(app, client, get_message):
     authenticate(client)
     register_options, response_url = _register_start_json(client, name="testr3")
@@ -1402,7 +1372,6 @@ def test_no_verify(app, client):
     assert response.status_code == 404
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_verify_usage_any_json(app, client, get_message):
     # Test the WAN_ALLOW_AS_VERIFY config.
     # Make sure only allowed credentials show up as options
@@ -1428,7 +1397,7 @@ def test_verify_usage_any_json(app, client, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, wan_allow_as_verify="first")
+@pytest.mark.settings(wan_allow_as_verify="first")
 def test_verify_usage_first_json(app, client, get_message):
     # Test the WAN_ALLOW_AS_VERIFY config.
     # Make sure only allowed credentials show up as options
@@ -1458,9 +1427,7 @@ def test_verify_usage_first_json(app, client, get_message):
     )
 
 
-@pytest.mark.settings(
-    webauthn_util_cls=HackWebauthnUtil, wan_allow_as_verify="secondary"
-)
+@pytest.mark.settings(wan_allow_as_verify="secondary")
 def test_verify_usage_secondary_json(app, client, get_message):
     # Test the WAN_ALLOW_AS_VERIFY config.
     # Make sure only allowed credentials show up as options
@@ -1489,7 +1456,6 @@ def test_verify_usage_secondary_json(app, client, get_message):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_remember_token(client):
     # test that remember token properly set on primary authn with webauthn
     authenticate(client)
@@ -1522,7 +1488,6 @@ def test_remember_token(client):
 
 @pytest.mark.two_factor()
 @pytest.mark.unified_signin()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_remember_token_tf(client):
     # test that remember token properly set after secondary authn with webauthn
     authenticate(client)
@@ -1556,7 +1521,6 @@ def test_remember_token_tf(client):
 
 
 @pytest.mark.settings(
-    webauthn_util_cls=HackWebauthnUtil,
     wan_post_register_view="/post_register",
 )
 def test_post_register_redirect(app, client, get_message):
@@ -1581,7 +1545,7 @@ class MyWebauthnUtil(HackWebauthnUtil):
 
 @pytest.mark.two_factor()
 @pytest.mark.unified_signin()
-@pytest.mark.settings(webauthn_util_cls=MyWebauthnUtil)
+@pytest.mark.webauthn(webauthn_util_cls=MyWebauthnUtil)
 def test_uv_required(client):
     # Override WebauthnUtils to require user-verification on signin.
     keys = reg_2_keys(client)
@@ -1619,9 +1583,7 @@ def test_uv_required(client):
     assert response.json["response"]["user"]["email"] == "matt@lp.com"
 
 
-@pytest.mark.settings(
-    multi_factor_recovery_codes=True, webauthn_util_cls=HackWebauthnUtil
-)
+@pytest.mark.settings(multi_factor_recovery_codes=True)
 def test_mf(client):
     # Test using recovery codes in-liu of a webauthn second factor
     # Note that we are allowed to generate recovery codes even if we don't yet have
@@ -1662,7 +1624,7 @@ def test_mf(client):
     assert response.status_code == 200
 
 
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil, url_prefix="/auth")
+@pytest.mark.settings(url_prefix="/auth")
 def test_login_next(app, client, get_message):
     # Test that ?next=/xx is propagated through login/wan-signin templates as well as
     # views.
@@ -1713,7 +1675,6 @@ def test_login_next(app, client, get_message):
 
 
 @pytest.mark.flask_async()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
 def test_async(app, client, get_message):
     auths = []
 
@@ -1759,7 +1720,6 @@ def test_async(app, client, get_message):
 
 @pytest.mark.csrf()
 @pytest.mark.settings(
-    webauthn_util_cls=HackWebauthnUtil,
     wan_post_register_view="/done-registration",
     post_login_view="/post-login",
 )

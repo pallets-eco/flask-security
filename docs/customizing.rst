@@ -281,7 +281,7 @@ appropriate input attributes can be set)::
         # Side-effect - field.data is updated to normalized value.
         # Use proxy to we can declare this prior to initializing Security.
         _security = LocalProxy(lambda: app.extensions["security"])
-        msg, field.data = _security._username_util.validate(field.data)
+        msg, field.data = _security.username_util.validate(field.data)
         if msg:
             raise ValidationError(msg)
 

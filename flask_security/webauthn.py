@@ -190,7 +190,7 @@ class WebAuthnRegisterResponseForm(Form):
             self.registration_verification = webauthn.verify_registration_response(
                 credential=reg_cred,
                 expected_challenge=self.challenge.encode(),
-                expected_origin=_security._webauthn_util.origin(),
+                expected_origin=_security.webauthn_util.origin(),
                 expected_rp_id=request.host.split(":")[0],
                 require_user_verification=self.user_verification,
             )
@@ -335,7 +335,7 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
             webauthn.verify_authentication_response,
             credential=auth_cred,
             expected_challenge=self.challenge.encode(),
-            expected_origin=_security._webauthn_util.origin(),
+            expected_origin=_security.webauthn_util.origin(),
             expected_rp_id=request.host.split(":")[0],
             credential_public_key=self.cred.public_key,
             credential_current_sign_count=self.cred.sign_count,
@@ -416,7 +416,7 @@ def webauthn_register() -> ResponseValue:
     )
 
     if form.validate_on_submit():
-        challenge = _security._webauthn_util.generate_challenge(
+        challenge = _security.webauthn_util.generate_challenge(
             cv("WAN_CHALLENGE_BYTES")
         )
         if not current_user.fs_webauthn_user_handle:
@@ -437,7 +437,7 @@ def webauthn_register() -> ResponseValue:
                 current_user, ["first", "secondary"]
             ),
         )
-        ro = _security._webauthn_util.registration_options(
+        ro = _security.webauthn_util.registration_options(
             current_user, form.usage.data, ro
         )
         credential_options = webauthn.generate_registration_options(**ro)
@@ -584,7 +584,7 @@ def _signin_common(user: UserMixin | None, usage: list[str]) -> tuple[t.Any, str
     """
     Common code between signin and verify - once form has been verified.
     """
-    challenge = _security._webauthn_util.generate_challenge(cv("WAN_CHALLENGE_BYTES"))
+    challenge = _security.webauthn_util.generate_challenge(cv("WAN_CHALLENGE_BYTES"))
 
     # Populate allowedCredentials if identity passed and allowed
     allow_credentials = None
@@ -597,7 +597,7 @@ def _signin_common(user: UserMixin | None, usage: list[str]) -> tuple[t.Any, str
         timeout=cv("WAN_SIGNIN_TIMEOUT"),
         allow_credentials=allow_credentials,
     )
-    ao = _security._webauthn_util.authentication_options(user, usage, ao)
+    ao = _security.webauthn_util.authentication_options(user, usage, ao)
     options = webauthn.generate_authentication_options(**ao)
 
     # If we ask for UserVerification then we need to check that in the response.

@@ -77,7 +77,7 @@ class MfRecoveryCodesUtil:
         If configured (:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_KEYS`),
         codes are stored encrypted - but plainttext versions are returned.
         """
-        new_codes = _security._totp_factory.generate_recovery_codes(
+        new_codes = _security.totp_factory.generate_recovery_codes(
             cv("MULTI_FACTOR_RECOVERY_CODES_N")
         )
         _datastore.mf_set_recovery_codes(user, self._encrypt_codes(new_codes))
@@ -173,7 +173,7 @@ class MfRecoveryForm(Form):
         assert self.user is not None
         assert self.code.data is not None  # RequiredLocalize validator
         assert isinstance(self.code.errors, list)
-        if not _security._mf_recovery_codes_util.check_recovery_code(
+        if not _security.mf_recovery_codes_util.check_recovery_code(
             self.user, self.code.data
         ):
             self.code.errors.append(get_message("INVALID_RECOVERY_CODE")[0])
@@ -198,7 +198,7 @@ def mf_recovery_codes() -> ResponseValue:
 
     if form.validate_on_submit():
         # generate new codes
-        codes = _security._mf_recovery_codes_util.create_recovery_codes(current_user)
+        codes = _security.mf_recovery_codes_util.create_recovery_codes(current_user)
         after_this_request(view_commit)
         if _security._want_json(request):
             payload = dict(recovery_codes=codes)
@@ -210,7 +210,7 @@ def mf_recovery_codes() -> ResponseValue:
             **_security._run_ctx_processor("mf_recovery_codes"),
         )
 
-    codes = _security._mf_recovery_codes_util.get_recovery_codes(current_user)
+    codes = _security.mf_recovery_codes_util.get_recovery_codes(current_user)
     if _security._want_json(request):
         return base_render_json(
             form, include_user=False, additional=dict(recovery_codes=codes)
@@ -243,9 +243,7 @@ def mf_recovery():
 
     if form.validate_on_submit():
         # Valid code - we want these to be one time - so remove it from list
-        _security._mf_recovery_codes_util.delete_recovery_code(
-            form.user, form.code.data
-        )
+        _security.mf_recovery_codes_util.delete_recovery_code(form.user, form.code.data)
         after_this_request(view_commit)
 
         # In the recovery case - don't set/offer validity token.

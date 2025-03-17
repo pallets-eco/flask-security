@@ -795,7 +795,7 @@ def test_zxcvbn_xlate(app):
 
     with app.test_request_context():
         user = TestUser("jwag@notme.com")
-        pbad, pnorm = app.security._password_util.validate("simple", False, user=user)
+        pbad, pnorm = app.security.password_util.validate("simple", False, user=user)
         print(pbad)
 """
 
@@ -818,7 +818,7 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
             mock_urlopen.return_value.__enter__.return_value.read.return_value = (
                 pwned_response
             )
-            pbad, pnorm = app.security._password_util.validate("flaskflask", False)
+            pbad, pnorm = app.security.password_util.validate("flaskflask", False)
             assert len(pbad) == 1
             assert app.config["SECURITY_MSG_PASSWORD_BREACHED"][0] in pbad[0]
 
@@ -845,7 +845,7 @@ B3902FD808DCA504AAAD30F3C14BD3ACE7C:10"
             mock_urlopen.return_value.__enter__.return_value.read.return_value = (
                 pwned_response
             )
-            pbad, pnorm = app.security._password_util.validate("flaskflask", True)
+            pbad, pnorm = app.security.password_util.validate("flaskflask", True)
             # Still weak password, just not pwned enough. Should fail complexity
             assert len(pbad) == 1
             assert "Repeats like" in pbad[0]
@@ -859,7 +859,7 @@ def test_breached_real(app, sqlalchemy_datastore):
     app.security = Security()
     app.security.init_app(app, sqlalchemy_datastore)
     with app.test_request_context():
-        pbad, pnorm = app.security._password_util.validate("flaskflask", True)
+        pbad, pnorm = app.security.password_util.validate("flaskflask", True)
         assert len(pbad) == 1
         assert app.config["SECURITY_MSG_PASSWORD_BREACHED"][0] in pbad[0]
 
@@ -933,6 +933,9 @@ def test_method_view(app, client):
 
 def test_phone_util_override(app, sqlalchemy_datastore):
     from flask_security import phone_util
+    import warnings
+
+    warnings.simplefilter("error")
 
     class MyPhoneUtil(phone_util.PhoneUtil):
         def validate_phone_number(self, input_data):
@@ -950,7 +953,8 @@ def test_phone_util_override(app, sqlalchemy_datastore):
     # try init_app kwargs
     app.config["SECURITY_BLUEPRINT_NAME"] = "security2"
     app.security2 = Security()
-    app.security2.init_app(app, sqlalchemy_datastore, phone_util_cls=MyPhoneUtil)
+    with pytest.raises(DeprecationWarning):
+        app.security2.init_app(app, sqlalchemy_datastore, phone_util_cls=MyPhoneUtil)
 
     with app.app_context():
         assert uia_phone_mapper("55") == "very-canonical"
@@ -1250,8 +1254,7 @@ def test_verify_next(app, client, get_message):
     assert response.location == "http://localhost/mynext"
 
 
-@pytest.mark.webauthn()
-@pytest.mark.settings(webauthn_util_cls=HackWebauthnUtil)
+@pytest.mark.webauthn(webauthn_util_cls=HackWebauthnUtil)
 def test_verify_wan(app, client, get_message):
     # test get correct options when requiring a reauthentication and have wan keys
     # setup.

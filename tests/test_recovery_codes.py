@@ -301,7 +301,7 @@ def test_rc_json_encrypted_multi(app, client, get_message):
     # add a new key to cryptor and verify old code still works
     key2 = Fernet.generate_key()
     newkeys = [key2, b"6_WhDTwI1RKJ3_ra9nADCBQbrRywlA88psGsq21xcsU="]
-    app.security._mf_recovery_codes_util.setup_cryptor(newkeys)
+    app.security.mf_recovery_codes_util.setup_cryptor(newkeys)
 
     response = client.post("/login", json=dict(email="gal@lp.com", password="password"))
     assert response.json["response"]["tf_required"]

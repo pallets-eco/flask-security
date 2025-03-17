@@ -198,12 +198,12 @@ class _UnifiedPassCodeForm(Form):
             ok = False
             for method in cv("US_ENABLED_METHODS"):
                 if method == "password" and self.user.password:
-                    passcode = _security._password_util.normalize(passcode)
+                    passcode = _security.password_util.normalize(passcode)
                     if self.user.verify_and_update_password(passcode):
                         ok = True
                         break
                 else:
-                    if method in totp_secrets and _security._totp_factory.verify_totp(
+                    if method in totp_secrets and _security.totp_factory.verify_totp(
                         token=passcode,
                         totp_secret=totp_secrets[method],
                         user=self.user,
@@ -343,12 +343,12 @@ class UnifiedSigninSetupForm(Form):
                 if not self.phone.data:
                     self.phone.errors.append(get_message("PHONE_INVALID")[0])
                     return False
-                msg = _security._phone_util.validate_phone_number(self.phone.data)
+                msg = _security.phone_util.validate_phone_number(self.phone.data)
                 if msg:
                     self.phone.errors.append(msg)
                     return False
                 # As an identity attribute - it MUST be unique!
-                cphone = _security._phone_util.get_canonical_form(self.phone.data)
+                cphone = _security.phone_util.get_canonical_form(self.phone.data)
                 if _datastore.find_user(us_phone_number=cphone):
                     msg = get_message(
                         "IDENTITY_ALREADY_ASSOCIATED",
@@ -397,7 +397,7 @@ class UnifiedSigninSetupValidateForm(Form):
 
         assert isinstance(self.passcode.errors, list)
         assert self.passcode.data is not None  # RequiredLocalize validator
-        if not _security._totp_factory.verify_totp(
+        if not _security.totp_factory.verify_totp(
             token=self.passcode.data,
             totp_secret=self.totp_secret,
             user=self.user,
@@ -704,7 +704,7 @@ def us_verify_link() -> ResponseValue:
         return redirect(url_for_security("us_signin"))
 
     totp_secrets = _datastore.us_get_totp_secrets(user)
-    if "email" not in totp_secrets or not _security._totp_factory.verify_totp(
+    if "email" not in totp_secrets or not _security.totp_factory.verify_totp(
         token=code,
         totp_secret=totp_secrets["email"],
         user=user,
@@ -838,7 +838,7 @@ def us_setup() -> ResponseValue:
         if add_method:
             # Always generate a totp_secret. We don't set it in the DB until
             # user has successfully validated.
-            totp = _security._totp_factory.generate_totp_secret()
+            totp = _security.totp_factory.generate_totp_secret()
 
             # N.B. totp (totp_secret) is actually encrypted - so it seems safe enough
             # to send it to the user.
@@ -846,7 +846,7 @@ def us_setup() -> ResponseValue:
             phone_number = None
             if add_method == "sms":
                 assert form.phone.data is not None
-                phone_number = _security._phone_util.get_canonical_form(form.phone.data)
+                phone_number = _security.phone_util.get_canonical_form(form.phone.data)
             state = {
                 "totp_secret": totp,
                 "chosen_method": add_method,
@@ -884,7 +884,7 @@ def us_setup() -> ResponseValue:
             )
 
             if form.chosen_method.data == "authenticator":
-                authr_setup_values = _security._totp_factory.fetch_setup_values(
+                authr_setup_values = _security.totp_factory.fetch_setup_values(
                     totp, current_user
                 )
 
@@ -1032,7 +1032,7 @@ def us_send_security_token(
 
     .. versionadded:: 3.4.0
     """
-    code = _security._totp_factory.generate_totp_password(totp_secret)
+    code = _security.totp_factory.generate_totp_password(totp_secret)
 
     if method == "email":
         login_link = None

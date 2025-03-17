@@ -446,7 +446,7 @@ class UserDatastore:
             Best practice is::
 
                 try:
-                    enorm = app.security._mail_util.validate(email)
+                    enorm = app.security.mail_util.validate(email)
                 except ValueError:
 
         .. danger::
@@ -459,7 +459,7 @@ class UserDatastore:
 
            Best practice is::
 
-            pbad, pnorm = app.security._password_util.validate(password, True)
+            pbad, pnorm = app.security.password_util.validate(password, True)
 
            Look for `pbad` being None. Pass the normalized password `pnorm` to this
            method.
@@ -533,7 +533,7 @@ class UserDatastore:
         This could be called from an application to apiori setup a user for two factor
         without the user having to go through the setup process.
 
-        To get a totp_secret - use ``app.security._totp_factory.generate_totp_secret()``
+        To get a totp_secret - use ``app.security.totp_factory.generate_totp_secret()``
 
         .. versionadded: 3.4.1
         """
@@ -629,7 +629,7 @@ class UserDatastore:
         This could be called from an application to apiori setup a user for unified
         sign in without the user having to go through the setup process.
 
-        To get a totp_secret - use ``app.security._totp_factory.generate_totp_secret()``
+        To get a totp_secret - use ``app.security.totp_factory.generate_totp_secret()``
 
         .. versionadded:: 3.4.1
         """
@@ -673,7 +673,7 @@ class UserDatastore:
         if not cv("UNIFIED_SIGNIN") or "email" not in cv("US_ENABLED_METHODS"):
             return False
         totp_secrets = self.us_get_totp_secrets(user)
-        totp_secrets["email"] = _security._totp_factory.generate_totp_secret()
+        totp_secrets["email"] = _security.totp_factory.generate_totp_secret()
         self.us_put_totp_secrets(user, totp_secrets)
         return True
 

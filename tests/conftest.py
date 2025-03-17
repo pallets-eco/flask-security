@@ -132,6 +132,9 @@ def app(request):
     # Make this hex_md5 for token tests
     app.config["SECURITY_HASHING_SCHEMES"] = ["hex_md5"]
     app.config["SECURITY_DEPRECATED_HASHING_SCHEMES"] = []
+    app.fs_constructor_args = (
+        dict()
+    )  # allow marks to set items for Security constructor
 
     for opt in [
         "changeable",
@@ -155,6 +158,7 @@ def app(request):
     webauthn_test = marker_getter("webauthn")
     if webauthn_test is not None:
         pytest.importorskip("webauthn")
+        app.fs_constructor_args.update(**webauthn_test.kwargs)
 
     oauthlib_test = marker_getter("oauth")
     if oauthlib_test is not None:
@@ -939,7 +943,9 @@ def pony_setup(app, tmpdir, realdburl):
 
 @pytest.fixture()
 def client(request, app, sqlalchemy_datastore):
-    app.security = Security(app, datastore=sqlalchemy_datastore)
+    app.security = Security(
+        app, datastore=sqlalchemy_datastore, **app.fs_constructor_args
+    )
     populate_data(app)
     return app.test_client()
 
@@ -979,7 +985,7 @@ def clients(request, app, tmpdir, realdburl, realmongodburl):
     elif request.param == "cl-fsqlalite":
         ds, td = fsqlalite_setup(app, tmpdir, realdburl)
 
-    app.security = Security(app, datastore=ds)
+    app.security = Security(app, datastore=ds, **app.fs_constructor_args)
     populate_data(app)
     if request.param == "cl-peewee":
         # peewee is insistent on a single connection?
@@ -990,7 +996,9 @@ def clients(request, app, tmpdir, realdburl, realmongodburl):
 
 @pytest.fixture()
 def in_app_context(request, app, sqlalchemy_datastore):
-    app.security = Security(app, datastore=sqlalchemy_datastore)
+    app.security = Security(
+        app, datastore=sqlalchemy_datastore, **app.fs_constructor_args
+    )
     with app.app_context():
         yield app
 

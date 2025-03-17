@@ -789,7 +789,7 @@ def two_factor_setup():
                 return base_render_json(form)
 
         # Regenerate the TOTP secret on every call of 2FA setup
-        totp = _security._totp_factory.generate_totp_secret()
+        totp = _security.totp_factory.generate_totp_secret()
         phone = form.phone.data if pm == "sms" else None
         session["tf_totp_secret"] = totp
         session["tf_primary_method"] = pm
@@ -834,7 +834,7 @@ def two_factor_setup():
 
         qrcode_values = dict()
         if pm == "authenticator":
-            authr_setup_values = _security._totp_factory.fetch_setup_values(totp, user)
+            authr_setup_values = _security.totp_factory.fetch_setup_values(totp, user)
             # Add all the values used in qrcode to json response
             json_response["tf_authr_key"] = authr_setup_values["key"]
             json_response["tf_authr_username"] = authr_setup_values["username"]

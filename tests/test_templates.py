@@ -67,12 +67,11 @@ def check_template_rdata(name, r, rdata):
 @pytest.mark.oauth()
 @pytest.mark.username_recovery()
 @pytest.mark.unified_signin()
-@pytest.mark.webauthn()
+@pytest.mark.webauthn(webauthn_util_cls=HackWebauthnUtil)
 @pytest.mark.two_factor()
 @pytest.mark.settings(
     multi_factor_recovery_codes=True,
     oauth_enable=True,
-    webauthn_util_cls=HackWebauthnUtil,
 )
 @pytest.mark.csrf()
 def test_valid_html(app, client):
