@@ -1439,7 +1439,7 @@ class Security:
         :param datastore: An instance of a user datastore.
         :param register_blueprint: to register the Security blueprint or not.
         :param kwargs: Can be used to override/initialize any of the form names,
-            flags, and utility classes.
+            or feature flags.
             All other kwargs are ignored.
 
         If you create the Security instance with both an 'app' and 'datastore'
