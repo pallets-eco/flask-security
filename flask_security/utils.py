@@ -474,7 +474,7 @@ def hash_data(data: t.Union[str, bytes]) -> str:
     """Hashes input data after ensuring proper encoding.
 
     :param data: Input data to hash (will be encoded if not already bytes)
-    :return: Hashed data as bytes
+    :return: Hashed data as a string
 
     Note: Uses application's configured _hashing_context
     """
@@ -1279,7 +1279,9 @@ class SmsSenderBaseClass(metaclass=abc.ABCMeta):
 
 
 class DummySmsSender(SmsSenderBaseClass):
-    def send_sms(self, from_number: str, to_number: str, msg: str) -> None:  # pragma: no cover
+    def send_sms(
+        self, from_number: str, to_number: str, msg: str
+    ) -> None:  # pragma: no cover
         """Do nothing."""
         return None
 
