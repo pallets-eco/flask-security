@@ -470,7 +470,7 @@ def encode_string(string: t.Union[str, bytes]) -> bytes:
     return string
 
 
-def hash_data(data: t.Union[str, bytes]) -> bytes:
+def hash_data(data: t.Union[str, bytes]) -> str:
     """Hashes input data after ensuring proper encoding.
 
     :param data: Input data to hash (will be encoded if not already bytes)
