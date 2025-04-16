@@ -85,7 +85,12 @@ def get_request_attr(name: str) -> t.Any:
     return getattr(g, name, None)
 
 
-def set_request_attr(name, value):
+def set_request_attr(name: str, value: t.Any) -> None:
+    """Set an attribute on Flask's application context global object (g).
+
+    :param name: The key/attribute name to store the value under
+    :param value: The value to store in the application context
+    """
     return setattr(g, name, value)
 
 
@@ -106,31 +111,63 @@ else:
         return response
 
 
-# From a miguel grinberg blog around dealing with 3.12.
-# Our default SQLAlchemy Datetime is naive.
-# Note that most code should call _security.datetime_factory()
-def aware_utcnow():
+def aware_utcnow() -> datetime:
+    """Return a timezone-aware UTC datetime object.
+
+    From a miguel grinberg blog around dealing with 3.12.
+    Our default SQLAlchemy Datetime is naive.
+    Note that most code should call _security.datetime_factory()
+
+    :return: Current UTC datetime with timezone information
+    :rtype: datetime
+    """
     return datetime.now(timezone.utc)
 
 
-def aware_utcfromtimestamp(timestamp):
+def aware_utcfromtimestamp(timestamp: float) -> datetime:
+    """Create timezone-aware UTC datetime from timestamp.
+
+    :param timestamp: Unix timestamp (seconds since epoch)
+    :type timestamp: float
+    :return: UTC datetime with timezone information
+    :rtype: datetime
+    """
     return datetime.fromtimestamp(timestamp, timezone.utc)
 
 
-def naive_utcnow():
+def naive_utcnow() -> datetime:
+    """Return a naive UTC datetime (tzinfo removed).
+
+    :return: Current UTC datetime without timezone information
+    :rtype: datetime
+    """
     return aware_utcnow().replace(tzinfo=None)
 
 
-def naive_utcfromtimestamp(timestamp):
+def naive_utcfromtimestamp(timestamp: float) -> datetime:
+    """Create naive UTC datetime from timestamp.
+
+    :param timestamp: Unix timestamp (seconds since epoch)
+    :type timestamp: float
+    :return: UTC datetime without timezone information
+    :rtype: datetime
+    """
     return aware_utcfromtimestamp(timestamp).replace(tzinfo=None)
 
 
-def find_csrf_field_name():
-    """
-    We need to clear it on logout (since that isn't being done by Flask-WTF).
-    The field name is configurable withing Flask-WTF as well as being
-    overridable.
-    We take the field name from the login_form as set by the configuration.
+def find_csrf_field_name() -> t.Optional[str]:
+    """Retrieve the configured CSRF field name from Flask-WTF form configuration.
+
+    This is needed to properly clear CSRF tokens on logout since Flask-WTF doesn't
+    automatically handle this case. The field name can be configured through
+    Flask-WTF's settings or overridden in form classes.
+
+    :return: Configured CSRF field name if found, None otherwise
+    :rtype: Optional[str]
+
+    Note:
+        Uses the field name from the login form as set by the Flask-WTF configuration.
+        Requires a DummyForm class with Flask-WTF's meta configuration.
     """
     from .forms import DummyForm
 
@@ -422,21 +459,37 @@ def hash_password(password: str | bytes) -> str:
     )
 
 
-def encode_string(string):
+def encode_string(string: t.Union[str, bytes]) -> bytes:
     """Encodes a string to bytes, if it isn't already.
 
-    :param string: The string to encode"""
-
+    :param string: The string to encode
+    :return: UTF-8 encoded bytes
+    """
     if isinstance(string, str):
         string = string.encode("utf-8")
     return string
 
 
-def hash_data(data):
+def hash_data(data: t.Union[str, bytes]) -> bytes:
+    """Hashes input data after ensuring proper encoding.
+
+    :param data: Input data to hash (will be encoded if not already bytes)
+    :return: Hashed data as bytes
+
+    Note: Uses application's configured _hashing_context
+    """
     return _hashing_context.hash(encode_string(data))
 
 
-def verify_hash(hashed_data, compare_data):
+def verify_hash(hashed_data: bytes, compare_data: t.Union[str, bytes]) -> bool:
+    """Verifies data against a previously hashed value.
+
+    :param hashed_data: Previously hashed data to compare against
+    :param compare_data: Input data to verify (will be encoded if not already bytes)
+    :return: True if data matches hash, False otherwise
+
+    Note: Uses application's configured _hashing_context
+    """
     return _hashing_context.verify(encode_string(compare_data), hashed_data)
 
 
@@ -534,10 +587,24 @@ def get_url(endpoint_or_url: str, qparams: dict[str, str] | None = None) -> str:
         return url
 
 
-def slash_url_suffix(url, suffix):
-    """Adds a slash either to the beginning or the end of a suffix
-    (which is to be appended to a URL), depending on whether or not
-    the URL ends with a slash."""
+def slash_url_suffix(url: str, suffix: str) -> str:
+    """
+    Formats a suffix to be appended to a URL, ensuring proper slash placement.
+
+    If the given `url` ends with a slash, this function adds a trailing slash to the `suffix`.
+    Otherwise, it adds a leading slash to the `suffix`.
+    This helps prevent double slashes or missing slashes when constructing URLs.
+
+    :param url: The base URL to which the suffix will be appended.
+    :param suffix: The suffix to be appended to the URL.
+    :return: The formatted suffix with the appropriate leading or trailing slash.
+
+    Example:
+        >>> slash_url_suffix("https://example.com/api", "v1")
+        '/v1'
+        >>> slash_url_suffix("https://example.com/api/", "v1")
+        'v1/'
+    """
     return url.endswith("/") and f"{suffix}/" or f"/{suffix}"
 
 
@@ -561,7 +628,17 @@ def transform_url(
     return urlunsplit(link_parse._replace(**kwargs))
 
 
-def get_security_endpoint_name(endpoint):
+def get_security_endpoint_name(endpoint: str) -> str:
+    """
+    Returns the fully qualified endpoint name by combining the blueprint name and the endpoint.
+
+    :param endpoint: The endpoint name to be combined with the blueprint name.
+    :return: The fully qualified endpoint name in the format '<blueprint>.<endpoint>'.
+
+    Example:
+        >>> get_security_endpoint_name("login")
+        'my_blueprint.login'
+    """
     return f"{config_value('BLUEPRINT_NAME')}.{endpoint}"
 
 
@@ -1185,7 +1262,7 @@ def json_error_response(
     return response_json
 
 
-def default_render_template(*args, **kwargs):
+def default_render_template(*args: t.Any, **kwargs: t.Any) -> str:
     return render_template(*args, **kwargs)
 
 
@@ -1202,9 +1279,9 @@ class SmsSenderBaseClass(metaclass=abc.ABCMeta):
 
 
 class DummySmsSender(SmsSenderBaseClass):
-    def send_sms(self, from_number, to_number, msg):  # pragma: no cover
+    def send_sms(self, from_number: str, to_number: str, msg: str) -> None:  # pragma: no cover
         """Do nothing."""
-        return
+        return None
 
 
 class SmsSenderFactory:
@@ -1230,7 +1307,7 @@ try:  # pragma: no cover
             self.account_sid = config_value("SMS_SERVICE_CONFIG")["ACCOUNT_SID"]
             self.auth_token = config_value("SMS_SERVICE_CONFIG")["AUTH_TOKEN"]
 
-        def send_sms(self, from_number, to_number, msg):
+        def send_sms(self, from_number: str, to_number: str, msg: str) -> None:
             """Send message via twilio account."""
             client = Client(self.account_sid, self.auth_token)
             client.messages.create(to=to_number, from_=from_number, body=msg)
