@@ -160,10 +160,9 @@ def test_cu_required(app, client, get_message):
     )
 
 
-@pytest.mark.app_settings(babel_default_locale="fr_FR")
+@pytest.mark.app_settings(babel_default_locale="fr_FR", SECURITY_CHANGEABLE=True)
 @pytest.mark.babel()
 def test_xlation(app, client, get_message_local):
-    pytest.skip()
     # Test form and email translation
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
@@ -172,9 +171,7 @@ def test_xlation(app, client, get_message_local):
     response = client.get("/change", follow_redirects=True)
     with app.test_request_context():
         # Check header
-        assert (
-            f'<h1>{localize_callback("Change password")}</h1>'.encode() in response.data
-        )
+        assert b"<h1>Changer le mot de passe</h1>" in response.data
         submit = localize_callback(_default_field_labels["change_password"])
         assert f'value="{submit}"'.encode() in response.data
 
