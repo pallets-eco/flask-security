@@ -3,6 +3,23 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.6.2
+-------------
+
+Released XXX, 2025
+
+Fixes
++++++
+- (:issue:`1032`) Use libpass for python >= 3.13
+- (:pr:`1086`) Fix FR translation test for Change Password (nickcuenca)
+
+Notes
++++++
+Since Python 3.13 no longer contains setuptools - the old passlib failed to import.
+Rather than require setuptools, for Python 3.13 we now depend on the new fork libpass (https://pypi.org/project/libpass/)
+This is a very new package and rather than possibly cause backwards compat issues for projects
+not using Python 3.13 - older versions of Python still depend on passlib.
+
 Version 5.6.1
 -------------
 
