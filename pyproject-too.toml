@@ -43,13 +43,16 @@ dependencies = [
     "Flask-WTF>=1.1.2",
     "email-validator>=2.0.0",
     "markupsafe>=2.1.0",
-    "passlib>=1.7.4",
+    "passlib>=1.7.4;python_version<'3.13'",
+    # passlib requires setuptools
+    "setuptools;python_version<'3.13'",
+    "libpass>=1.9.0;python_version>='3.13'",
     "wtforms>=3.0.0",  # for form-level errors
     "importlib_resources>=5.10.0",
 ]
 
 [project.optional-dependencies]
-babel = ["babel>=2.12.1", "flask_babel>=3.1.0"]
+babel = ["babel>=2.12.1", "flask_babel>=4.0.0"]
 fsqla = ["flask_sqlalchemy>=3.1.0", "sqlalchemy>=2.0.18", "sqlalchemy-utils>=0.41.1"]
 common = ["argon2_cffi>=21.3.0", "bcrypt>=4.0.1", "flask_mailman>=0.3.0", "bleach>=6.0.0"]
 mfa = ["cryptography>=40.0.2", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.0.0"]
@@ -72,15 +75,13 @@ low = [
     "jinja2==3.1.2",
     "itsdangerous==2.1.2",
     "markupsafe==2.1.2",
-    "mongoengine==0.27.0",
+    "mongoengine==0.29.1",
     "mongomock==4.1.2",
     "pony==0.7.16;python_version<'3.11'",
     "phonenumberslite==8.13.11",
     "qrcode==7.4.2",
     # authlib requires requests
     "requests",
-    # passlib required setuptools
-    "setuptools",
     "sqlalchemy==2.0.18",
     "sqlalchemy-utils==0.41.1",
     "webauthn==2.0.0",
@@ -104,6 +105,8 @@ include = [
     ".git-blame-ignore-revs",
     ".gitignore",
     ".pre-commit-config.yaml",
+    ".readthedocs.yml",
+    "pyproject.toml",
     "babel.ini",
     "codecov.yml",
     "mypy.ini",

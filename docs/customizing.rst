@@ -427,10 +427,13 @@ Overriding these templates is simple:
 2. Create a folder named ``email`` within the ``security`` folder
 3. Create a template with the same name for the template you wish to override
 
-Each template is passed a template context object that includes values as described below.
-In addition, the ``security`` object is always passed - you can for example render
-any security configuration variable via ``security.lower_case_variable_name``
-and don't include the prefix ``security_`` (e.g. ``{{ security.confirm_url }``)}.
+Each template is passed a template context object that includes values as described in the table below.
+In addition, all templates receive:
+
+* ``security``: The Flask-Security extension object.
+* ``config``: Injected by Flask - this holds all extensions' configuration.
+  The template can retrieve any configuration variable using e.g.  ``{{ config["SECURITY_XXX"] }}``
+
 If you require more values in the
 templates, you can specify an email context processor with the
 ``mail_context_processor`` decorator. For example::
@@ -589,7 +592,8 @@ tandem with Flask-Login, behaves as follows:
       ``Basic realm="xxxx"``. The realm name is defined by :py:data:`SECURITY_DEFAULT_HTTP_AUTH_REALM`.
 
     * If authorization fails as the result of `@roles_required`, `@roles_accepted`,
-      `@permissions_required`, or `@permissions_accepted`, then if the request 'wants' a JSON
+      `@permissions_required`, or `@permissions_accepted`, then :meth:`.Security.unauthz_handler` is called.
+      The default implementation flow is: if the request 'wants' a JSON
       response, :meth:`.Security.render_json` is called with a 403 status code. If not,
       then if :py:data:`SECURITY_UNAUTHORIZED_VIEW` is defined, the response will redirected.
       If :py:data:`SECURITY_UNAUTHORIZED_VIEW` is not defined, then ``abort(403)`` is called.
