@@ -12,11 +12,12 @@ Fixes
 +++++
 - (:issue:`1032`) Use libpass for python >= 3.13
 - (:pr:`1086`) Fix FR translation test for Change Password (nickcuenca)
+- (:issue:`1090`) Properly document context variables available in email templates.
 
 Notes
 +++++
 Since Python 3.13 no longer contains setuptools - the old passlib failed to import.
-Rather than require setuptools, for Python 3.13 we now depend on the new fork libpass (https://pypi.org/project/libpass/)
+Rather than require setuptools, for Python 3.13 we now depend on the fork ``libpass`` (https://pypi.org/project/libpass/)
 This is a very new package and rather than possibly cause backwards compat issues for projects
 not using Python 3.13 - older versions of Python still depend on passlib.
 

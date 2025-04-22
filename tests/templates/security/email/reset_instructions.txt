@@ -12,3 +12,4 @@ Link:{{ reset_link }}
 Email:{{ user.email }}
 Token:{{ reset_token }}
 RegisterBlueprint:{{ security.register_blueprint }}
+SecurityConfig:{{ config["SECURITY_RESET_URL"] }}

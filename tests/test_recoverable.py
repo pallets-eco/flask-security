@@ -4,7 +4,7 @@ test_recoverable
 
 Recoverable functionality tests
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -254,6 +254,7 @@ def test_recoverable_template(app, client, get_message):
         assert matcher[1].split(":")[1] == "joe@lp.com"
         assert matcher[2].split(":")[1] == resets[0]["reset_token"]
         assert matcher[3].split(":")[1] == "True"  # register_blueprint
+        assert matcher[4].split(":")[1] == "/reset"  # SECURITY_RESET_URL
 
         # check link
         link = matcher[0].split(":", 1)[1]
