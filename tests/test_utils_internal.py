@@ -1,9 +1,8 @@
 import pytest
 import time
-import re
 from datetime import timedelta
 from flask_security import Security, UserMixin
-from flask import Flask, flash, Response
+from flask import flash
 
 from tests.test_utils import (
     convert_bool_option,
@@ -91,13 +90,15 @@ def test_get_auth_token_version_4x(app):
 
 # New additions
 
+
 def test_get_form_input_value_extracts_correct_value():
-    html = b'''
+    html = b"""
     <form>
       <input type="text" id="username" value="nick123">
       <input type="password" id="password" value="secret">
     </form>
-    '''
+    """
+
     class DummyResponse:
         data = html
 
