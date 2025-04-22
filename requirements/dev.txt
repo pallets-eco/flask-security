@@ -7,17 +7,15 @@ psycopg2-binary
 pymysql
 pre-commit
 tox
-sqlalchemy
 types-requests
 
 # for dev - might not install Flask-Security - list those dependencies here
 flask
 flask-wtf
 flask-login
-wtforms
+flask-principal
 markupsafe
-passlib
-blinker
+passlib>=1.7.4;python_version<'3.13'
+libpass>=1.9.0;python_version>='3.13'
 email_validator
-itsdangerous
 importlib_resources>=5.10.0
