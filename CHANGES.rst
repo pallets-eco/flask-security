@@ -10,17 +10,19 @@ Released XXX, 2025
 
 Fixes
 +++++
-- (:issue:`1032`) Use libpass for python >= 3.13
+- (:issue:`1032` and :issue:`1096`) Use libpass for python >= 3.12
 - (:pr:`1086`) Fix FR translation test for Change Password (nickcuenca)
 - (:issue:`1090`) Properly document context variables available in email templates.
 - (:issue:`1093`) Add confirmation link/token and reset link/token to welcome_existing email template.
 
 Notes
 +++++
-Since Python 3.13 no longer contains setuptools - the old passlib failed to import.
-Rather than require setuptools, for Python 3.13 we now depend on the fork ``libpass`` (https://pypi.org/project/libpass/)
+Since Python 3.12 no longer contains setuptools - the old passlib failed to import.
+Rather than require setuptools, for Python >=3.12 we now depend on the fork ``libpass`` (https://pypi.org/project/libpass/)
 This is a very new package and rather than possibly cause backwards compat issues for projects
-not using Python 3.13 - older versions of Python still depend on passlib.
+not using Python >=3.12 - older versions of Python still depend on passlib.
+
+Note: you can still use passlib for 3.12 and 3.13 - you have to manually add setuptools.
 
 Version 5.6.1
 -------------
