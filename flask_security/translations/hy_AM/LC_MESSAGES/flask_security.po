@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 4.0.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2025-03-17 07:30-0700\n"
+"POT-Creation-Date: 2025-05-04 12:17-0700\n"
 "PO-Revision-Date: 2020-12-01 11:47+0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hy_AM\n"
@@ -1152,16 +1152,16 @@ msgstr ""
 msgid "If you did not initiate this request, you can safely ignore this email."
 msgstr ""
 
-#: flask_security/templates/security/email/welcome_existing.html:11
-#: flask_security/templates/security/email/welcome_existing.txt:11
+#: flask_security/templates/security/email/welcome_existing.html:16
+#: flask_security/templates/security/email/welcome_existing.txt:16
 #: flask_security/templates/security/email/welcome_existing_username.html:11
 #: flask_security/templates/security/email/welcome_existing_username.txt:11
 #, python-format
 msgid "Hello %(email)s!"
 msgstr "Բարև %(email)s"
 
-#: flask_security/templates/security/email/welcome_existing.html:12
-#: flask_security/templates/security/email/welcome_existing.txt:13
+#: flask_security/templates/security/email/welcome_existing.html:17
+#: flask_security/templates/security/email/welcome_existing.txt:18
 msgid ""
 "Someone (you?) tried to register this email - which is already in our "
 "system."
@@ -1169,32 +1169,44 @@ msgstr ""
 "Ինչ-որ մեկը (դու՞ք) փորձել է գրանցել այս էլփոստը, որն արդեն մեր "
 "համակարգում է:"
 
-#: flask_security/templates/security/email/welcome_existing.html:15
+#: flask_security/templates/security/email/welcome_existing.html:20
 #, python-format
 msgid ""
 "This account also has the following username associated with it: "
 "%(username)s."
 msgstr "Այս հաշիվը ունի նաև հետևյալ օգտվողի անունը՝ կապված դրա հետ. %(username)s։"
 
-#: flask_security/templates/security/email/welcome_existing.html:20
+#: flask_security/templates/security/email/welcome_existing.html:24
 #, python-format
 msgid ""
-"If you forgot your password you can reset it <a "
-"href=\"%(recovery_link)s\"> here.</a>"
+"You can use <a href=\"%(reset_link)s\">this link</a> to reset your "
+"password."
 msgstr ""
 
-#: flask_security/templates/security/email/welcome_existing.txt:16
+#: flask_security/templates/security/email/welcome_existing.html:27
+#, python-format
+msgid ""
+"You have not confirmed your email address yet - use <a "
+"href=\"%(confirmation_link)s\">this link</a> to do so now."
+msgstr ""
+
+#: flask_security/templates/security/email/welcome_existing.txt:21
 #, python-format
 msgid ""
 "This account also has the following username associated with it: "
 "%(username)s"
 msgstr "Այս հաշիվը ունի նաև հետևյալ օգտվողի անունը՝ կապված իրա հետ. %(username)s"
 
-#: flask_security/templates/security/email/welcome_existing.txt:20
+#: flask_security/templates/security/email/welcome_existing.txt:25
+#, python-format
+msgid "You can use this link %(reset_link)s to reset your password."
+msgstr ""
+
+#: flask_security/templates/security/email/welcome_existing.txt:29
 #, python-format
 msgid ""
-"If you forgot your password you can reset it with the following link: "
-"%(recovery_link)s"
+"You have not confirmed your email address yet - use this link: "
+"%(confirmation_link)s to do so now."
 msgstr ""
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
@@ -1344,3 +1356,15 @@ msgstr "Խնդրում ենք վերսկսել գրանցման գործընթա
 
 #~ msgid "Use this code to sign in: %(code)s."
 #~ msgstr "Մուտքի համար օգտագործեք այս ծածկագիրը․ %(code)s։"
+
+#~ msgid ""
+#~ "If you forgot your password you "
+#~ "can reset it <a href=\"%(recovery_link)s\">"
+#~ " here.</a>"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "If you forgot your password you "
+#~ "can reset it with the following "
+#~ "link: %(recovery_link)s"
+#~ msgstr ""

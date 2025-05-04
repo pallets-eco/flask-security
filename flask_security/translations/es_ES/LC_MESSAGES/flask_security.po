@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 5.6.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2025-03-17 07:30-0700\n"
+"POT-Creation-Date: 2025-05-04 12:17-0700\n"
 "PO-Revision-Date: 2025-02-08 20:17+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
@@ -1190,16 +1190,16 @@ msgstr "Tu nombre de usuario es: %(username)s"
 msgid "If you did not initiate this request, you can safely ignore this email."
 msgstr "Si no has iniciado esta solicitud, puedes ignorar este mensaje."
 
-#: flask_security/templates/security/email/welcome_existing.html:11
-#: flask_security/templates/security/email/welcome_existing.txt:11
+#: flask_security/templates/security/email/welcome_existing.html:16
+#: flask_security/templates/security/email/welcome_existing.txt:16
 #: flask_security/templates/security/email/welcome_existing_username.html:11
 #: flask_security/templates/security/email/welcome_existing_username.txt:11
 #, python-format
 msgid "Hello %(email)s!"
 msgstr "¡Hola %(email)s!"
 
-#: flask_security/templates/security/email/welcome_existing.html:12
-#: flask_security/templates/security/email/welcome_existing.txt:13
+#: flask_security/templates/security/email/welcome_existing.html:17
+#: flask_security/templates/security/email/welcome_existing.txt:18
 msgid ""
 "Someone (you?) tried to register this email - which is already in our "
 "system."
@@ -1207,25 +1207,30 @@ msgstr ""
 "Alguien (¿tú?) ha intentado registrar este correo electrónico, que ya "
 "está en nuestro sistema."
 
-#: flask_security/templates/security/email/welcome_existing.html:15
-#, python-format
-msgid ""
-"This account also has the following username associated with it: "
-"%(username)s."
-msgstr ""
-"Esta cuenta también tiene asociado el siguiente nombre de usuario: "
-"%(username)s."
-
 #: flask_security/templates/security/email/welcome_existing.html:20
 #, python-format
 msgid ""
-"If you forgot your password you can reset it <a "
-"href=\"%(recovery_link)s\"> here.</a>"
+"This account also has the following username associated with it: "
+"%(username)s."
 msgstr ""
-"Si has olvidado tu contraseña, puedes restablecerla <a "
-"href=\"%(recovery_link)s\"> aquí.</a>"
+"Esta cuenta también tiene asociado el siguiente nombre de usuario: "
+"%(username)s."
 
-#: flask_security/templates/security/email/welcome_existing.txt:16
+#: flask_security/templates/security/email/welcome_existing.html:24
+#, python-format
+msgid ""
+"You can use <a href=\"%(reset_link)s\">this link</a> to reset your "
+"password."
+msgstr ""
+
+#: flask_security/templates/security/email/welcome_existing.html:27
+#, python-format
+msgid ""
+"You have not confirmed your email address yet - use <a "
+"href=\"%(confirmation_link)s\">this link</a> to do so now."
+msgstr ""
+
+#: flask_security/templates/security/email/welcome_existing.txt:21
 #, python-format
 msgid ""
 "This account also has the following username associated with it: "
@@ -1234,14 +1239,17 @@ msgstr ""
 "Esta cuenta también tiene asociado el siguiente nombre de usuario: "
 "%(username)s"
 
-#: flask_security/templates/security/email/welcome_existing.txt:20
+#: flask_security/templates/security/email/welcome_existing.txt:25
+#, python-format
+msgid "You can use this link %(reset_link)s to reset your password."
+msgstr ""
+
+#: flask_security/templates/security/email/welcome_existing.txt:29
 #, python-format
 msgid ""
-"If you forgot your password you can reset it with the following link: "
-"%(recovery_link)s"
+"You have not confirmed your email address yet - use this link: "
+"%(confirmation_link)s to do so now."
 msgstr ""
-"Si has olvidado tu contraseña, puedes restablecerla a través del "
-"siguiente enlace: %(recovery_link)s"
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
 #: flask_security/templates/security/email/welcome_existing_username.txt:13
@@ -1354,3 +1362,21 @@ msgstr ""
 
 #~ msgid "Use this code to sign in: %(code)s."
 #~ msgstr "Utiliza este código para iniciar sesión: %(code)s."
+
+#~ msgid ""
+#~ "If you forgot your password you "
+#~ "can reset it <a href=\"%(recovery_link)s\">"
+#~ " here.</a>"
+#~ msgstr ""
+#~ "Si has olvidado tu contraseña, puedes"
+#~ " restablecerla <a href=\"%(recovery_link)s\"> "
+#~ "aquí.</a>"
+
+#~ msgid ""
+#~ "If you forgot your password you "
+#~ "can reset it with the following "
+#~ "link: %(recovery_link)s"
+#~ msgstr ""
+#~ "Si has olvidado tu contraseña, puedes"
+#~ " restablecerla a través del siguiente "
+#~ "enlace: %(recovery_link)s"
