@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.6.2
 -------------
 
-Released XXX, 2025
+Released May 4, 2025
 
 Fixes
 +++++
@@ -20,7 +20,7 @@ Notes
 Since Python 3.12 no longer contains setuptools - the old passlib failed to import.
 Rather than require setuptools, for Python >=3.12 we now depend on the fork ``libpass`` (https://pypi.org/project/libpass/)
 This is a very new package and rather than possibly cause backwards compat issues for projects
-not using Python >=3.12 - older versions of Python still depend on passlib.
+not using Python >=3.12 - Flask-Security maintains the dependency on passlib for Python <3.12.
 
 Note: you can still use passlib for 3.12 and 3.13 - you have to manually add setuptools.
 
