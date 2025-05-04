@@ -13,6 +13,7 @@ Fixes
 - (:issue:`1032`) Use libpass for python >= 3.13
 - (:pr:`1086`) Fix FR translation test for Change Password (nickcuenca)
 - (:issue:`1090`) Properly document context variables available in email templates.
+- (:issue:`1093`) Add confirmation link/token and reset link/token to welcome_existing email template.
 
 Notes
 +++++

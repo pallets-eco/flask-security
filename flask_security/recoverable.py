@@ -5,7 +5,7 @@ flask_security.recoverable
 Flask-Security recoverable module
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2023 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -27,13 +27,17 @@ from .utils import (
 )
 
 
+def generate_reset_link(user):
+    token = generate_reset_password_token(user)
+    return url_for_security("reset_password", token=token, _external=True), token
+
+
 def send_reset_password_instructions(user):
     """Sends the reset password instructions email for the specified user.
 
     :param user: The user to send the instructions to
     """
-    token = generate_reset_password_token(user)
-    reset_link = url_for_security("reset_password", token=token, _external=True)
+    reset_link, token = generate_reset_link(user)
 
     if config_value("SEND_PASSWORD_RESET_EMAIL"):
         send_mail(

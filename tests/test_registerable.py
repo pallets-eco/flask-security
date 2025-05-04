@@ -766,14 +766,14 @@ def test_legacy_style_login(app, sqlalchemy_datastore, get_message):
 @pytest.mark.confirmable()
 @pytest.mark.settings(return_generic_responses=True, username_enable=True)
 def test_generic_response(app, client, get_message):
+    # Register should not expose whether email/username is already in system.
     recorded = []
 
     @user_not_registered.connect_via(app)
-    def on_user_registered(app, **kwargs):
+    def on_user_not_registered(app, **kwargs):
         recorded.append(kwargs)
 
-    # Register should not expose whether email/username is already in system.
-    # Should still return errors such as illegal password, ...
+    # register new user
     data = dict(
         email="dude@lp.com",
         username="dude",
@@ -790,14 +790,22 @@ def test_generic_response(app, client, get_message):
     assert not any(
         e in response.json["response"].keys() for e in ["errors", "field_errors"]
     )
-    gr = app.mail.outbox[1]
-    assert "tried to register this email" in gr.body
-    assert "associated with it: dude" in gr.body
+    # this is using the test template
+    matcher = re.findall(r"\w+:.*", app.mail.outbox[1].body, re.IGNORECASE)
+    kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
+    assert kv["User"] == "dude"
+    assert kv["Email"] == "dude@lp.com"
+    assert kv["RegisterBlueprint"] == "True"
+    assert "/confirm" in kv["ConfirmationLink"]
+    assert kv["ConfirmationToken"]
+    assert not kv["ResetLink"]
+    assert not kv["ResetToken"]
+
+    # verify that signal sent.
     assert len(recorded) == 1
-    # test that signal sent.
     nr = recorded[0]
     assert nr["existing_email"]
-    assert nr["user"]
+    assert nr["user"].email == "dude@lp.com"
     assert nr["form_data"]["email"] == "dude@lp.com"
 
     # Forms should get generic response - even though email already registered.
@@ -815,23 +823,38 @@ def test_generic_response(app, client, get_message):
     assert get_message("CONFIRM_REGISTRATION", email="dude@lp.com") in response.data
     assert len(app.mail.outbox) == 4
     assert len(recorded) == 3
-    gr = app.mail.outbox[3]
-    assert "tried to register this email" in gr.body
-    assert "associated with it: dude" in gr.body
+    matcher = re.findall(r"\w+:.*", app.mail.outbox[3].body, re.IGNORECASE)
+    kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
+    assert kv["User"] == "dude"
 
-    # Now test a new email with an existing username
+
+@pytest.mark.confirmable()
+@pytest.mark.settings(return_generic_responses=True, username_enable=True)
+def test_gr_existing_username(app, client, get_message):
+    # Test a new email with an existing username
+    # Should still return errors such as illegal password
+    recorded = []
+
+    @user_not_registered.connect_via(app)
+    def on_user_not_registered(app, **kwargs):
+        recorded.append(kwargs)
+
+    client.post(
+        "/register",
+        json=dict(email="dude@lp.com", username="dude", password="awesome sunset"),
+    )
     response = client.post(
         "/register",
         data=dict(email="dude39@lp.com", username="dude", password="awesome sunset"),
         follow_redirects=True,
     )
     assert get_message("CONFIRM_REGISTRATION", email="dude39@lp.com") in response.data
-    assert len(app.mail.outbox) == 5
-    assert len(recorded) == 4
-    gr = app.mail.outbox[4]
+    assert len(app.mail.outbox) == 2
+    assert len(recorded) == 1
+    gr = app.mail.outbox[1]
     assert 'You attempted to register with a username "dude" that' in gr.body
     # test that signal sent.
-    nr = recorded[3]
+    nr = recorded[0]
     assert not nr["existing_email"]
     assert not nr["user"]
     assert nr["existing_username"]
@@ -862,15 +885,14 @@ def test_generic_response(app, client, get_message):
 
 @pytest.mark.recoverable()
 @pytest.mark.confirmable()
-@pytest.mark.settings(return_generic_responses=True, username_enable=True)
-def test_generic_response_recover(app, client, get_message):
-    # If user tries to re-register - response email should contain recovery url
-    recorded = []
-
-    @user_not_registered.connect_via(app)
-    def on_user_registered(app, **kwargs):
-        recorded.append(kwargs)
-
+@pytest.mark.settings(
+    return_generic_responses=True,
+    username_enable=True,
+    send_register_email_welcome_existing_template="welcome_existing",
+)
+def test_gr_extras(app, client, get_message):
+    # If user tries to re-register - response email should contain reset password
+    # link and (if applicable) a confirmation link
     data = dict(
         email="dude@lp.com",
         username="dude",
@@ -879,7 +901,6 @@ def test_generic_response_recover(app, client, get_message):
     response = client.post("/register", json=data)
     assert response.status_code == 200
     assert len(app.mail.outbox) == 1
-    assert len(recorded) == 0
 
     # now same email - same or different username
     data = dict(
@@ -890,15 +911,64 @@ def test_generic_response_recover(app, client, get_message):
     response = client.post("/register", json=data)
     assert response.status_code == 200
     assert len(app.mail.outbox) == 2
-    gr = app.mail.outbox[1]
-    assert "/reset" in gr.body
+    matcher = re.findall(r"\w+:.*", app.mail.outbox[1].body, re.IGNORECASE)
+    kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
+    assert kv["User"] == "dude"
+    confirm_link = kv["ConfirmationLink"]
+    response = client.get(confirm_link)
+    assert response.status_code == 302
 
-    assert len(recorded) == 1
-    # test that signal sent.
-    nr = recorded[0]
-    assert nr["existing_email"]
-    assert nr["user"]
-    assert nr["form_data"]["email"] == "dude@lp.com"
+    # now confirmed - should not get confirmation link
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert len(app.mail.outbox) == 3
+    matcher = re.findall(r"\w+:.*", app.mail.outbox[2].body, re.IGNORECASE)
+    kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
+    assert not kv["ConfirmationLink"]
+    assert not kv["ConfirmationToken"]
+
+    # but should still have reset link - test that
+    reset_link = kv["ResetLink"]
+    response = client.post(
+        reset_link,
+        json=dict(password="awesome password2", password_confirm="awesome password2"),
+    )
+    assert response.status_code == 200
+
+    response = client.post(
+        "/login", json=dict(username="dude", password="awesome password2")
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.recoverable()
+@pytest.mark.confirmable()
+@pytest.mark.settings(return_generic_responses=True)
+def test_gr_real_html_template(app, client, get_message):
+    # We have a test .txt template - but this will use the normal/real HTML template
+    data = dict(
+        email="dude@lp.com",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert len(app.mail.outbox) == 1
+
+    # now same email - same or different username
+    data = dict(
+        email="dude@lp.com",
+        password="awesome sunset",
+    )
+    response = client.post("/register", json=data)
+    assert response.status_code == 200
+    assert len(app.mail.outbox) == 2
+    matcher = re.findall(
+        r'href="(\S*)"',
+        app.mail.outbox[1].alternatives[0][0],
+        re.IGNORECASE,
+    )
+    assert "/reset" in matcher[0]
+    assert "/confirm" in matcher[1]
 
 
 def test_subclass(app, sqlalchemy_datastore):
