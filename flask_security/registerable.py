@@ -5,7 +5,7 @@ flask_security.registerable
 Flask-Security registerable module
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -15,9 +15,10 @@ import typing as t
 
 from flask import current_app
 
-from .confirmable import generate_confirmation_link
+from .confirmable import generate_confirmation_link, requires_confirmation
 from .forms import form_errors_munge
 from .proxies import _security, _datastore
+from .recoverable import generate_reset_link
 from .signals import user_registered, user_not_registered
 from .utils import (
     config_value as cv,
@@ -28,8 +29,8 @@ from .utils import (
     url_for_security,
 )
 
-if t.TYPE_CHECKING:
-    from .forms import ConfirmRegisterForm
+if t.TYPE_CHECKING:  # pragma: no cover
+    from .forms import ConfirmRegisterForm, RegisterForm, RegisterFormV2
 
 
 def register_user(registration_form):
@@ -79,7 +80,9 @@ def register_user(registration_form):
     return user
 
 
-def register_existing(form: ConfirmRegisterForm) -> bool:
+def register_existing(
+    form: ConfirmRegisterForm | RegisterForm | RegisterFormV2,
+) -> bool:
     """
     In the case of generic responses we want to mitigate any possible
     email/username enumeration.
@@ -127,7 +130,7 @@ def register_existing(form: ConfirmRegisterForm) -> bool:
         do_flash(*get_message("CONFIRM_REGISTRATION", email=form.email.data))
 
     # 2 cases:
-    # 1) existing email (an already registered account) empty or same username
+    # 1) existing email (an already registered account) with an empty or same username
     # 2) new email with existing username (which corresponds to some OTHER account)
 
     if form.existing_email_user:
@@ -139,18 +142,34 @@ def register_existing(form: ConfirmRegisterForm) -> bool:
             existing_username=form.existing_username_user is not None,
             form_data=form.to_dict(only_user=False),
         )
-        # Send a nice email saying they are already registered - tell them their
-        # existing username if they have one, and suggest how to reset password.
-        recovery_link = None
-        if _security.recoverable:
-            recovery_link = url_for_security("forgot_password", _external=True)
         if cv("SEND_REGISTER_EMAIL"):
+            # Send a nice email saying they are already registered -
+            # - tell them their existing username if they have one
+            # - suggest how to reset password and send reset link/token
+            # - if they haven't confirmed - send them confirm link and token
+            recovery_link = ""
+            reset_link = ""
+            reset_token = ""
+            if _security.recoverable:
+                recovery_link = url_for_security("forgot_password", _external=True)
+                reset_link, reset_token = generate_reset_link(form.existing_email_user)
+            confirmation_link = ""
+            confirmation_token = ""
+            if requires_confirmation(form.existing_email_user):
+                confirmation_link, confirmation_token = generate_confirmation_link(
+                    form.existing_email_user
+                )
+
             send_mail(
                 cv("EMAIL_SUBJECT_REGISTER"),
                 form.existing_email_user.email,
                 "welcome_existing",
                 user=form.existing_email_user,
                 recovery_link=recovery_link,
+                reset_link=reset_link,
+                reset_token=reset_token,
+                confirmation_link=confirmation_link,
+                confirmation_token=confirmation_token,
             )
     elif form.existing_username_user:
         # New email, already taken username.

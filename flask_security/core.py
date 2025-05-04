@@ -1150,9 +1150,10 @@ class Security:
     :param verify_form: set form for reauthentication due to freshness check
     :param change_email_form: set form for changing email address
     :param register_form: set form for the register view when
-            :data:`SECURITY_CONFIRMABLE` is false
+            :data:`SECURITY_CONFIRMABLE` is false (deprecated) or for the register view
+            when :data:`SECURITY_USE_REGISTER_V2` is true.
     :param confirm_register_form: set form for the register view when
-            :data:`SECURITY_CONFIRMABLE` is true
+            :data:`SECURITY_CONFIRMABLE` is true (deprecated)
     :param forgot_password_form: set form for the forgot password view
     :param reset_password_form: set form for the reset password view
     :param change_password_form: set form for the change password view

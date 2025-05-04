@@ -485,6 +485,10 @@ us_instructions                 N/A                                  SECURITY_US
                                                                                                                        - username
 welcome_existing                SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_not_registered
                                 SECURITY_RETURN_GENERIC_RESPONSES                                                      - recovery_link
+                                                                                                                       - confirmation_link
+                                                                                                                       - confirmation_token
+                                                                                                                       - reset_link
+                                                                                                                       - reset_token
 welcome_existing_username       SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - email                user_not_registered
                                 SECURITY_RETURN_GENERIC_RESPONSES                                                      - username
 username_recovery               SECURITY_USERNAME_RECOVERY           SECURITY_EMAIL_SUBJECT_USERNAME_RECOVERY          - user                 username_recovery_email_sent

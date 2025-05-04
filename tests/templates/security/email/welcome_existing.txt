@@ -1,0 +1,22 @@
+{# This template receives the following context:
+
+  user - the entire user model object
+  security - the Flask-Security configuration
+  recovery_link - if enabled.
+  reset_link - reset link if enabled
+  reset_token - this token is part of reset link - but can be used to
+    construct arbitrary URLs for redirecting.
+  confirmation_link - confirmation link is user not yet confirmed (and enabled)
+  confirmation_token
+
+  This template is used when returning generic responses and don't/can't
+  provide detailed errors as part of form validation to avoid email/username
+  enumeration.
+#}
+Email:{{ user.email }}
+User:{{ user.username }}
+RegisterBlueprint:{{ security.register_blueprint }}
+ResetLink:{{ reset_link }}
+ResetToken:{{ reset_token }}
+ConfirmationLink:{{ confirmation_link }}
+ConfirmationToken:{{ confirmation_token }}

@@ -3,6 +3,11 @@
   user - the entire user model object
   security - the Flask-Security configuration
   recovery_link - if enabled.
+  reset_link - reset link if enabled
+  reset_token - this token is part of reset link - but can be used to
+    construct arbitrary URLs for redirecting.
+  confirmation_link - confirmation link is user not yet confirmed (and enabled)
+  confirmation_token
 
   This template is used when returning generic responses and don't/can't
   provide detailed errors as part of form validation to avoid email/username
@@ -16,6 +21,10 @@
 {{ _fsdomain('This account also has the following username associated with it: %(username)s', username=user.username) }}
 {% endif %}
 
-{% if recovery_link %}
-    {{ _fsdomain('If you forgot your password you can reset it with the following link: %(recovery_link)s', recovery_link=recovery_link) }}
+{% if reset_link %}
+{{ _fsdomain('You can use this link %(reset_link)s to reset your password.', reset_link=reset_link)|safe }}
+{% endif %}
+
+{% if confirmation_link %}
+{{ _fsdomain('You have not confirmed your email address yet - use this link: %(confirmation_link)s to do so now.', confirmation_link=confirmation_link)|safe }}
 {% endif %}
