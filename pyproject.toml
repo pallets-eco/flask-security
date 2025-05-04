@@ -43,10 +43,8 @@ dependencies = [
     "Flask-WTF>=1.1.2",
     "email-validator>=2.0.0",
     "markupsafe>=2.1.0",
-    "passlib>=1.7.4;python_version<'3.13'",
-    # passlib requires setuptools
-    "setuptools;python_version<'3.13'",
-    "libpass>=1.9.0;python_version>='3.13'",
+    "passlib>=1.7.4;python_version<'3.12'",
+    "libpass>=1.9.0;python_version>='3.12'",
     "wtforms>=3.0.0",  # for form-level errors
     "importlib_resources>=5.10.0",
 ]
@@ -65,7 +63,7 @@ low = [
     "Flask-Mailman==0.3.0",
     "Flask-Login==0.6.3",
     "Flask-WTF==1.1.2",
-    "peewee==3.16.2",
+    "peewee==3.17.9",
     "argon2_cffi==21.3.0",
     "authlib==1.2.0",
     "babel==2.12.1",
@@ -76,7 +74,7 @@ low = [
     "itsdangerous==2.1.2",
     "markupsafe==2.1.2",
     "mongoengine==0.29.1",
-    "mongomock==4.1.2",
+    "mongomock==4.3.0",
     "pony==0.7.16;python_version<'3.11'",
     "phonenumberslite==8.13.11",
     "qrcode==7.4.2",

@@ -1035,7 +1035,7 @@ def datastore(request, app, tmpdir, realdburl, realmongodburl):
         ds, td = sqlalchemy_setup(app, tmpdir, realdburl)
     elif request.param == "sqlalchemy-session":
         if sys.version_info < (3, 10):
-            pytest.skip("requires python3.10 or higher")
+            pytest.skip("sqlalchemy-session requires python3.10 or higher")
         ds, td = sqlalchemy_session_setup(app, tmpdir, realdburl)
     elif request.param == "mongoengine":
         ds, td = mongoengine_setup(app, tmpdir, realmongodburl)
@@ -1043,7 +1043,7 @@ def datastore(request, app, tmpdir, realdburl, realmongodburl):
         ds, td = peewee_setup(app, tmpdir, realdburl)
     elif request.param == "pony":
         if sys.version_info > (3, 12):
-            pytest.skip("requires python3.12 or lower")
+            pytest.skip("pony requires python3.12 or lower")
         ds, td = pony_setup(app, tmpdir, realdburl)
     elif request.param == "fsqlalite":
         ds, td = fsqlalite_setup(app, tmpdir, realdburl)

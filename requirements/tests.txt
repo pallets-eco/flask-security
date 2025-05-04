@@ -1,7 +1,6 @@
 Flask-Babel
 Babel
 Flask-Mailman
-peewee; python_version < '3.12'
 Flask-SQLAlchemy
 Flask-SQLAlchemy-Lite; python_version >= '3.10'
 argon2-cffi
@@ -15,6 +14,7 @@ freezegun
 mongoengine
 mongomock
 msgcheck
+peewee
 pony
 phonenumberslite
 pydocstyle
