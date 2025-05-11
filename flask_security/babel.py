@@ -16,7 +16,10 @@ is maintained.  If that isn't installed fall back to a Null Domain
 from collections.abc import Iterable
 import atexit
 from contextlib import ExitStack
-from importlib_resources import files, as_file
+try:
+    from importlib_resources import files, as_file
+except ImportError:
+    from importlib.resources import files, as_file
 
 from flask import current_app
 from .utils import config_value as cv
