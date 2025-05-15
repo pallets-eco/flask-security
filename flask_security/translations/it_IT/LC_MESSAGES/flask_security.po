@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: Flask-Security 5.6.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2025-05-04 12:17-0700\n"
-"PO-Revision-Date: 2025-02-08 20:36+0100\n"
+"PO-Revision-Date: 2025-05-15 17:05+0200\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: it_IT\n"
 "Language-Team: \n"
@@ -1208,6 +1208,8 @@ msgid ""
 "You can use <a href=\"%(reset_link)s\">this link</a> to reset your "
 "password."
 msgstr ""
+"Puoi usare <a href=\"%(reset_link)s\">questo link</a> per reimpostare la "
+"tua password."
 
 #: flask_security/templates/security/email/welcome_existing.html:27
 #, python-format
@@ -1215,6 +1217,8 @@ msgid ""
 "You have not confirmed your email address yet - use <a "
 "href=\"%(confirmation_link)s\">this link</a> to do so now."
 msgstr ""
+"Non hai ancora confermato il tuo indirizzo e-mail - usa <a "
+"href=\"%(confirmation_link)s\">questo link</a> per farlo adesso."
 
 #: flask_security/templates/security/email/welcome_existing.txt:21
 #, python-format
@@ -1226,7 +1230,7 @@ msgstr "A questo account è associato anche il seguente nome utente: %(username)
 #: flask_security/templates/security/email/welcome_existing.txt:25
 #, python-format
 msgid "You can use this link %(reset_link)s to reset your password."
-msgstr ""
+msgstr "Puoi usare questo link %(reset_link)s per reimpostare la tua password."
 
 #: flask_security/templates/security/email/welcome_existing.txt:29
 #, python-format
@@ -1234,6 +1238,8 @@ msgid ""
 "You have not confirmed your email address yet - use this link: "
 "%(confirmation_link)s to do so now."
 msgstr ""
+"Non hai ancora confermato il tuo indirizzo e-mail - usa questo link: "
+"%(confirmation_link)s per farlo adesso."
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
 #: flask_security/templates/security/email/welcome_existing_username.txt:13
