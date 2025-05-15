@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: Flask-Security 5.6.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2025-05-04 12:17-0700\n"
-"PO-Revision-Date: 2025-02-08 20:17+0100\n"
+"PO-Revision-Date: 2025-05-15 17:05+0200\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
 "Language-Team: \n"
@@ -1222,6 +1222,8 @@ msgid ""
 "You can use <a href=\"%(reset_link)s\">this link</a> to reset your "
 "password."
 msgstr ""
+"Puedes usar <a href=\"%(reset_link)s\">este enlace</a> para restablecer "
+"tu contraseña."
 
 #: flask_security/templates/security/email/welcome_existing.html:27
 #, python-format
@@ -1229,6 +1231,8 @@ msgid ""
 "You have not confirmed your email address yet - use <a "
 "href=\"%(confirmation_link)s\">this link</a> to do so now."
 msgstr ""
+"Aún no has confirmado tu dirección de correo electrónico - utiliza <a "
+"href=\"%(confirmation_link)s\">este enlace</a> para hacerlo ahora."
 
 #: flask_security/templates/security/email/welcome_existing.txt:21
 #, python-format
@@ -1242,7 +1246,7 @@ msgstr ""
 #: flask_security/templates/security/email/welcome_existing.txt:25
 #, python-format
 msgid "You can use this link %(reset_link)s to reset your password."
-msgstr ""
+msgstr "Puedes usar este enlace %(reset_link)s para restablecer tu contraseña."
 
 #: flask_security/templates/security/email/welcome_existing.txt:29
 #, python-format
@@ -1250,6 +1254,8 @@ msgid ""
 "You have not confirmed your email address yet - use this link: "
 "%(confirmation_link)s to do so now."
 msgstr ""
+"Aún no has confirmado tu dirección de correo electrónico - utiliza este "
+"enlace: %(confirmation_link)s para hacerlo ahora."
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
 #: flask_security/templates/security/email/welcome_existing_username.txt:13
