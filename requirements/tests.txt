@@ -2,7 +2,7 @@ Flask-Babel
 Babel
 Flask-Mailman
 Flask-SQLAlchemy
-Flask-SQLAlchemy-Lite; python_version >= '3.10'
+Flask-SQLAlchemy-Lite
 argon2-cffi
 authlib
 bcrypt
