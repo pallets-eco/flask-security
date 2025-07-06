@@ -1034,15 +1034,13 @@ def datastore(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "sqlalchemy":
         ds, td = sqlalchemy_setup(app, tmpdir, realdburl)
     elif request.param == "sqlalchemy-session":
-        if sys.version_info < (3, 10):
-            pytest.skip("sqlalchemy-session requires python3.10 or higher")
         ds, td = sqlalchemy_session_setup(app, tmpdir, realdburl)
     elif request.param == "mongoengine":
         ds, td = mongoengine_setup(app, tmpdir, realmongodburl)
     elif request.param == "peewee":
         ds, td = peewee_setup(app, tmpdir, realdburl)
     elif request.param == "pony":
-        if sys.version_info > (3, 12):
+        if sys.version_info >= (3, 13):
             pytest.skip("pony requires python3.12 or lower")
         ds, td = pony_setup(app, tmpdir, realdburl)
     elif request.param == "fsqlalite":

@@ -7,7 +7,7 @@ keywords = ["flask security"]
 license = { file = "LICENSE.txt" }
 maintainers = [{ name = "Chris Wagner", email = "jwag.wagner+github@gmail.com"}]
 authors = [{ name = "Matt Wright"}, { name = "Chris Wagner", email = "jwag.wagner+github@gmail.com"}]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 urls.Documentation = "https://flask-security.readthedocs.io"
 urls.Homepage = "https://github.com/pallets-eco/flask-security"
 urls.Source = "https://github.com/pallets-eco/flask-security"
@@ -23,7 +23,6 @@ classifiers=[
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -48,7 +47,6 @@ dependencies = [
     "setuptools;python_version<'3.13'",
     "libpass>=1.9.0;python_version>='3.13'",
     "wtforms>=3.0.0",  # for form-level errors
-    "importlib_resources>=5.10.0",
 ]
 
 [project.optional-dependencies]

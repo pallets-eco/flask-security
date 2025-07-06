@@ -3,6 +3,19 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.7.0
+-------------
+
+Released XXX
+
+Fixes
++++++
+
+Docs and Chores
++++++++++++++++
+ - (:pr:`xx`) Drop support for Python 3.9. This removes the dependency on importlib_resources,
+   updates pypy to 3.10, and uses 3.12 as base python for tests/tox.
+
 Version 5.6.2
 -------------
 

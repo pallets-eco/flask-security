@@ -5,7 +5,7 @@ test_datastore
 Datastore tests
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -489,7 +489,7 @@ def test_uuid(app, request, tmpdir, realdburl):
 def test_webauthn(app, datastore):
     importorskip("webauthn")
     if not datastore.webauthn_model:
-        skip("No WebAuthn model defined")
+        skip(f"No WebAuthn model defined for datastore: {datastore.__class__.__name__}")
     init_app_with_options(app, datastore)
 
     with app.app_context():
@@ -523,7 +523,7 @@ def test_webauthn(app, datastore):
 def test_webauthn_cascade(app, datastore):
     importorskip("webauthn")
     if not datastore.webauthn_model:
-        skip("No WebAuthn model defined")
+        skip(f"No WebAuthn model defined for datastore: {datastore.__class__.__name__}")
     init_app_with_options(app, datastore)
 
     with app.app_context():
