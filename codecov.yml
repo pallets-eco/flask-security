@@ -10,5 +10,3 @@ coverage:
         if_ci_failed: error #success, failure, error, ignore
         informational: false
         only_pulls: false
-        ignore:
-          - "flask_security/flask_security/templates"

@@ -55,7 +55,12 @@ def test_confirmable_flag(app, clients, get_message):
     email = "dude@lp.com"
 
     with capture_registrations() as registrations:
-        data = dict(email=email, password="awesome sunset", next="")
+        data = dict(
+            email=email,
+            password="awesome sunset",
+            password_confirm="awesome sunset",
+            next="",
+        )
         response = clients.post("/register", data=data)
 
     assert response.status_code == 302
@@ -110,7 +115,12 @@ def test_confirmable_flag(app, clients, get_message):
 
     # Test if user was deleted before confirmation
     with capture_registrations() as registrations:
-        data = dict(email="mary27@lp.com", password="awesome sunset", next="")
+        data = dict(
+            email="mary27@lp.com",
+            password="awesome sunset",
+            password_confirm="awesome sunset",
+            next="",
+        )
         clients.post("/register", data=data)
 
     user = registrations[0]["user"]
@@ -141,7 +151,12 @@ def test_confirmation_template(app, client, get_message):
         recorded_tokens_sent.append(kwargs["confirmation_token"])
 
     with capture_registrations() as registrations:
-        data = dict(email="mary@lp.com", password="awesome sunset", next="")
+        data = dict(
+            email="mary@lp.com",
+            password="awesome sunset",
+            password_confirm="awesome sunset",
+            next="",
+        )
         # Register - this will use the welcome template
         client.post("/register", data=data, follow_redirects=True)
         # Explicitly ask for confirmation -
@@ -175,10 +190,14 @@ def test_confirmation_template(app, client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.settings(requires_confirmation_error_view="/confirm")
 def test_requires_confirmation_error_redirect(app, clients):
-    data = dict(email="jyl@lp.com", password="awesome sunset")
+    data = dict(
+        email="jyl@lp.com", password="awesome sunset", password_confirm="awesome sunset"
+    )
     response = clients.post("/register", data=data)
 
-    response = authenticate(clients, **data, follow_redirects=True)
+    response = authenticate(
+        clients, email="jyl@lp.com", password="awesome sunset", follow_redirects=True
+    )
     assert b"send_confirmation_form" in response.data
     assert b"jyl@lp.com" in response.data
 
@@ -189,7 +208,12 @@ def test_expired_confirmation_token(client, get_message):
     # Note that we need relatively new-ish date since session cookies also expire.
     with freeze_time(date.today() + timedelta(days=-1)):
         with capture_registrations() as registrations:
-            data = dict(email="mary@lp.com", password="awesome sunset", next="")
+            data = dict(
+                email="mary@lp.com",
+                password="awesome sunset",
+                password_confirm="awesome sunset",
+                next="",
+            )
             client.post("/register", data=data, follow_redirects=True)
 
         email = registrations[0]["email"]
@@ -203,7 +227,12 @@ def test_expired_confirmation_token(client, get_message):
 @pytest.mark.registerable()
 def test_email_conflict_for_confirmation_token(app, client, get_message):
     with capture_registrations() as registrations:
-        data = dict(email="mary@lp.com", password="awesome sunset", next="")
+        data = dict(
+            email="mary@lp.com",
+            password="awesome sunset",
+            password_confirm="awesome sunset",
+            next="",
+        )
         client.post("/register", data=data, follow_redirects=True)
 
     user = registrations[0]["user"]
@@ -223,12 +252,18 @@ def test_email_conflict_for_confirmation_token(app, client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.settings(login_without_confirmation=True)
 def test_login_when_unconfirmed(client, get_message):
-    data = dict(email="mary@lp.com", password="awesome sunset", next="")
+    data = dict(
+        email="mary@lp.com",
+        password="awesome sunset",
+        password_confirm="awesome sunset",
+        next="",
+    )
     response = client.post("/register", data=data, follow_redirects=True)
     assert b"mary@lp.com" in response.data
 
 
 @pytest.mark.registerable()
+@pytest.mark.settings(password_confirm_required=False)
 def test_no_auth_token(client_nc):
     """Make sure that register doesn't return Authentication Token
     if user isn't confirmed.
@@ -244,7 +279,7 @@ def test_no_auth_token(client_nc):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(login_without_confirmation=True)
+@pytest.mark.settings(login_without_confirmation=True, password_confirm_required=False)
 def test_auth_token_unconfirmed(client_nc):
     """Make sure that register returns Authentication Token
     if user isn't confirmed, but the 'login_without_confirmation' flag is set.
@@ -262,7 +297,11 @@ def test_auth_token_unconfirmed(client_nc):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(login_without_confirmation=True, auto_login_after_confirm=False)
+@pytest.mark.settings(
+    login_without_confirmation=True,
+    auto_login_after_confirm=False,
+    password_confirm_required=False,
+)
 def test_confirmation_different_user_when_logged_in_no_auto(client, get_message):
     """Default - AUTO_LOGIN == false so shouldn't log in second user."""
     e1 = "dude@lp.com"
@@ -297,7 +336,12 @@ def test_confirmation_different_user_when_logged_in(client, get_message):
 
     with capture_registrations() as registrations:
         for e in e1, e2:
-            data = dict(email=e, password="awesome sunset", next="")
+            data = dict(
+                email=e,
+                password="awesome sunset",
+                password_confirm="awesome sunset",
+                next="",
+            )
             response = client.post("/register", data=data)
             assert is_authenticated(client, get_message)
             logout(client)
@@ -321,7 +365,7 @@ def test_confirmation_different_user_when_logged_in(client, get_message):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(recoverable=True)
+@pytest.mark.settings(recoverable=True, password_confirm_required=False)
 def test_cannot_reset_password_when_email_is_not_confirmed(client, get_message):
     email = "dude@lp.com"
 
@@ -333,7 +377,7 @@ def test_cannot_reset_password_when_email_is_not_confirmed(client, get_message):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(auto_login_after_confirm=False)
+@pytest.mark.settings(auto_login_after_confirm=False, password_confirm_required=False)
 def test_confirm_redirect(client, get_message):
     with capture_registrations() as registrations:
         data = dict(email="jane@lp.com", password="awesome sunset", next="")
@@ -350,7 +394,9 @@ def test_confirm_redirect(client, get_message):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(post_confirm_view="/post_confirm")
+@pytest.mark.settings(
+    post_confirm_view="/post_confirm", password_confirm_required=False
+)
 def test_confirm_redirect_to_post_confirm(client, get_message):
     with capture_registrations() as registrations:
         data = dict(email="john@lp.com", password="awesome sunset", next="")
@@ -368,6 +414,7 @@ def test_confirm_redirect_to_post_confirm(client, get_message):
     redirect_behavior="spa",
     post_confirm_view="/confirm-redirect",
     confirm_error_view="/confirm-error",
+    password_confirm_required=False,
 )
 def test_spa_get(app, client, get_message):
     """
@@ -411,6 +458,7 @@ def test_spa_get(app, client, get_message):
     redirect_host="localhost:8081",
     redirect_behavior="spa",
     confirm_error_view="/confirm-error",
+    password_confirm_required=False,
 )
 def test_spa_get_bad_token(app, client, get_message):
     """Test expired and invalid token"""
@@ -463,7 +511,12 @@ def test_spa_get_bad_token(app, client, get_message):
 @pytest.mark.settings(auto_login_after_confirm=True, post_login_view="/postlogin")
 def test_auto_login(app, client, get_message):
     with capture_registrations() as registrations:
-        data = dict(email="mary@lp.com", password="password", next="")
+        data = dict(
+            email="mary@lp.com",
+            password="password",
+            password_confirm="password",
+            next="",
+        )
         client.post("/register", data=data, follow_redirects=True)
 
     assert not is_authenticated(client, get_message)
@@ -483,7 +536,12 @@ def test_two_factor(app, client, get_message):
     2-factor setup.
     """
     with capture_registrations() as registrations:
-        data = dict(email="mary@lp.com", password="password", next="")
+        data = dict(
+            email="mary@lp.com",
+            password="password",
+            password_confirm="password",
+            next="",
+        )
         client.post("/register", data=data, follow_redirects=True)
 
     assert not is_authenticated(client, get_message)
@@ -499,7 +557,9 @@ def test_two_factor(app, client, get_message):
 @pytest.mark.settings(two_factor_required=True, auto_login_after_confirm=True)
 def test_two_factor_json(app, client, get_message):
     with capture_registrations() as registrations:
-        data = dict(email="dude@lp.com", password="password")
+        data = dict(
+            email="dude@lp.com", password="password", password_confirm="password"
+        )
         response = client.post("/register", content_type="application/json", json=data)
         assert response.headers["content-type"] == "application/json"
         assert response.json["meta"]["code"] == 200
@@ -520,6 +580,7 @@ def test_two_factor_json(app, client, get_message):
 @pytest.mark.settings(
     user_identity_attributes=[{"username": {"mapper": lambda x: x}}],
     username_enable=True,
+    password_confirm_required=False,
 )
 def test_email_not_identity(app, client, get_message):
     # Test that can register/confirm with email even if it isn't an IDENTITY_ATTRIBUTE
@@ -674,7 +735,12 @@ def test_confirmable_async(app, client, get_message):
     email = "dude@lp.com"
 
     with capture_registrations() as registrations:
-        data = dict(email=email, password="awesome sunset", next="")
+        data = dict(
+            email=email,
+            password="awesome sunset",
+            password_confirm="awesome sunset",
+            next="",
+        )
         response = client.post("/register", data=data)
     assert response.status_code == 302
     client.post(

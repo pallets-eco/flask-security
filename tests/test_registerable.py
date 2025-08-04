@@ -8,6 +8,7 @@ Registerable tests
 import pytest
 import re
 from flask import Flask
+from tests.conftest import v2_param
 from tests.test_utils import (
     authenticate,
     check_xlation,
@@ -31,6 +32,7 @@ from flask_security.utils import localize_callback
 pytestmark = pytest.mark.registerable()
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.settings(post_register_view="/post_register")
 def test_registerable_flag(clients, app, get_message):
     recorded = []
@@ -87,7 +89,9 @@ def test_registerable_flag(clients, app, get_message):
     assert get_message("EMAIL_ALREADY_ASSOCIATED", email="Dude@lp.com") in response.data
 
     # Test registering with JSON
-    data = dict(email="dude2@lp.com", password="horse battery")
+    data = dict(
+        email="dude2@lp.com", password="horse battery", password_confirm="horse battery"
+    )
     response = clients.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
@@ -100,7 +104,7 @@ def test_registerable_flag(clients, app, get_message):
     logout(clients)
 
     # Test registering with invalid JSON
-    data = dict(email="bogus", password="password")
+    data = dict(email="bogus", password="password", password_confirm="password")
     response = clients.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
     )
@@ -205,6 +209,7 @@ def test_xlation(app, client, get_message_local):
 
 
 @pytest.mark.confirmable()
+@pytest.mark.settings(use_register_v2=False)
 def test_required_password(client, get_message):
     # when confirm required - should not require confirm_password - but should
     # require a password
@@ -217,6 +222,7 @@ def test_required_password(client, get_message):
     assert get_message("CONFIRM_REGISTRATION", email="trp@lp.com") in response.data
 
 
+@pytest.mark.settings(use_register_v2=False)
 def test_required_password_confirm(client, get_message):
     response = client.post(
         "/register",
@@ -237,18 +243,44 @@ def test_required_password_confirm(client, get_message):
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data
 
 
-@pytest.mark.confirmable()
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.unified_signin()
+@pytest.mark.confirmable()
 @pytest.mark.settings(password_required=False)
-def test_allow_null_password(client, get_message):
-    # If unified sign in is enabled - should be able to register w/o password
-    data = dict(email="trp@lp.com", password="")
+def test_allow_null_password(app, client, get_message):
+    # Test password not required with either register form
+    response = client.get("/register")
+    data = dict(email="trp@lp.com")
+    pw = get_form_input(response, "password")
+    assert "required" not in pw
+    pwc = get_form_input(response, "password_confirm")
+    assert not pwc or "required" not in pwc
+
     response = client.post("/register", data=data, follow_redirects=True)
     assert get_message("CONFIRM_REGISTRATION", email="trp@lp.com") in response.data
+    logout(client)
+
+    # should be able to register with password and password_confirm (with RegisterFormV2
+    if app.config["SECURITY_USE_REGISTER_V2"]:
+        data = dict(
+            email="trp2@lp.com",
+            password="battery staple",
+            password_confirm="battery staples",
+        )
+        response = client.post("/register", data=data, follow_redirects=True)
+        assert get_message("RETYPE_PASSWORD_MISMATCH") in response.data
+
+    data = dict(
+        email="trp2@lp.com",
+        password="battery staple",
+        password_confirm="battery staple",
+    )
+    response = client.post("/register", data=data, follow_redirects=True)
+    assert get_message("CONFIRM_REGISTRATION", email="trp2@lp.com") in response.data
 
 
 @pytest.mark.unified_signin()
-@pytest.mark.settings(password_required=False)
+@pytest.mark.settings(password_required=False, use_register_v2=False)
 def test_allow_null_password_nologin(client, get_message):
     # If unified sign in is enabled - should be able to register w/o password
     # With confirmable false - should be logged in automatically upon register.
@@ -332,9 +364,8 @@ def test_two_factor_json(app, client, get_message):
     )
 
 
-@pytest.mark.filterwarnings("ignore:.*The RegisterForm.*:DeprecationWarning")
 def test_form_data_is_passed_to_user_registered_signal(app, sqlalchemy_datastore):
-    class MyRegisterForm(RegisterForm):
+    class MyRegisterForm(RegisterFormV2):
         additional_field = StringField("additional_field")
 
     app.security = Security(
@@ -413,7 +444,7 @@ def test_easy_password(app, sqlalchemy_datastore):
     )
 
 
-@pytest.mark.settings(username_enable=True)
+@pytest.mark.settings(username_enable=True, password_confirm_required=False)
 def test_nullable_username(app, client):
     # sqlalchemy datastore uses fsqlav2 which has username as unique and nullable
     # make sure can register multiple users with no username
@@ -518,7 +549,8 @@ def test_form_error(app, client, get_message):
         assert get_message("EMAIL_NOT_PROVIDED") in rendered.encode("utf-8")
 
 
-@pytest.mark.settings(username_enable=True)
+@pytest.mark.parametrize("app", v2_param, indirect=True)
+@pytest.mark.settings(username_enable=True, password_confirm_required=False)
 @pytest.mark.unified_signin()
 def test_username(app, clients, get_message):
     client = clients
@@ -605,6 +637,7 @@ def test_username_normalize(app, client, get_message):
         email="dude@lp.com",
         username="Imnumber\N{ROMAN NUMERAL ONE}",
         password="awesome sunset",
+        password_confirm="awesome sunset",
     )
     response = client.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
@@ -628,6 +661,7 @@ def test_username_errors(app, client, get_message):
         email="dude@lp.com",
         username="dud",
         password="awesome sunset",
+        password_confirm="awesome sunset",
     )
     response = client.post(
         "/register", json=data, headers={"Content-Type": "application/json"}
@@ -763,8 +797,11 @@ def test_legacy_style_login(app, sqlalchemy_datastore, get_message):
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.confirmable()
-@pytest.mark.settings(return_generic_responses=True, username_enable=True)
+@pytest.mark.settings(
+    return_generic_responses=True, username_enable=True, password_confirm_required=False
+)
 def test_generic_response(app, client, get_message):
     # Register should not expose whether email/username is already in system.
     recorded = []
@@ -828,8 +865,11 @@ def test_generic_response(app, client, get_message):
     assert kv["User"] == "dude"
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.confirmable()
-@pytest.mark.settings(return_generic_responses=True, username_enable=True)
+@pytest.mark.settings(
+    return_generic_responses=True, username_enable=True, password_confirm_required=False
+)
 def test_gr_existing_username(app, client, get_message):
     # Test a new email with an existing username
     # Should still return errors such as illegal password
@@ -889,6 +929,7 @@ def test_gr_existing_username(app, client, get_message):
     return_generic_responses=True,
     username_enable=True,
     send_register_email_welcome_existing_template="welcome_existing",
+    password_confirm_required=False,
 )
 def test_gr_extras(app, client, get_message):
     # If user tries to re-register - response email should contain reset password
@@ -941,9 +982,10 @@ def test_gr_extras(app, client, get_message):
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.recoverable()
 @pytest.mark.confirmable()
-@pytest.mark.settings(return_generic_responses=True)
+@pytest.mark.settings(return_generic_responses=True, password_confirm_required=False)
 def test_gr_real_html_template(app, client, get_message):
     # We have a test .txt template - but this will use the normal/real HTML template
     data = dict(
@@ -1196,33 +1238,3 @@ def test_subclass_v2(app, sqlalchemy_datastore):
         response.json["response"]["errors"][0]
         == "Field must be at least 8 characters long."
     )
-
-
-@pytest.mark.unified_signin()
-@pytest.mark.confirmable()
-@pytest.mark.settings(password_required=False, use_register_v2=True)
-def test_allow_null_password_v2(client, get_message):
-    # Test password not required with new RegisterFormV2
-    response = client.get("/register")
-    data = dict(email="trp@lp.com")
-    pw = get_form_input(response, "password")
-    assert "required" not in pw
-    pwc = get_form_input(response, "password_confirm")
-    assert "required" not in pwc
-
-    response = client.post("/register", data=data, follow_redirects=True)
-    assert get_message("CONFIRM_REGISTRATION", email="trp@lp.com") in response.data
-    logout(client)
-
-    # should be able to register with password and password_confirm
-    data = dict(email="trp2@lp.com", password="battery staple")
-    response = client.post("/register", data=data, follow_redirects=True)
-    assert get_message("RETYPE_PASSWORD_MISMATCH") in response.data
-
-    data = dict(
-        email="trp2@lp.com",
-        password="battery staple",
-        password_confirm="battery staple",
-    )
-    response = client.post("/register", data=data, follow_redirects=True)
-    assert get_message("CONFIRM_REGISTRATION", email="trp2@lp.com") in response.data

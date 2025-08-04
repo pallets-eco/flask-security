@@ -5,7 +5,7 @@ flask_security.cli
 Command Line Interface for managing accounts and roles.
 
 :copyright: (c) 2016 by CERN.
-:copyright: (c) 2019-2024 by J. Christopher Wagner
+:copyright: (c) 2019-2025 by J. Christopher Wagner
 :license: MIT, see LICENSE for more details.
 """
 
@@ -153,8 +153,12 @@ def users_create(attributes, password, active, username):
     # it already asked for confirmation.
     # if they used inline keywords, there really isn't any reason to make them type
     # it in twice.
+    if _security.forms["confirm_register_form"].cls:
+        form_name = "confirm_register_form"
+    else:
+        form_name = "register_form"
     form = build_form(
-        "confirm_register_form" if _security._use_confirm_form else "register_form",
+        form_name,
         meta={"csrf": False},
         **kwargs,
         password_confirm=password,

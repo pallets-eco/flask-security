@@ -21,6 +21,7 @@ from flask_security.decorators import auth_required
 from flask_principal import identity_loaded
 from freezegun import freeze_time
 
+from tests.conftest import v2_param
 from tests.test_utils import (
     authenticate,
     capture_flashes,
@@ -337,6 +338,7 @@ def test_generic_response(app, client, get_message):
     assert len(flashes) == 0
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.registerable()
 @pytest.mark.settings(username_enable=True, return_generic_responses=True)
 def test_generic_response_username(app, client, get_message):
@@ -344,6 +346,7 @@ def test_generic_response_username(app, client, get_message):
         email="dude@lp.com",
         username="dude",
         password="awesome sunset",
+        password_confirm="awesome sunset",
     )
     response = client.post("/register", json=data)
     assert response.headers["Content-Type"] == "application/json"
@@ -351,7 +354,12 @@ def test_generic_response_username(app, client, get_message):
     logout(client)
 
     response = client.post(
-        "/login", data=dict(username="dude2", password="awesome sunset")
+        "/login",
+        data=dict(
+            username="dude2",
+            password="awesome sunset",
+            password_confirm="awesome sunset",
+        ),
     )
     assert get_message("GENERIC_AUTHN_FAILED") in response.data
 

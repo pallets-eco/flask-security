@@ -958,12 +958,18 @@ Registerable
 
     The :py:class:`flask_security.RegisterFormV2` is a single form used for registration. This is replacing the
     RegisterForm and ConfirmRegisterForm (over a few releases). Setting this option
-    to ``True`` will set both registration forms to RegisterFormV2. Note that this
+    to ``False`` will revert behavior to prior releases with register_form=RegisterForm and
+    confirm_register_form=ConfirmRegisterForm. Note that this
     option is ignored if the application has sub-classed the registration form.
 
-    Default: ``False``
+    Default: ``True``
 
     .. versionadded:: 5.6.0
+    .. versionchanged:: 5.7.0
+      Default set to ``True``
+    .. deprecated:: 5.7.0
+      In a future release the old RegisterForm and ConfirmRegisterForm will be removed which
+      will make this option obsolete.
 
 
 
