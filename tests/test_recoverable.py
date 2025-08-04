@@ -135,7 +135,9 @@ def test_recoverable_flag(app, clients, get_message):
 @pytest.mark.registerable()
 @pytest.mark.settings(requires_confirmation_error_view="/confirm")
 def test_requires_confirmation_error_redirect(app, clients):
-    data = dict(email="jyl@lp.com", password="awesome sunset")
+    data = dict(
+        email="jyl@lp.com", password="awesome sunset", password_confirm="awesome sunset"
+    )
     clients.post("/register", data=data)
 
     response = clients.post(

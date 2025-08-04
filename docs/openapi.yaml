@@ -2298,7 +2298,7 @@ components:
         password_confirm:
           type: string
           description: >
-            If present, must re-type in password. This will not be present if the __SECURITY_CONFIRM__ configuration is true.
+            If present, must re-type in password. This will not be present if the __SECURITY_PASSWORD_CONFIRM_REQUIRED__ configuration is False.
         next:
           type: string
           description: >

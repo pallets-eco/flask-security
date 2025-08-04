@@ -104,11 +104,11 @@ replacement class. This allows you to add extra fields to any
 form or override validators. For example it is often desired to add additional
 personal information fields to the registration form::
 
-    from flask_security import RegisterForm
+    from flask_security import RegisterFormV2
     from wtforms import StringField
     from wtforms.validators import DataRequired
 
-    class ExtendedRegisterForm(RegisterForm):
+    class ExtendedRegisterForm(RegisterFormV2):
         first_name = StringField('First Name', [DataRequired()])
         last_name = StringField('Last Name', [DataRequired()])
 
@@ -200,7 +200,7 @@ The following is a list of all the available form overrides:
 Register Form Migration
 ++++++++++++++++++++++++
 Since early in Flask Security releases, there have been 2 different forms used for
-registration: RegisterForm and ConfirmRegisterForm. The difference between them is only
+registration: RegisterForm and ConfirmRegisterForm. The only difference between them is
 that the ConfirmRegisterForm doesn't require password confirmation (i.e. asking the user to
 re-type their password). This wasn't a config option but rather based on whether :py:data:`SECURITY_CONFIRMABLE` was
 set or whether the request was form-based or JSON. This has always been a huge source of
@@ -218,6 +218,8 @@ ConfirmRegisterForm will raise a deprecation warning. The new RegisterFormV2 can
 The new RegisterFormV2 will add a ``password_confirm`` field if :py:data:`SECURITY_PASSWORD_CONFIRM_REQUIRED`
 is set to ``True`` (the default). Additionally, JSON requests will need to provide a value for ``password_confirm``
 if configured.
+
+In release 5.7 the default is flipped - :py:data:`SECURITY_USE_REGISTER_V2` is ``True`` and RegisterFormV2 is the default form.
 
 .. _form_instantiation:
 

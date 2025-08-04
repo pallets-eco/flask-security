@@ -13,8 +13,14 @@ Fixes
 
 Docs and Chores
 +++++++++++++++
- - (:pr:`xx`) Drop support for Python 3.9. This removes the dependency on importlib_resources,
+- (:pr:`1106`) Drop support for Python 3.9. This removes the dependency on importlib_resources,
    updates pypy to 3.10, and uses 3.12 as base python for tests/tox.
+- (:pr:`xx`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+As mentioned above - the default RegisterForm is now the new RegisterFormV2 - Please read :ref:`register_form_migration`.
+Flask-Security will emit a DeprecationWarning if the :py:data:`SECURITY_USE_REGISTER_V2` is set to False.
 
 Version 5.6.2
 -------------

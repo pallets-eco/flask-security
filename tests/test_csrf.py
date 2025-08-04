@@ -576,7 +576,7 @@ def test_remember_login_csrf_cookie(app, client):
 
 @pytest.mark.csrf(csrfprotect=True)
 @pytest.mark.registerable()
-@pytest.mark.settings(csrf_header="X-CSRF-Token")
+@pytest.mark.settings(csrf_header="X-CSRF-Token", password_confirm_required=False)
 def test_json_register_csrf_with_ignore_unauth_set_to_false(app, client):
     """
     Test that you are able to register a user when using the JSON api

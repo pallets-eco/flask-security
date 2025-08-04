@@ -385,8 +385,8 @@ def test_cli_change_password(script_info):
     assert "User not found" in result.output
 
 
-@pytest.mark.settings(use_register_v2=True)
-def test_cli_createuserV2(script_info):
+@pytest.mark.settings(use_register_v2=False)
+def test_cli_createuser_old(script_info):
     """Test create user CLI."""
     runner = CliRunner()
 
@@ -399,8 +399,8 @@ def test_cli_createuserV2(script_info):
     assert result.exit_code == 0
 
 
-@pytest.mark.settings(use_register_v2=True)
-def test_cli_createuserV2attr(script_info):
+@pytest.mark.settings(use_register_v2=False)
+def test_cli_createuserold_attr(script_info):
     """Test create user CLI passing attr that is in User but not in form."""
     runner = CliRunner()
 

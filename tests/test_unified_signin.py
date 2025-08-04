@@ -19,6 +19,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pytest
 from flask import Flask
+from tests.conftest import v2_param
 from tests.test_utils import (
     SmsBadSender,
     SmsTestSender,
@@ -1339,12 +1340,13 @@ def test_confirmable(app, client, get_message):
     assert not is_authenticated(client, get_message)
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.registerable()
 @pytest.mark.recoverable()
 @pytest.mark.settings(password_required=False)
 def test_can_add_password(app, client, get_message):
     # Test that if register w/o a password, can use 'recover password' to assign one
-    data = dict(email="trp@lp.com", password="")
+    data = dict(email="trp@lp.com", password="", password_confirm="")
     response = client.post("/register", data=data, follow_redirects=True)
     assert b"Welcome trp@lp.com" in response.data
     logout(client)
@@ -1377,6 +1379,7 @@ def test_can_add_password(app, client, get_message):
     assert b"Welcome trp@lp.com" in response.data
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.registerable()
 @pytest.mark.changeable()
 @pytest.mark.settings(password_required=False)
@@ -1384,7 +1387,7 @@ def test_change_empty_password(app, client):
     # test that if register w/o a password - can 'change' it.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-    data = dict(email="trp@lp.com", password="")
+    data = dict(email="trp@lp.com", password="", password_confirm="")
     response = client.post("/register", data=data, follow_redirects=True)
     # should have been logged in since no confirmation
 
@@ -1426,11 +1429,12 @@ def test_change_empty_password(app, client):
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.registerable()
 @pytest.mark.settings(password_required=False)
 def test_empty_password(app, client, get_message):
     # test that if no password - can't log in with empty password
-    data = dict(email="trp@lp.com", password="")
+    data = dict(email="trp@lp.com", password="", password_confirm="")
     response = client.post("/register", data=data, follow_redirects=True)
     logout(client)
 
@@ -1691,7 +1695,7 @@ def test_replace_send_code(app, get_message):
     client = app.test_client()
 
     # since we don't use client fixture - have to add user
-    data = dict(email="trp@lp.com", password="password")
+    data = dict(email="trp@lp.com", password="password", password_confirm="password")
     response = client.post("/register", data=data, follow_redirects=True)
     assert b"Welcome trp@lp.com" in response.data
     logout(client)
@@ -2202,6 +2206,7 @@ def test_xlation(app, client, get_message_local):
         assert any(markupsafe.escape(s).encode() in response.data for s in p)
 
 
+@pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.registerable()
 @pytest.mark.settings(password_required=False)
 @pytest.mark.app_settings(babel_default_locale="fr_FR")
@@ -2211,7 +2216,7 @@ def test_empty_password_xlate(app, client, get_message):
     # template
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
-    data = dict(email="trp@lp.com", password="")
+    data = dict(email="trp@lp.com", password="", password_confirm="")
     # register w/o password - this will automatically set up 'email'
     client.post("/register", data=data, follow_redirects=True)
     # will be auto-logged in since no confirmation

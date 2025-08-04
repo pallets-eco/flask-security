@@ -176,11 +176,9 @@ def test_basic_custom_forms(app, sqlalchemy_datastore):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
+@pytest.mark.settings(use_register_v2=False)
 @pytest.mark.filterwarnings("ignore:.*The ConfirmRegisterForm.*:DeprecationWarning")
 def test_confirmable_custom_form(app, sqlalchemy_datastore):
-    app.config["SECURITY_REGISTERABLE"] = True
-    app.config["SECURITY_CONFIRMABLE"] = True
-
     class MyRegisterForm(ConfirmRegisterForm):
         email = EmailField("My Register Email Address Field")
 
