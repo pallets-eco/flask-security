@@ -10,12 +10,13 @@ Released XXX
 
 Fixes
 +++++
+- (:issue:`1109`) Fix broken link in docs and improve docstrings/typing for util classes.
 
 Docs and Chores
 +++++++++++++++
 - (:pr:`1106`) Drop support for Python 3.9. This removes the dependency on importlib_resources,
    updates pypy to 3.10, and uses 3.12 as base python for tests/tox.
-- (:pr:`xx`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
+- (:pr:`1112`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
