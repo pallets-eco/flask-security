@@ -1694,7 +1694,7 @@ Trackable
 
     Specifies if Flask-Security should track basic user login statistics. If set to ``True``, ensure your
     models have the required fields/attributes and make sure to commit changes after calling
-    ``login_user``. Be sure to use `ProxyFix <http://flask.pocoo.org/docs/0.10/deploying/wsgi-standalone/#proxy-setups>`_ if you are using a proxy.
+    ``login_user``. Be sure to use `ProxyFix <https://werkzeug.palletsprojects.com/en/stable/middleware/proxy_fix/>`_ if you are using a proxy.
 
     Default: ``False``
 
