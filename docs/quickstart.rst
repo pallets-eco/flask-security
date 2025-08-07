@@ -7,7 +7,7 @@ There are some complete (but simple) examples available in the *examples* direct
 .. note::
     The below quickstarts are just that - they don't enable most of the features (such as registration, reset, etc.).
     They basically create a single user, and you can login as that user... that's it.
-    As you add more features, additional packages (e.g. Flask-Mailman, Flask-Babel, qrcode) might be required
+    As you add more features, additional packages (e.g. Flask-Mail, Flask-Babel, qrcode) might be required
     and will need to be added to your requirements.txt (or equivalent) file.
     Flask-Security does some configuration validation and will output error messages to the console
     for some missing packages.
@@ -561,15 +561,15 @@ Mail Configuration
 
 Flask-Security integrates with an outgoing mail service via the ``mail_util_cls`` which
 is part of initial configuration. The default class :class:`flask_security.MailUtil` utilizes the
-`Flask-Mailman <https://pypi.org/project/flask-mailman/>`_ package. Be sure to add flask_mailman to
-your requirements.txt. The older and no longer maintained package `Flask-Mail <https://pypi.org/project/Flask-Mail/>`_
-is also (still) supported.
+`Flask-Mail <https://pypi.org/project/flask-mail/>`_ package. Be sure to add flask_mail to
+your requirements.txt. The Django inspired package `Flask-Mailman <https://pypi.org/project/Flask-Mailman/>`_
+is also supported.
 
 The following code illustrates a basic setup, which could be added to
 the basic application code in the previous section::
 
     # At top of file
-    from flask_mailman import Mail
+    from flask_mail import Mail
 
     # After 'Create app'
     app.config['MAIL_SERVER'] = 'smtp.example.com'
@@ -579,9 +579,9 @@ the basic application code in the previous section::
     app.config['MAIL_PASSWORD'] = 'password'
     mail = Mail(app)
 
-To learn more about the various Flask-Mailman settings to configure it to
+To learn more about the various Flask-Mail settings to configure it to
 work with your particular email server configuration, please see the
-`Flask-Mailman documentation <https://waynerv.github.io/flask-mailman/>`_.
+`Flask-Mail documentation <https://flask-mail.readthedocs.io/en/latest/>`_.
 
 .. _proxy-configuration:
 

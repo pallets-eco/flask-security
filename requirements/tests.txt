@@ -1,6 +1,6 @@
 Flask-Babel
 Babel
-Flask-Mailman
+Flask-Mail
 Flask-SQLAlchemy
 Flask-SQLAlchemy-Lite
 argon2-cffi

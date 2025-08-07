@@ -535,7 +535,7 @@ def test_without_babel(app, client):
     assert response.status_code == 200
 
 
-def test_no_email_sender(app, sqlalchemy_datastore):
+def test_no_email_sender(app, sqlalchemy_datastore, outbox):
     """Verify that if SECURITY_EMAIL_SENDER is default
     (which is a local proxy) that send_mail picks up MAIL_DEFAULT_SENDER.
     """
@@ -551,12 +551,11 @@ def test_no_email_sender(app, sqlalchemy_datastore):
     with app.app_context():
         user = TestUser("matt@lp.com")
         send_mail("Test Default Sender", user.email, "welcome", user=user)
-        outbox = app.mail.outbox
         assert 1 == len(outbox)
-        assert "test@testme.com" == outbox[0].from_email
+        assert "test@testme.com" == outbox[0].sender
 
 
-def test_sender_tuple(app, sqlalchemy_datastore):
+def test_sender_tuple(app, sqlalchemy_datastore, outbox):
     """Verify that if sender is a (name, address) tuple,
     in the received email sender is properly formatted as "name <address>"
     Flask-Mail takes tuples - Flask-Mailman takes them - however the
@@ -574,12 +573,11 @@ def test_sender_tuple(app, sqlalchemy_datastore):
     with app.app_context():
         user = TestUser("matt@lp.com")
         send_mail("Test Tuple Sender", user.email, "welcome", user=user)
-        outbox = app.mail.outbox
         assert 1 == len(outbox)
-        assert outbox[0].from_email == "Test User <test@testme.com>"
+        assert outbox[0].sender == "Test User <test@testme.com>"
 
 
-def test_send_mail_context(app, sqlalchemy_datastore):
+def test_send_mail_context(app, sqlalchemy_datastore, outbox):
     """Test full context sent to MailUtil/send_mail"""
     app.config["MAIL_DEFAULT_SENDER"] = "test@testme.com"
     app.security = Security()
@@ -596,9 +594,8 @@ def test_send_mail_context(app, sqlalchemy_datastore):
     with app.app_context():
         user = TestUser("matt@lp.com")
         send_mail("Test Default Sender", user.email, "welcome", user=user)
-        outbox = app.mail.outbox
         assert 1 == len(outbox)
-        assert "test@testme.com" == outbox[0].from_email
+        assert "test@testme.com" == outbox[0].sender
         matcher = re.match(
             r".*ExtraContext:(\S+).*", outbox[0].body, re.IGNORECASE | re.DOTALL
         )

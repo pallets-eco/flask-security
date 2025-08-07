@@ -32,7 +32,7 @@ from tests.test_utils import (
 pytestmark = pytest.mark.changeable()
 
 
-def test_changeable_flag(app, clients, get_message):
+def test_changeable_flag(app, clients, get_message, outbox):
     tcl = clients
     recorded = []
 
@@ -120,7 +120,6 @@ def test_changeable_flag(app, clients, get_message):
         },
         follow_redirects=True,
     )
-    outbox = app.mail.outbox
 
     assert get_message("PASSWORD_CHANGE") in response.data
     assert b"Home Page" in response.data
@@ -323,7 +322,7 @@ def test_auth_uniquifier(app):
 
 @pytest.mark.app_settings(babel_default_locale="fr_FR")
 @pytest.mark.babel()
-def test_xlation(app, client, get_message_local):
+def test_xlation(app, client, get_message_local, outbox):
     # Test form and email translation
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
@@ -347,7 +346,6 @@ def test_xlation(app, client, get_message_local):
         },
         follow_redirects=True,
     )
-    outbox = app.mail.outbox
 
     with app.test_request_context():
         assert get_message_local("PASSWORD_CHANGE").encode("utf-8") in response.data
@@ -361,7 +359,7 @@ def test_xlation(app, client, get_message_local):
         )
         assert (
             str(markupsafe.escape(localize_callback("Your password has been changed.")))
-            in outbox[0].alternatives[0][0]
+            in outbox[0].alts["html"]
         )
         assert localize_callback("Your password has been changed") in outbox[0].body
 
@@ -381,7 +379,7 @@ def test_custom_change_template(client):
 
 
 @pytest.mark.settings(send_password_change_email=False)
-def test_disable_change_emails(app, client):
+def test_disable_change_emails(app, client, outbox):
     client.post(
         "/change",
         data={
@@ -391,7 +389,7 @@ def test_disable_change_emails(app, client):
         },
         follow_redirects=True,
     )
-    assert not app.mail.outbox
+    assert len(outbox) == 0
 
 
 @pytest.mark.settings(post_change_view="/profile")

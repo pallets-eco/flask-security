@@ -24,7 +24,7 @@ from flask_security import Security, UserMixin, login_instructions_sent
 pytestmark = pytest.mark.passwordless()
 
 
-def test_passwordless_flag(app, client, get_message):
+def test_passwordless_flag(app, client, get_message, outbox):
     recorded = []
 
     @login_instructions_sent.connect_via(app)
@@ -47,7 +47,7 @@ def test_passwordless_flag(app, client, get_message):
     )
     assert response.status_code == 200
     assert len(recorded) == 1
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
 
     # Test login with json and invalid email
     data = dict(email="nobody@lp.com")
@@ -64,7 +64,7 @@ def test_passwordless_flag(app, client, get_message):
 
     assert len(recorded) == 2
     assert len(requests) == 1
-    assert len(app.mail.outbox) == 2
+    assert len(outbox) == 2
     assert "user" in requests[0]
     assert "login_token" in requests[0]
 
@@ -90,13 +90,12 @@ def test_passwordless_flag(app, client, get_message):
     assert get_message("USER_DOES_NOT_EXIST") in response.data
 
 
-def test_passwordless_template(app, client, get_message):
+def test_passwordless_template(app, client, get_message, outbox):
     # Check contents of email template - this uses a test template
     # in order to check all context vars since the default template
     # doesn't have all of them.
     with capture_passwordless_login_requests() as requests:
         client.post("/login", data=dict(email="joe@lp.com"), follow_redirects=True)
-        outbox = app.mail.outbox
         assert len(outbox) == 1
         matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
         # should be 4 - link, email, token, config item

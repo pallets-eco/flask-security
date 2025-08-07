@@ -8,6 +8,8 @@ Version 5.7.0
 
 Released XXX
 
+This release is a set of small backward incompatible changes. Please read these notes carefully.
+
 Fixes
 +++++
 - (:issue:`1109`) Fix broken link in docs and improve docstrings/typing for util classes.
@@ -17,11 +19,17 @@ Docs and Chores
 - (:pr:`1106`) Drop support for Python 3.9. This removes the dependency on importlib_resources,
    updates pypy to 3.10, and uses 3.12 as base python for tests/tox.
 - (:pr:`1112`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
+- (:pr:`xx`) Flip default mail package back to Flask-Mail (from Flask-Mailman).
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 As mentioned above - the default RegisterForm is now the new RegisterFormV2 - Please read :ref:`register_form_migration`.
 Flask-Security will emit a DeprecationWarning if the :py:data:`SECURITY_USE_REGISTER_V2` is set to False.
+
+In 5.0 we changed the default mailer package to Flask-Mailman since Flask-Mail was no longer supported.
+Flask-Mail is again supported and is part of Pallets-Eco. Both packages are still supported based on which one
+an application initializes. The only backwards compatibility concern is that if you use the setup extras 'common',
+it will install Flask-Mail rather than Flask-Mailman.
 
 Version 5.6.2
 -------------

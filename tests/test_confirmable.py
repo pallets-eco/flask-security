@@ -139,7 +139,7 @@ def test_confirmable_flag(app, clients, get_message):
 
 
 @pytest.mark.registerable()
-def test_confirmation_template(app, client, get_message):
+def test_confirmation_template(app, client, get_message, outbox):
     # Check contents of email template - this uses a test template
     # in order to check all context vars since the default template
     # doesn't have all of them.
@@ -162,7 +162,6 @@ def test_confirmation_template(app, client, get_message):
         # Explicitly ask for confirmation -
         # this will use the confirmation_instructions template
         client.post("/confirm", data=dict(email="mary@lp.com"))
-        outbox = app.mail.outbox
         assert len(outbox) == 2
         # check registration email
         matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)

@@ -148,7 +148,7 @@ def set_email(app, email="matt@lp.com"):
         app.security.datastore.commit()
 
 
-def test_simple_signin(app, clients, get_message):
+def test_simple_signin(app, clients, get_message, outbox):
     set_email(app)
     auths = []
 
@@ -187,7 +187,7 @@ def test_simple_signin(app, clients, get_message):
         assert response.status_code == 200
         assert b"Sign In" in response.data
     assert len(requests) == 1
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
 
     # try bad code
     response = clients.post(
@@ -240,7 +240,7 @@ def test_simple_signin(app, clients, get_message):
     assert not clients.get_cookie("remember_token")
 
 
-def test_simple_signin_json(app, client_nc, get_message):
+def test_simple_signin_json(app, client_nc, get_message, outbox):
     set_email(app)
     auths = []
 
@@ -270,7 +270,7 @@ def test_simple_signin_json(app, client_nc, get_message):
             assert "csrf_token" in response.json["response"]
             assert "user" not in response.json["response"]
         assert len(requests) == 1
-        assert len(app.mail.outbox) == 1
+        assert len(outbox) == 1
 
         # try bad code
         response = client_nc.post(
@@ -364,7 +364,7 @@ def test_signin_pwd_json(app, client, get_message):
 
 @pytest.mark.registerable()
 @pytest.mark.settings(password_required=False)
-def test_us_passwordless(app, client, get_message):
+def test_us_passwordless(app, client, get_message, outbox):
     # Check passwordless.
     # Check contents of email template - this uses a test template
     # in order to check all context vars since the default template
@@ -379,7 +379,6 @@ def test_us_passwordless(app, client, get_message):
             data=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
             follow_redirects=True,
         )
-        outbox = app.mail.outbox
         # 2 emails - first from registration.
         assert len(outbox) == 2
         matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
@@ -404,7 +403,7 @@ def test_us_passwordless(app, client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
 @pytest.mark.settings(password_required=False)
-def test_us_passwordless_confirm(app, client, get_message):
+def test_us_passwordless_confirm(app, client, get_message, outbox):
     # Check passwordless with confirmation required.
     response = client.post(
         "/register", data=dict(email="nopasswd-dude@lp.com"), follow_redirects=True
@@ -417,7 +416,6 @@ def test_us_passwordless_confirm(app, client, get_message):
     )
     assert get_message("CONFIRMATION_REQUIRED") in response.data
     # grab welcome email which has confirmation link (test version of welcome.txt)
-    outbox = app.mail.outbox
     matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
     link = matcher[0].split(":", 1)[1]
     response = client.get(link, follow_redirects=True)
@@ -430,7 +428,6 @@ def test_us_passwordless_confirm(app, client, get_message):
         data=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
         follow_redirects=True,
     )
-    outbox = app.mail.outbox
     # 2 emails - first from registration.
     assert len(outbox) == 2
     matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
@@ -443,7 +440,7 @@ def test_us_passwordless_confirm(app, client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
 @pytest.mark.settings(password_required=False)
-def test_us_passwordless_confirm_json(app, client, get_message):
+def test_us_passwordless_confirm_json(app, client, get_message, outbox):
     # Check passwordless with confirmation required.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = client.post("/register", json=dict(email="nopasswd-dude@lp.com"))
@@ -457,7 +454,6 @@ def test_us_passwordless_confirm_json(app, client, get_message):
     )
 
     # grab welcome email which has confirmation link (test version of welcome.txt)
-    outbox = app.mail.outbox
     matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
     link = matcher[0].split(":", 1)[1]
     response = client.get(link, headers=headers, follow_redirects=False)
@@ -468,7 +464,6 @@ def test_us_passwordless_confirm_json(app, client, get_message):
         "/us-signin/send-code",
         json=dict(identity="nopasswd-dude@lp.com", chosen_method="email"),
     )
-    outbox = app.mail.outbox
     # 2 emails - first from registration.
     assert len(outbox) == 2
     matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
@@ -598,7 +593,7 @@ def test_post_already_authenticated(client, get_message):
 
 
 @pytest.mark.settings(us_email_subject="Code For You")
-def test_verify_link(app, client, get_message):
+def test_verify_link(app, client, get_message, outbox):
     set_email(app)
     auths = []
 
@@ -614,10 +609,9 @@ def test_verify_link(app, client, get_message):
         )
         assert response.status_code == 200
         assert b"Sign In" in response.data
-    outbox = app.mail.outbox
 
-    assert outbox[0].to == ["matt@lp.com"]
-    assert outbox[0].from_email == "no-reply@localhost"
+    assert outbox[0].recipients == ["matt@lp.com"]
+    assert outbox[0].sender == "no-reply@localhost"
     assert outbox[0].subject == "Code For You"
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
@@ -656,7 +650,7 @@ def test_verify_link(app, client, get_message):
     login_error_view="/login-error",
     post_login_view="/post-login",
 )
-def test_verify_link_spa(app, client, get_message):
+def test_verify_link_spa(app, client, get_message, outbox):
     # N.B. we use client here since this only works/ is supported if using
     # sessions.
     set_email(app)
@@ -669,7 +663,6 @@ def test_verify_link_spa(app, client, get_message):
             headers=headers,
         )
         assert response.status_code == 200
-    outbox = app.mail.outbox
 
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
@@ -766,7 +759,7 @@ def test_setup(app, clients, get_message):
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
 
-def test_setup_email(app, client, get_message):
+def test_setup_email(app, client, get_message, outbox):
     # setup with email - make sure magic link isn't sent and code is.
     # N.B. this is using the test us_instructions template
     set_email(app)
@@ -774,7 +767,6 @@ def test_setup_email(app, client, get_message):
     response = client.post("us-setup", data=dict(chosen_method="email"))
     assert response.status_code == 200
     assert b"Enter code here to complete setup" in response.data
-    outbox = app.mail.outbox
 
     verify_url = get_form_action(response, 1)
 
@@ -875,7 +867,7 @@ def test_setup_json(app, client_nc, get_message):
     us_enabled_methods=["email", "sms"],
     user_identity_attributes=UIA_EMAIL_PHONE,
 )
-def test_setup_json_no_session(app, client_nc, get_message):
+def test_setup_json_no_session(app, client_nc, get_message, outbox):
     # Test that with normal config freshness is required and we can use auth_token
     # for that
     set_email(app)
@@ -897,7 +889,6 @@ def test_setup_json_no_session(app, client_nc, get_message):
         json=dict(identity="matt@lp.com", chosen_method="email"),
         headers=headers,
     )
-    outbox = app.mail.outbox
     matcher = re.match(r".*Token:(\d+).*", outbox[1].body, re.IGNORECASE | re.DOTALL)
     code = matcher.group(1)
     response = client_nc.post(
@@ -1383,7 +1374,7 @@ def test_can_add_password(app, client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.changeable()
 @pytest.mark.settings(password_required=False)
-def test_change_empty_password(app, client):
+def test_change_empty_password(app, client, outbox):
     # test that if register w/o a password - can 'change' it.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
@@ -1407,7 +1398,6 @@ def test_change_empty_password(app, client):
         "/us-verify/send-code",
         json=dict(identity="trp@lp.com", chosen_method="email"),
     )
-    outbox = app.mail.outbox
     matcher = re.match(r".*Token:(\d+).*", outbox[1].body, re.IGNORECASE | re.DOTALL)
     code = matcher.group(1)
     response = client.post("/us-verify", json=dict(passcode=code))
@@ -1516,7 +1506,7 @@ def test_tf(app, client, get_message):
 
 @pytest.mark.two_factor()
 @pytest.mark.settings(two_factor_required=True)
-def test_tf_link(app, client, get_message):
+def test_tf_link(app, client, get_message, outbox):
     # Verify two-factor required when using magic link
     set_email(app)
     response = client.post(
@@ -1526,7 +1516,6 @@ def test_tf_link(app, client, get_message):
     )
     assert response.status_code == 200
     assert b"Sign In" in response.data
-    outbox = app.mail.outbox
 
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
@@ -1545,7 +1534,7 @@ def test_tf_link(app, client, get_message):
     redirect_behavior="spa",
     login_error_view="/login-error",
 )
-def test_tf_link_spa(app, client, get_message):
+def test_tf_link_spa(app, client, get_message, outbox):
     # Verify two-factor required when using magic link and SPA
     # This currently isn't supported and should redirect to an error.
     set_email(app)
@@ -1556,7 +1545,6 @@ def test_tf_link_spa(app, client, get_message):
     )
     assert response.status_code == 200
     assert b"Sign In" in response.data
-    outbox = app.mail.outbox
 
     matcher = re.match(
         r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL

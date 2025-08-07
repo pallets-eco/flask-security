@@ -34,7 +34,7 @@ pytestmark = pytest.mark.registerable()
 
 @pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.settings(post_register_view="/post_register")
-def test_registerable_flag(clients, app, get_message):
+def test_registerable_flag(clients, app, get_message, outbox):
     recorded = []
 
     # Test the register view
@@ -63,7 +63,7 @@ def test_registerable_flag(clients, app, get_message):
     response = clients.post("/register", data=data, follow_redirects=True)
 
     assert len(recorded) == 1
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
     assert b"Post Register" in response.data
 
     logout(clients)
@@ -161,7 +161,7 @@ def test_form_csrf(app, client):
 @pytest.mark.confirmable()
 @pytest.mark.app_settings(babel_default_locale="fr_FR")
 @pytest.mark.babel()
-def test_xlation(app, client, get_message_local):
+def test_xlation(app, client, get_message_local, outbox):
     # Test form and email translation
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
@@ -187,7 +187,6 @@ def test_xlation(app, client, get_message_local):
         },
         follow_redirects=True,
     )
-    outbox = app.mail.outbox
 
     with app.test_request_context():
         assert (
@@ -205,7 +204,7 @@ def test_xlation(app, client, get_message_local):
             " address.",
             confirmation_link=f"http://localhost/confirm/{confirmation_token[0]}",
         )
-        assert lc in outbox[0].alternatives[0][0]
+        assert lc in outbox[0].alts["html"]
 
 
 @pytest.mark.confirmable()
@@ -323,12 +322,12 @@ def test_custom_register_template(client):
 
 
 @pytest.mark.settings(send_register_email=False)
-def test_disable_register_emails(client, app):
+def test_disable_register_emails(client, app, outbox):
     data = dict(
         email="dude@lp.com", password="password", password_confirm="password", next=""
     )
     client.post("/register", data=data, follow_redirects=True)
-    assert not app.mail.outbox
+    assert len(outbox) == 0
 
 
 @pytest.mark.two_factor()
@@ -802,7 +801,7 @@ def test_legacy_style_login(app, sqlalchemy_datastore, get_message):
 @pytest.mark.settings(
     return_generic_responses=True, username_enable=True, password_confirm_required=False
 )
-def test_generic_response(app, client, get_message):
+def test_generic_response(app, client, get_message, outbox):
     # Register should not expose whether email/username is already in system.
     recorded = []
 
@@ -818,7 +817,7 @@ def test_generic_response(app, client, get_message):
     )
     response = client.post("/register", json=data)
     assert response.status_code == 200
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
     assert len(recorded) == 0
 
     # try again - should not get ANY error - but should get an email
@@ -828,7 +827,7 @@ def test_generic_response(app, client, get_message):
         e in response.json["response"].keys() for e in ["errors", "field_errors"]
     )
     # this is using the test template
-    matcher = re.findall(r"\w+:.*", app.mail.outbox[1].body, re.IGNORECASE)
+    matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
     kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
     assert kv["User"] == "dude"
     assert kv["Email"] == "dude@lp.com"
@@ -848,7 +847,7 @@ def test_generic_response(app, client, get_message):
     # Forms should get generic response - even though email already registered.
     response = client.post("/register", data=data, follow_redirects=True)
     assert get_message("CONFIRM_REGISTRATION", email="dude@lp.com") in response.data
-    assert len(app.mail.outbox) == 3
+    assert len(outbox) == 3
     assert len(recorded) == 2
 
     # Try same email with different username
@@ -858,9 +857,9 @@ def test_generic_response(app, client, get_message):
         follow_redirects=True,
     )
     assert get_message("CONFIRM_REGISTRATION", email="dude@lp.com") in response.data
-    assert len(app.mail.outbox) == 4
+    assert len(outbox) == 4
     assert len(recorded) == 3
-    matcher = re.findall(r"\w+:.*", app.mail.outbox[3].body, re.IGNORECASE)
+    matcher = re.findall(r"\w+:.*", outbox[3].body, re.IGNORECASE)
     kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
     assert kv["User"] == "dude"
 
@@ -870,7 +869,7 @@ def test_generic_response(app, client, get_message):
 @pytest.mark.settings(
     return_generic_responses=True, username_enable=True, password_confirm_required=False
 )
-def test_gr_existing_username(app, client, get_message):
+def test_gr_existing_username(app, client, get_message, outbox):
     # Test a new email with an existing username
     # Should still return errors such as illegal password
     recorded = []
@@ -889,9 +888,9 @@ def test_gr_existing_username(app, client, get_message):
         follow_redirects=True,
     )
     assert get_message("CONFIRM_REGISTRATION", email="dude39@lp.com") in response.data
-    assert len(app.mail.outbox) == 2
+    assert len(outbox) == 2
     assert len(recorded) == 1
-    gr = app.mail.outbox[1]
+    gr = outbox[1]
     assert 'You attempted to register with a username "dude" that' in gr.body
     # test that signal sent.
     nr = recorded[0]
@@ -931,7 +930,7 @@ def test_gr_existing_username(app, client, get_message):
     send_register_email_welcome_existing_template="welcome_existing",
     password_confirm_required=False,
 )
-def test_gr_extras(app, client, get_message):
+def test_gr_extras(app, client, get_message, outbox):
     # If user tries to re-register - response email should contain reset password
     # link and (if applicable) a confirmation link
     data = dict(
@@ -941,7 +940,7 @@ def test_gr_extras(app, client, get_message):
     )
     response = client.post("/register", json=data)
     assert response.status_code == 200
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
 
     # now same email - same or different username
     data = dict(
@@ -951,8 +950,8 @@ def test_gr_extras(app, client, get_message):
     )
     response = client.post("/register", json=data)
     assert response.status_code == 200
-    assert len(app.mail.outbox) == 2
-    matcher = re.findall(r"\w+:.*", app.mail.outbox[1].body, re.IGNORECASE)
+    assert len(outbox) == 2
+    matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
     kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
     assert kv["User"] == "dude"
     confirm_link = kv["ConfirmationLink"]
@@ -962,8 +961,8 @@ def test_gr_extras(app, client, get_message):
     # now confirmed - should not get confirmation link
     response = client.post("/register", json=data)
     assert response.status_code == 200
-    assert len(app.mail.outbox) == 3
-    matcher = re.findall(r"\w+:.*", app.mail.outbox[2].body, re.IGNORECASE)
+    assert len(outbox) == 3
+    matcher = re.findall(r"\w+:.*", outbox[2].body, re.IGNORECASE)
     kv = {m.split(":")[0]: m.split(":", 1)[1] for m in matcher}
     assert not kv["ConfirmationLink"]
     assert not kv["ConfirmationToken"]
@@ -986,7 +985,7 @@ def test_gr_extras(app, client, get_message):
 @pytest.mark.recoverable()
 @pytest.mark.confirmable()
 @pytest.mark.settings(return_generic_responses=True, password_confirm_required=False)
-def test_gr_real_html_template(app, client, get_message):
+def test_gr_real_html_template(app, client, get_message, outbox):
     # We have a test .txt template - but this will use the normal/real HTML template
     data = dict(
         email="dude@lp.com",
@@ -994,7 +993,7 @@ def test_gr_real_html_template(app, client, get_message):
     )
     response = client.post("/register", json=data)
     assert response.status_code == 200
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
 
     # now same email - same or different username
     data = dict(
@@ -1003,10 +1002,10 @@ def test_gr_real_html_template(app, client, get_message):
     )
     response = client.post("/register", json=data)
     assert response.status_code == 200
-    assert len(app.mail.outbox) == 2
+    assert len(outbox) == 2
     matcher = re.findall(
         r'href="(\S*)"',
-        app.mail.outbox[1].alternatives[0][0],
+        outbox[1].alts["html"],
         re.IGNORECASE,
     )
     assert "/reset" in matcher[0]
