@@ -38,7 +38,7 @@ possible using SQLAlchemy:
     from flask_sqlalchemy import SQLAlchemy
     from flask_security import Security, SQLAlchemyUserDatastore, \
         UserMixin, RoleMixin, auth_required
-    from flask_mailman import Mail
+    from flask_mail import Mail
 
     # Create app
     app = Flask(__name__)

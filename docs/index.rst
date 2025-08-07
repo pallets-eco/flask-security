@@ -32,7 +32,7 @@ Many of these features are made possible by integrating various Flask extensions
 and libraries. They include:
 
 * `Flask-Login <https://flask-login.readthedocs.org/en/latest/>`_
-* `Flask-Mailman <https://pypi.org/project/Flask-Mailman/>`_
+* `Flask-Mail <https://pypi.org/project/Flask-Mail/>`_
 * `Flask-Principal <https://pypi.org/project/Flask-Principal/>`_
 * `Flask-WTF <https://pypi.org/project/Flask-WTF/>`_
 * `itsdangerous <https://pypi.org/project/itsdangerous/>`_

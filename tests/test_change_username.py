@@ -31,7 +31,7 @@ pytestmark = pytest.mark.change_username()
 @pytest.mark.settings(
     post_change_username_view="/post_change_username", username_enable=True
 )
-def test_cu(app, clients, get_message):
+def test_cu(app, clients, get_message, outbox):
     recorded = []
 
     @username_changed.connect_via(app)
@@ -60,7 +60,6 @@ def test_cu(app, clients, get_message):
         data={"username": "memynewusername"},
         follow_redirects=True,
     )
-    outbox = app.mail.outbox
 
     assert get_message("USERNAME_CHANGE") in response.data
     assert b"Post Change Username" in response.data
@@ -92,7 +91,6 @@ def test_cu(app, clients, get_message):
         data={"username": ""},
         follow_redirects=True,
     )
-    outbox = app.mail.outbox
 
     assert get_message("USERNAME_CHANGE") in response.data
     assert b"Post Change Username" in response.data
@@ -162,7 +160,7 @@ def test_cu_required(app, client, get_message):
 
 @pytest.mark.app_settings(babel_default_locale="fr_FR", SECURITY_CHANGEABLE=True)
 @pytest.mark.babel()
-def test_xlation(app, client, get_message_local):
+def test_xlation(app, client, get_message_local, outbox):
     # Test form and email translation
     assert check_xlation(app, "fr_FR"), "You must run python setup.py compile_catalog"
 
@@ -184,7 +182,6 @@ def test_xlation(app, client, get_message_local):
         },
         follow_redirects=True,
     )
-    outbox = app.mail.outbox
 
     with app.test_request_context():
         assert get_message_local("PASSWORD_CHANGE").encode("utf-8") in response.data
@@ -198,7 +195,7 @@ def test_xlation(app, client, get_message_local):
         )
         assert (
             str(markupsafe.escape(localize_callback("Your password has been changed.")))
-            in outbox[0].alternatives[0][0]
+            in outbox[0].alts["html"]
         )
         assert localize_callback("Your password has been changed") in outbox[0].body
 
@@ -219,7 +216,7 @@ def test_custom_change_template(client):
 
 
 @pytest.mark.settings(send_username_change_email=False)
-def test_disable_change_emails(app, client):
+def test_disable_change_emails(app, client, outbox):
     authenticate(client)
     response = client.post(
         "/change-username",
@@ -227,7 +224,7 @@ def test_disable_change_emails(app, client):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert not app.mail.outbox
+    assert len(outbox) == 0
 
 
 @pytest.mark.settings(post_change_username_view="/profile")

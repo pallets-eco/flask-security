@@ -27,7 +27,7 @@ from passlib.registry import register_crypt_handler
 import pytest
 from flask import Flask, Response, jsonify, render_template
 from flask import request as flask_request
-from flask_mailman import Mail
+from flask_mail import Mail
 from flask_wtf import CSRFProtect
 
 try:
@@ -379,6 +379,12 @@ def app(request):
     # help find tests that don't clean up - note that pony leaves a connection so
     # we can't use this in 'production'...
     # assert not find_sqlite_connections()
+
+
+@pytest.fixture()
+def outbox(app):
+    with app.mail.record_messages() as outbox:
+        yield outbox
 
 
 @pytest.fixture()

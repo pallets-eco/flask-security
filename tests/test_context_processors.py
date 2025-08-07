@@ -31,7 +31,7 @@ from tests.test_utils import authenticate, capture_reset_password_requests, logo
     username_recovery_template="custom_security/recover_username.html",
     change_username_template="custom_security/change_username.html",
 )
-def test_context_processors(client, app):
+def test_context_processors(client, app, outbox):
     @app.security.context_processor
     def default_ctx_processor():
         return {"global": "global"}
@@ -110,7 +110,7 @@ def test_context_processors(client, app):
 
     client.post("/reset", data=dict(email="matt@lp.com"))
 
-    email = app.mail.outbox[1]
+    email = outbox[1]
     assert "global" in email.body
     assert "bar-mail" in email.body
 

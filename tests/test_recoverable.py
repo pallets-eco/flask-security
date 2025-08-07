@@ -38,7 +38,7 @@ from flask_security.signals import (
 pytestmark = pytest.mark.recoverable()
 
 
-def test_recoverable_flag(app, clients, get_message):
+def test_recoverable_flag(app, clients, get_message, outbox):
     recorded_resets = []
     recorded_instructions_sent = []
 
@@ -65,7 +65,7 @@ def test_recoverable_flag(app, clients, get_message):
         )
 
     assert len(recorded_instructions_sent) == 1
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
     assert response.status_code == 200
     assert get_message("PASSWORD_RESET_REQUEST", email="joe@lp.com") in response.data
     token = requests[0]["token"]
@@ -148,7 +148,7 @@ def test_requires_confirmation_error_redirect(app, clients):
 
 
 @pytest.mark.settings()
-def test_recoverable_json(app, client, get_message):
+def test_recoverable_json(app, client, get_message, outbox):
     recorded_resets = []
     recorded_instructions_sent = []
 
@@ -171,7 +171,7 @@ def test_recoverable_json(app, client, get_message):
             assert response.headers["Content-Type"] == "application/json"
 
         assert len(recorded_instructions_sent) == 1
-        assert len(app.mail.outbox) == 1
+        assert len(outbox) == 1
         assert response.status_code == 200
         token = requests[0]["token"]
 
@@ -241,7 +241,7 @@ def test_recoverable_json(app, client, get_message):
     assert len(flashes) == 0
 
 
-def test_recoverable_template(app, client, get_message):
+def test_recoverable_template(app, client, get_message, outbox):
     # Check contents of email template - this uses a test template
     # in order to check all context vars since the default template
     # doesn't have all of them.
@@ -249,7 +249,6 @@ def test_recoverable_template(app, client, get_message):
         response = client.post(
             "/reset", data=dict(email="joe@lp.com"), follow_redirects=True
         )
-        outbox = app.mail.outbox
         assert len(outbox) == 1
         matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
         # should be 4 - link, email, token, config item
@@ -804,7 +803,7 @@ def test_csrf(app, client, get_message):
 
 
 @pytest.mark.username_recovery()
-def test_username_recovery_valid_email(app, clients, get_message):
+def test_username_recovery_valid_email(app, clients, get_message, outbox):
     recorded_recovery_sent = []
 
     @username_recovery_email_sent.connect_via(app)
@@ -822,7 +821,7 @@ def test_username_recovery_valid_email(app, clients, get_message):
     )
 
     assert len(recorded_recovery_sent) == 1
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
     assert response.status_code == 200
 
     with capture_flashes() as flashes:
@@ -837,7 +836,7 @@ def test_username_recovery_valid_email(app, clients, get_message):
     )
 
     # Validate the emailed username
-    email = app.mail.outbox[1]
+    email = outbox[1]
     assert "Your username is: joe" in email.body
 
     # Test JSON responses
@@ -851,12 +850,12 @@ def test_username_recovery_valid_email(app, clients, get_message):
 
 
 @pytest.mark.username_recovery()
-def test_username_recovery_invalid_email(app, clients):
+def test_username_recovery_invalid_email(app, clients, outbox):
     response = clients.post(
         "/recover-username", data=dict(email="bogus@lp.com"), follow_redirects=True
     )
 
-    assert not app.mail.outbox
+    assert len(outbox) == 0
     assert response.status_code == 200
 
     # Test JSON responses
@@ -876,7 +875,7 @@ def test_username_recovery_invalid_email(app, clients):
 
 @pytest.mark.username_recovery()
 @pytest.mark.settings(return_generic_responses=True)
-def test_username_recovery_generic_responses(app, clients, get_message):
+def test_username_recovery_generic_responses(app, clients, get_message, outbox):
     recorded_recovery_sent = []
 
     @username_recovery_email_sent.connect_via(app)
@@ -895,7 +894,7 @@ def test_username_recovery_generic_responses(app, clients, get_message):
         "utf-8"
     )
     assert len(recorded_recovery_sent) == 1
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
     assert response.status_code == 200
 
     # Test with non-existant email (should still return 200)
@@ -911,7 +910,7 @@ def test_username_recovery_generic_responses(app, clients, get_message):
     )
     # Validate no email was sent (there should only be one from the previous test)
     assert len(recorded_recovery_sent) == 1
-    assert len(app.mail.outbox) == 1
+    assert len(outbox) == 1
     assert response.status_code == 200
 
     # Test JSON responses - valid email

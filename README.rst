@@ -55,7 +55,7 @@ maintenance of related projects. If you are interested in helping maintain
 this project, please reach out on `the Pallets Discord server <https://discord.gg/pallets>`.
 
 Goals
-+++++
+-----
 
 * Use `OWASP <https://github.com/OWASP/ASVS>`_ to guide best practice and default configurations.
 * Be more opinionated and 'batteries' included by reducing reliance on abandoned projects and
@@ -73,7 +73,7 @@ Goals
 
 
 Contributing
-++++++++++++
+------------
 Issues and pull requests are welcome. Other maintainers are also welcome.
 Please consult these `contributing`_ guidelines.
 

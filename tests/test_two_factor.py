@@ -305,7 +305,7 @@ def test_two_factor_illegal_state(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_two_factor_flag(app, clients, get_message):
+def test_two_factor_flag(app, clients, get_message, outbox):
     # trying to verify code without going through two-factor
     # first login function
     client = clients
@@ -413,7 +413,7 @@ def test_two_factor_flag(app, clients, get_message):
     # make sure two_factor_verify_code_form is set
     assert b'name="code"' in response.data
 
-    code = app.mail.outbox[1].body.split()[-1]
+    code = outbox[1].body.split()[-1]
     # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed your two-factor method" in response.data
@@ -663,7 +663,7 @@ def test_json(app, client):
 
 
 @pytest.mark.settings(two_factor_rescue_mail="helpme@myapp.com")
-def test_rescue_json(app, client):
+def test_rescue_json(app, client, outbox):
     # it's an error if not primary authenticated
     rescue_data_json = dict(help_setup="help")
     response = client.post(
@@ -680,10 +680,9 @@ def test_rescue_json(app, client):
     rescue_data = dict(help_setup="email")
     response = client.post("/tf-rescue", json=rescue_data)
     assert response.status_code == 200
-    outbox = app.mail.outbox
 
-    assert outbox[0].to == ["gal2@lp.com"]
-    assert outbox[0].from_email == "no-reply@localhost"
+    assert outbox[0].recipients == ["gal2@lp.com"]
+    assert outbox[0].sender == "no-reply@localhost"
     assert outbox[0].subject == "Two-Factor Login"
     matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
     response = client.post("/tf-validate", json=dict(code=matcher.group(1)))
@@ -695,10 +694,9 @@ def test_rescue_json(app, client):
     rescue_data = dict(help_setup="help")
     response = client.post("/tf-rescue", json=rescue_data)
     assert response.status_code == 200
-    outbox = app.mail.outbox
 
-    assert outbox[1].to == ["helpme@myapp.com"]
-    assert outbox[1].from_email == "no-reply@localhost"
+    assert outbox[1].recipients == ["helpme@myapp.com"]
+    assert outbox[1].sender == "no-reply@localhost"
     assert outbox[1].subject == "Two-Factor Rescue"
     assert "gal2@lp.com" in outbox[1].body
 
@@ -1270,16 +1268,15 @@ def test_authr_identity_num(app, client):
         {"username": {"mapper": lambda x: x}},
     ]
 )
-def test_email_salutation(app, client):
+def test_email_salutation(app, client, outbox):
     authenticate(client, email="jill@lp.com")
     response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"Enter code to complete setup"
     assert msg in response.data
-    outbox = app.mail.outbox
 
-    assert "jill@lp.com" in outbox[0].to
+    assert "jill@lp.com" in outbox[0].recipients
     assert "jill@lp.com" in outbox[0].body
-    assert "jill@lp.com" in outbox[0].alternatives[0][0]
+    assert "jill@lp.com" in outbox[0].alts["html"]
 
 
 @pytest.mark.settings(
@@ -1288,16 +1285,15 @@ def test_email_salutation(app, client):
         {"email": {"mapper": uia_email_mapper}},
     ]
 )
-def test_username_salutation(app, client):
+def test_username_salutation(app, client, outbox):
     authenticate(client, email="jill@lp.com")
     response = client.post("/tf-setup", data=dict(setup="email"), follow_redirects=True)
     msg = b"Enter code to complete setup"
     assert msg in response.data
-    outbox = app.mail.outbox
 
-    assert "jill@lp.com" in outbox[0].to
+    assert "jill@lp.com" in outbox[0].recipients
     assert "jill@lp.com" not in outbox[0].body
-    assert "jill@lp.com" not in outbox[0].alternatives[0][0]
+    assert "jill@lp.com" not in outbox[0].alts["html"]
     assert "jill" in outbox[0].body
 
 
@@ -1491,7 +1487,7 @@ def test_setup_nofresh(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_enabled_methods=["email"])
-def test_no_sms(app, get_message):
+def test_no_sms(app, get_message, outbox):
     pytest.importorskip("sqlalchemy")
     pytest.importorskip("flask_sqlalchemy")
 
@@ -1553,7 +1549,7 @@ def test_no_sms(app, get_message):
     msg = b"Enter code to complete setup"
     assert msg in response.data
 
-    code = app.mail.outbox[0].body.split()[-1]
+    code = outbox[0].body.split()[-1]
     # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     assert b"You successfully changed your two-factor method" in response.data
