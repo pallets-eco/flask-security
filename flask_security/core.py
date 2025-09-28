@@ -693,7 +693,12 @@ class FormInfo:
 
 
 def _user_loader(user_id):
-    """Load based on fs_uniquifier (alternative_id)."""
+    """Load based on fs_uniquifier (alternative_id).
+    If the db model and db are properly configured and set there is no way we should
+    ever see a null user_id. But it is clearly wrong.
+    """
+    if not user_id:
+        return None
     user = _security.datastore.find_user(fs_uniquifier=str(user_id))
     if user and user.active:
         set_request_attr("fs_authn_via", "session")

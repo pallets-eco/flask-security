@@ -17,6 +17,7 @@ from tests.test_utils import (
     init_app_with_options,
     json_authenticate,
     logout,
+    is_authenticated,
 )
 
 from flask_security import Security, UserMixin, user_registered, user_not_registered
@@ -578,6 +579,7 @@ def test_username(app, clients, get_message):
         "/login", json=dict(username="dude", password="awesome sunset")
     )
     assert response.status_code == 200
+    assert is_authenticated(client, get_message)
     logout(client)
 
     # login with email
@@ -585,6 +587,7 @@ def test_username(app, clients, get_message):
         "/login", json=dict(email="dude@lp.com", password="awesome sunset")
     )
     assert response.status_code == 200
+    assert is_authenticated(client, get_message)
     logout(client)
 
     response = client.post(
@@ -618,6 +621,29 @@ def test_username(app, clients, get_message):
     assert (
         get_message("USERNAME_ALREADY_ASSOCIATED", username="dude")
         == response.json["response"]["field_errors"]["username"][0].encode()
+    )
+
+
+@pytest.mark.settings(username_enable=True)
+def test_username_not_set(app, client, get_message):
+    # login with null username - shouldn't match
+    # note that this is caught at LoginForm - it doesn't force a DB call
+    response = client.post(
+        "/register",
+        json=dict(
+            email="justemail@lp.com",
+            username="",
+            password="awesome sunset",
+            password_confirm="awesome sunset",
+        ),
+    )
+    assert response.status_code == 200
+    client.post("/logout")
+    response = client.post("/login", json=dict(username="", password="awesome sunset"))
+    assert response.status_code == 400
+    assert (
+        get_message("USER_DOES_NOT_EXIST")
+        == response.json["response"]["field_errors"][""][0].encode()
     )
 
 

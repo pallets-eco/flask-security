@@ -769,3 +769,18 @@ def test_fsqlalite_table_name(app):
     with app.app_context():
         Model.metadata.drop_all(db.engine)
         db.engine.dispose()
+
+
+def test_null_fs_uniquifier(app, client):
+    # If a record has a null fs_uniquifier - we shouldn't find it.
+    # The only way this might happen is if an app upgrades from a 3.0 Flask-Security
+    # and doesn't properly update their DB.
+    ds = app.security.datastore
+    with app.test_request_context("/"):
+        user = ds.find_user(email="gal@lp.com")
+        user.fs_uniquifier = ""
+        ds.put(user)
+        ds.commit()
+
+        user = app.security.login_manager.user_callback("")
+        assert not user
