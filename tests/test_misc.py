@@ -35,6 +35,7 @@ from tests.test_utils import (
     populate_data,
     reset_fresh,
     get_form_input,
+    is_authenticated,
 )
 from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
@@ -1599,3 +1600,13 @@ def test_password_required_setting(app, sqlalchemy_datastore):
     with pytest.raises(ValueError) as vex:
         Security(app=app, datastore=sqlalchemy_datastore)
     assert "SECURITY_PASSWORD_REQUIRED can only be" in str(vex.value)
+
+
+def test_null_user_id(app, client, get_message):
+    # if DB not configured correctly - make sure we catch null fs_uniquifier
+    json_authenticate(client)
+    assert is_authenticated(client, get_message)
+    with client.session_transaction() as sess:
+        sess["_user_id"] = ""
+        sess["user_id"] = ""
+    assert not is_authenticated(client, get_message)
