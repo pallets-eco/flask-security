@@ -474,6 +474,7 @@ def test_uuid(app, request, tmpdir, realdburl):
     def tear_down():
         with app.app_context():
             db.drop_all()
+            db.engine.dispose()
             _teardown_realdb(db_info)
 
     request.addfinalizer(tear_down)
@@ -677,6 +678,7 @@ def test_permissions_41(request, app, realdburl):
         if realdburl:
             with app.app_context():
                 db.drop_all()
+                db.engine.dispose()
                 _teardown_realdb(db_info)
 
     request.addfinalizer(tear_down)

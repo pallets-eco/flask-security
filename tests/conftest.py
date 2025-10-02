@@ -551,6 +551,7 @@ def sqlalchemy_setup(app, tmpdir, realdburl):
         with app.app_context():
             if realdburl:
                 db.drop_all()
+                db.engine.dispose()  # make sure Flask-SQLAlchemy connections are closed
                 _teardown_realdb(db_info)
             engine = db.engine
             engine.dispose()
