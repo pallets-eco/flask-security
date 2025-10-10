@@ -13,10 +13,12 @@ them all.
 To run a test pass templates="RESET,LOGIN" on the command line.
 """
 
+import re
 from time import sleep
 
 import pytest
 import requests
+from flask import g
 
 from tests.test_utils import (
     authenticate,
@@ -57,6 +59,11 @@ def check_template_rdata(name, r, rdata):
     if vout.status_code != 200:
         return [f"{name} API error {vout.status_code}"]
     return check_message(vout.json()["messages"])
+
+
+def get_script_tags(html):
+    """Return list of script tags in the HTML"""
+    return re.findall(r"<script\b[^>]*>", html, re.DOTALL | re.IGNORECASE)
 
 
 @pytest.mark.registerable()
@@ -199,3 +206,32 @@ def test_valid_html_rescue(app, client):
             app.config["SECURITY_TWO_FACTOR_RESCUE_URL"], client, rsession
         )
         assert not terrors
+
+
+@pytest.mark.webauthn(webauthn_util_cls=HackWebauthnUtil)
+def test_script_nonce(app, client):
+    """Test that script nonces appear in script tags when configured."""
+
+    @app.before_request
+    def set_nonce():
+        g.csp_nonce = "12345"
+
+    # default config -> no nonces in script tags
+    res = client.get("/wan-signin")
+    tags = get_script_tags(res.text)
+    assert tags
+    assert all("nonce" not in t for t in tags)
+
+    # invalid nonce key given -> no nonces in script tags
+    app.config["SECURITY_SCRIPT_NONCE_KEY"] = "wrong_key"
+    res = client.get("/wan-signin")
+    tags = get_script_tags(res.text)
+    assert tags
+    assert all("nonce" not in t for t in tags)
+
+    # nonces set up correctly -> nonce in script tags
+    app.config["SECURITY_SCRIPT_NONCE_KEY"] = "csp_nonce"
+    res = client.get("/wan-signin")
+    tags = get_script_tags(res.text)
+    assert tags
+    assert all('nonce="12345"' in t for t in tags)

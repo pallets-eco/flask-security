@@ -3,12 +3,12 @@
 #}
 {% set title = title|default(_fsdomain("WebAuthn Security Key")) %}
 {% extends "security/base.html" %}
-{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors, prop_next %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors, prop_next, script_nonce %}
 
 {% block head_scripts %}
   {{ super() }}
-  <script src="{{ url_for('.static', filename='js/webauthn.js') }}"></script>
-  <script src="{{ url_for('.static', filename='js/base64.js') }}"></script>
+  <script {{ script_nonce() }} src="{{ url_for('.static', filename='js/webauthn.js') }}"></script>
+  <script {{ script_nonce() }} src="{{ url_for('.static', filename='js/base64.js') }}"></script>
 {% endblock head_scripts %}
 
 {% block content %}
@@ -40,7 +40,7 @@
       {{ render_field(wan_signin_response_form.credential) }}
       <div id="wan-errors"></div>
     </form>
-    <script type="text/javascript">
+    <script {{ script_nonce() }} type="text/javascript">
       handleSignin('{{ credential_options|safe }}')
         .then((result) => {
           if (result.error_msg) {

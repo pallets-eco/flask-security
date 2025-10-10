@@ -23,12 +23,13 @@ data and a mail sender that flashes what mail would be sent!
 from __future__ import annotations
 
 import base64
+import secrets
 from datetime import timedelta
 import os
 import typing as t
 import webbrowser
 
-from flask import Flask, flash, render_template_string, request, session
+from flask import Flask, flash, render_template_string, request, session, g
 from flask_wtf import CSRFProtect
 
 from flask_security import (
@@ -179,6 +180,20 @@ def create_app() -> Flask:
     # app.config["SECURITY_US_ENABLED_METHODS"] = ["authenticator", "password"]
     # app.config["SECURITY_US_SIGNIN_REPLACES_LOGIN"] = True
     # app.config["SECURITY_WAN_ALLOW_USER_HINTS"] = False
+
+    # Setup script nonces and test with nonce-based content-security policy
+    app.config["SECURITY_SCRIPT_NONCE_KEY"] = "csp_nonce"
+
+    @app.before_request
+    def set_nonce():
+        g.csp_nonce = secrets.token_urlsafe(16)
+
+    @app.after_request
+    def inject_csp_header(response):
+        response.headers["Content-Security-Policy"] = (
+            f"script-src 'nonce-{g.csp_nonce}'"
+        )
+        return response
 
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
