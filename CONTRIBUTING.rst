@@ -76,6 +76,7 @@ these steps:
   #. When done, verify unit tests, syntax etc. all pass::
 
         $ pip install -r requirements/tests.txt
+        $ pip install -e .
         $ sphinx-build docs docs/_build/html
         $ tox -e compile_catalog
         $ pytest tests
