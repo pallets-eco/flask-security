@@ -51,3 +51,9 @@
     {{ form[csrf_field_name](id=pfx~'-csrf') }}
   {% endif %}
 {% endmacro %}
+
+{% macro script_nonce() -%}
+  {% if config["SECURITY_SCRIPT_NONCE_KEY"] and g.get(config["SECURITY_SCRIPT_NONCE_KEY"]) -%}
+    nonce="{{ g.get(config["SECURITY_SCRIPT_NONCE_KEY"]) }}"
+  {%- endif %}
+{%- endmacro %}

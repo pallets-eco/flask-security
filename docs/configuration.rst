@@ -275,6 +275,18 @@ These configuration keys are used globally across all features.
 
     Default: ``False``.
 
+.. py:data:: SECURITY_SCRIPT_NONCE_KEY
+
+    If set, adds a nonce attribute to all ``<script>`` tags rendered by Flask-Security.
+    The nonce itself needs to be placed in the flask ``g`` context under the key defined here.
+    This is useful when the Content Security Policy requires a nonce on script tags like::
+
+        Content-Security-Policy: script-src 'nonce-{g.your-key}'
+
+    Default: ``None``.
+
+    .. versionadded:: 5.7.0
+
 .. py:data:: SECURITY_EMAIL_SENDER
 
     Specifies the email address to send emails as.

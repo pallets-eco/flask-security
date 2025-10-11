@@ -13,6 +13,7 @@ This release is a set of small backward incompatible changes. Please read these 
 Fixes
 +++++
 - (:issue:`1109`) Fix broken link in docs and improve docstrings/typing for util classes.
+- (:issue:`1127`) Add nonce to script tags if configured to support nonce-based Content-Security-Policy.
 
 Docs and Chores
 +++++++++++++++
