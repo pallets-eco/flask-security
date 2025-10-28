@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class ApiException(Exception):
     def __init__(self, msg, status_code):
+        super().__init__(msg, status_code)
         if isinstance(msg, list):
             self.msg = msg
         else:
