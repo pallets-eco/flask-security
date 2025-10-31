@@ -1,4 +1,4 @@
-# French (France) translations for Flask-Security.
+# Arabic (Saudi Arabia) translations for Flask-Security.
 # Copyright (C) 2025 CERN
 # This file is distributed under the same license as the Flask-Security
 # project.
@@ -68,7 +68,7 @@ msgstr "تسجيل الدخول بخطوتين"
 
 #: flask_security/core.py:308
 msgid "Two-Factor Rescue"
-msgstr "إنقاذ بخطوتين"
+msgstr "إنقاذ التحقق بخطوتين"
 
 #: flask_security/core.py:350
 msgid "Verification Code"
@@ -76,7 +76,7 @@ msgstr "رمز التحقق"
 
 #: flask_security/core.py:396
 msgid "Input not appropriate for requested API"
-msgstr "الإدخال غير مناسب لواجهة برمجة التطبيقات المطلوبة"
+msgstr "المدخلات غير مناسبة لطلب الـAPI"
 
 #: flask_security/core.py:398
 msgid "Authentication failed - identity or password/passcode invalid"
@@ -649,7 +649,7 @@ msgstr "طرق العامل الثاني المتاحة:"
 
 #: flask_security/tf_plugin.py:53
 msgid "Select"
-msgstr "اختيار"
+msgstr "اختر"
 
 #: flask_security/twofactor.py:137
 msgid "Send code via email"
