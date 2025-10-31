@@ -10,17 +10,22 @@ Released XXX
 
 This release is a set of small backward incompatible changes. Please read these notes carefully.
 
+Features & Improvements
++++++++++++++++++++++++
+- (:pr:`1132`) Add Arabic translations (samialfattani)
+
 Fixes
 +++++
 - (:issue:`1109`) Fix broken link in docs and improve docstrings/typing for util classes.
-- (:issue:`1127`) Add nonce to script tags if configured to support nonce-based Content-Security-Policy.
+- (:issue:`1127`) Add nonce to script tags if configured to support nonce-based Content-Security-Policy (ahanak).
+- (:issue:`1133`) Remove unnecessary (optional) dependency on sqlalchemy_utils
 
 Docs and Chores
 +++++++++++++++
 - (:pr:`1106`) Drop support for Python 3.9. This removes the dependency on importlib_resources,
    updates pypy to 3.10, and uses 3.12 as base python for tests/tox.
 - (:pr:`1112`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
-- (:pr:`xx`) Flip default mail package back to Flask-Mail (from Flask-Mailman).
+- (:pr:`1117`) Flip default mail package back to Flask-Mail (from Flask-Mailman).
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -31,6 +36,9 @@ In 5.0 we changed the default mailer package to Flask-Mailman since Flask-Mail w
 Flask-Mail is again supported and is part of Pallets-Eco. Both packages are still supported based on which one
 an application initializes. The only backwards compatibility concern is that if you use the setup extras 'common',
 it will install Flask-Mail rather than Flask-Mailman.
+
+In the optional dependencies 'fsqla' we removed sqlalchemy_utils - while many applications might want these useful
+add-ons - they aren't required for standard SQLAlchemy use.
 
 Version 5.6.2
 -------------
