@@ -448,10 +448,12 @@ def unauth_csrf(
 
     This decorator does nothing if *WTF_CSRF_ENABLED* == **False**.
 
-    This decorator does nothing if the caller is authenticated.
-
     This decorator will suppress CSRF if caller isn't authenticated and has set the
     :py:data:`SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS` config variable to **True**.
+
+    If the caller IS authenticated, it will perform normal CSRF checks. This makes
+    this decorator useful for the views that can be called EITHER when authenticated
+    or anonymously.
 
     .. versionadded:: 3.3.0
 

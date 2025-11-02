@@ -23,6 +23,7 @@ from tests.test_utils import (
     capture_reset_password_requests,
     check_location,
     get_form_input_value,
+    is_authenticated,
     logout,
     populate_data,
 )
@@ -800,6 +801,113 @@ def test_csrf(app, client, get_message):
     data["csrf_token"] = csrf_token
     response = client.post(f"/reset/{token}", data=data)
     assert check_location(app, response.location, "/post_reset_view")
+
+
+@pytest.mark.csrf(ignore_unauth=True)
+@pytest.mark.settings(post_reset_view="/post_reset_view")
+def test_auth_csrf(app, client, get_message):
+    # Test reset when authenticated and unauth CSRF is off
+    authenticate(client)
+    response = client.get("/reset")
+    csrf_token = get_form_input_value(response, "csrf_token")
+    assert "matt@lp.com" == get_form_input_value(response, "email")
+    with capture_reset_password_requests() as requests:
+        client.post(
+            "/reset",
+            data=dict(email="matt@lp.com", csrf_token=csrf_token),
+            follow_redirects=True,
+        )
+    token = requests[0]["token"]
+
+    # use the token - no CSRF so shouldn't work
+    data = {"password": "mypassword", "password_confirm": "mypassword"}
+    response = client.post(
+        "/reset/" + token,
+        data=data,
+    )
+    assert b"The CSRF token is missing" in response.data
+
+    data["csrf_token"] = csrf_token
+    response = client.post(f"/reset/{token}", data=data)
+    assert check_location(app, response.location, "/post_reset_view")
+    assert not is_authenticated(client, get_message)
+
+
+def test_recoverable_auth_json(app, client, get_message, outbox):
+    recorded_resets = []
+    recorded_instructions_sent = []
+
+    @password_reset.connect_via(app)
+    def on_password_reset(app, user):
+        recorded_resets.append(user)
+
+    @reset_password_instructions_sent.connect_via(app)
+    def on_instructions_sent(app, **kwargs):
+        recorded_instructions_sent.append(kwargs["user"])
+
+    authenticate(client, "joe@lp.com", password="password")
+    with capture_flashes() as flashes:
+        # Test reset password creates a token and sends email
+        with capture_reset_password_requests() as requests:
+            response = client.post(
+                "/reset",
+                json=dict(email="joe@lp.com"),
+            )
+
+        assert len(recorded_instructions_sent) == 1
+        assert len(outbox) == 1
+        assert response.status_code == 200
+        token = requests[0]["token"]
+
+        # Test invalid email
+        response = client.post(
+            "/reset",
+            json=dict(email="whoknows@lp.com"),
+        )
+        assert response.status_code == 400
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+            "USER_DOES_NOT_EXIST"
+        )
+
+        # Test submitting a new password
+        response = client.post(
+            "/reset/" + token + "?include_auth_token",
+            json=dict(password="awesome sunset", password_confirm="awesome sunset"),
+        )
+        assert not response.json["response"]
+        assert len(recorded_resets) == 1
+        assert not is_authenticated(client, get_message)
+
+        # Test logging in with the new password
+        response = client.post(
+            "/login?include_auth_token",
+            json=dict(email="joe@lp.com", password="awesome sunset"),
+        )
+        assert all(
+            k in response.json["response"]["user"]
+            for k in ["email", "authentication_token"]
+        )
+        logout(client)
+
+        # Use token again - should fail since already have set new password.
+        response = client.post(
+            "/reset/" + token,
+            json=dict(password="newpassword", password_confirm="newpassword"),
+            headers={"Content-Type": "application/json"},
+        )
+        assert response.status_code == 400
+        assert len(recorded_resets) == 1
+
+        # Test invalid token
+        response = client.post(
+            "/reset/bogus",
+            json=dict(password="newpassword", password_confirm="newpassword"),
+            headers={"Content-Type": "application/json"},
+        )
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+            "INVALID_RESET_PASSWORD_TOKEN"
+        )
+    assert len(flashes) == 0
 
 
 @pytest.mark.username_recovery()

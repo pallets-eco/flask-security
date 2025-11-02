@@ -599,13 +599,6 @@ paths:
                 type: string
                 description: render_template(SECURITY_FORGOT_PASSWORD_TEMPLATE)
                 example: render_template(SECURITY_FORGOT_PASSWORD_TEMPLATE)
-        302:
-          description: Response when already logged in
-          headers:
-            Location:
-              description: Redirect to ``SECURITY_POST_LOGIN_VIEW``
-              schema:
-                type: string
     post:
       summary: Send reset password instructions email
       requestBody:
@@ -630,6 +623,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+        302:
+          description: >
+            Response when valid email however user hasn't confirmed and
+            __SECURITY_REQUIRES_CONFIRMATION_ERROR_VIEW__ is set.
+          headers:
+            Location:
+              description: redirect(REQUIRES_CONFIRMATION_ERROR_VIEW)
+              schema:
+                type: string
         400:
           description: Errors while validating form
           content:
