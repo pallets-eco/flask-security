@@ -14,6 +14,11 @@
           <a href="{{ url_for_security('change_password') }}">{{ _fsdomain("Change Password") }}</a>
         </li>
       {% endif %}
+      {% if security.recoverable %}
+        <li>
+          <a href="{{ url_for_security('forgot_password') }}">{{ _fsdomain('Forgot password') }}</a>
+        </li>
+      {% endif %}
       {% if security.change_email %}
         <li>
           <a href="{{ url_for_security('change_email') }}">{{ _fsdomain("Change Registered Email") }}</a>

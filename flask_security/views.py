@@ -514,10 +514,13 @@ def confirm_email(token):
     )
 
 
-@anonymous_user_required
 @unauth_csrf()
 def forgot_password():
-    """View function that handles a forgotten password request (/reset)."""
+    """View function that handles a forgotten password request (/reset).
+    This is allowed for either anonymous or authenticated users. The rationale is that
+    often users stay logged in for a long time and might have forgotten their password
+    and might be prompted for it for sensitive operations (/verify).
+    """
     form = t.cast(ForgotPasswordForm, build_form_from_request("forgot_password_form"))
 
     if form.validate_on_submit():
@@ -555,6 +558,8 @@ def forgot_password():
             )
         )
 
+    if is_user_authenticated(current_user):
+        form.email.data = current_user.email
     return _security.render_template(
         cv("FORGOT_PASSWORD_TEMPLATE"),
         forgot_password_form=form,
@@ -562,13 +567,14 @@ def forgot_password():
     )
 
 
-@anonymous_user_required
 @unauth_csrf()
 def reset_password(token):
     """View function that handles a reset password request (/reset/<token>).
 
+    This endpoint can be called either when authenticated or anonymous
+
     This is usually called via GET as part of an email link and redirects to
-    a reset-password form
+    a reset-password form.
     It is called via POST to actually update the password (and then redirects to
     a post reset/login view)
     If in either case the token is either invalid or expired it redirects to

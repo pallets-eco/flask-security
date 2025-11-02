@@ -13,6 +13,7 @@ This release is a set of small backward incompatible changes. Please read these 
 Features & Improvements
 +++++++++++++++++++++++
 - (:pr:`1132`) Add Arabic translations (samialfattani)
+- (:issue:`1123`) Enable forgot-password workflow for authenticated users.
 
 Fixes
 +++++
