@@ -41,7 +41,7 @@ The code is hosted on a GitHub repo at
 https://github.com/pallets-eco/flask-security.  To get a working environment, follow
 these steps:
 
-  #. (Optional, but recommended) Create a Python 3.6 (or greater) virtualenv to work in,
+  #. (Optional, but recommended) Create a Python 3.12 (or greater) virtualenv to work in,
      and activate it.
 
   #. Fork the repo `Flask-Security <https://github.com/pallets-eco/flask-security>`_
@@ -85,7 +85,7 @@ these steps:
   #. Use tox::
 
         $ tox  # run everything CI does
-        $ tox -e py38-low  # make sure works with older dependencies
+        $ tox -e py311-low  # make sure works with older dependencies
         $ tox -e style  # run pre-commit/style checks
 
   #. When the tests are successful, commit your changes

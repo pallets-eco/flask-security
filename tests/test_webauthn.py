@@ -799,7 +799,7 @@ def test_tf(app, client, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
+    assert b"Use a Passkey as a Second Factor" in response.data
     # we should have a wan key available
     assert b'action="/wan-signin' in response.data
 
@@ -875,7 +875,7 @@ def test_tf_validity_window(app, client, get_message):
         data=dict(email="matt@lp.com", password="password"),
         follow_redirects=True,
     )
-    assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
+    assert b"Use a Passkey as a Second Factor" in response.data
     with client.session_transaction() as session:
         assert "tf_user_id" in session
 
@@ -895,7 +895,7 @@ def test_tf_validity_window(app, client, get_message):
         data=dict(email="matt@lp.com", password="password", remember=True),
         follow_redirects=True,
     )
-    assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
+    assert b"Use a Passkey as a Second Factor" in response.data
 
     signin_options, response_url = _signin_start(client, "matt@lp.com")
     response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
