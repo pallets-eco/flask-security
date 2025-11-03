@@ -589,15 +589,15 @@ _default_messages = {
         "error",
     ),
     "WEBAUTHN_EXPIRED": (
-        _("WebAuthn operation must be completed within %(within)s. Please start over."),
+        _("Passkey operations must be completed within %(within)s. Please start over."),
         "error",
     ),
     "WEBAUTHN_NAME_REQUIRED": (
-        _("Nickname for new credential is required."),
+        _("Nickname for new passkey is required."),
         "error",
     ),
     "WEBAUTHN_NAME_INUSE": (
-        _("%(name)s is already associated with a credential."),
+        _("%(name)s is already associated with a passkey."),
         "error",
     ),
     "WEBAUTHN_NAME_NOT_FOUND": (
@@ -605,31 +605,31 @@ _default_messages = {
         "error",
     ),
     "WEBAUTHN_CREDENTIAL_DELETED": (
-        _("Successfully deleted WebAuthn credential with name: %(name)s"),
+        _("Successfully deleted the passkey with name: %(name)s"),
         "info",
     ),
     "WEBAUTHN_REGISTER_SUCCESSFUL": (
-        _("Successfully added WebAuthn credential with name: %(name)s"),
+        _("Successfully added the passkey with name: %(name)s"),
         "info",
     ),
     "WEBAUTHN_CREDENTIAL_ID_INUSE": (
-        _("WebAuthn credential id already registered."),
+        _("Passkey already registered."),
         "error",
     ),
     "WEBAUTHN_UNKNOWN_CREDENTIAL_ID": (
-        _("Unregistered WebAuthn credential id."),
+        _("Unregistered passkey."),
         "error",
     ),
     "WEBAUTHN_ORPHAN_CREDENTIAL_ID": (
-        _("WebAuthn credential doesn't belong to any user."),
+        _("Passkey doesn't belong to any user."),
         "error",
     ),
     "WEBAUTHN_NO_VERIFY": (
-        _("Could not verify WebAuthn credential: %(cause)s."),
+        _("Could not verify passkey: %(cause)s."),
         "error",
     ),
     "WEBAUTHN_CREDENTIAL_WRONG_USAGE": (
-        _("Credential not registered for this use (first or secondary)"),
+        _("Passkey not registered for this use (first or secondary)"),
         "error",
     ),
     "WEBAUTHN_MISMATCH_USER_HANDLE": (

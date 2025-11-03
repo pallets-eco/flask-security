@@ -1724,31 +1724,31 @@ WebAuthn
 
 .. py:data:: SECURITY_WAN_REGISTER_URL
 
-    Endpoint for registering WebAuthn credentials.
+    Endpoint for registering WebAuthn credentials/passkeys.
 
     Default: ``"/wan-register"``
 
 .. py:data:: SECURITY_WAN_SIGNIN_URL
 
-    Endpoint for signing in using a WebAuthn credential.
+    Endpoint for signing in using a WebAuthn credential/passkey.
 
     Default: ``"/wan-signin"``
 
 .. py:data:: SECURITY_WAN_DELETE_URL
 
-    Endpoint for removing a WebAuthn credential.
+    Endpoint for removing a WebAuthn credential/passkey.
 
     Default: ``"/wan-delete"``
 
 .. py:data:: SECURITY_WAN_VERIFY_URL
 
-    Endpoint for reauthenticating using a WebAuthn credential.
+    Endpoint for reauthenticating using a WebAuthn credential/passkey.
 
     Default: ``"/wan-verify"``
 
 .. py:data:: SECURITY_WAN_POST_REGISTER_VIEW
 
-    Specifies the view to redirect to after a user successfully registers a new WebAuthn key (non-json).
+    Specifies the view to redirect to after a user successfully registers a new WebAuthn credential/passkey (non-json).
     This value can be set to a URL or an endpoint name.
 
     Default: ``".wan-register"``
@@ -1803,7 +1803,7 @@ WebAuthn
 
 .. py:data:: SECURITY_WAN_ALLOW_AS_FIRST_FACTOR
 
-    If True then a WebAuthn credential/key may be registered for use as the first (or only)
+    If True then a WebAuthn credential/passkey may be registered for use as the first (or only)
     authentication factor. This will set the default ``AuthenticatorSelectionCriteria``
     to require a cross-platform key.
 
@@ -1811,7 +1811,7 @@ WebAuthn
 
 .. py:data:: SECURITY_WAN_ALLOW_AS_MULTI_FACTOR
 
-    If True then a WebAuthn credential/key can be used
+    If True then a WebAuthn credential/passkey can be used
     as both a primary and a secondary factor. This requires that the key
     supports 'UserVerification'.
 
@@ -1820,7 +1820,7 @@ WebAuthn
 .. py:data:: SECURITY_WAN_ALLOW_USER_HINTS
 
     If True then an unauthenticated user can request a list of registered
-    WebAuthn credentials/keys. This allows the use of non-resident (non-discoverable)
+    WebAuthn credentials/passkeys. This allows the use of non-resident (non-discoverable)
     keys, but has the possible security concern that it allows 'user discovery'.
     Look at https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-username-enumeration
     for a good writeup.
@@ -1836,10 +1836,10 @@ WebAuthn
     Sets which type of WebAuthn security credential, if any, may be used for
     reauthentication/verify events. This is a list with possible values:
 
-        - ``"first"`` - just keys registered as "first" usage are allowed
-        - ``"secondary"`` - just keys registered as "secondary" are allowed
+        - ``"first"`` - just credentials/passkeys registered as "first" usage are allowed
+        - ``"secondary"`` - just credentials/passkeys registered as "secondary" are allowed
 
-    If list is empty or ``None`` WebAuthn keys aren't allowed. This also means that the
+    If list is empty or ``None`` WebAuthn credentials/passkeys aren't allowed. This also means that the
     :py:data:`SECURITY_WAN_VERIFY_URL` endpoint won't be registered.
 
     Default: ``["first", "secondary"]``

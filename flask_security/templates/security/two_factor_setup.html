@@ -86,9 +86,9 @@
     {% endif %}
     {% if security.webauthn %}
       <hr class="fs-gap">
-      <h3>{{ _fsdomain("WebAuthn") }}</h3>
+      <h3>{{ _fsdomain("Passkeys") }}</h3>
       <div class="fs-div">
-        {{ _fsdomain("This application supports WebAuthn security keys.") }}
+        {{ _fsdomain("This application supports passkeys.") }}
         <a href="{{ url_for_security('wan_register') }}">{{ _fsdomain("You can set them up here.") }}</a>
       </div>
     {% endif %}

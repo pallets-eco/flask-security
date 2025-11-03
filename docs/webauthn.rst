@@ -8,11 +8,14 @@ relying party (your Flask application) and an authenticator. In simple terms thi
 your Flask application to a variety of authenticators including dedicated hardware (e.g. YubiKey) and
 devices that have cryptographic capabilities (e.g. a mobile phone with fingerprint or face id).
 
-This protocol is supported by all major browsers, however as of Spring 2022, few web application actually
-support it, and those that do normally just support using a WebAuthn key as an additional, optional, second factor.
+This protocol is supported by all major browsers, and gradually (2025) many major web applications actually
+support it. Note that those that do normally just support using a WebAuthn credential/passkey as an additional, optional, second factor.
 
-Note that a WebAuthn key can possibly satisfy a complete 2-factor authentication requirement - something you have
+Note that a WebAuthn credential/passkey can possibly satisfy a complete 2-factor authentication requirement - something you have
 and something you are (think a mobile device with face-Id). Flask-Security supports this use case.
+
+Flask-Security uses the term WebAuthn and WebAuthn credential internally and in its JSON API. For the non-developer community, the term 'passkey'
+has become standard, so all templates and messages refer to WebAuthn credentials as passkeys.
 
 .. _W3C standard: https://www.w3.org/TR/webauthn-2/
 
@@ -49,20 +52,20 @@ As with many features in Flask-Security, configuration is a combination of confi
 constructor parameters, and a sub-classable utility class. The WebAuthn spec offers a lot of
 flexibility in supporting a wide range of authenticators. The default configuration is:
 
-    - Allow a WebAuthn key to be used for first/primary authentication (:py:data:`SECURITY_WAN_ALLOW_AS_FIRST_FACTOR` = ``True``)
-    - Allow a WebAuthn key to be used as a multi-factor (both first and secondary) if
+    - Allow a WebAuthn credential/passkey to be used for first/primary authentication (:py:data:`SECURITY_WAN_ALLOW_AS_FIRST_FACTOR` = ``True``)
+    - Allow a WebAuthn credential/passkey to be used as a multi-factor (both first and secondary) if
       the key supports it (:py:data:`SECURITY_WAN_ALLOW_AS_MULTI_FACTOR` = ``True``)
-    - Allow both 'first' and 'secondary' WebAuthn keys to be used for 'freshness' verification
+    - Allow both 'first' and 'secondary' WebAuthn credentials/passkeys to be used for 'freshness' verification
       (:py:data:`SECURITY_WAN_ALLOW_AS_VERIFY` = ``True``)
-    - Allow returning WebAuthn key names to un-authenticated users (:py:data:`SECURITY_WAN_ALLOW_USER_HINTS` = ``True``)
+    - Allow returning WebAuthn credential/passkey names to un-authenticated users (:py:data:`SECURITY_WAN_ALLOW_USER_HINTS` = ``True``)
       Please see `this`_ portion of the WebAuthn spec for security implications.
 
 
 The bundled :class:`.WebauthnUtil` class implements the following defaults:
 
-    - The ``AuthenticatorSelectionCriteria`` is set to ``CROSS_PLATFORM`` for webauthn keys being
+    - The ``AuthenticatorSelectionCriteria`` is set to ``CROSS_PLATFORM`` for webauthn credentials/passkeys being
       registered for first/primary authentication.
-    - The ``UserVerificationRequirement`` is set to ``DISCOURAGED`` for keys used for secondary
-      authentication, and ``PREFERRED`` for keys used for first/primary or multi-factor.
+    - The ``UserVerificationRequirement`` is set to ``DISCOURAGED`` for credentials/passkeys used for secondary
+      authentication, and ``PREFERRED`` for credentials/passkeys used for first/primary or multi-factor.
 
 .. _this: https://www.w3.org/TR/webauthn-2/#sctn-unprotected-account-detection

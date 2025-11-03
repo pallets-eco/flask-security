@@ -8,7 +8,7 @@ Version 5.7.0
 
 Released XXX
 
-This release is a set of small backward incompatible changes. Please read these notes carefully.
+This release contains a set of small backward incompatible changes. Please read these notes carefully.
 
 Features & Improvements
 +++++++++++++++++++++++
@@ -27,6 +27,7 @@ Docs and Chores
    updates pypy to 3.10, and uses 3.12 as base python for tests/tox.
 - (:pr:`1112`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
 - (:pr:`1117`) Flip default mail package back to Flask-Mail (from Flask-Mailman).
+- (:issue:`1139`) Change external facing terminology from 'WebAuthn Credential' to 'passkey'.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

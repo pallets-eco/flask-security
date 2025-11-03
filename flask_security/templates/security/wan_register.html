@@ -1,7 +1,7 @@
 {#
   This template receives the following pieces of context in addition to the form:
 #}
-{% set title = title|default(_fsdomain("Setup New WebAuthn Security Key")) %}
+{% set title = title|default(_fsdomain("Setup a New Passkey")) %}
 {% extends "security/base.html" %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_csrf, script_nonce %}
 
@@ -13,10 +13,10 @@
 
 {% block content %}
   {% include "security/_messages.html" %}
-  <h1>{{ _fsdomain("Setup New WebAuthn Security Key") }}</h1>
+  <h1>{{ _fsdomain("Setup a New Passkey") }}</h1>
   {% if not credential_options %}
     {# Initial form to get CreateOptions #}
-    <div>{{ _fsdomain("Start by providing a unique name for your new security key:") }}</div>
+    <div>{{ _fsdomain("Start by providing a unique name for your passkey:") }}</div>
     <form action="{{ url_for_security('wan_register') }}" method="post" name="wan_register_form" id="wan-register-form">
       {{ wan_register_form.hidden_tag() }}
       {{ render_field_with_errors(wan_register_form.name) }}
@@ -51,7 +51,7 @@
     </script>
   {% endif %}
   {% if registered_credentials %}
-    <h3>{{ _fsdomain("Currently registered security keys:") }}</h3>
+    <h3>{{ _fsdomain("Currently registered passkeys:") }}</h3>
     {% set listing = _fsdomain('Nickname: "%s" Usage: "%s" Transports: "%s" Discoverable: "%s" Device Type: "%s" Backed up? "%s" Last used on: %s') %}
     <ul>
       {% for cred in registered_credentials %}
@@ -63,7 +63,7 @@
   {% endif %}
   {% if wan_delete_form %}
     <hr>
-    <h2>{{ _fsdomain("Delete Existing WebAuthn Security Key") }}</h2>
+    <h2>{{ _fsdomain("Delete an Existing Passkey") }}</h2>
     <form action="{{ url_for_security('wan_delete') }}" method="post" name="wan_delete_form">
       {# explicitly render csrf_token so we can change the ID so we don't get duplicates #}
       {{ render_csrf(wan_delete_form, "delete") }}

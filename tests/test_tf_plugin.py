@@ -4,7 +4,7 @@ test_tf_plugin
 
 tf_plugin tests
 
-:copyright: (c) 2022-2022 by J. Christopher Wagner (jwag).
+:copyright: (c) 2022-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -45,7 +45,7 @@ def test_tf_select(app, client, get_message):
     response = client.post(
         tf_select_url, data=dict(which="webauthn"), follow_redirects=True
     )
-    assert b"Use Your WebAuthn Security Key as a Second Factor" in response.data
+    assert b"Use a Passkey as a Second Factor" in response.data
     wan_signin_url = get_form_action(response)
     assert "/wan-signin?next=/profile" == wan_signin_url
 

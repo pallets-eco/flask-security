@@ -243,12 +243,12 @@ If you disable the freshness check then sessions aren't required.
     * Registration and Confirmation only work with email - so while you can enable multiple
       authentication methods, you still have to register with email.
 
-WebAuthn
---------
+WebAuthn/Passkeys
+-----------------
 **This feature is in Beta - mostly due to it being brand new and little to no production soak time**
 
 WebAuthn is a standardized protocol that connects authenticators (such as YubiKey and mobile biometrics)
-with websites. If :ref:`configured<configuration:WebAuthn>`, Flask-Security supports using WebAuthn keys as either 'first' or 'secondary'
+with websites. If :ref:`configured<configuration:WebAuthn>`, Flask-Security supports using WebAuthn credentials (aka passkeys) as either 'first' or 'secondary'
 authenticators. Please read :ref:`webauthn_topic` for more details.
 
 Email Change
