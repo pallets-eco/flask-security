@@ -82,6 +82,7 @@ from .forms import (
     build_form,
     get_form_field_label,
     get_form_field_xlate,
+    _setup_methods_xlate,
 )
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
@@ -104,6 +105,7 @@ from .utils import (
     simple_render_json,
     url_for_security,
     view_commit,
+    localize_callback,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -942,9 +944,9 @@ class WebAuthnTfPlugin(TfPluginBase):
         """
         pass
 
-    def get_setup_methods(self, user: UserMixin) -> list[str]:
+    def get_setup_methods(self, user: UserMixin) -> list[tuple[str, str]]:
         if has_webauthn(user, "secondary"):
-            return [_("webauthn")]
+            return [("webauthn", localize_callback(_setup_methods_xlate["webauthn"]))]
         return []
 
     def tf_login(

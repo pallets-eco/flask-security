@@ -5,7 +5,7 @@ flask_security.two_factor
 Flask-Security two_factor module
 
 :copyright: (c) 2016 by Gal Stainfeld, at Emedgene
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ import typing as t
 from flask import current_app, redirect, request, session
 
 from .forms import (
+    _setup_methods_xlate,
     get_form_field_xlate,
     DummyForm,
     TwoFactorRescueForm,
@@ -28,6 +29,7 @@ from .utils import (
     config_value as cv,
     do_flash,
     get_message,
+    localize_callback,
     json_error_response,
     send_mail,
     url_for_security,
@@ -178,10 +180,15 @@ class CodeTfPlugin(TfPluginBase):
     ) -> None:
         pass
 
-    def get_setup_methods(self, user: UserMixin) -> list[str]:
+    def get_setup_methods(self, user: UserMixin) -> list[tuple[str, str]]:
         if is_tf_setup(user):
             assert user.tf_primary_method is not None
-            return [user.tf_primary_method]
+            return [
+                (
+                    user.tf_primary_method,
+                    localize_callback(_setup_methods_xlate[user.tf_primary_method]),
+                )
+            ]
         return []
 
     def tf_login(
