@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 5.6.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2025-05-04 12:17-0700\n"
+"POT-Creation-Date: 2025-11-03 19:21-0800\n"
 "PO-Revision-Date: 2025-05-15 17:05+0200\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: es_ES\n"
@@ -285,7 +285,8 @@ msgstr "La contraseña o el código facilitado son inválidos"
 msgid "You have successfully logged in."
 msgstr "Has iniciado sesión."
 
-#: flask_security/core.py:510
+#: flask_security/core.py:510 flask_security/templates/security/_menu.html:19
+#: flask_security/templates/security/_menu.html:65
 msgid "Forgot password?"
 msgstr "¿Has olvidado tu contraseña?"
 
@@ -414,19 +415,17 @@ msgstr "%(username)s ya está asociado a una cuenta."
 
 #: flask_security/core.py:592
 #, python-format
-msgid "WebAuthn operation must be completed within %(within)s. Please start over."
+msgid "Passkey operations must be completed within %(within)s. Please start over."
 msgstr ""
-"La operación de WebAuthn debe completarse dentro de %(within)s. Por favor"
-" vuelve a empezar."
 
 #: flask_security/core.py:596
-msgid "Nickname for new credential is required."
-msgstr "Se requiere un nombre para la nueva credencial."
+msgid "Nickname for new passkey is required."
+msgstr ""
 
 #: flask_security/core.py:600
 #, python-format
-msgid "%(name)s is already associated with a credential."
-msgstr "%(name)s ya está asociado a una credencial."
+msgid "%(name)s is already associated with a passkey."
+msgstr ""
 
 #: flask_security/core.py:604
 #, python-format
@@ -435,34 +434,34 @@ msgstr "%(name)s no registrado con el usuario actual."
 
 #: flask_security/core.py:608
 #, python-format
-msgid "Successfully deleted WebAuthn credential with name: %(name)s"
-msgstr "Se ha eliminado la credencial WebAuthn con nombre: %(name)s"
+msgid "Successfully deleted the passkey with name: %(name)s"
+msgstr ""
 
 #: flask_security/core.py:612
 #, python-format
-msgid "Successfully added WebAuthn credential with name: %(name)s"
-msgstr "Se ha añadido la credencial WebAuthn con nombre: %(name)s"
+msgid "Successfully added the passkey with name: %(name)s"
+msgstr ""
 
 #: flask_security/core.py:616
-msgid "WebAuthn credential id already registered."
-msgstr "Identificador de credencial de WebAuthn ya registrado."
+msgid "Passkey already registered."
+msgstr ""
 
 #: flask_security/core.py:620
-msgid "Unregistered WebAuthn credential id."
-msgstr "Identificador de credencial de WebAuthn no registrado."
+msgid "Unregistered passkey."
+msgstr ""
 
 #: flask_security/core.py:624
-msgid "WebAuthn credential doesn't belong to any user."
-msgstr "La credencial WebAuthn no pertenece a ningún usuario."
+msgid "Passkey doesn't belong to any user."
+msgstr ""
 
 #: flask_security/core.py:628
 #, python-format
-msgid "Could not verify WebAuthn credential: %(cause)s."
-msgstr "No se pudo verificar la credencial WebAuthn: %(cause)s."
+msgid "Could not verify passkey: %(cause)s."
+msgstr ""
 
 #: flask_security/core.py:632
-msgid "Credential not registered for this use (first or secondary)"
-msgstr "Credencial no registrada para este uso (primaria o secundaria)"
+msgid "Passkey not registered for this use (first or secondary)"
+msgstr ""
 
 #: flask_security/core.py:636
 msgid "Credential user handle didn't match"
@@ -532,7 +531,7 @@ msgstr "Error(es)"
 msgid "Identity"
 msgstr "Identidad"
 
-#: flask_security/forms.py:72 flask_security/templates/security/_menu.html:45
+#: flask_security/forms.py:72 flask_security/templates/security/_menu.html:50
 #: flask_security/templates/security/login_user.html:1
 #: flask_security/templates/security/login_user.html:7
 #: flask_security/templates/security/send_login.html:1
@@ -560,11 +559,11 @@ msgstr "Número de teléfono"
 msgid "Recover Password"
 msgstr "Recuperar contraseña"
 
-#: flask_security/forms.py:78 flask_security/templates/security/_menu.html:65
+#: flask_security/forms.py:78 flask_security/templates/security/_menu.html:70
 msgid "Recover Username"
 msgstr "Recuperar nombre de usuario"
 
-#: flask_security/forms.py:79 flask_security/templates/security/_menu.html:55
+#: flask_security/forms.py:79 flask_security/templates/security/_menu.html:60
 #: flask_security/templates/security/register_user.html:1
 #: flask_security/templates/security/register_user.html:7
 msgid "Register"
@@ -641,22 +640,26 @@ msgid "password"
 msgstr "contraseña"
 
 #: flask_security/forms.py:102
+msgid "passkey"
+msgstr ""
+
+#: flask_security/forms.py:103
 msgid "none"
 msgstr "ninguno"
 
-#: flask_security/forms.py:947 flask_security/unified_signin.py:167
+#: flask_security/forms.py:957 flask_security/unified_signin.py:167
 msgid "Available Methods"
 msgstr "Métodos disponibles"
 
-#: flask_security/forms.py:949
+#: flask_security/forms.py:959
 msgid "Disable two-factor authentication"
 msgstr "Deshabilitar la autenticación de dos factores"
 
-#: flask_security/forms.py:1040
+#: flask_security/forms.py:1050
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr "¿Problemas para acceder a tu cuenta/has perdido tu dispositivo móvil?"
 
-#: flask_security/forms.py:1042
+#: flask_security/forms.py:1052
 msgid "Contact Administrator"
 msgstr "Contactar con el administrador"
 
@@ -680,11 +683,11 @@ msgstr "Métodos de segundo factor disponibles:"
 msgid "Select"
 msgstr "Selecciona"
 
-#: flask_security/twofactor.py:137
+#: flask_security/twofactor.py:139
 msgid "Send code via email"
 msgstr "Enviar el código por correo electrónico"
 
-#: flask_security/twofactor.py:150
+#: flask_security/twofactor.py:152
 msgid "Use previously downloaded recovery code"
 msgstr "Usar código de recuperación descargado anteriormente"
 
@@ -708,29 +711,25 @@ msgstr "Configurar una opción de inicio de sesión adicional"
 msgid "Delete active sign in option"
 msgstr "Eliminar la opción de inicio de sesión activa"
 
-#: flask_security/webauthn.py:122 flask_security/webauthn.py:367
+#: flask_security/webauthn.py:124 flask_security/webauthn.py:369
 msgid "Nickname"
 msgstr "Nombre"
 
-#: flask_security/webauthn.py:126
+#: flask_security/webauthn.py:128
 msgid "Usage"
 msgstr "Uso"
 
-#: flask_security/webauthn.py:128
+#: flask_security/webauthn.py:130
 msgid "Use as a first authentication factor"
 msgstr "Uso como factor de autenticación primario"
 
-#: flask_security/webauthn.py:131
+#: flask_security/webauthn.py:133
 msgid "Use as a secondary authentication factor"
 msgstr "Uso como factor de autenticación secundario"
 
-#: flask_security/webauthn.py:223
+#: flask_security/webauthn.py:225
 msgid "Start"
 msgstr "Iniciar"
-
-#: flask_security/webauthn.py:947
-msgid "webauthn"
-msgstr "webauthn"
 
 #: flask_security/templates/security/_menu.html:5
 msgid "Menu"
@@ -740,38 +739,34 @@ msgstr "Menú"
 msgid "Sign out"
 msgstr "Cerrar sesión"
 
-#: flask_security/templates/security/_menu.html:19
+#: flask_security/templates/security/_menu.html:24
 msgid "Change Registered Email"
 msgstr "Cambiar el correo electrónico registrado"
 
-#: flask_security/templates/security/_menu.html:24
+#: flask_security/templates/security/_menu.html:29
 #: flask_security/templates/security/change_username.html:1
 #: flask_security/templates/security/change_username.html:7
 msgid "Change Username"
 msgstr "Cambiar el nombre de usuario"
 
-#: flask_security/templates/security/_menu.html:29
+#: flask_security/templates/security/_menu.html:34
 #: flask_security/templates/security/two_factor_setup.html:21
 msgid "Two-Factor Setup"
 msgstr "Configuración de dos factores"
 
-#: flask_security/templates/security/_menu.html:34
+#: flask_security/templates/security/_menu.html:39
 msgid "Unified Signin Setup"
 msgstr "Configuración de inicio de sesión unificado"
 
-#: flask_security/templates/security/_menu.html:39
-msgid "WebAuthn Setup"
-msgstr "Configuración de WebAuthn"
+#: flask_security/templates/security/_menu.html:44
+msgid "Passkey Setup"
+msgstr ""
 
-#: flask_security/templates/security/_menu.html:50
+#: flask_security/templates/security/_menu.html:55
 msgid "Unified Sign In"
 msgstr "Inicio de sesión unificado"
 
-#: flask_security/templates/security/_menu.html:60
-msgid "Forgot password"
-msgstr "Contraseña olvidada"
-
-#: flask_security/templates/security/_menu.html:70
+#: flask_security/templates/security/_menu.html:75
 msgid "Confirm account"
 msgstr "Confirmar cuenta"
 
@@ -808,13 +803,13 @@ msgstr "o"
 
 #: flask_security/templates/security/login_user.html:24
 #: flask_security/templates/security/us_signin.html:26
-msgid "Use WebAuthn to Sign In"
-msgstr "Usar WebAuthn para iniciar sesión"
+msgid "Use a Passkey to Sign In"
+msgstr ""
 
 #: flask_security/templates/security/login_user.html:27
 #: flask_security/templates/security/us_signin.html:29
-msgid "Sign in with WebAuthn"
-msgstr "Iniciar sesión con WebAuthn"
+msgid "Sign in with a passkey"
+msgstr ""
 
 #: flask_security/templates/security/login_user.html:33
 #: flask_security/templates/security/us_signin.html:35
@@ -922,13 +917,13 @@ msgid "You can set them up here."
 msgstr "Se pueden configurar aquí."
 
 #: flask_security/templates/security/two_factor_setup.html:89
-msgid "WebAuthn"
-msgstr "WebAuthn"
+msgid "Passkeys"
+msgstr ""
 
 #: flask_security/templates/security/two_factor_setup.html:91
 #: flask_security/templates/security/us_setup.html:89
-msgid "This application supports WebAuthn security keys."
-msgstr "Esta aplicación es compatible con las claves de seguridad de WebAuthn."
+msgid "This application supports passkeys."
+msgstr ""
 
 #: flask_security/templates/security/two_factor_verify_code.html:1
 #: flask_security/templates/security/two_factor_verify_code.html:7
@@ -986,23 +981,21 @@ msgstr "Se envió el código"
 
 #: flask_security/templates/security/us_verify.html:26
 #: flask_security/templates/security/verify.html:15
-msgid "Use a WebAuthn Security Key to Reauthenticate"
-msgstr "Utilizar una clave de seguridad de WebAuthn para reautenticarse"
+msgid "Use a Passkey to Reauthenticate"
+msgstr ""
 
 #: flask_security/templates/security/wan_register.html:4
 #: flask_security/templates/security/wan_register.html:16
-msgid "Setup New WebAuthn Security Key"
-msgstr "Configurar una nueva clave de seguridad de WebAuthn"
+msgid "Setup a New Passkey"
+msgstr ""
 
 #: flask_security/templates/security/wan_register.html:19
-msgid "Start by providing a unique name for your new security key:"
+msgid "Start by providing a unique name for your passkey:"
 msgstr ""
-"Comienza por proporcionar un nombre único para tu nueva clave de "
-"seguridad:"
 
 #: flask_security/templates/security/wan_register.html:54
-msgid "Currently registered security keys:"
-msgstr "Claves de seguridad actualmente registradas:"
+msgid "Currently registered passkeys:"
+msgstr ""
 
 #: flask_security/templates/security/wan_register.html:55
 #, python-format
@@ -1015,24 +1008,24 @@ msgstr ""
 "última vez: \"%s"
 
 #: flask_security/templates/security/wan_register.html:66
-msgid "Delete Existing WebAuthn Security Key"
-msgstr "Eliminar la clave de seguridad de WebAuthn existente"
+msgid "Delete an Existing Passkey"
+msgstr ""
 
 #: flask_security/templates/security/wan_signin.html:4
-msgid "WebAuthn Security Key"
-msgstr "Clave de seguridad de WebAuthn"
+msgid "Sign In With A Passkey"
+msgstr ""
 
 #: flask_security/templates/security/wan_signin.html:17
-msgid "Sign In Using WebAuthn Security Key"
-msgstr "Iniciar sesión con la clave de seguridad de WebAuthn"
+msgid "Sign In With a Passkey"
+msgstr ""
 
 #: flask_security/templates/security/wan_signin.html:19
-msgid "Use Your WebAuthn Security Key as a Second Factor"
-msgstr "Utiliza tu clave de seguridad de WebAuthn como segundo factor"
+msgid "Use a Passkey as a Second Factor"
+msgstr ""
 
 #: flask_security/templates/security/wan_verify.html:21
-msgid "Reauthenticate Using Your WebAuthn Security Key"
-msgstr "Vuelve a autenticarte con tu clave de seguridad de WebAuthn"
+msgid "Reauthenticate Using a Passkey"
+msgstr ""
 
 #: flask_security/templates/security/email/change_email_instructions.html:8
 #, python-format
@@ -1386,3 +1379,89 @@ msgstr ""
 #~ "Si has olvidado tu contraseña, puedes"
 #~ " restablecerla a través del siguiente "
 #~ "enlace: %(recovery_link)s"
+
+#~ msgid ""
+#~ "WebAuthn operation must be completed "
+#~ "within %(within)s. Please start over."
+#~ msgstr ""
+#~ "La operación de WebAuthn debe "
+#~ "completarse dentro de %(within)s. Por "
+#~ "favor vuelve a empezar."
+
+#~ msgid "Nickname for new credential is required."
+#~ msgstr "Se requiere un nombre para la nueva credencial."
+
+#~ msgid "%(name)s is already associated with a credential."
+#~ msgstr "%(name)s ya está asociado a una credencial."
+
+#~ msgid "Successfully deleted WebAuthn credential with name: %(name)s"
+#~ msgstr "Se ha eliminado la credencial WebAuthn con nombre: %(name)s"
+
+#~ msgid "Successfully added WebAuthn credential with name: %(name)s"
+#~ msgstr "Se ha añadido la credencial WebAuthn con nombre: %(name)s"
+
+#~ msgid "WebAuthn credential id already registered."
+#~ msgstr "Identificador de credencial de WebAuthn ya registrado."
+
+#~ msgid "Unregistered WebAuthn credential id."
+#~ msgstr "Identificador de credencial de WebAuthn no registrado."
+
+#~ msgid "WebAuthn credential doesn't belong to any user."
+#~ msgstr "La credencial WebAuthn no pertenece a ningún usuario."
+
+#~ msgid "Could not verify WebAuthn credential: %(cause)s."
+#~ msgstr "No se pudo verificar la credencial WebAuthn: %(cause)s."
+
+#~ msgid "Credential not registered for this use (first or secondary)"
+#~ msgstr "Credencial no registrada para este uso (primaria o secundaria)"
+
+#~ msgid "webauthn"
+#~ msgstr "webauthn"
+
+#~ msgid "WebAuthn Setup"
+#~ msgstr "Configuración de WebAuthn"
+
+#~ msgid "Forgot password"
+#~ msgstr "Contraseña olvidada"
+
+#~ msgid "Use WebAuthn to Sign In"
+#~ msgstr "Usar WebAuthn para iniciar sesión"
+
+#~ msgid "Sign in with WebAuthn"
+#~ msgstr "Iniciar sesión con WebAuthn"
+
+#~ msgid "WebAuthn"
+#~ msgstr "WebAuthn"
+
+#~ msgid "This application supports WebAuthn security keys."
+#~ msgstr "Esta aplicación es compatible con las claves de seguridad de WebAuthn."
+
+#~ msgid "Use a WebAuthn Security Key to Reauthenticate"
+#~ msgstr "Utilizar una clave de seguridad de WebAuthn para reautenticarse"
+
+#~ msgid "Setup New WebAuthn Security Key"
+#~ msgstr "Configurar una nueva clave de seguridad de WebAuthn"
+
+#~ msgid "Start by providing a unique name for your new security key:"
+#~ msgstr ""
+#~ "Comienza por proporcionar un nombre "
+#~ "único para tu nueva clave de "
+#~ "seguridad:"
+
+#~ msgid "Currently registered security keys:"
+#~ msgstr "Claves de seguridad actualmente registradas:"
+
+#~ msgid "Delete Existing WebAuthn Security Key"
+#~ msgstr "Eliminar la clave de seguridad de WebAuthn existente"
+
+#~ msgid "WebAuthn Security Key"
+#~ msgstr "Clave de seguridad de WebAuthn"
+
+#~ msgid "Sign In Using WebAuthn Security Key"
+#~ msgstr "Iniciar sesión con la clave de seguridad de WebAuthn"
+
+#~ msgid "Use Your WebAuthn Security Key as a Second Factor"
+#~ msgstr "Utiliza tu clave de seguridad de WebAuthn como segundo factor"
+
+#~ msgid "Reauthenticate Using Your WebAuthn Security Key"
+#~ msgstr "Vuelve a autenticarte con tu clave de seguridad de WebAuthn"

@@ -16,7 +16,7 @@
       {% endif %}
       {% if security.recoverable %}
         <li>
-          <a href="{{ url_for_security('forgot_password') }}">{{ _fsdomain('Forgot password') }}</a>
+          <a href="{{ url_for_security('forgot_password') }}">{{ _fsdomain('Forgot password?') }}</a>
         </li>
       {% endif %}
       {% if security.change_email %}
@@ -62,7 +62,7 @@
       {% endif %}
       {% if security.recoverable %}
         <li>
-          <a href="{{ url_for_security('forgot_password') }}">{{ _fsdomain('Forgot password') }}</a>
+          <a href="{{ url_for_security('forgot_password') }}">{{ _fsdomain('Forgot password?') }}</a>
         </li>
       {% endif %}
       {% if security.username_recovery %}
