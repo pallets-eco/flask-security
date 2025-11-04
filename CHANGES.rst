@@ -20,7 +20,7 @@ Fixes
 - (:issue:`1109`) Fix broken link in docs and improve docstrings/typing for util classes.
 - (:issue:`1127`) Add nonce to script tags if configured to support nonce-based Content-Security-Policy (ahanak).
 - (:issue:`1133`) Remove unnecessary (optional) dependency on sqlalchemy_utils.
-- (:pr:`xx`) Fix localization of tf_select choices.
+- (:pr:`1140`) Fix localization of tf_select choices.
 
 Docs and Chores
 +++++++++++++++
