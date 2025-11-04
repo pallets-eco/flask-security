@@ -99,6 +99,7 @@ _setup_methods_xlate = {
     "mail": _("email"),
     "sms": _("SMS"),
     "password": _("password"),
+    "webauthn": _("passkey"),
     None: _("none"),
 }
 
