@@ -1308,10 +1308,3 @@ def test_auth_token_decorator(app, client_nc):
         headers={"Content-Type": "application/json", "Authentication-Token": token},
     )
     assert response.status_code == 200
-
-
-@pytest.mark.filterwarnings("ignore:.*BACKWARDS_COMPAT_UNAUTHN:DeprecationWarning")
-@pytest.mark.settings(backwards_compat_unauthn=True)
-def test_unauthn_compat(client):
-    response = client.get("/profile")
-    assert response.status_code == 401

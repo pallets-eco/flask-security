@@ -672,14 +672,6 @@ These are flags that change various backwards compatability functionality.
 
     .. versionadded:: 5.4.0
 
-.. py:data:: SECURITY_BACKWARDS_COMPAT_UNAUTHN
-
-    If set to ``True`` then the default behavior for authentication
-    failures from one of Flask-Security's decorators will be restored to
-    be compatible with releases prior to 3.3.0 (return 401 and some static html).
-
-    Default: ``False``.
-
 .. py:data:: SECURITY_BACKWARDS_COMPAT_AUTH_TOKEN
 
     If set to ``True`` then an Authentication-Token will be returned

@@ -29,6 +29,8 @@ Docs and Chores
 - (:pr:`1112`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
 - (:pr:`1117`) Flip default mail package back to Flask-Mail (from Flask-Mailman).
 - (:issue:`1139`) Change external facing terminology from 'WebAuthn Credential' to 'passkey'.
+- (:pr:`xx`) Setting of xx_util_cls from kwargs which was deprecated in 5.6.1 has been removed.
+   The BACKWARDS_COMPAT_UNAUTHN option (code) which has been deprecated since 5.4 has been removed.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

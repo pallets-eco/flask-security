@@ -360,7 +360,6 @@ _default_config: dict[str, t.Any] = {
     },
     "CSRF_HEADER": "X-XSRF-Token",
     "CSRF_COOKIE_REFRESH_EACH_REQUEST": False,
-    "BACKWARDS_COMPAT_UNAUTHN": False,
     "BACKWARDS_COMPAT_AUTH_TOKEN": False,
     "JOIN_USER_ROLES": True,
     "USERNAME_ENABLE": False,
@@ -1577,26 +1576,6 @@ class Security:
             if ov := kwargs.get(attr, cv(attr.upper(), app, strict=False)):
                 setattr(self, attr, ov)
 
-        # Deprecated BC attrs - only settable at constructor time. Noter that newer
-        # _util classes (username_util_cls) already are this way
-        dep_attr_names = [
-            "mail_util_cls",
-            "password_util_cls",
-            "phone_util_cls",
-            "totp_cls",
-            "webauthn_util_cls",
-        ]
-        for attr in dep_attr_names:
-            if ov := kwargs.get(attr, cv(attr.upper(), app, strict=False)):
-                setattr(self, f"_{attr}", ov)
-                warnings.warn(
-                    f"Setting {attr} via kwargs or config is"
-                    " deprecated as of version 5.6.1 and will be removed in a future"
-                    " release. Use the Flask-Security constructor.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-
         identity_loaded.connect_via(app)(_on_identity_loaded)
 
         if hasattr(self.datastore, "user_model") and not hasattr(
@@ -1659,14 +1638,6 @@ class Security:
             warnings.warn(
                 "The auto-login after successful password reset functionality"
                 " has been deprecated and will be removed in a future release.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        if cv("BACKWARDS_COMPAT_UNAUTHN", app=app):
-            warnings.warn(
-                "The BACKWARDS_COMPAT_UNAUTHN configuration variable is"
-                " deprecated as of version 5.4.0 and will be removed in a future"
-                " release.",
                 DeprecationWarning,
                 stacklevel=2,
             )
