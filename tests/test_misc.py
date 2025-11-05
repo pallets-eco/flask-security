@@ -929,9 +929,6 @@ def test_method_view(app, client):
 
 def test_phone_util_override(app, sqlalchemy_datastore):
     from flask_security import phone_util
-    import warnings
-
-    warnings.simplefilter("error")
 
     class MyPhoneUtil(phone_util.PhoneUtil):
         def validate_phone_number(self, input_data):
@@ -942,15 +939,6 @@ def test_phone_util_override(app, sqlalchemy_datastore):
 
     app.security = Security(phone_util_cls=MyPhoneUtil)
     app.security.init_app(app, sqlalchemy_datastore)
-
-    with app.app_context():
-        assert uia_phone_mapper("55") == "very-canonical"
-
-    # try init_app kwargs
-    app.config["SECURITY_BLUEPRINT_NAME"] = "security2"
-    app.security2 = Security()
-    with pytest.raises(DeprecationWarning):
-        app.security2.init_app(app, sqlalchemy_datastore, phone_util_cls=MyPhoneUtil)
 
     with app.app_context():
         assert uia_phone_mapper("55") == "very-canonical"

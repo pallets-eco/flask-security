@@ -48,22 +48,6 @@ _csrf = LocalProxy(lambda: current_app.extensions["csrf"])
 
 BasicAuth = namedtuple("BasicAuth", "username, password")
 
-# NOTE: this is here for backwards compatibility, it is deprecated and
-# could be removed any time!
-_default_unauthenticated_html = """
-    <h1>Unauthorized</h1>
-    <p>The server could not verify that you are authorized to access the URL
-    requested. You either supplied the wrong credentials (e.g. a bad password),
-    or your browser doesn't understand how to supply the credentials required.
-    </p>
-    """
-
-
-def _get_unauthenticated_response(text=None, headers=None):
-    text = text or _default_unauthenticated_html
-    headers = headers or {}
-    return Response(text, 401, headers)
-
 
 def default_unauthn_handler(mechanisms=None, headers=None):
     """Default callback for failures to authenticate
@@ -79,8 +63,6 @@ def default_unauthn_handler(mechanisms=None, headers=None):
     headers = headers or {}
     m, c = get_message("UNAUTHENTICATED")
 
-    if cv("BACKWARDS_COMPAT_UNAUTHN"):
-        return _get_unauthenticated_response(headers=headers)
     if _security._want_json(request):
         payload = json_error_response(errors=m)
         return _security._render_json(payload, 401, headers, None)
