@@ -5,7 +5,7 @@ flask_security.utils
 Flask-Security utils module
 
 :copyright: (c) 2012-2019 by Matt Wright.
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -419,7 +419,10 @@ def verify_and_update_password(password: str | bytes, user: UserMixin) -> bool:
 
     """
     if use_double_hash(user.password):
-        verified = _pwd_context.verify(get_hmac(password), user.password)
+        password = get_hmac(password)
+        if _pwd_context.identify(user.password) == "bcrypt":
+            password = password[:72]
+        verified = _pwd_context.verify(password, user.password)
     else:
         # Try with original password.
         verified = _pwd_context.verify(password, user.password)
@@ -444,6 +447,9 @@ def hash_password(password: str | bytes) -> str:
 
     .. versionadded:: 2.0.2
 
+    .. versionchanged:: 5.7.0
+       Explicit check for bcrypt truncation
+
     :param password: The plaintext password to hash
     """
     if use_double_hash():
@@ -451,6 +457,11 @@ def hash_password(password: str | bytes) -> str:
 
     # Passing in options as part of hash is deprecated in passlib 1.7
     # and new algorithms like argon2 don't even support it.
+    if config_value("PASSWORD_HASH") == "bcrypt":
+        # bcrypt - OWASP says truncation concerns are negligible:
+        # https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#input-limits-of-bcrypt
+        password = password[:72]
+
     return _pwd_context.hash(
         password,
         **config_value("PASSWORD_HASH_OPTIONS", default={}).get(

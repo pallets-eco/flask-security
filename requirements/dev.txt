@@ -15,6 +15,5 @@ flask-wtf
 flask-login
 flask-principal
 markupsafe
-passlib>=1.7.4;python_version<'3.12'
-libpass>=1.9.0;python_version>='3.12'
+libpass
 email_validator
