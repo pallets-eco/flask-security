@@ -36,25 +36,24 @@ dynamic = [
 ]
 dependencies = [
     # flask dependencies include werkzeug, jinja2, itsdangerous, click, blinker
-    "Flask>=3.0.0",
+    "Flask>=3.1.0",
     "Flask-Login>=0.6.3",
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=1.1.2",
     "email-validator>=2.0.0",
     "markupsafe>=2.1.0",
-    "passlib>=1.7.4;python_version<'3.12'",
-    "libpass>=1.9.0;python_version>='3.12'",
+    "libpass>=1.9.3",
     "wtforms>=3.0.0",  # for form-level errors
 ]
 
 [project.optional-dependencies]
 babel = ["babel>=2.12.1", "flask_babel>=4.0.0"]
 fsqla = ["flask_sqlalchemy>=3.1.0", "sqlalchemy>=2.0.18"]
-common = ["argon2_cffi>=21.3.0", "bcrypt>=4.0.1,<5.0", "flask_mail>=0.10.0", "bleach>=6.0.0"]
-mfa = ["cryptography>=40.0.2", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.0.0"]
+common = ["argon2_cffi>=23.1.0", "bcrypt>4.2.1", "flask_mail>=0.10.0", "bleach>=6.0.0"]
+mfa = ["cryptography>=42.0.4", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.5.0"]
 low = [
     # Lowest supported versions
-    "Flask==3.0.0",
+    "Flask==3.1.0",
     "Flask-SQLAlchemy==3.1.0",
     "Flask-SQLAlchemy-Lite==0.1.0",
     "Flask-Babel==4.0.0",
@@ -69,7 +68,7 @@ low = [
     "bleach==6.0.0",
     "freezegun",
     "jinja2==3.1.2",
-    "itsdangerous==2.1.2",
+    "itsdangerous==2.2.0",
     "markupsafe==2.1.2",
     "mongoengine==0.29.1",
     "mongomock==4.3.0",
@@ -81,7 +80,7 @@ low = [
     "sqlalchemy==2.0.18",
     "sqlalchemy-utils==0.41.1",
     "webauthn==2.0.0",
-    "werkzeug==3.0.1",
+    "werkzeug==3.1.0",
     "zxcvbn==4.4.28"
 ]
 [build-system]

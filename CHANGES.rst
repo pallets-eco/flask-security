@@ -21,6 +21,8 @@ Fixes
 - (:issue:`1127`) Add nonce to script tags if configured to support nonce-based Content-Security-Policy (ahanak).
 - (:issue:`1133`) Remove unnecessary (optional) dependency on sqlalchemy_utils.
 - (:pr:`1140`) Fix localization of tf_select choices.
+- (:pr:`xx`) Support bcrypt 5.0 - See below for important compatibility concerns.
+   This also replaces passlib with libpass for all versions.
 
 Docs and Chores
 +++++++++++++++
@@ -34,16 +36,25 @@ Docs and Chores
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
-As mentioned above - the default RegisterForm is now the new RegisterFormV2 - Please read :ref:`register_form_migration`.
-Flask-Security will emit a DeprecationWarning if the :py:data:`SECURITY_USE_REGISTER_V2` is set to False.
+ - Flask-Security now depends on ``libpass`` (https://pypi.org/project/libpass/) for all versions. Be sure to UNINSTALL
+   passlib, ensure the passlib directory is empty and then install libpass - we have seen reports when both are installed -
+   it doesn't work!
 
-In 5.0 we changed the default mailer package to Flask-Mailman since Flask-Mail was no longer supported.
-Flask-Mail is again supported and is part of Pallets-Eco. Both packages are still supported based on which one
-an application initializes. The only backwards compatibility concern is that if you use the setup extras 'common',
-it will install Flask-Mail rather than Flask-Mailman.
+   In bcrypt 5.0 they started throwing a ValueError for passwords/secrets longer than 72 bytes. It is important to know that by default
+   Flask-Security performs a double hash - taking the secret, using HMAC(SHA512) then b64encodng the result. This means that ANY password
+   will be longer than 72 bytes (86 to be exact). In the past bcrypt would silently truncate the input - now we have to do that explicitly.
+   OWASP says truncation concerns are negligible: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#input-limits-of-bcrypt
 
-In the optional dependencies 'fsqla' we removed sqlalchemy_utils - while many applications might want these useful
-add-ons - they aren't required for standard SQLAlchemy use.
+ - The default RegisterForm is now the new RegisterFormV2 - Please read :ref:`register_form_migration`.
+   Flask-Security will emit a DeprecationWarning if the :py:data:`SECURITY_USE_REGISTER_V2` is set to False.
+
+ - In 5.0 we changed the default mailer package to Flask-Mailman since Flask-Mail was no longer supported.
+   Flask-Mail is again supported and is part of Pallets-Eco. Both packages are still supported based on which one
+   an application initializes. The only backwards compatibility concern is that if you use the setup extras 'common',
+   it will install Flask-Mail rather than Flask-Mailman.
+
+ - In the optional dependencies 'fsqla' we removed sqlalchemy_utils - while many applications might want these useful
+   add-ons - they aren't required for standard SQLAlchemy use.
 
 Version 5.6.2
 -------------

@@ -36,7 +36,7 @@ and libraries. They include:
 * `Flask-Principal <https://pypi.org/project/Flask-Principal/>`_
 * `Flask-WTF <https://pypi.org/project/Flask-WTF/>`_
 * `itsdangerous <https://pypi.org/project/itsdangerous/>`_
-* `passlib <https://pypi.org/project/passlib/>`_
+* `passlib <https://pypi.org/project/libpass/>`_
 * `QRCode <https://pypi.org/project/qrcode/>`_
 * `webauthn <https://pypi.org/project/webauthn/>`_
 * `authlib <https://pypi.org/project/Authlib/>`_

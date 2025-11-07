@@ -5,7 +5,7 @@ Flask-SQLAlchemy
 Flask-SQLAlchemy-Lite
 argon2-cffi
 authlib
-bcrypt<5.0.0
+bcrypt
 bleach
 coverage
 cryptography
