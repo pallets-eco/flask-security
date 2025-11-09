@@ -1,15 +1,15 @@
 # Italian (Italy) translations for Flask-Security.
-# Copyright (C) 2023 ORGANIZATION
+# Copyright (C) 2025 THE AUTHORS
 # This file is distributed under the same license as the Flask-Security
 # project.
 # Giorgio Stampa <giorgio.stampa@sanofi.com>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 5.6.0\n"
+"Project-Id-Version: Flask-Security 5.6.2\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2025-11-03 19:21-0800\n"
-"PO-Revision-Date: 2025-05-15 17:05+0200\n"
+"PO-Revision-Date: 2025-11-09 18:12+0100\n"
 "Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
 "Language: it_IT\n"
 "Language-Team: \n"
@@ -419,12 +419,12 @@ msgstr ""
 
 #: flask_security/core.py:596
 msgid "Nickname for new passkey is required."
-msgstr ""
+msgstr "Il nome per la nuova passkey è obbligatorio."
 
 #: flask_security/core.py:600
 #, python-format
 msgid "%(name)s is already associated with a passkey."
-msgstr ""
+msgstr "%(name)s è già associato ad una passkey."
 
 #: flask_security/core.py:604
 #, python-format
@@ -434,33 +434,33 @@ msgstr "%(name)s non registrato con l'utente attuale."
 #: flask_security/core.py:608
 #, python-format
 msgid "Successfully deleted the passkey with name: %(name)s"
-msgstr ""
+msgstr "Passkey con nome: %(name)s eliminata"
 
 #: flask_security/core.py:612
 #, python-format
 msgid "Successfully added the passkey with name: %(name)s"
-msgstr ""
+msgstr "Passkey con nome: %(name)s aggiunta"
 
 #: flask_security/core.py:616
 msgid "Passkey already registered."
-msgstr ""
+msgstr "Passkey già registrata."
 
 #: flask_security/core.py:620
 msgid "Unregistered passkey."
-msgstr ""
+msgstr "Passkey non registrata."
 
 #: flask_security/core.py:624
 msgid "Passkey doesn't belong to any user."
-msgstr ""
+msgstr "La passkey non appartiene a nessun utente."
 
 #: flask_security/core.py:628
 #, python-format
 msgid "Could not verify passkey: %(cause)s."
-msgstr ""
+msgstr "Impossibile verificare la passkey: %(cause)s."
 
 #: flask_security/core.py:632
 msgid "Passkey not registered for this use (first or secondary)"
-msgstr ""
+msgstr "Passkey non registrata per questo uso (primaria o secondaria)"
 
 #: flask_security/core.py:636
 msgid "Credential user handle didn't match"
@@ -640,7 +640,7 @@ msgstr "password"
 
 #: flask_security/forms.py:102
 msgid "passkey"
-msgstr ""
+msgstr "passkey"
 
 #: flask_security/forms.py:103
 msgid "none"
@@ -759,7 +759,7 @@ msgstr "Imposta accesso unificato"
 
 #: flask_security/templates/security/_menu.html:44
 msgid "Passkey Setup"
-msgstr ""
+msgstr "Imposta passkey"
 
 #: flask_security/templates/security/_menu.html:55
 msgid "Unified Sign In"
@@ -801,12 +801,12 @@ msgstr "o"
 #: flask_security/templates/security/login_user.html:24
 #: flask_security/templates/security/us_signin.html:26
 msgid "Use a Passkey to Sign In"
-msgstr ""
+msgstr "Usa una passkey per accedere"
 
 #: flask_security/templates/security/login_user.html:27
 #: flask_security/templates/security/us_signin.html:29
 msgid "Sign in with a passkey"
-msgstr ""
+msgstr "Accedi con una passkey"
 
 #: flask_security/templates/security/login_user.html:33
 #: flask_security/templates/security/us_signin.html:35
@@ -915,12 +915,12 @@ msgstr "Si possono impostare qui."
 
 #: flask_security/templates/security/two_factor_setup.html:89
 msgid "Passkeys"
-msgstr ""
+msgstr "Passkeys"
 
 #: flask_security/templates/security/two_factor_setup.html:91
 #: flask_security/templates/security/us_setup.html:89
 msgid "This application supports passkeys."
-msgstr ""
+msgstr "Questa applicazione supporta le passkey."
 
 #: flask_security/templates/security/two_factor_verify_code.html:1
 #: flask_security/templates/security/two_factor_verify_code.html:7
@@ -977,20 +977,20 @@ msgstr "Il codice è stato inviato"
 #: flask_security/templates/security/us_verify.html:26
 #: flask_security/templates/security/verify.html:15
 msgid "Use a Passkey to Reauthenticate"
-msgstr ""
+msgstr "Utilizzare una passkey per autenticarsi nuovamente"
 
 #: flask_security/templates/security/wan_register.html:4
 #: flask_security/templates/security/wan_register.html:16
 msgid "Setup a New Passkey"
-msgstr ""
+msgstr "Imposta una nuova passkey"
 
 #: flask_security/templates/security/wan_register.html:19
 msgid "Start by providing a unique name for your passkey:"
-msgstr ""
+msgstr "Inizia col fornire un nome univoco per la tua nuova passkey:"
 
 #: flask_security/templates/security/wan_register.html:54
 msgid "Currently registered passkeys:"
-msgstr ""
+msgstr "Passkeys attualmente registrate:"
 
 #: flask_security/templates/security/wan_register.html:55
 #, python-format
@@ -1003,23 +1003,23 @@ msgstr ""
 
 #: flask_security/templates/security/wan_register.html:66
 msgid "Delete an Existing Passkey"
-msgstr ""
+msgstr "Elimina una passkey esistente"
 
 #: flask_security/templates/security/wan_signin.html:4
 msgid "Sign In With A Passkey"
-msgstr ""
+msgstr "Accedi utilizzando una passkey"
 
 #: flask_security/templates/security/wan_signin.html:17
 msgid "Sign In With a Passkey"
-msgstr ""
+msgstr "Accedi utilizzando una passkey"
 
 #: flask_security/templates/security/wan_signin.html:19
 msgid "Use a Passkey as a Second Factor"
-msgstr ""
+msgstr "Utilizza una passkey come secondo fattore"
 
 #: flask_security/templates/security/wan_verify.html:21
 msgid "Reauthenticate Using a Passkey"
-msgstr ""
+msgstr "Autenticati nuovamente utilizzando una passkey"
 
 #: flask_security/templates/security/email/change_email_instructions.html:8
 #, python-format
