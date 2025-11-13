@@ -38,7 +38,8 @@ from flask_security import AsaList, RoleMixin, UserMixin, WebAuthnMixin, naive_u
 
 class FsModels:
     """
-    Helper class for model mixins.
+    Helper class for model mixins when utilizing the pre-packaged models
+    for Flask-SQLAlchemy-Lite.
     """
 
     roles_users = None
