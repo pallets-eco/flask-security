@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.7.0
 -------------
 
-Released XXX
+Released November 14, 2025
 
 This release contains a set of small backward incompatible changes. Please read these notes carefully.
 
@@ -17,21 +17,22 @@ Features & Improvements
 
 Fixes
 +++++
-- (:issue:`1109`) Fix broken link in docs and improve docstrings/typing for util classes.
+- (:pr:`1115`) Fix broken link in docs and improve docstrings/typing for util classes.
 - (:issue:`1127`) Add nonce to script tags if configured to support nonce-based Content-Security-Policy (ahanak).
 - (:issue:`1133`) Remove unnecessary (optional) dependency on sqlalchemy_utils.
 - (:pr:`1140`) Fix localization of tf_select choices.
-- (:pr:`xx`) Support bcrypt 5.0 - See below for important compatibility concerns.
+- (:pr:`1143`) Support bcrypt 5.0 - See below for important compatibility concerns.
    This also replaces passlib with libpass for all versions.
 
 Docs and Chores
 +++++++++++++++
+- (:pr:`1144`) Update ES and IT translations (gissimo)
 - (:pr:`1106`) Drop support for Python 3.9. This removes the dependency on importlib_resources,
    updates pypy to 3.10, and uses 3.12 as base python for tests/tox.
 - (:pr:`1112`) Flip :py:data:`SECURITY_USE_REGISTER_V2` default to ``True``.
 - (:pr:`1117`) Flip default mail package back to Flask-Mail (from Flask-Mailman).
 - (:issue:`1139`) Change external facing terminology from 'WebAuthn Credential' to 'passkey'.
-- (:pr:`xx`) Setting of xx_util_cls from kwargs which was deprecated in 5.6.1 has been removed.
+- (:pr:`1142`) Setting of xx_util_cls from kwargs which was deprecated in 5.6.1 has been removed.
    The BACKWARDS_COMPAT_UNAUTHN option (code) which has been deprecated since 5.4 has been removed.
 
 Backwards Compatibility Concerns
