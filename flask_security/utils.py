@@ -418,6 +418,10 @@ def verify_and_update_password(password: str | bytes, user: UserMixin) -> bool:
         :meth:`.UserMixin.verify_and_update_password`
 
     """
+    # Capture the original input in case we need to pass the unaltered
+    # value to hash_password if the hashing algorithm has changed
+    input_password = password
+
     if use_double_hash(user.password):
         password = get_hmac(password)
         if _pwd_context.identify(user.password) == "bcrypt":
@@ -428,7 +432,7 @@ def verify_and_update_password(password: str | bytes, user: UserMixin) -> bool:
         verified = _pwd_context.verify(password, user.password)
 
     if verified and (user.password is None or _pwd_context.needs_update(user.password)):
-        user.password = hash_password(password)
+        user.password = hash_password(input_password)
         _datastore.put(user)
     return verified
 
