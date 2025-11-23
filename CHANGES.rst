@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.7.1
+-------------
+
+Released November 23, 2025
+
+Fixes
++++++
+- (:issue:`1147`) Regression when updating hash algorithm from bcrypt (willcroft)
+
 Version 5.7.0
 -------------
 
