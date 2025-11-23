@@ -4,7 +4,7 @@ test_hashing
 
 hashing tests
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -15,7 +15,13 @@ from pytest import raises
 from tests.test_utils import authenticate, init_app_with_options
 from passlib.hash import argon2, pbkdf2_sha256, django_pbkdf2_sha256, plaintext
 
-from flask_security.utils import hash_password, verify_password, get_hmac
+from flask_security.core import _get_pwd_context, _get_hashing_context
+from flask_security.utils import (
+    hash_password,
+    verify_password,
+    get_hmac,
+    verify_and_update_password,
+)
 
 
 def test_verify_password_double_hash(app, sqlalchemy_datastore):
@@ -112,6 +118,23 @@ def test_login_with_bcrypt_enabled(app, sqlalchemy_datastore):
     )
     response = authenticate(app.test_client(), follow_redirects=True)
     assert b"Home Page" in response.data
+
+    # Above created all accounts using bcrypt - now change over to argon
+    # and verify that verify_and_update_password works
+    app.config["SECURITY_PASSWORD_HASH"] = "argon2"
+    app.config["SECURITY_PASSWORD_HASH_PASSLIB_OPTIONS"] = dict(argon2__rounds=1)
+    app.config["SECURITY_PASSWORD_SCHEMES"] = ["argon2", "bcrypt"]
+    app.security.pwd_context = _get_pwd_context(app)
+    app.security.hashing_context = _get_hashing_context(app)
+    with app.app_context():
+        user1 = sqlalchemy_datastore.find_user(email="gal@lp.com")
+        assert app.security.pwd_context.identify(user1.password) == "bcrypt"
+        assert verify_and_update_password("password", user1)
+        # above should have rewritten password to argon1
+        sqlalchemy_datastore.commit()
+        assert verify_and_update_password("password", user1)
+        user1 = sqlalchemy_datastore.find_user(email="gal@lp.com")
+        assert app.security.pwd_context.identify(user1.password) == "argon2"
 
 
 def test_missing_hash_salt_option(app, sqlalchemy_datastore):
