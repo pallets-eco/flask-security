@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 2.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-11-03 19:21-0800\n"
+"POT-Creation-Date: 2025-11-27 10:14+0100\n"
 "PO-Revision-Date: 2025-10-30 10:13+0200\n"
 "Last-Translator: Sami Alfattany <sami_alfattani@hotmail.com>\n"
 "Language: ar_SA\n"
@@ -74,15 +74,15 @@ msgstr "إنقاذ التحقق بخطوتين"
 msgid "Verification Code"
 msgstr "رمز التحقق"
 
-#: flask_security/core.py:396
+#: flask_security/core.py:395
 msgid "Input not appropriate for requested API"
 msgstr "المدخلات غير مناسبة لطلب الـAPI"
 
-#: flask_security/core.py:398
+#: flask_security/core.py:397
 msgid "Authentication failed - identity or password/passcode invalid"
 msgstr "فشل التحقق - الهوية أو كلمة المرور/الرمز غير صالح"
 
-#: flask_security/core.py:403
+#: flask_security/core.py:402
 msgid ""
 "If that email address is in our system, you will receive an email "
 "describing how to reset your password."
@@ -90,23 +90,23 @@ msgstr ""
 "إذا كان عنوان البريد الإلكتروني موجودًا في نظامنا، ستتلقى بريدًا "
 "إلكترونيًا يشرح كيفية إعادة تعيين كلمة المرور الخاصة بك."
 
-#: flask_security/core.py:409
+#: flask_security/core.py:408
 msgid "If that identity is in our system, you were sent a code."
 msgstr "إذا كانت الهوية موجودة في نظامنا، فقد تم إرسال رمز إليك."
 
-#: flask_security/core.py:412
+#: flask_security/core.py:411
 msgid "You do not have permission to view this resource."
 msgstr "ليس لديك إذن لعرض هذا المورد."
 
-#: flask_security/core.py:414
+#: flask_security/core.py:413
 msgid "You must sign in to view this resource."
 msgstr "يجب عليك تسجيل الدخول لعرض هذا المورد."
 
-#: flask_security/core.py:418
+#: flask_security/core.py:417
 msgid "You must reauthenticate to access this endpoint"
 msgstr "يجب عليك إعادة التحقق للوصول إلى هذه النقطة النهائية"
 
-#: flask_security/core.py:423
+#: flask_security/core.py:422
 #, python-format
 msgid ""
 "Thank you. To confirm your email address %(email)s, please click on the "
@@ -115,36 +115,36 @@ msgstr ""
 "شكرًا لك. لتأكيد عنوان بريدك الإلكتروني %(email)s، يرجى النقر على الرابط "
 "في البريد الإلكتروني الذي أرسلناه إليك للتو."
 
-#: flask_security/core.py:429
+#: flask_security/core.py:428
 msgid "Thank you. Your email has been confirmed."
 msgstr "شكرًا لك. تم تأكيد بريدك الإلكتروني."
 
-#: flask_security/core.py:430
+#: flask_security/core.py:429
 msgid "Your email has already been confirmed."
 msgstr "تم تأكيد بريدك الإلكتروني بالفعل."
 
-#: flask_security/core.py:431
+#: flask_security/core.py:430
 msgid "Invalid confirmation token."
 msgstr "رمز التأكيد غير صالح."
 
-#: flask_security/core.py:433
+#: flask_security/core.py:432
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s مرتبط بالفعل بحساب."
 
-#: flask_security/core.py:438
+#: flask_security/core.py:437
 #, python-format
 msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
 "associated with an account."
 msgstr "سمة الهوية '%(attr)s' بالقيمة '%(value)s' مرتبطة بالفعل بحساب."
 
-#: flask_security/core.py:444
+#: flask_security/core.py:443
 #, python-format
 msgid "Identity %(id)s not registered"
 msgstr "الهوية %(id)s غير مسجلة"
 
-#: flask_security/core.py:449
+#: flask_security/core.py:448
 #, python-format
 msgid ""
 "An error occurred while communicating with the Oauth provider: "
@@ -153,55 +153,55 @@ msgstr ""
 "حدث خطأ أثناء التواصل مع مزود Oauth: (%(exerror)s - %(exdesc)s). يرجى "
 "المحاولة مرة أخرى."
 
-#: flask_security/core.py:455
+#: flask_security/core.py:454
 msgid "Password does not match"
 msgstr "كلمة المرور غير متطابقة"
 
-#: flask_security/core.py:456
+#: flask_security/core.py:455
 msgid "Passwords do not match"
 msgstr "كلمات المرور غير متطابقة"
 
-#: flask_security/core.py:457
+#: flask_security/core.py:456
 msgid "Redirections outside the domain are forbidden"
 msgstr "إعادة التوجيه خارج النطاق محظورة"
 
-#: flask_security/core.py:458
+#: flask_security/core.py:457
 msgid "Recovery code invalid"
 msgstr "رمز الاسترداد غير صالح"
 
-#: flask_security/core.py:459
+#: flask_security/core.py:458
 msgid "No recovery codes generated yet"
 msgstr "لم يتم إنشاء رموز استرداد بعد"
 
-#: flask_security/core.py:461
+#: flask_security/core.py:460
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr "تم إرسال تعليمات إعادة تعيين كلمة المرور إلى %(email)s."
 
-#: flask_security/core.py:465
+#: flask_security/core.py:464
 #, python-format
 msgid "You did not reset your password within %(within)s. "
 msgstr "لم تقم بإعادة تعيين كلمة المرور الخاصة بك خلال %(within)s."
 
-#: flask_security/core.py:468
+#: flask_security/core.py:467
 msgid "Invalid reset password token."
 msgstr "رمز إعادة تعيين كلمة المرور غير صالح."
 
-#: flask_security/core.py:469
+#: flask_security/core.py:468
 msgid "Email requires confirmation."
 msgstr "البريد الإلكتروني يتطلب تأكيدًا."
 
-#: flask_security/core.py:471
+#: flask_security/core.py:470
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr "تم إرسال تعليمات التأكيد إلى %(email)s."
 
-#: flask_security/core.py:475
+#: flask_security/core.py:474
 #, python-format
 msgid "You did not confirm your email within %(within)s. "
 msgstr "لم تقم بتأكيد بريدك الإلكتروني خلال %(within)s."
 
-#: flask_security/core.py:480
+#: flask_security/core.py:479
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -210,84 +210,84 @@ msgstr ""
 "لم تقم بتسجيل الدخول خلال %(within)s. تم إرسال تعليمات جديدة لتسجيل "
 "الدخول إلى %(email)s."
 
-#: flask_security/core.py:486
+#: flask_security/core.py:485
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr "تم إرسال تعليمات تسجيل الدخول إلى %(email)s."
 
-#: flask_security/core.py:489
+#: flask_security/core.py:488
 msgid "Invalid login token."
 msgstr "رمز تسجيل الدخول غير صالح."
 
-#: flask_security/core.py:490
+#: flask_security/core.py:489
 msgid "Account is disabled."
 msgstr "الحساب معطل."
 
-#: flask_security/core.py:491
+#: flask_security/core.py:490
 msgid "Email not provided"
 msgstr "لم يتم تقديم البريد الإلكتروني"
 
-#: flask_security/core.py:492
+#: flask_security/core.py:491
 msgid "Invalid email address"
 msgstr "عنوان البريد الإلكتروني غير صالح"
 
-#: flask_security/core.py:493 flask_security/core.py:539
+#: flask_security/core.py:492 flask_security/core.py:538
 msgid "Invalid code"
 msgstr "رمز غير صالح"
 
-#: flask_security/core.py:494
+#: flask_security/core.py:493
 msgid "Password not provided"
 msgstr "لم يتم تقديم كلمة المرور"
 
-#: flask_security/core.py:496
+#: flask_security/core.py:495
 #, python-format
 msgid "Password must be at least %(length)s characters"
 msgstr "يجب أن تكون كلمة المرور على الأقل %(length)s أحرف"
 
-#: flask_security/core.py:499
+#: flask_security/core.py:498
 msgid "Password not complex enough"
 msgstr "كلمة المرور ليست معقدة بما فيه الكفاية"
 
-#: flask_security/core.py:500
+#: flask_security/core.py:499
 msgid "Password on breached list"
 msgstr "كلمة المرور موجودة في قائمة الاختراقات"
 
-#: flask_security/core.py:502
+#: flask_security/core.py:501
 msgid "Failed to contact breached passwords site"
 msgstr "فشل في الاتصال بموقع كلمات المرور المخترقة"
 
-#: flask_security/core.py:505
+#: flask_security/core.py:504
 msgid "Phone number not valid e.g. missing country code"
 msgstr "رقم الهاتف غير صالح، على سبيل المثال، رمز البلد مفقود"
 
-#: flask_security/core.py:506
+#: flask_security/core.py:505
 msgid "Specified user does not exist"
 msgstr "المستخدم المحدد غير موجود"
 
-#: flask_security/core.py:507
+#: flask_security/core.py:506
 msgid "Invalid password"
 msgstr "كلمة المرور غير صالحة"
 
-#: flask_security/core.py:508
+#: flask_security/core.py:507
 msgid "Password or code submitted is not valid"
 msgstr "كلمة المرور أو الرمز المقدم غير صالح"
 
-#: flask_security/core.py:509
+#: flask_security/core.py:508
 msgid "You have successfully logged in."
 msgstr "لقد قمت بتسجيل الدخول بنجاح."
 
-#: flask_security/core.py:510 flask_security/templates/security/_menu.html:19
+#: flask_security/core.py:509 flask_security/templates/security/_menu.html:19
 #: flask_security/templates/security/_menu.html:65
 msgid "Forgot password?"
 msgstr "هل نسيت كلمة المرور؟"
 
-#: flask_security/core.py:513
+#: flask_security/core.py:512
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
 msgstr "لقد قمت بإعادة تعيين كلمة المرور الخاصة بك بنجاح وتم تسجيل دخولك تلقائيًا."
 
-#: flask_security/core.py:520
+#: flask_security/core.py:519
 msgid ""
 "You successfully reset your password. Please authenticate using your new "
 "password."
@@ -295,184 +295,184 @@ msgstr ""
 "لقد قمت بإعادة تعيين كلمة المرور الخاصة بك بنجاح. يرجى التحقق باستخدام "
 "كلمة المرور الجديدة الخاصة بك."
 
-#: flask_security/core.py:526
+#: flask_security/core.py:525
 msgid "Your new password must be different than your previous password."
 msgstr "يجب أن تكون كلمة المرور الجديدة مختلفة عن كلمة المرور السابقة."
 
-#: flask_security/core.py:529
+#: flask_security/core.py:528
 msgid "You successfully changed your password."
 msgstr "لقد قمت بتغيير كلمة المرور الخاصة بك بنجاح."
 
-#: flask_security/core.py:530
+#: flask_security/core.py:529
 msgid "Please log in to access this page."
 msgstr "يرجى تسجيل الدخول للوصول إلى هذه الصفحة."
 
-#: flask_security/core.py:531
+#: flask_security/core.py:530
 msgid "Please reauthenticate to access this page."
 msgstr "يرجى إعادة التحقق للوصول إلى هذه الصفحة."
 
-#: flask_security/core.py:532
+#: flask_security/core.py:531
 msgid "Reauthentication successful"
 msgstr "تمت إعادة التحقق بنجاح"
 
-#: flask_security/core.py:534
+#: flask_security/core.py:533
 msgid "You can only access this endpoint when not logged in."
 msgstr "يمكنك الوصول إلى هذه النقطة النهائية فقط عندما لا تكون مسجلاً الدخول."
 
-#: flask_security/core.py:537
+#: flask_security/core.py:536
 msgid "Code has been sent."
 msgstr "تم إرسال الرمز."
 
-#: flask_security/core.py:538
+#: flask_security/core.py:537
 msgid "Failed to send code. Please try again later"
 msgstr "فشل في إرسال الرمز. يرجى المحاولة مرة أخرى لاحقًا"
 
-#: flask_security/core.py:540
+#: flask_security/core.py:539
 msgid "Your code has been confirmed"
 msgstr "تم تأكيد الرمز الخاص بك"
 
-#: flask_security/core.py:542
+#: flask_security/core.py:541
 msgid "You successfully changed your two-factor method."
 msgstr "لقد قمت بتغيير طريقة التحقق بخطوتين بنجاح."
 
-#: flask_security/core.py:546
+#: flask_security/core.py:545
 msgid "You currently do not have permissions to access this page"
 msgstr "ليس لديك حاليًا أذونات للوصول إلى هذه الصفحة"
 
-#: flask_security/core.py:549
+#: flask_security/core.py:548
 msgid "Marked method is not valid"
 msgstr "الطريقة المحددة غير صالحة"
 
-#: flask_security/core.py:551
+#: flask_security/core.py:550
 msgid "You successfully disabled two-factor authorization."
 msgstr "لقد قمت بتعطيل التحقق بخطوتين بنجاح."
 
-#: flask_security/core.py:555 flask_security/core.py:564
+#: flask_security/core.py:554 flask_security/core.py:563
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
 msgstr "يجب إكمال الإعداد خلال %(within)s. يرجى البدء من جديد."
 
-#: flask_security/core.py:559
+#: flask_security/core.py:558
 #, python-format
 msgid "Currently active sign in options: %(method_list)s."
 msgstr "خيارات تسجيل الدخول النشطة حاليًا: %(method_list)s."
 
-#: flask_security/core.py:562
+#: flask_security/core.py:561
 msgid "Requested method is not valid"
 msgstr "الطريقة المطلوبة غير صالحة"
 
-#: flask_security/core.py:567
+#: flask_security/core.py:566
 msgid "Unified sign in setup successful"
 msgstr "تم إعداد تسجيل الدخول الموحد بنجاح"
 
-#: flask_security/core.py:568
+#: flask_security/core.py:567
 msgid "You must specify a valid identity to sign in"
 msgstr "يجب عليك تحديد هوية صالحة لتسجيل الدخول"
 
-#: flask_security/core.py:569
+#: flask_security/core.py:568
 #, python-format
 msgid "Use this code to sign in: %(code)s"
 msgstr "استخدم هذا الرمز لتسجيل الدخول: %(code)s"
 
-#: flask_security/core.py:570
+#: flask_security/core.py:569
 msgid "You successfully changed your username"
 msgstr "لقد قمت بتغيير اسم المستخدم الخاص بك بنجاح"
 
-#: flask_security/core.py:573
+#: flask_security/core.py:572
 #, python-format
 msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
 "characters"
 msgstr "يجب أن يكون اسم المستخدم على الأقل %(min)d أحرف وأقل من %(max)d أحرف"
 
-#: flask_security/core.py:579
+#: flask_security/core.py:578
 msgid "Username contains illegal characters"
 msgstr "اسم المستخدم يحتوي على أحرف غير قانونية"
 
-#: flask_security/core.py:583
+#: flask_security/core.py:582
 msgid "Username can contain only letters and numbers"
 msgstr "يمكن أن يحتوي اسم المستخدم على الأحرف والأرقام فقط"
 
-#: flask_security/core.py:586
+#: flask_security/core.py:585
 msgid "Username not provided"
 msgstr "لم يتم تقديم اسم المستخدم"
 
-#: flask_security/core.py:588
+#: flask_security/core.py:587
 #, python-format
 msgid "%(username)s is already associated with an account."
 msgstr "%(username)s مرتبط بالفعل بحساب."
 
-#: flask_security/core.py:592
+#: flask_security/core.py:591
 #, python-format
 msgid "Passkey operations must be completed within %(within)s. Please start over."
 msgstr ""
 
-#: flask_security/core.py:596
+#: flask_security/core.py:595
 msgid "Nickname for new passkey is required."
 msgstr ""
 
-#: flask_security/core.py:600
+#: flask_security/core.py:599
 #, python-format
 msgid "%(name)s is already associated with a passkey."
 msgstr ""
 
-#: flask_security/core.py:604
+#: flask_security/core.py:603
 #, python-format
 msgid "%(name)s not registered with current user."
 msgstr "%(name)s غير مسجل مع المستخدم الحالي."
 
-#: flask_security/core.py:608
+#: flask_security/core.py:607
 #, python-format
 msgid "Successfully deleted the passkey with name: %(name)s"
 msgstr ""
 
-#: flask_security/core.py:612
+#: flask_security/core.py:611
 #, python-format
 msgid "Successfully added the passkey with name: %(name)s"
 msgstr ""
 
-#: flask_security/core.py:616
+#: flask_security/core.py:615
 msgid "Passkey already registered."
 msgstr ""
 
-#: flask_security/core.py:620
+#: flask_security/core.py:619
 msgid "Unregistered passkey."
 msgstr ""
 
-#: flask_security/core.py:624
+#: flask_security/core.py:623
 msgid "Passkey doesn't belong to any user."
 msgstr ""
 
-#: flask_security/core.py:628
+#: flask_security/core.py:627
 #, python-format
 msgid "Could not verify passkey: %(cause)s."
 msgstr ""
 
-#: flask_security/core.py:632
+#: flask_security/core.py:631
 msgid "Passkey not registered for this use (first or secondary)"
 msgstr ""
 
-#: flask_security/core.py:636
+#: flask_security/core.py:635
 msgid "Credential user handle didn't match"
 msgstr "مقبض مستخدم الاعتماد لم يتطابق"
 
-#: flask_security/core.py:640
+#: flask_security/core.py:639
 #, python-format
 msgid "Confirmation must be completed within %(within)s. Please start over."
 msgstr "يجب إكمال التأكيد خلال %(within)s. يرجى البدء من جديد."
 
-#: flask_security/core.py:644
+#: flask_security/core.py:643
 msgid "Change of email address confirmed"
 msgstr "تم تأكيد تغيير عنوان البريد الإلكتروني"
 
-#: flask_security/core.py:649
+#: flask_security/core.py:648
 #, python-format
 msgid ""
 "Instructions to confirm your new email address have been sent to "
 "%(email)s."
 msgstr "تم إرسال تعليمات لتأكيد عنوان بريدك الإلكتروني الجديد إلى %(email)s."
 
-#: flask_security/core.py:655
+#: flask_security/core.py:654
 msgid "If registered, your username will be sent to your email."
 msgstr "إذا كنت مسجلاً، سيتم إرسال اسم المستخدم الخاص بك إلى بريدك الإلكتروني."
 
@@ -1310,3 +1310,4 @@ msgstr "يرجى إعادة بدء عملية التسجيل باسم مستخد
 
 #~ msgid "Reauthenticate Using Your WebAuthn Security Key"
 #~ msgstr "إعادة التحقق باستخدام مفتاح أمان WebAuthn الخاص بك"
+
