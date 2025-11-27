@@ -1310,4 +1310,3 @@ msgstr "يرجى إعادة بدء عملية التسجيل باسم مستخد
 
 #~ msgid "Reauthenticate Using Your WebAuthn Security Key"
 #~ msgstr "إعادة التحقق باستخدام مفتاح أمان WebAuthn الخاص بك"
-
