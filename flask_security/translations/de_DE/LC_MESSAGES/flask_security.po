@@ -226,7 +226,7 @@ msgstr ""
 #: flask_security/core.py:485
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
-msgstr "Eine Anmeldeanleitung wurde an %(email)s gesendet."
+msgstr "Eine Anleitung zur Anmeldung wurde an %(email)s gesendet."
 
 #: flask_security/core.py:488
 msgid "Invalid login token."
@@ -391,7 +391,7 @@ msgstr "Sie müssen eine gültige Identität auswählen, um sich anzumelden"
 #: flask_security/core.py:568
 #, python-format
 msgid "Use this code to sign in: %(code)s"
-msgstr "Das folgende Einmalpasswort zum Anmelden verwenden: %(code)s"
+msgstr "Verwenden Sie das folgende Einmalpasswort zur Anmeldung: %(code)s"
 
 #: flask_security/core.py:569
 msgid "You successfully changed your username"
@@ -918,7 +918,7 @@ msgstr "Geben Sie den Bestätigungscode ein um die Einrichtung abzuschließen"
 #: flask_security/templates/security/two_factor_setup.html:75
 #: flask_security/templates/security/two_factor_verify_code.html:11
 msgid "enter numeric code"
-msgstr "gib numerischen Code ein"
+msgstr "geben Sie den numerischen Code ein"
 
 #: flask_security/templates/security/two_factor_setup.html:83
 #: flask_security/templates/security/wan_register.html:78
