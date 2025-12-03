@@ -5,6 +5,7 @@
 # Mauko Quiroga <mauko.quiroga@data.gouv.fr>, 2017.
 # Martin Mozos <martinmozos@gmail.com>, 2020.
 # Giorgio Stampa <giorgio.stampa@sanofi.com>, 2025.
+# Ariel von Barnekow <avbarnekow@gmail.com>, 2025.
 #
 msgid ""
 msgstr ""

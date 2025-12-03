@@ -3,6 +3,7 @@
 # This file is distributed under the same license as the Flask-Security
 # project.
 # Orestes Sanchez <miceno.atreides@gmail.com>, 2018.
+# Ariel von Barnekow <avbarnekow@gmail.com>, 2025.
 #
 msgid ""
 msgstr ""
