@@ -32,7 +32,7 @@ msgstr "Inicio de sesión necesario"
 
 #: flask_security/core.py:297
 msgid "Welcome"
-msgstr "Bienvenido"
+msgstr "Bienvenido/a"
 
 #: flask_security/core.py:298
 msgid "Please confirm your email"
@@ -1103,7 +1103,7 @@ msgstr ""
 #: flask_security/templates/security/email/welcome.txt:8
 #, python-format
 msgid "Welcome %(email)s!"
-msgstr "¡Bienvenido %(email)s!"
+msgstr "¡Bienvenido/a %(email)s!"
 
 #: flask_security/templates/security/email/login_instructions.html:2
 #: flask_security/templates/security/email/login_instructions.txt:3
@@ -1128,7 +1128,7 @@ msgstr "Haz clic en el enlace de abajo para restablecer la contraseña:"
 #: flask_security/templates/security/email/us_instructions.txt:9
 #, python-format
 msgid "Welcome %(username)s!"
-msgstr "¡Bienvenido %(username)s!"
+msgstr "¡Bienvenido/a %(username)s!"
 
 #: flask_security/templates/security/email/two_factor_instructions.html:2
 #: flask_security/templates/security/email/two_factor_instructions.txt:3
