@@ -685,7 +685,7 @@ def test_form_labels(app, sqlalchemy_datastore):
         assert str(form.password.label.text) == "Mot de passe"
         assert str(form.new_password.label.text) == "Nouveau mot de passe"
         assert str(form.new_password_confirm.label.text) == "Confirmer le mot de passe"
-        assert str(form.submit.label.text) == "Changer le mot de passe"
+        assert str(form.submit.label.text) == "Changer de mot de passe"
 
 
 @pytest.mark.babel()
@@ -750,7 +750,7 @@ def test_per_request_xlate(app, client):
     assert response.status_code == 200
 
     # verify errors are xlated
-    assert b"Merci d&#39;indiquer un mot de passe" in response.data
+    assert b"Aucun mot de passe n&#39;est indiqu\xc3\xa9" in response.data
 
     # log in correctly - this should set locale in session
     data = dict(email="matt@lp.com", password="password", remember="y")
@@ -763,7 +763,7 @@ def test_per_request_xlate(app, client):
     response = client.get("/change", follow_redirects=True)
     assert response.status_code == 200
     assert b"Nouveau mot de passe" in response.data
-    assert b"<h1>Changer le mot de passe</h1>" in response.data
+    assert b"<h1>Changer de mot de passe</h1>" in response.data
 
     # try JSON
     response = client.post(
@@ -773,7 +773,7 @@ def test_per_request_xlate(app, client):
     )
     assert response.status_code == 400
     assert response.json["response"]["field_errors"]["new_password"] == [
-        "Merci d'indiquer un mot de passe"
+        "Aucun mot de passe n'est indiqué"
     ]
 
 

@@ -2188,8 +2188,8 @@ def test_xlation(app, client, get_message_local):
     with app.test_request_context():
         assert markupsafe.escape("SMS").encode() in response.data
         p = [
-            "Options de connexion actuellement actives : mot de passe et e-mail.",
-            "Options de connexion actuellement actives : e-mail et mot de passe.",
+            "Options de connexion actuellement activées : mot de passe et email.",
+            "Options de connexion actuellement activées : email et mot de passe.",
         ]
         assert any(markupsafe.escape(s).encode() in response.data for s in p)
 
@@ -2213,7 +2213,7 @@ def test_empty_password_xlate(app, client, get_message):
     with app.test_request_context():
         assert (
             markupsafe.escape(
-                "Options de connexion actuellement actives : e-mail."
+                "Options de connexion actuellement activées : email."
             ).encode()
             in response.data
         )
@@ -2223,7 +2223,7 @@ def test_empty_password_xlate(app, client, get_message):
     with app.test_request_context():
         assert (
             markupsafe.escape(
-                "Options de connexion actuellement actives : aucune."
+                "Options de connexion actuellement activées : aucune."
             ).encode()
             in response.data
         )
@@ -2232,7 +2232,7 @@ def test_empty_password_xlate(app, client, get_message):
     with app.test_request_context():
         assert (
             markupsafe.escape(
-                "Options de connexion actuellement actives : aucune."
+                "Options de connexion actuellement activées : aucune."
             ).encode()
             in response.data
         )
