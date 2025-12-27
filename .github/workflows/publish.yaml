@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
     steps:
