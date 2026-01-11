@@ -51,7 +51,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Flask-Security"
-copyright = "2012-2025"
+copyright = "2012-2026"
 author = "Matt Wright & Chris Wagner"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -189,12 +189,6 @@ html_show_sourcelink = False
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = "Flask-Securitydoc"
-
-
-# -- Options for LaTeX output --------------------------------------------
-latex_documents = [
-    ("index", "Flask-Security.tex", "Flask-Security Documentation", author, "manual")
-]
 
 # -- Options for sphinx-issues ---------------------------------------------
 # Github repo
