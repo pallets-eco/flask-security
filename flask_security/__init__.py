@@ -6,7 +6,7 @@ Flask-Security is a Flask extension that aims to add comprehensive security
 to Flask applications.
 
 :copyright: (c) 2012-2019 by Matt Wright.
-:copyright: (c) 2019-2025 by J. Christopher Wagner.
+:copyright: (c) 2019-2026 by J. Christopher Wagner.
 :license: MIT, see LICENSE for more details.
 """
 
