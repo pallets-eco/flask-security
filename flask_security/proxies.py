@@ -14,9 +14,7 @@ _security: "Security" = LocalProxy(  # type: ignore
     lambda: current_app.extensions["security"]
 )
 
-_datastore: "UserDatastore" = LocalProxy(  # type:ignore
-    lambda: _security.datastore
-)
+_datastore: "UserDatastore" = LocalProxy(lambda: _security.datastore)  # type: ignore
 
 _pwd_context: "CryptContext" = LocalProxy(lambda: _security.pwd_context)  # type: ignore
 

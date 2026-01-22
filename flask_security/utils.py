@@ -748,7 +748,7 @@ def get_post_action_redirect(
     The solution is to simply 'quote' the path.
     """
     rurl = propagate_next(find_redirect(config_key), next_loc)
-    (scheme, netloc, path, query, fragment) = urlsplit(rurl)
+    scheme, netloc, path, query, fragment = urlsplit(rurl)
     safe_url = urlunsplit((scheme, netloc, quote(path), query, fragment))
     return safe_url
 
