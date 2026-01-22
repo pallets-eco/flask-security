@@ -191,7 +191,9 @@ def login() -> ResponseValue:
         login_user(form.user, remember=remember_me, authn_via=["password"])
 
         if _security._want_json(request):
-            return base_render_json(form, include_auth_token=True)
+            return base_render_json(
+                form, include_auth_token=True, additional=dict(tf_required=False)
+            )
         return redirect(get_post_login_redirect())
 
     if request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
@@ -300,7 +302,6 @@ def register() -> ResponseValue:
 
     if form.validate_on_submit():
         after_this_request(view_commit)
-        did_login = False
         user = register_user(form)
         form.user = user
 
@@ -316,13 +317,15 @@ def register() -> ResponseValue:
                 return response
             # two factor not required - login user.
             login_user(user, authn_via=["register"])
-            did_login = True
+            if _security._want_json(request):
+                return base_render_json(
+                    form, include_auth_token=True, additional=dict(tf_required=False)
+                )
 
         if not _security._want_json(request):
             return redirect(get_post_register_redirect())
 
-        # Only include auth token if in fact user is permitted to login
-        return base_render_json(form, include_auth_token=did_login)
+        return base_render_json(form)
 
     # Here on GET or failed validate
     if request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
@@ -655,7 +658,11 @@ def reset_password(token):
             if _security._want_json(request):
                 dummy_form = DummyForm(formdata=None)
                 dummy_form.user = user
-                return base_render_json(dummy_form, include_auth_token=True)
+                return base_render_json(
+                    dummy_form,
+                    include_auth_token=True,
+                    additional=dict(tf_required=False),
+                )
             else:
                 do_flash(*get_message("PASSWORD_RESET"))
                 return redirect(
@@ -773,13 +780,15 @@ def two_factor_setup():
                 cv("FRESHNESS"), cv("FRESHNESS_GRACE_PERIOD")
             )
         user = current_user
+    form.user = user
 
     if form.validate_on_submit():
         # Before storing in DB and therefore requiring 2FA we need to
         # make sure it actually works.
-        # Requiring 2FA is triggered by having BOTH tf_totp_secret and
-        # tf_primary_method in the user record (or having the application
-        # global config TWO_FACTOR_REQUIRED)
+        # Requiring 2FA is triggered by having:
+        # - BOTH tf_totp_secret and tf_primary_method in the user record
+        # - OR having the application global config TWO_FACTOR_REQUIRED
+        # - OR User.check_tf_required() returns True (overridden by app).
         # Until we correctly validate the 2FA - we don't set primary_method in
         # user model but use the session to store it.
         pm = form.setup.data
@@ -870,13 +879,14 @@ def two_factor_setup():
 
     # We get here on GET and POST with failed validation.
     choices = cv("TWO_FACTOR_ENABLED_METHODS")[:]
-    if (not cv("TWO_FACTOR_REQUIRED")) and user.tf_primary_method is not None:
+    tf_required = user.check_tf_required_setup()
+    if (not tf_required) and user.tf_primary_method is not None:
         choices.insert(0, "disable")
 
     if _security._want_json(request):
         # Provide information application/UI might need to render their own form/input
         json_response = {
-            "tf_required": cv("TWO_FACTOR_REQUIRED"),
+            "tf_required": tf_required,
             "tf_primary_method": getattr(user, "tf_primary_method", None),  # old
             "tf_method": getattr(user, "tf_primary_method", None),
             "tf_phone_number": getattr(user, "tf_phone_number", None),
@@ -896,7 +906,7 @@ def two_factor_setup():
         ),
         changing=changing,
         state_token=None,
-        two_factor_required=cv("TWO_FACTOR_REQUIRED"),
+        two_factor_required=tf_required,
         **_ctx("tf_setup"),
     )
 

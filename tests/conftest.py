@@ -532,6 +532,14 @@ def sqlalchemy_setup(app, tmpdir, realdburl):
     class User(db.Model, fsqla.FsUserMixin):
         security_number = Column(Integer, unique=True)
 
+        def __init__(self, *args, **kwargs):
+            from flask import current_app
+
+            super().__init__(*args, **kwargs)
+            inject = current_app.config.get("TESTING_USER_INJECT") or dict()
+            for k, v in inject.items():
+                setattr(User, k, v)
+
         def get_security_payload(self):
             # Make sure we still properly hook up to flask's JSON extension
             # which handles datetime

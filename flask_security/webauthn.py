@@ -717,7 +717,7 @@ def webauthn_signin_response(token: str) -> ResponseValue:
         )
         _datastore.put(form.cred)
 
-        json_payload = {}
+        json_payload: dict[str, t.Any] = {}
         if is_secondary:
             tf_token = _security.two_factor_plugins.tf_complete(form.user, True)
             if tf_token:
@@ -750,6 +750,7 @@ def webauthn_signin_response(token: str) -> ResponseValue:
             # Tell caller where we would go if forms based - they can use it or
             # not.
             json_payload["post_login_url"] = goto_url
+            json_payload["tf_required"] = False
             return base_render_json(
                 form, include_auth_token=True, additional=json_payload
             )

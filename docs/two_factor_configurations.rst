@@ -4,7 +4,7 @@ Two-factor Configurations
 Two-factor authentication provides a second layer of security to any type of
 login, requiring extra information or a secondary device to log in, in addition
 to ones login credentials. The added feature includes the ability to add a
-secondary authentication method using either via email, sms message, or an
+secondary authentication method using either an email link, sms message, or an
 Authenticator app such as Google, Lastpass, or Authy.
 
 The following code sample illustrates how to get started as quickly as
@@ -160,7 +160,7 @@ The Two-factor (2FA) API has four paths:
     - Rescue
 
 When using forms, the flow from one state to the next is handled by the forms themselves. When using JSON
-the application must of course explicitly access the appropriate endpoints. The descriptions below describe the JSON access pattern.
+the application must explicitly access the appropriate endpoints. The descriptions below is for the JSON access pattern.
 
 Normal Login
 ~~~~~~~~~~~~
@@ -201,3 +201,11 @@ security of a two factor authentication but with a slightly better user experien
 and clicking the 'Remember' button on the login form. Once the two factor code is validated, a cookie is set to allow skipping the validation step.  The cookie is named
 ``tf_validity`` and contains the signed token containing the user's ``fs_uniquifier``.  The cookie and token are both set to expire after the time delta given in
 :py:data:`SECURITY_TWO_FACTOR_LOGIN_VALIDITY`.  Note that setting ``SECURITY_TWO_FACTOR_LOGIN_VALIDITY`` to 0 is equivalent to ``SECURITY_TWO_FACTOR_ALWAYS_VALIDATE`` being ``True``.
+
+Fine-Grained Control of Two-Factor
++++++++++++++++++++++++++++++++++++
+The decision whether to require a second factor after primary authentication is made in :py:meth:`.UserMixin.check_tf_required`.
+The default implementation returns True if :py:data:`SECURITY_TWO_FACTOR_REQUIRED` is set OR the user has a two-factor method already setup AND
+and recent two-factor authentication isn't 'valid' (see above).
+
+This method can be overridden in the applications User class. A common use case might be to require two-factor for any user with the 'admin' role.

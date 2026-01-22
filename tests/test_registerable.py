@@ -99,8 +99,10 @@ def test_registerable_flag(clients, app, get_message, outbox):
 
     assert response.headers["content-type"] == "application/json"
     assert response.json["meta"]["code"] == 200
-    assert len(response.json["response"]) == 2
-    assert all(k in response.json["response"] for k in ["csrf_token", "user"])
+    assert len(response.json["response"]) == 3
+    assert all(
+        k in response.json["response"] for k in ["csrf_token", "user", "tf_required"]
+    )
 
     logout(clients)
 

@@ -4,7 +4,7 @@ test_unified_signin
 
 Unified signin tests
 
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 """
@@ -1528,6 +1528,34 @@ def test_tf_link(app, client, get_message, outbox):
 
 
 @pytest.mark.two_factor()
+@pytest.mark.settings(two_factor_required=True, us_mfa_required=["password"])
+def test_tf_link_not_email(app, client, get_message, outbox):
+    # Verify two-factor not required when using magic link and us_mfa_required set
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    def authned(myapp, user, **extra_args):
+        auths.append((user.email, extra_args["authn_via"]))
+
+    set_email(app)
+    response = client.post(
+        "/us-signin/send-code",
+        data=dict(identity="matt@lp.com", chosen_method="email"),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Sign In" in response.data
+
+    matcher = re.match(
+        r".*(http://[^\s*]*).*", outbox[0].body, re.IGNORECASE | re.DOTALL
+    )
+    magic_link = matcher.group(1)
+    client.get(magic_link, follow_redirects=True)
+    assert "email" in auths[0][1]
+    assert is_authenticated(client, get_message)
+
+
+@pytest.mark.two_factor()
 @pytest.mark.settings(
     two_factor_required=True,
     redirect_host="localhost:8081",
@@ -2376,3 +2404,24 @@ def test_us_setup_authenticator_sms(app, client, get_message):
     assert len(chosen_methods_choices) == 2
     assert chosen_methods_choices[0][0] == "authenticator"
     assert chosen_methods_choices[1][0] == "sms"
+
+
+def _tf_required(self, tf_setup_methods, tf_fresh):
+    if self.email == "gal@lp.com":
+        return False, tf_setup_methods
+    return True, tf_setup_methods
+
+
+@pytest.mark.two_factor()
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(check_tf_required=_tf_required))
+@pytest.mark.settings(two_factor_required=True)
+def test_override_tf_required(app, client, get_message):
+    data = dict(identity="jill@lp.com", passcode="password")
+    response = client.post("/us-signin", json=data)
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    data = dict(identity="gal@lp.com", passcode="password")
+    response = client.post("/us-signin", json=data)
+    assert response.status_code == 200
+    assert not response.json["response"]["tf_required"]

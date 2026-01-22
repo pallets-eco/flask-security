@@ -969,19 +969,21 @@ class TwoFactorSetupForm(Form):
     phone = TelField(get_form_field_label("phone"))
     submit = SubmitField(get_form_field_label("submit"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
+        self.user: UserMixin | None = None  # set by view
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
             return False
+        assert self.user is not None
         choices = list(cv("TWO_FACTOR_ENABLED_METHODS"))
         assert isinstance(self.setup.errors, list)
         assert isinstance(self.phone.errors, list)
         if "email" in choices:
             # backwards compat
             choices.append("mail")
-        if not cv("TWO_FACTOR_REQUIRED"):
+        if not self.user.check_tf_required_setup():
             choices.append("disable")
         if "setup" not in self.data or self.data["setup"] not in choices:
             self.setup.errors.append(get_message("TWO_FACTOR_METHOD_NOT_AVAILABLE")[0])
