@@ -20,6 +20,7 @@ Since we don't actually send email - we have signal handlers flash the required
 data and a mail sender that flashes what mail would be sent!
 
 """
+
 from __future__ import annotations
 
 import base64
