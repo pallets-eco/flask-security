@@ -21,7 +21,6 @@ from flask import render_template_string
 from flask_security import Security, auth_required
 from tests.test_utils import get_form_input_value, get_session, logout
 
-
 REAL_VALIDATE_CSRF = None
 
 
