@@ -7,7 +7,7 @@ Flask-Security core module
 :copyright: (c) 2012 by Matt Wright.
 :copyright: (c) 2017 by CERN.
 :copyright: (c) 2017 by ETH Zurich, Swiss Data Science Center.
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -1006,7 +1006,7 @@ class UserMixin(BaseUserMixin):
 
     def get_security_payload(self) -> dict[str, t.Any]:
         """Serialize user object as response payload.
-        Override this to return any/all of the user object in JSON responses.
+        Override this to return any/all the user object in JSON responses.
         Return a dict.
         """
         return {}
@@ -1016,8 +1016,8 @@ class UserMixin(BaseUserMixin):
     ) -> dict[str, t.Any]:
         """Return user info that will be added to redirect query params.
 
-        :param existing: A dict that will be updated.
-        :return: A dict whose keys will be query params and values will be query values.
+        :param existing: Existing dict of params to update.
+        :return: A dict whose keys are query params and values are query values.
 
         The returned dict will always have an 'identity' key/value.
         If the User Model contains 'email', an 'email' key/value will be added.
@@ -1103,6 +1103,42 @@ class UserMixin(BaseUserMixin):
         except Exception:
             return get_message("FAILED_TO_SEND_CODE")[0]
         return None
+
+    def check_tf_required(
+        self, tf_setup_methods: list[tuple[str, str]], tf_fresh: bool
+    ) -> tuple[bool, list[tuple[str, str]]]:
+        """Check if current user requires two-factor authentication.
+
+        :param tf_setup_methods: A tuple of (two_factor method, label) - methods
+            the user has already set up (from all two-factor implementations)
+        :param tf_fresh: if True then user has recently completed
+            two-factor authentication on the requesting device
+        :return: Whether TFA is required for this user and a possibly augmented
+            list of allowable methods
+
+        The default implementation uses global configuration values.
+        An application could for example require two-factor authentication for users
+        with a particular role, or not require two-factor for 'new' users.
+        This is called AFTER the user has successfully authenticated.
+
+        .. versionadded:: 5.8.0
+        """
+        if cv("TWO_FACTOR_REQUIRED") or len(tf_setup_methods) > 0:
+            if cv("TWO_FACTOR_ALWAYS_VALIDATE") or not tf_fresh:
+                return True, tf_setup_methods
+        return False, tf_setup_methods
+
+    def check_tf_required_setup(self) -> bool:
+        """Check if current user requires two-factor authentication.
+        This is called as part of two-factor setup to inform the caller
+
+        N.B. this is only called from tf-setup - not from webauthn and
+        is only used to improve UX - the above method check_tf_required is the
+        definitive answer in the authentication path.
+
+        .. versionadded:: 5.8.0
+        """
+        return cv("TWO_FACTOR_REQUIRED")
 
 
 class WebAuthnMixin:

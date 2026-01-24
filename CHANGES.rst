@@ -3,6 +3,25 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.8.0
+-------------
+
+Released TBD
+
+Features & Improvements
++++++++++++++++++++++++
+- (:pr:`xx`) Add API :py:meth:`.UserMixin.check_tf_required` to allow applications to control which users
+  require two-factor authentication.
+
+Fixes
++++++
+
+Docs and Chores
++++++++++++++++
+- (:pr:`1150`) Update de_DE translations (swaeberle)
+- (:pr:`1151`) Update ca_ES translations (arielvb)
+- (:pr:`1152`) Update es_ES translations (arielvb)
+
 Version 5.7.1
 -------------
 

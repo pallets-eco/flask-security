@@ -4,7 +4,7 @@ test_two_factor
 
 two_factor tests
 
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -1720,3 +1720,47 @@ def test_csrf_2fa_nounauth_cookie(app, client):
     )
     assert response.status_code == 200
     assert response.json["label"] == "label"
+
+
+def _tf_required(self, tf_setup_methods, tf_fresh):
+    if self.email == "gal@lp.com":
+        return False, tf_setup_methods
+    return True, tf_setup_methods
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(check_tf_required=_tf_required))
+@pytest.mark.settings(two_factor_required=True)
+def test_override_tf_required(app, client, get_message):
+    data = dict(email="jill@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 200
+    assert not response.json["response"]["tf_required"]
+
+
+def _tf_required_admin(self, tf_setup_methods, tf_fresh):
+    if self.has_role("admin"):
+        return True, tf_setup_methods
+    return False, tf_setup_methods
+
+
+@pytest.mark.app_settings(
+    TESTING_USER_INJECT=dict(check_tf_required=_tf_required_admin)
+)
+def test_override_tf_required_admin(app, client, get_message):
+    # jill is an 'author' so shouldn't require TF
+    data = dict(email="jill@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 200
+    assert not response.json["response"]["tf_required"]
+    client.post("/logout")
+
+    # gal is an admin so should require TF
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]

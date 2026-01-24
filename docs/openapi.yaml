@@ -94,7 +94,7 @@ paths:
                     The user successfully signed in using their primary credential.
                     Note that depending on SECURITY_TWO_FACTOR configuration variable, a second form of authentication might be required prior to the user being fully authenticated.
                     `tf_required` will be set to True in this case.
-                    Note that if 2FA is not configured, none of the ``tf_`` properties will be returned.
+                    Note that if 2FA is not configured, only the ``tf_required`` property (=False) will be returned.
                  - $ref: "#/components/schemas/LoginJsonResponse"
             text/html:
               schema:

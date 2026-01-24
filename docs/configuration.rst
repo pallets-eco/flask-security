@@ -1255,16 +1255,20 @@ Configuration related to the two-factor authentication feature.
 .. py:data:: SECURITY_TWO_FACTOR
 
     Specifies if Flask-Security should enable the two-factor login feature.
-    If set to ``True``, in addition to their passwords, users will be required to
-    enter a code that is sent to them. Note that unless
-    :data:`SECURITY_TWO_FACTOR_REQUIRED` is set - this is opt-in.
 
     Default: ``False``.
 .. py:data:: SECURITY_TWO_FACTOR_REQUIRED
 
-    If set to ``True`` then all users will be required to setup and use two-factor authorization.
+    If set to ``True`` then all users will be required to setup and use two-factor authentication.
+    Please see :py:meth:`.UserMixin.check_tf_required` and :ref:`two_factor_configurations:Fine-Grained Control of Two-Factor`
+    for ways the application can
+    more finely tune which users require two-factor authentication.
 
     Default: ``False``.
+
+    .. versionchanged:: 5.8.0
+        Added overridable method that can alter this behavior.
+
 .. py:data:: SECURITY_TWO_FACTOR_ENABLED_METHODS
 
     Specifies the default enabled methods for two-factor authentication.
@@ -1341,7 +1345,7 @@ Configuration related to the two-factor authentication feature.
 .. py:data:: SECURITY_TWO_FACTOR_SELECT_URL
 
     Specifies the two-factor select URL. This is used when the user has
-    setup more than one second factor.
+    setup more than one second factor - see :ref:`webauthn:webauthn`.
 
     Default: ``"/tf-select"``.
 

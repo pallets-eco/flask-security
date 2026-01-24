@@ -4,7 +4,7 @@ flask_security.tf_plugin
 
 Flask-Security Two-Factor Plugin Module
 
-:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2022-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 TODO:
@@ -180,7 +180,8 @@ class TfPlugin:
 
     def get_setup_tf_methods(self, user: UserMixin) -> list[tuple[str, str]]:
         """Return a list of tuples representing currently configured methods.
-        The tuple is (value, label) - suitable for use in a FlaskForm Select element.
+        The tuple is (value, translated(value)) - suitable for use in a
+        FlaskForm Select element.
         """
         methods = []
         for impl in self._tf_impls.values():
@@ -202,49 +203,50 @@ class TfPlugin:
         """
         json_payload: dict[str, t.Any]
         if _security.support_mfa:
-            tf_setup_methods = [k for k, v in self.get_setup_tf_methods(user)]
-            if cv("TWO_FACTOR_REQUIRED") or len(tf_setup_methods) > 0:
-                tf_fresh = tf_verify_validity_token(user.fs_uniquifier)
-                if cv("TWO_FACTOR_ALWAYS_VALIDATE") or not tf_fresh:
-                    # Clean out any potential old session info - in case of previous
-                    # aborted 2FA attempt.
-                    tf_clean_session()
+            tf_setup_methods = self.get_setup_tf_methods(user)
+            tf_fresh = tf_verify_validity_token(user.fs_uniquifier)
+            tf_required, tf_available_methods = user.check_tf_required(
+                tf_setup_methods, tf_fresh
+            )
+            if tf_required:
+                tf_setup_methods_keys = [t1 for t1, t2 in tf_setup_methods]
+                # Clean out any potential old session info - in case of previous
+                # aborted 2FA attempt.
+                tf_clean_session()
 
-                    json_payload = {"tf_required": True}
-                    if remember_me:
-                        session["tf_remember_login"] = remember_me
+                json_payload = {"tf_required": True}
+                if remember_me:
+                    session["tf_remember_login"] = remember_me
 
-                    session["tf_user_id"] = user.fs_uniquifier
-                    # A backwards compat hack - the original twofactor could be setup
-                    # as part of initial login.
-                    if len(tf_setup_methods) == 0:
-                        # only initial two-factor implementation supports this
-                        return self._tf_impls["code"].tf_login(
-                            user, json_payload, next_loc
-                        )
-                    elif len(tf_setup_methods) == 1:
-                        # method_to_impl can't return None here since we just
-                        # got the methods up above.
-                        impl = t.cast(
-                            TfPluginBase,
-                            self.method_to_impl(user, tf_setup_methods[0]),
-                        )
-                        return impl.tf_login(user, json_payload, next_loc)
-                    else:
-                        session["tf_select"] = True
-                        if not _security._want_json(request):
-                            values = dict(next=next_loc) if next_loc else dict()
-                            return redirect(url_for_security("tf_select", **values))
-                        # Let's force app to go through tf-select just in case we want
-                        # to do further validation... However, provide the choices
-                        # so they can just do a POST
-                        json_payload.update(
-                            {
-                                "tf_select": True,
-                                "tf_setup_methods": tf_setup_methods,
-                            }
-                        )
-                        return simple_render_json(json_payload)
+                session["tf_user_id"] = user.fs_uniquifier
+                # A backwards compat hack - the original twofactor could be setup
+                # as part of initial login.
+                if len(tf_setup_methods) == 0:
+                    # only initial two-factor implementation supports this
+                    return self._tf_impls["code"].tf_login(user, json_payload, next_loc)
+                elif len(tf_setup_methods) == 1:
+                    # method_to_impl can't return None here since we just
+                    # got the methods up above.
+                    impl = t.cast(
+                        TfPluginBase,
+                        self.method_to_impl(user, tf_setup_methods_keys[0]),
+                    )
+                    return impl.tf_login(user, json_payload, next_loc)
+                else:
+                    session["tf_select"] = True
+                    if not _security._want_json(request):
+                        values = dict(next=next_loc) if next_loc else dict()
+                        return redirect(url_for_security("tf_select", **values))
+                    # Let's force app to go through tf-select just in case we want
+                    # to do further validation... However, provide the choices
+                    # so they can just do a POST
+                    json_payload.update(
+                        {
+                            "tf_select": True,
+                            "tf_setup_methods": tf_setup_methods_keys,
+                        }
+                    )
+                    return simple_render_json(json_payload)
         return None
 
     def tf_complete(self, user: UserMixin, dologin: bool) -> str | None:
