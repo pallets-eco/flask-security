@@ -1332,47 +1332,20 @@ def test_bad_sender(app, client, get_message):
     )
 
 
-def test_replace_send_code(app, get_message):
-    pytest.importorskip("sqlalchemy")
-    pytest.importorskip("flask_sqlalchemy")
+cresponse = [None, "That didnt work out as we planned", "Failed Again"]
 
-    # replace tf_send_code - and have it return an error to check that.
-    from flask_sqlalchemy import SQLAlchemy
-    from flask_security.models import fsqla_v2 as fsqla
-    from flask_security import Security, hash_password
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-    db = SQLAlchemy(app)
+def _tf_send_code(self, method, totp_secret, phone_number):
+    return self.code_response.pop(0)
 
-    fsqla.FsModels.set_db_info(db)
 
-    class Role(db.Model, fsqla.FsRoleMixin):
-        pass
-
-    class User(db.Model, fsqla.FsUserMixin):
-        rv = [None, "That didnt work out as we planned", "Failed Again"]
-
-        def tf_send_security_token(self, method, **kwargs):
-            return User.rv.pop(0)
-
-    with app.app_context():
-        db.create_all()
-
-    ds = SQLAlchemyUserDatastore(db, User, Role)
-    app.security = Security(app, datastore=ds)
-
-    with app.app_context():
-        client = app.test_client()
-
-        ds.create_user(
-            email="trp@lp.com",
-            password=hash_password("password"),
-            tf_primary_method="sms",
-            tf_totp_secret=app.security._totp_factory.generate_totp_secret(),
-        )
-        ds.commit()
-
-    data = dict(email="trp@lp.com", password="password")
+@pytest.mark.app_settings(
+    TESTING_USER_INJECT=dict(
+        tf_send_security_token=_tf_send_code, code_response=cresponse
+    )
+)
+def test_replace_send_code(app, client, get_message):
+    data = dict(email="gal@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
     assert b"Please enter your authentication code" in response.data
     rescue_data = dict(help_setup="email")
@@ -1384,8 +1357,6 @@ def test_replace_send_code(app, get_message):
     response = client.post("/tf-rescue", json=rescue_data, headers=headers)
     assert response.status_code == 500
     assert response.json["response"]["field_errors"]["help_setup"][0] == "Failed Again"
-    with app.app_context():
-        db.engine.dispose()
 
 
 def test_propagate_next(app, client):
