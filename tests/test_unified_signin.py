@@ -41,7 +41,6 @@ from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
 from flask_security import (
     SmsSenderFactory,
-    SQLAlchemyUserDatastore,
     UserMixin,
     uia_email_mapper,
     uia_phone_mapper,
@@ -1680,49 +1679,18 @@ def test_bad_sender(app, client, get_message):
     ) == get_message("FAILED_TO_SEND_CODE")
 
 
+def _send_code(self, method, **kwargs):
+    assert method == "sms"
+    return "NO SMS AVAILABLE"
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(us_send_security_token=_send_code))
 @pytest.mark.registerable()
-def test_replace_send_code(app, get_message):
-    pytest.importorskip("sqlalchemy")
-    pytest.importorskip("flask_sqlalchemy")
-
-    from flask_sqlalchemy import SQLAlchemy
-    from flask_security.models import fsqla_v2 as fsqla
-    from flask_security import Security, us_send_security_token
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-    db = SQLAlchemy(app)
-
-    fsqla.FsModels.set_db_info(db)
-
-    class Role(db.Model, fsqla.FsRoleMixin):
-        pass
-
-    class User(db.Model, fsqla.FsUserMixin):
-        def us_send_security_token(self, method, **kwargs):
-            assert method == "sms"
-            us_send_security_token(self, method, **kwargs)
-
-    with app.app_context():
-        db.create_all()
-
-    ds = SQLAlchemyUserDatastore(db, User, Role)
-    app.security = Security(app, datastore=ds)
-
-    client = app.test_client()
-
-    # since we don't use client fixture - have to add user
-    data = dict(email="trp@lp.com", password="password", password_confirm="password")
-    response = client.post("/register", data=data, follow_redirects=True)
-    assert b"Welcome trp@lp.com" in response.data
-    logout(client)
-
-    set_phone(app, email="trp@lp.com")
-    data = dict(identity="trp@lp.com", chosen_method="sms")
+def test_replace_send_code(app, client, get_message):
+    set_phone(app, "gal@lp.com")
+    data = dict(identity="gal@lp.com", chosen_method="sms")
     response = client.post("/us-signin/send-code", data=data, follow_redirects=True)
-    assert b"Code has been sent" in response.data
-
-    with app.app_context():
-        db.engine.dispose()  # sqlite wants everything cleaned up
+    assert b"NO SMS AVAILABLE" in response.data
 
 
 @pytest.mark.settings(us_enabled_methods=["password"])

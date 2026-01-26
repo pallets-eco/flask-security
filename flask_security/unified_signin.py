@@ -451,8 +451,9 @@ def us_signin_send_code() -> ResponseValue:
                 form, include_user=False, error_status_code=500 if msg else 200
             )
 
-        # Make sure same response as non-setup method below
-        do_flash(*generic_message("CODE_HAS_BEEN_SENT", "GENERIC_US_SIGNIN"))
+        if not msg:
+            # Make sure same response as non-setup method below
+            do_flash(*generic_message("CODE_HAS_BEEN_SENT", "GENERIC_US_SIGNIN"))
 
         return _security.render_template(
             cv("US_SIGNIN_TEMPLATE"),
