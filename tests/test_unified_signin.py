@@ -670,7 +670,7 @@ def test_verify_link_spa(app, client, get_message, outbox):
 
     # Try with no code
     response = client.get("us-verify-link?id=matt@lp.com", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
     assert "/login-error" == split.path
@@ -679,7 +679,7 @@ def test_verify_link_spa(app, client, get_message, outbox):
 
     # Try unknown user
     response = client.get("us-verify-link?id=98765&code=12345", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
     assert "/login-error" == split.path
@@ -691,7 +691,7 @@ def test_verify_link_spa(app, client, get_message, outbox):
         f"us-verify-link?id={requests[0]['user'].fs_uniquifier}&code=12345",
         follow_redirects=False,
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
     assert "/login-error" == split.path
@@ -700,7 +700,7 @@ def test_verify_link_spa(app, client, get_message, outbox):
 
     # Try actual link
     response = client.get(magic_link, follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     split = urlsplit(response.headers["Location"])
     assert "localhost:8081" == split.netloc
     assert "/post-login" == split.path

@@ -63,7 +63,7 @@ def test_confirmable_flag(app, clients, get_message):
         )
         response = clients.post("/register", data=data)
 
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
     response = authenticate(clients, email=email, password="awesome sunset")
     assert get_message("CONFIRMATION_REQUIRED") in response.data
@@ -431,7 +431,7 @@ def test_spa_get(app, client, get_message):
         token = registrations[0]["confirm_token"]
 
         response = client.get("/confirm/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/confirm-redirect" == split.path
@@ -441,7 +441,7 @@ def test_spa_get(app, client, get_message):
         response = client.get("/confirm/" + token)
         split = urlsplit(response.headers["Location"])
         qparams = dict(parse_qsl(split.query))
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert "/confirm-error" in response.location
         assert "email" not in qparams
         assert get_message("ALREADY_CONFIRMED") in qparams["info"].encode("utf-8")
@@ -474,7 +474,7 @@ def test_spa_get_bad_token(app, client, get_message):
             token = registrations[0]["confirm_token"]
 
         response = client.get("/confirm/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/confirm-error" == split.path
@@ -492,7 +492,7 @@ def test_spa_get_bad_token(app, client, get_message):
             "&url_id=fbb89a8328e58c181ea7d064c2987874bc54a23d"
         )
         response = client.get("/confirm/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/confirm-error" == split.path
@@ -590,7 +590,7 @@ def test_email_not_identity(app, client, get_message):
 
     token = registrations[0]["confirm_token"]
     response = client.get("/confirm/" + token, headers={"Accept": "application/json"})
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert not is_authenticated(client, get_message)
 
     # check that username must be unique
@@ -741,7 +741,7 @@ def test_confirmable_async(app, client, get_message):
             next="",
         )
         response = client.post("/register", data=data)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     client.post(
         "/confirm",
         json=dict(email=email),

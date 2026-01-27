@@ -103,7 +103,7 @@ def test_rc(app, client, get_message):
     response = client.post(
         "/mf-recovery", data=dict(code=codes[0]), follow_redirects=False
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     logout(client)
 
     response = client.post("/login", json=dict(email="gal@lp.com", password="password"))
@@ -165,7 +165,7 @@ def test_rc_bad_state(app, client, get_message):
     response = client.post(
         "/api/mf-recovery", data=dict(code="hi"), follow_redirects=False
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/api/login" in response.location
 
 

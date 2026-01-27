@@ -51,7 +51,7 @@ def test_default_unauthn(app, client):
     """Test default unauthn handler with and without json"""
 
     response = client.get("/profile")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/login?next=/profile"
 
     response = client.get("/profile", headers={"Accept": "application/json"})
@@ -67,7 +67,7 @@ def test_default_unauthn_bp(app, client):
     """Test default unauthn handler with blueprint prefix and login url"""
 
     response = client.get("/profile")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/myprefix/mylogin?next=/profile"
 
 

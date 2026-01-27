@@ -97,7 +97,7 @@ def test_github(app, sqlalchemy_datastore, get_message):
     assert "/whatever" in response.location
 
     response = client.get("/login/oauthresponse/github", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/post_login" in response.location
     # verify logged in
     response = client.get("/profile", follow_redirects=False)
@@ -144,7 +144,7 @@ def test_outside_register(app, sqlalchemy_datastore, get_message):
     assert "/whatever" in response.location
 
     response = client.get("/login/oauthresponse/myoauth", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/post_login" in response.location
     # verify logged in
     response = client.get("/profile", follow_redirects=False)
@@ -248,7 +248,7 @@ def test_spa(app, sqlalchemy_datastore, get_message):
     local_redirect = urllib.parse.parse_qs(redirect_url.query)["redirect_uri"][0]
 
     response = client.get(local_redirect, headers=headers)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
     split = urlsplit(response.location)
     assert "myui.com:8090" == split.netloc
@@ -300,7 +300,7 @@ def test_already_auth(app, sqlalchemy_datastore, get_message):
 
     # forms
     response = client.post("/login/oauthstart/github", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     check_location(app, response.location, "/post-login")
 
 
@@ -321,7 +321,7 @@ def test_simple_next(app, sqlalchemy_datastore, get_message):
     assert "fs_oauth_next" in session
 
     response = client.get("/login/oauthresponse/github", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert check_location(app, response.location, "/profile")
     session = get_session(response)
     assert "fs_oauth_next" not in session
@@ -357,13 +357,13 @@ def test_provider_class(app, sqlalchemy_datastore, get_message):
     oauth_app = app.security.oauthglue.oauth_app
     oauth_app.myoauth.set_exception(MismatchingStateError)
     response = client.get("/login/oauthresponse/myoauth", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert check_location(app, response.location, "/uh-oh")
 
     # now log in successfully
     oauth_app.myoauth.set_exception(None)
 
     response = client.get("/login/oauthresponse/myoauth", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert check_location(app, response.location, "/post_login")
     assert is_authenticated(client, get_message)

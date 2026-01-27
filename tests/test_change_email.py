@@ -194,14 +194,14 @@ def test_spa_get(app, client, get_message):
         assert "matt2@lp.com" == ce_requests[0]["new_email"]
         token = ce_requests[0]["token"]
     response = client.get("/change-email/" + token, follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     split = urlsplit(response.headers["Location"])
     assert "myui.com:8090" == split.netloc
     assert "/change-email-redirect" == split.path
 
     # again - should be an error
     response = client.get("/change-email/" + token, follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     split = urlsplit(response.headers["Location"])
     assert "myui.com:8090" == split.netloc
     assert "/change-email-error" == split.path

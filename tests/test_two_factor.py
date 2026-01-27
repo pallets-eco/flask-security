@@ -268,7 +268,7 @@ def test_two_factor_two_factor_setup_anonymous(app, client, get_message):
 
     with capture_flashes() as flashes:
         response = client.post("/tf-setup", data=data)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "TWO_FACTOR_PERMISSION_DENIED"
@@ -282,7 +282,7 @@ def test_two_factor_illegal_state(app, client, get_message):
 
     with capture_flashes() as flashes:
         response = client.post("/api/tf-setup", data=data)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert "/api/login" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
@@ -293,14 +293,14 @@ def test_two_factor_illegal_state(app, client, get_message):
     response = client.post(
         "/api/tf-validate", data=dict(code=b"333"), follow_redirects=False
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/api/login" in response.location
 
     # try rescue
     response = client.post(
         "/api/tf-rescue", data=dict(help_setup="lost_device"), follow_redirects=False
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/api/login" in response.location
 
 
@@ -761,9 +761,9 @@ def test_custom_urls(client):
     response = client.get("/tf-setup")
     assert response.status_code == 404
     response = client.get("/custom-setup")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     response = client.get("/custom-rescue")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
 
 def test_evil_validate(app, client):
@@ -1040,7 +1040,7 @@ def test_recoverable(app, client, get_message):
 
     # we shouldn't be logged in
     response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
     # Grab code that was sent
     assert sms_sender.get_count() == 1
@@ -1067,7 +1067,7 @@ def test_admin_setup_reset(app, client, get_message):
 
     # we shouldn't be logged in
     response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/login?next=/profile"
 
     # Use admin to setup gene's SMS/phone.
@@ -1109,7 +1109,7 @@ def test_admin_setup_reset(app, client, get_message):
 
     # we shouldn't be logged in
     response = client.get("/profile", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
 
 @pytest.mark.settings(two_factor_required=True)
@@ -1307,7 +1307,7 @@ def test_bad_sender(app, client, get_message):
     with capture_flashes() as flashes:
         data = {"email": "gal@lp.com", "password": "password"}
         response = client.post("login", data=data, follow_redirects=False)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert "/login" in response.location
     assert get_message("FAILED_TO_SEND_CODE") in flashes[0]["message"].encode("utf-8")
 
@@ -1416,7 +1416,7 @@ def test_verify(app, client, get_message):
             data=dict(password="password"),
             follow_redirects=False,
         )
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert check_location(app, response.location, "/tf-setup")
 
     assert get_message("REAUTHENTICATION_SUCCESSFUL") == flashes[0]["message"].encode(

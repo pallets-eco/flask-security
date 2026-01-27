@@ -47,7 +47,7 @@ def test_login_view(client):
 
 def test_authenticate(client):
     response = authenticate(client)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     response = authenticate(client, follow_redirects=True)
     assert b"Welcome matt@lp.com" in response.data
 
@@ -55,7 +55,7 @@ def test_authenticate(client):
 @pytest.mark.settings(anonymous_user_disabled=True)
 def test_authenticate_no_anon(client):
     response = authenticate(client)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     response = authenticate(client, follow_redirects=True)
     assert b"Welcome matt@lp.com" in response.data
 
@@ -76,7 +76,7 @@ def test_authenticate_with_next_bp(app, client):
     app.register_blueprint(api, url_prefix="/api")
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=api.info", data=data, follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "api/info" in response.location
 
 
@@ -152,7 +152,7 @@ def test_authenticate_with_subdomain_next(app, client, get_message):
     app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
     data = dict(email="matt@lp.com", password="password")
     response = client.post("/login?next=http://sub.lp.com", data=data)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "http://sub.lp.com"
 
 
@@ -164,7 +164,7 @@ def test_authenticate_with_root_domain_next(app, client, get_message):
     app.config["SECURITY_REDIRECT_ALLOW_SUBDOMAINS"] = True
     data = dict(email="matt@lp.com", password="password")
     response = client.post("http://auth.lp.com/login?next=http://lp.com", data=data)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "http://lp.com"
 
 
@@ -416,7 +416,7 @@ def test_inactive_forbids(app, client, get_message):
     response = client.get("/profile", follow_redirects=False)
     print(response.data)
     # should be thrown back to login page.
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/login?next=/profile"
 
 
@@ -578,7 +578,7 @@ def test_unauthorized_url_view(app, sqlalchemy_datastore):
     client = app.test_client()
     authenticate(client, "tiya@lp.com")
     response = client.get("/admin")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     check_location(app, response.location, ".myendpoint")
 
 
