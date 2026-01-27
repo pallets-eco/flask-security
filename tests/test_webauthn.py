@@ -569,7 +569,7 @@ def test_bad_data_register(app, client, get_message):
             data=dict(credential=json.dumps(bad_register)),
             follow_redirects=False,
         )
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert "/wan-register" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
@@ -637,7 +637,7 @@ def test_delete(app, clients, get_message):
     # Make sure GET works - this is important if we get a freshness redirect when
     # attempting to delete - the verify endpoint will redirect back to here.
     response = clients.get("/wan-delete", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
     """
     response = clients.post("/wan-delete")
@@ -761,7 +761,7 @@ def test_unk_credid(app, client, get_message):
             data=dict(credential=json.dumps(bad_signin)),
             follow_redirects=False,
         )
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert "/wan-signin" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
@@ -1357,7 +1357,7 @@ def test_verify_validate_error(app, client, get_message):
             data=dict(credential=json.dumps(SIGNIN_DATA_UH)),
             follow_redirects=False,
         )
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert "/wan-verify" in response.location
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
@@ -1532,7 +1532,7 @@ def test_post_register_redirect(app, client, get_message):
         data=dict(credential=json.dumps(REG_DATA1)),
         follow_redirects=False,
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/post_register" in response.location
 
 

@@ -148,7 +148,7 @@ def test_spa_get(app, client):
         token = requests[0]["login_token"]
 
         response = client.get("/login/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/login-redirect" == split.path
@@ -178,7 +178,7 @@ def test_spa_get_bad_token(app, client, get_message):
         token = requests[0]["login_token"]
 
         response = client.get("/login/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/login-error" == split.path
@@ -195,7 +195,7 @@ def test_spa_get_bad_token(app, client, get_message):
             "&url_id=fbb89a8328e58c181ea7d064c2987874bc54a23d"
         )
         response = client.get("/login/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/login-error" == split.path

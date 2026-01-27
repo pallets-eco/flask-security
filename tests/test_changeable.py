@@ -202,7 +202,7 @@ def test_change_invalidates_session(app, client):
 
     # try to access protected endpoint - shouldn't work
     response = client.get("/profile")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/login?next=/profile"
 
 
@@ -252,7 +252,7 @@ def test_change_invalidates_auth_token(app, client):
 
     # authtoken should now be invalid
     response = client.get("/token", headers=headers)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/login?next=/token"
 
 

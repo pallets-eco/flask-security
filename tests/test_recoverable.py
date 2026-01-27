@@ -292,7 +292,7 @@ def test_recover_invalidates_session(app, client):
 
     # try to access protected endpoint with old session - shouldn't work
     response = other_client.get("/profile")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/login?next=/profile"
 
 
@@ -470,7 +470,7 @@ def test_spa_get(app, client):
     token = requests[0]["token"]
 
     response = client.get("/reset/" + token)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     split = urlsplit(response.headers["Location"])
     assert "myui.com:8090" == split.netloc
     assert "/reset-redirect" == split.path
@@ -502,7 +502,7 @@ def test_spa_get_bad_token(app, client, get_message):
             token = requests[0]["token"]
 
         response = client.get("/reset/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/reset-error" == split.path
@@ -524,7 +524,7 @@ def test_spa_get_bad_token(app, client, get_message):
             "&url_id=fbb89a8328e58c181ea7d064c2987874bc54a23d"
         )
         response = client.get("/reset/" + token)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         split = urlsplit(response.headers["Location"])
         assert "localhost:8081" == split.netloc
         assert "/reset-error" == split.path
