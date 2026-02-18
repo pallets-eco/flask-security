@@ -445,7 +445,7 @@ _default_messages = {
     ),
     "OAUTH_HANDSHAKE_ERROR": (
         _(
-            "An error occurred while communicating with the Oauth provider:"
+            "An error occurred while communicating with the OAuth provider:"
             " (%(exerror)s - %(exdesc)s). "
             "Please try again."
         ),

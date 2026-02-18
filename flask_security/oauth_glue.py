@@ -56,8 +56,8 @@ if t.TYPE_CHECKING:  # pragma: no cover
 
 @unauth_csrf()
 def oauthstart(name: str) -> ResponseValue:
-    """View to start an oauth authentication.
-    Name is a pre-registered oauth provider.
+    """View to start an OAuth authentication.
+    Name is a pre-registered OAuth provider.
     TODO: remember me?
     """
     assert _security.oauthglue

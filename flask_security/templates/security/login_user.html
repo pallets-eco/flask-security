@@ -30,7 +30,7 @@
   {% endif %}
   {% if security.oauthglue %}
     <hr class="fs-gap">
-    <h2>{{ _fsdomain("Use Social Oauth to Sign In") }}</h2>
+    <h2>{{ _fsdomain("Use Social OAuth to Sign In") }}</h2>
     {% for provider in security.oauthglue.provider_names %}
       <div class="fs-gap">
         <form method="post" id="{{ provider }}_form" name="{{ provider }}_form">

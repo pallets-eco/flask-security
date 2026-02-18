@@ -41,17 +41,17 @@ OauthCbType = cabc.Callable[["OAuth", t.Any], tuple[str, t.Any]]
 
 class FsOAuthProvider:
     """
-    Subclass this or instantiate to add new oauth providers.
+    Subclass this or instantiate to add new OAuth providers.
 
-    Subclassing allows for customizing additional aspects of the oauth flow
-    in particular - a custom error path for oauth flow state mismatches and
+    Subclassing allows for customizing additional aspects of the OAuth flow
+    in particular - a custom error path for OAuth flow state mismatches and
     other errors thrown by authlib.
 
     Call security.oauthglue.register_provider_ext(myproviderclass("myprovider"))
 
     :param name: a name for provider - must match what was passed if this
-     is already registered with Oauth.
-    :param registration_info: This dict is passed directly to Oauth as
+     is already registered with OAuth.
+    :param registration_info: This dict is passed directly to OAuth as
      part of registration - not needed if provider already registered with
      Oauth
     :param fetch_identity_cb: Call back from response to oauth flow.

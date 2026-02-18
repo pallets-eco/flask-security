@@ -915,7 +915,7 @@ def two_factor_setup():
 def two_factor_setup_validate(token: str) -> ResponseValue:
     """
     Validate new setup.
-    The token is the state variable which is signed and timed
+    The token is the state variable that is signed and timed
     and contains all the state that once confirmed will be stored in the user record.
     Unlike the code in two_factor_token_validation - this works w/o a session.
     It also is JUST for setting up/changing two factor for an authenticated user.

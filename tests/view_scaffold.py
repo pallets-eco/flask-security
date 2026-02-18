@@ -170,7 +170,7 @@ def create_app() -> Flask:
     app.config["LOGIN_DISABLED"] = False
     app.config["WTF_CSRF_ENABLED"] = True
     app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
-    # 'strict' causes redirect after oauth to fail since session cookie not sent
+    # 'strict' causes redirect after OAuth to fail since session cookie not sent
     # this just happens on first 'register' with e.g. github
     # app.config["SESSION_COOKIE_SAMESITE"] = "strict"
     app.config["SECURITY_USER_IDENTITY_ATTRIBUTES"] = [
@@ -206,7 +206,7 @@ def create_app() -> Flask:
     app.config["SECURITY_USERNAME_REQUIRED"] = True
     app.config["SECURITY_PASSWORD_REQUIRED"] = False  # allow registration w/o password
     app.config["SECURITY_RETURN_GENERIC_RESPONSES"] = False
-    # enable oauth - note that this assumes that app is passes XXX_CLIENT_ID and
+    # enable OAuth - note that this assumes that app is passes XXX_CLIENT_ID and
     # XXX_CLIENT_SECRET as environment variables.
     app.config["SECURITY_OAUTH_ENABLE"] = True
     # app.config["SECURITY_URL_PREFIX"] = "/fs"

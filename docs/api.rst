@@ -178,7 +178,7 @@ Utils
 
 .. py:class:: OauthCbType[oauth: OAuth, token: t.Any]
 
-    This callback is called when the oauth
+    This callback is called when the OAuth
     redirect happens. It must take the response from the provider and return
     a tuple of <user_model_field_name, value> - which will be used
     to look up the user in the datastore.

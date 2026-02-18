@@ -44,7 +44,7 @@ of handling all authorization errors. A simple way to do this is to use a specia
 class that you can raise either in response to Flask-Security authorization failures, or in your
 own code. Then use Flask's ``errorhandler`` to catch that exception and create the appropriate API response::
 
-    Class MyForbiddenException(Exception):
+    class MyForbiddenException(Exception):
         def __init__(self, msg='Not permitted with your privileges', status=http.HTTPStatus.FORBIDDEN):
             self.info = {'status': status, 'msgs': [msg]}
 
@@ -262,7 +262,7 @@ with actually retrieving and using a CSRF token. There are 2 normal ways to do t
 
  * Have the csrf-token available via a JSON GET request that can be attached as a
    header in every mutating request.
- * Have a cookie that can be read via javascript whose value is the csrf-token that
+ * Have a cookie that can be read via JavaScript whose value is the csrf-token that
    can be attached as a header in every mutating request.
 
 Flask-Security supports both solutions.
@@ -337,7 +337,7 @@ Using a Cookie
 --------------
 You can instruct Flask-Security to send a cookie that contains the csrf token.
 The cookie will be set on a call to ``GET /login`` or ``GET /us-signin`` - as well as after a successful authentication.
-This can be very convenient since various javascript AJAX packages are pre-configured to extract the contents of a cookie
+This can be very convenient since various JavaScript AJAX packages are pre-configured to extract the contents of a cookie
 and send it on every mutating request as an HTTP header. `axios`_ for example has a default configuration
 that it will look for a cookie named ``XSRF-TOKEN`` and will send the contents of that back
 in an HTTP header called ``X-XSRF-Token``. This means that if you use that package you don't need to make

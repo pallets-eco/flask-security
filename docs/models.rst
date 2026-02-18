@@ -40,7 +40,7 @@ The provided models are versioned since they represent actual DB models, and any
 changes require a schema migration (and perhaps a data migration). Applications
 must specifically import the version they want (and handle any required migration).
 
-There are 2 available models - one when using Flask-SQLAlchemy and one when
+There are two available models - one when using Flask-SQLAlchemy and one when
 using 'raw' sqlalchemy or Flask-SQLAlchemy-Lite.
 
 .. note::
@@ -49,7 +49,8 @@ using 'raw' sqlalchemy or Flask-SQLAlchemy-Lite.
 
 Flask-SQLAlchemy
 ^^^^^^^^^^^^^^^^
-Your application code should import just the required version e.g.::
+Your application code should import just the required version e.g.:
+.. code-block:: python
 
     from flask_security.models import fsqla_v3 as fsqla
     from flask_sqlalchemy import SQLAlchemy
@@ -71,7 +72,9 @@ DB instance. This is only needed if you use the packaged models.
 
 Flask-SQLAlchemy-Lite
 ^^^^^^^^^^^^^^^^^^^^^
-Your application code should import just the required version e.g.::
+Your application code should import just the required version e.g.:
+
+.. code-block:: python
 
     from flask_security.models import sqla as sqla
     from flask_sqlalchemy_lite import SQLAlchemy
@@ -222,7 +225,12 @@ Flask-Security must be able to locate a User record based on a credential id.
     It is important that you maintain data consistency when deleting WebAuthn
     records or users.
 
-The 'WebAuthn' model requires the following fields:
+The `User` model needs the following additional field:
+
+* ``fs_webauthn_user_handle`` (string, 64 bytes, unique).
+  This is used as the `PublicKeyCredentialUserEntity` `id` value.
+
+The `WebAuthn` model requires the following fields:
 
 * ``id`` (primary key)
 * ``credential_id`` (binary, 1024 bytes, indexed, non-nullable, unique)
@@ -239,47 +247,59 @@ The 'WebAuthn' model requires the following fields:
 There needs to be a bi-directional relationship between the WebAuthn record and
 the User record (since we need to look up the ``User`` based on a WebAuthn ``credential_id``.
 
-**For SQLAlchemy**::
+**For SQLAlchemy**:
 
-    Add the following to the WebAuthn model (assuming your primary key is named ``id``):
+    - Add the following to the WebAuthn model (assuming your primary key is named ``id``):
 
-        @declared_attr
-        def user_id(cls) -> Mapped[int]:
-            return mapped_column(
-                ForeignKey("user.id", ondelete="CASCADE")
-            )
+        .. code-block:: python
 
-    Add the following to the User model:
+            @declared_attr
+            def user_id(cls) -> Mapped[int]:
+                return mapped_column(
+                    ForeignKey("user.id", ondelete="CASCADE")
+                )
 
-        @declared_attr
-        def webauthn(cls):
-            return relationship(
-                "WebAuthn", back_populates="user", cascade="all, delete"
-            )
+    - Add the following to the User model:
 
-**For mongoengine**::
+        .. code-block:: python
+
+            @declared_attr
+            def webauthn(cls):
+                return relationship(
+                    "WebAuthn", back_populates="user", cascade="all, delete"
+                )
+
+**For mongoengine**:
+
+    - Add the following to the WebAuthn model:
+
+        .. code-block:: python
+
+            user = ReferenceField("User")
+            def get_user_mapping(self) -> dict[str, str]:
+                """Return the mapping from webauthn back to User"""
+                return dict(id=self.user.id)
+
+    - Add the following to the User model:
+
+        .. code-block:: python
+
+            webauthn = ListField(ReferenceField(WebAuthn, reverse_delete_rule=PULL), default=[])
+
+    - To make sure all WebAuthn objects are deleted if the User is deleted:
+
+        .. code-block:: python
+
+            User.register_delete_rule(WebAuthn, "user", CASCADE)
+
+
+**For peewee**:
 
     Add the following to the WebAuthn model:
 
-        user = ReferenceField("User")
-        def get_user_mapping(self) -> dict[str, str]:
-            """Return the mapping from webauthn back to User"""
-            return dict(id=self.user.id)
+        .. code-block:: python
 
-    Add the following to the User model:
-
-        webauthn = ListField(ReferenceField(WebAuthn, reverse_delete_rule=PULL), default=[])
-
-    To make sure all WebAuthn objects are deleted if the User is deleted:
-
-        User.register_delete_rule(WebAuthn, "user", CASCADE)
-
-
-**For peewee**::
-
-    Add the following to the WebAuthn model:
-
-        user = ForeignKeyField(User, backref="webauthn")
+            user = ForeignKeyField(User, backref="webauthn")
 
     This will add a column called ``user_id`` that references the User model's
     ``id`` primary key field. It will also create a virtual column ``webauthn``
@@ -287,10 +307,6 @@ the User record (since we need to look up the ``User`` based on a WebAuthn ``cre
     calls ``delete_instance(recursive=True)`` which correctly deals with ensuring
     that WebAuthn records get deleted if a User is deleted.
 
-The `User` model needs the following additional fields:
-
-* ``fs_webauthn_user_handle`` (string, 64 bytes, unique).
-  This is used as the `PublicKeyCredentialUserEntity` `id` value.
 
 Recovery Codes
 ^^^^^^^^^^^^^^^

@@ -158,7 +158,7 @@ def test_rc_reset(app, client, get_message):
 def test_rc_bad_state(app, client, get_message):
     response = client.post("/api/mf-recovery", json=dict(code="hi"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "TWO_FACTOR_PERMISSION_DENIED"
     )
 

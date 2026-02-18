@@ -4,7 +4,7 @@ test_webauthn
 
 WebAuthn tests
 
-:copyright: (c) 2021-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2021-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 """
@@ -41,7 +41,7 @@ from flask_security import (
     wan_deleted,
 )
 
-# We can't/don't test the actual client-side javascript and browser APIs - so
+# We can't/don't test the actual client-side JavaScript and browser APIs - so
 # to create reproducible tests, use view_scaffold, set breakpoints in the views and
 # cut-and-paste the responses. That requires that 'challenge' and 'rp_origin' be
 # identical between view_scaffold and tests here.
@@ -156,7 +156,7 @@ REG_DATA_UH = {
         "Q6NTAwMSIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
         "transports": ["nfc", "usb"],
     },
-    "extensions": '{"credProps":{"rk": true}}"',
+    "extensions": '{"credProps":{"rk": true}}',
 }
 SIGNIN_DATA_UH = {
     "id": "rHb1OXVM--dgGcWg0u3cfomyc-Tu4l4kK8GjVkS8bms-foXmBAlWHyTzuhgGgCnx",
@@ -675,13 +675,13 @@ def test_delete_json(app, clients, get_message):
 
     response = clients.post("/wan-delete", json=dict())
     assert response.status_code == 400
-    assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_NAME_REQUIRED"
     )
 
     response = clients.post("/wan-delete", json=dict(name="testr1"))
     assert response.status_code == 400
-    assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_NAME_NOT_FOUND", name="testr1"
     )
 

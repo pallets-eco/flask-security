@@ -284,7 +284,7 @@ registered. They can be completely disabled or their names can be changed.
 Run ``flask --help`` and look for users and roles.
 
 
-Social/Oauth Authentication
+Social/OAuth Authentication
 ----------------------------
 Flask-Security provides a thin layer which integrates `authlib`_ with Flask-Security
 views and features (such as two-factor authentication). Flask-Security is shipped
