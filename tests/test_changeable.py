@@ -4,7 +4,7 @@ test_changeable
 
 Changeable tests
 
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -33,7 +33,6 @@ pytestmark = pytest.mark.changeable()
 
 
 def test_changeable_flag(app, clients, get_message, outbox):
-    tcl = clients
     recorded = []
 
     @password_changed.connect_via(app)
@@ -42,14 +41,14 @@ def test_changeable_flag(app, clients, get_message, outbox):
         assert isinstance(user, UserMixin)
         recorded.append(user)
 
-    authenticate(tcl)
+    authenticate(clients)
 
     # Test change view
-    response = tcl.get("/change", follow_redirects=True)
+    response = clients.get("/change", follow_redirects=True)
     assert b"Change Password" in response.data
 
     # Test wrong original password
-    response = tcl.post(
+    response = clients.post(
         "/change",
         data={
             "password": "notpassword",
@@ -61,7 +60,7 @@ def test_changeable_flag(app, clients, get_message, outbox):
     assert get_message("INVALID_PASSWORD") in response.data
 
     # Test mismatch
-    response = tcl.post(
+    response = clients.post(
         "/change",
         data={
             "password": "password",
@@ -73,13 +72,13 @@ def test_changeable_flag(app, clients, get_message, outbox):
     assert get_message("RETYPE_PASSWORD_MISMATCH") in response.data
 
     # Test missing password
-    response = tcl.post(
+    response = clients.post(
         "/change",
         data={"password": "   ", "new_password": "", "new_password_confirm": ""},
         follow_redirects=True,
     )
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data
-    response = tcl.post(
+    response = clients.post(
         "/change",
         data={
             "password": "   ",
@@ -91,7 +90,7 @@ def test_changeable_flag(app, clients, get_message, outbox):
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data
 
     # Test bad password
-    response = tcl.post(
+    response = clients.post(
         "/change",
         data={"password": "password", "new_password": "a", "new_password_confirm": "a"},
         follow_redirects=True,
@@ -99,7 +98,7 @@ def test_changeable_flag(app, clients, get_message, outbox):
     assert get_message("PASSWORD_INVALID_LENGTH", length=8) in response.data
 
     # Test same as previous
-    response = tcl.post(
+    response = clients.post(
         "/change",
         data={
             "password": "password",
@@ -111,7 +110,7 @@ def test_changeable_flag(app, clients, get_message, outbox):
     assert get_message("PASSWORD_IS_THE_SAME") in response.data
 
     # Test successful submit sends email notification
-    response = tcl.post(
+    response = clients.post(
         "/change",
         data={
             "password": "password",
@@ -127,8 +126,8 @@ def test_changeable_flag(app, clients, get_message, outbox):
     assert len(outbox) == 1
     assert "Your password has been changed" in outbox[0].body
 
-    # Test leading & trailing whitespace not stripped
-    response = tcl.post(
+    # Test leading and trailing whitespace not stripped
+    response = clients.post(
         "/change",
         data={
             "password": "new strong password",
@@ -145,7 +144,7 @@ def test_changeable_flag(app, clients, get_message, outbox):
         '"new_password": "new stronger password2", '
         '"new_password_confirm": "new stronger password2"}'
     )
-    response = tcl.post(
+    response = clients.post(
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 200
@@ -153,7 +152,7 @@ def test_changeable_flag(app, clients, get_message, outbox):
 
     # Test JSON errors
     data = '{"password": "newpassword"}'
-    response = tcl.post(
+    response = clients.post(
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.status_code == 400
@@ -290,18 +289,18 @@ def test_auth_uniquifier(app):
         )
         ds.commit()
 
-    client = app.test_client()
+    tcl = app.test_client()
 
     # standard login with auth token
-    response = json_authenticate(client)
+    response = json_authenticate(tcl)
     token = response.json["response"]["user"]["authentication_token"]
     headers = {"Authentication-Token": token}
     # make sure can access restricted page
-    response = client.get("/token", headers=headers)
+    response = tcl.get("/token", headers=headers)
     assert b"Token Authentication" in response.data
 
     # change password
-    response = client.post(
+    response = tcl.post(
         "/change",
         data={
             "password": "password",
@@ -313,7 +312,7 @@ def test_auth_uniquifier(app):
     assert response.status_code == 200
 
     # authtoken should still be valid
-    response = client.get("/token", headers=headers)
+    response = tcl.get("/token", headers=headers)
     assert response.status_code == 200
 
     with app.app_context():
@@ -493,16 +492,16 @@ def test_my_validator(app, sqlalchemy_datastore):
     init_app_with_options(
         app, sqlalchemy_datastore, **{"security_args": {"password_util_cls": MyPwUtil}}
     )
-    client = app.test_client()
+    tcl = app.test_client()
 
-    authenticate(client)
+    authenticate(tcl)
 
     data = (
         '{"password": "password", '
         '"new_password": "mattmatt2", '
         '"new_password_confirm": "mattmatt2"}'
     )
-    response = client.post(
+    response = tcl.post(
         "/change", data=data, headers={"Content-Type": "application/json"}
     )
     assert response.headers["Content-Type"] == "application/json"

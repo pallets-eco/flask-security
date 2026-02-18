@@ -492,7 +492,7 @@ Backwards Compatibility Concerns
 
 - To align with the W3C WebAuthn Level2 and 3 spec - transports are now part of the registration response.
   This has been changed BOTH in the server code (using webauthn data structures) as well as the sample
-  javascript code. If an application has their own javascript front end code - it might need to be changed.
+  JavaScript code. If an application has their own JavaScript front end code - it might need to be changed.
 - The tf_validity feature :py:data:`SECURITY_TWO_FACTOR_ALWAYS_VALIDATE` used to set a cookie if the request was
   form based, and return the token as part of a JSON response. Now, this feature is ONLY cookie based and the token
   is no longer returned as part of any response.

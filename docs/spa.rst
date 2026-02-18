@@ -1,10 +1,10 @@
 Working with Single Page Applications
 ======================================
-`Single Page Applications (spa)`_ are a popular model for both separating
+`Single Page Applications (SPAs)`_ are a popular model for both separating
 user interface from application/backend code as well as providing a responsive
-user experience. Angular and Vue are popular Javascript frameworks for writing SPAs.
+user experience. Angular and Vue are popular JavaScript frameworks for writing SPAs.
 An added benefit is that the UI can be developed completely independently (in a separate repo)
-and take advantage of the latest Javascript packing and bundling technologies that are
+and take advantage of the latest JavaScript packing and bundling technologies that are
 evolving rapidly, and not make the Flask application have to deal with things
 like Flask-Webpack or webassets.
 
@@ -26,7 +26,9 @@ For the purposes of this application note - this implies:
 
 Configuration
 ~~~~~~~~~~~~~
-An example configuration::
+An example configuration:
+
+.. code-block:: python
 
     # no forms so no concept of flashing
     SECURITY_FLASH_MESSAGES = False
@@ -77,7 +79,9 @@ An example configuration::
     security.unauthz_handler(<your unauth handler>)
 
 When in development mode, the Flask application will run by default on port 5000.
-The UI might want to run on port 8080. In order to test redirects you need to set::
+The UI might want to run on port 8080. In order to test redirects you need to set:
+
+.. code-block:: python
 
     SECURITY_REDIRECT_HOST = 'localhost:8080'
 
@@ -104,15 +108,15 @@ standard security headers such as:
     * ``X-XSS-Protection``
     * ``Referrer policy``
 
-There are a lot of different ways to host a SPA as the javascript part itself is quit easily hosted from any static
+There are a lot of different ways to host a SPA as the JavaScript part itself is quit easily hosted from any static
 webserver. A couple of deployment options and their configurations will be describer here.
 
 Nginx
 ~~~~~
 When serving a SPA from a Nginx webserver the Flask backend, with Flask-Security, will probably be served via
-Nginx's reverse proxy feature. The javascript is served from Nginx itself and all calls to a certain path will be routed
+Nginx's reverse proxy feature. The JavaScript is served from Nginx itself and all calls to a certain path will be routed
 to the reversed proxy. The example below routes all http requests to *"/api/"* to the Flask backend and handles all other
-requests directly from javascript. This has a couple of benefits as all the requests happen within the same domain so you
+requests directly from JavaScript. This has a couple of benefits as all the requests happen within the same domain so you
 don't have to worry about `CORS`_ problems::
 
     server {
@@ -164,11 +168,13 @@ Most Flask apps can be deployed to Amazon's lambda gateway without much hassle b
 You'll get automatic horizontal scaling, seamless upgrades, automatic SSL certificate renewal and a very cheap way of
 hosting a backend without being responsible for any infrastructure. Depending on how you design your app you could
 choose to host your backend from an api specific domain: e.g. *api.example.com*. When your SPA deployment structure is
-capable of routing the AJAX/XHR request from your javascript app to the separate backend; use it. When you want to use
+capable of routing the AJAX/XHR request from your JavaScript app to the separate backend; use it. When you want to use
 the backend from another e.g. *www.example.com* you have some deal with some `CORS`_ setup as your browser will block
 cross-domain POST requests. There is a Flask package for that: `Flask-CORS`_.
 
-The setup of CORS is simple::
+The setup of CORS is simple:
+
+.. code-block:: python
 
     CORS(
         app,
@@ -179,7 +185,7 @@ The setup of CORS is simple::
         expose_headers="Authorization,Content-Type,Authentication-Token,XSRF-TOKEN",
     )
 
-You can then host your javascript app from an S3 bucket, with or without Cloudfront, GH-pages or from any static webserver.
+You can then host your JavaScript app from an S3 bucket, with or without Cloudfront, GH-pages or from any static webserver.
 
 Some background material:
 
@@ -188,7 +194,7 @@ Some background material:
     * `Flask-Talisman`_ - useful if serving everything from your Flask application - also
       useful as a good list of things to consider.
 
-.. _Single Page Applications (spa): https://en.wikipedia.org/wiki/Single-page_application
+.. _Single Page Applications (SPAs): https://en.wikipedia.org/wiki/Single-page_application
 .. _Nginx: https://www.nginx.com/
 .. _S3: https://www.savjee.be/2018/05/Content-security-policy-and-aws-s3-cloudfront/
 .. _Flask-Talisman: https://pypi.org/project/flask-talisman/

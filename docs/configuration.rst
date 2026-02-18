@@ -148,7 +148,7 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_REDIRECT_BEHAVIOR
 
-    Passwordless login, confirmation, reset password, unified signin, change_email, and oauth signin
+    Passwordless login, confirmation, reset password, unified signin, change_email, and OAuth signin
     have GET endpoints that validate the passed token and redirect to an action form.
     For Single-Page-Applications style UIs which need to control their own internal URL routing these redirects
     need to not contain forms, but contain relevant information as query parameters.

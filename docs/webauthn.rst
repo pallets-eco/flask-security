@@ -40,9 +40,9 @@ there is at least one second-factor authentication method setup that is NOT plat
 Flask-Security requires that when registering a WebAuthn key, the user must specify whether the key
 will be used for first/primary authentication or for multi-factor/second authentication.
 
-It should be noted the the current spec REQUIRES javascript to communicate from your front-end to the browser.
+It should be noted the the current spec REQUIRES JavaScript to communicate from your front-end to the browser.
 Flask-Security ships with the basic required JS (static/{webauthn.js,base64.js}).
-An application should be able to simply wire those into their templates or javascript.
+An application should be able to simply wire those into their templates or JavaScript.
 
 
 Configuration

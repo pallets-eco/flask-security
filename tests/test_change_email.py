@@ -4,7 +4,7 @@ test_change_email
 
 Change email functionality tests
 
-:copyright: (c) 2024-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2024-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -48,21 +48,19 @@ def capture_change_email_requests():
 
 @pytest.mark.settings(change_email_error_view="/change-email")
 def test_ce(app, clients, get_message, outbox):
-    client = clients
-
     @change_email_confirmed.connect_via(app)
     def _on(app, **kwargs):
         assert kwargs["old_email"] == "matt@lp.com"
         assert kwargs["user"].email == "matt2@lp.com"
 
-    authenticate(client, email="matt@lp.com")
+    authenticate(clients, email="matt@lp.com")
 
     with capture_change_email_requests() as ce_requests:
-        response = client.post("/change-email", data={"email": "<EMAIL>"})
+        response = clients.post("/change-email", data={"email": "<EMAIL>"})
         assert get_message("INVALID_EMAIL_ADDRESS") in response.data
         assert len(outbox) == 0
 
-        response = client.post("/change-email", data=dict(email="matt2@lp.com"))
+        response = clients.post("/change-email", data=dict(email="matt2@lp.com"))
         msg = get_message("CHANGE_EMAIL_SENT", email="matt2@lp.com")
         assert msg in response.data
         assert "matt2@lp.com" == ce_requests[0]["new_email"]
@@ -70,17 +68,17 @@ def test_ce(app, clients, get_message, outbox):
     assert len(outbox) == 1
     assert app.config["SECURITY_CHANGE_EMAIL_WITHIN"] in outbox[0].body
 
-    response = client.get("/change-email/" + token, follow_redirects=True)
+    response = clients.get("/change-email/" + token, follow_redirects=True)
     assert get_message("CHANGE_EMAIL_CONFIRMED") in response.data
-    assert is_authenticated(client, get_message)
+    assert is_authenticated(clients, get_message)
 
-    logout(client)
-    authenticate(client, email="matt2@lp.com")
-    assert is_authenticated(client, get_message)
+    logout(clients)
+    authenticate(clients, email="matt2@lp.com")
+    assert is_authenticated(clients, get_message)
 
     # try using link again - should fail
     with capture_flashes() as flashes:
-        client.get("/change-email/" + token, follow_redirects=True)
+        clients.get("/change-email/" + token, follow_redirects=True)
     assert flashes[0]["message"].encode("utf-8") == get_message("API_ERROR")
 
 
@@ -96,7 +94,7 @@ def test_ce_json(app, client, get_message, outbox):
 
     with capture_change_email_requests() as ce_requests:
         response = client.post("/change-email", json={"email": "<EMAIL>"})
-        assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
             "INVALID_EMAIL_ADDRESS"
         )
         assert len(outbox) == 0
@@ -139,7 +137,7 @@ def test_expired_token(client, get_message):
 
 def test_template(app, client, get_message, outbox):
     # Check contents of email template - this uses a test template
-    # in order to check all context vars since the default template
+    # to check all context vars since the default template
     # doesn't have all of them.
 
     authenticate(client, email="matt@lp.com")
@@ -148,7 +146,7 @@ def test_template(app, client, get_message, outbox):
         # check email
         assert outbox[0].recipients[0] == "matt2@lp.com"
         matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
-        # should be 4 - link, email, token, config item
+        # should be 5 - link, email, token, config item, within
         assert matcher[1].split(":")[1] == "matt@lp.com"
         assert matcher[2].split(":")[1] == ce_requests[0]["token"]
         assert matcher[3].split(":")[1] == "True"  # register_blueprint
@@ -166,7 +164,7 @@ def test_generic_response(app, client, get_message, outbox):
     with capture_change_email_requests():
         # first try bad formatted email - should get detailed error
         response = client.post("/change-email", json={"email": "<EMAIL>"})
-        assert response.json["response"]["errors"][0].encode("utf=8") == get_message(
+        assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
             "INVALID_EMAIL_ADDRESS"
         )
 

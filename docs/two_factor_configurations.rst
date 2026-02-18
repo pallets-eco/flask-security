@@ -31,7 +31,7 @@ Two-factor Application
 The following code sample illustrates how to get started as quickly as
 possible using SQLAlchemy:
 
-::
+.. code-block:: python
 
     import os
     from flask import Flask, current_app, render_template_string
@@ -133,7 +133,9 @@ You need to install additional packages::
 
     pip install phonenumberslite twilio
 
-And set additional configuration variables::
+And set additional configuration variables:
+
+.. code-block:: python
 
     app.config["SECURITY_TWO_FACTOR_ENABLED_METHODS"] = ['email',
       'authenticator', 'sms']
@@ -206,6 +208,6 @@ Fine-Grained Control of Two-Factor
 +++++++++++++++++++++++++++++++++++
 The decision whether to require a second factor after primary authentication is made in :py:meth:`.UserMixin.check_tf_required`.
 The default implementation returns True if :py:data:`SECURITY_TWO_FACTOR_REQUIRED` is set OR the user has a two-factor method already setup AND
-and recent two-factor authentication isn't 'valid' (see above).
+recent two-factor authentication isn't 'valid' (see above).
 
 This method can be overridden in the applications User class. A common use case might be to require two-factor for any user with the 'admin' role.

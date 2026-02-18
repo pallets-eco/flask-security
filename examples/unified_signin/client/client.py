@@ -8,7 +8,7 @@ It assumes server is set up to send a CSRF cookie.
 We assume server doesn't require CSRF for unauthenticated endpoints.
 
 Note that we have to manually take the CSRF cookie and send it as a header.
-For many javascript http clients - they do this as part of default configuration.
+For many JavaScript http clients - they do this as part of default configuration.
 
 """
 
