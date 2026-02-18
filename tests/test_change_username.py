@@ -169,7 +169,7 @@ def test_xlation(app, client, get_message_local, outbox):
     response = client.get("/change", follow_redirects=True)
     with app.test_request_context():
         # Check header
-        assert b"<h1>Changer le mot de passe</h1>" in response.data
+        assert b"<h1>Changer de mot de passe</h1>" in response.data
         submit = localize_callback(_default_field_labels["change_password"])
         assert f'value="{submit}"'.encode() in response.data
 

@@ -193,7 +193,9 @@ def test_xlation(app, client, get_message_local, outbox):
 
     with app.test_request_context():
         assert (
-            get_message_local("CONFIRM_REGISTRATION", email="me@fr.com").encode("utf-8")
+            get_message_local("CONFIRM_REGISTRATION", email="me@fr.com")
+            .replace("'", "&#39;")
+            .encode("utf-8")
             in response.data
         )
         assert b"Home Page" in response.data

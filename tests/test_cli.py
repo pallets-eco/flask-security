@@ -149,7 +149,7 @@ def test_cli_locale(script_info):
         users_create, ["--password", "battery staple"], obj=script_info
     )
     assert result.exit_code == 2
-    assert "Merci d'indiquer une adresse email" in result.output
+    assert "Aucune adresse email n'est indiquée" in result.output
 
 
 def test_cli_createrole(script_info):
