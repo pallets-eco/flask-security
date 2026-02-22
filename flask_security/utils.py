@@ -395,6 +395,8 @@ def verify_password(password: str | bytes, password_hash: str | bytes) -> bool:
     """
     if use_double_hash(password_hash):
         password = get_hmac(password)
+        if _pwd_context.identify(password_hash) == "bcrypt":
+            password = password[:72]
 
     return _pwd_context.verify(password, password_hash)
 
