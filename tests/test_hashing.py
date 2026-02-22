@@ -24,7 +24,7 @@ from flask_security.utils import (
 )
 
 
-def test_verify_password_double_hash(app, sqlalchemy_datastore):
+def test_verify_password_double_hash_argon2(app, sqlalchemy_datastore):
     init_app_with_options(
         app,
         sqlalchemy_datastore,
@@ -42,6 +42,22 @@ def test_verify_password_double_hash(app, sqlalchemy_datastore):
 
         # Verify double hash
         assert verify_password("pass", argon2.hash(get_hmac("pass")))
+
+
+def test_verify_password_double_hash_bcrypt(app, sqlalchemy_datastore):
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{
+            "SECURITY_PASSWORD_HASH": "bcrypt",
+            "SECURITY_PASSWORD_SALT": "salty",
+            "SECURITY_PASSWORD_SINGLE_HASH": False,
+        },
+    )
+    with app.app_context():
+        hashed_pwd = hash_password("pass")
+        assert verify_password("pass", hashed_pwd)
+        assert hashed_pwd.startswith("$2")
 
 
 def test_verify_password_single_hash(app, sqlalchemy_datastore):
