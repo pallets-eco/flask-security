@@ -92,6 +92,8 @@ def verify_token(client_nc, token, status=None):
         "/token",
         headers={"Content-Type": "application/json", "Authentication-Token": token},
     )
+    assert response.cache_control.private
+    assert response.cache_control.no_store
     if status:
         assert response.status_code == status
     else:

@@ -121,6 +121,30 @@ These configuration keys are used globally across all features.
 
     Default: ``lambda user: 0``
 
+
+.. py:data:: SECURITY_CACHE_CONTROL
+
+    Specifies the Cache-Control header attributes to be sent with all responses from Flask-Security endpoints.
+    Each entry in the dict is a (attribute, value) pair, where allowed attributes are
+    defined in the Flask documentation https://flask.palletsprojects.com/en/stable/api/#flask.Response.cache_control.
+
+    .. note::
+        Flask-Security does not pretend to handle the Cache-Control header for your application.
+        This default setting is to ensure that out of the box, Flask-Security responses
+        which might contain sensitive information aren't cached.
+        Please see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#cache_directives.
+
+    .. note::
+        Flask itself adds the 'Vary: Cookie' header to all responses that access the session (cookie).
+        This of course includes all non-anonymous Flask-Security endpoints as well as
+        any application endpoints that are decorated with a Flask-Security decorator.
+        This alone is likely enough to ensure no personal information is leaked.
+
+
+    Default: ``{"private": True, "no-store": True}``.
+
+     .. versionadded:: 5.8.0
+
 .. py:data:: SECURITY_EMAIL_VALIDATOR_ARGS
 
     Email address are validated and normalized via the ``mail_util_cls`` which
