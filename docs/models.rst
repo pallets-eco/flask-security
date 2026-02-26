@@ -50,6 +50,7 @@ using 'raw' sqlalchemy or Flask-SQLAlchemy-Lite.
 Flask-SQLAlchemy
 ^^^^^^^^^^^^^^^^
 Your application code should import just the required version e.g.:
+
 .. code-block:: python
 
     from flask_security.models import fsqla_v3 as fsqla

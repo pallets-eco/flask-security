@@ -1,5 +1,5 @@
 Pallets-Sphinx-Themes
-Sphinx<9
+Sphinx
 sphinx-issues
 packaging
 Flask-SQLAlchemy
