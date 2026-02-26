@@ -94,6 +94,7 @@ from .utils import _
 from .utils import config_value as cv
 from .utils import (
     FsPermNeed,
+    add_cache_control,
     csrf_cookie_handler,
     default_render_template,
     default_want_json,
@@ -350,6 +351,7 @@ _default_config: dict[str, t.Any] = {
     "US_EMAIL_SUBJECT": _("Verification Code"),
     "US_SETUP_WITHIN": "30 minutes",
     "US_SIGNIN_REPLACES_LOGIN": False,
+    "CACHE_CONTROL": {"private": True, "no-store": True},
     "CSRF_PROTECT_MECHANISMS": AUTHN_MECHANISMS,
     "CSRF_IGNORE_UNAUTH_ENDPOINTS": False,
     "CSRF_COOKIE_NAME": None,
@@ -1743,6 +1745,8 @@ class Security:
             self.two_factor_plugins.create_blueprint(app, bp, self)
             if self.oauthglue:
                 self.oauthglue._create_blueprint(app, bp)
+            if cv("CACHE_CONTROL", app=app):
+                bp.after_app_request(add_cache_control)
             app.register_blueprint(bp)
             app.context_processor(_context_processor)
 

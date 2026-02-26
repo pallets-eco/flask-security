@@ -12,9 +12,11 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:pr:`1170`) Add API :py:meth:`.UserMixin.check_tf_required` to allow applications to control which users
   require two-factor authentication.
+- (:issue:`1178`) Add Cache-Control headers.
 
 Fixes
 +++++
+- (:issue:`1179`) Fix verify_password for bcrypt 5.0 (mephi42)
 
 Docs and Chores
 +++++++++++++++

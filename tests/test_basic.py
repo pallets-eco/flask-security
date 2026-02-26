@@ -1048,6 +1048,7 @@ def test_login_info(client):
     json_authenticate(client)
     response = client.get("/login", headers={"Content-Type": "application/json"})
     assert response.status_code == 200
+    assert response.cache_control.private
     assert response.json["response"]["user"]["email"] == "matt@lp.com"
     assert "last_update" in response.json["response"]["user"]
 
@@ -1308,3 +1309,16 @@ def test_auth_token_decorator(app, client_nc):
         headers={"Content-Type": "application/json", "Authentication-Token": token},
     )
     assert response.status_code == 200
+
+
+@pytest.mark.settings(cache_control={"no-store": True})
+def test_override_cache_control(app, client_nc):
+    response = json_authenticate(client_nc)
+    assert not response.cache_control.private
+    assert response.cache_control.no_store
+
+
+@pytest.mark.settings(cache_control=None)
+def test_no_cache_control(app, client_nc):
+    response = json_authenticate(client_nc)
+    assert "Cache-Control" not in response.headers

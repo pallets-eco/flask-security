@@ -1158,6 +1158,14 @@ def csrf_cookie_handler(response: Response) -> Response:
     return response
 
 
+def add_cache_control(resp: Response) -> Response:
+    """Add cache control header attributes to response."""
+    cc = config_value("CACHE_CONTROL") or dict()
+    for attr, v in cc.items():
+        resp.cache_control[attr] = v
+    return resp
+
+
 def base_render_json(
     form: FlaskForm,
     include_user: bool = True,
