@@ -81,7 +81,7 @@ class FsOAuthProvider:
             raise NotImplementedError
         return self._fetch_identity_cb(oauth, token)
 
-    def oauth_response_failure(self, e: OAuthError) -> ResponseValue:
+    def oauth_response_failure(self, error_view: str, e: OAuthError) -> ResponseValue:
         """Called if authlib authorize_access_token throws an error.
 
         N.B. flashing doesn't seem to work in some cases - if the session
@@ -91,7 +91,7 @@ class FsOAuthProvider:
             "OAUTH_HANDSHAKE_ERROR", exerror=e.error, exdesc=e.description
         )
         if cv("REDIRECT_BEHAVIOR") == "spa":
-            return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
+            return redirect(get_url(cv(error_view), qparams={c: m}))
         do_flash(m, c)
         return redirect(url_for_security("login"))
 

@@ -4,13 +4,14 @@ flask_security.oauth_glue
 
 Class and methods to glue our login path with authlib for to support 'social' auth.
 
-:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2022-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 """
 
 from __future__ import annotations
 
+import time
 import typing as t
 
 try:
@@ -27,7 +28,7 @@ except ImportError:  # pragma: no cover
 from flask import abort, after_this_request, redirect, request, session
 from flask_login import current_user
 
-from .decorators import unauth_csrf
+from .decorators import auth_required, unauth_csrf
 from .oauth_provider import (
     OauthCbType,
     FsOAuthProvider,
@@ -52,6 +53,7 @@ from .utils import (
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask
     from flask.typing import ResponseValue
+    from flask_security import UserMixin
 
 
 @unauth_csrf()
@@ -60,7 +62,7 @@ def oauthstart(name: str) -> ResponseValue:
     Name is a pre-registered OAuth provider.
     TODO: remember me?
     """
-    assert _security.oauthglue
+    assert _security.oauthglue is not None
     if is_user_authenticated(current_user):
         # Just redirect current_user to POST_LOGIN_VIEW.
         # For json - return an error.
@@ -81,7 +83,29 @@ def oauthstart(name: str) -> ResponseValue:
     session.pop("fs_oauth_next", None)
     if request.args.get("next"):
         session["fs_oauth_next"] = request.args.get("next")
-    return _security.oauthglue.get_redirect(name)
+    return _security.oauthglue.get_redirect(name, "oauthresponse")
+
+
+def _oauth_response_common(name: str) -> tuple[t.Any, UserMixin | None] | t.NoReturn:
+    """
+    Common code for oauth response (login or verify)
+    This can abort or raise an OAuthError or return a
+    tuple of (field_value, user)
+    """
+    assert _security.oauthglue is not None
+    authlib_provider = _security.oauthglue.authlib_provider(name)
+    oauth_provider = _security.oauthglue.providers.get(name)
+    if not authlib_provider or not oauth_provider:
+        # this should only happen with purposeful bad API call
+        abort(404)  # TODO - redirect... to where?
+    # This parses the Flask Request and can raise an OAuthError
+    token = authlib_provider.authorize_access_token()
+
+    field_name, field_value = oauth_provider.fetch_identity_cb(
+        _security.oauthglue.oauth_app, token
+    )
+    user = _security.datastore.find_user(**{field_name: field_value})
+    return field_value, user
 
 
 def oauthresponse(name: str) -> ResponseValue:
@@ -91,27 +115,18 @@ def oauthresponse(name: str) -> ResponseValue:
     We may have stored the original 'next' in the session
     N.B. all responses MUST be redirects.
     """
-    assert _security.oauthglue
-    authlib_provider = _security.oauthglue.authlib_provider(name)
+    assert _security.oauthglue is not None
     oauth_provider = _security.oauthglue.providers.get(name)
-    if not authlib_provider or not oauth_provider:
-        # this should only happen with purposeful bad API call
-        abort(404)  # TODO - redirect... to where?
-    # This parses the Flask Request
     try:
-        token = authlib_provider.authorize_access_token()
+        field_value, user = _oauth_response_common(name)
     except OAuthError as e:
         """One known way this can happen is if the session cookie 'samesite'
         is set to 'strict' and e.g. the first time the user goes to github
         and has to authorize this app and then redirect - the session
         cookie isn't sent - and by default that is where the state is kept.
         """
-        return oauth_provider.oauth_response_failure(e)
-
-    field_name, value = oauth_provider.fetch_identity_cb(
-        _security.oauthglue.oauth_app, token
-    )
-    user = _security.datastore.find_user(**{field_name: value})
+        assert oauth_provider is not None
+        return oauth_provider.oauth_response_failure("LOGIN_ERROR_VIEW", e)
     if user:
         after_this_request(view_commit)
         next_loc = session.pop("fs_oauth_next", None)
@@ -120,21 +135,20 @@ def oauthresponse(name: str) -> ResponseValue:
         )
         if response:
             return response
-        # two factor not required - login user
+        # two-factor not required - login user
         login_user(user)
         if cv("REDIRECT_BEHAVIOR") == "spa":
-            return redirect(
-                get_url(
-                    cv("POST_OAUTH_LOGIN_VIEW"), qparams=user.get_redirect_qparams()
-                )
+            redirect_url = get_url(
+                cv("POST_OAUTH_LOGIN_VIEW"), qparams=user.get_redirect_qparams()
             )
-        redirect_url = get_post_action_redirect(
-            "SECURITY_POST_LOGIN_VIEW", dict(next=next_loc)
-        )
+        else:
+            redirect_url = get_post_action_redirect(
+                "SECURITY_POST_LOGIN_VIEW", dict(next=next_loc)
+            )
         return redirect(redirect_url)
     # Seems ok to show identity - the only identity it could be is the callers
     # so seems no way this can be used to enumerate registered users.
-    m, c = get_message("IDENTITY_NOT_REGISTERED", id=value)
+    m, c = get_message("IDENTITY_NOT_REGISTERED", id=field_value)
     if cv("REDIRECT_BEHAVIOR") == "spa":
         return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
     do_flash(m, c)
@@ -142,12 +156,71 @@ def oauthresponse(name: str) -> ResponseValue:
     return redirect(url_for_security("login"))
 
 
+@auth_required(lambda: cv("API_ENABLED_METHODS"))
+def oauth_verify_start(name: str) -> ResponseValue:
+    """
+    Re-authenticate to reset freshness time.
+    With a forms-based app this is the result of a reauthn_handler redirect.
+    """
+    # we never want to return here or to the redirect location.
+    # Some providers match on entire redirect url - so we don't want to
+    # store next there. Use session.
+    assert _security.oauthglue is not None
+    session.pop("fs_oauth_next", None)
+    if request.args.get("next"):
+        session["fs_oauth_next"] = request.args.get("next")
+    return _security.oauthglue.get_redirect(name, "oauth_verify_response")
+
+
+def oauth_verify_response(name: str) -> ResponseValue:
+    """
+    Callback from oauth provider - response is provider-specific
+    Since this is a callback from oauth provider - there is no form,
+    We may have stored the original 'next' in the session
+    N.B. all responses MUST be redirects.
+    """
+    assert _security.oauthglue is not None
+    oauth_provider = _security.oauthglue.providers.get(name)
+    try:
+        field_value, user = _oauth_response_common(name)
+    except OAuthError as e:
+        """One known way this can happen is if the session cookie 'samesite'
+        is set to 'strict' and e.g. the first time the user goes to github
+        and has to authorize this app and then redirect - the session
+        cookie isn't sent - and by default that is where the state is kept.
+        """
+        assert oauth_provider is not None
+        return oauth_provider.oauth_response_failure("VERIFY_ERROR_VIEW", e)
+    next_loc = session.pop("fs_oauth_next", None)
+    if user:
+        # verified - so set freshness time.
+        session["fs_paa"] = time.time()
+        if cv("REDIRECT_BEHAVIOR") == "spa":
+            redirect_url = get_url(
+                cv("POST_OAUTH_VERIFY_VIEW"), qparams=user.get_redirect_qparams()
+            )
+        else:
+            do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
+            redirect_url = get_post_action_redirect(
+                "SECURITY_POST_VERIFY_VIEW", dict(next=next_loc)
+            )
+        return redirect(redirect_url)
+
+    m, c = get_message("IDENTITY_NOT_REGISTERED", id=field_value)
+    if cv("REDIRECT_BEHAVIOR") == "spa":
+        return redirect(get_url(cv("VERIFY_ERROR_VIEW"), qparams={c: m}))
+    do_flash(m, c)
+    # Go back to verify - this is the same logic as in default_reauthn_handler
+    view = "us_verify" if cv("UNIFIED_SIGNIN") else "verify"
+    return redirect(url_for_security(view, next=next_loc))
+
+
 class OAuthGlue:
     """
     Provide the necessary glue between the Flask-Security login process and
     authlib oauth client code.
 
-    There are some builtin providers which can be used or not - configured via
+    There are some builtin providers that can be used or not - configured via
     :py:data:`SECURITY_OAUTH_BUILTIN_PROVIDERS`. Any other provider can be registered
     using :py:meth:`register_provider_ext`.
 
@@ -158,6 +231,9 @@ class OAuthGlue:
     .. versionchanged:: 5.4.0
         Added register_provider_ext which allows applications more control to
         manage new providers (such as extended error handling).
+
+    .. versionchanged:: 5.8.0
+        Added endpoints for verify using OAuth.
     """
 
     def __init__(self, app: flask.Flask, oauthapp: OAuth | None = None):
@@ -187,19 +263,33 @@ class OAuthGlue:
             endpoint="oauthresponse",
         )(oauthresponse)
 
-    def get_redirect(self, name: str, **values: t.Any) -> ResponseValue:
+        if cv("FRESHNESS", app=app).total_seconds() >= 0:
+            verify_start_url = cv("OAUTH_VERIFY_START_URL", app=app)
+            bp.route(
+                verify_start_url + slash_url_suffix(verify_start_url, "<name>"),
+                methods=["POST"],
+                endpoint="oauth_verify_start",
+            )(oauth_verify_start)
+            verify_response_url = cv("OAUTH_VERIFY_RESPONSE_URL", app=app)
+            bp.route(
+                verify_response_url + slash_url_suffix(verify_response_url, "<name>"),
+                methods=["GET"],
+                endpoint="oauth_verify_response",
+            )(oauth_verify_response)
+
+    def get_redirect(
+        self, name: str, endpoint: str, **values: t.Any
+    ) -> ResponseValue | t.NoReturn:
         authlib_provider = self.authlib_provider(name)
         if not authlib_provider:
-            return abort(404)
-        start_uri = url_for_security(
-            "oauthresponse", name=name, _external=True, **values
-        )
+            abort(404)
+        start_uri = url_for_security(endpoint, name=name, _external=True, **values)
         redirect_url = authlib_provider.authorize_redirect(start_uri)
         return redirect_url
 
     @property
-    def provider_names(self):
-        return self.providers.keys()
+    def provider_names(self) -> list[str]:
+        return list(self.providers.keys())
 
     @property
     def oauth_app(self):

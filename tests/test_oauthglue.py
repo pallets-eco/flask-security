@@ -4,7 +4,7 @@ test_oauthglue.py
 
 OAuth glue tests - oauthglue is a very thin shim between FS and authlib
 
-:copyright: (c) 2022-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2022-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -18,6 +18,7 @@ from flask_wtf import CSRFProtect
 from flask_security import FsOAuthProvider
 from tests.test_utils import (
     authenticate,
+    capture_flashes,
     check_location,
     get_csrf_token,
     get_form_action,
@@ -25,7 +26,9 @@ from tests.test_utils import (
     get_session,
     init_app_with_options,
     is_authenticated,
+    json_authenticate,
     logout,
+    reset_fresh,
     setup_tf_sms,
 )
 
@@ -337,7 +340,8 @@ def test_provider_class(app, sqlalchemy_datastore, get_message):
             profile = resp.json()
             return "email", profile["email"]
 
-        def oauth_response_failure(self, e):
+        def oauth_response_failure(self, error_view, e):
+            assert isinstance(e, MismatchingStateError)
             return redirect("/uh-oh")
 
     init_app_with_options(
@@ -367,3 +371,143 @@ def test_provider_class(app, sqlalchemy_datastore, get_message):
     assert response.status_code in [302, 303]
     assert check_location(app, response.location, "/post_login")
     assert is_authenticated(client, get_message)
+
+
+@pytest.mark.settings(oauth_enable=True, post_verify_view="/post_verify")
+def test_verify(app, sqlalchemy_datastore, get_message):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+
+    # just authenticate using github
+    client.get("/login/oauthresponse/github", follow_redirects=False)
+    assert is_authenticated(client, get_message)
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    # This will return the /verify form
+    response = client.get("/fresh", follow_redirects=True)
+    github_url = get_form_action(response, 1)
+    assert "oauth-verify-start" in github_url
+    response = client.post(github_url, follow_redirects=False)
+    assert "/whatever" in response.location
+    session = get_session(response)
+    assert "fs_oauth_next" in session
+
+    with capture_flashes() as flashes:
+        response = client.get(
+            "/login/oauth-verify-response/github", follow_redirects=True
+        )
+    assert flashes[0]["category"] == "info"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "REAUTHENTICATION_SUCCESSFUL"
+    )
+    assert b"Fresh Only" in response.data
+    session = get_session(response)
+    assert "fs_oauth_next" not in session
+
+
+@pytest.mark.settings(oauth_enable=True)
+def test_verify_unknown_user(app, sqlalchemy_datastore, get_message):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    authenticate(client)
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_identity("jwag@lp.com")  # this will cause response to fail
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("/fresh", follow_redirects=True)
+    github_url = get_form_action(response, 1)
+    response = client.post(github_url, follow_redirects=False)
+
+    with capture_flashes() as flashes:
+        redirect_url = urllib.parse.urlsplit(urllib.parse.unquote(response.location))
+        local_redirect = urllib.parse.parse_qs(redirect_url.query)["redirect_uri"][0]
+        response = client.get(local_redirect, follow_redirects=True)
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "IDENTITY_NOT_REGISTERED", id="jwag@lp.com"
+    )
+    assert b"Reauthenticate" in response.data
+    session = get_session(response)
+    assert "fs_oauth_next" not in session
+
+
+@pytest.mark.settings(
+    oauth_enable=True,
+    oauth_builtin_providers=["github"],
+    post_oauth_verify_view="/post_oauth_verify",
+    redirect_host="myui.com:8090",
+    redirect_behavior="spa",
+)
+def test_verify_spa(app, sqlalchemy_datastore, get_message):
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    json_authenticate(client)
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("/fresh", headers=headers)
+    assert response.json["response"]["reauth_required"]
+    assert response.json["response"]["oauth_enabled"]
+    assert response.json["response"]["oauth_providers"] == ["github"]
+
+    response = client.post("/login/oauth-verify-start/github", follow_redirects=False)
+    assert "/whatever" in response.location
+
+    # this is what github would call
+    response = client.get("/login/oauth-verify-response/github", follow_redirects=False)
+    assert (
+        response.location == "//myui.com:8090/post_oauth_verify?"
+        "email=matt%40lp.com&identity=matt%40lp.com"
+    )
+
+
+@pytest.mark.settings(
+    oauth_enable=True, redirect_behavior="spa", verify_error_view="/verify-error"
+)
+def test_verify_unknown_user_spa(app, sqlalchemy_datastore, get_message):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    json_authenticate(client)
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_identity("jwag@lp.com")
+
+    # what github would have called
+    response = client.get("/login/oauth-verify-response/github")
+    assert "/verify-error" in response.location
+    assert "not+registered" in response.location
+
+
+@pytest.mark.settings(
+    oauth_enable=True, redirect_behavior="spa", verify_error_view="/verify-error"
+)
+def test_verify_spa_exc(app, sqlalchemy_datastore, get_message):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    json_authenticate(client)
+    # try fake oauth exception
+    from authlib.integrations.base_client.errors import MismatchingStateError
+
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_exception(MismatchingStateError)
+    response = client.get("/login/oauth-verify-response/github", follow_redirects=False)
+    split = urlsplit(response.location)
+    assert "/verify-error" == split.path
+    qparams = dict(parse_qsl(split.query))
+    msg = get_message(
+        "OAUTH_HANDSHAKE_ERROR",
+        exerror="mismatching_state",
+        exdesc="CSRF Warning! State not equal in request and response.",
+    )
+    assert qparams["error"] == msg.decode()

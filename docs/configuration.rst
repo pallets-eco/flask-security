@@ -181,6 +181,8 @@ These configuration keys are used globally across all features.
     When this is enabled, the following must also be defined:
 
     - :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
+    - :py:data:`SECURITY_POST_OAUTH_VERIFY_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
+    - :py:data:`SECURITY_VERIFY_ERROR_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
     - :py:data:`SECURITY_LOGIN_ERROR_VIEW`
     - :py:data:`SECURITY_CONFIRM_ERROR_VIEW`
     - :py:data:`SECURITY_POST_CHANGE_EMAIL_VIEW`
@@ -412,7 +414,7 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_FRESHNESS
 
     A timedelta used to protect endpoints that alter sensitive information.
-    This is used to protect the following endpoints:
+    This is used to protect the following Flask Security endpoints:
 
         - :py:data:`SECURITY_US_SETUP_URL`
         - :py:data:`SECURITY_TWO_FACTOR_SETUP_URL`
@@ -421,6 +423,8 @@ These configuration keys are used globally across all features.
         - :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
         - :py:data:`SECURITY_CHANGE_EMAIL_URL`
 
+    This can also be used to protect application endpoints with the :meth:`flask_security.auth_required` decorator.
+
     Setting this to a negative number will disable any freshness checking and
     the endpoints:
 
@@ -428,6 +432,8 @@ These configuration keys are used globally across all features.
         - :py:data:`SECURITY_US_VERIFY_URL`
         - :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL`
         - :py:data:`SECURITY_WAN_VERIFY_URL`
+        - :py:data:`SECURITY_OAUTH_VERIFY_START_URL`
+        - :py:data:`SECURITY_OAUTH_VERIFY_RESPONSE_URL`
 
     won't be registered.
     Setting this to 0 results in undefined behavior.
@@ -1939,8 +1945,8 @@ Additional relevant configuration variables:
     * :py:data:`SECURITY_TOTP_SECRETS` - TOTP/passlib is used to generate the codes.
     * :py:data:`SECURITY_TOTP_ISSUER`
 
-Social Oauth
--------------
+Social Login (OAuth)
+--------------------
     .. versionadded:: 5.1.0
 
 .. py:data:: SECURITY_OAUTH_ENABLE
@@ -1968,7 +1974,7 @@ Social Oauth
 .. py:data:: SECURITY_POST_OAUTH_LOGIN_VIEW
 
     Specifies the view/URL to redirect to after a successful authentication (login)
-    using social oauth.
+    using social login (OAuth).
     This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``.
     Query params in the redirect will contain `identity` and `email`.
 
@@ -1976,7 +1982,46 @@ Social Oauth
 
     .. versionadded:: 5.4.0
 
+.. py:data:: SECURITY_OAUTH_VERIFY_START_URL
 
+    Endpoint for starting an Oauth reauthentication/verify operation.
+
+    Default: ``"/login/oauth-verify-start"``
+
+    .. versionadded:: 5.8.0
+
+.. py:data:: SECURITY_OAUTH_VERIFY_RESPONSE_URL
+
+    Endpoint used as the Oauth verify redirect.
+
+    Default: ``"/login/oauth-verify-response"``
+
+    .. versionadded:: 5.8.0
+
+.. py:data:: SECURITY_POST_OAUTH_VERIFY_VIEW
+
+    Specifies the view/URL to redirect to after a successful reauthentication (verify)
+    using social login/oauth.
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``.
+    Query params in the redirect will contain `identity` and `email`.
+
+    Default: ``None``.
+
+    .. versionadded:: 5.8.0
+
+.. py:data:: SECURITY_VERIFY_ERROR_VIEW
+
+    Specifies the view/URL to redirect to after the following login/authentication errors:
+
+    * GET on oauth-verify-response where there was an OAuth protocol error.
+    * GET on oauth-verify-response where the returned identity isn't registered.
+
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``.
+    Query params in the redirect will contain the error type and message.
+
+    Default: ``None``.
+
+    .. versionadded:: 5.8.0
 
 Feature Flags
 -------------
@@ -2015,6 +2060,8 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_URL` ``"/mf-recovery"``
 * :py:data:`SECURITY_OAUTH_START_URL` ``"/login/oauthstart"``
 * :py:data:`SECURITY_OAUTH_RESPONSE_URL` ``"/login/oauthresponse"``
+* :py:data:`SECURITY_OAUTH_VERIFY_START_URL` ``"/login/oauth-verify-start"``
+* :py:data:`SECURITY_OAUTH_VERIFY_RESPONSE_URL` ``"/login/oauth-verify-response"``
 * :py:data:`SECURITY_TWO_FACTOR_SELECT_URL` ``"/tf-select"``
 * :py:data:`SECURITY_TWO_FACTOR_SETUP_URL` ``"/tf-setup"``
 * :py:data:`SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL` ``"/tf-validate"``
@@ -2029,6 +2076,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_POST_RESET_VIEW`
 * :py:data:`SECURITY_POST_CHANGE_VIEW`
 * :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW`
+* :py:data:`SECURITY_POST_OAUTH_VERIFY_VIEW`
 * :py:data:`SECURITY_UNAUTHORIZED_VIEW`
 * :py:data:`SECURITY_RESET_VIEW`
 * :py:data:`SECURITY_RESET_ERROR_VIEW`
@@ -2041,6 +2089,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_US_VERIFY_URL`
 * :py:data:`SECURITY_US_VERIFY_SEND_CODE_URL`
 * :py:data:`SECURITY_US_POST_SETUP_VIEW`
+* :py:data:`SECURITY_VERIFY_ERROR_VIEW`
 * :py:data:`SECURITY_WAN_REGISTER_URL`
 * :py:data:`SECURITY_WAN_SIGNIN_URL`
 * :py:data:`SECURITY_WAN_DELETE_URL`

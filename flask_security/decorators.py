@@ -5,7 +5,7 @@ flask_security.decorators
 Flask-Security decorators module
 
 :copyright: (c) 2012-2019 by Matt Wright.
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -99,6 +99,10 @@ def default_reauthn_handler(within, grace):
         payload["unified_signin_enabled"] = is_us
         payload["has_webauthn_verify_credential"] = has_webauthn(
             current_user, cv("WAN_ALLOW_AS_VERIFY")
+        )
+        payload["oauth_enabled"] = cv("OAUTH_ENABLE")
+        payload["oauth_providers"] = (
+            _security.oauthglue.provider_names if cv("OAUTH_ENABLE") else []
         )
         return _security._render_json(payload, 401, None, None)
 
@@ -197,7 +201,7 @@ def handle_csrf(method: str, json_response: bool = False) -> ResponseValue | Non
 
         #) csrfProtect already checked and accepted the token
 
-    This means in the default config - CSRF is done as part of form validation
+    This means in the default config - CSRF is done as part of form validation,
     not here. Only if the application calls CSRFProtect(app) will this method
     do anything. Furthermore - since this is called PRIOR to form instantiation
     if the request is JSON - it MUST send the csrf_token as a header.
@@ -288,7 +292,7 @@ def auth_token_required(fn: DecoratedView) -> DecoratedView:
             return current_app.ensure_sync(fn)(*args, **kwargs)
         return _security._unauthn_handler(["token"])
 
-    return t.cast(DecoratedView, decorated)
+    return decorated
 
 
 def auth_required(
@@ -625,4 +629,4 @@ def anonymous_user_required(f: DecoratedView) -> DecoratedView:
                 return redirect(get_url(cv("POST_LOGIN_VIEW")))
         return current_app.ensure_sync(f)(*args, **kwargs)
 
-    return t.cast(DecoratedView, wrapper)
+    return wrapper
