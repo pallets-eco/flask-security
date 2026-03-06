@@ -284,10 +284,10 @@ registered. They can be completely disabled or their names can be changed.
 Run ``flask --help`` and look for users and roles.
 
 
-Social/OAuth Authentication
-----------------------------
+Social Login (OAuth) Authentication
+------------------------------------
 Flask-Security provides a thin layer which integrates `authlib`_ with Flask-Security
-views and features (such as two-factor authentication). Flask-Security is shipped
+views and features (such as two-factor authentication and verify). Flask-Security is shipped
 with support for github and google - others can be added by the application (see `loginpass`_
 for many examples).
 
@@ -306,7 +306,7 @@ We have seen issues with some providers when `SESSION_COOKIE_SAMESITE` = "strict
 The handshake (sometimes just the first time when the user is being asked to accept your application)
 fails due to the session cookie not getting sent as part of the redirect.
 
-A very simple example of configuring social auth with Flask-Security is available
+A very simple example of configuring social login with Flask-Security is available
 in the `examples` directory.
 
 .. _Click: https://palletsprojects.com/p/click/

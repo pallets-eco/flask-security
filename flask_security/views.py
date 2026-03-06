@@ -261,6 +261,10 @@ def verify():
     if _security._want_json(request):
         payload = {
             "has_webauthn_verify_credential": webauthn_available,
+            "oauth_enabled": cv("OAUTH_ENABLE"),
+            "oauth_providers": (
+                _security.oauthglue.provider_names if cv("OAUTH_ENABLE") else []
+            ),
         }
         return base_render_json(form, additional=payload)
 

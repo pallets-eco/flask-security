@@ -210,4 +210,4 @@ The decision whether to require a second factor after primary authentication is 
 The default implementation returns True if :py:data:`SECURITY_TWO_FACTOR_REQUIRED` is set OR the user has a two-factor method already setup AND
 recent two-factor authentication isn't 'valid' (see above).
 
-This method can be overridden in the applications User class. A common use case might be to require two-factor for any user with the 'admin' role.
+This method can be overridden in the application's User class. A common use case might be to require two-factor for any user with the 'admin' role.

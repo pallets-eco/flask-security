@@ -664,6 +664,12 @@ def us_verify() -> ResponseValue:
             "available_methods": cv("US_ENABLED_METHODS"),
             "code_methods": code_methods,
             "has_webauthn_verify_credential": webauthn_available,
+            "oauth_enabled": cv("OAUTH_ENABLE"),
+            "oauth_providers": (
+                _security.oauthglue.provider_names  # type: ignore[union-attr]
+                if cv("OAUTH_ENABLE")
+                else []
+            ),
         }
         return base_render_json(form, additional=payload)
 
@@ -958,7 +964,7 @@ def us_setup() -> ResponseValue:
 def us_setup_validate(token: str) -> ResponseValue:
     """
     Validate new setup.
-    The token is the state variable which is signed and timed
+    The token is the state variable that is signed and timed
     and contains all the state that once confirmed will be stored in the user record.
     """
     form = t.cast(

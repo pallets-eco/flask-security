@@ -1,5 +1,5 @@
 """
-Copyright 2020-2024 by J. Christopher Wagner (jwag). All rights reserved.
+Copyright 2020-2026 by J. Christopher Wagner (jwag). All rights reserved.
 :license: MIT, see LICENSE for more details.
 
 A simple example of utilizing Flask-Security's OAuth glue layer.
@@ -20,6 +20,7 @@ This example uses github as the OAuth provider. Before this example will work:
     "GITHUB_CLIENT_ID" and "GITHUB_CLIENT_SECRET".
    See: https://docs.authlib.org/en/latest/client/flask.html# for details.
    (look under profile->settings->developer settings)
+   The redirect_url should be set to https://<your app>/login
 2) Register yourself (with your github email) with this application.
 
 Note: by default this uses an in-memory DB - so everytime you restart you lose all
@@ -90,6 +91,7 @@ def create_app():
     app.config["SECURITY_TOTP_SECRETS"] = {
         "1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"
     }
+    app.config["SECURITY_TOTP_ISSUER"] = "me"
     # app.config["SESSION_COOKIE_SAMESITE"] = "strict"
 
     # As of Flask-SQLAlchemy 2.4.0 it is easy to pass in options directly to the
@@ -138,6 +140,13 @@ def create_app():
     @auth_required()
     def home():
         return render_template_string("Hello {{ current_user.email }}")
+
+    @app.route("/superfresh")
+    @auth_required(within=1, grace=0)
+    def superfresh():
+        return render_template_string(
+            "Hello {{ current_user.email }} you are super fresh!"
+        )
 
     @app.route("/")
     def root():

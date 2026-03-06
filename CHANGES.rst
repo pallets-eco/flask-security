@@ -13,6 +13,7 @@ Features & Improvements
 - (:pr:`1170`) Add API :py:meth:`.UserMixin.check_tf_required` to allow applications to control which users
   require two-factor authentication.
 - (:issue:`1178`) Add Cache-Control headers.
+- (:issue:`1165`) Add support for using Social Login (OAuth) for verification.
 
 Fixes
 +++++

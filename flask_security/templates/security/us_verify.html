@@ -30,5 +30,19 @@
       {{ render_field(wan_verify_form.submit) }}
     </form>
   {% endif %}
+  {% if security.oauthglue %}
+    <hr class="fs-gap">
+    <h2>{{ _fsdomain("Use Social Login to Reauthenticate") }}</h2>
+    {% for provider in security.oauthglue.provider_names %}
+      <div class="fs-gap">
+        <form method="post" id="{{ provider }}_form" name="{{ provider }}_form">
+          <input id="{{ provider }}" name="{{ provider }}" type="submit" value="{{ _fsdomain('Continue with %(provider)s', provider=provider) }}" formaction="{{ url_for_security('oauth_verify_start', name=provider) }}{{ prop_next() }}">
+          {% if csrf_token is defined %}
+            <input id="{{ provider }}_csrf_token" name="{{ provider }}_csrf_token" type="hidden" value="{{ csrf_token() }}">
+          {% endif %}
+        </form>
+      </div>
+    {% endfor %}
+  {% endif %}
   {% include "security/_menu.html" %}
 {% endblock content %}

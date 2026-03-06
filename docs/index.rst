@@ -21,8 +21,8 @@ Flask application. They include:
 5. Password management (recovery and resetting) (optional)
 6. Username management (configuration, recovery, change) (optional)
 7. Two-factor authentication via email, SMS, authenticator (optional)
-8. WebAuthn Support (optional)
-9. 'social'/OAuth for authentication (e.g. google, github, ..) (optional)
+8. Passkey (Webauthn) Support (optional)
+9. Social Login (OAuth) for authentication (e.g. google, github, ..) (optional)
 10. Change email (optional)
 11. Login tracking (optional)
 12. JSON/Ajax Support

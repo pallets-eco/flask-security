@@ -91,6 +91,8 @@ The following is a list of all the available context processor decorators:
 * ``tf_token_validation_context_processor``: Two factor token validation view
 * ``us_signin_context_processor``: Unified sign in view
 * ``us_setup_context_processor``: Unified sign in setup view
+* ``us_verify_context_processor``: Unified sign in verify view
+* ``verify_context_processor``: Verify view
 * ``wan_register_context_processor``: WebAuthn registration view
 * ``wan_signin_context_processor``: WebAuthn sign in view
 * ``wan_verify_context_processor``: WebAuthn verify view
