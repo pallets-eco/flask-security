@@ -1067,6 +1067,8 @@ def test_verify_json(app, client, get_message):
     assert set(response.json["response"]["code_methods"]) == {
         "email",
     }
+    assert not response.json["response"]["oauth_enabled"]
+    assert not response.json["response"]["oauth_providers"]
 
     response = client.post(
         "us-verify/send-code",

@@ -197,10 +197,12 @@ _default_config: dict[str, t.Any] = {
     "POST_LOGOUT_VIEW": "/",
     "LOGIN_ERROR_VIEW": None,  # spa
     "POST_OAUTH_LOGIN_VIEW": None,  # spa
+    "POST_OAUTH_VERIFY_VIEW": None,  # spa
     "CONFIRM_ERROR_VIEW": None,  # spa
     "POST_CONFIRM_VIEW": None,  # spa
     "RESET_VIEW": None,  # spa
     "RESET_ERROR_VIEW": None,  # spa
+    "VERIFY_ERROR_VIEW": None,  # spa
     "POST_RESET_VIEW": None,
     "POST_CHANGE_VIEW": None,
     "POST_VERIFY_VIEW": None,
@@ -275,6 +277,8 @@ _default_config: dict[str, t.Any] = {
     "OAUTH_BUILTIN_PROVIDERS": ["github", "google"],
     "OAUTH_START_URL": "/login/oauthstart",
     "OAUTH_RESPONSE_URL": "/login/oauthresponse",
+    "OAUTH_VERIFY_START_URL": "/login/oauth-verify-start",
+    "OAUTH_VERIFY_RESPONSE_URL": "/login/oauth-verify-response",
     "CONFIRM_EMAIL_WITHIN": "5 days",
     "RESET_PASSWORD_WITHIN": "1 days",
     "LOGIN_WITHOUT_CONFIRMATION": False,

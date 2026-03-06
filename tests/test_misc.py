@@ -1177,6 +1177,8 @@ def test_verify_fresh_json(app, client, get_message):
     response = client.get("/fresh", headers=headers)
     assert response.status_code == 401
     assert response.json["response"]["reauth_required"]
+    assert not response.json["response"]["oauth_enabled"]
+    assert not response.json["response"]["oauth_providers"]
 
     response = client.get("/verify")
     assert b"Reauthenticate" in response.data
