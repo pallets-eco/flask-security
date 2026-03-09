@@ -13,7 +13,7 @@ will install the basic package along with its required dependencies:
 * Flask-WTF
 * email-validator
 * itsdangerous
-* passlib
+* libpass
 * Blinker
 
 These are not sufficient for a complete application - other packages are

@@ -6,7 +6,7 @@ from flask import current_app
 from werkzeug.local import LocalProxy
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from passlib.context import CryptContext
+    from libpass.context import CryptContext
     from .core import Security, UserDatastore
 
 # Convenient references

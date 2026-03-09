@@ -14,8 +14,8 @@ import base64
 import io
 import typing as t
 
-from passlib.totp import TOTP, TokenError, TotpMatch
-from passlib.pwd import genword
+from libpass.totp import TOTP, TokenError, TotpMatch
+from libpass.pwd import genword
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask_security import UserMixin
