@@ -1554,9 +1554,7 @@ def test_xlation(app, client, get_message_local):
     # login as gal2 which has 'authenticator' set up
     response = authenticate(client, email="gal2@lp.com", follow_redirects=True)
     with app.test_request_context():
-        existing = (
-            "Veuillez saisir votre code d'authentification généré via: authentificateur"
-        )
+        existing = "Veuillez saisir votre code d'authentification généré avec : authentificateur"
         assert markupsafe.escape(existing).encode() in response.data
     with app.app_context():
         # generate 'code' as authenticator would and complete authentication
@@ -1565,7 +1563,7 @@ def test_xlation(app, client, get_message_local):
     client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
     response = client.get("/tf-setup", follow_redirects=True)
     with app.test_request_context():
-        existing = "Méthode à deux facteurs actuellement configurée : authentificateur"
+        existing = "Méthode d'authentification à deux facteurs actuellement configurée : authentificateur"
         assert markupsafe.escape(existing).encode() in response.data
 
 
