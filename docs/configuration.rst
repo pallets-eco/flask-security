@@ -172,7 +172,7 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_REDIRECT_BEHAVIOR
 
-    Passwordless login, confirmation, reset password, unified signin, change_email, and OAuth signin
+    Passwordless login, confirmation, reset password, unified signin, change_email, and Social Login
     have GET endpoints that validate the passed token and redirect to an action form.
     For Single-Page-Applications style UIs which need to control their own internal URL routing these redirects
     need to not contain forms, but contain relevant information as query parameters.
@@ -225,7 +225,7 @@ These configuration keys are used globally across all features.
 .. py:data:: SECURITY_REDIRECT_BASE_DOMAIN
 
     Set the base domain for checking allowable redirects. The intent here is to
-    allow an application to be server on e.g. "flaskapp.my.org" and redirect
+    allow an application to be served on e.g. "flaskapp.my.org" and redirect
     to "myservice.my.org" (which maybe isn't a Flask app). Flask's SERVER_NAME
     can't be used to verify redirects in this case. Note that in most cases
     the application will want to set Flask's SESSION_COOKIE_DOMAIN to be this base domain -
@@ -422,6 +422,7 @@ These configuration keys are used globally across all features.
         - :py:data:`SECURITY_WAN_DELETE_URL`
         - :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
         - :py:data:`SECURITY_CHANGE_EMAIL_URL`
+        - :py:data:`SECURITY_CHANGE_USERNAME_URL`
 
     This can also be used to protect application endpoints with the :meth:`flask_security.auth_required` decorator.
 

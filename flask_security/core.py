@@ -2023,7 +2023,7 @@ class Security:
         Can raise an exception if it is handled as part of
         flask.errorhandler(<exception>)
 
-        With the passed parameters the application could deliver a concise error
+        With the passed parameters, the application could deliver a concise error
         message.
 
         .. versionadded:: 3.3.0
@@ -2038,7 +2038,8 @@ class Security:
         cb: t.Callable[[list[str], dict[str, str] | None], ResponseValue],
     ) -> None:
         """
-        Callback for failed authentication.
+        Callback when a protected endpoint is accessed without the required
+        authentication.
         This is called by :func:`auth_required`, :func:`auth_token_required`
         or :func:`http_auth_required` if authentication fails.
         It is also called from Flask-Login's @login_required decorator.
@@ -2053,7 +2054,8 @@ class Security:
         ``flask.errorhandler(<exception>)``
 
         The default implementation will return a 401 response if the request was JSON,
-        otherwise will redirect to the `login` view.
+        otherwise will redirect to the `login` view. In addition, the
+        :data:`user_unauthenticated` signal is sent.
 
         .. versionadded:: 3.3.0
 
