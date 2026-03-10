@@ -290,7 +290,8 @@ sends the following signals.
 
 .. data:: user_unauthenticated
 
-   Sent when a user fails to authenticate. It is sent from the `default_unauthn_handler`.
+   Sent when a user accesses a protected endpoint but isn't properly authenticated.
+   It is sent as part of the `default_unauthn_handler` (:meth:`.Security.unauthn_handler`)
    It is passed the app (which is the sender).
 
     .. versionadded:: 5.4.0

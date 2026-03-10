@@ -50,7 +50,10 @@ BasicAuth = namedtuple("BasicAuth", "username, password")
 
 
 def default_unauthn_handler(mechanisms=None, headers=None):
-    """Default callback for failures to authenticate
+    """Default callback when a protected endpoint is accessed without the required
+    authentication.
+
+    The :data:`user_unauthenticated` signal is sent.
 
     If caller wants JSON - return 401.
     If caller wants BasicAuth - return 401 (the WWW-Authenticate header is set).
