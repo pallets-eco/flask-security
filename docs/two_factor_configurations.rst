@@ -58,7 +58,7 @@ possible using SQLAlchemy:
     app.config['SECURITY_TWO_FACTOR_ALWAYS_VALIDATE'] = False
     app.config['SECURITY_TWO_FACTOR_LOGIN_VALIDITY'] = "1 week"
 
-    # Generate a good totp secret using: passlib.totp.generate_secret()
+    # Generate a good totp secret using: libpass.totp.generate_secret()
     app.config['SECURITY_TOTP_SECRETS'] = {"1": "TjQ9Qa31VOrfEzuPy4VHQWPCTmRzCnFzMKLxXYiZu9B"}
     app.config['SECURITY_TOTP_ISSUER'] = "put_your_app_name"
 

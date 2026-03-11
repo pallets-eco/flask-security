@@ -13,7 +13,7 @@ import base64
 from contextlib import contextmanager
 from datetime import timedelta
 import markupsafe
-from passlib.totp import TOTP
+from libpass.totp import TOTP
 import re
 from urllib.parse import parse_qsl, urlsplit
 

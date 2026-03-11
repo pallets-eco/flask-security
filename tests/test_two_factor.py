@@ -13,7 +13,7 @@ import re
 
 from freezegun import freeze_time
 import markupsafe
-from passlib.totp import TOTP
+from libpass.totp import TOTP
 import pytest
 from flask_principal import identity_changed
 from flask_security import (

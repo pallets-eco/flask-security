@@ -640,7 +640,7 @@ These are used by the Two-Factor and Unified Signin features.
 
     .. code-block:: python
 
-        from passlib import totp
+        from libpass import totp
         "{1: <result of totp.generate_secret()>}"
 
     See: `Totp`_ for details.

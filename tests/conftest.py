@@ -22,8 +22,8 @@ from datetime import datetime
 import sys
 from urllib.parse import urlsplit
 
-from passlib.ifc import PasswordHash
-from passlib.registry import register_crypt_handler
+from libpass.ifc import PasswordHash
+from libpass.registry import register_crypt_handler
 import pytest
 from flask import Flask, Response, jsonify, render_template
 from flask import request as flask_request

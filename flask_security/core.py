@@ -26,7 +26,7 @@ from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
 from flask_principal import Identity, Principal, RoleNeed, UserNeed, identity_loaded
 from itsdangerous import URLSafeTimedSerializer
-from passlib.context import CryptContext
+from libpass.context import CryptContext
 from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy
 
