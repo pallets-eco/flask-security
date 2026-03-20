@@ -951,6 +951,7 @@ def two_factor_setup_validate(token: str) -> ResponseValue:
     form.tf_totp_secret = totp_secret
     form.primary_method = method
     form.user = current_user
+    form.is_setup = True
 
     if form.validate_on_submit():
         tf_clean_session()  # until we completely remove session based setup/state
@@ -1040,6 +1041,7 @@ def two_factor_token_validation():
             logout_user()
             return tf_illegal_state(form, cv("TWO_FACTOR_ERROR_VIEW"))
         form.user = current_user
+        form.is_setup = True
 
     form.primary_method = pm
     form.tf_totp_secret = totp_secret

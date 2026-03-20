@@ -4,7 +4,7 @@ flask_security.webauthn
 
 Flask-Security WebAuthn module
 
-:copyright: (c) 2021-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2021-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 This implements support for webauthn/FIDO2 Level 2 using the py_webauthn package.
@@ -342,7 +342,7 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
             credential_public_key=self.cred.public_key,
             credential_current_sign_count=self.cred.sign_count,
         )
-        # Start by verifying requiring user_verification - if that succeeds then
+        # Start by verifying requiring user_verification - if that succeeds, then
         # this authn could be used for both primary and secondary.
         # If it fails, then try to verify with user_verification == False - unless
         # as part of signin the app required user_verification (as stored in the state)
@@ -358,6 +358,7 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
                 self.credential.errors.append(
                     get_message("WEBAUTHN_NO_VERIFY", cause=str(exc))[0]
                 )
+                self.user.track_failed_authn(request.endpoint, "passkey")
                 return False
         return True
 

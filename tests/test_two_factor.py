@@ -37,6 +37,7 @@ from tests.test_utils import (
     is_authenticated,
     json_authenticate,
     logout,
+    check_signals,
 )
 
 pytestmark = pytest.mark.two_factor()
@@ -305,7 +306,7 @@ def test_two_factor_illegal_state(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_two_factor_flag(app, clients, get_message, outbox):
+def test_two_factor_flag(app, clients, get_message, outbox, signals):
     # trying to verify code without going through two-factor
     # first login function
     client = clients
@@ -393,6 +394,13 @@ def test_two_factor_flag(app, clients, get_message, outbox):
     # submit bad token to two_factor_token_validation
     response = client.post("/tf-validate", data=dict(code=wrong_code))
     assert get_message("TWO_FACTOR_INVALID_TOKEN") in response.data
+    assert (
+        signals["user_failed_authn"][2]["endpoint"]
+        == "security.two_factor_token_validation"
+    )
+    assert signals["user_failed_authn"][2]["user"].email == "gal@lp.com"
+    assert signals["user_failed_authn"][2]["auth_type"] == "code"
+    assert signals["user_failed_authn"][2]["tfa"]
 
     # submit right token and show appropriate response
     response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
@@ -576,7 +584,7 @@ def test_setup_bad_phone(app, client, get_message):
 
 
 @pytest.mark.settings(two_factor_required=True)
-def test_json(app, client):
+def test_json(app, client, signals):
     """
     Test login/setup using JSON.
     """
@@ -594,8 +602,11 @@ def test_json(app, client):
     # Verify SMS sent
     assert sms_sender.get_count() == 1
     code = sms_sender.messages[0].split()[-1]
+    assert signals["tf_security_token_sent"][0]["token"] == code
+    assert signals["tf_security_token_sent"][0]["method"] == "sms"
     response = client.post("/tf-validate", json=dict(code=code))
     assert response.status_code == 200
+    assert signals["tf_code_confirmed"][0]["user_email"] == "gal@lp.com"
     # verify logged in
     response = client.get("/profile", follow_redirects=False)
     assert response.status_code == 200
@@ -619,6 +630,7 @@ def test_json(app, client):
     assert response.json["response"]["tf_state"] == "validating_profile"
     assert response.json["response"]["tf_primary_method"] == "sms"
     code = sms_sender.messages[0].split()[-1]
+    assert signals["tf_security_token_sent"][1]["token"] == code
     response = client.post("/tf-validate", json=dict(code=code), headers=headers)
     assert response.status_code == 200
     assert "csrf_token" in response.json["response"]
@@ -637,6 +649,13 @@ def test_json(app, client):
     assert response.status_code == 400
     assert response.json["response"]["field_errors"]["code"][0] == "Invalid code"
     assert response.json["response"]["errors"][0] == "Invalid code"
+    assert (
+        signals["user_failed_authn"][0]["endpoint"]
+        == "security.two_factor_token_validation"
+    )
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "code"
+    assert signals["user_failed_authn"][0]["tfa"]
 
     # Do a GET - should get recovery options
     response = client.get("/tf-validate", headers=headers)
@@ -660,6 +679,10 @@ def test_json(app, client):
     assert response.json["response"]["tf_primary_method"] == "sms"
     assert response.json["response"]["tf_phone_number"] == "+442083661177"
     assert not tf_in_session(get_session(response))
+    check_signals(
+        signals,
+        {"user_failed_authn": 1, "tf_security_token_sent": 3, "tf_code_confirmed": 3},
+    )
 
 
 @pytest.mark.settings(two_factor_rescue_mail="helpme@myapp.com")
@@ -870,7 +893,7 @@ def test_opt_in(app, client, get_message):
         assert signalled_identity[0] == user.fs_uniquifier
 
 
-def test_opt_in_nc(app, client_nc, get_message):
+def test_opt_in_nc(app, client_nc, get_message, signals):
     """
     Test tf-setup without cookies
     """
@@ -904,6 +927,8 @@ def test_opt_in_nc(app, client_nc, get_message):
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "TWO_FACTOR_INVALID_TOKEN"
     )
+    # setup shouldn't trigger this.
+    assert len(signals["user_failed_authn"]) == 0
 
     # Validate token - this should complete 2FA setup
     @tf_profile_changed.connect_via(app)
@@ -952,7 +977,7 @@ def test_opt_in_nc_expired(app, client_nc, get_message):
     )
 
 
-def test_opt_in_state_token(app, client, get_message):
+def test_opt_in_state_token(app, client, get_message, signals):
     """
     Test using forms and new state_token approach (rather than sessions to store
     intermediate state)
@@ -979,6 +1004,8 @@ def test_opt_in_state_token(app, client, get_message):
     response = client.post(verify_url, data=dict(code=12345), follow_redirects=True)
     assert check_location(app, response.history[0].location, "/tf-setup")
     assert get_message("TWO_FACTOR_INVALID_TOKEN") in response.data
+    # setup shouldn't trigger this.
+    assert len(signals["user_failed_authn"]) == 0
 
     # Validate token - this should complete 2FA setup
     response = client.post(verify_url, data=dict(code=code), follow_redirects=True)

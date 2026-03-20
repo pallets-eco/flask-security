@@ -14,6 +14,8 @@ Features & Improvements
   require two-factor authentication.
 - (:issue:`1178`) Add Cache-Control headers.
 - (:issue:`1165`) Add support for using Social Login (OAuth) for verification.
+- (:issue:`1188`) Add tracking of failed authentication attempts via :py:meth:`.UserMixin.track_failed_authn`
+  and :py:data:`user_failed_authn`
 
 Fixes
 +++++

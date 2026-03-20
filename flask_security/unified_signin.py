@@ -213,6 +213,7 @@ class _UnifiedPassCodeForm(Form):
                         ok = True
                         break
             if not ok:
+                self.user.track_failed_authn(request.endpoint, "passcode")
                 self.passcode.errors.append(get_message("INVALID_PASSWORD_CODE")[0])
                 return False
 
@@ -721,6 +722,8 @@ def us_verify_link() -> ResponseValue:
         window=cv("US_TOKEN_VALIDITY"),
     ):
         m, c = generic_message("INVALID_CODE", "GENERIC_AUTHN_FAILED")
+        user.track_failed_authn(request.endpoint, "passcode")
+
         if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
                 get_url(

@@ -416,6 +416,34 @@ def capture_username_recovery_requests():
         username_recovery_email_sent.disconnect(_on)
 
 
+def check_signals(
+    signals: dict,
+    expected: str | list | dict[str, int] | None = None,
+    ignore: str | list[str] | None = None,
+) -> None:
+    # Check if test received expected # of signals.
+    # Expected can be a string (signal name), list of strings or
+    # dict of signal name to expected count.
+    # Use with the signals fixture
+    if not expected:
+        expected = dict()
+    elif isinstance(expected, str):
+        expected = {expected: 1}
+    elif isinstance(expected, list):
+        expected = {sig: 1 for sig in expected}
+    if not ignore:
+        ignore = ["user_authenticated"]  # this is too common in tests to worry about
+    elif isinstance(ignore, str):
+        ignore = [ignore]
+    for sig in signals:
+        if sig not in ignore:
+            expected_calls = expected.get(sig, 0)
+            actual_calls = len(signals[sig])
+            assert (
+                expected_calls == actual_calls
+            ), f"Expected {expected_calls} calls to {sig} but got {actual_calls}"
+
+
 @contextmanager
 def capture_flashes():
     """Testing utility for capturing flashes."""

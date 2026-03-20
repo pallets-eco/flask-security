@@ -28,6 +28,7 @@ from tests.test_utils import (
     capture_flashes,
     capture_reset_password_requests,
     check_location,
+    check_signals,
     check_xlation,
     get_form_action,
     get_session,
@@ -147,13 +148,8 @@ def set_email(app, email="matt@lp.com"):
         app.security.datastore.commit()
 
 
-def test_simple_signin(app, clients, get_message, outbox):
+def test_simple_signin(app, clients, get_message, outbox, signals):
     set_email(app)
-    auths = []
-
-    @user_authenticated.connect_via(app)
-    def authned(myapp, user, **extra_args):
-        auths.append((user.email, extra_args["authn_via"]))
 
     # Test missing choice
     data = dict(identity="matt@lp.com")
@@ -195,6 +191,10 @@ def test_simple_signin(app, clients, get_message, outbox):
         follow_redirects=True,
     )
     assert get_message("INVALID_PASSWORD_CODE") in response.data
+    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_signin"
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
+    assert not signals["user_failed_authn"][0]["tfa"]
 
     # Correct code
     assert not clients.get_cookie("remember_token")
@@ -205,7 +205,7 @@ def test_simple_signin(app, clients, get_message, outbox):
         follow_redirects=False,
     )
     assert not clients.get_cookie("remember_token")
-    assert "email" in auths[0][1]
+    assert signals["user_authenticated"][0]["authn_via"] == ["email"]
 
     assert is_authenticated(clients, get_message)
 
@@ -231,7 +231,7 @@ def test_simple_signin(app, clients, get_message, outbox):
     )
     assert response.status_code == 200
     assert clients.get_cookie("remember_token")
-    assert "sms" in auths[1][1]
+    assert signals["user_authenticated"][1]["authn_via"] == ["sms"]
 
     assert is_authenticated(clients, get_message)
 
@@ -239,14 +239,8 @@ def test_simple_signin(app, clients, get_message, outbox):
     assert not clients.get_cookie("remember_token")
 
 
-def test_simple_signin_json(app, client_nc, get_message, outbox):
+def test_simple_signin_json(app, client_nc, get_message, outbox, signals):
     set_email(app)
-    auths = []
-
-    @user_authenticated.connect_via(app)
-    def authned(myapp, user, **extra_args):
-        auths.append((user.email, extra_args["authn_via"]))
-
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     with capture_flashes() as flashes:
@@ -282,6 +276,10 @@ def test_simple_signin_json(app, client_nc, get_message, outbox):
         assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
             "INVALID_PASSWORD_CODE"
         )
+        assert signals["user_failed_authn"][0]["endpoint"] == "security.us_signin"
+        assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+        assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
+        assert not signals["user_failed_authn"][0]["tfa"]
 
         # Login successfully with code
         response = client_nc.post(
@@ -292,7 +290,7 @@ def test_simple_signin_json(app, client_nc, get_message, outbox):
         )
         assert response.status_code == 200
         assert "authentication_token" in response.json["response"]["user"]
-        assert "email" in auths[0][1]
+        assert signals["user_authenticated"][0]["authn_via"] == ["email"]
 
         logout(client_nc)
         assert not is_authenticated(client_nc, get_message)
@@ -592,13 +590,8 @@ def test_post_already_authenticated(client, get_message):
 
 
 @pytest.mark.settings(us_email_subject="Code For You")
-def test_verify_link(app, client, get_message, outbox):
+def test_verify_link(app, client, get_message, outbox, signals):
     set_email(app)
-    auths = []
-
-    @user_authenticated.connect_via(app)
-    def authned(myapp, user, **extra_args):
-        auths.append((user.email, extra_args["authn_via"]))
 
     with capture_send_code_requests() as requests:
         response = client.post(
@@ -633,14 +626,19 @@ def test_verify_link(app, client, get_message, outbox):
         follow_redirects=True,
     )
     assert get_message("INVALID_CODE") in response.data
+    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_verify_link"
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
+    assert not signals["user_failed_authn"][0]["tfa"]
 
     # Try actual link
     response = client.get(magic_link, follow_redirects=True)
     assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
-    assert "email" in auths[0][1]
+    assert signals["user_authenticated"][0]["authn_via"] == ["email"]
 
     # verify logged in
     assert is_authenticated(client, get_message)
+    check_signals(signals, {"user_failed_authn": 1, "us_security_token_sent": 1})
 
 
 @pytest.mark.settings(
@@ -649,7 +647,7 @@ def test_verify_link(app, client, get_message, outbox):
     login_error_view="/login-error",
     post_login_view="/post-login",
 )
-def test_verify_link_spa(app, client, get_message, outbox):
+def test_verify_link_spa(app, client, get_message, outbox, signals):
     # N.B. we use client here since this only works/ is supported if using
     # sessions.
     set_email(app)
@@ -697,6 +695,10 @@ def test_verify_link_spa(app, client, get_message, outbox):
     assert "/login-error" == split.path
     qparams = dict(parse_qsl(split.query))
     assert get_message("INVALID_CODE") == qparams["error"].encode("utf-8")
+    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_verify_link"
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
+    assert not signals["user_failed_authn"][0]["tfa"]
 
     # Try actual link
     response = client.get(magic_link, follow_redirects=False)
@@ -706,11 +708,12 @@ def test_verify_link_spa(app, client, get_message, outbox):
     assert "/post-login" == split.path
     qparams = dict(parse_qsl(split.query))
     assert qparams["email"] == "matt@lp.com"
+    check_signals(signals, {"user_failed_authn": 1, "us_security_token_sent": 1})
 
     assert is_authenticated(client, get_message)
 
 
-def test_setup(app, clients, get_message):
+def test_setup(app, clients, get_message, signals):
     tcl = clients
     set_email(app)
     us_authenticate(tcl)
@@ -751,6 +754,8 @@ def test_setup(app, clients, get_message):
     # Try invalid code
     response = tcl.post(verify_url, data=dict(passcode=12345), follow_redirects=True)
     assert get_message("INVALID_PASSWORD_CODE") in response.data
+    # a bad code during setup shouldn't trigger the signal
+    assert len(signals["user_failed_authn"]) == 0
 
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = tcl.post(verify_url, data=dict(passcode=code), follow_redirects=True)
@@ -999,10 +1004,10 @@ def test_unique_phone(app, client, get_message):
 
 
 @pytest.mark.settings(freshness=timedelta(minutes=0))
-def test_verify(app, clients, get_message):
+def test_verify(app, clients, get_message, signals):
     client = clients
     # Test setup when re-authenticate required
-    # With  freshness set to 0 - the first call should require reauth (by
+    # With freshness set to 0 - the first call should require reauth (by
     # redirecting); but the second should work due to grace period.
     set_email(app)
     us_authenticate(client)
@@ -1040,9 +1045,10 @@ def test_verify(app, clients, get_message):
     code = sms_sender.messages[0].split()[-1].strip(".")
     response = client.post(verify_url, data=dict(passcode=code), follow_redirects=False)
     assert check_location(app, response.location, "/us-setup")
+    check_signals(signals, {"user_failed_authn": 0, "us_security_token_sent": 3})
 
 
-def test_verify_json(app, client, get_message):
+def test_verify_json(app, client, get_message, signals):
     # Test setup when re-authenticate required
     # N.B. with freshness=0 we never set a grace period and should never be able to
     # get to /us-setup
@@ -1096,6 +1102,10 @@ def test_verify_json(app, client, get_message):
     assert response.json["response"]["field_errors"]["passcode"][0].encode(
         "utf-8"
     ) == get_message("INVALID_PASSWORD_CODE")
+    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_verify"
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
+    assert not signals["user_failed_authn"][0]["tfa"]
 
     response = client.post("us-verify", json=dict(passcode=None), headers=headers)
     assert response.status_code == 400
@@ -1110,6 +1120,8 @@ def test_verify_json(app, client, get_message):
     app.config["SECURITY_FRESHNESS"] = timedelta(minutes=60)
     response = client.get("us-setup", headers=headers)
     assert response.status_code == 200
+    assert len(signals["user_failed_authn"]) == 1
+    check_signals(signals, {"user_failed_authn": 1, "us_security_token_sent": 2})
 
 
 @pytest.mark.settings(freshness=timedelta(minutes=-1))
@@ -1310,7 +1322,7 @@ def test_requires_confirmation_error_redirect(app, client):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
-def test_confirmable(app, client, get_message):
+def test_confirmable(app, client, get_message, signals):
     # Verify can't log in if need confirmation.
     data = dict(
         email="dude@lp.com", password="password", password_confirm="password", next=""
@@ -1327,6 +1339,7 @@ def test_confirmable(app, client, get_message):
     assert response.status_code == 200
 
     assert get_message("CONFIRMATION_REQUIRED") in response.data
+    check_signals(signals, "user_registered")
 
     # Verify not authenticated
     assert not is_authenticated(client, get_message)
