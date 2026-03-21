@@ -32,6 +32,7 @@ from tests.test_utils import (
     reset_fresh,
     setup_tf_sms,
     verify_token,
+    check_signals,
 )
 
 from flask_security import (
@@ -577,7 +578,7 @@ def test_bad_data_register(app, client, get_message):
     )
 
 
-def test_bad_data_signin(app, client, get_message):
+def test_bad_data_signin(app, client, get_message, signals):
     authenticate(client)
     register_options, response_url = _register_start_json(client, usage="first")
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
@@ -614,6 +615,13 @@ def test_bad_data_signin(app, client, get_message):
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_NO_VERIFY", cause="Could not verify authentication signature"
+    )
+    assert signals["user_failed_authn"][0]["endpoint"] == "security.wan_signin_response"
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "passkey"
+    assert not signals["user_failed_authn"][0]["tfa"]
+    check_signals(
+        signals, ["user_failed_authn", "wan_registered", "user_authenticated"]
     )
 
 
@@ -1333,7 +1341,7 @@ def test_verify_timeout(app, client, get_message):
     )
 
 
-def test_verify_validate_error(app, client, get_message):
+def test_verify_validate_error(app, client, get_message, signals):
     authenticate(client)
     register_options, response_url = _register_start_json(client, name="testr3")
     response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
@@ -1362,6 +1370,24 @@ def test_verify_validate_error(app, client, get_message):
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
         "WEBAUTHN_UNKNOWN_CREDENTIAL_ID"
+    )
+
+    # now muck with attestation - should get VERIFY ERROR
+    bad_signin = copy.deepcopy(SIGNIN_DATA1)
+    bad_signin["response"]["signature"] = bad_signin["response"]["signature"].replace(
+        "M", "N"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(bad_signin)))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_NO_VERIFY", cause="Could not verify authentication signature"
+    )
+    assert signals["user_failed_authn"][0]["endpoint"] == "security.wan_verify_response"
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "passkey"
+    assert not signals["user_failed_authn"][0]["tfa"]
+    check_signals(
+        signals, ["user_failed_authn", "wan_registered", "user_authenticated"]
     )
 
 

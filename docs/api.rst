@@ -284,7 +284,7 @@ sends the following signals.
     sender), it is passed `user`, and `authn_via` arguments. The `authn_via` argument
     specifies how the user authenticated - it will be a list with possible values
     of ``password``, ``sms``, ``authenticator``, ``email``, ``confirm``, ``reset``,
-    ``register``.
+    ``register``, ``webauthn``, ``oauth``.
 
     .. versionadded:: 3.4.0
 
@@ -295,6 +295,18 @@ sends the following signals.
    It is passed the app (which is the sender).
 
     .. versionadded:: 5.4.0
+
+.. data:: user_failed_authn
+
+   Sent from :py:meth:`.UserMixin.track_failed_authn` when a user fails authentication.
+   In addition to the app (which is the sender) it is passed:
+
+    * `user` - the user that failed authentication
+    * `endpoint` - the endpoint that was accessed
+    * `auth_type` - `password`, `code`, `passkey`
+    * `tfa` - True if this was a two factor authentication attempt
+
+    .. versionadded:: 5.8.0
 
 .. data:: user_registered
 

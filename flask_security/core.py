@@ -70,6 +70,7 @@ from .recovery_codes import (
     MfRecoveryCodesForm,
     MfRecoveryCodesUtil,
 )
+from .signals import user_failed_authn
 from .tf_plugin import TfPlugin, TwoFactorSelectForm
 from .twofactor import tf_send_security_token
 from .unified_signin import (
@@ -1145,6 +1146,45 @@ class UserMixin(BaseUserMixin):
         .. versionadded:: 5.8.0
         """
         return cv("TWO_FACTOR_REQUIRED")
+
+    def track_failed_authn(
+        self, endpoint: str | None, auth_type: str, tfa: bool = False
+    ) -> None:
+        """Called when a user fails to authenticate.
+
+        endpoint - blueprint endpoint name:
+
+            - security.login
+            - security.verify
+            - security.us_signin
+            - security.us_verify
+            - security.us_verify_link
+            - security.wan_signin_response
+            - security.wan_verify_response
+            - security.two_factor_token_validation
+
+        auth_type is what failed:
+
+            - password
+            - passcode (unified signin)
+            - passkey (webauthn
+
+        tfa - True if it was a second factor that failed
+
+        This is called any time a credential is presented but is not verifiable.
+        It is NOT called on API errors or missing data.
+
+        The default implementation sends the user_failed_authn signal.
+
+        """
+        user_failed_authn.send(
+            current_app._get_current_object(),  # type: ignore[attr-defined]
+            _async_wrapper=current_app.ensure_sync,
+            endpoint=endpoint,
+            user=self,
+            auth_type=auth_type,
+            tfa=tfa,
+        )
 
 
 class WebAuthnMixin:

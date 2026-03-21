@@ -986,6 +986,38 @@ def client_nc(request, app, sqlalchemy_datastore):
     return app.test_client(use_cookies=False)
 
 
+@pytest.fixture()
+def signals():
+    """Tracks signal calls for testing purposes.
+
+    This sets up a receiver for all signals and tracks the data
+    """
+    from flask_security import signals
+    import inspect
+    import blinker
+
+    signal_calls = dict()
+    def_signals = inspect.getmembers(
+        signals, lambda v: isinstance(v, blinker.NamedSignal)
+    )
+
+    for name, sig in def_signals:
+        sc = signal_calls[name] = []
+
+        def _on(app, _sc=sc, **kwargs):
+            assert isinstance(app, Flask)
+            # user argument is an ORM structure so may not be available in a test
+            # outside of the request - capture value(s) here
+            user = kwargs.get("user", None)
+            if user:
+                assert isinstance(kwargs["user"], UserMixin)
+                kwargs["user_email"] = user.email
+            _sc.append(kwargs)
+
+        sig.connect(_on, weak=False)
+    return signal_calls
+
+
 @pytest.fixture(
     params=[
         "cl-fsqlalchemy",

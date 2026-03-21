@@ -5,7 +5,7 @@ flask_security.signals
 Flask-Security signals module
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -16,6 +16,8 @@ signals = blinker.Namespace()
 user_authenticated = signals.signal("user-authenticated")
 
 user_unauthenticated = signals.signal("user-unauthenticated")
+
+user_failed_authn = signals.signal("user-failed-authn")
 
 user_registered = signals.signal("user-registered")
 

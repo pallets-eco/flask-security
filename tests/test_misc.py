@@ -27,6 +27,7 @@ from tests.test_utils import (
     capture_flashes,
     capture_reset_password_requests,
     check_location,
+    check_signals,
     check_xlation,
     get_csrf_token,
     init_app_with_options,
@@ -1168,7 +1169,7 @@ def test_verify_fresh(app, client, get_message):
     assert b"Fresh Only" in response.data
 
 
-def test_verify_fresh_json(app, client, get_message):
+def test_verify_fresh_json(app, client, get_message, signals):
     # Hit a fresh-required endpoint and walk through verify
     authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -1187,6 +1188,10 @@ def test_verify_fresh_json(app, client, get_message):
         "/verify", json=dict(password="not my password"), headers=headers
     )
     assert response.status_code == 400
+    assert signals["user_failed_authn"][0]["endpoint"] == "security.verify"
+    assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
+    assert signals["user_failed_authn"][0]["auth_type"] == "password"
+    assert not signals["user_failed_authn"][0]["tfa"]
 
     response = client.post("/verify", json=dict(password="password"), headers=headers)
     assert response.status_code == 200
@@ -1195,10 +1200,11 @@ def test_verify_fresh_json(app, client, get_message):
     response = client.get("/fresh", headers=headers)
     assert response.status_code == 200
     assert response.json["title"] == "Fresh Only"
+    check_signals(signals, "user_failed_authn")
 
 
 @pytest.mark.changeable()
-def test_verify_pwd_json(app, client, get_message):
+def test_verify_pwd_json(app, client, get_message, signals):
     # Make sure verify accepts a normalized and original password.
     authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -1227,6 +1233,7 @@ def test_verify_pwd_json(app, client, get_message):
         headers=headers,
     )
     assert response.status_code == 200
+    check_signals(signals, "password_changed")
 
 
 @pytest.mark.settings(verify_url="/auth/")

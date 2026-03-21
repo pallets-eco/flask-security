@@ -136,7 +136,7 @@ def oauthresponse(name: str) -> ResponseValue:
         if response:
             return response
         # two-factor not required - login user
-        login_user(user)
+        login_user(user, authn_via=["oauth"])
         if cv("REDIRECT_BEHAVIOR") == "spa":
             redirect_url = get_url(
                 cv("POST_OAUTH_LOGIN_VIEW"), qparams=user.get_redirect_qparams()
