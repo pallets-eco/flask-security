@@ -854,8 +854,10 @@ def two_factor_setup():
             authr_setup_values = _security.totp_factory.fetch_setup_values(totp, user)
             # Add all the values used in qrcode to json response
             json_response["tf_authr_key"] = authr_setup_values["key"]
+            json_response["tf_authr_b32key"] = authr_setup_values["b32key"]
             json_response["tf_authr_username"] = authr_setup_values["username"]
             json_response["tf_authr_issuer"] = authr_setup_values["issuer"]
+            json_response["tf_authr_uri"] = authr_setup_values["uri"]
 
             qrcode_values = dict(
                 authr_qrcode=authr_setup_values["image"],

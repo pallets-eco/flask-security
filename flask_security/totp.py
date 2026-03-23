@@ -111,15 +111,30 @@ class Totp:
         tp = self._totp.from_source(totp_secret)
         return tp.pretty_key()
 
+    def get_totp_b32_key(self, totp_secret: str) -> str:
+        """Generate b32 key for creating a otpauth url
+
+        :param totp_secret: a unique shared secret of the user
+
+        .. versionadded:: 5.8.0
+        """
+        tp = self._totp.from_source(totp_secret)
+        return tp.base32_key
+
     def fetch_setup_values(self, totp: str, user: UserMixin) -> dict[str, str]:
         """Generate various values user needs to setup authenticator app.
             Returns dict with keys:
                 'key': totp key
+                'b32key': totp key in base32
+                'uri': provisioning url
                 'image': image as string (useful for <img src=xx>)
                 'username: qrcode best practice
                 'issuer': qrcode best practice
 
         .. versionadded:: 4.0.0
+
+        .. versionchanged:: 5.8.0
+          Added keys b32key and uri
         """
 
         r = dict()
@@ -130,8 +145,10 @@ class Totp:
         assert self._totp.issuer
         r["username"] = username
         r["key"] = self.get_totp_pretty_key(totp)
+        r["b32key"] = self.get_totp_b32_key(totp)
         r["issuer"] = self._totp.issuer
         r["image"] = self.generate_qrcode(username, totp)
+        r["uri"] = self.get_totp_uri(username, totp)
         return r
 
     def generate_qrcode(self, username: str, totp: str) -> str:

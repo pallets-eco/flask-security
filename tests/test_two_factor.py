@@ -1265,10 +1265,18 @@ def test_authr_identity(app, client):
 
     setup_data = dict(setup="authenticator")
     response = client.post("/tf-setup", json=setup_data, headers=headers)
-    assert response.json["response"]["tf_authr_issuer"] == "tests"
-    assert response.json["response"]["tf_authr_username"] == "jill"
-    assert response.json["response"]["tf_state"] == "validating_profile"
+    jr = response.json["response"]
+    assert jr["tf_authr_issuer"] == "tests"
+    assert jr["tf_authr_username"] == "jill"
+    assert jr["tf_state"] == "validating_profile"
+    assert len(jr["tf_authr_b32key"]) % 8 == 0 and re.match(
+        r"^[A-Z2-7]+=*$", jr["tf_authr_b32key"]
+    )
     assert "tf_authr_key" in response.json["response"]
+    assert (
+        jr["tf_authr_uri"]
+        == f"otpauth://totp/tests:jill?secret={jr['tf_authr_b32key']}&issuer=tests"
+    )
 
 
 @pytest.mark.settings(
