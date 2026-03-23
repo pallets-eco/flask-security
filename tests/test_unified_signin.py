@@ -1759,9 +1759,17 @@ def test_totp_generation(app, client, get_message):
         "us-setup", json=dict(chosen_method="authenticator"), headers=headers
     )
     assert response.status_code == 200
-    assert response.json["response"]["authr_issuer"] == "tests"
-    assert response.json["response"]["authr_username"] == "dave@lp.com"
+    jr = response.json["response"]
+    assert jr["authr_issuer"] == "tests"
+    assert jr["authr_username"] == "dave@lp.com"
     assert "authr_key" in response.json["response"]
+    assert len(jr["authr_b32key"]) % 8 == 0 and re.match(
+        r"^[A-Z2-7]+=*$", jr["authr_b32key"]
+    )
+    assert (
+        jr["authr_uri"]
+        == f"otpauth://totp/tests:dave@lp.com?secret={jr['authr_b32key']}&issuer=tests"
+    )
 
     state = response.json["response"]["state"]
 

@@ -904,8 +904,10 @@ def us_setup() -> ResponseValue:
 
                 # Add all the values used in qrcode to json response
                 json_response["authr_key"] = authr_setup_values["key"]
+                json_response["authr_b32key"] = authr_setup_values["b32key"]
                 json_response["authr_username"] = authr_setup_values["username"]
                 json_response["authr_issuer"] = authr_setup_values["issuer"]
+                json_response["authr_uri"] = authr_setup_values["uri"]
 
                 qrcode_values = dict(
                     authr_qrcode=authr_setup_values["image"],
