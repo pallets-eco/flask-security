@@ -1,13 +1,11 @@
-# Arabic (Saudi Arabia) translations for Flask-Security.
-# Copyright (C) 2025 CERN
 # This file is distributed under the same license as the Flask-Security
 # project.
 # Sami Alfattany <sami_alfattani@hotmail.com>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 2.0.1\n"
-"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"Project-Id-Version: Flask-Security 5.8.0\n"
+"Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2026-04-02 18:49+0300\n"
 "PO-Revision-Date: 2025-10-30 10:13+0200\n"
 "Last-Translator: Sami Alfattany <sami_alfattani@hotmail.com>\n"
