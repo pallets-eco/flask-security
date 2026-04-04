@@ -46,7 +46,7 @@ algorithms.
 For any given hashing algorithm, consult its documentation on what
 options/values are recommended. For argon2, the `argon2_cffi`_ package
 keeps its default options up to date with `RFC9106`_, and should be suitable for most
-applications. The `OWASP Password Storage Cheat Sheet <owasp_pass_cheat>`_ also
+applications. The `OWASP Password Storage Cheat Sheet`_ also
 has a lot of useful suggestions.
 
 You should **always use a hashing algorithm** in your production
@@ -166,9 +166,9 @@ Password Change
 If :ref:`configured<configuration:Changeable>` users can change their password. Unlike password
 recovery, this endpoint is used when the user is already authenticated. The result
 of a successful password change is not only a new password, but a new value for ``fs_uniquifier``.
-This has the effect is immediately invalidating all existing sessions. The change request
-itself effectively re-logs in the user so a new session is created. Note that since the user
-is effectively re-logged in, the same signals are sent as when the user normally authenticates.
+This has the effect of immediately invalidating all existing sessions. The change request
+itself effectively re-signs in in the user so a new session is created. Note that
+the same signals are sent as when the user normally authenticates.
 
 *NOTE*: The ``fs_uniquifier`` by default, controls both sessions and authenticated tokens.
 Thus changing the password also invalidates all authentication tokens. This may not be desirable
@@ -275,8 +275,6 @@ Single Page Applications.
 In addition, :ref:`spa:Working With Single Page Applications`
 (like those built with Vue, Angular, and React) are supported via customizable redirect links.
 
-Note: All registration requests done through JSON/Ajax utilize the ``confirm_register_form``.
-
 Command Line Interface
 ----------------------
 Basic `Click`_ commands for managing users and roles are automatically
@@ -309,6 +307,61 @@ fails due to the session cookie not getting sent as part of the redirect.
 A very simple example of configuring social login with Flask-Security is available
 in the `examples` directory.
 
+Account Management
+-------------------
+Flask-Security includes support for managing user accounts. A combination of forms
+views, database models, and CLI provide application support for:
+
+Adding and Deleting Users
++++++++++++++++++++++++++
+Users can be added either by enabling the Register feature - which allows users to self-register
+and/or via CLI - where an administrator can control precisely who to add to the system.
+Users can be allowed or required to have a username in addition to an email address.
+
+Self-Management of Accounts
++++++++++++++++++++++++++++
+Flask-Security can be configured to allow users to perform many normal administrative
+tasks pertaining to security:
+
+* :ref:`Change Password<features:Password Change>`
+* :ref:`Forgot Password<features:Password Reset/Recovery>`
+* :ref:`Change Username<features:Username Support>`
+* :ref:`Forgot Username<features:Username Support>`
+* :ref:`Change Email<features:Email Change>`
+* Add/modify alternative primary authentication mechanisms -
+  SMS, Passkeys, Authenticator, magic link, social login (OAuth)
+* Add/modify second factor authentication mechanisms -
+  SMS, Passkeys, Authenticator, magic link
+
+Administrative Management of Accounts
+++++++++++++++++++++++++++++++++++++++
+The CLI and API provides administrators and the application control over accounts.
+
+* Deactivate immediately stops any access by the user to any
+  protected endpoints
+
+  * CLI: ``user deactivate``
+  * API: :py:meth:`.UserDatastore.deactivate_user`
+* Reset user access - this disables all authentication mechanisms except password
+  (e.g. one-time password, passkeys, tokens)
+
+  * CLI: ``user reset_access``
+  * API: :py:meth:`.UserDatastore.reset_user_access`
+* Create or delete roles - including adding/removing permissions from roles
+
+  * CLI: ``roles create``, ``roles add_permissions``, ``roles remove_permissions``
+  * API: :py:meth:`.UserDatastore.create_role`, :py:meth:`.UserDatastore.add_permissions_to_role`, :py:meth:`.UserDatastore.remove_permissions_from_role`
+* Add or remove roles from a user
+
+  * CLI: ``roles add``, ``roles remove``
+  * API: :py:meth:`.UserDatastore.add_role_to_user`, :py:meth:`.UserDatastore.remove_role_from_user`
+* API - :ref:`Signals<api:Signals>` are sent for many operations that allow the application to track
+  important account changes (such as track_failed_authn)
+* Configuration - allow or require two factor authentication
+* API - :py:meth:`.UserMixin.check_tf_required` allows applications to fine-tune which users require MFA
+* API - :py:meth:`.UserMixin.is_allowed_authn` can be used to support account lockout
+
+
 .. _Click: https://palletsprojects.com/p/click/
 .. _Flask-Login: https://flask-login.readthedocs.org/en/latest/
 .. _Flask-WTF: https://flask-wtf.readthedocs.io/en/1.2.x/csrf/
@@ -320,7 +373,7 @@ in the `examples` directory.
 .. _argon2: https://en.wikipedia.org/wiki/Argon2
 .. _argon2_cffi: https://pypi.org/project/argon2-cffi/
 .. _RFC9106: https://www.rfc-editor.org/rfc/rfc9106.html
-.. _owasp_pass_cheat: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
+.. _OWASP Password Storage Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 .. _bcrypt: https://en.wikipedia.org/wiki/Bcrypt
 .. _PyQRCode: https://pypi.python.org/pypi/PyQRCode/
 .. _Wikipedia: https://en.wikipedia.org/wiki/Multi-factor_authentication

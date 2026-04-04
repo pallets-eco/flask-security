@@ -16,6 +16,7 @@ Features & Improvements
 - (:issue:`1165`) Add support for using Social Login (OAuth) for verification.
 - (:issue:`1188`) Add tracking of failed authentication attempts via :py:meth:`.UserMixin.track_failed_authn`
   and :py:data:`user_failed_authn`
+- (:issue:`1192`) Add API for application to decide if a particular user should be allowed to authenticate.
 
 Fixes
 +++++
@@ -26,6 +27,7 @@ Docs and Chores
 - (:pr:`1150`) Update de_DE translations (swaeberle)
 - (:pr:`1151`) Update ca_ES translations (arielvb)
 - (:pr:`1152`) Update es_ES translations (arielvb)
+- (:pr:`1196`) Update arabic translations (samialfattani)
 
 Version 5.7.1
 -------------

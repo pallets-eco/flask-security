@@ -1167,7 +1167,7 @@ class UserMixin(BaseUserMixin):
 
             - password
             - passcode (unified signin)
-            - passkey (webauthn
+            - passkey (webauthn)
 
         tfa - True if it was a second factor that failed
 
@@ -1185,6 +1185,27 @@ class UserMixin(BaseUserMixin):
             auth_type=auth_type,
             tfa=tfa,
         )
+
+    def is_allowed_authn(self, form_error: list[str] | None = None) -> bool:
+        """
+        Return True if the user is allowed to be authenticated.
+        This is called by Flask-Security during authentication - after the user's
+        credentials have been verified but prior to being 'logged in'. It is also
+        called as part of 'forgot password'.
+        This is called AFTER the check whether the user is disabled/deactivated
+        but before the check for confirmation required.
+
+        form_error is a list that could be associated with a form - used to convey
+        any error messages.
+
+        .. tip::
+          This does not prevent an already authenticated user from continuing to access
+          the system. Think of it similar to the confirmation sequence.
+          See :meth:`.UserDatastore.deactivate_user`.
+
+        .. versionadded:: 5.8.0
+        """
+        return True
 
 
 class WebAuthnMixin:
