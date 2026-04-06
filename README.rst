@@ -63,7 +63,7 @@ Goals
 * Follow the `Pallets <https://github.com/pallets>`_ lead on supported versions, documentation
   standards and any other guidelines for extensions that they come up with.
 * Continue to add newer authentication/authorization standards:
-    * 'Social Auth' integrated (using authlib) (5.1)
+    * 'Social Login (OAuth)' integrated (using authlib) (5.1)
     * WebAuthn/Passkey support (5.0)
     * Two-Factor recovery codes (5.0)
     * First-class support for username as identity (4.1)

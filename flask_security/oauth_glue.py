@@ -127,7 +127,8 @@ def oauthresponse(name: str) -> ResponseValue:
         """
         assert oauth_provider is not None
         return oauth_provider.oauth_response_failure("LOGIN_ERROR_VIEW", e)
-    if user:
+    form_error: list[str] = []
+    if user and user.is_active and user.is_allowed_authn(form_error):
         after_this_request(view_commit)
         next_loc = session.pop("fs_oauth_next", None)
         response = _security.two_factor_plugins.tf_enter(
@@ -148,7 +149,13 @@ def oauthresponse(name: str) -> ResponseValue:
         return redirect(redirect_url)
     # Seems ok to show identity - the only identity it could be is the callers
     # so seems no way this can be used to enumerate registered users.
-    m, c = get_message("IDENTITY_NOT_REGISTERED", id=field_value)
+    if user and not user.is_active:
+        m, c = get_message("DISABLED_ACCOUNT")
+    elif form_error:
+        m = form_error[0]
+        c = "error"
+    else:
+        m, c = get_message("IDENTITY_NOT_REGISTERED", id=field_value)
     if cv("REDIRECT_BEHAVIOR") == "spa":
         return redirect(get_url(cv("LOGIN_ERROR_VIEW"), qparams={c: m}))
     do_flash(m, c)

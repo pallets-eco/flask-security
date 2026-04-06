@@ -195,6 +195,40 @@ def test_unknown_user(app, sqlalchemy_datastore, get_message):
     assert get_message("IDENTITY_NOT_REGISTERED", id="jwag@lp.com") in response.data
 
 
+@pytest.mark.settings(oauth_enable=True)
+def test_disabled_user(app, sqlalchemy_datastore, get_message):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_identity("tiya@lp.com")  # disabled account
+    response = client.get("/login/oauthresponse/github", follow_redirects=True)
+    assert check_location(app, response.request.path, "/login")
+    assert get_message("DISABLED_ACCOUNT") in response.data  # should be in flash
+
+
+def _allowed(self, form_error):
+    if self.email == "gal@lp.com":
+        form_error.append("You are not allowed to do that")
+        return False
+    return True
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+@pytest.mark.settings(oauth_enable=True)
+def test_override_user_allowed(app, sqlalchemy_datastore, get_message):
+    init_app_with_options(
+        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+    )
+    client = app.test_client()
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_identity("gal@lp.com")  # disabled account
+    response = client.get("/login/oauthresponse/github", follow_redirects=True)
+    assert check_location(app, response.request.path, "/login")
+    assert b"You are not allowed to do that" in response.data  # should be in flash
+
+
 @pytest.mark.two_factor()
 @pytest.mark.settings(oauth_enable=True)
 def test_tf(app, sqlalchemy_datastore, get_message):

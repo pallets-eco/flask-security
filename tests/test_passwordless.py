@@ -214,3 +214,20 @@ def test_deprecated(app, sqlalchemy_datastore):
         security = Security()
         security.init_app(app, sqlalchemy_datastore)
         assert any("passwordless feature" in str(m.message) for m in w)
+
+
+def _allowed(self, form_error):
+    if self.email == "gal@lp.com":
+        form_error.append("You are not allowed to do that")
+        return False
+    return True
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+def test_override_user_allowed(app, client, get_message):
+    response = client.post("/login", json=dict(email="gal@lp.com"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"] == ["You are not allowed to do that"]
+    assert response.json["response"]["field_errors"]["email"] == [
+        "You are not allowed to do that"
+    ]

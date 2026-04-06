@@ -4,7 +4,7 @@ test_recoverable
 
 Recoverable functionality tests
 
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -685,6 +685,23 @@ def test_generic_with_extra(app, sqlalchemy_datastore):
         )
         assert len(response.json["response"]["errors"]) == 1
     assert len(flashes) == 0
+
+
+def _allowed(self, form_error):
+    if self.email == "gal@lp.com":
+        form_error.append("You are not allowed to do that")
+        return False
+    return True
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+def test_override_user_allowed(app, client, get_message):
+    response = client.post("/reset", json=dict(email="gal@lp.com"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"] == ["You are not allowed to do that"]
+    assert response.json["response"]["field_errors"]["email"] == [
+        "You are not allowed to do that"
+    ]
 
 
 @pytest.mark.filterwarnings("ignore")

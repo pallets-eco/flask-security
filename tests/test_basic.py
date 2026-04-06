@@ -483,6 +483,41 @@ def test_unset_password(client, get_message):
     assert get_message("PASSWORD_NOT_PROVIDED") in response.data
 
 
+def _allowed(self, form_error):
+    if self.email == "gal@lp.com":
+        form_error.append("You are not allowed to do that")
+        return False
+    return True
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+def test_override_user_allowed(app, client, get_message):
+    data = dict(email="jill@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 200
+    logout(client)
+
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 400
+    assert response.json["response"]["errors"] == ["You are not allowed to do that"]
+    assert response.json["response"]["field_errors"]["email"] == [
+        "You are not allowed to do that"
+    ]
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+@pytest.mark.settings(return_generic_responses=True)
+def test_override_user_allowed_gr(app, client, get_message):
+    data = dict(email="gal@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "GENERIC_AUTHN_FAILED"
+    )
+    assert "email" not in response.json["response"]["field_errors"]
+
+
 def test_logout(client):
     authenticate(client)
     response = logout(client, follow_redirects=True)

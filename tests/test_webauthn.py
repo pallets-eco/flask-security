@@ -737,6 +737,37 @@ def test_disabled_account(app, client, get_message):
     )
 
 
+def _allowed(self, form_error):
+    if self.email == "gal@lp.com":
+        from flask import request
+
+        if request.endpoint != "security.login":
+            form_error.append("You are not allowed to do that")
+            return False
+    return True
+
+
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+def test_override_user_allowed(app, client, get_message):
+    authenticate(client, email="gal@lp.com")
+    register_options, response_url = _register_start_json(
+        client, name="testr3", usage="first"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    logout(client)
+
+    signin_options, response_url, _ = _signin_start_json(client, "gal@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"] == ["You are not allowed to do that"]
+    assert response.json["response"]["field_errors"]["credential"] == [
+        "You are not allowed to do that"
+    ]
+
+
 def test_unk_credid(app, client, get_message):
     authenticate(client)
 

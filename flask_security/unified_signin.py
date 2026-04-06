@@ -141,6 +141,8 @@ def _us_common_validate(form):
     if not form.user.is_active:
         form.identity.errors.append(get_message("DISABLED_ACCOUNT")[0])
         return False
+    if not form.user.is_allowed_authn(form.identity.errors):
+        return False
     return True
 
 

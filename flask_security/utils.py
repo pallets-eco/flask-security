@@ -219,7 +219,7 @@ def login_user(
     if remember is None:
         remember = config_value("DEFAULT_REMEMBER_ME")
 
-    if not _login_user(user, remember):  # pragma: no cover
+    if not _login_user(user, remember, force=True):  # pragma: no cover
         return False
 
     if _security.trackable:

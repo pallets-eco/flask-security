@@ -463,6 +463,8 @@ class ForgotPasswordForm(Form, UserEmailFormMixin):
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
+        if not self.user.is_allowed_authn(self.email.errors):
+            return False
         self.requires_confirmation = requires_confirmation(self.user)
         if self.requires_confirmation:
             self.email.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
@@ -492,6 +494,8 @@ class PasswordlessLoginForm(Form):
         assert isinstance(self.email.errors, list)
         if not self.user.is_active:
             self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
+            return False
+        if not self.user.is_allowed_authn(self.email.errors):
             return False
         return True
 
@@ -613,11 +617,13 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
         self.requires_confirmation = requires_confirmation(self.user)
         assert self.ifield is not None
         assert isinstance(self.ifield.errors, list)
-        if self.requires_confirmation:
-            self.ifield.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
-            return False
         if not self.user.is_active:
             self.ifield.errors.append(get_message("DISABLED_ACCOUNT")[0])
+            return False
+        if not self.user.is_allowed_authn(self.ifield.errors):
+            return False
+        if self.requires_confirmation:
+            self.ifield.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False
         return True
 
