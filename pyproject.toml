@@ -22,11 +22,6 @@ classifiers=[
     "Programming Language :: Python",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Development Status :: 5 - Production/Stable",
@@ -36,25 +31,25 @@ dynamic = [
 ]
 dependencies = [
     # flask dependencies include werkzeug, jinja2, itsdangerous, click, blinker
-    "Flask>=3.1.0",
+    "Flask>=3.1.1",
     "Flask-Login>=0.6.3",
     "Flask-Principal>=0.4.0",
     "Flask-WTF>=1.1.2",
-    "email-validator>=2.0.0",
+    "email-validator>=2.3.0",
     "markupsafe>=2.1.0",
     "libpass>=1.9.3",
     "wtforms>=3.0.0",  # for form-level errors
 ]
 
 [project.optional-dependencies]
-babel = ["babel>=2.12.1", "flask_babel>=4.0.0"]
-fsqla = ["flask_sqlalchemy>=3.1.0", "sqlalchemy>=2.0.18"]
-common = ["argon2_cffi>=23.1.0", "bcrypt>=4.2.1", "flask_mail>=0.10.0", "bleach>=6.0.0"]
-mfa = ["cryptography>=42.0.4", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.5.0"]
+babel = ["babel>=2.17.0", "flask_babel>=4.0.0"]
+fsqla = ["flask_sqlalchemy>=3.1.1", "sqlalchemy>=2.0.41"]
+common = ["argon2_cffi>=25.1.0", "bcrypt>=4.2.1", "flask_mail>=0.10.0", "bleach>=6.0.0"]
+mfa = ["cryptography>=45.0.7", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.6.0"]
 low = [
     # Lowest supported versions
-    "Flask==3.1.0",
-    "Flask-SQLAlchemy==3.1.0",
+    "Flask==3.1.1",
+    "Flask-SQLAlchemy==3.1.1",
     "Flask-SQLAlchemy-Lite==0.1.0",
     "Flask-Babel==4.0.0",
     "Flask-Mail==0.10.0",
@@ -63,7 +58,7 @@ low = [
     "peewee==3.17.9",
     "argon2_cffi==21.3.0",
     "authlib==1.2.0",
-    "babel==2.12.1",
+    "babel==2.16.0",
     "bcrypt==4.0.1",
     "bleach==6.0.0",
     "freezegun",
@@ -77,10 +72,10 @@ low = [
     "qrcode==7.4.2",
     # authlib requires requests
     "requests",
-    "sqlalchemy==2.0.18",
-    "sqlalchemy-utils==0.41.1",
+    "sqlalchemy==2.0.41",
+    "sqlalchemy-utils==0.42.0",
     "webauthn==2.0.0",
-    "werkzeug==3.1.0",
+    "werkzeug==3.1.3",
     "zxcvbn==4.4.28"
 ]
 [build-system]
