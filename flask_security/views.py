@@ -5,7 +5,7 @@ flask_security.views
 Flask-Security views module
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 CSRF is tricky. By default all our forms have CSRF protection built in via
@@ -105,6 +105,7 @@ from .utils import (
     check_and_update_authn_fresh,
     check_and_get_token_status,
     config_value as cv,
+    confirm_redirect,
     do_flash,
     get_identity_attributes,
     get_message,
@@ -217,21 +218,9 @@ def login() -> ResponseValue:
         }
         return base_render_json(form, additional=payload)
 
-    if (
-        form.requires_confirmation
-        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
-        and not cv("RETURN_GENERIC_RESPONSES")
-    ):
-        # Validation failed BECAUSE user needs to confirm
-        assert form.user_authenticated
-        assert form.email.data  # email_required validator
-        do_flash(*get_message("CONFIRMATION_REQUIRED"))
-        return redirect(
-            get_url(
-                cv("REQUIRES_CONFIRMATION_ERROR_VIEW"),
-                qparams={"email": form.email.data},
-            )
-        )
+    if rurl := confirm_redirect(form, "email"):
+        return rurl
+
     return _security.render_template(
         cv("LOGIN_USER_TEMPLATE"),
         login_user_form=form,
@@ -552,18 +541,8 @@ def forgot_password():
         # Never include user info since this is an anonymous endpoint.
         return base_render_json(form, include_user=False)
 
-    if (
-        form.requires_confirmation
-        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
-        and not cv("RETURN_GENERIC_RESPONSES")
-    ):
-        do_flash(*get_message("CONFIRMATION_REQUIRED"))
-        return redirect(
-            get_url(
-                cv("REQUIRES_CONFIRMATION_ERROR_VIEW"),
-                qparams={"email": form.email.data},
-            )
-        )
+    if rurl := confirm_redirect(form, "email"):
+        return rurl
 
     if is_user_authenticated(current_user):
         form.email.data = current_user.email
@@ -1197,6 +1176,9 @@ def recover_username():
 
     if _security._want_json(request):
         return base_render_json(form, include_user=False)
+
+    if rurl := confirm_redirect(form, "email"):
+        return rurl
 
     return _security.render_template(
         cv("USERNAME_RECOVERY_TEMPLATE"),

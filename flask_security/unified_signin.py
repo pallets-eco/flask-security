@@ -72,6 +72,7 @@ from .utils import (
     base_render_json,
     check_and_get_token_status,
     config_value as cv,
+    confirm_redirect,
     do_flash,
     get_identity_attributes,
     get_post_login_redirect,
@@ -486,13 +487,8 @@ def us_signin_send_code() -> ResponseValue:
         }
         return base_render_json(form, include_user=False, additional=payload)
 
-    if (
-        form.requires_confirmation
-        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
-        and not cv("RETURN_GENERIC_RESPONSES")
-    ):
-        do_flash(*get_message("CONFIRMATION_REQUIRED"))
-        return redirect(get_url(cv("REQUIRES_CONFIRMATION_ERROR_VIEW")))
+    if rurl := confirm_redirect(form, "email"):
+        return rurl
 
     return _security.render_template(
         cv("US_SIGNIN_TEMPLATE"),
@@ -618,13 +614,8 @@ def us_signin() -> ResponseValue:
     # On error - wipe code
     form.passcode.data = None
 
-    if (
-        form.requires_confirmation
-        and cv("REQUIRES_CONFIRMATION_ERROR_VIEW")
-        and not cv("RETURN_GENERIC_RESPONSES")
-    ):
-        do_flash(*get_message("CONFIRMATION_REQUIRED"))
-        return redirect(get_url(cv("REQUIRES_CONFIRMATION_ERROR_VIEW")))
+    if rurl := confirm_redirect(form, "email"):
+        return rurl
 
     return _security.render_template(
         cv("US_SIGNIN_TEMPLATE"),

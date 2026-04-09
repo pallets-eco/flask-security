@@ -1176,6 +1176,7 @@ class UserMixin(BaseUserMixin):
 
         The default implementation sends the user_failed_authn signal.
 
+        .. versionadded:: 5.8.0
         """
         user_failed_authn.send(
             current_app._get_current_object(),  # type: ignore[attr-defined]

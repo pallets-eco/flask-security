@@ -1310,14 +1310,14 @@ def test_requires_confirmation_error_redirect(app, client):
         data=dict(identity="jyl@lp.com", chosen_method="email"),
         follow_redirects=False,
     )
-    assert "/confirm" in response.location
+    assert response.location == "/confirm?email=jyl%40lp.com"
 
     response = client.post(
         "/us-signin",
         data=dict(identity="jyl@lp.com", passcode="password"),
         follow_redirects=False,
     )
-    assert "/confirm" in response.location
+    assert response.location == "/confirm?email=jyl%40lp.com"
 
 
 @pytest.mark.registerable()

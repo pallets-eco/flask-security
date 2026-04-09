@@ -524,6 +524,25 @@ def suppress_form_csrf():
     return {}
 
 
+def confirm_redirect(form, identity_attribute):
+    """This is a very specific utility that all open endpoints call
+    to implement the confirm redirect feature.
+    """
+    if (
+        form.requires_confirmation
+        and config_value("REQUIRES_CONFIRMATION_ERROR_VIEW")
+        and not config_value("RETURN_GENERIC_RESPONSES")
+    ):
+        do_flash(*get_message("CONFIRMATION_REQUIRED"))
+        return redirect(
+            get_url(
+                config_value("REQUIRES_CONFIRMATION_ERROR_VIEW"),
+                qparams={identity_attribute: getattr(form.user, identity_attribute)},
+            )
+        )
+    return None
+
+
 def do_flash(message: str, category: str) -> None:
     """Flash a message depending on if the `FLASH_MESSAGES` configuration
     value is set.

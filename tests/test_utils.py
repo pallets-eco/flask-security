@@ -4,7 +4,7 @@ test_utils
 
 Test utils
 
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -29,7 +29,6 @@ from flask_security.signals import (
     tf_security_token_sent,
     user_registered,
     us_security_token_sent,
-    username_recovery_email_sent,
 )
 from flask_security.utils import hash_data, hash_password
 
@@ -166,6 +165,7 @@ def get_existing_session(client):
         serializer = URLSafeTimedSerializer("secret", serializer=TaggedJSONSerializer())
         val = serializer.loads_unsafe(cookie.value)
         return val[1]
+    return None
 
 
 def reset_fresh(client, within):
@@ -381,12 +381,8 @@ def capture_registrations():
 
 
 @contextmanager
-def capture_reset_password_requests(reset_password_sent_at=None):
-    """Testing utility for capturing password reset requests.
-
-    :param reset_password_sent_at: An optional datetime object to set the
-                                   user's `reset_password_sent_at` to
-    """
+def capture_reset_password_requests():
+    """Testing utility for capturing password reset requests."""
     reset_requests = []
 
     def _on(app, **data):
@@ -398,22 +394,6 @@ def capture_reset_password_requests(reset_password_sent_at=None):
         yield reset_requests
     finally:
         reset_password_instructions_sent.disconnect(_on)
-
-
-@contextmanager
-def capture_username_recovery_requests():
-    """Testing utility for capturing username recovery requests."""
-    recovery_requests = []
-
-    def _on(app, **data):
-        recovery_requests.append(data)
-
-    username_recovery_email_sent.connect(_on)
-
-    try:
-        yield recovery_requests
-    finally:
-        username_recovery_email_sent.disconnect(_on)
 
 
 def check_signals(
