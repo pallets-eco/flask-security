@@ -21,6 +21,7 @@ Features & Improvements
 Fixes
 +++++
 - (:issue:`1179`) Fix verify_password for bcrypt 5.0 (mephi42)
+- (:issue:`1200`) Fix username_recovery w.r.t. inactive and non-confirmed users
 
 Docs and Chores
 +++++++++++++++
@@ -28,6 +29,7 @@ Docs and Chores
 - (:pr:`1151`) Update ca_ES translations (arielvb)
 - (:pr:`1152`) Update es_ES translations (arielvb)
 - (:pr:`1196`) Update arabic translations (samialfattani)
+- (:pr:`1199`) Update it_IT translations (gissimo)
 
 Version 5.7.1
 -------------

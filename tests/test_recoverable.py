@@ -2,7 +2,7 @@
 test_recoverable
 ~~~~~~~~~~~~~~~~
 
-Recoverable functionality tests
+Recoverable (password, usernanme) functionality tests
 
 :copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
@@ -22,6 +22,7 @@ from tests.test_utils import (
     capture_flashes,
     capture_reset_password_requests,
     check_location,
+    check_signals,
     get_form_input_value,
     is_authenticated,
     logout,
@@ -33,7 +34,6 @@ from flask_security.forms import ForgotPasswordForm, LoginForm
 from flask_security.signals import (
     password_reset,
     reset_password_instructions_sent,
-    username_recovery_email_sent,
 )
 
 pytestmark = pytest.mark.recoverable()
@@ -133,19 +133,13 @@ def test_recoverable_flag(app, clients, get_message, outbox):
 
 
 @pytest.mark.confirmable()
-@pytest.mark.registerable()
 @pytest.mark.settings(requires_confirmation_error_view="/confirm")
 def test_requires_confirmation_error_redirect(app, clients):
-    data = dict(
-        email="jyl@lp.com", password="awesome sunset", password_confirm="awesome sunset"
-    )
-    clients.post("/register", data=data)
-
     response = clients.post(
-        "/reset", data=dict(email="jyl@lp.com"), follow_redirects=True
+        "/reset", data=dict(email="joe@lp.com"), follow_redirects=True
     )
     assert b"send_confirmation_form" in response.data
-    assert b"jyl@lp.com" in response.data
+    assert b"joe@lp.com" in response.data
 
 
 @pytest.mark.settings()
@@ -928,15 +922,7 @@ def test_recoverable_auth_json(app, client, get_message, outbox):
 
 
 @pytest.mark.username_recovery()
-def test_username_recovery_valid_email(app, clients, get_message, outbox):
-    recorded_recovery_sent = []
-
-    @username_recovery_email_sent.connect_via(app)
-    def on_email_sent(app, **kwargs):
-        assert isinstance(app, Flask)
-        assert isinstance(kwargs["user"], UserMixin)
-        recorded_recovery_sent.append(kwargs["user"])
-
+def test_username_recovery_valid_email(app, clients, get_message, outbox, signals):
     # Test the username recovery view
     response = clients.get("/recover-username")
     assert b"<h1>Username Recovery</h1>" in response.data
@@ -945,7 +931,8 @@ def test_username_recovery_valid_email(app, clients, get_message, outbox):
         "/recover-username", data=dict(email="joe@lp.com"), follow_redirects=True
     )
 
-    assert len(recorded_recovery_sent) == 1
+    check_signals(signals, "username_recovery_email_sent")
+    assert signals["username_recovery_email_sent"][0]["user_email"] == "joe@lp.com"
     assert len(outbox) == 1
     assert response.status_code == 200
 
@@ -975,8 +962,8 @@ def test_username_recovery_valid_email(app, clients, get_message, outbox):
 
 
 @pytest.mark.username_recovery()
-def test_username_recovery_invalid_email(app, clients, outbox):
-    response = clients.post(
+def test_username_recovery_invalid_email(app, client, outbox):
+    response = client.post(
         "/recover-username", data=dict(email="bogus@lp.com"), follow_redirects=True
     )
 
@@ -984,10 +971,9 @@ def test_username_recovery_invalid_email(app, clients, outbox):
     assert response.status_code == 200
 
     # Test JSON responses
-    response = clients.post(
+    response = client.post(
         "/recover-username",
         json=dict(email="bogus@lp.com"),
-        headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 400
     assert response.headers["Content-Type"] == "application/json"
@@ -1000,13 +986,9 @@ def test_username_recovery_invalid_email(app, clients, outbox):
 
 @pytest.mark.username_recovery()
 @pytest.mark.settings(return_generic_responses=True)
-def test_username_recovery_generic_responses(app, clients, get_message, outbox):
-    recorded_recovery_sent = []
-
-    @username_recovery_email_sent.connect_via(app)
-    def on_email_sent(app, **kwargs):
-        recorded_recovery_sent.append(kwargs["user"])
-
+def test_username_recovery_generic_responses(
+    app, clients, get_message, outbox, signals
+):
     # Test with valid email
     with capture_flashes() as flashes:
         response = clients.post(
@@ -1018,7 +1000,8 @@ def test_username_recovery_generic_responses(app, clients, get_message, outbox):
     assert get_message("USERNAME_RECOVERY_REQUEST") == flashes[0]["message"].encode(
         "utf-8"
     )
-    assert len(recorded_recovery_sent) == 1
+    check_signals(signals, "username_recovery_email_sent")
+    assert signals["username_recovery_email_sent"][0]["user_email"] == "joe@lp.com"
     assert len(outbox) == 1
     assert response.status_code == 200
 
@@ -1034,25 +1017,58 @@ def test_username_recovery_generic_responses(app, clients, get_message, outbox):
         "utf-8"
     )
     # Validate no email was sent (there should only be one from the previous test)
-    assert len(recorded_recovery_sent) == 1
+    check_signals(signals, "username_recovery_email_sent")
     assert len(outbox) == 1
     assert response.status_code == 200
 
     # Test JSON responses - valid email
-    response = clients.post(
-        "/recover-username",
-        json=dict(email="joe@lp.com"),
-        headers={"Content-Type": "application/json"},
-    )
+    response = clients.post("/recover-username", json=dict(email="joe@lp.com"))
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
 
     # Test JSON responses - invalid email
-    response = clients.post(
-        "/recover-username",
-        json=dict(email="bogus@lp.com"),
-        headers={"Content-Type": "application/json"},
-    )
+    response = clients.post("/recover-username", json=dict(email="bogus@lp.com"))
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     assert not any(e in response.json["response"].keys() for e in ["error", "errors"])
+
+
+@pytest.mark.username_recovery()
+def test_ur_inactive(client, get_message):
+    response = client.post(
+        "/recover-username", data=dict(email="tiya@lp.com"), follow_redirects=True
+    )
+    assert get_message("DISABLED_ACCOUNT") in response.data
+
+
+@pytest.mark.username_recovery()
+@pytest.mark.confirmable()
+def test_ur_confirm_needed(app, client, get_message, outbox):
+    response = client.post("/recover-username", json=dict(email="joe@lp.com"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "CONFIRMATION_REQUIRED"
+    )
+    assert len(outbox) == 0
+
+
+@pytest.mark.username_recovery()
+@pytest.mark.confirmable()
+@pytest.mark.settings(requires_confirmation_error_view="/confirm")
+def test_ur_confirmation_error_redirect(app, client):
+    response = client.post(
+        "/recover-username", data=dict(email="joe@lp.com"), follow_redirects=True
+    )
+    assert b"send_confirmation_form" in response.data
+    assert b"joe@lp.com" in response.data
+
+
+@pytest.mark.username_recovery()
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+def test_ur_override_user_allowed(app, client, get_message):
+    response = client.post("/recover-username", json=dict(email="gal@lp.com"))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"] == ["You are not allowed to do that"]
+    assert response.json["response"]["field_errors"]["email"] == [
+        "You are not allowed to do that"
+    ]

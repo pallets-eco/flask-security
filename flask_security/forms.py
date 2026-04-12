@@ -1069,7 +1069,7 @@ class TwoFactorRescueForm(Form):
     submit = SubmitField(get_form_field_label("submit"), id="rescue")
 
 
-class UsernameRecoveryForm(Form, UserEmailFormMixin):
+class UsernameRecoveryForm(ForgotPasswordForm):
     """The username recovery form"""
 
     submit = SubmitField(get_form_field_label("recover_username"))

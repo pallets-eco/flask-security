@@ -1952,7 +1952,7 @@ Social Login (OAuth)
 
 .. py:data:: SECURITY_OAUTH_ENABLE
 
-    To enable using external Oauth providers - set this to ``True``.
+    To enable using external OAuth providers - set this to ``True``.
 
 .. py:data:: SECURITY_OAUTH_BUILTIN_PROVIDERS
 
@@ -1962,13 +1962,13 @@ Social Login (OAuth)
 
 .. py:data:: SECURITY_OAUTH_START_URL
 
-    Endpoint for starting an Oauth authentication operation.
+    Endpoint for starting an OAuth authentication operation.
 
     Default: ``"/login/oauthstart"``
 
 .. py:data:: SECURITY_OAUTH_RESPONSE_URL
 
-    Endpoint used as Oauth redirect.
+    Endpoint used as OAuth redirect.
 
     Default: ``"/login/oauthresponse"``
 
@@ -1985,7 +1985,7 @@ Social Login (OAuth)
 
 .. py:data:: SECURITY_OAUTH_VERIFY_START_URL
 
-    Endpoint for starting an Oauth reauthentication/verify operation.
+    Endpoint for starting an OAuth reauthentication/verify operation.
 
     Default: ``"/login/oauth-verify-start"``
 
@@ -1993,7 +1993,7 @@ Social Login (OAuth)
 
 .. py:data:: SECURITY_OAUTH_VERIFY_RESPONSE_URL
 
-    Endpoint used as the Oauth verify redirect.
+    Endpoint used as the OAuth verify redirect.
 
     Default: ``"/login/oauth-verify-response"``
 
