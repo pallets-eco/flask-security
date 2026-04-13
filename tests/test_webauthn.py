@@ -616,7 +616,10 @@ def test_bad_data_signin(app, client, get_message, signals):
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_NO_VERIFY", cause="Could not verify authentication signature"
     )
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.wan_signin_response"
+    assert (
+        signals["user_failed_authn"][0]["request_endpoint"]
+        == "security.wan_signin_response"
+    )
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "passkey"
     assert not signals["user_failed_authn"][0]["tfa"]
@@ -1413,7 +1416,10 @@ def test_verify_validate_error(app, client, get_message, signals):
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "WEBAUTHN_NO_VERIFY", cause="Could not verify authentication signature"
     )
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.wan_verify_response"
+    assert (
+        signals["user_failed_authn"][0]["request_endpoint"]
+        == "security.wan_verify_response"
+    )
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "passkey"
     assert not signals["user_failed_authn"][0]["tfa"]
