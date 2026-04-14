@@ -2431,7 +2431,7 @@ def _allowed(self, form_error):
     return True
 
 
-@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_allowed))
 def test_override_user_allowed(app, client, get_message):
     data = dict(identity="jill@lp.com", passcode="password")
     response = client.post("/us-signin", json=data)
@@ -2447,7 +2447,7 @@ def test_override_user_allowed(app, client, get_message):
     ]
 
 
-@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_allowed))
 @pytest.mark.settings(return_generic_responses=True)
 def test_override_user_allowed_gr(app, client, get_message):
     data = dict(identity="gal@lp.com", passcode="password")

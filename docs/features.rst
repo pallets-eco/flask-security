@@ -358,8 +358,9 @@ The CLI and API provides administrators and the application control over account
 * API - :ref:`Signals<api:Signals>` are sent for many operations that allow the application to track
   important account changes (such as track_failed_authn)
 * Configuration - allow or require two factor authentication
-* API - :py:meth:`.UserMixin.check_tf_required` allows applications to fine-tune which users require MFA
-* API - :py:meth:`.UserMixin.is_allowed_authn` can be used to support account lockout
+* API - :py:meth:`.UserMixin.check_tf_required` allows applications to fine-tune which users require MFA.
+  For example could require all users with a role of 'admin' to setup MFA.
+* API - :py:meth:`.UserMixin.is_locked` can be used to support account lockout
 
 
 .. _Click: https://palletsprojects.com/p/click/
