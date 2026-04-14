@@ -1147,12 +1147,10 @@ class UserMixin(BaseUserMixin):
         """
         return cv("TWO_FACTOR_REQUIRED")
 
-    def track_failed_authn(
-        self, endpoint: str | None, auth_type: str, tfa: bool = False
-    ) -> None:
+    def track_failed_authn(self, auth_type: str, tfa: bool = False) -> None:
         """Called when a user fails to authenticate.
 
-        endpoint - blueprint endpoint name:
+        The following flask-Security endpoints call this:
 
             - security.login
             - security.verify
@@ -1174,6 +1172,9 @@ class UserMixin(BaseUserMixin):
         This is called any time a credential is presented but is not verifiable.
         It is NOT called on API errors or missing data.
 
+        Use Flask's request proxy to get information such as endpoint. Note that
+        it is possible there isn't a Flask Request if this is called from the cli.
+
         The default implementation sends the user_failed_authn signal.
 
         .. versionadded:: 5.8.0
@@ -1181,7 +1182,6 @@ class UserMixin(BaseUserMixin):
         user_failed_authn.send(
             current_app._get_current_object(),  # type: ignore[attr-defined]
             _async_wrapper=current_app.ensure_sync,
-            endpoint=endpoint,
             user=self,
             auth_type=auth_type,
             tfa=tfa,

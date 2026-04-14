@@ -191,7 +191,7 @@ def test_simple_signin(app, clients, get_message, outbox, signals):
         follow_redirects=True,
     )
     assert get_message("INVALID_PASSWORD_CODE") in response.data
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_signin"
+    assert signals["user_failed_authn"][0]["request_endpoint"] == "security.us_signin"
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
     assert not signals["user_failed_authn"][0]["tfa"]
@@ -276,7 +276,9 @@ def test_simple_signin_json(app, client_nc, get_message, outbox, signals):
         assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
             "INVALID_PASSWORD_CODE"
         )
-        assert signals["user_failed_authn"][0]["endpoint"] == "security.us_signin"
+        assert (
+            signals["user_failed_authn"][0]["request_endpoint"] == "security.us_signin"
+        )
         assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
         assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
         assert not signals["user_failed_authn"][0]["tfa"]
@@ -626,7 +628,9 @@ def test_verify_link(app, client, get_message, outbox, signals):
         follow_redirects=True,
     )
     assert get_message("INVALID_CODE") in response.data
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_verify_link"
+    assert (
+        signals["user_failed_authn"][0]["request_endpoint"] == "security.us_verify_link"
+    )
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
     assert not signals["user_failed_authn"][0]["tfa"]
@@ -695,7 +699,9 @@ def test_verify_link_spa(app, client, get_message, outbox, signals):
     assert "/login-error" == split.path
     qparams = dict(parse_qsl(split.query))
     assert get_message("INVALID_CODE") == qparams["error"].encode("utf-8")
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_verify_link"
+    assert (
+        signals["user_failed_authn"][0]["request_endpoint"] == "security.us_verify_link"
+    )
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
     assert not signals["user_failed_authn"][0]["tfa"]
@@ -1102,7 +1108,7 @@ def test_verify_json(app, client, get_message, signals):
     assert response.json["response"]["field_errors"]["passcode"][0].encode(
         "utf-8"
     ) == get_message("INVALID_PASSWORD_CODE")
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.us_verify"
+    assert signals["user_failed_authn"][0]["request_endpoint"] == "security.us_verify"
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "passcode"
     assert not signals["user_failed_authn"][0]["tfa"]

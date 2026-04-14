@@ -395,7 +395,7 @@ def test_two_factor_flag(app, clients, get_message, outbox, signals):
     response = client.post("/tf-validate", data=dict(code=wrong_code))
     assert get_message("TWO_FACTOR_INVALID_TOKEN") in response.data
     assert (
-        signals["user_failed_authn"][2]["endpoint"]
+        signals["user_failed_authn"][2]["request_endpoint"]
         == "security.two_factor_token_validation"
     )
     assert signals["user_failed_authn"][2]["user"].email == "gal@lp.com"
@@ -650,7 +650,7 @@ def test_json(app, client, signals):
     assert response.json["response"]["field_errors"]["code"][0] == "Invalid code"
     assert response.json["response"]["errors"][0] == "Invalid code"
     assert (
-        signals["user_failed_authn"][0]["endpoint"]
+        signals["user_failed_authn"][0]["request_endpoint"]
         == "security.two_factor_token_validation"
     )
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"

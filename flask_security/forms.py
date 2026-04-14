@@ -600,14 +600,14 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
             return False
         if not self.user.password:
             # This is result of PASSWORD_REQUIRED=False and UNIFIED_SIGNIN
-            self.user.track_failed_authn(request.endpoint, "password")
+            self.user.track_failed_authn("password")
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             # Reduce timing variation between existing and non-existing users
             hash_password(self.password.data)
             return False
         self.password.data = _security.password_util.normalize(self.password.data)
         if not self.user.verify_and_update_password(self.password.data):
-            self.user.track_failed_authn(request.endpoint, "password")
+            self.user.track_failed_authn("password")
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
 
@@ -669,7 +669,7 @@ class VerifyForm(Form, PasswordFormMixin):
         self.password.data = _security.password_util.normalize(self.password.data)
         assert isinstance(self.password.errors, list)
         if not self.user.verify_and_update_password(self.password.data):
-            self.user.track_failed_authn(request.endpoint, "password")
+            self.user.track_failed_authn("password")
             self.password.errors.append(get_message("INVALID_PASSWORD")[0])
             return False
         return True
@@ -1049,7 +1049,7 @@ class TwoFactorVerifyCodeForm(Form, CodeFormMixin):
             window=self.window,
         ):
             if not self.is_setup:
-                self.user.track_failed_authn(request.endpoint, "code", True)
+                self.user.track_failed_authn("code", True)
             self.code.errors.append(get_message("TWO_FACTOR_INVALID_TOKEN")[0])
             return False
 
