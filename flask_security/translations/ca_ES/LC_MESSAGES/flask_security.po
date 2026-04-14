@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 3.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2026-03-24 09:50+0100\n"
+"POT-Creation-Date: 2026-04-14 15:32-0700\n"
 "PO-Revision-Date: 2026-03-24 09:50+0100\n"
 "Last-Translator: Ariel von Barnekow <avbarnekow@gmail.com>\n"
 "Language: ca_ES\n"
@@ -18,7 +18,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
 #: flask_security/core.py:249
 msgid "Confirm your new email address"
@@ -651,19 +651,19 @@ msgstr "clau d'accés"
 msgid "none"
 msgstr "cap"
 
-#: flask_security/forms.py:960 flask_security/unified_signin.py:168
+#: flask_security/forms.py:966 flask_security/unified_signin.py:171
 msgid "Available Methods"
 msgstr "Mètodes disponibles"
 
-#: flask_security/forms.py:962
+#: flask_security/forms.py:968
 msgid "Disable two-factor authentication"
 msgstr "Desactiva l'autenticació de doble factor"
 
-#: flask_security/forms.py:1058
+#: flask_security/forms.py:1064
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr "Tens problemes per accedir al teu compte? / Dispositiu mòbil perdut?"
 
-#: flask_security/forms.py:1060
+#: flask_security/forms.py:1066
 msgid "Contact Administrator"
 msgstr "Contacta amb l'administrador"
 
@@ -695,27 +695,27 @@ msgstr "Envia el codi per correu electrònic"
 msgid "Use previously downloaded recovery code"
 msgstr "Utilitza el codi de recuperació descarregat anteriorment"
 
-#: flask_security/unified_signin.py:161
+#: flask_security/unified_signin.py:164
 msgid "Code or Password"
 msgstr "Codi o contrasenya"
 
-#: flask_security/unified_signin.py:170
+#: flask_security/unified_signin.py:173
 msgid "Via email"
 msgstr "Via correu electrònic"
 
-#: flask_security/unified_signin.py:171
+#: flask_security/unified_signin.py:174
 msgid "Via SMS"
 msgstr "Via SMS"
 
-#: flask_security/unified_signin.py:303
+#: flask_security/unified_signin.py:306
 msgid "Setup additional sign in option"
 msgstr "Configura una opció d'inici de sessió addicional"
 
-#: flask_security/unified_signin.py:316
+#: flask_security/unified_signin.py:319
 msgid "Delete active sign in option"
 msgstr "Elimina l'opció d'inici de sessió activa"
 
-#: flask_security/webauthn.py:124 flask_security/webauthn.py:370
+#: flask_security/webauthn.py:124 flask_security/webauthn.py:371
 msgid "Nickname"
 msgstr "Sobrenom"
 

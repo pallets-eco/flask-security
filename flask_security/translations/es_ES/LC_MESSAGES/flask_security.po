@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 5.6.2\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2026-03-24 09:50+0100\n"
+"POT-Creation-Date: 2026-04-14 15:32-0700\n"
 "PO-Revision-Date: 2026-03-24 09:48+0100\n"
 "Last-Translator: Ariel von Barnekow  <avbarnekow@gmail.com>\n"
 "Language: es_ES\n"
@@ -20,7 +20,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
 #: flask_security/core.py:249
 msgid "Confirm your new email address"
@@ -652,19 +652,19 @@ msgstr "llave de acceso"
 msgid "none"
 msgstr "ninguno"
 
-#: flask_security/forms.py:960 flask_security/unified_signin.py:168
+#: flask_security/forms.py:966 flask_security/unified_signin.py:171
 msgid "Available Methods"
 msgstr "Métodos disponibles"
 
-#: flask_security/forms.py:962
+#: flask_security/forms.py:968
 msgid "Disable two-factor authentication"
 msgstr "Deshabilitar la autenticación de doble factor"
 
-#: flask_security/forms.py:1058
+#: flask_security/forms.py:1064
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr "¿Problemas para acceder a tu cuenta/has perdido tu dispositivo móvil?"
 
-#: flask_security/forms.py:1060
+#: flask_security/forms.py:1066
 msgid "Contact Administrator"
 msgstr "Contactar con el administrador"
 
@@ -696,27 +696,27 @@ msgstr "Enviar el código por correo electrónico"
 msgid "Use previously downloaded recovery code"
 msgstr "Usar código de recuperación descargado anteriormente"
 
-#: flask_security/unified_signin.py:161
+#: flask_security/unified_signin.py:164
 msgid "Code or Password"
 msgstr "Código o contraseña"
 
-#: flask_security/unified_signin.py:170
+#: flask_security/unified_signin.py:173
 msgid "Via email"
 msgstr "Con correo electrónico"
 
-#: flask_security/unified_signin.py:171
+#: flask_security/unified_signin.py:174
 msgid "Via SMS"
 msgstr "Con SMS"
 
-#: flask_security/unified_signin.py:303
+#: flask_security/unified_signin.py:306
 msgid "Setup additional sign in option"
 msgstr "Configurar una opción de inicio de sesión adicional"
 
-#: flask_security/unified_signin.py:316
+#: flask_security/unified_signin.py:319
 msgid "Delete active sign in option"
 msgstr "Eliminar la opción de inicio de sesión activa"
 
-#: flask_security/webauthn.py:124 flask_security/webauthn.py:370
+#: flask_security/webauthn.py:124 flask_security/webauthn.py:371
 msgid "Nickname"
 msgstr "Apodo"
 
