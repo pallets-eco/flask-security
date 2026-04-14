@@ -215,7 +215,7 @@ def _allowed(self, form_error):
     return True
 
 
-@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_allowed))
 @pytest.mark.settings(oauth_enable=True)
 def test_override_user_allowed(app, sqlalchemy_datastore, get_message):
     init_app_with_options(

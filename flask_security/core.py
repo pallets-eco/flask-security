@@ -1187,13 +1187,21 @@ class UserMixin(BaseUserMixin):
             tfa=tfa,
         )
 
-    def is_allowed_authn(self, form_error: list[str] | None = None) -> bool:
+    def is_locked(self, form_error: list[str] | None = None) -> bool:
         """
-        Return True if the user is allowed to be authenticated.
-        This is called by Flask-Security during authentication - after the user's
-        credentials have been verified but prior to being 'logged in'. It is also
-        called as part of 'forgot password'.
-        This is called AFTER the check whether the user is disabled/deactivated
+        Return True if the user account is locked.
+
+        It is called from the following endpoints:
+
+            - security.login
+            - security.us_signin
+            - security.forgot_password
+            - security.recover_username
+            - security.wan_signin_response
+            - oauthresponse
+
+        For authentication endpoints it is called AFTER the credentials have been
+        verified, and AFTER the check whether the user is disabled/deactivated
         but before the check for confirmation required.
 
         form_error is a list that could be associated with a form - used to convey

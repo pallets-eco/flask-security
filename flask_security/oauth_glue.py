@@ -128,7 +128,7 @@ def oauthresponse(name: str) -> ResponseValue:
         assert oauth_provider is not None
         return oauth_provider.oauth_response_failure("LOGIN_ERROR_VIEW", e)
     form_error: list[str] = []
-    if user and user.is_active and user.is_allowed_authn(form_error):
+    if user and user.is_active and user.is_locked(form_error):
         after_this_request(view_commit)
         next_loc = session.pop("fs_oauth_next", None)
         response = _security.two_factor_plugins.tf_enter(

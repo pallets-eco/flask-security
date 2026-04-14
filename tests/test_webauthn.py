@@ -750,7 +750,7 @@ def _allowed(self, form_error):
     return True
 
 
-@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_allowed_authn=_allowed))
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_allowed))
 def test_override_user_allowed(app, client, get_message):
     authenticate(client, email="gal@lp.com")
     register_options, response_url = _register_start_json(
