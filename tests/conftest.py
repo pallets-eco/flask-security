@@ -5,7 +5,7 @@ conftest
 Test fixtures and what not
 
 :copyright: (c) 2017 by CERN.
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -1006,6 +1006,9 @@ def signals():
 
         def _on(app, _sc=sc, **kwargs):
             assert isinstance(app, Flask)
+            kwargs["request_endpoint"] = (
+                flask_request.endpoint if flask_request else None
+            )
             # user argument is an ORM structure so may not be available in a test
             # outside of the request - capture value(s) here
             user = kwargs.get("user", None)

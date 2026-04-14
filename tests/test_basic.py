@@ -390,7 +390,7 @@ def test_invalid_user(client, get_message):
 def test_bad_password(client, get_message, signals):
     response = authenticate(client, password="bogus")
     assert get_message("INVALID_PASSWORD") in response.data
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.login"
+    assert signals["user_failed_authn"][0]["request_endpoint"] == "security.login"
     assert signals["user_failed_authn"][0]["user_email"] == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "password"
     assert not signals["user_failed_authn"][0]["tfa"]

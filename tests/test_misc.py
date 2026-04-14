@@ -1188,7 +1188,7 @@ def test_verify_fresh_json(app, client, get_message, signals):
         "/verify", json=dict(password="not my password"), headers=headers
     )
     assert response.status_code == 400
-    assert signals["user_failed_authn"][0]["endpoint"] == "security.verify"
+    assert signals["user_failed_authn"][0]["request_endpoint"] == "security.verify"
     assert signals["user_failed_authn"][0]["user"].email == "matt@lp.com"
     assert signals["user_failed_authn"][0]["auth_type"] == "password"
     assert not signals["user_failed_authn"][0]["tfa"]

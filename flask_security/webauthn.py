@@ -359,7 +359,7 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
                 self.credential.errors.append(
                     get_message("WEBAUTHN_NO_VERIFY", cause=str(exc))[0]
                 )
-                self.user.track_failed_authn(request.endpoint, "passkey")
+                self.user.track_failed_authn("passkey")
                 return False
         return True
 
