@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 5.8.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
-"POT-Creation-Date: 2026-04-02 18:49+0300\n"
+"POT-Creation-Date: 2026-04-14 15:32-0700\n"
 "PO-Revision-Date: 2025-10-30 10:13+0200\n"
 "Last-Translator: Sami Alfattany <sami_alfattani@hotmail.com>\n"
 "Language: ar\n"
@@ -15,7 +15,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
 #: flask_security/core.py:249
 msgid "Confirm your new email address"
@@ -148,8 +148,8 @@ msgid ""
 "An error occurred while communicating with the OAuth provider: "
 "(%(exerror)s - %(exdesc)s). Please try again."
 msgstr ""
-"حدث خطأ أثناء التواصل مع مزود OAuth: "
-"(%(exerror)s - %(exdesc)s). يرجى المحاولة مرة أخرى."
+"حدث خطأ أثناء التواصل مع مزود OAuth: (%(exerror)s - %(exdesc)s). يرجى "
+"المحاولة مرة أخرى."
 
 #: flask_security/core.py:461
 msgid "Password does not match"
@@ -628,19 +628,19 @@ msgstr "مفتاح المرور"
 msgid "none"
 msgstr "لا شيء"
 
-#: flask_security/forms.py:960 flask_security/unified_signin.py:168
+#: flask_security/forms.py:966 flask_security/unified_signin.py:171
 msgid "Available Methods"
 msgstr "الطرق المتاحة"
 
-#: flask_security/forms.py:962
+#: flask_security/forms.py:968
 msgid "Disable two-factor authentication"
 msgstr "تعطيل التحقق بخطوتين"
 
-#: flask_security/forms.py:1058
+#: flask_security/forms.py:1064
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr "هل تواجه مشكلة في الوصول إلى حسابك؟/فقدت جهازك المحمول؟"
 
-#: flask_security/forms.py:1060
+#: flask_security/forms.py:1066
 msgid "Contact Administrator"
 msgstr "اتصل بالمسؤول"
 
@@ -672,27 +672,27 @@ msgstr "إرسال الرمز عبر البريد الإلكتروني"
 msgid "Use previously downloaded recovery code"
 msgstr "استخدم رمز الاستعادة الذي تم تحميله مسبقًا"
 
-#: flask_security/unified_signin.py:161
+#: flask_security/unified_signin.py:164
 msgid "Code or Password"
 msgstr "رمز أو كلمة مرور"
 
-#: flask_security/unified_signin.py:170
+#: flask_security/unified_signin.py:173
 msgid "Via email"
 msgstr "عبر البريد الإلكتروني"
 
-#: flask_security/unified_signin.py:171
+#: flask_security/unified_signin.py:174
 msgid "Via SMS"
 msgstr "عبر الرسائل النصية"
 
-#: flask_security/unified_signin.py:303
+#: flask_security/unified_signin.py:306
 msgid "Setup additional sign in option"
 msgstr "إعداد خيار تسجيل دخول إضافي"
 
-#: flask_security/unified_signin.py:316
+#: flask_security/unified_signin.py:319
 msgid "Delete active sign in option"
 msgstr "حذف خيار تسجيل الدخول النشط"
 
-#: flask_security/webauthn.py:124 flask_security/webauthn.py:370
+#: flask_security/webauthn.py:124 flask_security/webauthn.py:371
 msgid "Nickname"
 msgstr "الاسم المستعار"
 

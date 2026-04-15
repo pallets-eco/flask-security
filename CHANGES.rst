@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.8.0
 -------------
 
-Released TBD
+Released April 15, 2026
 
 Features & Improvements
 +++++++++++++++++++++++
@@ -15,13 +15,14 @@ Features & Improvements
 - (:issue:`1178`) Add Cache-Control headers.
 - (:issue:`1165`) Add support for using Social Login (OAuth) for verification.
 - (:issue:`1188`) Add tracking of failed authentication attempts via :py:meth:`.UserMixin.track_failed_authn`
-  and :py:data:`user_failed_authn`
-- (:issue:`1192`) Add API for application to decide if a particular user should be allowed to authenticate.
+  and signal :py:data:`user_failed_authn`
+- (:issue:`1192`) Add API for application to decide if a particular user account is locked.
 
 Fixes
 +++++
 - (:issue:`1179`) Fix verify_password for bcrypt 5.0 (mephi42)
 - (:issue:`1200`) Fix username_recovery w.r.t. inactive and non-confirmed users
+- (:issue:`1189`) Return additional fields for JSON responses with QR codes
 
 Docs and Chores
 +++++++++++++++
@@ -30,6 +31,7 @@ Docs and Chores
 - (:pr:`1152`) Update es_ES translations (arielvb)
 - (:pr:`1196`) Update arabic translations (samialfattani)
 - (:pr:`1199`) Update it_IT translations (gissimo)
+- (:pr:`1185`) Change external facing terminology from 'Social OAuth' to 'Social Login'.
 
 Version 5.7.1
 -------------
