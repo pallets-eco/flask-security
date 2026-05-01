@@ -7,6 +7,8 @@ argon2-cffi
 authlib
 bcrypt
 bleach
+# new Rust-based cbor2 doesn't handle memoryview which some (peewee) DBs return
+cbor2 < 6.0.0
 coverage
 cryptography
 djlint
