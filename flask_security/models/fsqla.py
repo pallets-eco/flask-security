@@ -43,6 +43,7 @@ class FsModels:
     user_table_name = "user"
     role_table_name = "role"
     webauthn_table_name = "webauthn"
+    refresh_table_name = "fs_refresh"
 
     @classmethod
     def set_db_info(
@@ -51,13 +52,14 @@ class FsModels:
         user_table_name="user",
         role_table_name="role",
         webauthn_table_name="webauthn",
+        refresh_table_name="fs_refresh",
     ):
         """Initialize Model.
         This needs to be called after the DB object has been created
-        (e.g. db = Sqlalchemy()).
+        (e.g., db = Sqlalchemy()).
 
         .. note::
-            This should only be used if you are utilizing the fsqla data
+            This should only be used if you are using the fsqla data
             models. With your own models you would need similar but slightly
             different code.
         """
@@ -65,6 +67,7 @@ class FsModels:
         cls.user_table_name = user_table_name
         cls.role_table_name = role_table_name
         cls.webauthn_table_name = webauthn_table_name
+        cls.refresh_table_name = refresh_table_name
         cls.roles_users = appdb.Table(
             "roles_users",
             Column("user_id", Integer(), ForeignKey(f"{cls.user_table_name}.id")),

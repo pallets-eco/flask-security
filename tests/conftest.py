@@ -55,6 +55,7 @@ from flask_security import (
     permissions_accepted,
     permissions_required,
     uia_email_mapper,
+    RefreshTrackerMixin,
 )
 from flask_security.utils import localize_callback
 
@@ -71,6 +72,10 @@ v2_param = [
     pytest.param(dict(use_register_v2=True), id="use_register_v2-True"),
     pytest.param(dict(use_register_v2=False), id="use_register_v2-False"),
 ]
+
+
+class Nomixin:
+    pass
 
 
 class FastHash(PasswordHash):
@@ -151,6 +156,7 @@ def app(request):
         "passwordless",
         "recoverable",
         "registerable",
+        "refresh_token",
         "trackable",
         "two_factor",
         "unified_signin",
@@ -443,7 +449,6 @@ def mongoengine_setup(app, tmpdir, realmongodburl):
         usage = StringField(max_length=64, required=True)
         # we need to be able to look up a user from a credential_id
         user = ReferenceField("User")
-        # user_id = ObjectIdField(required=True)
         meta = {"db_alias": db_name}
 
         def get_user_mapping(self) -> dict[str, str]:
@@ -451,6 +456,19 @@ def mongoengine_setup(app, tmpdir, realmongodburl):
             Return the mapping from webauthn back to User
             """
             return dict(id=self.user.id)
+
+    class FsRefreshTracker(Document, RefreshTrackerMixin):
+        """Refresh Token Tracker"""
+
+        refresh_family = StringField(max_length=64, required=True)
+        gen = IntField(default=1)
+        expires_at = DateTimeField(required=True)
+        revoked_at = DateTimeField(required=False)
+        last_used_at = DateTimeField(required=True)
+        name = StringField(max_length=64)
+        user = ReferenceField("User")
+
+        meta = {"db_alias": db_name}
 
     class User(Document, UserMixin):
         email = StringField(unique=True, max_length=255)
@@ -478,12 +496,16 @@ def mongoengine_setup(app, tmpdir, realmongodburl):
         webauthn = ListField(
             ReferenceField(WebAuthn, reverse_delete_rule=PULL), default=[]
         )
+        refresh_trackers = ListField(
+            ReferenceField(FsRefreshTracker, reverse_delete_rule=PULL), default=[]
+        )
         meta = {"db_alias": db_name}
 
         def get_security_payload(self):
             return {"email": str(self.email)}
 
     User.register_delete_rule(WebAuthn, "user", CASCADE)
+    User.register_delete_rule(FsRefreshTracker, "user", CASCADE)
 
     def tear_down():
         with app.app_context():
@@ -493,7 +515,10 @@ def mongoengine_setup(app, tmpdir, realmongodburl):
             db.drop_database(db_name)
             disconnect_all()
 
-    return MongoEngineUserDatastore(db, User, Role, WebAuthn), tear_down
+    return (
+        MongoEngineUserDatastore(db, User, Role, WebAuthn, FsRefreshTracker),
+        tear_down,
+    )
 
 
 @pytest.fixture()
@@ -507,7 +532,7 @@ def sqlalchemy_setup(app, tmpdir, realdburl):
     pytest.importorskip("flask_sqlalchemy")
     from flask_sqlalchemy import SQLAlchemy
     from sqlalchemy import Column, Integer
-    from flask_security.models import fsqla_v3 as fsqla
+    from flask_security.models import fsqla_v4 as fsqla
 
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)
@@ -529,7 +554,12 @@ def sqlalchemy_setup(app, tmpdir, realdburl):
     class WebAuthn(db.Model, fsqla.FsWebAuthnMixin):
         pass
 
-    class User(db.Model, fsqla.FsUserMixin):
+    class FsRefreshTracker(db.Model, fsqla.FsRefreshTrackerMixin):
+        pass
+
+    class User(
+        db.Model, fsqla.FsUserMixin, app.config.get("TESTING_USER_MIXIN", Nomixin)
+    ):
         security_number = Column(Integer, unique=True)
 
         def __init__(self, *args, **kwargs):
@@ -564,7 +594,10 @@ def sqlalchemy_setup(app, tmpdir, realdburl):
             engine = db.engine
             engine.dispose()
 
-    return SQLAlchemyUserDatastore(db, User, Role, WebAuthn), tear_down
+    return (
+        SQLAlchemyUserDatastore(db, User, Role, WebAuthn, FsRefreshTracker),
+        tear_down,
+    )
 
 
 @pytest.fixture()
@@ -600,17 +633,24 @@ def fsqlalite_min_datastore(app, tmpdir, realdburl):
             )
 
     ds, td = fsqlalite_setup(
-        app, tmpdir, realdburl, usermixin=FsMinUserMixin, use_webauthn=False
+        app,
+        tmpdir,
+        realdburl,
+        usermixin=FsMinUserMixin,
+        use_webauthn=False,
+        use_fs_tracker=False,
     )
     yield ds
     td()
 
 
-def fsqlalite_setup(app, tmpdir, realdburl, usermixin=None, use_webauthn=True):
+def fsqlalite_setup(
+    app, tmpdir, realdburl, usermixin=None, use_webauthn=True, use_fs_tracker=True
+):
     pytest.importorskip("flask_sqlalchemy_lite")
     from flask_sqlalchemy_lite import SQLAlchemy
     from sqlalchemy.orm import DeclarativeBase, mapped_column
-    from flask_security.models import sqla as sqla
+    from flask_security.models import sqla_v2 as sqla
 
     if not usermixin:
         usermixin = sqla.FsUserMixin
@@ -638,7 +678,12 @@ def fsqlalite_setup(app, tmpdir, realdburl, usermixin=None, use_webauthn=True):
         class WebAuthn(Model, sqla.FsWebAuthnMixin):
             __tablename__ = "webauthn"
 
-    class User(Model, usermixin):
+    if use_fs_tracker:
+
+        class FsRefreshTracker(Model, sqla.FsRefreshTrackerMixin):
+            __tablename__ = "fs_refresh_tracker"
+
+    class User(Model, usermixin, app.config.get("TESTING_USER_MIXIN", Nomixin)):
         __tablename__ = "user"
         security_number: Mapped[t.Optional[int]] = mapped_column(  # type: ignore
             unique=True
@@ -661,7 +706,13 @@ def fsqlalite_setup(app, tmpdir, realdburl, usermixin=None, use_webauthn=True):
                 _teardown_realdb(db_info)
 
     return (
-        FSQLALiteUserDatastore(db, User, Role, WebAuthn if use_webauthn else None),
+        FSQLALiteUserDatastore(
+            db,
+            User,
+            Role,
+            WebAuthn if use_webauthn else None,
+            FsRefreshTracker if use_fs_tracker else None,
+        ),
         tear_down,
     )
 
@@ -693,7 +744,7 @@ def sqlalchemy_session_setup(app, tmpdir, realdburl, **engine_kwargs):
         Integer,
         ForeignKey,
     )
-    from flask_security.models import sqla as sqla
+    from flask_security.models import sqla_v2 as sqla
 
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)
@@ -725,6 +776,13 @@ def sqlalchemy_session_setup(app, tmpdir, realdburl, **engine_kwargs):
             """
             return dict(myuserid=self.user_id)
 
+    class FsRefreshTracker(Base, sqla.FsRefreshTrackerMixin):
+        __tablename__ = "fs_refresh_tracker"
+
+        @declared_attr
+        def user_id(self) -> Mapped[int]:
+            return mapped_column(ForeignKey("user.myuserid", ondelete="CASCADE"))
+
     class RolesUsers(Base):
         __tablename__ = "roles_users"
         id = Column(Integer(), primary_key=True)
@@ -736,7 +794,7 @@ def sqlalchemy_session_setup(app, tmpdir, realdburl, **engine_kwargs):
         myroleid: Mapped[int] = mapped_column(primary_key=True)  # type: ignore
         id: Mapped[int] = mapped_column(nullable=True)  # type: ignore
 
-    class User(Base, sqla.FsUserMixin):
+    class User(Base, sqla.FsUserMixin, app.config.get("TESTING_USER_MIXIN", Nomixin)):
         __tablename__ = "user"
         myuserid: Mapped[int] = mapped_column(primary_key=True)  # type: ignore
         id: Mapped[int] = mapped_column(nullable=True)  # type: ignore
@@ -759,7 +817,12 @@ def sqlalchemy_session_setup(app, tmpdir, realdburl, **engine_kwargs):
             if realdburl:
                 _teardown_realdb(db_info)
 
-    return SQLAlchemySessionUserDatastore(db_session, User, Role, WebAuthn), tear_down
+    return (
+        SQLAlchemySessionUserDatastore(
+            db_session, User, Role, WebAuthn, FsRefreshTracker
+        ),
+        tear_down,
+    )
 
 
 @pytest.fixture()
@@ -869,6 +932,17 @@ def peewee_setup(app, tmpdir, realdburl):
         # This creates a real column called user_id
         user = ForeignKeyField(User, backref="webauthn")
 
+    class FsRefreshTracker(RefreshTrackerMixin, db.Model):
+        """Refresh Token Tracker"""
+
+        refresh_family = TextField(unique=True, null=False)
+        gen = IntegerField(default=1)
+        expires_at = DateTimeField(null=False)
+        revoked_at = DateTimeField(null=True)
+        last_used_at = DateTimeField(null=False)
+        name = TextField(null=False)
+        user = ForeignKeyField(User, backref="refresh_trackers")
+
     class UserRoles(db.Model):
         """Peewee does not have built-in many-to-many support, so we have to
         create this mapping class to link users to roles."""
@@ -882,7 +956,7 @@ def peewee_setup(app, tmpdir, realdburl):
             return self.role.get_permissions()
 
     with app.app_context():
-        for Model in (Role, User, UserRoles, WebAuthn):
+        for Model in (Role, User, UserRoles, WebAuthn, FsRefreshTracker):
             Model.drop_table()
             Model.create_table()
 
@@ -895,7 +969,10 @@ def peewee_setup(app, tmpdir, realdburl):
             os.close(f)
             os.remove(path)
 
-    return PeeweeUserDatastore(db, User, Role, UserRoles, WebAuthn), tear_down
+    return (
+        PeeweeUserDatastore(db, User, Role, UserRoles, WebAuthn, FsRefreshTracker),
+        tear_down,
+    )
 
 
 @pytest.fixture()
@@ -974,7 +1051,7 @@ def client(request, app, sqlalchemy_datastore):
         app, datastore=sqlalchemy_datastore, **app.fs_constructor_args
     )
     populate_data(app)
-    return app.test_client()
+    return app.test_client(use_cookies=not app.config.get("TESTING_NO_COOKIES", False))
 
 
 @pytest.fixture()
@@ -1052,7 +1129,7 @@ def clients(request, app, tmpdir, realdburl, realmongodburl):
     if request.param == "cl-peewee":
         # peewee is insistent on a single connection?
         ds.db.close_db(None)
-    yield app.test_client()
+    yield app.test_client(use_cookies=not app.config.get("TESTING_NO_COOKIES", False))
     td()
 
 

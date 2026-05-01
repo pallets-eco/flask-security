@@ -106,6 +106,7 @@ from .utils import (
     url_for_security,
     view_commit,
     localize_callback,
+    allowed_auth_token,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -754,7 +755,9 @@ def webauthn_signin_response(token: str) -> ResponseValue:
             json_payload["post_login_url"] = goto_url
             json_payload["tf_required"] = False
             return base_render_json(
-                form, include_auth_token=True, additional=json_payload
+                form,
+                include_auth_token=allowed_auth_token(form.user),
+                additional=json_payload,
             )
         return redirect(goto_url)
 
@@ -868,6 +871,7 @@ def webauthn_verify_response(token: str) -> ResponseValue:
         # update last use and sign count
         after_this_request(view_commit)
         assert form.cred
+        assert form.user
         form.cred.lastuse_datetime = _security.datetime_factory()
         form.cred.sign_count = form.authentication_verification.new_sign_count
         _datastore.put(form.cred)
@@ -876,7 +880,9 @@ def webauthn_verify_response(token: str) -> ResponseValue:
         session["fs_paa"] = time.time()
 
         if _security._want_json(request):
-            return base_render_json(form, include_auth_token=True)
+            return base_render_json(
+                form, include_auth_token=allowed_auth_token(form.user)
+            )
 
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
         return redirect(get_post_verify_redirect())

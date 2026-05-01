@@ -13,13 +13,13 @@ depending on the functionality your app requires. Aside from this, you're free
 to add any additional fields to your model(s) if you want.
 
 .. note::
-    The User, Role, and WebAuthn models MUST subclass their respective mixin (along
+    The User, Role, WebAuthn, and RefreshTracker models MUST subclass their respective mixin (along
     with any other mixin the datastore requires). The pre-packaged models described
     below do this for you.
 
     .. code-block:: python
 
-        from flask_security import UserMixin, RoleMixin, WebAuthMixin
+        from flask_security import UserMixin, RoleMixin, WebAuthMixin, RefreshTrackerMixin
 
         class User(<db specific base>, UserMixin):
             ... define columns here
@@ -45,7 +45,7 @@ using 'raw' sqlalchemy or Flask-SQLAlchemy-Lite.
 
 .. note::
     Using these models, you can override the tables names (and provide them to .set_db_info()
-    however your model class names MUST be `User`, `Role`, and `WebAuthn`.
+    however your model class names MUST be `User`, `Role`, `WebAuthn`, and `RefreshTracker`.
 
 Flask-SQLAlchemy
 ^^^^^^^^^^^^^^^^
@@ -53,7 +53,7 @@ Your application code should import just the required version e.g.:
 
 .. code-block:: python
 
-    from flask_security.models import fsqla_v3 as fsqla
+    from flask_security.models import fsqla_v2 as fsqla
     from flask_sqlalchemy import SQLAlchemy
 
     db = SQLAlchemy(app)
@@ -194,7 +194,7 @@ will require the following additional field:
 
 Separate Identity Domains
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-If you want authentication tokens to not be invalidated when the user changes their
+If you want authentication and refresh tokens to not be invalidated when the user changes their
 password add the following to your `User` model:
 
 * ``fs_token_uniquifier`` (string, 64 bytes, unique, non-nullable)
@@ -307,6 +307,87 @@ the User record (since we need to look up the ``User`` based on a WebAuthn ``cre
     as part of the User model. Note that the default Peewee datastore implementation
     calls ``delete_instance(recursive=True)`` which correctly deals with ensuring
     that WebAuthn records get deleted if a User is deleted.
+
+.. _refresh_tracker_model:
+
+Refresh Tokens
+^^^^^^^^^^^^^^
+Flask Security supports refresh tokens by enabling
+:py:data:`SECURITY_REFRESH_TOKEN`. Internal to Flask-Security, refresh tokens
+are tracked using a ``refresh_tracker`` table. This requires an additional table as well as
+references from the User model. Users can have many refresh trackers/tokens.
+
+.. important::
+    It is important that you maintain data consistency when deleting refresh_tracker
+    records or users.
+
+The `FsRefreshTracker` model requires the following fields:
+
+* ``id`` (primary key)
+* ``refresh_family`` (string, 64 bytes, indexed, non-nullable, unique)
+* ``gen`` (integer, non-nullable)
+* ``expires_at`` (datetime, non-nullable)
+* ``revoked_at`` (datetime)
+* ``last_used_at`` (datetime, non-nullable)
+* ``name`` (string, 64 bytes, non-nullable)
+
+The User record needs to have a list of refresh trackers.
+
+**For SQLAlchemy**:
+
+    - Add the following to the FsRefreshTracker model (assuming your primary key is named ``id``):
+
+        .. code-block:: python
+
+            @declared_attr
+            def user_id(cls) -> Mapped[int]:
+                return mapped_column(
+                    ForeignKey("user.id", ondelete="CASCADE")
+                )
+
+    - Add the following to the User model:
+
+        .. code-block:: python
+
+            @declared_attr
+            def refresh_trackers(cls):
+                return relationship(
+                    "FsRefreshTracker", cascade="all, delete"
+                )
+
+**For mongoengine**:
+
+    - Add the following to the FsRefreshTracker model:
+
+        .. code-block:: python
+
+            user = ReferenceField("User")
+
+    - Add the following to the User model:
+
+        .. code-block:: python
+
+            refresh_trackers = ListField(ReferenceField(FsRefreshTracker, reverse_delete_rule=PULL), default=[])
+
+    - To make sure all FsRefreshTracker objects are deleted if the User is deleted:
+
+        .. code-block:: python
+
+            User.register_delete_rule(FsRefreshTracker, "user", CASCADE)
+
+**For peewee**:
+
+    Add the following to the FsRefreshTracker model:
+
+        .. code-block:: python
+
+            user = ForeignKeyField(User, backref="refresh_trackers")
+
+    This will add a column called ``user_id`` that references the User model's
+    ``id`` primary key field. It will also create a virtual column ``refresh_trackers``
+    as part of the User model. Note that the default Peewee datastore implementation
+    calls ``delete_instance(recursive=True)`` which correctly deals with ensuring
+    that FsRefreshTracker records get deleted if a User is deleted.
 
 
 Recovery Codes

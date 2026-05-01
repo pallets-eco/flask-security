@@ -63,6 +63,9 @@ Goals
 * Follow the `Pallets <https://github.com/pallets>`_ lead on supported versions, documentation
   standards and any other guidelines for extensions that they come up with.
 * Continue to add newer authentication/authorization standards:
+    * Support for Refresh Tokens (5.9)
+    * Support username recovery and changing username (5.6)
+    * Support for changing email (5.5)
     * 'Social Login (OAuth)' integrated (using authlib) (5.1)
     * WebAuthn/Passkey support (5.0)
     * Two-Factor recovery codes (5.0)

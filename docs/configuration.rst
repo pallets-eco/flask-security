@@ -759,6 +759,10 @@ Core - rarely need changing
 .. py:data:: SECURITY_WAN_SALT
 
     Default: ``"wan-salt"``
+
+.. py:data:: SECURITY_REFRESH_TOKEN_SALT
+
+    Default: ``"refresh-token-salt"``
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_SALT
 
     Default: ``"tf-setup-salt"``
@@ -2024,6 +2028,46 @@ Social Login (OAuth)
 
     .. versionadded:: 5.8.0
 
+Refresh Tokens
+---------------
+
+    .. versionadded:: 5.9.0
+
+.. py:data:: SECURITY_REFRESH_TOKEN
+
+    Specifies if Flask-Security should enable refresh token support.
+
+    Default: ``False``.
+.. py:data:: SECURITY_REFRESH_TOKEN_URL
+
+    Specifies the URL used to get new auth_tokens using an existing
+    refresh token
+
+    Default: ``"/refresh-token"``.
+.. py:data:: SECURITY_REFRESH_TOKEN_MAX_AGE
+
+    Specifies a timedelta used to compute the tokens expiration date.
+
+    Default: ``timedelta(days=90)``
+.. py:data:: SECURITY_REFRESH_TOKEN_MAX_IDLE
+
+    Specifies a timedelta used to compute the date the refresh token will
+    considered expired due to none use.
+
+    Default: ``timedelta(days=7)``
+.. py:data:: SECURITY_REFRESH_TOKEN_CLEANUP_EXPIRED
+
+    If True then expired refresh tokens database trackers will be deleted
+    whenever the user creates a new one (re-authenticates)
+
+    Default: ``True``
+.. py:data:: SECURITY_REFRESH_TOKEN_CLEANUP_REVOKED
+
+    If True then expired refresh tokens database trackers will be deleted
+    whenever the user creates a new one (re-authenticates)
+
+    Default: ``False``
+
 Feature Flags
 -------------
 All feature flags. By default all are ``False``/not enabled.
@@ -2042,6 +2086,7 @@ All feature flags. By default all are ``False``/not enabled.
 * :py:data:`SECURITY_WEBAUTHN`
 * :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES`
 * :py:data:`SECURITY_OAUTH_ENABLE`
+* :py:data:`SECURITY_REFRESH_TOKEN`
 
 URLs and Views
 --------------
@@ -2083,6 +2128,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_RESET_ERROR_VIEW`
 * :py:data:`SECURITY_LOGIN_ERROR_VIEW`
 * :py:data:`SECURITY_USERNAME_RECOVERY_URL`
+* :py:data:`SECURITY_REFRESH_TOKEN_URL` ``"/refresh-token"``
 * :py:data:`SECURITY_US_SIGNIN_URL`
 * :py:data:`SECURITY_US_SETUP_URL`
 * :py:data:`SECURITY_US_SIGNIN_SEND_CODE_URL`
@@ -2186,6 +2232,7 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_REAUTHENTICATION_REQUIRED``
 * ``SECURITY_MSG_REAUTHENTICATION_SUCCESSFUL``
 * ``SECURITY_MSG_REFRESH``
+* ``SECURITY_REFRESH_TOKEN_INVALID``
 * ``SECURITY_MSG_RETYPE_PASSWORD_MISMATCH``
 * ``SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN``
 * ``SECURITY_MSG_TWO_FACTOR_LOGIN_SUCCESSFUL``

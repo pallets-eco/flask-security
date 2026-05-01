@@ -52,6 +52,9 @@ User Object Helpers
 .. autoclass:: flask_security.WebAuthnMixin
    :members:
 
+.. autoclass:: flask_security.RefreshTrackerMixin
+   :members:
+
 
 Datastores
 ----------
@@ -60,7 +63,8 @@ Datastores
     :exclude-members: create_webauthn, find_user_from_webauthn,
         mf_set_recovery_codes, mf_delete_recovery_code,
         set_webauthn_user_handle,
-        us_get_totp_secrets, us_put_totp_secrets
+        us_get_totp_secrets, us_put_totp_secrets,
+        create_refresh_tracker,
 
 .. autoclass:: flask_security.SQLAlchemyUserDatastore
     :show-inheritance:
@@ -109,6 +113,11 @@ Datastores
 .. class:: WebAuthn
 
     The WebAuthn model. This must be provided by the application.
+    See :ref:`Models <models_topic>`.
+
+.. class:: FsRefreshTracker
+
+    The RefreshTracker model. This must be provided by the application.
     See :ref:`Models <models_topic>`.
 
 Packaged Models
@@ -239,6 +248,7 @@ Forms
 .. autoclass:: flask_security.MfRecoveryCodesForm
 .. autoclass:: flask_security.MfRecoveryForm
 .. autoclass:: flask_security.PasswordlessLoginForm
+.. autoclass:: flask_security.RefreshTokenForm
 .. autoclass:: flask_security.RegisterForm
 .. autoclass:: flask_security.RegisterFormV2
 .. autoclass:: flask_security.ResetPasswordForm
@@ -371,6 +381,24 @@ sends the following signals.
     app (which is the sender) it is passed `user`, `old_email`.
 
     .. versionadded:: 5.5.0
+
+.. data:: refresh_tracker_created
+
+    Sent when a user has authenticated, has requested an auth_token, and
+    the :py:data:`SECURITY_REFRESH_TOKEN` feature is enabled.
+    In addition to the app (which is the sender), it is passed the `user` and
+    the `refresh_tracker` objects.
+
+    .. versionadded:: 5.9.0
+
+.. data:: refresh_tracker_revoked
+
+    Sent when a refresh tracker is revoked as part of the ``/refresh`` view
+    when the provided refresh token doesn't match the current generation #.
+    In addition to the app (which is the sender), it is passed the `user` and
+    the `refresh_tracker` objects, and the `refresh_error` tuple.
+
+    .. versionadded:: 5.9.0
 
 .. data:: tf_code_confirmed
 

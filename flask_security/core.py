@@ -25,7 +25,7 @@ from flask_login import AnonymousUserMixin, LoginManager
 from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
 from flask_principal import Identity, Principal, RoleNeed, UserNeed, identity_loaded
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, URLSafeSerializer
 from passlib.context import CryptContext
 from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy
@@ -72,6 +72,7 @@ from .recovery_codes import (
 )
 from .signals import user_failed_authn
 from .tf_plugin import TfPlugin, TwoFactorSelectForm
+from .tokens import RefreshTokenForm
 from .twofactor import tf_send_security_token
 from .unified_signin import (
     UnifiedSigninForm,
@@ -293,6 +294,13 @@ _default_config: dict[str, t.Any] = {
     "TOKEN_AUTHENTICATION_HEADER": "Authentication-Token",
     "TOKEN_MAX_AGE": None,
     "TOKEN_EXPIRE_TIMESTAMP": lambda user: 0,
+    "REFRESH_TOKEN": False,
+    "REFRESH_TOKEN_SALT": "refresh-token-salt",
+    "REFRESH_TOKEN_MAX_AGE": timedelta(days=90),
+    "REFRESH_TOKEN_MAX_IDLE": timedelta(days=7),
+    "REFRESH_TOKEN_CLEANUP_EXPIRED": True,
+    "REFRESH_TOKEN_CLEANUP_REVOKED": False,
+    "REFRESH_TOKEN_URL": "/refresh-token",
     "CONFIRM_SALT": "confirm-salt",
     "RESET_SALT": "reset-salt",
     "LOGIN_SALT": "login-salt",
@@ -535,6 +543,7 @@ _default_messages = {
     "PASSWORD_CHANGE": (_("You successfully changed your password."), "success"),
     "LOGIN": (_("Please log in to access this page."), "info"),
     "REFRESH": (_("Please reauthenticate to access this page."), "info"),
+    "REFRESH_TOKEN_INVALID": (_("Refresh token is invalid (%(reason)s)"), "error"),
     "REAUTHENTICATION_SUCCESSFUL": (_("Reauthentication successful"), "info"),
     "ANONYMOUS_USER_REQUIRED": (
         _("You can only access this endpoint when not logged in."),
@@ -733,9 +742,12 @@ def _request_loader(request):
 
     try:
         tdata = parse_auth_token(token)
+        # Fallback to fs_uniquifier - allows upgrading to token_uniquifier while
+        # old tokens still work.
+        user = None
         if hasattr(_security.datastore.user_model, "fs_token_uniquifier"):
             user = _security.datastore.find_user(fs_token_uniquifier=tdata["uid"])
-        else:
+        if not user:
             user = _security.datastore.find_user(fs_uniquifier=tdata["uid"])
     except Exception:
         return None
@@ -823,7 +835,7 @@ def _get_hashing_context(app: flask.Flask) -> CryptContext:
     return CryptContext(schemes=schemes, deprecated=deprecated)
 
 
-def _get_serializer(app, name):
+def _get_serializer(app, name, serializer=URLSafeTimedSerializer):
     secret_key = app.config.get("SECRET_KEY")
     derived_keys = app.config.get("SECRET_KEY_FALLBACKS")
 
@@ -831,7 +843,7 @@ def _get_serializer(app, name):
         derived_keys if isinstance(derived_keys, list) else []
     )
     salt = cv(f"{name.upper()}_SALT", app=app)
-    return URLSafeTimedSerializer(secret_keys, salt=salt)
+    return serializer(secret_keys, salt=salt)
 
 
 def _context_processor():
@@ -903,6 +915,7 @@ class UserMixin(BaseUserMixin):
         update_datetime: datetime
         roles: list[RoleMixin]
         webauthn: list[WebAuthnMixin]
+        refresh_trackers: list[RefreshTrackerMixin]
 
         def __init__(self, **kwargs): ...
 
@@ -943,20 +956,18 @@ class UserMixin(BaseUserMixin):
             Remove session id (never set or used); added fs_paa (last authentication
             timestamp)
         """
+        from .proxies import _datastore
 
-        tdata: dict[str, t.Any] = dict(ver=str(5))
-        if hasattr(self, "fs_token_uniquifier"):
-            if not self.fs_token_uniquifier:
-                raise ValueError()
-            tdata["uid"] = str(self.fs_token_uniquifier)
-        else:
-            tdata["uid"] = str(self.fs_uniquifier)
-        # Set the primary authenticated at variable. This is equivalent to
-        # what we set in the session.
-        tdata["fs_paa"] = time.time()  # equivalent of session["fs_paa"]
-        tdata["exp"] = int(cv("TOKEN_EXPIRE_TIMESTAMP")(self))  # if >0 then shorter of
-        # :data:SECURITY_MAX_AGE and this.
-
+        uid = getattr(self, _datastore.get_token_uniquifier_name())
+        if not uid:
+            raise ValueError()
+        tdata: dict[str, t.Any] = {
+            "ver": str(5),
+            "uid": uid,
+            "fs_paa": time.time(),  # equivalent of session["fs_paa"]
+            "exp": int(cv("TOKEN_EXPIRE_TIMESTAMP")(self)),  # if >0 then shorter of
+            # :data:SECURITY_MAX_AGE and this.
+        }
         # Let application add things
         self.augment_auth_token(tdata)
 
@@ -1245,6 +1256,21 @@ class WebAuthnMixin:
         return dict(id=self.user_id)  # type: ignore
 
 
+class RefreshTrackerMixin:
+    if t.TYPE_CHECKING:  # pragma: no cover
+        # These are defined in the application's Model files.
+        id: int
+        name: str
+        # refresh_family and gen track rotation and lets the app react
+        refresh_family: str
+        gen: int
+        expires_at: datetime
+        revoked_at: datetime | None
+        last_used_at: datetime
+
+        def __init__(self, **kwargs): ...
+
+
 class AnonymousUser(AnonymousUserMixin):
     """AnonymousUser definition"""
 
@@ -1282,6 +1308,7 @@ class Security:
     :param two_factor_select_form: set form for selecting between active 2FA methods
     :param mf_recovery_codes_form: set form for retrieving and setting recovery codes
     :param mf_recovery_form: set form for multi factor recovery
+    :param refresh_token_form: set form for the refresh token view
     :param username_recovery_form: set form for the username recovery view
     :param us_signin_form: set form for the unified sign in view
     :param us_setup_form: set form for the unified sign in setup view
@@ -1359,6 +1386,9 @@ class Security:
         ``register_form`` default value is RegisterFormV2 and
         ``confirm_register_form`` default is now ``None``.
 
+    .. versionadded:: 5.9.0
+        ``refresh_token_form``
+
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
         ``two_factor_verify_password_form`` removed.
@@ -1398,6 +1428,7 @@ class Security:
         two_factor_select_form: t.Type[TwoFactorSelectForm] = TwoFactorSelectForm,
         mf_recovery_codes_form: t.Type[MfRecoveryCodesForm] = MfRecoveryCodesForm,
         mf_recovery_form: t.Type[MfRecoveryForm] = MfRecoveryForm,
+        refresh_token_form: t.Type[RefreshTokenForm] = RefreshTokenForm,
         us_signin_form: t.Type[UnifiedSigninForm] = UnifiedSigninForm,
         us_setup_form: t.Type[UnifiedSigninSetupForm] = UnifiedSigninSetupForm,
         us_setup_validate_form: t.Type[
@@ -1468,6 +1499,7 @@ class Security:
             "two_factor_select_form": FormInfo(cls=two_factor_select_form),
             "mf_recovery_codes_form": FormInfo(cls=mf_recovery_codes_form),
             "mf_recovery_form": FormInfo(cls=mf_recovery_form),
+            "refresh_token_form": FormInfo(cls=refresh_token_form),
             "username_recovery_form": FormInfo(cls=username_recovery_form),
             "us_signin_form": FormInfo(cls=us_signin_form),
             "us_setup_form": FormInfo(cls=us_setup_form),
@@ -1505,6 +1537,7 @@ class Security:
         self.tf_setup_serializer: URLSafeTimedSerializer
         self.tf_validity_serializer: URLSafeTimedSerializer
         self.wan_serializer: URLSafeTimedSerializer
+        self.refresh_token_serializer: URLSafeSerializer
         self.principal: Principal
         self.pwd_context: CryptContext
         self.hashing_context: CryptContext
@@ -1535,6 +1568,7 @@ class Security:
         self.registerable: bool = False
         self.changeable: bool = False
         self.recoverable: bool = False
+        self.refresh_token: bool = False
         self.two_factor: bool = False
         self.unified_signin: bool = False
         self.passwordless: bool = False
@@ -1613,6 +1647,7 @@ class Security:
             "two_factor_select_form",
             "mf_recovery_form",
             "mf_recovery_codes_form",
+            "refresh_token_form",
             "username_recovery_form",
             "us_signin_form",
             "us_setup_form",
@@ -1676,6 +1711,7 @@ class Security:
             "confirmable",
             "changeable",
             "recoverable",
+            "refresh_token",
             "two_factor",
             "unified_signin",
             "username_recovery",
@@ -1730,6 +1766,9 @@ class Security:
         self.tf_setup_serializer = _get_serializer(app, "two_factor_setup")
         self.tf_validity_serializer = _get_serializer(app, "two_factor_validity")
         self.wan_serializer = _get_serializer(app, "wan")
+        self.refresh_token_serializer = _get_serializer(
+            app, "refresh_token", URLSafeSerializer
+        )
         self.principal = _get_principal(app)
         self.pwd_context = _get_pwd_context(app)
         self.hashing_context = _get_hashing_context(app)

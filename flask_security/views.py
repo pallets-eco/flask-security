@@ -67,11 +67,13 @@ from .forms import (
     TwoFactorSetupForm,
     TwoFactorRescueForm,
     UsernameRecoveryForm,
+    VerifyForm,
 )
 from .passwordless import login_token_status, send_login_instructions
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import tf_profile_changed
+from .tokens import refresh
 from .unified_signin import (
     us_signin,
     us_signin_send_code,
@@ -127,6 +129,7 @@ from .utils import (
     slash_url_suffix,
     url_for_security,
     view_commit,
+    allowed_auth_token,
 )
 from .webauthn import (
     has_webauthn,
@@ -193,7 +196,9 @@ def login() -> ResponseValue:
 
         if _security._want_json(request):
             return base_render_json(
-                form, include_auth_token=True, additional=dict(tf_required=False)
+                form,
+                include_auth_token=allowed_auth_token(form.user),
+                additional=dict(tf_required=False),
             )
         return redirect(get_post_login_redirect())
 
@@ -232,7 +237,7 @@ def login() -> ResponseValue:
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
 def verify():
     """View function which handles a reauthentication request."""
-    form = build_form_from_request("verify_form", user=current_user)
+    form = t.cast(VerifyForm, build_form_from_request("verify_form", user=current_user))
 
     if form.validate_on_submit():
         # form may have called verify_and_update_password()
@@ -242,7 +247,9 @@ def verify():
         session["fs_paa"] = time.time()
 
         if _security._want_json(request):
-            return base_render_json(form, include_auth_token=True)
+            return base_render_json(
+                form, include_auth_token=allowed_auth_token(form.user)
+            )
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
         return redirect(get_post_verify_redirect())
 
@@ -312,7 +319,9 @@ def register() -> ResponseValue:
             login_user(user, authn_via=["register"])
             if _security._want_json(request):
                 return base_render_json(
-                    form, include_auth_token=True, additional=dict(tf_required=False)
+                    form,
+                    include_auth_token=allowed_auth_token(form.user),
+                    additional=dict(tf_required=False),
                 )
 
         if not _security._want_json(request):
@@ -643,7 +652,7 @@ def reset_password(token):
                 dummy_form.user = user
                 return base_render_json(
                     dummy_form,
-                    include_auth_token=True,
+                    include_auth_token=allowed_auth_token(form.user),
                     additional=dict(tf_required=False),
                 )
             else:
@@ -693,7 +702,9 @@ def change_password():
         change_user_password(current_user._get_current_object(), form.new_password.data)
         if _security._want_json(request):
             form.user = current_user
-            return base_render_json(form, include_auth_token=True)
+            return base_render_json(
+                form, include_auth_token=allowed_auth_token(form.user)
+            )
 
         do_flash(*get_message("PASSWORD_CHANGE"))
         return redirect(
@@ -1044,7 +1055,9 @@ def two_factor_token_validation():
                 return redirect(get_post_login_redirect())
 
         else:
-            return base_render_json(form, include_auth_token=True)
+            return base_render_json(
+                form, include_auth_token=allowed_auth_token(form.user)
+            )
 
     # GET or not successful POST
 
@@ -1403,4 +1416,11 @@ def create_blueprint(app, state, import_name):
                 endpoint="wan_verify_response",
             )(webauthn_verify_response)
 
+    if state.refresh_token:
+        refresh_url = cv("REFRESH_TOKEN_URL", app=app)
+        bp.route(
+            refresh_url,
+            methods=["POST"],
+            endpoint="refresh_token",
+        )(refresh)
     return bp
