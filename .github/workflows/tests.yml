@@ -32,8 +32,7 @@ jobs:
           - {python: '3.13', tox: 'py313-release' }
           - {python: '3.13', tox: 'py313-low' }
           - {python: '3.14', tox: 'py314-release' }
-          - {python: 'pypy-3.10', tox: 'pypy310-release'}
-          - {python: 'pypy-3.10', tox: 'pypy310-low'}
+          - {python: 'pypy-3.11', tox: 'pypy311-release'}
 
     steps:
       - uses: actions/checkout@v6
