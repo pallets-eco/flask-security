@@ -48,6 +48,7 @@ class FsModels:
     user_table_name = "user"
     role_table_name = "role"
     webauthn_table_name = "webauthn"
+    refresh_table_name = "fs_refresh"
 
     @classmethod
     def set_db_info(
@@ -57,6 +58,7 @@ class FsModels:
         user_table_name="user",
         role_table_name="role",
         webauthn_table_name="webauthn",
+        refresh_table_name="fs_refresh",
     ):
         """Initialize Model.
         This MUST be called PRIOR to declaring your User/Role/WebAuthn model in order
@@ -71,6 +73,7 @@ class FsModels:
         cls.user_table_name = user_table_name
         cls.role_table_name = role_table_name
         cls.webauthn_table_name = webauthn_table_name
+        cls.refresh_table_name = refresh_table_name
         cls.roles_users = Table(
             "roles_users",
             cls.base_model.metadata,

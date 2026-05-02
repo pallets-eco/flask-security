@@ -89,6 +89,7 @@ from .utils import (
     send_mail,
     url_for_security,
     view_commit,
+    allowed_auth_token,
 )
 from .tf_plugin import tf_verify_validity_token
 from .twofactor import tf_clean_session
@@ -590,7 +591,9 @@ def us_signin() -> ResponseValue:
 
         if _security._want_json(request):
             return base_render_json(
-                form, include_auth_token=True, additional=dict(tf_required=False)
+                form,
+                include_auth_token=allowed_auth_token(form.user),
+                additional=dict(tf_required=False),
             )
 
         return redirect(get_post_login_redirect())
@@ -646,7 +649,9 @@ def us_verify() -> ResponseValue:
         session["fs_paa"] = time.time()
 
         if _security._want_json(request):
-            return base_render_json(form, include_auth_token=True)
+            return base_render_json(
+                form, include_auth_token=allowed_auth_token(form.user)
+            )
 
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
         return redirect(get_post_verify_redirect())

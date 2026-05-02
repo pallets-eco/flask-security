@@ -34,6 +34,10 @@ password_reset = signals.signal("password-reset")
 
 password_changed = signals.signal("password-changed")
 
+refresh_tracker_created = signals.signal("refresh-tracker-created")
+
+refresh_tracker_revoked = signals.signal("refresh-tracker-revoked")
+
 reset_password_instructions_sent = signals.signal("password-reset-instructions-sent")
 
 tf_code_confirmed = signals.signal("tf-code-confirmed")

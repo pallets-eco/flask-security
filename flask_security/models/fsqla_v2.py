@@ -17,16 +17,13 @@ This is Version 2:
 # pyright: reportAssignmentType = false, reportIncompatibleVariableOverride=false
 
 from sqlalchemy import Column, String, Text
-from sqlalchemy.ext.declarative import declared_attr
 
 
-from .fsqla import FsModels as FsModelsV1
+from .fsqla import FsModels
 from .fsqla import FsUserMixin as FsUserMixinV1
 from .fsqla import FsRoleMixin as FsRoleMixinV1
 
-
-class FsModels(FsModelsV1):
-    fs_model_version = 2
+FsModels.fs_model_version = 2
 
 
 class FsRoleMixin(FsRoleMixinV1):
@@ -42,15 +39,3 @@ class FsUserMixin(FsUserMixinV1):
     # unified sign in
     us_totp_secrets = Column(Text, nullable=True)
     us_phone_number = Column(String(128), nullable=True)
-
-    # This is repeated since I couldn't figure out how to have it reference the
-    # new version of FsModels.
-    @declared_attr
-    def roles(cls):
-        return FsModels.db.relationship(
-            "Role",
-            secondary=FsModels.roles_users,
-            backref=FsModels.db.backref(
-                "users", lazy="dynamic", cascade_backrefs=False
-            ),
-        )

@@ -177,6 +177,7 @@ The following is a list of all the available form overrides:
 * ``mf_recovery_codes_form``: Setup recovery codes form
 * ``mf_recovery_form``: Use recovery code form
 * ``passwordless_login_form``: Passwordless login form
+* ``refresh_token_form``: Refresh Token form (:py:class:`flask_security.RefreshTokenForm`)
 * ``two_factor_verify_code_form``: Two-factor verify code form
 * ``two_factor_select_form``: Two-factor select form
 * ``two_factor_setup_form``: Two-factor setup form

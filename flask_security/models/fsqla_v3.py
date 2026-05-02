@@ -33,14 +33,12 @@ from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.sql import func
 
 
-from .fsqla_v2 import FsModels as FsModelsV2
+from .fsqla import FsModels
 from .fsqla_v2 import FsUserMixin as FsUserMixinV2
 from .fsqla_v2 import FsRoleMixin as FsRoleMixinV2
 from flask_security import AsaList, WebAuthnMixin
 
-
-class FsModels(FsModelsV2):
-    fs_model_version = 3
+FsModels.fs_model_version = 3
 
 
 class FsRoleMixin(FsRoleMixinV2):
@@ -76,18 +74,6 @@ class FsUserMixin(FsUserMixinV2):
 
     # since phone can be used to authenticate - must be unique.
     us_phone_number = Column(String(128), nullable=True, unique=True)
-
-    # This is repeated since I couldn't figure out how to have it reference the
-    # new version of FsModels.
-    @declared_attr
-    def roles(cls):
-        return FsModels.db.relationship(
-            "Role",
-            secondary=FsModels.roles_users,
-            backref=FsModels.db.backref(
-                "users", lazy="dynamic", cascade_backrefs=False
-            ),
-        )
 
 
 class FsWebAuthnMixin(WebAuthnMixin):

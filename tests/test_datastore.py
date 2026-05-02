@@ -9,6 +9,8 @@ Datastore tests
 :license: MIT, see LICENSE for more details.
 """
 
+from datetime import timedelta
+
 import pytest
 from pytest import raises, skip, importorskip
 from tests.test_utils import init_app_with_options, capture_queries
@@ -786,3 +788,64 @@ def test_null_fs_uniquifier(app, client):
 
         user = app.security.login_manager.user_callback("")
         assert not user
+
+
+def test_refresh_tracker_cleanup(app, datastore):
+    if not datastore.refresh_tracker_model:
+        skip(
+            f"No RefreshTracker model defined for datastore:"
+            f" {datastore.__class__.__name__}"
+        )
+    init_app_with_options(app, datastore)
+
+    with app.app_context():
+        user = datastore.find_user(email="matt@lp.com")
+        expires_at = app.security.datetime_factory() - timedelta(days=1)
+        datastore.create_refresh_tracker(
+            user=user, name="expired", expires_at=expires_at
+        )
+        expires_at = app.security.datetime_factory() + timedelta(days=1)
+        rt2 = datastore.create_refresh_tracker(
+            user=user, name="revoked", expires_at=expires_at
+        )
+        datastore.revoke_refresh_tracker(rt2)
+        datastore.commit()
+
+        assert len(user.refresh_trackers) == 2
+        datastore.cleanup_refresh_trackers(user, revoked=False)
+        datastore.commit()
+        assert len(user.refresh_trackers) == 1
+        assert user.refresh_trackers[0].name == "revoked"
+
+        datastore.cleanup_refresh_trackers(user, revoked=True)
+        datastore.commit()
+        assert len(user.refresh_trackers) == 0
+
+
+def test_refresh_tracker_cascade(app, datastore):
+    if not datastore.refresh_tracker_model:
+        skip(
+            f"No RefreshTracker model defined for datastore:"
+            f" {datastore.__class__.__name__}"
+        )
+    init_app_with_options(app, datastore)
+
+    with app.app_context():
+        user = datastore.find_user(email="matt@lp.com")
+        expires_at = app.security.datetime_factory() - timedelta(days=1)
+        rt = datastore.create_refresh_tracker(
+            user=user, name="expired", expires_at=expires_at
+        )
+        rtid = rt.refresh_family
+        datastore.commit()
+        assert len(user.refresh_trackers) == 1
+        assert datastore.find_refresh_tracker(rtid)
+
+        # delete user
+        datastore.delete_user(user)
+        datastore.commit()
+        user = datastore.find_user(email="matt@lp.com")
+        assert not user
+
+        rt = datastore.find_refresh_tracker(rtid)
+        assert not rt

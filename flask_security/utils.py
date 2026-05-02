@@ -26,7 +26,6 @@ import warnings
 
 from flask import (
     Response,
-    after_this_request,
     current_app,
     flash,
     g,
@@ -1185,6 +1184,17 @@ def add_cache_control(resp: Response) -> Response:
     return resp
 
 
+def allowed_auth_token(user: UserMixin) -> bool:
+    """When an endpoint could return an auth_token (such as all the authentication
+    endpoints) - this utility if it should - based on configuration variables."""
+    if (
+        config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
+        or "include_auth_token" in request.args
+    ):
+        return True
+    return False
+
+
 def base_render_json(
     form: FlaskForm,
     include_user: bool = True,
@@ -1207,26 +1217,14 @@ def base_render_json(
         code = 200
         payload = dict()
         if user:
-            # This allows anonymous GETs via JSON
+            # This will be false for anonymous GETs via JSON
+            from .tokens import response_tokens
+
             if include_user:
                 payload["user"] = user.get_security_payload()
 
             if include_auth_token:
-                # view willing to return auth_token - check behavior config
-                if (
-                    config_value("BACKWARDS_COMPAT_AUTH_TOKEN")
-                    or "include_auth_token" in request.args
-                ):
-                    try:
-                        token = user.get_auth_token()
-                    except ValueError:
-                        # application has fs_token_uniquifier attribute but it
-                        # hasn't been initialized. Since we are in a request context
-                        # we can do that here.
-                        _datastore.set_token_uniquifier(user)
-                        after_this_request(view_commit)
-                        token = user.get_auth_token()
-                    payload["user"]["authentication_token"] = token
+                response_tokens(user, payload)
 
         # Return csrf_token on each JSON response - just as every form
         # has it rendered.

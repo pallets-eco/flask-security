@@ -3,6 +3,21 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.9.0
+-------------
+
+Released TBD
+
+Features & Improvements
++++++++++++++++++++++++
+- (:issue:`1206`) Add support for refresh tokens. See :ref:`token_topic`
+
+Notes
++++++
+- The refresh token features uses a new DB model - FsRefreshTracker which must
+  be added by the application. This model has been added to the `fsqla` and `sqla`
+  all-inclusive models their respective versions have been bumped.
+
 Version 5.8.0
 -------------
 

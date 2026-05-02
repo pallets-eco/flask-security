@@ -2181,7 +2181,28 @@ paths:
                 On form-success: `next` or SECURITY_POST_VERIFY_VIEW
               schema:
                 type: string
-
+  /refresh-token:
+    post:
+      summary: Get a new auth token using a refresh token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshToken"
+      responses:
+        200:
+          description: Refresh token response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonResponseWithToken'
+        400:
+          description: Errors while validating attributes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
 
 components:
   schemas:
@@ -2286,6 +2307,11 @@ components:
                         Token to be used in future token-based API calls.
                         Note this only returned from those APIs that accept a
                         'include_auth_token' query param.
+                    refresh_token:
+                      type: string
+                      description: >
+                        A refresh token that can be used to get a new auth token.
+                        This is only returned if the application has enabled refresh tokens.
                 csrf_token:
                   type: string
                   description: Session CSRF token
@@ -2723,7 +2749,13 @@ components:
                   type: string
                 wan_state:
                   type: string
-
+    RefreshToken:
+      type: object
+      required: [ refresh_token ]
+      properties:
+        refresh_token:
+          type: string
+          description: The refresh token retrieved from an authentication endpoint.
   headers:
     X-CSRF-Token:
       description: CSRF token

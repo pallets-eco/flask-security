@@ -5,18 +5,19 @@ flask_security.datastore
 This module contains an user datastore classes.
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
 from __future__ import annotations
 
+from datetime import datetime
 import json
 import typing as t
 import uuid
 from copy import copy
 
-from .core import UserMixin, RoleMixin, WebAuthnMixin
+from .core import UserMixin, RoleMixin, WebAuthnMixin, RefreshTrackerMixin
 from .utils import config_value as cv
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -38,6 +39,11 @@ class Datastore:
 
     def delete(self, model):
         raise NotImplementedError
+
+    def reload(self, model):
+        # Some ORMs (mongoengine) don't update in-memory objects if referenced fields
+        # are deleted/modified. Code must reload() explicitly
+        pass
 
 
 try:
@@ -99,6 +105,9 @@ class MongoEngineDatastore(Datastore):
 
     def delete(self, model):
         model.delete()
+
+    def reload(self, model):
+        model.reload()
 
 
 class PeeweeDatastore(Datastore):
@@ -172,6 +181,7 @@ class UserDatastore:
     :param user_model: A user model class definition
     :param role_model: A role model class definition
     :param webauthn_model: A model used to store webauthn registrations
+    :param refresh_tracker_model: A model used to track refresh tokens
 
     .. important::
         For mutating operations, the user/role will be added to the
@@ -190,10 +200,12 @@ class UserDatastore:
         user_model: t.Type[UserMixin],
         role_model: t.Type[RoleMixin],
         webauthn_model: t.Type[WebAuthnMixin] | None = None,
+        refresh_tracker_model: t.Type[RefreshTrackerMixin] | None = None,
     ):
         self.user_model = user_model
         self.role_model = role_model
         self.webauthn_model = webauthn_model
+        self.refresh_tracker_model = refresh_tracker_model
 
     if t.TYPE_CHECKING:  # pragma: no cover
         # These are available from a DataStore implementation
@@ -204,6 +216,9 @@ class UserDatastore:
             pass
 
         def commit(self):
+            pass
+
+        def reload(self, model):
             pass
 
     def _prepare_role_modify_args(self, role: str | RoleMixin) -> RoleMixin | None:
@@ -227,11 +242,18 @@ class UserDatastore:
 
         return kwargs
 
+    def get_token_uniquifier_name(self) -> str:
+        """Returns the user's token uniquifier attribute name."""
+        if hasattr(self.user_model, "fs_token_uniquifier"):
+            return "fs_token_uniquifier"
+        else:
+            return "fs_uniquifier"
+
     def find_user(
         self, case_insensitive: bool = False, **kwargs: t.Any
     ) -> UserMixin | None:
         """Returns a user matching the provided parameters.
-        A single kwarg will be poped and used to filter results. This should
+        A single kwarg will be popped and used to filter results. This should
         be a unique/primary key in the User model since only a single result is
         returned.
         """
@@ -247,7 +269,7 @@ class UserDatastore:
         :param user: The user to manipulate.
         :param role: The role to add to the user. Can be a Role object or
             string role name
-        :return: True is role was added, False if role already existed.
+        :return: True if role was added, False if role already existed.
         """
         if not (role_obj := self._prepare_role_modify_args(role)):
             raise ValueError(f"Role: {role} doesn't exist")
@@ -490,6 +512,7 @@ class UserDatastore:
             * remove all two-factor secrets so those can't be used
             * remove all registered webauthn credentials
             * remove all one-time recovery codes
+            * revoke all refresh tokens/trackers
             * will NOT affect password
 
         Note that if using unified sign in and allow 'email' as a way to receive a code;
@@ -505,6 +528,9 @@ class UserDatastore:
 
         .. versionchanged:: 5.0.0
             Added webauthn and recovery codes reset.
+
+        .. versionchanged:: 5.9.0
+            Added refresh tracker reset.
         """
         self.set_uniquifier(user)
         self.set_token_uniquifier(user)
@@ -516,6 +542,8 @@ class UserDatastore:
             self.webauthn_reset(user)
         if hasattr(user, "mf_recovery_codes"):
             self.mf_set_recovery_codes(user, None)
+        if hasattr(user, "refresh_trackers"):
+            self.refresh_tracker_reset(user)
 
     def tf_set(
         self,
@@ -535,7 +563,7 @@ class UserDatastore:
 
         To get a totp_secret - use ``app.security.totp_factory.generate_totp_secret()``
 
-        .. versionadded: 3.4.1
+        .. versionadded:: 3.4.1
         """
 
         changed = False
@@ -554,7 +582,7 @@ class UserDatastore:
     def tf_reset(self, user: UserMixin) -> None:
         """Disable two-factor auth for user.
 
-        .. versionadded: 3.4.1
+        .. versionadded:: 3.4.1
         """
         user.tf_primary_method = None
         user.tf_totp_secret = None
@@ -565,7 +593,7 @@ class UserDatastore:
         """Set MF recovery codes into user record.
         Any existing codes will be erased.
 
-        .. versionadded: 5.0.0
+        .. versionadded:: 5.0.0
         """
         user.mf_recovery_codes = rcs
         self.put(user)
@@ -580,7 +608,7 @@ class UserDatastore:
 
         Return True if code found and deleted, False otherwise.
 
-        .. versionadded: 5.0.0
+        .. versionadded:: 5.0.0
         """
         if not user.mf_recovery_codes:
             return False
@@ -708,27 +736,27 @@ class UserDatastore:
         Note that we need to find webauthn records per user as well as
         find a user from a given webauthn (credential_id) record.
 
-        .. versionadded: 5.0.0
+        .. versionadded:: 5.0.0
         """
         raise NotImplementedError
 
     def delete_webauthn(self, webauthn: WebAuthnMixin) -> None:
         """
-        .. versionadded: 5.0.0
+        .. versionadded:: 5.0.0
         """
         self.delete(webauthn)
 
     def find_webauthn(self, credential_id: bytes) -> WebAuthnMixin | None:
         """Returns a credential matching the id.
 
-        .. versionadded: 5.0.0
+        .. versionadded:: 5.0.0
         """
         raise NotImplementedError
 
     def find_user_from_webauthn(self, webauthn: WebAuthnMixin) -> UserMixin | None:
         """Returns user associated with this webauthn credential
 
-        .. versionadded: 5.0.0
+        .. versionadded:: 5.0.0
         """
         if not self.webauthn_model:
             raise NotImplementedError
@@ -741,11 +769,81 @@ class UserDatastore:
         There doesn't appear to be any reason to change the user's
         fs_webauthn_user_handle.
 
-        .. versionadded: 5.0.0
+        .. versionadded:: 5.0.0
         """
         for cred in user.webauthn:
             self.delete(cred)
         self.put(user)
+        self.reload(user)
+
+    def create_refresh_tracker(
+        self,
+        user: UserMixin,
+        name: str,
+        expires_at: datetime,
+        **kwargs: t.Any,
+    ) -> RefreshTrackerMixin:
+        """Create a new refresh token tracker object in DB
+        .. versionadded:: 5.9.0
+        """
+        raise NotImplementedError
+
+    def find_refresh_tracker(self, refresh_family: str) -> RefreshTrackerMixin | None:
+        """Returns a refresh tracker matching the id.
+
+        .. versionadded:: 5.9.0
+        """
+        raise NotImplementedError
+
+    def exchange_refresh_tracker(self, refresh_tracker: RefreshTrackerMixin) -> None:
+        """
+        Bump the generation #. Expiration Time is NOT changed
+
+        :param refresh_tracker: The refresh tracker to exchange.
+
+        .. versionadded:: 5.9.0
+        """
+        from .proxies import _security
+
+        refresh_tracker.gen += 1
+        refresh_tracker.last_used_at = _security.datetime_factory()
+        self.put(refresh_tracker)
+
+    def revoke_refresh_tracker(self, refresh_tracker: RefreshTrackerMixin) -> None:
+        """Mark tracker as revoked.
+
+        .. versionadded:: 5.9.0
+        """
+        from .proxies import _security
+
+        refresh_tracker.revoked_at = _security.datetime_factory()
+        self.put(refresh_tracker)
+
+    def cleanup_refresh_trackers(
+        self, user: UserMixin, expired: bool = True, revoked: bool = False
+    ) -> None:
+        """Remove expired/revoked refresh trackers for a user
+
+        .. versionadded:: 5.9.0
+        """
+        from .proxies import _security
+
+        for rt in user.refresh_trackers:
+            if expired and (rt.expires_at < _security.datetime_factory()):
+                self.delete(rt)
+            if revoked and rt.revoked_at is not None:
+                self.delete(rt)
+        self.put(user)
+        self.reload(user)
+
+    def refresh_tracker_reset(self, user: UserMixin) -> None:
+        """Reset access via refresh tokens/trackers.
+        This will mark all refresh trackers for the specified user as revoked.
+
+        .. versionadded:: 5.9.0
+        """
+        for rt in user.refresh_trackers:
+            self.revoke_refresh_tracker(rt)
 
 
 class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
@@ -758,6 +856,7 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
     :param webauthn_model: See :ref:`Models <models_topic>`.
+    :param refresh_tracker_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(
@@ -766,9 +865,12 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         user_model: t.Type[UserMixin],
         role_model: t.Type[RoleMixin],
         webauthn_model: t.Type[WebAuthnMixin] | None = None,
+        refresh_tracker_model: t.Type[RefreshTrackerMixin] | None = None,
     ):
         SQLAlchemyDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
+        UserDatastore.__init__(
+            self, user_model, role_model, webauthn_model, refresh_tracker_model
+        )
 
     def find_user(
         self, case_insensitive: bool = False, **kwargs: t.Any
@@ -845,6 +947,44 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         self.put(webauthn)
         self.put(user)
 
+    def create_refresh_tracker(
+        self,
+        user: UserMixin,
+        name: str,
+        expires_at: datetime,
+        **kwargs: t.Any,
+    ) -> RefreshTrackerMixin:
+        from .proxies import _security
+
+        if not hasattr(self, "refresh_tracker_model") or not self.refresh_tracker_model:
+            raise NotImplementedError
+
+        refresh_tracker = self.refresh_tracker_model(
+            gen=1,
+            name=name,
+            expires_at=expires_at,
+            refresh_family=uuid.uuid4().hex,
+            last_used_at=_security.datetime_factory(),
+            **kwargs,
+        )
+        user.refresh_trackers.append(refresh_tracker)
+        self.put(refresh_tracker)
+        self.put(user)
+        return refresh_tracker
+
+    def find_refresh_tracker(self, refresh_family: str) -> RefreshTrackerMixin | None:
+        from sqlalchemy import select
+
+        if not self.refresh_tracker_model:  # pragma: no cover
+            raise NotImplementedError
+
+        return self.db.session.scalar(
+            select(self.refresh_tracker_model).where(
+                self.refresh_tracker_model.refresh_family
+                == refresh_family  # type: ignore
+            )
+        )
+
 
 class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastore):
     """A UserDatastore implementation that directly uses
@@ -855,6 +995,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
     :param webauthn_model: See :ref:`Models <models_topic>`.
+    :param refresh_tracker_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(
@@ -863,6 +1004,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
         user_model: t.Type[UserMixin],
         role_model: t.Type[RoleMixin],
         webauthn_model: t.Type[WebAuthnMixin] | None = None,
+        refresh_tracker_model: t.Type[RefreshTrackerMixin] | None = None,
     ):
         class PretendFlaskSQLAlchemyDb:
             """This is a pretend db object, so we can just pass in a session."""
@@ -876,6 +1018,7 @@ class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastor
             user_model,
             role_model,
             webauthn_model,
+            refresh_tracker_model,
         )
 
 
@@ -888,6 +1031,7 @@ class FSQLALiteUserDatastore(SQLAlchemyUserDatastore, UserDatastore):
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
     :param webauthn_model: See :ref:`Models <models_topic>`.
+    :param refresh_tracker_model: See :ref:`Models <models_topic>`.
     """
 
     if t.TYPE_CHECKING:  # pragma: no cover
@@ -899,6 +1043,7 @@ class FSQLALiteUserDatastore(SQLAlchemyUserDatastore, UserDatastore):
         user_model: t.Type[UserMixin],
         role_model: t.Type[RoleMixin],
         webauthn_model: t.Type[WebAuthnMixin] | None = None,
+        refresh_tracker_model: t.Type[RefreshTrackerMixin] | None = None,
     ):
         SQLAlchemyUserDatastore.__init__(
             self,
@@ -906,6 +1051,7 @@ class FSQLALiteUserDatastore(SQLAlchemyUserDatastore, UserDatastore):
             user_model,
             role_model,
             webauthn_model,
+            refresh_tracker_model,
         )
 
 
@@ -919,6 +1065,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
     :param user_model: See :ref:`Models <models_topic>`.
     :param role_model: See :ref:`Models <models_topic>`.
     :param webauthn_model: See :ref:`Models <models_topic>`.
+    :param refresh_tracker_model: See :ref:`Models <models_topic>`.
     """
 
     def __init__(
@@ -927,9 +1074,12 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         user_model: t.Type[UserMixin],
         role_model: t.Type[RoleMixin],
         webauthn_model: t.Type[WebAuthnMixin] | None = None,
+        refresh_tracker_model: t.Type[RefreshTrackerMixin] | None = None,
     ):
         MongoEngineDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
+        UserDatastore.__init__(
+            self, user_model, role_model, webauthn_model, refresh_tracker_model
+        )
 
     def find_user(self, case_insensitive=False, **kwargs):
         from mongoengine.queryset.visitor import Q, QCombination
@@ -1004,6 +1154,40 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         self.put(webauthn)  # type: ignore
         self.put(user)  # type: ignore
 
+    def create_refresh_tracker(
+        self,
+        user: UserMixin,
+        name: str,
+        expires_at: datetime,
+        **kwargs: t.Any,
+    ) -> RefreshTrackerMixin:
+        from .proxies import _security
+
+        if not hasattr(self, "refresh_tracker_model") or not self.refresh_tracker_model:
+            raise NotImplementedError
+
+        refresh_tracker = self.refresh_tracker_model(
+            gen=1,
+            user=user,
+            name=name,
+            expires_at=expires_at,
+            last_used_at=_security.datetime_factory(),
+            refresh_family=uuid.uuid4().hex,
+            **kwargs,
+        )
+        user.refresh_trackers.append(refresh_tracker)
+        self.put(refresh_tracker)  # type: ignore
+        self.put(user)  # type: ignore
+        return refresh_tracker
+
+    def find_refresh_tracker(self, refresh_family: str) -> RefreshTrackerMixin | None:
+        if not self.refresh_tracker_model:  # pragma: no cover
+            raise NotImplementedError
+        obj = self.refresh_tracker_model.objects(  # type: ignore
+            refresh_family=refresh_family
+        ).first()
+        return obj
+
 
 class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
     """A UserDatastore implementation that assumes the
@@ -1013,17 +1197,29 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
     for datastore transactions.
     """
 
-    def __init__(self, db, user_model, role_model, role_link, webauthn_model=None):
+    def __init__(
+        self,
+        db,
+        user_model,
+        role_model,
+        role_link,
+        webauthn_model=None,
+        refresh_tracker_model=None,
+    ):
         """
         :param db:
         :param user_model: A user model class definition
         :param role_model: A role model class definition
         :param role_link: A model implementing the many-to-many user-role relation
         :param webauthn_model: A webauthn model class definition
+        :param refresh_tracker_model: See :ref:`Models <models_topic>`.
+
 
         """
         PeeweeDatastore.__init__(self, db)
-        UserDatastore.__init__(self, user_model, role_model, webauthn_model)
+        UserDatastore.__init__(
+            self, user_model, role_model, webauthn_model, refresh_tracker_model
+        )
         self.UserRole = role_link
 
     def find_user(self, case_insensitive=False, **kwargs):
@@ -1138,6 +1334,42 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
             **kwargs,
         )
         self.put(webauthn)  # type: ignore
+
+    def create_refresh_tracker(
+        self,
+        user: UserMixin,
+        name: str,
+        expires_at: datetime,
+        **kwargs: t.Any,
+    ) -> RefreshTrackerMixin:
+        from .proxies import _security
+
+        if not hasattr(self, "refresh_tracker_model") or not self.refresh_tracker_model:
+            raise NotImplementedError
+
+        refresh_tracker = self.refresh_tracker_model(
+            user=user,
+            gen=1,
+            name=name,
+            expires_at=expires_at,
+            last_used_at=_security.datetime_factory(),
+            refresh_family=uuid.uuid4().hex,
+            **kwargs,
+        )
+        # user.refresh_tokens.append(refresh_tracker)
+        self.put(refresh_tracker)  # type: ignore
+        # self.put(user)  # type: ignore
+        return refresh_tracker
+
+    def find_refresh_tracker(self, refresh_family: str) -> RefreshTrackerMixin | None:
+        if not self.refresh_tracker_model:
+            raise NotImplementedError
+        try:
+            return self.refresh_tracker_model.filter(  # type: ignore[attr-defined]
+                refresh_family=refresh_family
+            ).get()
+        except self.refresh_tracker_model.DoesNotExist:  # type: ignore[attr-defined]
+            return None
 
 
 class PonyUserDatastore(PonyDatastore, UserDatastore):
