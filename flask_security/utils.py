@@ -392,7 +392,8 @@ def verify_password(password: str | bytes, password_hash: str | bytes) -> bool:
     .. note::
         Make sure that the password passed in has already been normalized.
     """
-    if use_double_hash(password_hash):
+
+    if password_hash and use_double_hash(password_hash):
         password = get_hmac(password)
         if _pwd_context.identify(password_hash) == "bcrypt":
             password = password[:72]
