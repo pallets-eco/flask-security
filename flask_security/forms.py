@@ -56,6 +56,7 @@ from .utils import (
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask_security import UserMixin
+    from .tokens import RefreshTokenErrors, RefreshTrackerMixin
 
 _default_field_labels = {
     "authapp_method": _(
@@ -650,6 +651,39 @@ def build_login_form(app, fcls):
                 render_kw={"autocomplete": "email"},
                 validators=[Optional(), EmailValidation(verify=False)],
             )
+
+
+class LogoutForm(Form):
+    """The logout form.
+    No data is required to logout - however, if a refresh token
+    is provided, it will be revoked.
+    """
+
+    refresh_token = StringField(
+        get_form_field_xlate(_("Refresh Token")),
+        validators=[Optional()],
+    )
+    submit = SubmitField(label=get_form_field_label("submit"))
+
+    # returned to caller
+    refresh_errors: RefreshTokenErrors | None = None
+    refresh_tracker: RefreshTrackerMixin | None = None
+
+    def validate(self, **kwargs: t.Any) -> bool:
+        from .tokens import verify_refresh_token
+
+        if not super().validate(**kwargs):  # pragma: no cover
+            return False
+        if not self.refresh_token.data:
+            return True
+
+        assert isinstance(self.refresh_token.errors, list)
+
+        self.refresh_tracker, self.refresh_errors, uid = verify_refresh_token(
+            self.refresh_token.data
+        )
+        # don't really care if valid or not - return it to view
+        return True
 
 
 class VerifyForm(Form, PasswordFormMixin):

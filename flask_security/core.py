@@ -44,6 +44,7 @@ from .forms import (
     ForgotPasswordForm,
     Form,
     LoginForm,
+    LogoutForm,
     PasswordlessLoginForm,
     RegisterForm,
     RegisterFormMixin,
@@ -1289,6 +1290,7 @@ class Security:
     :param datastore: An instance of a user datastore.
     :param register_blueprint: to register the Security blueprint or not.
     :param login_form: set form for the login view
+    :param logout_form: set form for the logout view
     :param verify_form: set form for reauthentication due to freshness check
     :param change_email_form: set form for changing email address
     :param register_form: set form for the register view when
@@ -1387,7 +1389,7 @@ class Security:
         ``confirm_register_form`` default is now ``None``.
 
     .. versionadded:: 5.9.0
-        ``refresh_token_form``
+        ``refresh_token_form``, ``logout_form``
 
     .. deprecated:: 4.0.0
         ``send_mail`` and ``send_mail_task``. Replaced with ``mail_util_cls``.
@@ -1410,6 +1412,7 @@ class Security:
         register_blueprint: bool = True,
         *,
         login_form: t.Type[LoginForm] = LoginForm,
+        logout_form: t.Type[LogoutForm] = LogoutForm,
         verify_form: t.Type[VerifyForm] = VerifyForm,
         change_email_form: t.Type[ChangeEmailForm] = ChangeEmailForm,
         change_username_form: t.Type[ChangeUsernameForm] = ChangeUsernameForm,
@@ -1483,6 +1486,7 @@ class Security:
         # BC - in init_app we will allow override of class.
         self.forms = {
             "login_form": FormInfo(cls=login_form),
+            "logout_form": FormInfo(cls=logout_form),
             "verify_form": FormInfo(cls=verify_form),
             "confirm_register_form": FormInfo(cls=confirm_register_form),
             "register_form": FormInfo(cls=register_form),
@@ -1631,6 +1635,7 @@ class Security:
         # BC - we allow forms to be set from config
         form_names = [
             "login_form",
+            "logout_form",
             "verify_form",
             "change_email_form",
             "confirm_register_form",

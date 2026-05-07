@@ -116,12 +116,16 @@ The refresh token feature consists of:
     token given a valid refresh token
   - refresh token rotation
   - built-in re-use protection
+  - revoke refresh token/tracker on logout
 
 The refresh token (when enabled) is returned along with the authentication token from any
 authentication endpoint. Each new refresh token is tracked in the DB with a FsRefreshTracker entry.
 Each time a new authentication_token is requested (via the .refresh_token endpoint) the generation
 number of the refresh tracker entry is incremented, and a new refresh token is generated and returned.
 This effectively makes refresh tokens single use.
+
+The ``.logout`` endpoint takes a ``refresh_token`` as an optional item - if supplied - that refresh token
+and the associated tracker will be revoked - this should be the best practice for any application.
 
 .. _freshness_topic:
 

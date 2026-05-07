@@ -165,6 +165,7 @@ careful about the order of the inherited classes::
 The following is a list of all the available form overrides:
 
 * ``login_form``: Login form (:py:class:`flask_security.LoginForm`)
+* ``logout_form``: Logout form (:py:class:`flask_security.LogoutForm`)
 * ``verify_form``: Verify form
 * ``confirm_register_form``: Confirmable register form (:py:class:`flask_security.ConfirmRegisterForm`) (deprecated)
 * ``register_form``: Register form (:py:class:`flask_security.RegisterForm` (deprecated) OR (:py:class:`flask_security.RegisterFormV2`)

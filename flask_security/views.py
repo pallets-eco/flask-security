@@ -58,6 +58,7 @@ from .forms import (
     DummyForm,
     ForgotPasswordForm,
     LoginForm,
+    LogoutForm,
     build_form_from_request,
     build_form,
     form_errors_munge,
@@ -278,6 +279,18 @@ def logout():
     tf_clean_session()
 
     if is_user_authenticated(current_user):
+        form = t.cast(
+            LogoutForm, build_form_from_request("logout_form", user=current_user)
+        )
+
+        if form.validate_on_submit():
+            # if they passed a refresh token - revoke it
+            from .tokens import _revoke_refresh_tracker
+
+            if form.refresh_tracker and not form.refresh_tracker.revoked_at:
+                _revoke_refresh_tracker(
+                    form.refresh_tracker, form.refresh_errors, current_user
+                )
         logout_user()
 
     # No body is required - so if a POST and json - return OK

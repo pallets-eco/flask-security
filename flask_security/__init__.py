@@ -52,6 +52,7 @@ from .forms import (
     Form,
     ForgotPasswordForm,
     LoginForm,
+    LogoutForm,
     PasswordlessLoginForm,
     RegisterForm,
     RegisterFormV2,
