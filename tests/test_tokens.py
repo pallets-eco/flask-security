@@ -266,3 +266,18 @@ def test_no_token_uniquifier(app, client, get_message):
 
     response = client.post("/refresh-token", json={"refresh_token": refresh_token})
     assert response.status_code == 400
+
+
+@pytest.mark.app_settings(testing_no_cookies=True)
+def test_logout_with_token(app, client, get_message):
+    response = json_authenticate(client)
+    refresh_token = response.json["response"]["user"]["refresh_token"]
+    auth_token = response.json["response"]["user"]["authentication_token"]
+    headers = {"Authentication-Token": auth_token}
+    client.post("/logout", json=dict(refresh_token=refresh_token), headers=headers)
+
+    response = client.post("/refresh-token", json={"refresh_token": refresh_token})
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "REFRESH_TOKEN_INVALID", reason=RefreshTokenErrors.REVOKED.name
+    )

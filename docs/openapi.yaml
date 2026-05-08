@@ -208,6 +208,18 @@ paths:
                 type: string
     post:
       summary: Log out current user
+      description: >
+        If a refresh-token is supplied, it will be revoked as part
+        of logging the user out.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Logout"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/Logout"
       responses:
         200:
           description: Successful logout
@@ -225,6 +237,13 @@ paths:
                         type: integer
                         example: 200
                         description: Http status code
+        302:
+          description: Successful logout
+          headers:
+            Location:
+              description: Redirect to ``SECURITY_POST_LOGOUT_VIEW``
+              schema:
+                type: string
   /verify:
     get:
       summary: GET verify/reauthentication form
@@ -2352,6 +2371,12 @@ components:
                 type: string
                 example: "Unauthenticated"
                 description: Error message (localized)
+    Logout:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+
     Verify:
       type: object
       required: [ password ]

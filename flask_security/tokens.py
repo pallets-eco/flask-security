@@ -14,7 +14,6 @@ This module implements refresh and authentication tokens.
 
 TODO
  - add ability for app to add/verify additional stuff in refresh_token
- - allow logout to have refresh token and revoke it
  - add support for HTTP-only cookie (watch for CSRF issue)
  - change TOKEN_MAX_AGE to accept timedelta and change default to 30minutes or so.
  - implment rotation overlap period:
@@ -163,7 +162,28 @@ def verify_refresh_token(
     return refresh_tracker, None, tdata["uid"]
 
 
+def _revoke_refresh_tracker(
+    refresh_tracker: RefreshTrackerMixin,
+    refresh_errors: RefreshTokenErrors | None,
+    user: UserMixin | None,
+) -> None:
+    """Helper function for views"""
+    after_this_request(view_commit)
+    _datastore.revoke_refresh_tracker(refresh_tracker)
+    refresh_tracker_revoked.send(
+        current_app._get_current_object(),  # type: ignore
+        _async_wrapper=current_app.ensure_sync,
+        user=user,
+        refresh_tracker=refresh_tracker,
+        refresh_errors=refresh_errors,
+    )
+
+
 class RefreshTokenForm(Form):
+    """The refresh token form.
+    Given a valid refresh token, this will return a new access token.
+    """
+
     refresh_token = StringField(
         get_form_field_xlate(_("Refresh Token")),
         validators=[RequiredLocalize()],
@@ -227,13 +247,5 @@ def refresh() -> ResponseValue:
     # invalidate/revoke the entire token family.
     if form.refresh_errors == RefreshTokenErrors.GEN_MISMATCH:
         assert form.refresh_tracker
-        after_this_request(view_commit)
-        _datastore.revoke_refresh_tracker(form.refresh_tracker)
-        refresh_tracker_revoked.send(
-            current_app._get_current_object(),  # type: ignore
-            _async_wrapper=current_app.ensure_sync,
-            user=form.user,
-            refresh_tracker=form.refresh_tracker,
-            refresh_errors=form.refresh_errors,
-        )
+        _revoke_refresh_tracker(form.refresh_tracker, form.refresh_errors, form.user)
     return base_render_json(form, include_user=False)

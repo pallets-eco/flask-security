@@ -245,6 +245,7 @@ Forms
 .. autoclass:: flask_security.FormInfo
 .. autoclass:: flask_security.ForgotPasswordForm
 .. autoclass:: flask_security.LoginForm
+.. autoclass:: flask_security.LogoutForm
 .. autoclass:: flask_security.MfRecoveryCodesForm
 .. autoclass:: flask_security.MfRecoveryForm
 .. autoclass:: flask_security.PasswordlessLoginForm
