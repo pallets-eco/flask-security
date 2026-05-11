@@ -740,18 +740,18 @@ def test_disabled_account(app, client, get_message):
     )
 
 
-def _allowed(self, form_error):
+def _locked(self, form_error):
     if self.email == "gal@lp.com":
         from flask import request
 
         if request.endpoint != "security.login":
             form_error.append("You are not allowed to do that")
-            return False
-    return True
+            return True
+    return False
 
 
-@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_allowed))
-def test_override_user_allowed(app, client, get_message):
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_locked))
+def test_override_user_locked(app, client, get_message):
     authenticate(client, email="gal@lp.com")
     register_options, response_url = _register_start_json(
         client, name="testr3", usage="first"

@@ -12,11 +12,20 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`1206`) Add support for refresh tokens. See :ref:`token_topic`
 
+Fixes
++++++
+- (:issue:`1212`) Newly introduced :py:meth:`.UserMixin.is_locked` logic is inverted.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+- The fix for the inverted `is_locked` logic will require any application using it
+  to invert their logic.
+
 Notes
 +++++
-- The refresh token features uses a new DB model - FsRefreshTracker which must
+- The refresh token features requires a new DB model - FsRefreshTracker which must
   be added by the application. This model has been added to the `fsqla` and `sqla`
-  all-inclusive models their respective versions have been bumped.
+  all-inclusive models and their respective versions have been bumped.
 
 Version 5.8.0
 -------------
