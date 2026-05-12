@@ -681,15 +681,15 @@ def test_generic_with_extra(app, sqlalchemy_datastore):
     assert len(flashes) == 0
 
 
-def _allowed(self, form_error):
+def _locked(self, form_error):
     if self.email == "gal@lp.com":
         form_error.append("You are not allowed to do that")
-        return False
-    return True
+        return True
+    return False
 
 
-@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_allowed))
-def test_override_user_allowed(app, client, get_message):
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_locked))
+def test_override_user_locked(app, client, get_message):
     response = client.post("/reset", json=dict(email="gal@lp.com"))
     assert response.status_code == 400
     assert response.json["response"]["errors"] == ["You are not allowed to do that"]
@@ -1064,8 +1064,8 @@ def test_ur_confirmation_error_redirect(app, client):
 
 
 @pytest.mark.username_recovery()
-@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_allowed))
-def test_ur_override_user_allowed(app, client, get_message):
+@pytest.mark.app_settings(TESTING_USER_INJECT=dict(is_locked=_locked))
+def test_ur_override_user_locked(app, client, get_message):
     response = client.post("/recover-username", json=dict(email="gal@lp.com"))
     assert response.status_code == 400
     assert response.json["response"]["errors"] == ["You are not allowed to do that"]

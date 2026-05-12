@@ -332,7 +332,7 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
 
         if not self.user.is_active:
             self.credential.errors.append(get_message("DISABLED_ACCOUNT")[0])
-        if not self.user.is_locked(self.credential.errors):
+        if self.user.is_locked(self.credential.errors):
             return False
 
         verify = partial(
