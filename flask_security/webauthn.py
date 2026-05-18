@@ -56,6 +56,7 @@ try:
     )
     from webauthn.registration.verify_registration_response import VerifiedRegistration
     from webauthn.helpers import (
+        options_to_json_dict,
         parse_registration_credential_json,
         parse_authentication_credential_json,
     )
@@ -269,7 +270,7 @@ class WebAuthnSigninResponseForm(Form, NextFormMixin):
     authentication_verification: VerifiedAuthentication
     user: UserMixin | None = None
     cred: WebAuthnMixin | None = None
-    # Set to True if this authentication qualifies as 'multi-factor'
+    # Set to True if this authentication qualifies as 'multifactor'
     mf_check: bool = False
 
     def validate(self, **kwargs: t.Any) -> bool:
@@ -427,7 +428,7 @@ def webauthn_register() -> ResponseValue:
         if not current_user.fs_webauthn_user_handle:
             # set a user handle. This allows an easy migration when adding this
             # column (and not requiring as part of schema change to update all existing
-            # records. New users will have this set as part of user creation.
+            # records). New users will have this set as part of user creation.
             after_this_request(view_commit)
             _datastore.set_webauthn_user_handle(current_user)
 
@@ -446,7 +447,7 @@ def webauthn_register() -> ResponseValue:
             current_user, form.usage.data, ro
         )
         credential_options = webauthn.generate_registration_options(**ro)
-        co_json = json.loads(webauthn.options_to_json(credential_options))
+        co_json = options_to_json_dict(credential_options)
         co_json["extensions"] = {"credProps": True}
 
         # If we ask for UserVerification then we need to check that in the response.
@@ -614,7 +615,7 @@ def _signin_common(user: UserMixin | None, usage: list[str]) -> tuple[t.Any, str
         "user_verification": uv,
     }
 
-    o_json = json.loads(webauthn.options_to_json(options))
+    o_json = options_to_json_dict(options)
     state_token = t.cast(  # type: ignore[redundant-cast]
         str, _security.wan_serializer.dumps(state)
     )
