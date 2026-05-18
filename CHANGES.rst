@@ -15,6 +15,8 @@ Features & Improvements
 Fixes
 +++++
 - (:issue:`1212`) Newly introduced :py:meth:`.UserMixin.is_locked` logic is inverted.
+- (:issue:`1215`) Fix GHSA-97r5-pg8x-p63p - possible to verify an account using a different
+  users oauth credentials.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

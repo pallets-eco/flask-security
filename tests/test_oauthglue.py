@@ -70,7 +70,7 @@ class MockProvider:
         return redirect(urllib.parse.quote(redirect_url))
 
 
-class MockOAuth:
+class MockAuthlibFlaskClient:
     def __init__(self):
         pass
 
@@ -83,7 +83,9 @@ class MockOAuth:
 def test_github(app, sqlalchemy_datastore, get_message):
     CSRFProtect(app)
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     response = client.get("/login")
@@ -115,7 +117,9 @@ def test_github_nocsrf(app, sqlalchemy_datastore, get_message):
     # Test if ignore_unauth_endpoints is true - doesn't require CSRF
     CSRFProtect(app)
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     response = client.get("/login")
@@ -131,7 +135,7 @@ def test_outside_register(app, sqlalchemy_datastore, get_message):
         profile = resp.json()
         return "email", profile["email"]
 
-    authlib_oauth = MockOAuth()
+    authlib_oauth = MockAuthlibFlaskClient()
     authlib_oauth.register("myoauth")
     init_app_with_options(
         app, sqlalchemy_datastore, **{"security_args": {"oauth": authlib_oauth}}
@@ -157,7 +161,9 @@ def test_outside_register(app, sqlalchemy_datastore, get_message):
 @pytest.mark.settings(oauth_enable=True)
 def test_bad_api(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
 
@@ -186,7 +192,9 @@ def test_bad_api(app, sqlalchemy_datastore, get_message):
 @pytest.mark.settings(oauth_enable=True)
 def test_unknown_user(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     oauth_app = app.security.oauthglue.oauth_app
@@ -198,7 +206,9 @@ def test_unknown_user(app, sqlalchemy_datastore, get_message):
 @pytest.mark.settings(oauth_enable=True)
 def test_disabled_user(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     oauth_app = app.security.oauthglue.oauth_app
@@ -206,6 +216,44 @@ def test_disabled_user(app, sqlalchemy_datastore, get_message):
     response = client.get("/login/oauthresponse/github", follow_redirects=True)
     assert check_location(app, response.request.path, "/login")
     assert get_message("DISABLED_ACCOUNT") in response.data  # should be in flash
+
+
+@pytest.mark.settings(oauth_enable=True)
+def test_unicode_email(app, sqlalchemy_datastore, get_message):
+    # Test that we normalize email response from oauth provider
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
+    )
+    client = app.test_client()
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_identity(
+        "matt@\N{FULLWIDTH LATIN SMALL LETTER L}\N{FULLWIDTH LATIN SMALL LETTER P}.com"
+    )
+    client.get("/login/oauthresponse/github", follow_redirects=True)
+    assert is_authenticated(client, get_message)
+
+
+@pytest.mark.settings(
+    oauth_enable=True,
+    USER_IDENTITY_ATTRIBUTES=[
+        {"username": {"mapper": lambda x: x}},
+    ],
+)
+def test_email_not_identity(app, sqlalchemy_datastore, get_message):
+    # Test that if email isn't an identity attribute - can't use oauth to log in
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
+    )
+    client = app.test_client()
+    response = client.get("/login/oauthresponse/github", follow_redirects=True)
+    assert (
+        b": (Config error - Invalid identity attribute: email). Please try again."
+        in response.data
+    )
 
 
 def _locked(self, form_error):
@@ -219,7 +267,9 @@ def _locked(self, form_error):
 @pytest.mark.settings(oauth_enable=True)
 def test_override_user_locked(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     oauth_app = app.security.oauthglue.oauth_app
@@ -233,7 +283,9 @@ def test_override_user_locked(app, sqlalchemy_datastore, get_message):
 @pytest.mark.settings(oauth_enable=True)
 def test_tf(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     authenticate(client)
@@ -273,7 +325,9 @@ def test_spa(app, sqlalchemy_datastore, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     csrf_token = get_csrf_token(client)
@@ -325,7 +379,9 @@ def test_spa(app, sqlalchemy_datastore, get_message):
 def test_already_auth(app, sqlalchemy_datastore, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     authenticate(client)
@@ -346,7 +402,9 @@ def test_simple_next(app, sqlalchemy_datastore, get_message):
     # For oauth we stash 'next' in the session since we can't really
     # send it all around the oauth providers.
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     response = client.get("/profile", follow_redirects=True)
@@ -379,7 +437,9 @@ def test_provider_class(app, sqlalchemy_datastore, get_message):
             return redirect("/uh-oh")
 
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     # Have to register with Oauthglue.
     app.security.oauthglue.register_provider_ext(MyOauthProvider("myoauth"))
@@ -410,7 +470,9 @@ def test_provider_class(app, sqlalchemy_datastore, get_message):
 @pytest.mark.settings(oauth_enable=True, post_verify_view="/post_verify")
 def test_verify(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
 
@@ -444,7 +506,9 @@ def test_verify(app, sqlalchemy_datastore, get_message):
 @pytest.mark.settings(oauth_enable=True)
 def test_verify_unknown_user(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     authenticate(client)
@@ -469,6 +533,38 @@ def test_verify_unknown_user(app, sqlalchemy_datastore, get_message):
     assert "fs_oauth_next" not in session
 
 
+@pytest.mark.settings(oauth_enable=True)
+def test_verify_evil_user(app, sqlalchemy_datastore, get_message):
+    # Ensure a valid (evil) user can't use their oauth credentials to 'verify'
+    # another user.
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
+    )
+    client = app.test_client()
+    authenticate(client)  # authenticate as matt@lp.com
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_identity("joe@lp.com")  # a valid user
+
+    reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+    response = client.get("/fresh", follow_redirects=True)
+    github_url = get_form_action(response, 1)
+    response = client.post(github_url, follow_redirects=False)
+
+    with capture_flashes() as flashes:
+        redirect_url = urllib.parse.urlsplit(urllib.parse.unquote(response.location))
+        local_redirect = urllib.parse.parse_qs(redirect_url.query)["redirect_uri"][0]
+        response = client.get(local_redirect, follow_redirects=True)
+    assert flashes[0]["category"] == "error"
+    assert flashes[0]["message"].encode("utf-8") == get_message(
+        "IDENTITY_NOT_REGISTERED", id="joe@lp.com"
+    )
+    assert b"Reauthenticate" in response.data
+    session = get_session(response)
+    assert "fs_oauth_next" not in session
+
+
 @pytest.mark.settings(
     oauth_enable=True,
     oauth_builtin_providers=["github"],
@@ -479,7 +575,9 @@ def test_verify_unknown_user(app, sqlalchemy_datastore, get_message):
 def test_verify_spa(app, sqlalchemy_datastore, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     json_authenticate(client)
@@ -506,7 +604,9 @@ def test_verify_spa(app, sqlalchemy_datastore, get_message):
 )
 def test_verify_unknown_user_spa(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     json_authenticate(client)
@@ -526,7 +626,9 @@ def test_verify_unknown_user_spa(app, sqlalchemy_datastore, get_message):
 )
 def test_verify_spa_exc(app, sqlalchemy_datastore, get_message):
     init_app_with_options(
-        app, sqlalchemy_datastore, **{"security_args": {"oauth": MockOAuth()}}
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
     )
     client = app.test_client()
     json_authenticate(client)
