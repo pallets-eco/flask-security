@@ -40,6 +40,7 @@ from .utils import (
     config_value as cv,
     do_flash,
     login_user,
+    get_identity_attribute,
     get_message,
     get_post_action_redirect,
     get_url,
@@ -104,6 +105,14 @@ def _oauth_response_common(name: str) -> tuple[t.Any, UserMixin | None] | t.NoRe
     field_name, field_value = oauth_provider.fetch_identity_cb(
         _security.oauthglue.oauth_app, token
     )
+    # we only allow configured IDENTITY_ATTRIBUTES and run
+    # the mapper (which for email will normalize it)
+    if not (uia := get_identity_attribute(field_name)):
+        raise OAuthError(
+            error="Config error",
+            description=f"Invalid identity attribute: {field_name}",
+        )
+    field_value = uia["mapper"](field_value)
     user = _security.datastore.find_user(**{field_name: field_value})
     return field_value, user
 
@@ -199,7 +208,7 @@ def oauth_verify_response(name: str) -> ResponseValue:
         assert oauth_provider is not None
         return oauth_provider.oauth_response_failure("VERIFY_ERROR_VIEW", e)
     next_loc = session.pop("fs_oauth_next", None)
-    if user:
+    if user and user.email == current_user.email:
         # verified - so set freshness time.
         session["fs_paa"] = time.time()
         if cv("REDIRECT_BEHAVIOR") == "spa":
