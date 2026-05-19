@@ -46,38 +46,7 @@ babel = ["babel>=2.17.0", "flask_babel>=4.0.0"]
 fsqla = ["flask_sqlalchemy>=3.1.1", "sqlalchemy>=2.0.41"]
 common = ["argon2_cffi>=25.1.0", "bcrypt>=4.2.1", "flask_mail>=0.10.0", "bleach>=6.0.0"]
 mfa = ["cryptography>=45.0.7", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.6.0"]
-low = [
-    # Lowest supported versions
-    "Flask==3.1.1",
-    "Flask-SQLAlchemy==3.1.1",
-    "Flask-SQLAlchemy-Lite==0.1.0",
-    "Flask-Babel==4.0.0",
-    "Flask-Mail==0.10.0",
-    "Flask-Login==0.6.3",
-    "Flask-WTF==1.1.2",
-    "peewee==3.17.9",
-    "argon2_cffi==21.3.0",
-    "authlib==1.2.0",
-    "babel==2.16.0",
-    "bcrypt==4.0.1",
-    "bleach==6.0.0",
-    "freezegun",
-    "jinja2==3.1.2",
-    "itsdangerous==2.2.0",
-    "markupsafe==2.1.2",
-    "mongoengine==0.29.1",
-    "mongomock==4.3.0",
-    "pony==0.7.16;python_version<'3.11'",
-    "phonenumberslite==8.13.11",
-    "qrcode==7.4.2",
-    # authlib requires requests
-    "requests",
-    "sqlalchemy==2.0.41",
-    "sqlalchemy-utils==0.42.0",
-    "webauthn==2.6.0",
-    "werkzeug==3.1.3",
-    "zxcvbn==4.4.28"
-]
+
 [build-system]
 requires = ["flit_core >=3.8,<4"]
 build-backend = "flit_core.buildapi"
@@ -116,3 +85,63 @@ exclude = ["docs/_build/"]
     include=["flask_security", "tests/view_scaffold.py"]
     analyzeUnannotatedFunctions = "none"
     reportMissingImports = false
+
+[dependency-groups]
+dev = [
+    "check-wheel-contents>=0.6.3",
+    "email-validator>=2.3.0",
+    "flask>=3.1.3",
+    "flask-login>=0.6.3",
+    "flask-principal>=0.4.0",
+    "flask-wtf>=1.3.0",
+    "flit>=3.12.0",
+    "libpass>=1.9.3",
+    "markupsafe>=3.0.3",
+    "mypy>=2.1.0",
+    "pre-commit>=4.6.0",
+    "psycopg2-binary>=2.9.12",
+    "pymysql>=1.2.0",
+    "tox>=4.54.0",
+    "types-requests>=2.33.0.20260518",
+]
+docs = [
+    "flask-sqlalchemy>=3.1.1",
+    "packaging>=26.2",
+    "pallets-sphinx-themes>=2.5.0",
+    "sphinx>=8.1.3",
+    "sphinx-issues>=6.0.0",
+    "sqlalchemy>=2.0.49",
+    "sqlalchemy-utils>=0.42.1",
+]
+tests = [
+    "argon2-cffi>=25.1.0",
+    "authlib>=1.7.2",
+    "babel>=2.18.0",
+    "bcrypt>=5.0.0",
+    "bleach>=6.3.0",
+    "cbor2<6.0.0",
+    "coverage>=7.14.0",
+    "cryptography>=48.0.0",
+    "djlint>=1.36.4",
+    "flask-babel>=4.0.0",
+    "flask-mail>=0.10.0",
+    "flask-sqlalchemy>=3.1.1",
+    "flask-sqlalchemy-lite>=0.2.1",
+    "freezegun>=1.5.5",
+    "mongoengine>=0.29.3",
+    "mongomock>=4.3.0",
+    "msgcheck>=4.2.0",
+    "peewee>=4.0.5",
+    "phonenumberslite>=9.0.30",
+    "pony>=0.7.19",
+    "pydocstyle>=6.3.0",
+    "pytest>=9.0.3",
+    "pytest-cache>=1.0",
+    "pytest-cov>=7.1.0",
+    "qrcode>=8.2",
+    "requests>=2.34.2",
+    "sqlalchemy>=2.0.49",
+    "sqlalchemy-utils>=0.42.1",
+    "webauthn>=2.7.1",
+    "zxcvbn>=4.5.0",
+]
