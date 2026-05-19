@@ -35,15 +35,15 @@ jobs:
           - {python: 'pypy-3.11', tox: 'pypy311-release'}
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python }}
       - name: update pip
         run: |
           python -m pip install -U pip
       - name: cache pip
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/pip
           key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
@@ -55,8 +55,8 @@ jobs:
   lint:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
         - name: update pip
@@ -70,8 +70,8 @@ jobs:
   other:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
         - name: update pip
@@ -84,8 +84,8 @@ jobs:
   cov:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
         - name: update pip
@@ -96,7 +96,7 @@ jobs:
             pip install tox coverage
             tox -e coverage
         - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v6
+          uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
           with:
             fail_ci_if_error: true
             verbose: true
@@ -119,15 +119,15 @@ jobs:
             --health-timeout 5s
             --health-retries 5
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
         - name: update pip
           run: |
             python -m pip install -U pip
         - name: cache pip
-          uses: actions/cache@v5
+          uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
           with:
             path: ~/.cache/pip
             key: pip-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
