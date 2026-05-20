@@ -155,10 +155,6 @@ exclude = ["docs/_build/"]
 [tool.djlint]
 ignore="H005,H006"  # lang, img height/width
 
-[tool.flake8]
-max-line-length = 88
-per-file-ignores = "tests/view_scaffold.py: E402"
-
 [tool.pyright]
 include=["flask_security", "tests/view_scaffold.py"]
 analyzeUnannotatedFunctions = "none"
