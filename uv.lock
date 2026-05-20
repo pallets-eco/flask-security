@@ -995,6 +995,10 @@ mfa = [
 ]
 
 [package.dev-dependencies]
+babel = [
+    { name = "babel" },
+    { name = "jinja2" },
+]
 dev = [
     { name = "check-wheel-contents" },
     { name = "email-validator" },
@@ -1089,6 +1093,10 @@ requires-dist = [
 provides-extras = ["babel", "common", "fsqla", "mfa"]
 
 [package.metadata.requires-dev]
+babel = [
+    { name = "babel", specifier = ">=2.18.0" },
+    { name = "jinja2", specifier = ">=3.1.6" },
+]
 dev = [
     { name = "check-wheel-contents" },
     { name = "email-validator" },
