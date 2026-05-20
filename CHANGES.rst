@@ -3,6 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.8.1
+-------------
+
+Released TBD
+
+Fixes
++++++
+- (:issue:`1222`) Possible open-redirect with ALLOW_SUBDOMAIN option.
+
 Version 5.8.0
 -------------
 
