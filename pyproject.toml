@@ -325,7 +325,7 @@ commands = [
     ],
 ]
 
-[tool.tox.env.noaflasksqlalchemy]
+[tool.tox.env.noflasksqlalchemy]
 description = "run tests without flask-sqlalchemy"
 dependency_groups = ["tests"]
 commands = [
@@ -345,6 +345,20 @@ dependency_groups = ["tests"]
 commands = [
     [
         "uv", "pip", "uninstall", "-y", "webauthn",
+    ],
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
+    [
+        "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
+        {replace = "posargs", default = [], extend = true},
+    ],
+]
+
+[tool.tox.env.realdb]
+description = "run tests with a real postgres db"
+dependency_groups = ["tests"]
+commands = [
+    [
+        "uv", "pip", "install", "psycopg2-binary",
     ],
     ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     [
