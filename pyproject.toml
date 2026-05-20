@@ -47,49 +47,11 @@ fsqla = ["flask_sqlalchemy>=3.1.1", "sqlalchemy>=2.0.41"]
 common = ["argon2_cffi>=25.1.0", "bcrypt>=4.2.1", "flask_mail>=0.10.0", "bleach>=6.0.0"]
 mfa = ["cryptography>=45.0.7", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.6.0"]
 
-[build-system]
-requires = ["flit_core >=3.8,<4"]
-build-backend = "flit_core.buildapi"
-
-[tool.flit.module]
-name = "flask_security"
-
-[tool.flit.sdist]
-include = [
-    "AUTHORS",
-    "CHANGES.rst",
-    "CONTRIBUTING.rst",
-    "LICENSE.txt",
-    ".djlintrc",
-    ".git-blame-ignore-revs",
-    ".gitignore",
-    ".pre-commit-config.yaml",
-    ".readthedocs.yml",
-    "pyproject-too.toml",
-    "babel.ini",
-    "codecov.yml",
-    "mypy.ini",
-    "pytest.ini",
-    "tox.ini",
-    "docs/",
-    "examples/",
-    "requirements",
-    "tests/",
-]
-exclude = ["docs/_build/"]
-
-[tool.djlint]
-    ignore="H005,H006"  # lang, img height/width
-
-[tool.pyright]
-    include=["flask_security", "tests/view_scaffold.py"]
-    analyzeUnannotatedFunctions = "none"
-    reportMissingImports = false
 
 [dependency-groups]
 babel = [
-    "babel>=2.18.0",
-    "jinja2>=3.1.6",
+    "babel",
+    "jinja2",
 ]
 dev = [
     "check-wheel-contents",
@@ -156,3 +118,42 @@ tests = [
     "webauthn",
     "zxcvbn",
 ]
+
+[build-system]
+requires = ["flit_core >=3.8,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "flask_security"
+
+[tool.flit.sdist]
+include = [
+    "AUTHORS",
+    "CHANGES.rst",
+    "CONTRIBUTING.rst",
+    "LICENSE.txt",
+    ".djlintrc",
+    ".git-blame-ignore-revs",
+    ".gitignore",
+    ".pre-commit-config.yaml",
+    ".readthedocs.yml",
+    "pyproject-too.toml",
+    "babel.ini",
+    "codecov.yml",
+    "mypy.ini",
+    "pytest.ini",
+    "tox.ini",
+    "docs/",
+    "examples/",
+    "requirements",
+    "tests/",
+]
+exclude = ["docs/_build/"]
+
+[tool.djlint]
+    ignore="H005,H006"  # lang, img height/width
+
+[tool.pyright]
+    include=["flask_security", "tests/view_scaffold.py"]
+    analyzeUnannotatedFunctions = "none"
+    reportMissingImports = false
