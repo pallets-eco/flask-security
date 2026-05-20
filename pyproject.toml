@@ -248,6 +248,7 @@ commands = [
     [
         "uv", "pip", "install", "flask[async]",
     ],
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     [
         "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
         {replace = "posargs", default = [], extend = true},
@@ -258,6 +259,7 @@ commands = [
 description = "run with coverage"
 dependency_groups = ["tests"]
 commands = [
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     ["coverage", "run", "--source=flask_security", "-m", "pytest"],
     ["coverage", "xml"],
 ]
@@ -281,6 +283,7 @@ commands = [
         "git+https://github.com/wtforms/wtforms@main#egg=wtforms",
         "git+https://github.com/maxcountryman/flask-login@main#egg=flask-login",
     ],
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     [
         "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
         {replace = "posargs", default = [], extend = true},
@@ -301,6 +304,7 @@ commands = [
     [
         "uv", "pip", "uninstall", "-y", "authlib",
     ],
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     [
         "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
         {replace = "posargs", default = [], extend = true},
@@ -314,6 +318,7 @@ commands = [
     [
         "uv", "pip", "uninstall", "-y", "babel", "flask_babel",
     ],
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     [
         "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
         {replace = "posargs", default = [], extend = true},
@@ -327,6 +332,7 @@ commands = [
     [
         "uv", "pip", "uninstall", "-y", "flask_sqlalchemy", "flask_sqlalchemy_lite",
     ],
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     [
         "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
         {replace = "posargs", default = [], extend = true},
@@ -340,6 +346,7 @@ commands = [
     [
         "uv", "pip", "uninstall", "-y", "webauthn",
     ],
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
     [
         "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
         {replace = "posargs", default = [], extend = true},
@@ -375,4 +382,4 @@ skip_install = true
 commands = [["uv", "lock", {replace = "posargs", default = ["-U"], extend = true}]]
 
 [tool.uv]
-default-groups = ["dev", "pre-commit", "tests"]
+default-groups = ["dev", "pre-commit", "tests", "typing"]
