@@ -161,6 +161,7 @@ def fsqla_lite_datastore(app: Flask) -> FSQLALiteUserDatastore:
 def create_app() -> Flask:
     # Use real templates - not test templates...
     app = Flask("view_scaffold", template_folder="../")
+    app.config["SERVER_NAME"] = "localhost"
     app.config["DEBUG"] = True
     # SECRET_KEY generated using: secrets.token_urlsafe()
     app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
