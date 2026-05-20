@@ -10,7 +10,9 @@ Released TBD
 
 Fixes
 +++++
-- (:issue:`1222`) Possible open-redirect with ALLOW_SUBDOMAIN option.
+- (:issue:`1222`) Fix for GHSA-w2j7-f3c6-g8cw - Possible open-redirect with ALLOW_SUBDOMAIN option.
+- (:issue:`1215`) Fix for GHSA-97r5-pg8x-p63p - possible oauth bypass in /verify
+
 
 Version 5.8.0
 -------------
