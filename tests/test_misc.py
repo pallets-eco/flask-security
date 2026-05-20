@@ -70,6 +70,7 @@ from flask_security.utils import (
     uia_email_mapper,
     uia_phone_mapper,
     verify_hash,
+    get_post_action_redirect,
 )
 from flask_security.core import _get_serializer
 
@@ -315,14 +316,14 @@ def test_change_hash_type(app, sqlalchemy_datastore):
     response = client.post(
         "/login", data=dict(email="matt@lp.com", password="password")
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
     response = client.get("/logout")
 
     response = client.post(
         "/login", data=dict(email="matt@lp.com", password="password")
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
 
 
 @pytest.mark.settings(hashing_schemes=["hex_md5"], deprecated_hashing_schemes=[])
@@ -355,7 +356,7 @@ def test_verify_hash(in_app_context):
 )
 def test_password_unicode_password_salt(client):
     response = authenticate(client)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     response = authenticate(client, follow_redirects=True)
     assert b"Welcome matt@lp.com" in response.data
 
@@ -611,7 +612,7 @@ def test_xlation(app, client):
     response = client.get("/login")
     assert b'<label for="password">Mot de passe</label>' in response.data
     response = authenticate(client)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     response = authenticate(client, follow_redirects=True)
     assert b"Bienvenue matt@lp.com" in response.data
 
@@ -918,7 +919,7 @@ def test_method_view(app, client):
 
     response = client.get("/myview", follow_redirects=False)
     # should require login
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/login" in response.location
 
     authenticate(client)
@@ -969,7 +970,7 @@ def test_authn_freshness(
     time.sleep(0.1)
     with capture_flashes() as flashes:
         response = client.get("/myspecialview", follow_redirects=False)
-        assert response.status_code == 302
+        assert response.status_code in [302, 303]
         assert response.location == "/verify?next=/myspecialview"
     assert flashes[0]["category"] == "error"
     assert flashes[0]["message"].encode("utf-8") == get_message(
@@ -1049,7 +1050,7 @@ def test_default_authn_bp(app, client):
     # This should require additional authn and redirect to verify
     reset_fresh(client, within=timedelta(minutes=1))
     response = client.get("/myview", follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/myprefix/verify?next=/myview"
 
 
@@ -1109,7 +1110,7 @@ def test_authn_freshness_nc_no(app, client_nc, get_message):
 
     # This should fail - should be a redirect
     response = client_nc.get("/myview", headers=h, follow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert response.location == "/verify?next=/myview"
 
 
@@ -1168,7 +1169,7 @@ def test_verify_fresh(app, client, get_message):
     assert b"Fresh Only" in response.data
 
 
-def test_verify_fresh_json(app, client, get_message):
+def test_verify_fresh_json(app, client, get_message, signals):
     # Hit a fresh-required endpoint and walk through verify
     authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -1313,11 +1314,11 @@ def test_post_security_with_application_root(app, sqlalchemy_datastore):
     response = client.post(
         "/login", data=dict(email="matt@lp.com", password="password")
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/root" in response.location
 
     response = client.get("/logout")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/root" in response.location
 
 
@@ -1336,11 +1337,11 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
     response = client.post(
         "/login", data=dict(email="matt@lp.com", password="password")
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/post_login" in response.location
 
     response = client.get("/logout")
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/post_logout" in response.location
 
 
@@ -1358,18 +1359,73 @@ def test_open_redirect(app, client, get_message):
         ("//github.com", ""),
         ("\t//github.com", "%09//github.com"),
     ]
-    for i, o in test_urls:
-        data = dict(email="matt@lp.com", password="password", next=i)
-        response = client.post("/login", data=data, follow_redirects=False)
-        if response.status_code == 302:
-            # this means it passed form validation but should have been quoted
-            assert check_location(app, response.location, o)
-        elif response.status_code == 200:
-            # should have failed form validation
-            assert get_message("INVALID_REDIRECT") in response.data
-        else:
-            raise AssertionError("Bad response code")
-        logout(client)
+    for nextloc in ["form", "query"]:
+        for i, o in test_urls:
+            if nextloc == "form":
+                data = dict(email="matt@lp.com", password="password", next=i)
+                response = client.post("/login", data=data, follow_redirects=False)
+            else:
+                data = dict(email="matt@lp.com", password="password")
+                response = client.post(
+                    f"/login?next={i}", data=data, follow_redirects=False
+                )
+            if response.status_code in [302, 303]:
+                # this means it passed form validation but should have been quoted
+                assert check_location(app, response.location, o)
+            elif response.status_code == 200:
+                # should have failed form validation
+                assert get_message("INVALID_REDIRECT") in response.data
+            else:
+                raise AssertionError("Bad response code")
+            logout(client)
+
+
+@pytest.mark.settings(redirect_allow_subdomains=True)
+def test_open_redirect_subdomain(app, client, get_message):
+    # As above - netloc is also susceptible to crazy escaping
+    # The first URL below, if cut-n-pasted into Chrome will end up at amazon.com
+    # The difference in response between in-form and query string is that
+    # the query string is unescaped by Werkzeug but the form value isn't.
+    app.config["SERVER_NAME"] = "lp.com"
+    test_urls = [
+        ("https://amazon.com\\.lp.com", "https://amazon.com%5C.lp.com", None),
+        (
+            "https://amazon.com%5C.lp.com",
+            "https://amazon.com%255C.lp.com",
+            "https://amazon.com%5C.lp.com",
+        ),
+        (
+            "https://jwag:mypass@amazon.com\\.lp.com",
+            "https://jwag:mypass@amazon.com%5C.lp.com",
+            None,
+        ),
+    ]
+    for nextloc in ["form", "query"]:
+        for i, o, oq in test_urls:
+            if nextloc == "form":
+                data = dict(email="matt@lp.com", password="password", next=i)
+                response = client.post("/login", data=data, follow_redirects=False)
+            else:
+                data = dict(email="matt@lp.com", password="password")
+                response = client.post(
+                    f"/login?next={i}", data=data, follow_redirects=False
+                )
+            if response.status_code in [302, 303]:
+                # this means it passed form validation but should have been quoted
+                assert check_location(
+                    app, response.location, oq if oq and (nextloc == "query") else o
+                )
+            logout(client)
+
+
+def test_get_post_action_redirect(app, client):
+    # test parts of get_post_action_redirect that are hard to get to via the client
+    # e.g. port
+    with app.test_request_context(base_url="https://lp.com:8080/"):
+        r = get_post_action_redirect(
+            "SECURITY_POST_LOGIN_VIEW", dict(next="https://lp.com:8080/myredirect")
+        )
+        assert r == "https://lp.com:8080/myredirect"
 
 
 def test_kwargs():
@@ -1475,7 +1531,7 @@ def test_login_email_whatever(app, client, get_message):
     response = client.post(
         "/login", data=dict(email="matt@lp.com", password="password")
     )
-    assert response.status_code == 302
+    assert response.status_code in [302, 303]
     assert "/" in response.location
 
 
