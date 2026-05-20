@@ -165,8 +165,11 @@ analyzeUnannotatedFunctions = "none"
 reportMissingImports = false
 
 [tool.tox]
-envlist = [
-    "py{310,311,312,313,314,py311}-{low,release,appinstall}",
+env_list = [
+    { product = [
+        ["py310", "py311", "py312", "py313", "py314", "pypy311"],
+        ["low", "release", "appinstall"]
+    ] },
     "mypy",
     "async",
     "nowebauthn",
@@ -181,7 +184,6 @@ envlist = [
 [tool.tox.env_run_base]
 description = "pytest on latest dependency versions"
 runner = "uv-venv-lock-runner"
-allowlist_externals = "tox"
 package = "wheel"
 wheel_build_env = ".pkg"
 constrain_package_deps = true
