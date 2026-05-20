@@ -47,7 +47,6 @@ fsqla = ["flask_sqlalchemy>=3.1.1", "sqlalchemy>=2.0.41"]
 common = ["argon2_cffi>=25.1.0", "bcrypt>=4.2.1", "flask_mail>=0.10.0", "bleach>=6.0.0"]
 mfa = ["cryptography>=45.0.7", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.6.0"]
 
-
 [dependency-groups]
 babel = [
     "babel",
@@ -118,9 +117,12 @@ tests = [
     "webauthn",
     "zxcvbn",
 ]
+typing = [
+    "mypy",
+]
 
 [build-system]
-requires = ["flit_core >=3.8,<4"]
+requires = ["flit-core>=3.8,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
@@ -151,9 +153,224 @@ include = [
 exclude = ["docs/_build/"]
 
 [tool.djlint]
-    ignore="H005,H006"  # lang, img height/width
+ignore="H005,H006"  # lang, img height/width
+
+[tool.flake8]
+max-line-length = 88
+per-file-ignores = "tests/view_scaffold.py: E402"
 
 [tool.pyright]
-    include=["flask_security", "tests/view_scaffold.py"]
-    analyzeUnannotatedFunctions = "none"
-    reportMissingImports = false
+include=["flask_security", "tests/view_scaffold.py"]
+analyzeUnannotatedFunctions = "none"
+reportMissingImports = false
+
+[tool.tox]
+envlist = [
+    "py{310,311,312,313,314,py311}-{low,release,appinstall}",
+    "mypy",
+    "async",
+    "nowebauthn",
+    "nobabel",
+    "noauthlib",
+    "style",
+    "docs",
+    "coverage",
+    "makedist",
+]
+
+[tool.tox.env_run_base]
+description = "pytest on latest dependency versions"
+runner = "uv-venv-lock-runner"
+allowlist_externals = "tox"
+package = "wheel"
+wheel_build_env = ".pkg"
+constrain_package_deps = true
+use_frozen_constraints = true
+dependency_groups = ["tests"]
+env_tmp_dir = "{toxworkdir}/tmp/{envname}"
+factors = [
+    ["py310", "py311", "py312", "py313", "py314", "pypy311"],
+    ["low", "release", "appinstall"],
+]
+commands = [
+    { replace = "if", condition = "factor.low", then = [[
+        "uv", "pip", "install",
+        "pytest",
+        "Flask==3.1.1",
+        "Flask-SQLAlchemy==3.1.1",
+        "Flask-SQLAlchemy-Lite==0.1.0",
+        "Flask-Babel==4.0.0",
+        "Flask-Mail==0.10.0",
+        "Flask-Login==0.6.3",
+        "Flask-WTF==1.1.2",
+        "peewee==3.17.9",
+        "argon2_cffi==21.3.0",
+        "authlib==1.2.0",
+        "babel==2.16.0",
+        "bcrypt==4.0.1",
+        "bleach==6.0.0",
+        "freezegun",
+        "jinja2==3.1.2",
+        "itsdangerous==2.2.0",
+        "markupsafe==2.1.2",
+        "mongoengine==0.29.1",
+        "mongomock==4.3.0",
+        "pony==0.7.16;python_version<'3.11'",
+        "phonenumberslite==8.13.11",
+        "qrcode==7.4.2",
+        # authlib requires requests
+        "requests",
+        "sqlalchemy==2.0.41",
+        "sqlalchemy-utils==0.42.0",
+        "webauthn==2.6.0",
+        "werkzeug==3.1.3",
+        "zxcvbn==4.4.28",
+    ]], extend = true },
+    ["pybabel", "compile", "--domain", "flask_security", "-d", "flask_security/translations"],
+    { replace = "if", condition = "factor.low or factor.release", then = [
+        [
+            "pytest", "-v", "--capture=tee-sys", "--tb=short", "--basetemp={env_tmp_dir}",
+            {replace = "posargs", default = [], extend = true},
+        ],
+    ], "else" = [
+        [
+            "python", "-c", "from flask_security import Security; s = Security()",
+        ],
+    ], extend = true },
+]
+
+[tool.tox.env.async]
+description = "run tests without authlib"
+dependency_groups = ["tests"]
+commands = [
+    [
+        "uv", "pip", "install", "flask[async]",
+    ],
+    [
+        "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
+        {replace = "posargs", default = [], extend = true},
+    ],
+]
+
+[tool.tox.env.coverage]
+description = "run with coverage"
+dependency_groups = ["tests"]
+commands = [
+    ["coverage", "run", "--source=flask_security", "-m", "pytest"],
+    ["coverage", "xml"],
+]
+
+[tool.tox.env.docs]
+description = "build docs"
+dependency_groups = ["docs"]
+commands = [["sphinx-build", "-E", "-W", "-b", "html", "docs", "docs/_build/"]]
+
+[tool.tox.env.main]
+description = "run tests against main"
+dependency_groups = ["tests"]
+commands = [
+    [
+        "uv", "pip", "install",
+        "git+https://github.com/pallets/werkzeug@main#egg=werkzeug",
+        "git+https://github.com/pallets/flask@main#egg=flask",
+        "git+https://github.com/pallets/flask-sqlalchemy@main#egg=flask-sqlalchemy",
+        "git+https://github.com/pallets/jinja@main#egg=jinja2",
+        "git+https://github.com/pallets-eco/flask-principal@main#egg=flask-principal",
+        "git+https://github.com/wtforms/wtforms@main#egg=wtforms",
+        "git+https://github.com/maxcountryman/flask-login@main#egg=flask-login",
+    ],
+    [
+        "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
+        {replace = "posargs", default = [], extend = true},
+    ],
+]
+
+[tool.tox.env.mypy]
+description = "run type checks"
+dependency_groups = ["typing"]
+commands = [
+    ["mypy", "--install-types", "--non-interactive", "flask_security", "tests"],
+]
+
+[tool.tox.env.noauthlib]
+description = "run tests without authlib"
+dependency_groups = ["tests"]
+commands = [
+    [
+        "uv", "pip", "uninstall", "-y", "authlib",
+    ],
+    [
+        "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
+        {replace = "posargs", default = [], extend = true},
+    ],
+]
+
+[tool.tox.env.nobabel]
+description = "run tests without babel"
+dependency_groups = ["tests"]
+commands = [
+    [
+        "uv", "pip", "uninstall", "-y", "babel", "flask_babel",
+    ],
+    [
+        "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
+        {replace = "posargs", default = [], extend = true},
+    ],
+]
+
+[tool.tox.env.noaflasksqlalchemy]
+description = "run tests without flask-sqlalchemy"
+dependency_groups = ["tests"]
+commands = [
+    [
+        "uv", "pip", "uninstall", "-y", "flask_sqlalchemy", "flask_sqlalchemy_lite",
+    ],
+    [
+        "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
+        {replace = "posargs", default = [], extend = true},
+    ],
+]
+
+[tool.tox.env.nowebauthn]
+description = "run tests without flask-sqlalchemy"
+dependency_groups = ["tests"]
+commands = [
+    [
+        "uv", "pip", "uninstall", "-y", "webauthn",
+    ],
+    [
+        "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}",
+        {replace = "posargs", default = [], extend = true},
+    ],
+]
+
+[tool.tox.env.style]
+description = "run all pre-commit hooks on all files"
+dependency_groups = ["pre-commit"]
+skip_install = true
+commands = [["pre-commit", "run", "--all-files"]]
+
+[tool.tox.env.update-actions]
+description = "update GitHub Actions pins"
+labels = ["update"]
+dependency_groups = ["gha-update"]
+skip_install = true
+commands = [["gha-update"]]
+
+[tool.tox.env.update-pre-commit]
+description = "update pre-commit pins"
+labels = ["update"]
+dependency_groups = ["pre-commit"]
+skip_install = true
+commands = [["pre-commit", "autoupdate", "--freeze", "-j4"]]
+
+[tool.tox.env.update-requirements]
+description = "update uv lock"
+labels = ["update"]
+dependency_groups = []
+no_default_groups = true
+skip_install = true
+commands = [["uv", "lock", {replace = "posargs", default = ["-U"], extend = true}]]
+
+[tool.uv]
+default-groups = ["dev", "pre-commit", "tests"]

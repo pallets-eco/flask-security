@@ -1066,6 +1066,9 @@ tests = [
     { name = "webauthn" },
     { name = "zxcvbn" },
 ]
+typing = [
+    { name = "mypy" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -1158,6 +1161,7 @@ tests = [
     { name = "webauthn" },
     { name = "zxcvbn" },
 ]
+typing = [{ name = "mypy" }]
 
 [[package]]
 name = "flask-sqlalchemy"
