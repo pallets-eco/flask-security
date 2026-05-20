@@ -353,7 +353,7 @@ commands = [
     ],
 ]
 
-[tool.tox.env.realdb]
+[tool.tox.env.realpostgres]
 description = "run tests with a real postgres db"
 dependency_groups = ["tests"]
 commands = [
