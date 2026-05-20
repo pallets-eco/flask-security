@@ -23,16 +23,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: '3.10', tox: 'py3.10-release'}
-          - {python: '3.10', tox: 'py3.10-low'}
-          - {python: '3.11', tox: 'py3.11-release'}
-          - {python: '3.11', tox: 'py3.11-low'}
-          - {python: '3.12', tox: 'py3.12-release' }
-          - {python: '3.12', tox: 'py3.12-low' }
-          - {python: '3.13', tox: 'py3.13-release' }
-          - {python: '3.13', tox: 'py3.13-low' }
-          - {python: '3.14', tox: 'py3.14-release' }
-          - {python: 'pypy-3.11', tox: 'pypy3.11-release'}
+          - {python: '3.10', tox: 'py310-release'}
+          - {python: '3.10', tox: 'py310-low'}
+          - {python: '3.11', tox: 'py311-release'}
+          - {python: '3.11', tox: 'py311-low'}
+          - {python: '3.12', tox: 'py312-release' }
+          - {python: '3.12', tox: 'py312-low' }
+          - {python: '3.13', tox: 'py313-release' }
+          - {python: '3.13', tox: 'py313-low' }
+          - {python: '3.14', tox: 'py314-release' }
+          - {python: 'pypy-3.11', tox: 'pypy311-release'}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
