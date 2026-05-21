@@ -6,12 +6,12 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.8.1
 -------------
 
-Released TBD
+Released May 21, 2026
 
 Fixes
 +++++
 - (:issue:`1222`) Fix for GHSA-w2j7-f3c6-g8cw - Possible open-redirect with ALLOW_SUBDOMAIN option.
-- (:issue:`1215`) Fix for GHSA-97r5-pg8x-p63p - possible oauth bypass in /verify
+- (:issue:`1215`) Fix for GHSA-97r5-pg8x-p63p - Possible oauth bypass in /verify
 
 
 Version 5.8.0
