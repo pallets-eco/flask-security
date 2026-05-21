@@ -71,6 +71,7 @@ from flask_security.utils import (
     uia_email_mapper,
     uia_phone_mapper,
     verify_hash,
+    get_post_action_redirect,
 )
 from flask_security.core import _get_serializer
 
@@ -1367,18 +1368,73 @@ def test_open_redirect(app, client, get_message):
         ("//github.com", ""),
         ("\t//github.com", "%09//github.com"),
     ]
-    for i, o in test_urls:
-        data = dict(email="matt@lp.com", password="password", next=i)
-        response = client.post("/login", data=data, follow_redirects=False)
-        if response.status_code in [302, 303]:
-            # this means it passed form validation but should have been quoted
-            assert check_location(app, response.location, o)
-        elif response.status_code == 200:
-            # should have failed form validation
-            assert get_message("INVALID_REDIRECT") in response.data
-        else:
-            raise AssertionError("Bad response code")
-        logout(client)
+    for nextloc in ["form", "query"]:
+        for i, o in test_urls:
+            if nextloc == "form":
+                data = dict(email="matt@lp.com", password="password", next=i)
+                response = client.post("/login", data=data, follow_redirects=False)
+            else:
+                data = dict(email="matt@lp.com", password="password")
+                response = client.post(
+                    f"/login?next={i}", data=data, follow_redirects=False
+                )
+            if response.status_code in [302, 303]:
+                # this means it passed form validation but should have been quoted
+                assert check_location(app, response.location, o)
+            elif response.status_code == 200:
+                # should have failed form validation
+                assert get_message("INVALID_REDIRECT") in response.data
+            else:
+                raise AssertionError("Bad response code")
+            logout(client)
+
+
+@pytest.mark.settings(redirect_allow_subdomains=True)
+def test_open_redirect_subdomain(app, client, get_message):
+    # As above - netloc is also susceptible to crazy escaping
+    # The first URL below, if cut-n-pasted into Chrome will end up at amazon.com
+    # The difference in response between in-form and query string is that
+    # the query string is unescaped by Werkzeug but the form value isn't.
+    app.config["SERVER_NAME"] = "lp.com"
+    test_urls = [
+        ("https://amazon.com\\.lp.com", "https://amazon.com%5C.lp.com", None),
+        (
+            "https://amazon.com%5C.lp.com",
+            "https://amazon.com%255C.lp.com",
+            "https://amazon.com%5C.lp.com",
+        ),
+        (
+            "https://jwag:mypass@amazon.com\\.lp.com",
+            "https://jwag:mypass@amazon.com%5C.lp.com",
+            None,
+        ),
+    ]
+    for nextloc in ["form", "query"]:
+        for i, o, oq in test_urls:
+            if nextloc == "form":
+                data = dict(email="matt@lp.com", password="password", next=i)
+                response = client.post("/login", data=data, follow_redirects=False)
+            else:
+                data = dict(email="matt@lp.com", password="password")
+                response = client.post(
+                    f"/login?next={i}", data=data, follow_redirects=False
+                )
+            if response.status_code in [302, 303]:
+                # this means it passed form validation but should have been quoted
+                assert check_location(
+                    app, response.location, oq if oq and (nextloc == "query") else o
+                )
+            logout(client)
+
+
+def test_get_post_action_redirect(app, client):
+    # test parts of get_post_action_redirect that are hard to get to via the client
+    # e.g. port
+    with app.test_request_context(base_url="https://lp.com:8080/"):
+        r = get_post_action_redirect(
+            "SECURITY_POST_LOGIN_VIEW", dict(next="https://lp.com:8080/myredirect")
+        )
+        assert r == "https://lp.com:8080/myredirect"
 
 
 def test_kwargs():

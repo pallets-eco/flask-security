@@ -762,14 +762,29 @@ def get_post_action_redirect(
     strictly true. From: https://datatracker.ietf.org/doc/html/rfc3986#section-5
     a relative path can start with a "//", "/", a non-colon, or be empty. So it seems
     that all the above URLs are valid.
-    By the time we get the URL, it has been unencoded - so we can't really determine
+    By the time we get the URL it may or may not have been unencoded - if part of a
+    query string, then it has been, but if set in the form, not.
+    This means we can't really determine
     if it is 'valid' since it appears that '/'s can appear in the URL if escaped.
 
     The solution is to simply 'quote' the path.
+
+    netloc has a same issue: https://amazon.com\\.lp.com will cause many
+    browsers to redirect to amazon.com
     """
     rurl = propagate_next(find_redirect(config_key), next_loc)
-    scheme, netloc, path, query, fragment = urlsplit(rurl)
-    safe_url = urlunsplit((scheme, netloc, quote(path), query, fragment))
+
+    u = urlsplit(rurl)
+    userinfo = ""
+    if u.username or u.password:
+        userinfo = f"{u.username}:{u.password}@"
+    hostname = quote(u.hostname) if u.hostname else ""
+    if u.port:
+        netloc = f"{userinfo}{hostname}:{u.port}"
+    else:
+        netloc = f"{userinfo}{hostname}"
+
+    safe_url = urlunsplit((u.scheme, netloc, quote(u.path), u.query, u.fragment))
     return safe_url
 
 
