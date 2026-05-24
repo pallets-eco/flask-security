@@ -17,11 +17,12 @@ Features & Improvements
 Fixes
 +++++
 - (:issue:`1212`) Newly introduced :py:meth:`.UserMixin.is_locked` logic is inverted.
+- (:pr:`1234`) Fix for GHSA-f66q-9rf6-8795 - WebAuthn reauthentication freshness bypass. (tonghuaroot)
+
 
 Docs and Chores
 +++++++++++++++
 - (:issue:`1208`) Remove support for Pony ORM
-
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

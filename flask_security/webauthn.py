@@ -869,10 +869,23 @@ def webauthn_verify_response(token: str) -> ResponseValue:
     form.is_verify = True
 
     if form.validate_on_submit():
-        # update last use and sign count
-        after_this_request(view_commit)
         assert form.cred
         assert form.user
+        # The assertion was cryptographically valid for `form.user`. For the
+        # reauthentication / verify flow, that user must also be the user
+        # currently logged in to this session - otherwise an attacker who
+        # owns any registered credential could satisfy a victim session's
+        # freshness gate by submitting their own credential's assertion.
+        if form.user.email != current_user.email:
+            m, c = get_message("WEBAUTHN_MISMATCH_USER_HANDLE")
+            if _security._want_json(request):
+                form.form_errors.append(m)
+                return base_render_json(form, include_user=False)
+            do_flash(m, c)
+            return redirect(url_for_security("wan_verify"))
+
+        # update last use and sign count
+        after_this_request(view_commit)
         form.cred.lastuse_datetime = _security.datetime_factory()
         form.cred.sign_count = form.authentication_verification.new_sign_count
         _datastore.put(form.cred)
