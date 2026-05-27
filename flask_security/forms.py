@@ -669,6 +669,13 @@ class LogoutForm(Form):
     refresh_errors: RefreshTokenErrors | None = None
     refresh_tracker: RefreshTrackerMixin | None = None
 
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
+        super().__init__(*args, **kwargs)
+        # If cookie name set - then use that - NOT from the form
+        if request and cv("REFRESH_TOKEN") and cv("REFRESH_TOKEN_COOKIE_NAME"):
+            token = request.cookies.get(cv("REFRESH_TOKEN_COOKIE_NAME"), default=None)
+            self.refresh_token.data = token
+
     def validate(self, **kwargs: t.Any) -> bool:
         from .tokens import verify_refresh_token
 

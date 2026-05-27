@@ -5,7 +5,7 @@ flask_security.utils
 Flask-Security utils module
 
 :copyright: (c) 2012-2019 by Matt Wright.
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -34,6 +34,7 @@ from flask import (
     render_template,
     session,
     url_for,
+    after_this_request,
 )
 from flask_login import login_user as _login_user
 from flask_login import logout_user as _logout_user
@@ -284,6 +285,10 @@ def logout_user() -> None:
         # in 'g'. Be sure to clear both. This affects at least /confirm
         g.pop(csrf_field_name, None)
     session["fs_cc"] = "clear"
+    if config_value("REFRESH_TOKEN") and config_value("REFRESH_TOKEN_COOKIE_NAME"):
+        from .tokens import clear_refresh_token_cookie
+
+        after_this_request(partial(clear_refresh_token_cookie))
     identity_changed.send(
         current_app._get_current_object(),  # type: ignore
         _async_wrapper=current_app.ensure_sync,

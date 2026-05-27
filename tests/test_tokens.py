@@ -16,6 +16,7 @@ from sqlalchemy import Column, String
 
 from flask_security.datastore import PeeweeDatastore
 from flask_security.tokens import RefreshTokenErrors
+from tests.test_csrf import _get_csrf_token
 from tests.test_utils import (
     check_signals,
     json_authenticate,
@@ -40,6 +41,7 @@ def _set_refresh_tracker(app, refresh_token, **kwargs):
 
 
 @pytest.mark.app_settings(testing_no_cookies=True)
+@pytest.mark.settings(refresh_token_cookie_name=None)
 def test_refresh(app, clients, get_message):
     """Test basic refresh token flow.
     - authenticate and receive auth_token and refresh_token
@@ -89,6 +91,7 @@ def test_refresh(app, clients, get_message):
 
 
 @pytest.mark.app_settings(testing_no_cookies=True)
+@pytest.mark.settings(refresh_token_cookie_name=None)
 def test_refresh_errors(app, client, get_message):
     response = json_authenticate(client)
     refresh_token = response.json["response"]["user"]["refresh_token"]
@@ -122,7 +125,9 @@ def test_refresh_errors(app, client, get_message):
 
 
 @pytest.mark.app_settings(testing_no_cookies=True)
-@pytest.mark.settings(refresh_token_max_idle=timedelta(hours=1))
+@pytest.mark.settings(
+    refresh_token_max_idle=timedelta(hours=1), refresh_token_cookie_name=None
+)
 def test_idle_expire(app, clients, get_message):
     response = json_authenticate(clients)
     refresh_token = response.json["response"]["user"]["refresh_token"]
@@ -137,6 +142,7 @@ def test_idle_expire(app, clients, get_message):
     )
 
 
+@pytest.mark.settings(refresh_token_cookie_name=None)
 def test_gen_mismatch(app, clients, get_message, signals):
     # If there is generation mismatch, the system should revoke the
     # entire refresh token family.
@@ -167,6 +173,7 @@ def test_gen_mismatch(app, clients, get_message, signals):
 
 
 @pytest.mark.app_settings(testing_no_cookies=True)
+@pytest.mark.settings(refresh_token_cookie_name=None)
 def test_auto_cleanup_expired(app, clients, get_message, signals):
     # test that expired refresh trackers are cleaned up as part of getting a new tracker
     response = json_authenticate(clients)
@@ -191,6 +198,7 @@ def test_auto_cleanup_expired(app, clients, get_message, signals):
 
 
 @pytest.mark.app_settings(testing_no_cookies=True)
+@pytest.mark.settings(refresh_token_cookie_name=None)
 def test_reset(app, clients, get_message):
     response = json_authenticate(clients)
     refresh_token = response.json["response"]["user"]["refresh_token"]
@@ -215,6 +223,7 @@ class UserWithTokenUniquifier:
 @pytest.mark.app_settings(
     TESTING_USER_MIXIN=UserWithTokenUniquifier, testing_no_cookies=True
 )
+@pytest.mark.settings(refresh_token_cookie_name=None)
 @pytest.mark.changeable()
 def test_token_uniquifier(app, client, get_message):
     # Test if User model has a fs_token_uniquifier field then change password doesn't
@@ -245,6 +254,7 @@ def test_token_uniquifier(app, client, get_message):
 
 @pytest.mark.app_settings(testing_no_cookies=True)
 @pytest.mark.changeable()
+@pytest.mark.settings(refresh_token_cookie_name=None)
 def test_no_token_uniquifier(app, client, get_message):
     # Test if User model doesn't have a fs_token_uniquifier field then change
     # password will invalidate all refresh tokens.
@@ -269,6 +279,7 @@ def test_no_token_uniquifier(app, client, get_message):
 
 
 @pytest.mark.app_settings(testing_no_cookies=True)
+@pytest.mark.settings(refresh_token_cookie_name=None)
 def test_logout_with_token(app, client, get_message):
     response = json_authenticate(client)
     refresh_token = response.json["response"]["user"]["refresh_token"]
@@ -281,3 +292,82 @@ def test_logout_with_token(app, client, get_message):
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "REFRESH_TOKEN_INVALID", reason=RefreshTokenErrors.REVOKED.name
     )
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        assert len(user.refresh_trackers) == 1
+        assert user.refresh_trackers[0].revoked_at is not None
+
+
+@pytest.mark.settings(
+    refresh_token_cookie_name="fs_rtoken_test",
+    refresh_token_cookie=dict(
+        samesite="Lax",
+        httponly=True,
+        secure=True,
+    ),
+)
+def test_refresh_cookie(app, client, get_message):
+    """If we configure a cookie we shouldn't get the refresh token in the response.
+    The cookie should be properly updated when getting a new auth_token.
+    The cookie should be deleted as part of logout.
+    """
+    response = json_authenticate(client)
+    assert "refresh_token" not in response.json["response"]["user"]
+    rcookie = client.get_cookie("fs_rtoken_test")
+    assert rcookie is not None
+    assert rcookie.http_only
+    assert rcookie.same_site == "Lax"
+    assert rcookie.secure
+    tdict = app.security.refresh_token_serializer.loads(rcookie.value)
+    assert tdict["gen"] == 1
+
+    auth_token = response.json["response"]["user"]["authentication_token"]
+    verify_token(client, auth_token)
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = client.post("/refresh-token", headers=headers)
+    assert response.status_code == 200
+
+    nrcookie = client.get_cookie("fs_rtoken_test")
+    assert nrcookie is not None
+    assert nrcookie.http_only
+    ntdict = app.security.refresh_token_serializer.loads(nrcookie.value)
+    assert ntdict["gen"] == 2
+    assert tdict["family"] == ntdict["family"]
+
+    # log out and ensure cookie is removed
+    client.post("/logout")
+    assert client.get_cookie("fs_rtoken_test") is None
+    assert len(client._cookies) == 1  # session
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        assert len(user.refresh_trackers) == 1
+        assert user.refresh_trackers[0].revoked_at is not None
+
+
+@pytest.mark.csrf(csrfprotect=True)
+def test_refresh_token_csrf(app, client, get_message):
+    csrf_token = _get_csrf_token(client)
+    headers = {"X-CSRF-Token": csrf_token}
+
+    json_authenticate(client, headers=headers)
+    rcookie = client.get_cookie("fs_refresh")
+    assert rcookie is not None
+
+    response = client.post("/refresh-token", json={})
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    client.post("/refresh-token", json={}, headers=headers)
+    nrcookie = client.get_cookie("fs_refresh")
+    assert nrcookie is not None
+    ntdict = app.security.refresh_token_serializer.loads(nrcookie.value)
+    assert ntdict["gen"] == 2
+
+    # upon logout refresh tracker/token should have been revoked
+    client.post("/logout")
+    assert client.get_cookie("fs_rtoken_test") is None
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        assert len(user.refresh_trackers) == 1
+        assert user.refresh_trackers[0].revoked_at is not None

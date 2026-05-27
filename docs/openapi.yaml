@@ -210,7 +210,8 @@ paths:
       summary: Log out current user
       description: >
         If a refresh-token is supplied, it will be revoked as part
-        of logging the user out.
+        of logging the user out. If SECURITY_REFRESH_TOKEN_COOKIE_NAME is configured,
+        the refresh token will be deleted as part of logout.
       requestBody:
         required: false
         content:
@@ -2211,7 +2212,10 @@ paths:
               $ref: "#/components/schemas/RefreshToken"
       responses:
         200:
-          description: Refresh token response
+          description: >
+            Refresh token response. If SECURITY_REFRESH_TOKEN_COOKIE_NAME is configured,
+            the response will NOT include the refresh token. The refresh token will be
+            stored in a cookie.
           content:
             application/json:
               schema:

@@ -2046,13 +2046,13 @@ Refresh Tokens
     Default: ``"/refresh-token"``.
 .. py:data:: SECURITY_REFRESH_TOKEN_MAX_AGE
 
-    Specifies a timedelta used to compute the tokens expiration date.
+    Specifies a timedelta used to compute the refresh tokens expiration date.
 
     Default: ``timedelta(days=90)``
 .. py:data:: SECURITY_REFRESH_TOKEN_MAX_IDLE
 
     Specifies a timedelta used to compute the date the refresh token will
-    considered expired due to none use.
+    considered expired due to non-use.
 
     Default: ``timedelta(days=7)``
 .. py:data:: SECURITY_REFRESH_TOKEN_CLEANUP_EXPIRED
@@ -2067,6 +2067,21 @@ Refresh Tokens
     whenever the user creates a new one (re-authenticates)
 
     Default: ``False``
+.. py:data:: SECURITY_REFRESH_COOKIE_NAME
+
+    If set then refresh tokens will be returned in a cookie rather than as
+    part of the JSON response. Upon logout, the cookie will be deleted.
+
+    Default: ``fs_refresh``
+
+.. py:data:: SECURITY_REFRESH_TOKEN_COOKIE
+
+    A dict that defines the parameters required to
+    set the refresh token cookie.
+    The complete set of parameters is described in Flask's `set_cookie`_ documentation.
+    ``"httponly"`` should ALWAYS be set.
+
+    Default: ``{"samesite": "Strict", "httponly": True, "secure": True}``
 
 Feature Flags
 -------------
