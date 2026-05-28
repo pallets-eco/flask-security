@@ -302,6 +302,12 @@ _default_config: dict[str, t.Any] = {
     "REFRESH_TOKEN_CLEANUP_EXPIRED": True,
     "REFRESH_TOKEN_CLEANUP_REVOKED": False,
     "REFRESH_TOKEN_URL": "/refresh-token",
+    "REFRESH_TOKEN_COOKIE_NAME": "fs_refresh",
+    "REFRESH_TOKEN_COOKIE": {
+        "samesite": "Strict",
+        "httponly": True,
+        "secure": True,
+    },
     "CONFIRM_SALT": "confirm-salt",
     "RESET_SALT": "reset-salt",
     "LOGIN_SALT": "login-salt",

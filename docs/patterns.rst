@@ -89,25 +89,19 @@ user's UserModel. By default that field is ``fs_uniquifier``. This means that
 if that field is changed (via :meth:`.UserDatastore.set_uniquifier`)
 then any existing authentication tokens will no longer be valid. This value is changed
 whenever a user changes their password. If this is not the desired behavior then you can add an additional
-attribute to the UserModel: ``fs_token_uniquifier`` and that will be used instead, thus
-isolating password changes from authentication tokens. That attribute can be changed via
-:meth:`.UserDatastore.set_token_uniquifier`. This attribute should have ``unique=True``.
+field to the UserModel: ``fs_token_uniquifier`` and that will be used instead, thus
+isolating password changes from authentication tokens. That field can be changed via
+:meth:`.UserDatastore.set_token_uniquifier`. This field should have ``unique=True``.
 Unlike ``fs_uniquifier``, it can be set to ``nullable`` - it will automatically be generated
-at first use if null.
+at first use if None.
 
-Authentication tokens have 2 options for specifying expiry time :data:`SECURITY_TOKEN_MAX_AGE`
+Authentication tokens have 2 options for specifying expiry time: :data:`SECURITY_TOKEN_MAX_AGE`
 is applied to ALL authentication tokens. Each authentication token can itself have an embedded
 expiry value (settable via the :data:`SECURITY_TOKEN_EXPIRE_TIMESTAMP` callable).
 
 Authentication tokens also convey freshness by recording the time the token was generated.
 This is used for endpoints protected with :func:`.auth_required` with a ``within``
 value set.
-
-.. note::
-    While every Flask-Security endpoint will accept an authentication token header,
-    there are some endpoints that require session information (e.g. a session cookie).
-    This includes entering in a second factor and handling of :ref:`CSRF<csrf_topic>`.
-    As of release 5.5.0, authentication tokens by default carry freshness information.
 
 The refresh token feature consists of:
 
@@ -116,16 +110,19 @@ The refresh token feature consists of:
     token given a valid refresh token
   - refresh token rotation
   - built-in re-use protection
+  - return refresh token as a cookie (default) OR in the JSON response
   - revoke refresh token/tracker on logout
 
 The refresh token (when enabled) is returned along with the authentication token from any
-authentication endpoint. Each new refresh token is tracked in the DB with a FsRefreshTracker entry.
+authentication endpoint. By default, it is returned as a cookie (http-only).
+Each new refresh token is tracked in the DB with a FsRefreshTracker entry.
 Each time a new authentication_token is requested (via the .refresh_token endpoint) the generation
 number of the refresh tracker entry is incremented, and a new refresh token is generated and returned.
 This effectively makes refresh tokens single use.
 
 The ``.logout`` endpoint takes a ``refresh_token`` as an optional item - if supplied - that refresh token
-and the associated tracker will be revoked - this should be the best practice for any application.
+and the associated tracker will be revoked - this should be the best practice for any application. If the
+refresh token is being managed via a cookie, the cookie will be deleted.
 
 .. _freshness_topic:
 
@@ -154,6 +151,8 @@ Flask-Security itself uses this as part of securing the following endpoints:
     - .us_setup ("/us-setup")
     - .mf_recovery_codes ("/mf-recovery-codes")
     - .change_email ("/change-email")
+    - .change_username ("/change-username")
+    - .change_password ("/change")
 
 using the :py:data:`SECURITY_FRESHNESS` and :py:data:`SECURITY_FRESHNESS_GRACE_PERIOD` configuration variables.
 
@@ -184,6 +183,8 @@ The following endpoints accept a ``next`` parameter:
     - .wan_signin_response ("/wan-signin")
     - .us_signin ("/us-signin")
     - .us_verify ("/us-verify")
+    - .oauthstart ("/oauthstart")
+    - .oauth_verify_start ("/oauth-verify-start")
 
 Flask-Security always quotes the path portion of a user supplied URL.
 This `link <https://www.cve.org/CVERecord?id=CVE-2021-32618>`_ provides background of why simple parsing of URLs isn't enough.
@@ -285,6 +286,11 @@ and the application endpoints (protected with Flask-Security decorators such as 
 If your application just uses forms that are derived from ``Flask-WTF::Flaskform`` - you are done.
 Note that all of Flask-Security's endpoints are form based (regardless of how the request was made).
 
+.. note::
+  The logout endpoint has never been form-based and has never had CSRF protection. With the addition
+  of the refresh token feature, logout now accepts form/json input - but still does not support
+  CSRF protection.
+
 Behind-The-Scenes
 ++++++++++++++++++
 Depending on configuration, there are 3 places CSRF tokens can be checked:
@@ -371,7 +377,7 @@ the csrf-token, and if it can't, it will check if the request has a header that 
 Be aware that if you enable this it will ONLY work if you send the session cookie on each request.
 
 .. note::
-    It is IMPORTANT that you initialize/call ``CSRFProtect`` PRIOR to initializing Flask_Security.
+    It is IMPORTANT that you initialize/call ``CSRFProtect`` PRIOR to initializing Flask-Security.
 
 .. note::
     Calling CSRFProtect(app) will setup a @before_request handler to verify CSRF - this occurs BEFORE any Flask-Security decorators

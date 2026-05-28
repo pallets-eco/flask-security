@@ -53,12 +53,14 @@ def authenticate(
     return client.post(endpoint or "/login", data=data, **kwargs)
 
 
-def json_authenticate(client, email="matt@lp.com", password="password", endpoint=None):
+def json_authenticate(
+    client, email="matt@lp.com", password="password", endpoint=None, headers=None
+):
     data = dict(email=email, password=password)
 
     # Get auth token always
     ep = endpoint or "/login?include_auth_token"
-    return client.post(ep, content_type="application/json", json=data)
+    return client.post(ep, content_type="application/json", json=data, headers=headers)
 
 
 def is_authenticated(client, get_message, auth_token=None):

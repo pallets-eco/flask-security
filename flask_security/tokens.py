@@ -14,22 +14,25 @@ This module implements refresh and authentication tokens.
 
 TODO
  - add ability for app to add/verify additional stuff in refresh_token
- - add support for HTTP-only cookie (watch for CSRF issue)
+ - add endpoint to user can revoke refresh token?
  - change TOKEN_MAX_AGE to accept timedelta and change default to 30minutes or so.
- - implment rotation overlap period:
+ - implment rotation overlap period?:
    https://auth0.com/docs/secure/tokens/refresh-tokens/configure-refresh-token-rotation
 
 """
 
 from __future__ import annotations
 
+from copy import copy
 from enum import Enum, auto
 import typing as t
+from functools import partial
 
-from flask import abort, request, after_this_request, current_app
+from flask import abort, request, after_this_request, current_app, Response
 from itsdangerous import BadSignature
 from wtforms import StringField
 
+from .decorators import unauth_csrf
 from .forms import (
     Form,
     RequiredLocalize,
@@ -40,7 +43,13 @@ from .forms import (
 )
 from .proxies import _security, _datastore
 from .signals import refresh_tracker_revoked, refresh_tracker_created
-from .utils import config_value as cv, _, view_commit, get_message, base_render_json
+from .utils import (
+    config_value as cv,
+    _,
+    view_commit,
+    get_message,
+    base_render_json,
+)
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
@@ -73,7 +82,10 @@ def response_tokens(user: UserMixin, payload: dict[str, t.Any]) -> None:
     if _security.refresh_token:
         after_this_request(view_commit)
         refresh_tracker, refresh_token = new_refresh_tracker(user, name="default")
-        payload["user"]["refresh_token"] = refresh_token
+        if cv("REFRESH_TOKEN_COOKIE_NAME"):
+            after_this_request(partial(set_refresh_token_cookie, token=refresh_token))
+        else:
+            payload["user"]["refresh_token"] = refresh_token
 
 
 def new_refresh_tracker(user: UserMixin, name: str) -> tuple[RefreshTrackerMixin, str]:
@@ -122,6 +134,7 @@ def get_refresh_token(refresh_tracker: RefreshTrackerMixin, user: UserMixin) -> 
         "ver": str(1),
         "uid": getattr(user, _datastore.get_token_uniquifier_name()),
         "expires_at": refresh_tracker.expires_at.timestamp(),
+        "last_used_at": refresh_tracker.last_used_at.timestamp(),
         "name": refresh_tracker.name,
         "family": refresh_tracker.refresh_family,
         "gen": refresh_tracker.gen,
@@ -195,6 +208,13 @@ class RefreshTokenForm(Form):
     refresh_tracker: RefreshTrackerMixin | None = None
     user: UserMixin | None = None
 
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
+        super().__init__(*args, **kwargs)
+        # If cookie name set - then use that - NOT anything in the form
+        if request and cv("REFRESH_TOKEN") and cv("REFRESH_TOKEN_COOKIE_NAME"):
+            token = request.cookies.get(cv("REFRESH_TOKEN_COOKIE_NAME"), default=None)
+            self.refresh_token.data = token
+
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):  # pragma: no cover
             return False
@@ -222,6 +242,7 @@ class RefreshTokenForm(Form):
         return True
 
 
+@unauth_csrf()
 def refresh() -> ResponseValue:
     if not request.is_json:
         abort(400)
@@ -238,9 +259,12 @@ def refresh() -> ResponseValue:
         payload = dict()
         payload["user"] = form.user.get_security_payload()
         payload["user"]["authentication_token"] = form.user.get_auth_token()
-        payload["user"]["refresh_token"] = get_refresh_token(
-            form.refresh_tracker, form.user
-        )
+
+        refresh_token = get_refresh_token(form.refresh_tracker, form.user)
+        if cv("REFRESH_TOKEN_COOKIE_NAME"):
+            after_this_request(partial(set_refresh_token_cookie, token=refresh_token))
+        else:
+            payload["user"]["refresh_token"] = refresh_token
         return _security._render_json(payload, 200, None, form.user)
 
     # Failed validation - if it was a GEN_MISMATCH this could be a hack and we should
@@ -249,3 +273,21 @@ def refresh() -> ResponseValue:
         assert form.refresh_tracker
         _revoke_refresh_tracker(form.refresh_tracker, form.refresh_errors, form.user)
     return base_render_json(form, include_user=False)
+
+
+def set_refresh_token_cookie(response: Response, token: str) -> Response:
+    cookie_kwargs = copy(cv("REFRESH_TOKEN_COOKIE"))
+    response.set_cookie(cv("REFRESH_TOKEN_COOKIE_NAME"), value=token, **cookie_kwargs)
+    # This is likely overkill since so far we only return this on a POST which is
+    # unlikely to be cached.
+    response.vary.add("Cookie")
+    return response
+
+
+def clear_refresh_token_cookie(response: Response) -> Response:
+    cookie_kwargs = copy(cv("REFRESH_TOKEN_COOKIE"))
+    # Alas delete_cookie only accepts some of the keywords set_cookie does
+    allowed = ["path", "domain", "secure", "httponly", "samesite", "partitioned"]
+    args = {k: cookie_kwargs.get(k) for k in allowed if k in cookie_kwargs}
+    response.delete_cookie(cv("REFRESH_TOKEN_COOKIE_NAME"), **args)
+    return response
