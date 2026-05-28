@@ -35,68 +35,63 @@ jobs:
           - {python: 'pypy-3.11', tox: 'pypy311-release'}
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          prune-cache: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python }}
-      - name: update pip
-        run: |
-          python -m pip install -U pip
-      - name: cache pip
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
       - name: run tests
         run: |
-          pip install tox
-          tox -e ${{ matrix.tox }}
+          uv run --locked tox -e ${{ matrix.tox }}
 
   lint:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            enable-cache: true
+            prune-cache: false
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
-        - name: update pip
-          run: |
-            python -m pip install -U pip
         - name: Style, docs, mypy
           run: |
-            pip install tox
-            tox -e style,docs,mypy
+            uv run --locked tox -e style,docs,mypy
 
   other:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            enable-cache: true
+            prune-cache: false
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
-        - name: update pip
-          run: |
-            python -m pip install -U pip
         - name: nobabel, nowebauthn, noauthlib, noflasksqlalchemy, async
           run: |
-            pip install tox
-            tox -e nobabel,nowebauthn,noauthlib,noflasksqlalchemy,async
+            uv run --locked tox -e nobabel,nowebauthn,noauthlib,noflasksqlalchemy,async
   cov:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            enable-cache: true
+            prune-cache: false
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
-        - name: update pip
-          run: |
-            python -m pip install -U pip
         - name: Coverage
           run: |
-            pip install tox coverage
-            tox -e coverage
+            uv run --locked tox -e coverage
         - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v6
+          uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
           with:
             fail_ci_if_error: true
             verbose: true
@@ -119,19 +114,14 @@ jobs:
             --health-timeout 5s
             --health-retries 5
       steps:
-        - uses: actions/checkout@v6
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            enable-cache: true
+            prune-cache: false
+        - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
           with:
             python-version: "3.13"
-        - name: update pip
-          run: |
-            python -m pip install -U pip
-        - name: cache pip
-          uses: actions/cache@v5
-          with:
-            path: ~/.cache/pip
-            key: pip-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
         - name: Postgres
           run: |
-            pip install tox
-            tox -e realpostgres -- --realdburl='postgresql://postgres:testpw@localhost:5432/testdb'
+            uv run --locked tox -e realpostgres -- --realdburl='postgresql://postgres:testpw@localhost:5432/testdb'
