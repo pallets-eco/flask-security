@@ -30,7 +30,6 @@ from .datastore import (
     AsaList,
     MongoEngineUserDatastore,
     PeeweeUserDatastore,
-    PonyUserDatastore,
     SQLAlchemySessionUserDatastore,
 )
 from .decorators import (

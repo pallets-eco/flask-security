@@ -67,7 +67,6 @@ low = [
     "markupsafe==2.1.2",
     "mongoengine==0.29.1",
     "mongomock==4.3.0",
-    "pony==0.7.16;python_version<'3.11'",
     "phonenumberslite==8.13.11",
     "qrcode==7.4.2",
     # authlib requires requests

@@ -18,7 +18,6 @@ import os
 import tempfile
 import time
 import typing as t
-from datetime import datetime
 import sys
 from urllib.parse import urlsplit
 
@@ -39,7 +38,6 @@ from flask_security import (
     FSQLALiteUserDatastore,
     MongoEngineUserDatastore,
     PeeweeUserDatastore,
-    PonyUserDatastore,
     RoleMixin,
     Security,
     SQLAlchemySessionUserDatastore,
@@ -382,9 +380,6 @@ def app(request):
 
     request.addfinalizer(revert_forms)
     yield app
-    # help find tests that don't clean up - note that pony leaves a connection so
-    # we can't use this in 'production'...
-    # assert not find_sqlite_connections()
 
 
 @pytest.fixture()
@@ -976,76 +971,6 @@ def peewee_setup(app, tmpdir, realdburl):
 
 
 @pytest.fixture()
-def pony_datastore(app, tmpdir, realdburl):
-    ds, td = pony_setup(app, tmpdir, realdburl)
-    yield ds
-    td()
-
-
-def pony_setup(app, tmpdir, realdburl):
-    pytest.importorskip("pony")
-    from pony.orm import Database, Optional, Required, Set
-    from pony.orm.core import SetInstance
-
-    SetInstance.append = SetInstance.add
-    db = Database()
-
-    class Role(db.Entity):
-        name = Required(str, unique=True)
-        description = Optional(str, nullable=True)
-        users = Set(lambda: User)  # type: ignore
-
-    class User(db.Entity):
-        email = Required(str)
-        fs_uniquifier = Required(str, nullable=False)
-        username = Optional(str)
-        security_number = Optional(int)
-        password = Optional(str, nullable=True)
-        last_login_at = Optional(datetime)
-        current_login_at = Optional(datetime)
-        tf_primary_method = Optional(str, nullable=True)
-        tf_totp_secret = Optional(str, nullable=True)
-        tf_phone_number = Optional(str, nullable=True)
-        us_totp_secrets = Optional(str, nullable=True)
-        us_phone_number = Optional(str, nullable=True)
-        last_login_ip = Optional(str)
-        current_login_ip = Optional(str)
-        login_count = Optional(int)
-        active = Required(bool, default=True)
-        confirmed_at = Optional(datetime)
-        roles = Set(lambda: Role)
-
-        def has_role(self, name):
-            return name in {r.name for r in self.roles.copy()}
-
-    if realdburl:
-        db_url, db_info = _setup_realdb(realdburl)
-        pieces = urlsplit(db_url)
-        provider = pieces.scheme.split("+")[0]
-        provider = "postgres" if provider == "postgresql" else provider
-        db.bind(
-            provider=provider,
-            user=pieces.username,
-            password=pieces.password,
-            host=pieces.hostname,
-            port=pieces.port,
-            database=pieces.path[1:],
-        )
-    else:
-        app.config["DATABASE"] = {"name": ":memory:", "engine": "pony.SqliteDatabase"}
-        db.bind("sqlite", ":memory:", create_db=True)
-
-    db.generate_mapping(create_tables=True)
-
-    def tear_down():
-        db.disconnect()
-        if realdburl:
-            _teardown_realdb(db_info)
-
-    return PonyUserDatastore(db, User, Role), tear_down
-
-
-@pytest.fixture()
 def client(request, app, sqlalchemy_datastore):
     app.security = Security(
         app, datastore=sqlalchemy_datastore, **app.fs_constructor_args
@@ -1118,9 +1043,6 @@ def clients(request, app, tmpdir, realdburl, realmongodburl):
         ds, td = mongoengine_setup(app, tmpdir, realmongodburl)
     elif request.param == "cl-peewee":
         ds, td = peewee_setup(app, tmpdir, realdburl)
-    elif request.param == "cl-pony":
-        # Not working yet.
-        ds, td = pony_setup(app, tmpdir, realdburl)
     elif request.param == "cl-fsqlalite":
         ds, td = fsqlalite_setup(app, tmpdir, realdburl)
 
@@ -1165,7 +1087,6 @@ def get_message_local(app):
         "sqlalchemy-session",
         "mongoengine",
         "peewee",
-        "pony",
         "fsqlalite",
     ]
 )
@@ -1178,10 +1099,6 @@ def datastore(request, app, tmpdir, realdburl, realmongodburl):
         ds, td = mongoengine_setup(app, tmpdir, realmongodburl)
     elif request.param == "peewee":
         ds, td = peewee_setup(app, tmpdir, realdburl)
-    elif request.param == "pony":
-        if sys.version_info >= (3, 13):
-            pytest.skip("pony requires python3.12 or lower")
-        ds, td = pony_setup(app, tmpdir, realdburl)
     elif request.param == "fsqlalite":
         ds, td = fsqlalite_setup(app, tmpdir, realdburl)
     yield ds
@@ -1189,8 +1106,7 @@ def datastore(request, app, tmpdir, realdburl, realmongodburl):
 
 
 @pytest.fixture()
-# def script_info(app, datastore): # Fix me when pony works
-def script_info(app, sqlalchemy_datastore):
+def script_info(app, datastore):
     from flask.cli import ScriptInfo
 
     def create_app():
@@ -1200,7 +1116,7 @@ def script_info(app, sqlalchemy_datastore):
         ]
 
         app.config.update(**{"SECURITY_USER_IDENTITY_ATTRIBUTES": uia})
-        app.security = Security(app, datastore=sqlalchemy_datastore)
+        app.security = Security(app, datastore=datastore)
         return app
 
     return ScriptInfo(create_app=create_app)
