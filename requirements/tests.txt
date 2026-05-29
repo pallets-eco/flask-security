@@ -16,7 +16,6 @@ mongoengine
 mongomock
 msgcheck
 peewee
-pony
 phonenumberslite
 pydocstyle
 pytest-cache

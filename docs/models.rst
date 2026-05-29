@@ -7,7 +7,7 @@ Basics
 ------
 
 Flask-Security assumes you'll be using libraries such as SQLAlchemy,
-MongoEngine, Peewee or PonyORM to define a `User`
+MongoEngine or, Peewee to define a `User`
 and `Role` data model. The fields on your models must follow a particular convention
 depending on the functionality your app requires. Aside from this, you're free
 to add any additional fields to your model(s) if you want.

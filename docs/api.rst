@@ -81,9 +81,6 @@ Datastores
 .. autoclass:: flask_security.PeeweeUserDatastore
     :show-inheritance:
 
-.. autoclass:: flask_security.PonyUserDatastore
-    :show-inheritance:
-
 .. autoclass:: flask_security.datastore.SQLAlchemyDatastore
 
     Internal class implementing DataStore interface.
@@ -93,10 +90,6 @@ Datastores
     Internal class implementing DataStore interface.
 
 .. autoclass:: flask_security.datastore.PeeweeDatastore
-
-    Internal class implementing DataStore interface.
-
-.. autoclass:: flask_security.datastore.PonyDatastore
 
     Internal class implementing DataStore interface.
 

@@ -576,10 +576,6 @@ def test_webauthn_cascade(app, datastore):
 
 
 def test_mf_recovery_codes(app, datastore):
-    from tests.conftest import PonyUserDatastore
-
-    if isinstance(datastore, PonyUserDatastore):
-        skip("Pony not supported")
     init_app_with_options(app, datastore)
 
     with app.test_request_context("/"):

@@ -15,8 +15,11 @@ Features & Improvements
 Fixes
 +++++
 - (:issue:`1212`) Newly introduced :py:meth:`.UserMixin.is_locked` logic is inverted.
-- (:issue:`1215`) Fix GHSA-97r5-pg8x-p63p - possible to verify an account using a different
-  users oauth credentials.
+
+Docs and Chores
++++++++++++++++
+- (:issue:`1208`) Remove support for Pony ORM
+
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -32,7 +35,7 @@ Notes
 Version 5.8.1
 -------------
 
-Released TBD
+Released May 21, 2026
 
 Fixes
 +++++

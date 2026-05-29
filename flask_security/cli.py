@@ -176,7 +176,7 @@ def users_create(attributes, password, active, username):
         # Exceptions could be an attribute given that isn't in user store
         try:
             _datastore.create_user(**kwargs)
-        except TypeError as e:
+        except Exception as e:
             raise click.exceptions.BadParameter(e)
         click.secho("User created successfully.", fg="green")
         kwargs["password"] = "****"
