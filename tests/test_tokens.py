@@ -8,14 +8,17 @@ Refresh/Auth Token functionality tests
 :license: MIT, see LICENSE for more details.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import math
 
 import pytest
+from freezegun import freeze_time
+from itsdangerous import SignatureExpired
 from sqlalchemy import Column, String
 
 from flask_security.datastore import PeeweeDatastore
 from flask_security.tokens import RefreshTokenErrors
+from flask_security.utils import parse_auth_token
 from tests.test_csrf import _get_csrf_token
 from tests.test_utils import (
     check_signals,
@@ -371,3 +374,65 @@ def test_refresh_token_csrf(app, client, get_message):
         user = app.security.datastore.find_user(email="matt@lp.com")
         assert len(user.refresh_trackers) == 1
         assert user.refresh_trackers[0].revoked_at is not None
+
+
+@pytest.mark.settings(token_max_age=60)
+def test_auth_token_max_age_int(app, client_nc):
+    with app.app_context():
+        with freeze_time(datetime.now(timezone.utc) + timedelta(minutes=-3)):
+            response = json_authenticate(client_nc)
+            token = response.json["response"]["user"]["authentication_token"]
+        with pytest.raises(SignatureExpired):
+            parse_auth_token(token)
+
+
+@pytest.mark.settings(token_max_age=timedelta(days=3))
+def test_auth_token_max_age_delta(app, client_nc):
+    with app.app_context():
+        with freeze_time(datetime.now(timezone.utc) + timedelta(days=-5)):
+            response = json_authenticate(client_nc)
+            token = response.json["response"]["user"]["authentication_token"]
+        with pytest.raises(SignatureExpired):
+            parse_auth_token(token)
+
+
+@pytest.mark.settings(token_max_age=0)
+def test_auth_token_max_age_0(app, client_nc):
+    with app.app_context():
+        with freeze_time(datetime.now(timezone.utc) + timedelta(weeks=-1000)):
+            response = json_authenticate(client_nc)
+            token = response.json["response"]["user"]["authentication_token"]
+        with pytest.raises(SignatureExpired):
+            parse_auth_token(token)
+
+
+@pytest.mark.settings(token_max_age=timedelta(days=6))
+def test_per_user_expired_token(app, client_nc):
+    # Test expiry in auth_token using callable
+    with app.app_context():
+        with freeze_time(datetime.now(timezone.utc) + timedelta(days=-3)):
+
+            def exp(user):
+                assert user.email == "matt@lp.com"
+                return int((datetime.now(timezone.utc) + timedelta(days=1)).timestamp())
+
+            app.config["SECURITY_TOKEN_EXPIRE_TIMESTAMP"] = exp
+
+            response = json_authenticate(client_nc)
+            token = response.json["response"]["user"]["authentication_token"]
+        with pytest.raises(SignatureExpired) as e:
+            parse_auth_token(token)
+        assert "token[exp] value expired" in e.value.message
+
+
+def test_per_user_not_expired_token(app, client_nc):
+    # Test expiry in auth_token using callable
+    def exp(user):
+        assert user.email == "matt@lp.com"
+        return int((datetime.now(timezone.utc) + timedelta(days=1)).timestamp())
+
+    app.config["SECURITY_TOKEN_EXPIRE_TIMESTAMP"] = exp
+
+    response = json_authenticate(client_nc)
+    token = response.json["response"]["user"]["authentication_token"]
+    verify_token(client_nc, token)

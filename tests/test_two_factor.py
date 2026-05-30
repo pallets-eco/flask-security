@@ -946,6 +946,7 @@ def test_opt_in_nc(app, client_nc, get_message, signals):
     assert response.json["response"]["tf_phone_number"] == "+442083661177"
 
 
+@pytest.mark.settings(token_max_age=timedelta(days=4))
 def test_opt_in_nc_expired(app, client_nc, get_message):
     """
     Test tf-setup without cookies - expired token

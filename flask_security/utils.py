@@ -566,7 +566,7 @@ def parse_auth_token(auth_token: str) -> dict[str, t.Any]:
 
     # This can raise BadSignature or SignatureExpired exceptions from itsdangerous
     raw_data = _security.remember_token_serializer.loads(
-        auth_token, max_age=config_value("TOKEN_MAX_AGE")
+        auth_token, max_age=config_value("TOKEN_MAX_AGE").total_seconds()
     )
 
     # Version 3.x generated tokens that map to data with 3 elements,

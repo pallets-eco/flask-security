@@ -293,7 +293,7 @@ _default_config: dict[str, t.Any] = {
     "TWO_FACTOR_RESCUE_MAIL": "no-reply@localhost",
     "TOKEN_AUTHENTICATION_KEY": "auth_token",
     "TOKEN_AUTHENTICATION_HEADER": "Authentication-Token",
-    "TOKEN_MAX_AGE": None,
+    "TOKEN_MAX_AGE": timedelta(minutes=15),
     "TOKEN_EXPIRE_TIMESTAMP": lambda user: 0,
     "REFRESH_TOKEN": False,
     "REFRESH_TOKEN_SALT": "refresh-token-salt",
@@ -1760,6 +1760,11 @@ class Security:
                     "Each element in SECURITY_USER_IDENTITY_ATTRIBUTES"
                     " must have one and only one key."
                 )
+
+        if not isinstance(cv("TOKEN_MAX_AGE", app=app), timedelta):
+            app.config["SECURITY_TOKEN_MAX_AGE"] = timedelta(
+                seconds=cv("TOKEN_MAX_AGE", app=app)
+            )
 
         self.login_manager = _get_login_manager(app, self)
         self._phone_util = self._phone_util_cls(app)
