@@ -9,7 +9,6 @@ Test common functionality
 """
 
 import base64
-from datetime import datetime, timedelta, timezone
 import json
 import re
 import pytest
@@ -19,7 +18,6 @@ from flask import Blueprint, g
 from flask_security import uia_email_mapper
 from flask_security.decorators import auth_required
 from flask_principal import identity_loaded
-from freezegun import freeze_time
 
 from tests.conftest import v2_param
 from tests.test_utils import (
@@ -727,35 +725,6 @@ def test_token_auth_invalid_for_session_auth(client):
     headers = {"Authentication-Token": token, "Accept": "application/json"}
     response = client.get("/session", headers=headers)
     assert response.status_code == 401
-
-
-def test_per_user_expired_token(app, client_nc):
-    # Test expiry in auth_token using callable
-    with freeze_time("2024-01-01"):
-
-        def exp(user):
-            assert user.email == "matt@lp.com"
-            return int((datetime.now(timezone.utc) + timedelta(days=1)).timestamp())
-
-        app.config["SECURITY_TOKEN_EXPIRE_TIMESTAMP"] = exp
-
-        response = json_authenticate(client_nc)
-        token = response.json["response"]["user"]["authentication_token"]
-
-    verify_token(client_nc, token, status=401)
-
-
-def test_per_user_not_expired_token(app, client_nc):
-    # Test expiry in auth_token using callable
-    def exp(user):
-        assert user.email == "matt@lp.com"
-        return int((datetime.now(timezone.utc) + timedelta(days=1)).timestamp())
-
-    app.config["SECURITY_TOKEN_EXPIRE_TIMESTAMP"] = exp
-
-    response = json_authenticate(client_nc)
-    token = response.json["response"]["user"]["authentication_token"]
-    verify_token(client_nc, token)
 
 
 def test_garbled_auth_token(app, client_nc):

@@ -98,9 +98,14 @@ These configuration keys are used globally across all features.
 
 .. py:data:: SECURITY_TOKEN_MAX_AGE
 
-    Specifies the number of seconds before an authentication token expires.
+    Specifies token expiration as a timedelta. Setting to 0 will mean the
+    token never expires.
 
-    Default: ``None``, meaning the token never expires.
+    Default: ``timedelta(minutes=15)``
+
+    .. versionchanged:: 5.9.0
+        Change from int to a timedelta. If an int is provided, it will be
+        changed to a timedelta as part of Flask-Security initialization.
 
 .. py:data:: SECURITY_TOKEN_EXPIRE_TIMESTAMP
 

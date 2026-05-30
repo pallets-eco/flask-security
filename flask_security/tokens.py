@@ -15,7 +15,6 @@ This module implements refresh and authentication tokens.
 TODO
  - add ability for app to add/verify additional stuff in refresh_token
  - add endpoint to user can revoke refresh token?
- - change TOKEN_MAX_AGE to accept timedelta and change default to 30minutes or so.
  - implment rotation overlap period?:
    https://auth0.com/docs/secure/tokens/refresh-tokens/configure-refresh-token-rotation
 

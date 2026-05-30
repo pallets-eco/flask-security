@@ -11,6 +11,8 @@ Released TBD
 Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`1206`) Add support for refresh tokens. See :ref:`token_topic`
+- (:pr:`1233`) Change :py:data:`SECURITY_TOKEN_MAX_AGE` from an int to a timedelta.
+  Also - change default from ``never expire`` to 15 minutes.
 
 Fixes
 +++++
@@ -25,6 +27,10 @@ Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 - The fix for the inverted `is_locked` logic will require any application using it
   to invert their logic.
+- The change to :py:data:`SECURITY_TOKEN_MAX_AGE` default improves a long-standing
+  'insecure-out-of-the-box' issue. Applications will have to either change the
+  value if they really want a long-lasting token or use the new refresh token
+  feature.
 
 Notes
 +++++
