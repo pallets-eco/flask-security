@@ -4,7 +4,7 @@ test_basic
 
 Test common functionality
 
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -531,13 +531,13 @@ def test_logout_post(client):
 
 def test_logout_with_next_invalid(client, get_message):
     authenticate(client)
-    response = client.get("/logout?next=http://google.com")
+    response = client.post("/logout?next=http://google.com")
     assert "google.com" not in response.location
 
 
 def test_logout_with_next(client):
     authenticate(client)
-    response = client.get("/logout?next=/page1", follow_redirects=True)
+    response = client.post("/logout?next=/page1", follow_redirects=True)
     assert b"Page 1" in response.data
 
 
@@ -671,7 +671,7 @@ def test_multiple_role_required(clients):
         authenticate(clients, user)
         response = clients.get("/admin_and_editor", follow_redirects=True)
         assert b"Unauthorized" in response.data
-        clients.get("/logout")
+        clients.post("/logout")
 
     authenticate(clients, "dave@lp.com")
     response = clients.get("/admin_and_editor", follow_redirects=True)

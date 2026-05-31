@@ -1326,7 +1326,7 @@ def test_post_security_with_application_root(app, sqlalchemy_datastore):
     assert response.status_code in [302, 303]
     assert "/root" in response.location
 
-    response = client.get("/logout")
+    response = client.post("/logout")
     assert response.status_code in [302, 303]
     assert "/root" in response.location
 
@@ -1349,7 +1349,7 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
     assert response.status_code in [302, 303]
     assert "/post_login" in response.location
 
-    response = client.get("/logout")
+    response = client.post("/logout")
     assert response.status_code in [302, 303]
     assert "/post_logout" in response.location
 

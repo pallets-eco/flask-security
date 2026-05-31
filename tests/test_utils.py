@@ -102,7 +102,7 @@ def verify_token(client_nc, token, status=None):
 
 
 def logout(client, endpoint=None, **kwargs):
-    return client.get(endpoint or "/logout", **kwargs)
+    return client.post(endpoint or "/logout", **kwargs)
 
 
 def json_logout(client, token, endpoint=None):
