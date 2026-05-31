@@ -106,7 +106,7 @@ def test_context_processors(client, app, outbox):
     def mail():
         return {"foo": "bar-mail"}
 
-    client.get("/logout")
+    client.post("/logout")
 
     client.post("/reset", data=dict(email="matt@lp.com"))
 
@@ -127,7 +127,7 @@ def test_context_processors(client, app, outbox):
     def recover_username():
         return {"foo": "bar-recover-username"}
 
-    client.get("/logout")
+    client.post("/logout")
     response = client.get("/recover-username")
     assert b"global" in response.data
     assert b"bar-recover-username" in response.data

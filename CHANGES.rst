@@ -13,6 +13,7 @@ Features & Improvements
 - (:issue:`1206`) Add support for refresh tokens. See :ref:`token_topic`
 - (:pr:`1233`) Change :py:data:`SECURITY_TOKEN_MAX_AGE` from an int to a timedelta.
   Also - change default from ``never expire`` to 15 minutes.
+- (:pr:`xx`) Change default LOGOUT_METHODS to be just ``"POST"``
 
 Fixes
 +++++
@@ -32,6 +33,8 @@ Backwards Compatibility Concerns
   'insecure-out-of-the-box' issue. Applications will have to either change the
   value if they really want a long-lasting token or use the new refresh token
   feature.
+- The default for :py:data:`SECURITY_LOGOUT_METHODS` has been changed to just
+  allowing ``"POST"``. This is considered modern best practice.
 
 Notes
 +++++

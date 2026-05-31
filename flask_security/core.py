@@ -195,7 +195,7 @@ _default_config: dict[str, t.Any] = {
     "TWO_FACTOR_SELECT_URL": "/tf-select",
     "TWO_FACTOR_POST_SETUP_VIEW": ".two_factor_setup",  # endpoint or URL
     "TWO_FACTOR_ERROR_VIEW": ".login",
-    "LOGOUT_METHODS": ["GET", "POST"],
+    "LOGOUT_METHODS": ["POST"],
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
     "LOGIN_ERROR_VIEW": None,  # spa
