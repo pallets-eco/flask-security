@@ -1428,6 +1428,49 @@ def test_verify_validate_error(app, client, get_message, signals):
     )
 
 
+def test_verify_rejects_cross_user_assertion(app, client, get_message):
+    # The reauthentication-freshness gate must not be satisfied by a
+    # WebAuthn assertion whose proven credential belongs to a different
+    # user than the currently authenticated session user. Sibling of the
+    # OAuth fix in `oauth_glue.oauth_verify_response`.
+    authenticate(client, email="joe@lp.com")
+    register_options, response_url = _register_start_json(
+        client, name="joekey", usage="first"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    authenticate(client, email="matt@lp.com")
+    register_options, response_url = _register_start_json(
+        client, name="mattkey", usage="first"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
+    assert response.status_code == 200
+
+    old_paa = reset_fresh(client, app.config["SECURITY_FRESHNESS"])
+
+    response = client.post("wan-verify", json=dict())
+    response_url = f'wan-verify/{response.json["response"]["wan_state"]}'
+    # Submit joe's assertion while logged in as matt.
+    response = client.post(response_url, json=dict(credential=json.dumps(SIGNIN_DATA1)))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "WEBAUTHN_MISMATCH_USER_HANDLE"
+    )
+    with client.session_transaction() as sess:
+        assert sess["fs_paa"] == old_paa
+
+    # same with forms
+    response = client.post(
+        response_url,
+        data=dict(credential=json.dumps(SIGNIN_DATA1)),
+        follow_redirects=True,
+    )
+    assert b"<title>Reauthenticate</title>" in response.data
+    assert b"Credential user handle" in response.data
+
+
 @pytest.mark.settings(wan_allow_as_verify=None)
 def test_no_verify(app, client):
     authenticate(client)
