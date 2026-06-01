@@ -1857,10 +1857,10 @@ def test_totp_generation(app, client, get_message):
 )
 def test_us_tf_validity(app, client, get_message):
     us_tf_authenticate(app, client, remember=True)
-    assert client.get_cookie("tf_validity")
+    assert client.get_cookie(app.config["SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME"])
     logout(client)
     # logout does NOT remove this cookie
-    assert client.get_cookie("tf_validity")
+    assert client.get_cookie(app.config["SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME"])
 
     # This time shouldn't require code
     data = dict(identity="gal@lp.com", passcode="password")
