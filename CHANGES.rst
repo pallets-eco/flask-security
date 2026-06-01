@@ -13,7 +13,9 @@ Features & Improvements
 - (:issue:`1206`) Add support for refresh tokens. See :ref:`token_topic`
 - (:pr:`1233`) Change :py:data:`SECURITY_TOKEN_MAX_AGE` from an int to a timedelta.
   Also - change default from ``never expire`` to 15 minutes.
-- (:pr:`xx`) Change default LOGOUT_METHODS to be just ``"POST"``
+- (:pr:`1235`) Change default LOGOUT_METHODS to be just ``"POST"``
+- (:issue:`1228`) Change default ``csrf`` and ``tf_validity`` cookie config to ``secure=True``
+- (:issue:`1228`) The ``tf_validity`` cookie name is now configurable via :py:data:`SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME`
 
 Fixes
 +++++
@@ -35,6 +37,10 @@ Backwards Compatibility Concerns
   feature.
 - The default for :py:data:`SECURITY_LOGOUT_METHODS` has been changed to just
   allowing ``"POST"``. This is considered modern best practice.
+- The default configuration for :py:data:`SECURITY_TWO_FACTOR_VALIDITY_COOKIE`
+  has been change to ``secure=True``.
+- The default configuration for :py:data:`SECURITY_CSRF_COOKIE` has been
+  changed to ``secure=True``
 
 Notes
 +++++

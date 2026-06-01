@@ -282,11 +282,14 @@ These configuration keys are used globally across all features.
     set a CSRF cookie.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
-    Default: ``{"samesite": "Strict", "httponly": False, "secure": False}``
+    Default: ``{"samesite": "Strict", "httponly": False, "secure": True}``
 
     .. versionchanged:: 4.1.0
         The 'key' attribute was deprecated in favor of a separate configuration
         variable :data:`SECURITY_CSRF_COOKIE_NAME`.
+
+    .. versionchanged:: 5.9.0
+        ``secure`` default changed to ``True``
 
 .. py:data:: SECURITY_CSRF_HEADER
 
@@ -1424,7 +1427,7 @@ Configuration related to the two-factor authentication feature.
 .. py:data:: SECURITY_TWO_FACTOR_ALWAYS_VALIDATE
 
     Specifies whether the application should require a two-factor code upon every login.
-    If set to ``False`` then the 2 values below are used to determine when
+    If set to ``False`` then the values below are used to determine when
     a code is required. Note that this is cookie based - so a new browser
     session will always require a fresh two-factor code.
 
@@ -1436,12 +1439,24 @@ Configuration related to the two-factor authentication feature.
     Default: ``"30 Days"``.
 
 
+.. py:data:: SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME
+
+    Name for the two factor validity cookie.
+
+    Default: ``tf_validity``
+
+    .. versionadded:: 5.9.0
+
 .. py:data:: SECURITY_TWO_FACTOR_VALIDITY_COOKIE
 
     A dictionary containing the parameters of the two-factor validity cookie.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
-    Default: ``{'httponly': True, 'secure': False, 'samesite': None}``.
+    Default: ``{'httponly': True, 'secure': True, 'samesite': "Strict"}``.
+
+
+    .. versionchanged:: 5.9.0
+        ``secure`` default changed to ``True``. ``samesite`` default changed to ``Strict``
 
 .. py:data:: SECURITY_TWO_FACTOR_IMPLEMENTATIONS
 

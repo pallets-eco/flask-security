@@ -91,29 +91,35 @@ def tf_in_session(session):
     )
 
 
-@pytest.mark.settings(two_factor_always_validate=False)
-def test_always_validate(app, client, get_message):
+@pytest.mark.settings(
+    two_factor_always_validate=False, two_factor_validity_cookie_name="tfv"
+)
+def test_validity_cookie(app, client, get_message):
     tf_authenticate(app, client, remember=True)
-    assert client.get_cookie("tf_validity")
+    assert client.get_cookie("tfv")
 
+    # logout shouldn't delete cookie so we can log in again with just password
     logout(client)
 
     data = dict(email="gal@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
     assert b"Welcome gal@lp.com" in response.data
     assert response.status_code == 200
-
     logout(client)
+
+    # ensure the cookie is for a specific user
     data = dict(email="gal2@lp.com", password="password")
     response = client.post("/login", data=data, follow_redirects=True)
     assert b"Please enter your authentication code" in response.data
 
-    # make sure the cookie doesn't affect the JSON request
-    client.delete_cookie("tf_validity")
-    # Test JSON (this authenticates gal@lp.com)
+    client.delete_cookie("tfv")
+
+    # Same tests as above with JSON (this authenticates gal@lp.com)
     tf_authenticate(app, client, json=True, remember=True)
+    assert client.get_cookie("tfv")
     logout(client)
 
+    # shouldn't require tf
     data = dict(email="gal@lp.com", password="password")
     response = client.post(
         "/login",
@@ -121,7 +127,6 @@ def test_always_validate(app, client, get_message):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    # verify logged in
     is_authenticated(client, get_message)
     logout(client)
 
@@ -139,7 +144,10 @@ def test_always_validate(app, client, get_message):
 
 @pytest.mark.settings(two_factor_always_validate=False)
 def test_do_not_remember_tf_validity(app, client):
+    # If 'remember' not set during login - no cookie should be sent
+    # and tf should be required every time.
     tf_authenticate(app, client)
+    assert not client.get_cookie("tf_validity")
     logout(client)
 
     data = dict(email="gal@lp.com", password="password")

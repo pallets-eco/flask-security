@@ -260,9 +260,10 @@ _default_config: dict[str, t.Any] = {
     "TWO_FACTOR_ALWAYS_VALIDATE": True,
     "TWO_FACTOR_LOGIN_VALIDITY": "30 days",
     "TWO_FACTOR_VALIDITY_SALT": "tf-validity-salt",
+    "TWO_FACTOR_VALIDITY_COOKIE_NAME": "tf_validity",
     "TWO_FACTOR_VALIDITY_COOKIE": {
         "httponly": True,
-        "secure": False,
+        "secure": True,
         "samesite": "Strict",
     },
     "TWO_FACTOR_SETUP_SALT": "tf-setup-salt",
@@ -378,7 +379,7 @@ _default_config: dict[str, t.Any] = {
     "CSRF_COOKIE": {
         "samesite": "Strict",
         "httponly": False,
-        "secure": False,
+        "secure": True,
     },
     "CSRF_HEADER": "X-XSRF-Token",
     "CSRF_COOKIE_REFRESH_EACH_REQUEST": False,
