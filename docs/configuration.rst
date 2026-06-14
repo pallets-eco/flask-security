@@ -876,6 +876,28 @@ Login/Logout
 
     Default: ``"security/login_user.html"``.
 
+.. py:data:: SECURITY_LOGOUT_USER_TEMPLATE
+
+    Specifies the path to the template for the logout page.
+    Note this is only returned on POST error.
+
+    Default: ``"security/logout_user.html"``.
+
+    .. versionadded:: 5.9.0
+
+.. py:data:: SECURITY_LOGOUT_CSRF
+
+    Should the logout view enforce CSRF. If set to ``"True"`` and if there is a
+    CSRF token mismatch then the ``"SECURITY_LOGOUT_USER_TEMPLATE"`` will be
+    returned (if request was a form post). For a JSON request, a 400 response will
+    be returned.
+
+    .. danger::
+        Be sure to not configure ``"GET"`` as an accepted method since that is not
+        CSRF protected.
+
+    .. versionadded:: 5.9.0
+
 .. py:data:: SECURITY_VERIFY_URL
 
     Specifies the reauthenticate URL. If :py:data:`SECURITY_FRESHNESS` evaluates to < 0; this
@@ -2185,6 +2207,7 @@ A list of all templates:
 
 * :py:data:`SECURITY_FORGOT_PASSWORD_TEMPLATE`
 * :py:data:`SECURITY_LOGIN_USER_TEMPLATE`
+* :py:data:`SECURITY_LOGOUT_USER_TEMPLATE`
 * :py:data:`SECURITY_VERIFY_TEMPLATE`
 * :py:data:`SECURITY_REGISTER_USER_TEMPLATE`
 * :py:data:`SECURITY_RESET_PASSWORD_TEMPLATE`

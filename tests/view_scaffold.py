@@ -1,4 +1,4 @@
-# :copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+# :copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 # :license: MIT, see LICENSE for more details.
 
 """
@@ -31,7 +31,6 @@ import typing as t
 import webbrowser
 
 from flask import Flask, flash, render_template_string, request, session, g
-from flask_wtf import CSRFProtect
 
 from flask_security import (
     MailUtil,
@@ -169,7 +168,6 @@ def create_app() -> Flask:
     app.config["SECURITY_PASSWORD_SALT"] = "156043940537155509276282232127182067465"
 
     app.config["LOGIN_DISABLED"] = False
-    app.config["WTF_CSRF_ENABLED"] = True
     app.config["REMEMBER_COOKIE_SAMESITE"] = "strict"
     # 'strict' causes redirect after OAuth to fail since session cookie not sent
     # this just happens on first 'register' with e.g. github
@@ -256,7 +254,9 @@ def create_app() -> Flask:
         ):
             app.config[ev] = _find_bool(os.environ.get(ev))
 
-    CSRFProtect(app)
+    app.config["SECURITY_LOGOUT_CSRF"] = True
+    # app.config["WTF_CSRF_CHECK_DEFAULT"] = False
+    # CSRFProtect(app)
 
     # Setup Flask-Security
     # user_datastore = fsqla_datastore(app)
@@ -340,9 +340,12 @@ def create_app() -> Flask:
     def home():
         return render_template_string(
             """
-            {% include 'security/_messages.html' %}
-            {{ _fsdomain('Welcome') }} {{email}} !
-            {% include "security/_menu.html" %}
+            {% extends "security/base.html" %}
+            {% block content %}
+              {% include 'security/_messages.html' %}
+              {{ _fsdomain('Welcome') }} {{email}} !
+              {% include "security/_menu.html" %}
+            {% endblock content %}
             """,
             email=current_user.email,
             security=security,

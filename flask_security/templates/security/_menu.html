@@ -3,11 +3,13 @@
   security.username_recovery %}
   <hr>
   <h2>{{ _fsdomain('Menu') }}</h2>
-  <ul>
+  <menu>
     {% if _fs_is_user_authenticated(current_user) %}
       {# already authenticated user #}
-      <li>
-        <a href="{{ url_for_security('logout') }}">{{ _fsdomain("Sign out") }}</a>
+      <li class="fs-button">
+        <form action="{{ url_for_security('logout') }}" method="post" name="logout_form">
+          <button type="submit">Sign Out</button>
+        </form>
       </li>
       {% if security.changeable %}
         <li>
@@ -76,5 +78,5 @@
         </li>
       {% endif %}
     {% endif %}
-  </ul>
+  </menu>
 {% endif %}

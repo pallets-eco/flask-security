@@ -657,9 +657,11 @@ class LogoutForm(Form):
     """The logout form.
     No data is required to logout - however, if a refresh token
     is provided, it will be revoked.
+    Also - CSRF will be checked - whether that will cause an error is up to
+    the view.
     """
 
-    refresh_token = StringField(
+    refresh_token = HiddenField(
         get_form_field_xlate(_("Refresh Token")),
         validators=[Optional()],
     )
@@ -679,13 +681,12 @@ class LogoutForm(Form):
     def validate(self, **kwargs: t.Any) -> bool:
         from .tokens import verify_refresh_token
 
-        if not super().validate(**kwargs):  # pragma: no cover
+        if not super().validate(**kwargs):
             return False
         if not self.refresh_token.data:
             return True
 
         assert isinstance(self.refresh_token.errors, list)
-
         self.refresh_tracker, self.refresh_errors, uid = verify_refresh_token(
             self.refresh_token.data
         )

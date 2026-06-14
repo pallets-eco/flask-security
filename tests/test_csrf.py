@@ -19,7 +19,13 @@ from freezegun import freeze_time
 from flask import render_template_string
 
 from flask_security import Security, auth_required
-from tests.test_utils import get_form_input_value, get_session, logout
+from tests.test_utils import (
+    get_form_input_value,
+    get_session,
+    is_authenticated,
+    logout,
+    authenticate,
+)
 
 REAL_VALIDATE_CSRF = None
 
@@ -672,3 +678,64 @@ def test_csrf_json_protect(app, client):
     )
     assert response.status_code == 400
     assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+
+@pytest.mark.settings(logout_csrf=True, post_logout_view="/post-csrf-logout")
+@pytest.mark.csrf()
+def test_logout_csrf_form(app, client, get_message):
+    # test logout CSRF using default (form) config
+    authenticate(client, csrf=True)
+    response = client.post("/logout")
+    assert b"Confirm Sign Out" in response.data
+
+    data = dict(csrf_token=get_form_input_value(response, "csrf_token"))
+    response = client.post("/logout", data=data, follow_redirects=False)
+    assert response.location == "/post-csrf-logout"
+    assert not is_authenticated(client, get_message)
+
+
+@pytest.mark.settings(logout_csrf=True)
+@pytest.mark.csrf()
+def test_logout_csrf_json(app, client, get_message):
+    # test logout CSRF using default config - using json
+    auth_token, csrf_token = json_login(client)
+
+    response = client.post("/logout", json={})
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    data = dict(csrf_token=csrf_token)
+    response = client.post("/logout", json=data)
+    assert response.status_code == 200
+    assert not is_authenticated(client, get_message)
+
+
+@pytest.mark.settings(logout_csrf=True, post_logout_view="/post-csrf-logout")
+@pytest.mark.csrf(csrfprotect=True)
+def test_logout_csrfapp_form(app, client, get_message):
+    # test logout CSRF using CSRFProtect
+    authenticate(client, csrf=True)
+    response = client.post("/logout")
+    assert b"Confirm Sign Out" in response.data
+
+    data = dict(csrf_token=get_form_input_value(response, "csrf_token"))
+    response = client.post("/logout", data=data, follow_redirects=False)
+    assert response.location == "/post-csrf-logout"
+    assert not is_authenticated(client, get_message)
+
+
+@pytest.mark.settings(logout_csrf=True, csrf_cookie_name="mycsrf")
+@pytest.mark.csrf(csrfprotect=True)
+def test_logout_csrfapp_json(app, client, get_message):
+    # test logout CSRF using default config - using json
+    authenticate(client, csrf=True)
+    csrf_cookie = client.get_cookie("mycsrf")
+
+    response = client.post("/logout", json={})
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0] == "The CSRF token is missing."
+
+    headers = {"X-XSRF-Token": csrf_cookie.value}
+    response = client.post("/logout", json={}, headers=headers)
+    assert response.status_code == 200
+    assert not is_authenticated(client, get_message)

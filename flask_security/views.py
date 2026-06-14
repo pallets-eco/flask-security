@@ -42,6 +42,7 @@ from flask import (
     session,
 )
 from flask_login import current_user
+from flask_wtf.csrf import CSRFError
 
 from .changeable import change_user_password
 from .change_email import change_email, change_email_confirm
@@ -51,7 +52,7 @@ from .confirmable import (
     confirm_user,
     send_confirmation_instructions,
 )
-from .decorators import anonymous_user_required, auth_required, unauth_csrf
+from .decorators import anonymous_user_required, auth_required, unauth_csrf, handle_csrf
 from .forms import (
     _setup_methods_xlate,
     ChangePasswordForm,
@@ -277,21 +278,37 @@ def verify():
 
 def logout():
     """View function which handles a logout request.
-    logout has never been CSRF protected.
     As part of the refresh_token feature, logout now has a form defined
     which a client can pass a refresh token that will be revoked as part of logout
     (if the refresh token is managed with a cookie, the value will be set into the
     form).
     The cookie AND refresh tracker/token will be revoked.
+
+    If CSRF is configured and fails - a confirmation dialog will be shown (which
+    has the csrf token populated).
     """
     tf_clean_session()
 
     if is_user_authenticated(current_user):
-        # Until we implement logout CSRF - shouldn't logout but NOT revoke refresh token
-        set_request_attr("csrf_valid", True)
         form = t.cast(
             LogoutForm, build_form_from_request("logout_form", user=current_user)
         )
+        if cv("LOGOUT_CSRF"):
+            try:
+                # if failed and JSON - return 400 response
+                if response := handle_csrf(
+                    get_request_attr("fs_authn_via"), _security._want_json(request)
+                ):
+                    return response
+            except CSRFError:
+                return _security.render_template(
+                    cv("LOGOUT_USER_TEMPLATE"),
+                    logout_form=form,
+                    **_ctx("logout"),
+                )
+        else:
+            # ensure logout succeeds
+            set_request_attr("csrf_valid", True)
 
         if form.validate_on_submit():
             # if they passed a refresh token - revoke it
@@ -300,6 +317,17 @@ def logout():
             if form.refresh_tracker and not form.refresh_tracker.revoked_at:
                 _revoke_refresh_tracker(
                     form.refresh_tracker, form.refresh_errors, current_user
+                )
+        if cv("LOGOUT_CSRF"):
+            # Could be a CSRF error from form validate
+            csrf_field = getattr(form, form.meta.csrf_field_name)
+            if csrf_field and csrf_field.errors:
+                if _security._want_json(request):
+                    return base_render_json(form)
+                return _security.render_template(
+                    cv("LOGOUT_USER_TEMPLATE"),
+                    logout_form=form,
+                    **_ctx("logout"),
                 )
         logout_user()
 

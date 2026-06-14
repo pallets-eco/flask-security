@@ -196,6 +196,8 @@ _default_config: dict[str, t.Any] = {
     "TWO_FACTOR_POST_SETUP_VIEW": ".two_factor_setup",  # endpoint or URL
     "TWO_FACTOR_ERROR_VIEW": ".login",
     "LOGOUT_METHODS": ["POST"],
+    "LOGOUT_CSRF": False,
+    "LOGOUT_USER_TEMPLATE": "security/logout_user.html",
     "POST_LOGIN_VIEW": "/",
     "POST_LOGOUT_VIEW": "/",
     "LOGIN_ERROR_VIEW": None,  # spa
@@ -2031,7 +2033,6 @@ class Security:
             )
 
         if csrf:
-            csrf.exempt("flask_security.views.logout")
             # Add configured header to WTF_CSRF_HEADERS
             if ch := cv("CSRF_HEADER", app=app):
                 if ch not in app.config["WTF_CSRF_HEADERS"]:
@@ -2284,6 +2285,9 @@ class Security:
 
     def login_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("login", fn)
+
+    def logout_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
+        self._add_ctx_processor("logout", fn)
 
     def register_context_processor(self, fn: t.Callable[[], dict[str, t.Any]]) -> None:
         self._add_ctx_processor("register", fn)
