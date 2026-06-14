@@ -16,6 +16,7 @@ following is a list of view templates:
 
 * `security/forgot_password.html`
 * `security/login_user.html`
+* `security/logout_user.html`
 * `security/mf_recovery.html`
 * `security/mf_recovery_codes.html`
 * `security/recover_username.html`
@@ -76,6 +77,7 @@ The following is a list of all the available context processor decorators:
 * ``context_processor``: All views
 * ``forgot_password_context_processor``: Forgot password view
 * ``login_context_processor``: Login view
+* ``logout_context_processor``: Logout view
 * ``mf_recovery_codes_context_processor``: Setup recovery codes view
 * ``mf_recovery_context_processor``: Use recovery code view
 * ``register_context_processor``: Register view

@@ -211,7 +211,9 @@ paths:
       description: >
         If a refresh-token is supplied, it will be revoked as part
         of logging the user out. If SECURITY_REFRESH_TOKEN_COOKIE_NAME is configured,
-        the refresh token will be deleted as part of logout.
+        the refresh token (as well as the cookie) will be deleted as part of logout.
+        If SECURITY_LOGOUT_CSRF is enabled, a valid CSRF token must be provided and
+        an error can be returned if the token is invalid.
       requestBody:
         required: false
         content:
@@ -223,7 +225,7 @@ paths:
               $ref: "#/components/schemas/Logout"
       responses:
         200:
-          description: Successful logout
+          description: Logout response
           content:
             application/json:
               schema:
@@ -238,6 +240,11 @@ paths:
                         type: integer
                         example: 200
                         description: Http status code
+            text/html:
+              schema:
+                description: Unsuccessful logout.
+                type: string
+                example: render_template(SECURITY_LOGOUT_USER_TEMPLATE) with error values
         302:
           description: Successful logout
           headers:
@@ -245,6 +252,12 @@ paths:
               description: Redirect to ``SECURITY_POST_LOGOUT_VIEW``
               schema:
                 type: string
+        400:
+          description: Errors while validating form (CSRF).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /verify:
     get:
       summary: GET verify/reauthentication form

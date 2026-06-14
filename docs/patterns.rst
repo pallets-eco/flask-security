@@ -273,37 +273,51 @@ CSRF
 By default, Flask-Security, via Flask-WTForms protects all form based POSTS
 from CSRF attacks using well vetted per-session hidden-form-field csrf-tokens.
 
-Any web application that relies on session cookies for authentication must have CSRF protection.
+Any web application that uses a session cookie for authentication must have CSRF protection.
 For more details please read this `OWASP CSRF cheatsheet <https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.md>`_.
-A couple important take-aways - first - it isn't about forms versus JSON - it is about
-how the API is authenticated (session cookies versus authentication token). Second there is the
-concern about 'login CSRF' - is protection needed prior to authentication (yes if
-you have a really secure/popular site).
+As mentioned in the OWASP cheatsheet - pure JSON requests should be immune from CSRF exploits ASSUMING that the application
+has a properly set CORS policy. Flask-Security, via Werkzeug, is careful to ONLY accept JSON with an ``"application/+json"`` header.
+However, currently, there is no way to configure Flask-Security to accept ONLY ``"application/json"`` - meaning that it is important
+to properly pass CSRF tokens for ALL requests.
 
 Flask-Security strives to support various options for both its endpoints (e.g. ``/login``)
 and the application endpoints (protected with Flask-Security decorators such as :func:`.auth_required`).
 
 If your application just uses forms that are derived from ``Flask-WTF::Flaskform`` - you are done.
-Note that all of Flask-Security's endpoints are form based (regardless of how the request was made).
+All of Flask-Security's endpoints are form based (regardless of how the request was made).
 
-.. note::
-  The logout endpoint has never been form-based and has never had CSRF protection. With the addition
-  of the refresh token feature, logout now accepts form/json input - but still does not support
-  CSRF protection.
+Login CSRF
+++++++++++++
+Read more about this at `OWASP <https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.md#possible-csrf-vulnerabilities-in-login-forms>`_.
+
+Logout CSRF
+++++++++++++
+Prior to release 5.9 the logout endpoint never accepted any input nor enabled CSRF protection so
+there was never any possible errors. Furthermore, both ``"GET"`` and ``"POST"`` were accepted.
+Best practice is to accept only ``"POST"`` requests to avoid trivial 'auto-logout' attacks.
+Requiring CSRF for the logout endpoint is best practice - however there are many
+sources that disagree with this (and in fact, security advisories are usually NOT issued for applications that don't
+support that). The usability issue is that users may or may not be looking for an error when they click the logout button
+and NOT logging them out is worse. Flask-Security supports requiring CSRF for logout with the
+:py:data:`SECURITY_LOGOUT_CSRF` configuration option.
+
+.. warning::
+    Enabling CSRF protection means that the logout endpoint can return an error - be sure your application
+    handles that. For form based applications, Flask-Security will return a 'Confirm Sign Out' template.
 
 Behind-The-Scenes
 ++++++++++++++++++
-Depending on configuration, there are 3 places CSRF tokens can be checked:
+Depending on configuration, there are 3 places CSRF tokens can be checked (in order):
+  #) As part of an @before_request handler that Flask-WTF sets up if CSRFprotect(app) is called. On error
+     this always returns HTTP 400 and small snippet of HTML. This can be disabled
+     by setting app.config["WTF_CSRF_CHECK_DEFAULT"] = False.
+  #) As part of a Flask-Security decorator (:func:`.unauth_csrf`, :func:`.auth_required`). On
+     error, either a JSON response is returned OR CSRFError exception is raised and 400 is returned with the small snippet of HTML
+     (the exception and default response is part of Flask-WTF).
   #) As part of form validation for any form derived from FlaskForm (which all Flask-Security
      forms are). An error here is recorded in the ``csrf_token`` field and the calling view
      decides whether to return 200 or 400.
      This is the default if no other configuration changes are made.
-  #) As part of an @before_request handler that Flask-WTF sets up if CSRFprotect() is called. On error
-     this always returns HTTP 400 and small snippet of HTML. This can be disabled
-     by setting config["WTF_CSRF_CHECK_DEFAULT"] = False.
-  #) As part of a Flask-Security decorator (:func:`.unauth_csrf`, :func:`.auth_required`). On
-     error either a JSON response is returned OR CSRFError exception is raised and 400 is returned with the small snippet of HTML
-     (the exception and default response is part of Flask-WTF).
 
 CSRF: Single-Page-Applications and AJAX/XHR
 ++++++++++++++++++++++++++++++++++++++++++++

@@ -16,6 +16,7 @@ Features & Improvements
 - (:pr:`1235`) Change default LOGOUT_METHODS to be just ``"POST"``
 - (:issue:`1228`) Change default ``csrf`` and ``tf_validity`` cookie config to ``secure=True``
 - (:issue:`1228`) The ``tf_validity`` cookie name is now configurable via :py:data:`SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME`
+- (:issue:`1237`) Add support for CSRF on logout
 
 Fixes
 +++++
@@ -32,7 +33,7 @@ Backwards Compatibility Concerns
 - The fix for the inverted `is_locked` logic will require any application using it
   to invert their logic.
 - The change to :py:data:`SECURITY_TOKEN_MAX_AGE` default improves a long-standing
-  'insecure-out-of-the-box' issue. Applications will have to either change the
+  'insecure-out-of-the-box' concern. Applications will have to either change the
   value if they really want a long-lasting token or use the new refresh token
   feature.
 - The default for :py:data:`SECURITY_LOGOUT_METHODS` has been changed to just

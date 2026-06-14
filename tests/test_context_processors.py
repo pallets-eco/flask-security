@@ -276,3 +276,23 @@ def test_mf_recovery_context_processors(client, app):
     response = client.get("/mf-recovery")
     assert b"global" in response.data
     assert b"code" in response.data
+
+
+@pytest.mark.settings(
+    logout_user_template="custom_security/logout_user.html", logout_csrf=True
+)
+@pytest.mark.csrf(ignore_unauth=True)
+def test_logout_context_processor(app, client):
+    @app.security.context_processor
+    def default_ctx_processor():
+        return {"global": "global"}
+
+    @app.security.logout_context_processor
+    def logout_ctx():
+        return {"foo": "bar-logout"}
+
+    authenticate(client)
+    response = client.post("/logout")
+
+    assert b"global" in response.data
+    assert b"bar-logout" in response.data

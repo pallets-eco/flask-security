@@ -218,7 +218,9 @@ def app(request):
         # without any keys/arguments - this is the default config
         # Note that WTF_CSRF_CHECK_DEFAULT = True means Flask_wtf will
         # run a CSRF check as part of @before_request - before we see it.
-        app.config["WTF_CSRF_ENABLED"] = True
+        # Above we set WTF_CSRF_ENABLED to False. With this marker
+        # we want the 'default' config.
+        del app.config["WTF_CSRF_ENABLED"]
         if "ignore_unauth" in csrf.kwargs.keys():
             app.config["WTF_CSRF_CHECK_DEFAULT"] = False
             app.config["SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS"] = True
