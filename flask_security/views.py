@@ -86,10 +86,10 @@ from .unified_signin import (
     us_verify_send_code,
 )
 from .recoverable import (
-    reset_password_token_status,
     send_reset_password_instructions,
     update_password,
     send_username_recovery_email,
+    reset_password_token_status,
 )
 from .registerable import register_user, register_existing
 from .recovery_codes import mf_recovery, mf_recovery_codes
@@ -632,13 +632,11 @@ def reset_password(token):
     For POST normal/successful case - return 200 with new authentication token
     For POST error case return 400
     """
-
-    expired, invalid, user = reset_password_token_status(token)
     form = t.cast(ResetPasswordForm, build_form_from_request("reset_password_form"))
-    form.user = user
+    expired, invalid, form.user = reset_password_token_status(token)
 
     if request.method == "GET":
-        if not user or invalid or expired:
+        if not form.user or invalid or expired:
             if expired:
                 m, c = get_message(
                     "PASSWORD_RESET_EXPIRED",
@@ -671,7 +669,7 @@ def reset_password(token):
         )
 
     # This is the POST case.
-    if not user or invalid or expired:
+    if not form.user or invalid or expired:
         if expired:
             m, c = get_message(
                 "PASSWORD_RESET_EXPIRED", within=cv("RESET_PASSWORD_WITHIN")
@@ -688,7 +686,7 @@ def reset_password(token):
 
     if form.validate_on_submit():
         after_this_request(view_commit)
-        update_password(user, form.password.data)
+        update_password(form.user, form.password.data)
         if cv("AUTO_LOGIN_AFTER_RESET"):
             # backwards compat - really shouldn't do this according to OWASP
             response = _security.two_factor_plugins.tf_enter(
@@ -697,10 +695,10 @@ def reset_password(token):
             if response:
                 return response
             # two factor not required - just login
-            login_user(user, authn_via=["reset"])
+            login_user(form.user, authn_via=["reset"])
             if _security._want_json(request):
                 dummy_form = DummyForm(formdata=None)
-                dummy_form.user = user
+                dummy_form.user = form.user
                 return base_render_json(
                     dummy_form,
                     include_auth_token=allowed_auth_token(form.user),

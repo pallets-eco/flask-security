@@ -5,7 +5,7 @@ flask_security.recoverable
 Flask-Security recoverable module
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2025 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -18,12 +18,12 @@ from .signals import (
 )
 from .utils import (
     config_value,
-    get_token_status,
     hash_data,
     hash_password,
     send_mail,
     url_for_security,
-    verify_hash,
+    check_and_get_token_status,
+    get_within_delta,
 )
 
 
@@ -90,18 +90,12 @@ def reset_password_token_status(token):
 
     :param token: The password reset token
     """
-    expired, invalid, user, data = get_token_status(
-        token, "reset", "RESET_PASSWORD", return_data=True
+    user = None
+    expired, invalid, data = check_and_get_token_status(
+        token, "reset", get_within_delta("RESET_PASSWORD_WITHIN")
     )
-    # This check looks to see if the password has been changed since the reset token
-    # was created. As of #338 - we reset the fs_uniquifier on each password change
-    # so the token would have been marked invalid above.
-    # This made sure that the token couldn't be used twice.
-    # TODO - look at removing this entire check.
-    if not invalid and user:
-        if user.password:
-            if not verify_hash(data[1], user.password):
-                invalid = True
+    if data:
+        user = _datastore.find_user(fs_uniquifier=data[0])
 
     return expired, invalid, user
 

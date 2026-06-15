@@ -6,7 +6,7 @@ Flask-Security confirmable module
 
 :copyright: (c) 2012 by Matt Wright.
 :copyright: (c) 2017 by CERN.
-:copyright: (c) 2021-2023 by J. Christopher Wagner (jwag).
+:copyright: (c) 2021-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 """
 
@@ -16,10 +16,11 @@ from .proxies import _security, _datastore
 from .signals import confirm_instructions_sent, user_confirmed
 from .utils import (
     config_value as cv,
-    get_token_status,
     hash_data,
     send_mail,
     url_for_security,
+    check_and_get_token_status,
+    get_within_delta,
     verify_hash,
 )
 
@@ -79,14 +80,17 @@ def confirm_email_token_status(token):
 
         expired, invalid, user = confirm_email_token_status('...')
 
+    Always check invalid and expiration first - 'user' could be returned in any case
     :param token: The confirmation token
     """
-    expired, invalid, user, token_data = get_token_status(
-        token, "confirm", "CONFIRM_EMAIL", return_data=True
+    expired, invalid, data = check_and_get_token_status(
+        token, "confirm", get_within_delta("CONFIRM_EMAIL_WITHIN")
     )
-    if not invalid and user:
-        user_id, token_email_hash = token_data
-        invalid = not verify_hash(token_email_hash, user.email)
+    if invalid or expired or not data:
+        return expired, invalid, None
+    if not (user := _datastore.find_user(fs_uniquifier=data[0])):
+        return expired, True, None
+    invalid = not verify_hash(data[1], user.email)
     return expired, invalid, user
 
 
