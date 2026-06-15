@@ -928,7 +928,7 @@ class ResetPasswordForm(Form, NewPasswordFormMixin, PasswordConfirmFormMixin):
     """The default reset password form"""
 
     # filled in by caller
-    user: UserMixin
+    user: UserMixin | None
 
     submit = SubmitField(get_form_field_label("reset_password"))
 

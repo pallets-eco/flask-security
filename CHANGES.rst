@@ -27,6 +27,7 @@ Fixes
 Docs and Chores
 +++++++++++++++
 - (:issue:`1208`) Remove support for Pony ORM
+- (:pr:`xxx`) Remove deprecated get_token_status() and converted over to check_and_get_token_status()
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

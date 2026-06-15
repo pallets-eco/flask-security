@@ -22,7 +22,6 @@ import typing as t
 from urllib.parse import parse_qsl, quote, urlsplit, urlunsplit, urlencode
 import urllib.request
 import urllib.error
-import warnings
 
 from flask import (
     Response,
@@ -891,11 +890,6 @@ def config_value(key, app=None, default=None, strict=True):
     return app.config.get(key, default)
 
 
-def get_max_age(key, app=None):
-    td = get_within_delta(key + "_WITHIN", app)
-    return td.seconds + td.days * 24 * 3600
-
-
 def get_within_delta(key, app=None):
     """Get a timedelta object from the application configuration following
     the internal convention of::
@@ -956,47 +950,6 @@ def send_mail(subject, recipient, template, **context):
     )
 
 
-def get_token_status(token, serializer, max_age=None, return_data=False):
-    """Get the status of a token.
-
-    :param token: The token to check
-    :param serializer: The name of the serializer. Can be one of the
-                       following: ``confirm``, ``login``, ``reset``
-    :param max_age: The name of the max age config option. Can be one of
-                    the following: ``CONFIRM_EMAIL``, ``LOGIN``,
-                    ``RESET_PASSWORD``
-
-    .. deprecated:: 5.0.0
-    """
-    warnings.warn(
-        "'get_token_status' is deprecated - use check_and_get_token_status instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    serializer = getattr(_security, serializer + "_serializer")
-    max_age = get_max_age(max_age)
-    user, data = None, None
-    expired, invalid = False, False
-
-    try:
-        data = serializer.loads(token, max_age=max_age)
-    except SignatureExpired:
-        d, data = serializer.loads_unsafe(token)
-        expired = True
-    except (BadSignature, TypeError, ValueError):
-        invalid = True
-
-    if data:
-        user = _datastore.find_user(fs_uniquifier=data[0])
-
-    expired = expired and (user is not None)
-
-    if return_data:
-        return expired, invalid, user, data
-    else:
-        return expired, invalid, user
-
-
 def check_and_get_token_status(
     token: str, serializer_name: str, within: timedelta
 ) -> tuple[bool, bool, t.Any]:
@@ -1005,7 +958,9 @@ def check_and_get_token_status(
     :param token: The token to check
     :param serializer_name: The name of the serializer. Can be one of the
                        following: ``confirm``, ``login``, ``reset``, ``us_setup``
-                       ``remember``, ``two_factor_validity``, ``wan``
+                       ``remember``, ``tf_validity``, ``tf_setup``,
+                       ``wan``, ``change_email``,
+                       ``refresh_token``
     :param within: max age - passed as a timedelta
 
     :return: a tuple of (expired, invalid, data)
