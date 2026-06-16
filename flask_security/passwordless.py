@@ -14,11 +14,10 @@ from flask import current_app as app
 from .proxies import _security, _datastore
 from .signals import login_instructions_sent
 from .utils import (
-    config_value,
+    config_value as cv,
     send_mail,
     url_for_security,
     check_and_get_token_status,
-    get_within_delta,
 )
 
 
@@ -31,7 +30,7 @@ def send_login_instructions(user):
     login_link = url_for_security("token_login", token=token, _external=True)
 
     send_mail(
-        config_value("EMAIL_SUBJECT_PASSWORDLESS"),
+        cv("EMAIL_SUBJECT_PASSWORDLESS"),
         user.email,
         "login_instructions",
         user=user,
@@ -64,7 +63,7 @@ def login_token_status(token):
     :param token: The login token
     """
     expired, invalid, data = check_and_get_token_status(
-        token, "login", get_within_delta("LOGIN_WITHIN")
+        token, "login", cv("LOGIN_WITHIN")
     )
     if invalid or not data:
         return expired, invalid, None

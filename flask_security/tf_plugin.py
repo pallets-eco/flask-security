@@ -33,7 +33,6 @@ from .utils import (
     config_value as cv,
     do_flash,
     get_message,
-    get_within_delta,
     get_url,
     login_user,
     propagate_next,
@@ -280,7 +279,7 @@ def tf_validity_token_status(token):
     :param token: The Two-Factor Validity token
     """
     return check_and_get_token_status(
-        token, "tf_validity", get_within_delta("TWO_FACTOR_LOGIN_VALIDITY")
+        token, "tf_validity", cv("TWO_FACTOR_LOGIN_VALIDITY")
     )
 
 
@@ -304,7 +303,7 @@ def tf_verify_validity_token(fs_uniquifier: str) -> bool:
 def tf_set_validity_token_cookie(response: Response, token: str) -> Response:
     """Sets the Two-Factor validity cookie"""
     cookie_kwargs = cv("TWO_FACTOR_VALIDITY_COOKIE")
-    max_age = int(get_within_delta("TWO_FACTOR_LOGIN_VALIDITY").total_seconds())
+    max_age = int(cv("TWO_FACTOR_LOGIN_VALIDITY").total_seconds())
     response.set_cookie(
         cv("TWO_FACTOR_VALIDITY_COOKIE_NAME"),
         value=token,

@@ -109,7 +109,7 @@ def test_passwordless_template(app, client, get_message, outbox):
         assert get_message("PASSWORDLESS_LOGIN_SUCCESSFUL") in response.data
 
 
-@pytest.mark.settings(login_within="1 milliseconds")
+@pytest.mark.settings(login_within=timedelta(days=1))
 def test_expired_login_token(client, app, get_message):
     e = "matt@lp.com"
     with capture_passwordless_login_requests() as requests:
@@ -122,8 +122,7 @@ def test_expired_login_token(client, app, get_message):
 
     response = client.get("/login/" + token, follow_redirects=True)
     assert (
-        get_message("LOGIN_EXPIRED", within="1 milliseconds", email=user.email)
-        in response.data
+        get_message("LOGIN_EXPIRED", within="1 day", email=user.email) in response.data
     )
 
 
@@ -158,7 +157,7 @@ def test_spa_get(app, client):
 
 
 @pytest.mark.settings(
-    login_within="1 milliseconds",
+    login_within=timedelta(seconds=73),
     redirect_host="localhost:8081",
     redirect_behavior="spa",
     login_error_view="/login-error",
@@ -185,7 +184,9 @@ def test_spa_get_bad_token(app, client, get_message):
         qparams = dict(parse_qsl(split.query))
         assert all(k in qparams for k in ["email", "error", "identity"])
 
-        msg = get_message("LOGIN_EXPIRED", within="1 milliseconds", email="matt@lp.com")
+        msg = get_message(
+            "LOGIN_EXPIRED", within="1 minute, 13 seconds", email="matt@lp.com"
+        )
         assert msg == qparams["error"].encode("utf-8")
 
         # Test mangled token

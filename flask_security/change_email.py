@@ -41,12 +41,12 @@ from .utils import (
     do_flash,
     get_message,
     get_url,
-    get_within_delta,
     hash_data,
     send_mail,
     url_for_security,
     verify_hash,
     view_commit,
+    td_format,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -129,7 +129,7 @@ def change_email_confirm(token):
         if expired:
             m, c = get_message(
                 "CHANGE_EMAIL_EXPIRED",
-                within=cv("CHANGE_EMAIL_WITHIN"),
+                within=td_format(cv("CHANGE_EMAIL_WITHIN")),
             )
         else:
             m, c = get_message("API_ERROR")
@@ -187,6 +187,7 @@ def _send_instructions(user, new_email):
         user=user,
         link=link,
         token=token,
+        within=td_format(cv("CHANGE_EMAIL_WITHIN")),
     )
 
     change_email_instructions_sent.send(
@@ -204,7 +205,7 @@ def _verify_token_status(token):
     new_email is still available (and if not return 'invalid').
     """
     expired, invalid, state = check_and_get_token_status(
-        token, "change_email", get_within_delta("CHANGE_EMAIL_WITHIN")
+        token, "change_email", cv("CHANGE_EMAIL_WITHIN")
     )
     if invalid or expired:
         return expired, invalid, None, None

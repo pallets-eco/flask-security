@@ -241,10 +241,10 @@ _default_config: dict[str, t.Any] = {
     "SEND_PASSWORD_CHANGE_EMAIL": True,
     "SEND_PASSWORD_RESET_EMAIL": True,
     "SEND_PASSWORD_RESET_NOTICE_EMAIL": True,
-    "LOGIN_WITHIN": "1 days",
+    "LOGIN_WITHIN": timedelta(days=1),
     "CHANGE_EMAIL": False,
     "CHANGE_EMAIL_TEMPLATE": "security/change_email.html",
-    "CHANGE_EMAIL_WITHIN": "2 hours",
+    "CHANGE_EMAIL_WITHIN": timedelta(hours=2),
     "CHANGE_EMAIL_URL": "/change-email",
     "CHANGE_EMAIL_CONFIRM_URL": "/change-email-confirm",
     "CHANGE_EMAIL_ERROR_VIEW": None,  # spa
@@ -260,7 +260,7 @@ _default_config: dict[str, t.Any] = {
     "TWO_FACTOR_MAIL_VALIDITY": 300,
     "TWO_FACTOR_SMS_VALIDITY": 120,
     "TWO_FACTOR_ALWAYS_VALIDATE": True,
-    "TWO_FACTOR_LOGIN_VALIDITY": "30 days",
+    "TWO_FACTOR_LOGIN_VALIDITY": timedelta(days=30),
     "TWO_FACTOR_VALIDITY_SALT": "tf-validity-salt",
     "TWO_FACTOR_VALIDITY_COOKIE_NAME": "tf_validity",
     "TWO_FACTOR_VALIDITY_COOKIE": {
@@ -269,7 +269,7 @@ _default_config: dict[str, t.Any] = {
         "samesite": "Strict",
     },
     "TWO_FACTOR_SETUP_SALT": "tf-setup-salt",
-    "TWO_FACTOR_SETUP_WITHIN": "30 minutes",
+    "TWO_FACTOR_SETUP_WITHIN": timedelta(minutes=30),
     "TWO_FACTOR_RESCUE_EMAIL": True,
     "MULTI_FACTOR_RECOVERY_CODES": False,
     "MULTI_FACTOR_RECOVERY_CODES_N": 5,
@@ -285,8 +285,8 @@ _default_config: dict[str, t.Any] = {
     "OAUTH_RESPONSE_URL": "/login/oauthresponse",
     "OAUTH_VERIFY_START_URL": "/login/oauth-verify-start",
     "OAUTH_VERIFY_RESPONSE_URL": "/login/oauth-verify-response",
-    "CONFIRM_EMAIL_WITHIN": "5 days",
-    "RESET_PASSWORD_WITHIN": "1 days",
+    "CONFIRM_EMAIL_WITHIN": timedelta(days=2),
+    "RESET_PASSWORD_WITHIN": timedelta(days=1),
     "LOGIN_WITHOUT_CONFIRMATION": False,
     "AUTO_LOGIN_AFTER_CONFIRM": False,
     "AUTO_LOGIN_AFTER_RESET": False,
@@ -372,7 +372,7 @@ _default_config: dict[str, t.Any] = {
     "US_MFA_REQUIRED": ["password", "email"],
     "US_TOKEN_VALIDITY": 120,
     "US_EMAIL_SUBJECT": _("Verification Code"),
-    "US_SETUP_WITHIN": "30 minutes",
+    "US_SETUP_WITHIN": timedelta(minutes=30),
     "US_SIGNIN_REPLACES_LOGIN": False,
     "CACHE_CONTROL": {"private": True, "no-store": True},
     "CSRF_PROTECT_MECHANISMS": AUTHN_MECHANISMS,
@@ -400,11 +400,11 @@ _default_config: dict[str, t.Any] = {
     "WAN_REGISTER_TIMEOUT": 60000,  # milliseconds
     "WAN_REGISTER_TEMPLATE": "security/wan_register.html",
     "WAN_REGISTER_URL": "/wan-register",
-    "WAN_REGISTER_WITHIN": "30 minutes",
+    "WAN_REGISTER_WITHIN": timedelta(minutes=30),
     "WAN_SIGNIN_TIMEOUT": 60000,  # milliseconds
     "WAN_SIGNIN_TEMPLATE": "security/wan_signin.html",
     "WAN_SIGNIN_URL": "/wan-signin",
-    "WAN_SIGNIN_WITHIN": "1 minutes",
+    "WAN_SIGNIN_WITHIN": timedelta(minutes=1),
     "WAN_DELETE_URL": "/wan-delete",
     "WAN_VERIFY_URL": "/wan-verify",
     "WAN_VERIFY_TEMPLATE": "security/wan_verify.html",
@@ -1768,6 +1768,29 @@ class Security:
             app.config["SECURITY_TOKEN_MAX_AGE"] = timedelta(
                 seconds=cv("TOKEN_MAX_AGE", app=app)
             )
+
+        within_conversion = [
+            "LOGIN_WITHIN",
+            "CHANGE_EMAIL_WITHIN",
+            "CONFIRM_EMAIL_WITHIN",
+            "RESET_PASSWORD_WITHIN",
+            "TWO_FACTOR_SETUP_WITHIN",
+            "US_SETUP_WITHIN",
+            "WAN_REGISTER_WITHIN",
+            "WAN_SIGNIN_WITHIN",
+            "TWO_FACTOR_LOGIN_VALIDITY",
+        ]
+        for key in within_conversion:
+            within_value = cv(key, app=app)
+            if not isinstance(within_value, timedelta):
+                values = within_value.split()
+                app.config[f"SECURITY_{key}"] = timedelta(**{values[1]: int(values[0])})
+                warnings.warn(
+                    f"Non timedelta values for SECURITY_{key} are"
+                    f"deprecated as of 5.9",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
         self.login_manager = _get_login_manager(app, self)
         self._phone_util = self._phone_util_cls(app)
