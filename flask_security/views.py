@@ -118,7 +118,6 @@ from .utils import (
     get_post_register_redirect,
     get_post_verify_redirect,
     get_request_attr,
-    get_within_delta,
     get_url,
     handle_already_auth,
     hash_password,
@@ -129,6 +128,7 @@ from .utils import (
     propagate_next,
     send_mail,
     slash_url_suffix,
+    td_format,
     url_for_security,
     view_commit,
     allowed_auth_token,
@@ -434,7 +434,9 @@ def token_login(token):
         return redirect(url_for_security("login"))
     if expired:
         send_login_instructions(user)
-        m, c = get_message("LOGIN_EXPIRED", email=user.email, within=cv("LOGIN_WITHIN"))
+        m, c = get_message(
+            "LOGIN_EXPIRED", email=user.email, within=td_format(cv("LOGIN_WITHIN"))
+        )
         if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
                 get_url(
@@ -503,7 +505,7 @@ def confirm_email(token):
         if expired:
             m, c = get_message(
                 "CONFIRMATION_EXPIRED",
-                within=cv("CONFIRM_EMAIL_WITHIN"),
+                within=td_format(cv("CONFIRM_EMAIL_WITHIN")),
             )
         else:
             m, c = get_message("INVALID_CONFIRMATION_TOKEN")
@@ -640,7 +642,7 @@ def reset_password(token):
             if expired:
                 m, c = get_message(
                     "PASSWORD_RESET_EXPIRED",
-                    within=cv("RESET_PASSWORD_WITHIN"),
+                    within=td_format(cv("RESET_PASSWORD_WITHIN")),
                 )
             else:
                 m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
@@ -672,7 +674,7 @@ def reset_password(token):
     if not form.user or invalid or expired:
         if expired:
             m, c = get_message(
-                "PASSWORD_RESET_EXPIRED", within=cv("RESET_PASSWORD_WITHIN")
+                "PASSWORD_RESET_EXPIRED", within=td_format(cv("RESET_PASSWORD_WITHIN"))
             )
         else:
             m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
@@ -970,13 +972,13 @@ def two_factor_setup_validate(token: str) -> ResponseValue:
     )
 
     expired, invalid, state = check_and_get_token_status(
-        token, "tf_setup", get_within_delta("TWO_FACTOR_SETUP_WITHIN")
+        token, "tf_setup", cv("TWO_FACTOR_SETUP_WITHIN")
     )
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
         m, c = get_message(
-            "TWO_FACTOR_SETUP_EXPIRED", within=cv("TWO_FACTOR_SETUP_WITHIN")
+            "TWO_FACTOR_SETUP_EXPIRED", within=td_format(cv("TWO_FACTOR_SETUP_WITHIN"))
         )
     if invalid or expired:
         tf_clean_session()  # until we completely remove session based setup/state

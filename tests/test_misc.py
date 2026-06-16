@@ -72,6 +72,7 @@ from flask_security.utils import (
     uia_phone_mapper,
     verify_hash,
     get_post_action_redirect,
+    td_format,
 )
 from flask_security.core import _get_serializer
 
@@ -1663,3 +1664,12 @@ def test_null_user_id(app, client, get_message):
         sess["_user_id"] = ""
         sess["user_id"] = ""
     assert not is_authenticated(client, get_message)
+
+
+def test_td_format(app):
+    # Test our internal timedelta formatter - we encourage using humanize but don't
+    # want to require that dependency.
+    assert "4 seconds" == td_format(timedelta(seconds=4))
+    assert "1 day" == td_format(timedelta(days=1))
+    assert "1 day, 30 minutes" == td_format(timedelta(days=1, minutes=30))
+    assert "1 day, 2 hours, 40 seconds" == td_format(timedelta(hours=26, seconds=40))

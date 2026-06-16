@@ -890,24 +890,28 @@ def config_value(key, app=None, default=None, strict=True):
     return app.config.get(key, default)
 
 
-def get_within_delta(key, app=None):
-    """Get a timedelta object from the application configuration following
-    the internal convention of::
-
-        <Amount of Units> <Type of Units>
-
-    Examples of valid config values::
-
-        5 days
-        10 minutes
-
-    :param key: The config value key without the `SECURITY_` prefix
-    :param app: Optional application to inspect. Defaults to Flask's
-                `current_app`
+def td_format(td: timedelta) -> str:
+    """Formats a timedelta object to a string.
+    This is simplistic version of what humanize provides.
+    This is english only - use humanize for localization
     """
-    txt = config_value(key, app=app)
-    values = txt.split()
-    return timedelta(**{values[1]: int(values[0])})
+    periods = [
+        ("year", 60 * 60 * 24 * 365),
+        ("month", 60 * 60 * 24 * 30),
+        ("day", 60 * 60 * 24),
+        ("hour", 60 * 60),
+        ("minute", 60),
+        ("second", 1),
+    ]
+
+    seconds = int(td.total_seconds())
+    strings = []
+    for period_name, period_seconds in periods:
+        if seconds >= period_seconds:
+            period_value, seconds = divmod(seconds, period_seconds)
+            has_s = "s" if period_value > 1 else ""
+            strings.append(f"{period_value} {period_name}{has_s}")
+    return ", ".join(strings)
 
 
 def send_mail(subject, recipient, template, **context):

@@ -99,7 +99,6 @@ from .utils import (
     get_post_login_redirect,
     get_post_verify_redirect,
     get_url,
-    get_within_delta,
     login_user,
     lookup_identity,
     propagate_next,
@@ -108,6 +107,7 @@ from .utils import (
     view_commit,
     localize_callback,
     allowed_auth_token,
+    td_format,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -527,12 +527,14 @@ def webauthn_register_response(token: str) -> ResponseValue:
     )
 
     expired, invalid, state = check_and_get_token_status(
-        token, "wan", get_within_delta("WAN_REGISTER_WITHIN")
+        token, "wan", cv("WAN_REGISTER_WITHIN")
     )
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_REGISTER_WITHIN"))
+        m, c = get_message(
+            "WEBAUTHN_EXPIRED", within=td_format(cv("WAN_REGISTER_WITHIN"))
+        )
     if invalid or expired:
         if _security._want_json(request):
             form.form_errors.append(m)
@@ -688,12 +690,14 @@ def webauthn_signin_response(token: str) -> ResponseValue:
     )
 
     expired, invalid, state = check_and_get_token_status(
-        token, "wan", get_within_delta("WAN_SIGNIN_WITHIN")
+        token, "wan", cv("WAN_SIGNIN_WITHIN")
     )
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_SIGNIN_WITHIN"))
+        m, c = get_message(
+            "WEBAUTHN_EXPIRED", within=td_format(cv("WAN_SIGNIN_WITHIN"))
+        )
     if invalid or expired:
         if _security._want_json(request):
             form.form_errors.append(m)
@@ -850,12 +854,14 @@ def webauthn_verify_response(token: str) -> ResponseValue:
     )
 
     expired, invalid, state = check_and_get_token_status(
-        token, "wan", get_within_delta("WAN_SIGNIN_WITHIN")
+        token, "wan", cv("WAN_SIGNIN_WITHIN")
     )
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("WEBAUTHN_EXPIRED", within=cv("WAN_SIGNIN_WITHIN"))
+        m, c = get_message(
+            "WEBAUTHN_EXPIRED", within=td_format(cv("WAN_SIGNIN_WITHIN"))
+        )
     if invalid or expired:
         if _security._want_json(request):
             form.form_errors.append(m)

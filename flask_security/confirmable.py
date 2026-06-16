@@ -20,7 +20,6 @@ from .utils import (
     send_mail,
     url_for_security,
     check_and_get_token_status,
-    get_within_delta,
     verify_hash,
 )
 
@@ -84,7 +83,7 @@ def confirm_email_token_status(token):
     :param token: The confirmation token
     """
     expired, invalid, data = check_and_get_token_status(
-        token, "confirm", get_within_delta("CONFIRM_EMAIL_WITHIN")
+        token, "confirm", cv("CONFIRM_EMAIL_WITHIN")
     )
     if invalid or expired or not data:
         return expired, invalid, None

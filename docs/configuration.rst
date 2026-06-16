@@ -844,6 +844,9 @@ Login/Logout
 
     Default: ``["POST"]``.
 
+    .. versionchanged:: 5.9.0
+        Default changed to just allowing ``"POST"``.
+
 
 .. py:data:: SECURITY_POST_LOGIN_VIEW
 
@@ -1055,10 +1058,12 @@ Confirmable
     Default: ``False``.
 .. py:data:: SECURITY_CONFIRM_EMAIL_WITHIN
 
-    Specifies the amount of time a user has before their confirmation
-    link expires. Always pluralize the time unit for this value.
+    Specifies how long until the confirmation link expires.
 
-    Default: ``"5 days"``.
+    Default: ``timedelta(days=2)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 .. py:data:: SECURITY_CONFIRM_URL
 
     Specifies the email confirmation URL.
@@ -1221,10 +1226,12 @@ Recoverable
 
 .. py:data:: SECURITY_RESET_PASSWORD_WITHIN
 
-    Specifies the amount of time a user has before their password reset link expires.
-    Always pluralize the time unit for this value.
+    Specifies how long until the reset link expires.
 
-    Default: ``"1 days"``.
+    Default: ``timedelta(days=1)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 
 .. py:data:: SECURITY_SEND_PASSWORD_RESET_EMAIL
 
@@ -1273,10 +1280,12 @@ Change-Email
     Default: ``"security/change_email.html"``.
 .. py:data:: SECURITY_CHANGE_EMAIL_WITHIN
 
-    Specifies the amount of time a user has before their change email
-    token expires. Always pluralize the time unit for this value.
+    Specifies how long until the change email token expires.
 
-    Default: ``"2 hours"``
+    Default: ``timedelta(hours=2)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 .. py:data:: SECURITY_POST_CHANGE_EMAIL_VIEW
 
     Specifies the view to redirect to after a user successfully confirms their new email address.
@@ -1357,10 +1366,12 @@ Configuration related to the two-factor authentication feature.
     Default: ``120``.
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_WITHIN
 
-    Specifies the amount of time a user has before their two-factor setup
-    token expires. Always pluralize the time unit for this value.
+    Specifies how long until the setup token expires.
 
-    Default: ``"30 minutes"``
+    Default: ``timedelta(minutes=30)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 
     .. versionadded:: 5.5.0
 .. py:data:: SECURITY_TWO_FACTOR_RESCUE_MAIL
@@ -1458,7 +1469,10 @@ Configuration related to the two-factor authentication feature.
 
     Specifies the expiration of the two-factor validity cookie and verification of the token.
 
-    Default: ``"30 Days"``.
+    Default: ``timedelta(days=30)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 
 
 .. py:data:: SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME
@@ -1612,10 +1626,12 @@ Unified Signin
 
 .. py:data:: SECURITY_US_SETUP_WITHIN
 
-    Specifies the amount of time a user has before their setup
-    token expires. Always pluralize the time unit for this value.
+    Specifies how long until the setup token expires.
 
-    Default: ``"30 minutes"``
+    Default: ``timedelta(minutes=30)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 
 .. py:data:: SECURITY_US_SIGNIN_REPLACES_LOGIN
 
@@ -1755,10 +1771,12 @@ This feature is DEPRECATED as of 5.0.0. Please use unified signin feature instea
 
 .. py:data:: SECURITY_LOGIN_WITHIN
 
-    Specifies the amount of time a user has before a login link expires.
-    Always pluralize the time unit for this value.
+    Specifies how long until the login link expires.
 
-    Default: ``"1 days"``.
+    Default: ``timedelta(days=1)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 
 .. py:data:: SECURITY_LOGIN_ERROR_VIEW
 
@@ -1849,10 +1867,12 @@ WebAuthn
 
 .. py:data:: SECURITY_WAN_REGISTER_WITHIN
 
-    Specifies the amount of time a user has before their register
-    token expires. Always pluralize the time unit for this value.
+    Specifies how long until the passkey registration token expires.
 
-    Default: ``"30 minutes"``
+    Default: ``timedelta(minutes=30)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 
 .. py:data:: SECURITY_WAN_REGISTER_TIMEOUT
 
@@ -1863,10 +1883,12 @@ WebAuthn
 
 .. py:data:: SECURITY_WAN_SIGNIN_WITHIN
 
-    Specifies the amount of time a user has before their signin
-    token expires. Always pluralize the time unit for this value.
+    Specifies how long until the passkey signin token expires.
 
-    Default: ``"1 minutes"``
+    Default: ``timedelta(minutes=1)``.
+
+    .. versionchanged:: 5.9.0
+        Accepted value changed to a timedelta
 
 .. py:data:: SECURITY_WAN_SIGNIN_TIMEOUT
 

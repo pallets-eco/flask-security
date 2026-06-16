@@ -174,7 +174,7 @@ def test_do_not_remember_tf_validity(app, client):
 
 
 @pytest.mark.settings(
-    two_factor_always_validate=False, two_factor_login_validity="-1 minutes"
+    two_factor_always_validate=False, two_factor_login_validity=timedelta(minutes=-1)
 )
 def test_tf_expired_cookie(app, client):
     tf_authenticate(app, client, remember=True)
@@ -981,8 +981,7 @@ def test_opt_in_nc_expired(app, client_nc, get_message):
     )
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
-        "TWO_FACTOR_SETUP_EXPIRED",
-        within=app.config["SECURITY_TWO_FACTOR_SETUP_WITHIN"],
+        "TWO_FACTOR_SETUP_EXPIRED", within="30 minutes"
     )
 
 

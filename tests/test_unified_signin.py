@@ -947,7 +947,7 @@ def test_setup_bad_token(app, client, get_message):
     assert get_message("API_ERROR") in response.data
 
 
-@pytest.mark.settings(us_setup_within="2 seconds")
+@pytest.mark.settings(us_setup_within=timedelta(seconds=47))
 def test_setup_timeout(app, client, get_message):
     # Test setup timeout
     set_email(app)
@@ -955,7 +955,7 @@ def test_setup_timeout(app, client, get_message):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     sms_sender = SmsSenderFactory.createSender("test")
-    app.security.us_setup_serializer = FakeSerializer(2.0)
+    app.security.us_setup_serializer = FakeSerializer(47.0)
     response = client.post(
         "us-setup",
         json=dict(chosen_method="sms", phone="650-555-1212"),
@@ -970,7 +970,7 @@ def test_setup_timeout(app, client, get_message):
     )
     assert response.status_code == 400
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
-        "US_SETUP_EXPIRED", within=app.config["SECURITY_US_SETUP_WITHIN"]
+        "US_SETUP_EXPIRED", within="47 seconds"
     )
 
 

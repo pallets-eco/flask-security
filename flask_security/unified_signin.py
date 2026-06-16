@@ -79,7 +79,6 @@ from .utils import (
     get_post_verify_redirect,
     get_message,
     get_url,
-    get_within_delta,
     handle_already_auth,
     is_user_authenticated,
     localize_callback,
@@ -90,6 +89,7 @@ from .utils import (
     url_for_security,
     view_commit,
     allowed_auth_token,
+    td_format,
 )
 from .tf_plugin import tf_verify_validity_token
 from .twofactor import tf_clean_session
@@ -976,12 +976,12 @@ def us_setup_validate(token: str) -> ResponseValue:
     )
 
     expired, invalid, state = check_and_get_token_status(
-        token, "us_setup", get_within_delta("US_SETUP_WITHIN")
+        token, "us_setup", cv("US_SETUP_WITHIN")
     )
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("US_SETUP_EXPIRED", within=cv("US_SETUP_WITHIN"))
+        m, c = get_message("US_SETUP_EXPIRED", within=td_format(cv("US_SETUP_WITHIN")))
     if invalid or expired:
         if _security._want_json(request):
             form.form_errors.append(m)

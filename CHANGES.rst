@@ -13,10 +13,11 @@ Features & Improvements
 - (:issue:`1206`) Add support for refresh tokens. See :ref:`token_topic`
 - (:pr:`1233`) Change :py:data:`SECURITY_TOKEN_MAX_AGE` from an int to a timedelta.
   Also - change default from ``never expire`` to 15 minutes.
-- (:pr:`1235`) Change default LOGOUT_METHODS to be just ``"POST"``
+- (:pr:`1235`) Change default :py:data:`SECURITY_LOGOUT_METHODS` to be just ``"POST"``
 - (:issue:`1228`) Change default ``csrf`` and ``tf_validity`` cookie config to ``secure=True``
 - (:issue:`1228`) The ``tf_validity`` cookie name is now configurable via :py:data:`SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME`
 - (:issue:`1237`) Add support for CSRF on logout
+- (:pr:`xx`) Convert all _WITHIN configuration variable to use timedelta.
 
 Fixes
 +++++
@@ -27,7 +28,7 @@ Fixes
 Docs and Chores
 +++++++++++++++
 - (:issue:`1208`) Remove support for Pony ORM
-- (:pr:`xxx`) Remove deprecated get_token_status() and converted over to check_and_get_token_status()
+- (:pr:`1240`) Remove deprecated get_token_status() and converted over to check_and_get_token_status()
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -43,6 +44,9 @@ Backwards Compatibility Concerns
   has been change to ``secure=True``.
 - The default configuration for :py:data:`SECURITY_CSRF_COOKIE` has been
   changed to ``secure=True``
+- All _WITHIN configuration variables now take a timedelta instead of the
+  home-grown <#> <period>. The old form is still accepted, with a deprecation
+  warning, and converted at flask-security app init time into a timedelta.
 
 Notes
 +++++
