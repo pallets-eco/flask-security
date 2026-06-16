@@ -17,13 +17,12 @@ from .signals import (
     username_recovery_email_sent,
 )
 from .utils import (
-    config_value,
+    check_and_get_token_status,
+    config_value as cv,
     hash_data,
     hash_password,
     send_mail,
     url_for_security,
-    check_and_get_token_status,
-    get_within_delta,
 )
 
 
@@ -39,9 +38,9 @@ def send_reset_password_instructions(user):
     """
     reset_link, token = generate_reset_link(user)
 
-    if config_value("SEND_PASSWORD_RESET_EMAIL"):
+    if cv("SEND_PASSWORD_RESET_EMAIL"):
         send_mail(
-            config_value("EMAIL_SUBJECT_PASSWORD_RESET"),
+            cv("EMAIL_SUBJECT_PASSWORD_RESET"),
             user.email,
             "reset_instructions",
             user=user,
@@ -63,9 +62,9 @@ def send_password_reset_notice(user):
 
     :param user: The user to send the notice to
     """
-    if config_value("SEND_PASSWORD_RESET_NOTICE_EMAIL"):
+    if cv("SEND_PASSWORD_RESET_NOTICE_EMAIL"):
         send_mail(
-            config_value("EMAIL_SUBJECT_PASSWORD_NOTICE"),
+            cv("EMAIL_SUBJECT_PASSWORD_NOTICE"),
             user.email,
             "reset_notice",
             user=user,
@@ -92,7 +91,7 @@ def reset_password_token_status(token):
     """
     user = None
     expired, invalid, data = check_and_get_token_status(
-        token, "reset", get_within_delta("RESET_PASSWORD_WITHIN")
+        token, "reset", cv("RESET_PASSWORD_WITHIN")
     )
     if data:
         user = _datastore.find_user(fs_uniquifier=data[0])
@@ -122,9 +121,9 @@ def send_username_recovery_email(user):
     """Sends the username recovery email for the specified user.
     :param user: The user requesting username recovery
     """
-    if config_value("USERNAME_RECOVERY"):
+    if cv("USERNAME_RECOVERY"):
         send_mail(
-            config_value("EMAIL_SUBJECT_USERNAME_RECOVERY"),
+            cv("EMAIL_SUBJECT_USERNAME_RECOVERY"),
             user.email,
             "username_recovery",
             user=user,

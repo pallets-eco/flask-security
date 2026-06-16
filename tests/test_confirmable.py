@@ -202,7 +202,8 @@ def test_requires_confirmation_error_redirect(app, clients):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(confirm_email_within="1 milliseconds")
+@pytest.mark.settings(confirm_email_within="1 minutes")
+@pytest.mark.filterwarnings("ignore:.*Non timedelta")
 def test_expired_confirmation_token(client, get_message):
     # Note that we need relatively new-ish date since session cookies also expire.
     with freeze_time(date.today() + timedelta(days=-1)):
@@ -219,7 +220,7 @@ def test_expired_confirmation_token(client, get_message):
         token = registrations[0]["confirm_token"]
 
     response = client.get("/confirm/" + token, follow_redirects=True)
-    msg = get_message("CONFIRMATION_EXPIRED", within="1 milliseconds", email=email)
+    msg = get_message("CONFIRMATION_EXPIRED", within="1 minute", email=email)
     assert msg in response.data
 
 
@@ -453,7 +454,7 @@ def test_spa_get(app, client, get_message):
 
 @pytest.mark.registerable()
 @pytest.mark.settings(
-    confirm_email_within="1 milliseconds",
+    confirm_email_within=timedelta(minutes=300),
     redirect_host="localhost:8081",
     redirect_behavior="spa",
     confirm_error_view="/confirm-error",
@@ -482,7 +483,7 @@ def test_spa_get_bad_token(app, client, get_message):
         assert "email" not in qparams
         assert "identity" not in qparams
 
-        msg = get_message("CONFIRMATION_EXPIRED", within="1 milliseconds")
+        msg = get_message("CONFIRMATION_EXPIRED", within="5 hours")
         assert msg == qparams["error"].encode("utf-8")
 
         # Test mangled token

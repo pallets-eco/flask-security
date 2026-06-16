@@ -298,7 +298,7 @@ def test_login_form_description(app, sqlalchemy_datastore):
         assert login_form.password.description == expected
 
 
-@pytest.mark.settings(reset_password_within="1 milliseconds")
+@pytest.mark.settings(reset_password_within=timedelta(hours=4))
 def test_expired_reset_token(client, get_message):
     # Note that we need relatively new-ish date since session cookies also expire.
     with freeze_time(date.today() + timedelta(days=-1)):
@@ -309,9 +309,7 @@ def test_expired_reset_token(client, get_message):
     token = requests[0]["token"]
 
     with capture_flashes() as flashes:
-        msg = get_message(
-            "PASSWORD_RESET_EXPIRED", within="1 milliseconds", email=user.email
-        )
+        msg = get_message("PASSWORD_RESET_EXPIRED", within="4 hours", email=user.email)
 
         # Test getting reset form with expired token
         response = client.get("/reset/" + token, follow_redirects=True)
@@ -475,7 +473,7 @@ def test_spa_get(app, client):
 
 
 @pytest.mark.settings(
-    reset_password_within="1 milliseconds",
+    reset_password_within=timedelta(seconds=39),
     redirect_host="localhost:8081",
     redirect_behavior="spa",
     reset_error_view="/reset-error",
@@ -507,7 +505,7 @@ def test_spa_get_bad_token(app, client, get_message):
         assert "email" not in qparams
 
         msg = get_message(
-            "PASSWORD_RESET_EXPIRED", within="1 milliseconds", email="joe@lp.com"
+            "PASSWORD_RESET_EXPIRED", within="39 seconds", email="joe@lp.com"
         )
         assert msg == qparams["error"].encode("utf-8")
 

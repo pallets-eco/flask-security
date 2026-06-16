@@ -46,7 +46,9 @@ def capture_change_email_requests():
         change_email_instructions_sent.disconnect(_on)
 
 
-@pytest.mark.settings(change_email_error_view="/change-email")
+@pytest.mark.settings(
+    change_email_error_view="/change-email", change_email_within=timedelta(seconds=67)
+)
 def test_ce(app, clients, get_message, outbox):
     @change_email_confirmed.connect_via(app)
     def _on(app, **kwargs):
@@ -66,7 +68,7 @@ def test_ce(app, clients, get_message, outbox):
         assert "matt2@lp.com" == ce_requests[0]["new_email"]
         token = ce_requests[0]["token"]
     assert len(outbox) == 1
-    assert app.config["SECURITY_CHANGE_EMAIL_WITHIN"] in outbox[0].body
+    assert "1 minute, 7 seconds" in outbox[0].body
 
     response = clients.get("/change-email/" + token, follow_redirects=True)
     assert get_message("CHANGE_EMAIL_CONFIRMED") in response.data
@@ -118,7 +120,7 @@ def test_ce_json(app, client, get_message, outbox):
 
 
 @pytest.mark.settings(
-    change_email_within="1 milliseconds", change_email_error_view="/change-email"
+    change_email_within=timedelta(minutes=36), change_email_error_view="/change-email"
 )
 def test_expired_token(client, get_message):
     # Note that we need relatively new-ish date since session cookies also expire.
@@ -131,7 +133,7 @@ def test_expired_token(client, get_message):
         token = ce_requests[0]["token"]
 
     response = client.get("/change-email/" + token, follow_redirects=True)
-    msg = get_message("CHANGE_EMAIL_EXPIRED", within="1 milliseconds")
+    msg = get_message("CHANGE_EMAIL_EXPIRED", within="36 minutes")
     assert msg in response.data
 
 
