@@ -892,26 +892,33 @@ def config_value(key, app=None, default=None, strict=True):
 
 def td_format(td: timedelta) -> str:
     """Formats a timedelta object to a string.
-    This is simplistic version of what humanize provides.
-    This is english only - use humanize for localization
+    Use humanize.precisedelta if available otherwise use
+    this simplistic version of what humanize provides (English only).
     """
-    periods = [
-        ("year", 60 * 60 * 24 * 365),
-        ("month", 60 * 60 * 24 * 30),
-        ("day", 60 * 60 * 24),
-        ("hour", 60 * 60),
-        ("minute", 60),
-        ("second", 1),
-    ]
+    try:
+        import humanize
 
-    seconds = int(td.total_seconds())
-    strings = []
-    for period_name, period_seconds in periods:
-        if seconds >= period_seconds:
-            period_value, seconds = divmod(seconds, period_seconds)
-            has_s = "s" if period_value > 1 else ""
-            strings.append(f"{period_value} {period_name}{has_s}")
-    return ", ".join(strings)
+        return humanize.precisedelta(td)
+    except ImportError:
+        periods = [
+            ("year", 60 * 60 * 24 * 365),
+            ("month", 60 * 60 * 24 * 30),
+            ("day", 60 * 60 * 24),
+            ("hour", 60 * 60),
+            ("minute", 60),
+            ("second", 1),
+        ]
+
+        seconds = int(td.total_seconds())
+        strings = []
+        for period_name, period_seconds in periods:
+            if seconds >= period_seconds:
+                period_value, seconds = divmod(seconds, period_seconds)
+                has_s = "s" if period_value > 1 else ""
+                strings.append(f"{period_value} {period_name}{has_s}")
+        if len(strings) == 2:
+            return " and ".join(strings)
+        return ", ".join(strings)
 
 
 def send_mail(subject, recipient, template, **context):

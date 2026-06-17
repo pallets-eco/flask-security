@@ -185,7 +185,7 @@ def test_spa_get_bad_token(app, client, get_message):
         assert all(k in qparams for k in ["email", "error", "identity"])
 
         msg = get_message(
-            "LOGIN_EXPIRED", within="1 minute, 13 seconds", email="matt@lp.com"
+            "LOGIN_EXPIRED", within="1 minute and 13 seconds", email="matt@lp.com"
         )
         assert msg == qparams["error"].encode("utf-8")
 
