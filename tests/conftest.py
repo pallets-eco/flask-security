@@ -1207,3 +1207,16 @@ def _teardown_realdb(db_info):
     from sqlalchemy_utils import drop_database
 
     drop_database(db_info["engine"].url)
+
+
+@pytest.fixture()
+def humanizer(request):
+    pytest.importorskip("humanize")
+    import humanize
+
+    if getattr(request, "param", None):
+        humanize.i18n.activate(request.param)
+        yield 1
+        humanize.i18n.deactivate()
+    else:
+        yield 0

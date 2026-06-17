@@ -68,7 +68,7 @@ def test_ce(app, clients, get_message, outbox):
         assert "matt2@lp.com" == ce_requests[0]["new_email"]
         token = ce_requests[0]["token"]
     assert len(outbox) == 1
-    assert "1 minute, 7 seconds" in outbox[0].body
+    assert "1 minute and 7 seconds" in outbox[0].body
 
     response = clients.get("/change-email/" + token, follow_redirects=True)
     assert get_message("CHANGE_EMAIL_CONFIRMED") in response.data
@@ -158,6 +158,18 @@ def test_template(app, client, get_message, outbox):
         _, link = matcher[0].split(":", 1)
         response = client.get(link, follow_redirects=True)
         assert get_message("CHANGE_EMAIL_CONFIRMED") in response.data
+
+
+@pytest.mark.parametrize("humanizer", ["fr_FR"], indirect=["humanizer"])
+def test_template_fr(app, client, get_message, outbox, humanizer):
+    # Check contents of email template - with humanize xlation of within
+    authenticate(client, email="matt@lp.com")
+    with capture_change_email_requests():
+        client.post("/change-email", data=dict(email="matt2@lp.com"))
+        # check email
+        assert outbox[0].recipients[0] == "matt2@lp.com"
+        matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+        assert matcher[4].split(":")[1] == "2 heures"
 
 
 @pytest.mark.settings(return_generic_responses=True)

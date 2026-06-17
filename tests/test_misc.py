@@ -1666,10 +1666,27 @@ def test_null_user_id(app, client, get_message):
     assert not is_authenticated(client, get_message)
 
 
-def test_td_format(app):
+def test_td_format(app, monkeypatch):
     # Test our internal timedelta formatter - we encourage using humanize but don't
     # want to require that dependency.
+    import sys
+
+    monkeypatch.setitem(sys.modules, "humanize", None)
     assert "4 seconds" == td_format(timedelta(seconds=4))
     assert "1 day" == td_format(timedelta(days=1))
-    assert "1 day, 30 minutes" == td_format(timedelta(days=1, minutes=30))
+    assert "1 day and 30 minutes" == td_format(timedelta(days=1, minutes=30))
     assert "1 day, 2 hours, 40 seconds" == td_format(timedelta(hours=26, seconds=40))
+
+
+def test_td_format_humanize(app):
+    pytest.importorskip("humanize")
+    assert "1 day, 2 hours and 40 seconds" == td_format(timedelta(hours=26, seconds=40))
+
+
+@pytest.mark.parametrize("humanizer", ["fr_FR"], indirect=["humanizer"])
+def test_td_format_humanize_fr(app, humanizer):
+    # humanize has built in localization
+    # app responsible for setting it up.
+    assert "1 jour, 2 heures et 40 secondes" == td_format(
+        timedelta(hours=26, seconds=40)
+    )
