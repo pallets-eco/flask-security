@@ -1079,6 +1079,13 @@ Confirmable
     Sets the subject for the email confirmation message.
 
     Default: ``_("Please confirm your email")``.
+.. py:data:: SECURITY_EMAIL_TEMPLATE_CONFIRM
+
+    Specifies the path to the template for the email send confirmation instructions.
+
+    Default: ``"confirmation_instructions"``.
+
+    .. versionadded:: 5.9.0
 .. py:data:: SECURITY_CONFIRM_ERROR_VIEW
 
     Specifies the view to redirect to if a confirmation error occurs.
@@ -1253,6 +1260,14 @@ Recoverable
 
     Default: ``_("Password reset instructions")``.
 
+.. py:data:: SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET
+
+    Specifies the path to the template for the email send password reset instructions.
+
+    Default: ``"reset_instructions"``.
+
+    .. versionadded:: 5.9.0
+
 .. py:data:: SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE
 
     Sets subject for the password notice.
@@ -1273,6 +1288,13 @@ Change-Email
     Sets the subject for the change email confirmation email.
 
     Default: ``_("Confirm your new email address")``.
+.. py:data:: SECURITY_CHANGE_EMAIL_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the change email email instructions.
+
+    Default: ``"change_email_instructions"``.
+
+    .. versionadded:: 5.9.0
 .. py:data:: SECURITY_CHANGE_EMAIL_TEMPLATE
 
     Specifies the path to the template for the change email page.

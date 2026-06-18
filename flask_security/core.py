@@ -251,6 +251,7 @@ _default_config: dict[str, t.Any] = {
     "POST_CHANGE_EMAIL_VIEW": None,  # spa
     "CHANGE_EMAIL_SALT": "change-email-salt",
     "CHANGE_EMAIL_SUBJECT": _("Confirm your new email address"),
+    "CHANGE_EMAIL_EMAIL_TEMPLATE": "change_email_instructions",
     "CHANGE_USERNAME": False,
     "CHANGE_USERNAME_TEMPLATE": "security/change_username.html",
     "CHANGE_USERNAME_URL": "/change-username",
@@ -330,6 +331,8 @@ _default_config: dict[str, t.Any] = {
     "EMAIL_HTML": True,
     "EMAIL_SUBJECT_TWO_FACTOR": _("Two-Factor Login"),
     "EMAIL_SUBJECT_TWO_FACTOR_RESCUE": _("Two-Factor Rescue"),
+    "EMAIL_TEMPLATE_CONFIRM": "confirmation_instructions",
+    "EMAIL_TEMPLATE_PASSWORD_RESET": "reset_instructions",
     "USER_IDENTITY_ATTRIBUTES": [
         {"email": {"mapper": uia_email_mapper, "case_insensitive": True}}
     ],

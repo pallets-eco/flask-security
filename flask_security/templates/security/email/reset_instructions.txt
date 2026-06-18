@@ -3,8 +3,8 @@
   reset_token - this token is part of reset link - but can be used to
     construct arbitrary URLs for redirecting.
   user - the entire user model object
+  within - formatted expiration of link
   security - the Flask-Security configuration
 #}
-{{ _fsdomain('Click the link below to reset your password:') }}
-
-{{ reset_link }}
+{{ _fsdomain('Use %(reset_link)s to reset your password.', reset_link=reset_link)|safe }}
+{{ _fsdomain('This link will expire in %(within)s.', within=within) }}

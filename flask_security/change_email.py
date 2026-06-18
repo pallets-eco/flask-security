@@ -183,7 +183,7 @@ def _send_instructions(user, new_email):
     send_mail(
         cv("CHANGE_EMAIL_SUBJECT"),
         new_email,
-        "change_email_instructions",
+        cv("CHANGE_EMAIL_EMAIL_TEMPLATE"),
         user=user,
         link=link,
         token=token,
