@@ -53,7 +53,7 @@ def test_refresh(app, clients, get_message):
     - use the /refresh-token endpoint to get a new refresh_token and auth_token
     - auth_token should be valid
     """
-    start_ts = datetime.today().timestamp()
+    start_ts = datetime.now(timezone.utc).replace(tzinfo=None).timestamp()
     max_age = app.config["SECURITY_REFRESH_TOKEN_MAX_AGE"]
     rts = app.security.remember_token_serializer
     app.security.remember_token_serializer = FakeSerializer(2.0)
