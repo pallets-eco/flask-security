@@ -3,6 +3,8 @@
   confirmation_token - this token is part of confirmation link - but can be used to
     construct arbitrary URLs for redirecting.
   user - the entire user model object
+  within - formatted expiration of link
   security - the Flask-Security configuration
 #}
 {{ _fsdomain('Use %(confirmation_link)s to confirm your email address.', confirmation_link=confirmation_link)|safe }}
+{{ _fsdomain('This link will expire in %(within)s.', within=within) }}

@@ -21,6 +21,7 @@ from .utils import (
     url_for_security,
     check_and_get_token_status,
     verify_hash,
+    td_format,
 )
 
 
@@ -40,10 +41,11 @@ def send_confirmation_instructions(user):
     send_mail(
         cv("EMAIL_SUBJECT_CONFIRM"),
         user.email,
-        "confirmation_instructions",
+        cv("EMAIL_TEMPLATE_CONFIRM"),
         user=user,
         confirmation_link=confirmation_link,
         confirmation_token=token,
+        within=td_format(cv("CONFIRM_EMAIL_WITHIN")),
     )
 
     confirm_instructions_sent.send(
