@@ -19,6 +19,7 @@ Features & Improvements
 - (:issue:`1237`) Add support for CSRF on logout
 - (:pr:`1241`) Convert all _WITHIN configuration variable to use timedelta
 - (:issue:`1153`) Enable localization of %(within)s variables using humanize
+- (:pr:`xx`) Add link expiration to confirmation and reset password email templates
 
 Fixes
 +++++

@@ -23,6 +23,7 @@ from .utils import (
     hash_password,
     send_mail,
     url_for_security,
+    td_format,
 )
 
 
@@ -42,10 +43,11 @@ def send_reset_password_instructions(user):
         send_mail(
             cv("EMAIL_SUBJECT_PASSWORD_RESET"),
             user.email,
-            "reset_instructions",
+            cv("EMAIL_TEMPLATE_PASSWORD_RESET"),
             user=user,
             reset_link=reset_link,
             reset_token=token,
+            within=td_format(cv("RESET_PASSWORD_WITHIN")),
         )
 
     reset_password_instructions_sent.send(

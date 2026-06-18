@@ -137,6 +137,11 @@ def test_expired_token(client, get_message):
     assert msg in response.data
 
 
+@pytest.mark.settings(
+    change_email_within=timedelta(minutes=90),
+    change_email_email_template="change_email_instructions_test",
+    email_html=False,
+)
 def test_template(app, client, get_message, outbox):
     # Check contents of email template - this uses a test template
     # to check all context vars since the default template
@@ -152,7 +157,9 @@ def test_template(app, client, get_message, outbox):
         assert matcher[1].split(":")[1] == "matt@lp.com"
         assert matcher[2].split(":")[1] == ce_requests[0]["token"]
         assert matcher[3].split(":")[1] == "True"  # register_blueprint
-        assert matcher[4].split(":")[1] == "2 hours"
+        assert matcher[4].split(":")[1] == "1 hour and 30 minutes"  # within
+        # entire original template is included in this test one
+        assert "This link will expire in 1 hour and 30 minutes." in outbox[0].body
 
         # check link
         _, link = matcher[0].split(":", 1)
@@ -160,6 +167,9 @@ def test_template(app, client, get_message, outbox):
         assert get_message("CHANGE_EMAIL_CONFIRMED") in response.data
 
 
+@pytest.mark.settings(
+    change_email_email_template="change_email_instructions_test", email_html=False
+)
 @pytest.mark.parametrize("humanizer", ["fr_FR"], indirect=["humanizer"])
 def test_template_fr(app, client, get_message, outbox, humanizer):
     # Check contents of email template - with humanize xlation of within

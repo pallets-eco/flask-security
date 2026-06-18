@@ -236,6 +236,12 @@ def test_recoverable_json(app, client, get_message, outbox):
     assert len(flashes) == 0
 
 
+@pytest.mark.registerable()
+@pytest.mark.settings(
+    email_template_password_reset="reset_instructions_test",
+    email_html=False,
+    reset_password_within=timedelta(minutes=45),
+)
 def test_recoverable_template(app, client, get_message, outbox):
     # Check contents of email template - this uses a test template
     # in order to check all context vars since the default template
@@ -246,16 +252,20 @@ def test_recoverable_template(app, client, get_message, outbox):
         )
         assert len(outbox) == 1
         matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
-        # should be 4 - link, email, token, config item
+        # should be 5 - link, email, token, config item, within
         assert matcher[1].split(":")[1] == "joe@lp.com"
         assert matcher[2].split(":")[1] == resets[0]["reset_token"]
         assert matcher[3].split(":")[1] == "True"  # register_blueprint
         assert matcher[4].split(":")[1] == "/reset"  # SECURITY_RESET_URL
+        assert matcher[5].split(":")[1] == "45 minutes"  # within
 
         # check link
         link = matcher[0].split(":", 1)[1]
         response = client.get(link, follow_redirects=True)
         assert b"Reset Password" in response.data
+
+        # regular text template is included in the test template
+        assert "This link will expire in 45 minutes." in outbox[0].body
 
 
 def test_recover_invalidates_session(app, client):
