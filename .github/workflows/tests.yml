@@ -34,7 +34,7 @@ jobs:
           - {python: '3.14', tox: 'py314-release' }
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
@@ -54,7 +54,7 @@ jobs:
   lint:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@v7
         - uses: actions/setup-python@v6
           with:
             python-version: "3.13"
@@ -69,7 +69,7 @@ jobs:
   other:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@v7
         - uses: actions/setup-python@v6
           with:
             python-version: "3.13"
@@ -83,7 +83,7 @@ jobs:
   cov:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@v7
         - uses: actions/setup-python@v6
           with:
             python-version: "3.13"
@@ -118,7 +118,7 @@ jobs:
             --health-timeout 5s
             --health-retries 5
       steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@v7
         - uses: actions/setup-python@v6
           with:
             python-version: "3.13"
