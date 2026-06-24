@@ -429,9 +429,11 @@ def test_two_factor_flag(app, clients, get_message, outbox, signals):
     # make sure two_factor_verify_code_form is set
     assert b'name="code"' in response.data
 
-    code = outbox[1].body.split()[-1]
+    matcher = re.match(r".*code: ([0-9]+).*", outbox[1].body, re.IGNORECASE | re.DOTALL)
     # submit right token and show appropriate response
-    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    response = client.post(
+        "/tf-validate", data=dict(code=matcher.group(1)), follow_redirects=True
+    )
     assert b"You successfully changed your two-factor method" in response.data
 
     # Test change two_factor password confirmation view to authenticator
@@ -715,6 +717,7 @@ def test_rescue_json(app, client, outbox):
     assert outbox[0].recipients == ["gal2@lp.com"]
     assert outbox[0].sender == "no-reply@localhost"
     assert outbox[0].subject == "Two-Factor Login"
+    assert "This code will expire in 5 minutes" in outbox[0].body
     matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
     response = client.post("/tf-validate", json=dict(code=matcher.group(1)))
     assert response.status_code == 200
@@ -1563,9 +1566,11 @@ def test_no_sms(app, get_message, outbox):
     msg = b"Enter code to complete setup"
     assert msg in response.data
 
-    code = outbox[0].body.split()[-1]
+    matcher = re.match(r".*code: ([0-9]+).*", outbox[0].body, re.IGNORECASE | re.DOTALL)
     # submit right token and show appropriate response
-    response = client.post("/tf-validate", data=dict(code=code), follow_redirects=True)
+    response = client.post(
+        "/tf-validate", data=dict(code=matcher.group(1)), follow_redirects=True
+    )
     assert b"You successfully changed your two-factor method" in response.data
 
     with app.app_context():

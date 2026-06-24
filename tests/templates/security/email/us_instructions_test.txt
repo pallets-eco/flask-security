@@ -4,6 +4,7 @@
     construct arbitrary URLs for redirecting.
   user - the entire user model object
   username - username
+  within - formatted expiration of link
   security - the Flask-Security configuration
 #}
 Link:{{ login_link }}
@@ -11,3 +12,6 @@ Email:{{ user.email }}
 Token:{{ login_token }}
 RegisterBlueprint:{{ security.register_blueprint }}
 Username:{{ username }}
+Within:{{ within }}
+
+{% include "security/email/us_instructions.txt" %}
