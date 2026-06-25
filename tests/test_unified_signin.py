@@ -362,7 +362,11 @@ def test_signin_pwd_json(app, client, get_message):
 
 
 @pytest.mark.registerable()
-@pytest.mark.settings(password_required=False)
+@pytest.mark.settings(
+    password_required=False,
+    us_email_template="us_instructions_test",
+    email_html=False,
+)
 def test_us_passwordless(app, client, get_message, outbox):
     # Check passwordless.
     # Check contents of email template - this uses a test template
@@ -381,13 +385,17 @@ def test_us_passwordless(app, client, get_message, outbox):
         # 2 emails - first from registration.
         assert len(outbox) == 2
         matcher = re.findall(r"\w+:.*", outbox[1].body, re.IGNORECASE)
-        # should be 5 - link, email, token, config item, username
+        # should be 6 - link, email, token, config item, username, within
+        # and entire real template included
         assert matcher[1].split(":")[1] == "nopasswd-dude@lp.com"
         token = matcher[2].split(":")[1]
         assert token == requests[0]["token"]  # deprecated
         assert token == requests[0]["login_token"]
         assert matcher[3].split(":")[1] == "True"  # register_blueprint
         assert matcher[4].split(":")[1] == "nopasswd-dude@lp.com"
+        assert matcher[5].split(":")[1] == "2 minutes"
+        # regular text template is included in the test template
+        assert "This code/link will expire in 2 minutes." in outbox[1].body
 
         # check link
         link = matcher[0].split(":", 1)[1]
@@ -401,7 +409,11 @@ def test_us_passwordless(app, client, get_message, outbox):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
-@pytest.mark.settings(password_required=False)
+@pytest.mark.settings(
+    password_required=False,
+    us_email_template="us_instructions_test",
+    email_html=False,
+)
 def test_us_passwordless_confirm(app, client, get_message, outbox):
     # Check passwordless with confirmation required.
     response = client.post(
@@ -438,7 +450,11 @@ def test_us_passwordless_confirm(app, client, get_message, outbox):
 
 @pytest.mark.registerable()
 @pytest.mark.confirmable()
-@pytest.mark.settings(password_required=False)
+@pytest.mark.settings(
+    password_required=False,
+    us_email_template="us_instructions_test",
+    email_html=False,
+)
 def test_us_passwordless_confirm_json(app, client, get_message, outbox):
     # Check passwordless with confirmation required.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -769,6 +785,7 @@ def test_setup(app, clients, get_message, signals):
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
 
+@pytest.mark.settings(us_email_template="us_instructions_test", email_html=False)
 def test_setup_email(app, client, get_message, outbox):
     # setup with email - make sure magic link isn't sent and code is.
     # N.B. this is using the test us_instructions template
@@ -876,6 +893,8 @@ def test_setup_json(app, client_nc, get_message):
 @pytest.mark.settings(
     us_enabled_methods=["email", "sms"],
     user_identity_attributes=UIA_EMAIL_PHONE,
+    us_email_template="us_instructions_test",
+    email_html=False,
 )
 def test_setup_json_no_session(app, client_nc, get_message, outbox):
     # Test that with normal config freshness is required and we can use auth_token
@@ -1393,7 +1412,11 @@ def test_can_add_password(app, client, get_message):
 @pytest.mark.parametrize("app", v2_param, indirect=True)
 @pytest.mark.registerable()
 @pytest.mark.changeable()
-@pytest.mark.settings(password_required=False)
+@pytest.mark.settings(
+    password_required=False,
+    us_email_template="us_instructions_test",
+    email_html=False,
+)
 def test_change_empty_password(app, client, outbox):
     # test that if register w/o a password - can 'change' it.
     headers = {"Accept": "application/json", "Content-Type": "application/json"}

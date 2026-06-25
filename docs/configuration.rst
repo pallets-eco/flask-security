@@ -1353,7 +1353,7 @@ Configuration related to the two-factor authentication feature.
 
     Specifies if Flask-Security should enable the two-factor login feature.
 
-    Default: ``False``.
+    Default: ``False``
 .. py:data:: SECURITY_TWO_FACTOR_REQUIRED
 
     If set to ``True`` then all users will be required to setup and use two-factor authentication.
@@ -1361,7 +1361,7 @@ Configuration related to the two-factor authentication feature.
     for ways the application can
     more finely tune which users require two-factor authentication.
 
-    Default: ``False``.
+    Default: ``False``
 
     .. versionchanged:: 5.8.0
         Added overridable method that can alter this behavior.
@@ -1375,22 +1375,22 @@ Configuration related to the two-factor authentication feature.
 
     Specifies the number of seconds access token is valid.
 
-    Default: ``120``.
+    Default: ``120``
 .. py:data:: SECURITY_TWO_FACTOR_MAIL_VALIDITY
 
     Specifies the number of seconds access token is valid.
 
-    Default: ``300``.
+    Default: ``300``
 .. py:data:: SECURITY_TWO_FACTOR_SMS_VALIDITY
 
     Specifies the number of seconds access token is valid.
 
-    Default: ``120``.
+    Default: ``120``
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_WITHIN
 
     Specifies how long until the setup token expires.
 
-    Default: ``timedelta(minutes=30)``.
+    Default: ``timedelta(minutes=30)``
 
     .. versionchanged:: 5.9.0
         Accepted value changed to a timedelta
@@ -1401,7 +1401,7 @@ Configuration related to the two-factor authentication feature.
     Specifies the email address users send mail to when they can't complete the
     two-factor authentication login.
 
-    Default: ``"no-reply@localhost"``.
+    Default: ``"no-reply@localhost"``
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_TWO_FACTOR
 
@@ -1417,39 +1417,44 @@ Configuration related to the two-factor authentication feature.
 
     Specifies the path to the template for the verify code page for the two-factor authentication process.
 
-    Default: ``"security/two_factor_verify_code.html"``.
+    Default: ``"security/two_factor_verify_code.html"``
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_TEMPLATE
 
     Specifies the path to the template for the setup page for the two-factor authentication process.
 
-    Default: ``"security/two_factor_setup.html"``.
+    Default: ``"security/two_factor_setup.html"``
 
 .. py:data:: SECURITY_TWO_FACTOR_SETUP_URL
 
     Specifies the two-factor setup URL.
 
-    Default: ``"/tf-setup"``.
+    Default: ``"/tf-setup"``
 .. py:data:: SECURITY_TWO_FACTOR_TOKEN_VALIDATION_URL
 
     Specifies the two-factor token validation URL.
 
-    Default: ``"/tf-validate"``.
-
+    Default: ``"/tf-validate"``
 .. py:data:: SECURITY_TWO_FACTOR_RESCUE_URL
 
     Specifies the two-factor rescue URL.
 
-    Default: ``"/tf-rescue"``.
-
+    Default: ``"/tf-rescue"``
 .. py:data:: SECURITY_TWO_FACTOR_SELECT_URL
 
     Specifies the two-factor select URL. This is used when the user has
     setup more than one second factor - see :ref:`webauthn:webauthn`.
 
-    Default: ``"/tf-select"``.
+    Default: ``"/tf-select"``
 
     .. versionadded:: 5.0.0
 
+.. py:data:: SECURITY_TWO_FACTOR_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the email providing the code for authentication.
+
+    Default: ``"two_factor_instructions"``
+
+    .. versionadded:: 5.9.0
 .. py:data:: SECURITY_TWO_FACTOR_ERROR_VIEW
 
     Specifies a URL or endpoint to redirect to if the system detects that
@@ -1475,7 +1480,7 @@ Configuration related to the two-factor authentication feature.
     Specifies the path to the template for the select method page for the two-factor authentication process.
     This is used when more than one two-factor method has been setup (e.g. SMS and Webauthn).
 
-    Default: ``"security/two_factor_select.html"``.
+    Default: ``"security/two_factor_select.html"``
 
     .. versionadded:: 5.0.0
 
@@ -1486,12 +1491,12 @@ Configuration related to the two-factor authentication feature.
     a code is required. Note that this is cookie based - so a new browser
     session will always require a fresh two-factor code.
 
-    Default: ``True``.
+    Default: ``True``
 .. py:data:: SECURITY_TWO_FACTOR_LOGIN_VALIDITY
 
     Specifies the expiration of the two-factor validity cookie and verification of the token.
 
-    Default: ``timedelta(days=30)``.
+    Default: ``timedelta(days=30)``
 
     .. versionchanged:: 5.9.0
         Accepted value changed to a timedelta
@@ -1501,7 +1506,7 @@ Configuration related to the two-factor authentication feature.
 
     Name for the two factor validity cookie.
 
-    Default: ``tf_validity``
+    Default: ``"tf_validity"``
 
     .. versionadded:: 5.9.0
 
@@ -1510,7 +1515,7 @@ Configuration related to the two-factor authentication feature.
     A dictionary containing the parameters of the two-factor validity cookie.
     The complete set of parameters is described in Flask's `set_cookie`_ documentation.
 
-    Default: ``{'httponly': True, 'secure': True, 'samesite': "Strict"}``.
+    Default: ``{'httponly': True, 'secure': True, 'samesite': "Strict"}``
 
 
     .. versionchanged:: 5.9.0
@@ -1613,6 +1618,13 @@ Unified Signin
 
     Default: ``"security/us_verify.html"``
 
+.. py:data:: SECURITY_US_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the email providing the code for authentication.
+
+    Default: ``"us_instructions"``
+
+    .. versionadded:: 5.9.0
 .. py:data:: SECURITY_US_ENABLED_METHODS
 
     Specifies the default enabled methods for unified signin authentication.
@@ -1632,7 +1644,7 @@ Unified Signin
     and :py:data:`SECURITY_TWO_FACTOR_REQUIRED`. Note that even with REQUIRED, only
     methods listed here will trigger a two-factor cycle.
 
-    Default: ``["password", "email"]``.
+    Default: ``["password", "email"]``
 
 .. py:data:: SECURITY_US_TOKEN_VALIDITY
 
@@ -1650,7 +1662,7 @@ Unified Signin
 
     Specifies how long until the setup token expires.
 
-    Default: ``timedelta(minutes=30)``.
+    Default: ``timedelta(minutes=30)``
 
     .. versionchanged:: 5.9.0
         Accepted value changed to a timedelta
@@ -1721,13 +1733,13 @@ Change Username
    This feature should be used in conjunction with
    the :py:data:`SECURITY_USERNAME_ENABLE` feature.
 
-   Default: ``False``.
+   Default: ``False``
 
 .. py:data:: SECURITY_CHANGE_USERNAME_URL
 
    Specifies the change username URL.
 
-   Default: ``"/change-username"``.
+   Default: ``"/change-username"``
 
 .. py:data:: SECURITY_POST_CHANGE_USERNAME_VIEW
 
@@ -1736,26 +1748,26 @@ Change Username
     If this value is ``None``, the user is redirected  to the
     value of :data:`SECURITY_POST_LOGIN_VIEW`.
 
-    Default: ``None``.
+    Default: ``None``
 
 .. py:data:: SECURITY_SEND_USERNAME_CHANGE_EMAIL
 
    If ``True`` then an email will be sent to the registered user upon
    successful change of their username.
 
-   Default: ``True``.
+   Default: ``True``
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_USERNAME_CHANGE_NOTICE
 
    Sets subject for the change username email.
 
-   Default: ``_(""Your username has been changed"")``.
+   Default: ``_("Your username has been changed")``
 
 .. py:data:: SECURITY_CHANGE_USERNAME_TEMPLATE
 
    Specifies the path to the template for the change username page.
 
-   Default: ``"security/change_username.html"``.
+   Default: ``"security/change_username.html"``
 
 Additional relevant configuration variables:
 
@@ -1891,7 +1903,7 @@ WebAuthn
 
     Specifies how long until the passkey registration token expires.
 
-    Default: ``timedelta(minutes=30)``.
+    Default: ``timedelta(minutes=30)``
 
     .. versionchanged:: 5.9.0
         Accepted value changed to a timedelta
@@ -1907,7 +1919,7 @@ WebAuthn
 
     Specifies how long until the passkey signin token expires.
 
-    Default: ``timedelta(minutes=1)``.
+    Default: ``timedelta(minutes=1)``
 
     .. versionchanged:: 5.9.0
         Accepted value changed to a timedelta
@@ -2124,13 +2136,13 @@ Refresh Tokens
 
     Specifies if Flask-Security should enable refresh token support.
 
-    Default: ``False``.
+    Default: ``False``
 .. py:data:: SECURITY_REFRESH_TOKEN_URL
 
     Specifies the URL used to get new auth_tokens using an existing
     refresh token
 
-    Default: ``"/refresh-token"``.
+    Default: ``"/refresh-token"``
 .. py:data:: SECURITY_REFRESH_TOKEN_MAX_AGE
 
     Specifies a timedelta used to compute the refresh tokens expiration date.
@@ -2159,7 +2171,7 @@ Refresh Tokens
     If set then refresh tokens will be returned in a cookie rather than as
     part of the JSON response. Upon logout, the cookie will be deleted.
 
-    Default: ``fs_refresh``
+    Default: ``"fs_refresh"``
 
 .. py:data:: SECURITY_REFRESH_TOKEN_COOKIE
 
@@ -2247,7 +2259,7 @@ A list of all URLs and Views:
 
 Template Paths
 --------------
-A list of all templates:
+The list of all views templates:
 
 * :py:data:`SECURITY_FORGOT_PASSWORD_TEMPLATE`
 * :py:data:`SECURITY_LOGIN_USER_TEMPLATE`
@@ -2272,6 +2284,14 @@ A list of all templates:
 * :py:data:`SECURITY_WAN_REGISTER_TEMPLATE`
 * :py:data:`SECURITY_WAN_SIGNIN_TEMPLATE`
 * :py:data:`SECURITY_WAN_VERIFY_TEMPLATE`
+
+The list of all email templates:
+
+* :py:data:`SECURITY_CHANGE_EMAIL_EMAIL_TEMPLATE` ``"change_email_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_CONFIRM` ``"confirmation_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET` ``"reset_instructions"``
+* :py:data:`SECURITY_TWO_FACTOR_EMAIL_TEMPLATE` ``"two_factor_instructions"``
+* :py:data:`SECURITY_US_EMAIL_TEMPLATE` ``"us_instructions"``
 
 Messages
 -------------

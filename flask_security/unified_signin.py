@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import time
 import typing as t
+from datetime import timedelta
 
 from flask import current_app
 from flask import after_this_request, request, session
@@ -1057,12 +1058,13 @@ def us_send_security_token(
         send_mail(
             cv("US_EMAIL_SUBJECT"),
             user.email,
-            "us_instructions",
+            cv("US_EMAIL_TEMPLATE"),
             user=user,
             username=user.calc_username(),
             token=code,  # deprecated
             login_token=code,
             login_link=login_link,
+            within=td_format(timedelta(seconds=cv("US_TOKEN_VALIDITY"))),
         )
     elif method == "sms":
         m, c = get_message("USE_CODE", code=code)

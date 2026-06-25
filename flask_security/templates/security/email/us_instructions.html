@@ -4,10 +4,12 @@
     construct arbitrary URLs for redirecting.
   user - the entire user model object
   username - username
+  within - how long the link/code is valid
   security - the Flask-Security configuration
 #}
 <p>{{ _fsdomain("Welcome %(username)s!", username=username) }}</p>
-<p>{{ _fsdomain("You can sign in to your account using the following code: %(token)s", token=token) }}</p>
+<p>{{ _fsdomain("You can sign in to your account using the following code: %(code)s", code=login_token) }}</p>
 {% if login_link %}
   <p>{{ _fsdomain('Or use this link: <a href="%(login_link)s">Sign in</a>', login_link=login_link)|safe }}</p>
 {% endif %}
+<p>{{ _fsdomain('This code/link will expire in %(within)s.', within=within) }}</p>

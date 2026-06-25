@@ -11,6 +11,7 @@ Flask-Security two_factor module
 from __future__ import annotations
 
 import typing as t
+from datetime import timedelta
 
 from flask import current_app, redirect, request, session
 
@@ -33,6 +34,7 @@ from .utils import (
     json_error_response,
     send_mail,
     url_for_security,
+    td_format,
 )
 from .signals import (
     tf_code_confirmed,
@@ -67,10 +69,11 @@ def tf_send_security_token(user, method, totp_secret, phone_number):
         send_mail(
             cv("EMAIL_SUBJECT_TWO_FACTOR"),
             user.email,
-            "two_factor_instructions",
+            cv("TWO_FACTOR_EMAIL_TEMPLATE"),
             user=user,
             token=token_to_be_sent,
             username=user.calc_username(),
+            within=td_format(timedelta(seconds=cv("TWO_FACTOR_MAIL_VALIDITY"))),
         )
     elif method == "sms":
         m, c = get_message("USE_CODE", code=token_to_be_sent)
