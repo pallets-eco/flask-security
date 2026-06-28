@@ -1187,7 +1187,7 @@ def two_factor_rescue():
             send_mail(
                 cv("EMAIL_SUBJECT_TWO_FACTOR_RESCUE"),
                 cv("TWO_FACTOR_RESCUE_MAIL"),
-                "two_factor_rescue",
+                cv("TWO_FACTOR_RESCUE_EMAIL_TEMPLATE"),
                 user=form.user,
             )
             # drop through to GET path

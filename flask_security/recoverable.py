@@ -68,7 +68,7 @@ def send_password_reset_notice(user):
         send_mail(
             cv("EMAIL_SUBJECT_PASSWORD_NOTICE"),
             user.email,
-            "reset_notice",
+            cv("EMAIL_TEMPLATE_PASSWORD_RESET_NOTICE"),
             user=user,
         )
 
@@ -127,7 +127,7 @@ def send_username_recovery_email(user):
         send_mail(
             cv("EMAIL_SUBJECT_USERNAME_RECOVERY"),
             user.email,
-            "username_recovery",
+            cv("USERNAME_RECOVERY_EMAIL_TEMPLATE"),
             user=user,
             username=user.username,
         )

@@ -125,7 +125,7 @@ link. Upon navigating to the confirmation link, the user's account will be set t
 There is also view for resending a confirmation link to a given email
 if the user happens to try to use an expired token or has lost the previous
 email. Confirmation links can be configured to expire after a specified amount
-of time (default 5 days).
+of time (default 2 days).
 
 Password Reset/Recovery
 -----------------------
@@ -287,7 +287,7 @@ in the `examples` directory.
 
 Account Management
 -------------------
-Flask-Security includes support for managing user accounts. A combination of forms
+Flask-Security includes support for managing user accounts. A combination of forms,
 views, database models, and CLI provide application support for:
 
 Adding and Deleting Users

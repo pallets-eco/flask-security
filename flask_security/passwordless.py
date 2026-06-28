@@ -32,7 +32,7 @@ def send_login_instructions(user):
     send_mail(
         cv("EMAIL_SUBJECT_PASSWORDLESS"),
         user.email,
-        "login_instructions",
+        cv("EMAIL_TEMPLATE_PASSWORDLESS"),
         user=user,
         login_link=login_link,
         login_token=token,

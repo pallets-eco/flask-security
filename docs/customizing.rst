@@ -407,43 +407,34 @@ Emails
 ------
 
 Flask-Security is also packaged with a default template for each email that it
-may send. Templates are located within the subfolder named ``security/email``.
+may send. The default templates are located within the subfolder named ``security/email``.
+Each template has a both a text and an html version (see :py:data:`SECURITY_EMAIL_HTML`)
+
 The following is a list of email templates:
 
-* `security/email/confirmation_instructions.html`
-* `security/email/confirmation_instructions.txt`
-* `security/email/login_instructions.html`
-* `security/email/login_instructions.txt`
-* `security/email/username_recovery.html`
-* `security/email/username_recovery.txt`
-* `security/email/reset_instructions.html`
-* `security/email/reset_instructions.txt`
-* `security/email/reset_notice.html`
-* `security/email/reset_notice.txt`
-* `security/email/change_notice.txt`
-* `security/email/change_notice.html`
-* `security/email/change_email_instructions.txt`
-* `security/email/change_email_instructions.html`
-* `security/email/change_username_notice.txt`
-* `security/email/change_username_notice.html`
-* `security/email/welcome.html`
-* `security/email/welcome.txt`
-* `security/email/welcome_existing.html`
-* `security/email/welcome_existing.txt`
-* `security/email/welcome_existing_username.html`
-* `security/email/welcome_existing_username.txt`
-* `security/email/two_factor_instructions.html`
-* `security/email/two_factor_instructions.txt`
-* `security/email/two_factor_rescue.html`
-* `security/email/two_factor_rescue.txt`
-* `security/email/us_instructions.html`
-* `security/email/us_instructions.txt`
+* :py:data:`SECURITY_CHANGE_EMAIL_EMAIL_TEMPLATE` ``"security/email/change_email_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_CHANGE_NOTICE` ``"security/email/change_notice"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_CONFIRM` ``"security/email/confirmation_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET` ``"security/email/reset_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET_NOTICE` ``"security/email/reset_notice"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORDLESS` ``"security/email/login_instructions"``
+* :py:data:`SECURITY_REGISTER_EMAIL_TEMPLATE` ``"security/email/welcome"``
+* :py:data:`SECURITY_REGISTER_EMAIL_EXISTING_USERNAME_TEMPLATE` ``"security/email/welcome_existing_username"``
+* :py:data:`SECURITY_REGISTER_EMAIL_EXISTING_TEMPLATE` ``"security/email/welcome_existing"``
+* :py:data:`SECURITY_TWO_FACTOR_EMAIL_TEMPLATE` ``"security/email/two_factor_instructions"``
+* :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL_TEMPLATE` ``"security/email/two_factor_rescue"``
+* :py:data:`SECURITY_US_EMAIL_TEMPLATE` ``"security/email/us_instructions"``
+* :py:data:`SECURITY_CHANGE_USERNAME_EMAIL_TEMPLATE` ``"security/email/change_username_notice"``
+* :py:data:`SECURITY_USERNAME_RECOVERY_EMAIL_TEMPLATE` ``"security/email/username_recovery"``
 
 Overriding these templates is simple:
 
-1. Create a folder named ``security`` within your application's templates folder
-2. Create a folder named ``email`` within the ``security`` folder
-3. Create a template with the same name for the template you wish to override
+1. Create a folder named ``security/email`` within your application's templates folder
+2. Create a template with the same name for the template you wish to override
+
+OR
+
+1. Change the above configuration variable to point to a template in your applications template path(s).
 
 Each template is passed a template context object that includes values as described in the table below.
 In addition, all templates receive:
@@ -479,15 +470,18 @@ welcome                         SECURITY_SEND_REGISTER_EMAIL         SECURITY_EM
 confirmation_instructions       N/A                                  SECURITY_EMAIL_SUBJECT_CONFIRM                    - user                 confirm_instructions_sent
                                                                                                                        - confirmation_link
                                                                                                                        - confirmation_token
+                                                                                                                       - within
 change_email_instructions       N/A                                  SECURITY_CHANGE_EMAIL_SUBJECT                     - user                 change_email_instructions_sent
                                                                                                                        - link
                                                                                                                        - token
+                                                                                                                       - within
 login_instructions              N/A                                  SECURITY_EMAIL_SUBJECT_PASSWORDLESS               - user                 login_instructions_sent
                                                                                                                        - login_link
                                                                                                                        - login_token
 reset_instructions              SEND_PASSWORD_RESET_EMAIL            SECURITY_EMAIL_SUBJECT_PASSWORD_RESET             - user                 reset_password_instructions_sent
                                                                                                                        - reset_link
                                                                                                                        - reset_token
+                                                                                                                       - within
 reset_notice                    SEND_PASSWORD_RESET_NOTICE_EMAIL     SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE            - user                 password_reset
 
 change_notice                   SEND_PASSWORD_CHANGE_EMAIL           SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE     - user                 password_changed
@@ -496,11 +490,13 @@ change_username_notice          SEND_USERNAME_PASSWORD_CHANGE_EMAIL  SECURITY_EM
 two_factor_instructions         N/A                                  SECURITY_EMAIL_SUBJECT_TWO_FACTOR                 - user                 tf_security_token_sent
                                                                                                                        - token
                                                                                                                        - username
+                                                                                                                       - within
 two_factor_rescue               N/A                                  SECURITY_EMAIL_SUBJECT_TWO_FACTOR_RESCUE          - user                 N/A
 us_instructions                 N/A                                  SECURITY_US_EMAIL_SUBJECT                         - user                 us_security_token_sent
                                                                                                                        - login_token
                                                                                                                        - login_link
                                                                                                                        - username
+                                                                                                                       - within
 welcome_existing                SECURITY_SEND_REGISTER_EMAIL         SECURITY_EMAIL_SUBJECT_REGISTER                   - user                 user_not_registered
                                 SECURITY_RETURN_GENERIC_RESPONSES                                                      - recovery_link
                                                                                                                        - confirmation_link
@@ -522,7 +518,7 @@ When sending an email, Flask-Security goes through the following steps:
 
   #. Calls :meth:`.MailUtil.send_mail` with all the required parameters.
 
-The default implementation of ``MailUtil.send_mail`` uses flask-mailman to create and send the message.
+The default implementation of ``MailUtil.send_mail`` uses Flask-Mail to create and send the message.
 By providing your own implementation, you can use any available python email handling package.
 
 Email subjects are by default localized - see above section on Localization to learn how

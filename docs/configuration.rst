@@ -993,6 +993,36 @@ Registerable
     Default: ``False``
 
     .. versionadded:: 4.1.0
+.. py:data:: SECURITY_REGISTER_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the email sent when
+    a new account has been registered.
+
+    Default: ``"security/email/welcome"``
+
+    .. versionadded:: 5.9.0
+.. py:data:: SECURITY_REGISTER_EMAIL_EXISTING_USERNAME_TEMPLATE
+
+    Specifies the path to the template for the email sent when
+    attempting to register a new account but the selected username
+    is already in use by another account.
+    This is only sent if :py:data:`SECURITY_RETURN_GENERIC_RESPONSES` is set.
+    Please see :ref:`generic_responses`.
+
+    Default: ``"security/email/welcome_existing_username"``
+
+    .. versionadded:: 5.9.0
+.. py:data:: SECURITY_REGISTER_EMAIL_EXISTING_TEMPLATE
+
+    Specifies the path to the template for the email sent when
+    attempting to register a new account but the selected email
+    ss already in the system.
+    This is only sent if :py:data:`SECURITY_RETURN_GENERIC_RESPONSES` is set.
+    Please see :ref:`generic_responses`.
+
+    Default: ``"security/email/welcome_existing"``
+
+    .. versionadded:: 5.9.0
 
 .. py:data:: SECURITY_USERNAME_REQUIRED
 
@@ -1083,7 +1113,7 @@ Confirmable
 
     Specifies the path to the template for the email send confirmation instructions.
 
-    Default: ``"confirmation_instructions"``.
+    Default: ``"security/email/confirmation_instructions"``
 
     .. versionadded:: 5.9.0
 .. py:data:: SECURITY_CONFIRM_ERROR_VIEW
@@ -1163,6 +1193,14 @@ Changeable
     Sets the subject for the password change notice.
 
     Default: ``_("Your password has been changed")``.
+.. py:data:: SECURITY_EMAIL_TEMPLATE_PASSWORD_CHANGE_NOTICE
+
+    Specifies the path to the template for the email sent on successful
+    password change.
+
+    Default: ``"security/email/change_notice"``
+
+    .. versionadded:: 5.9.0
 
 Recoverable
 -----------
@@ -1262,9 +1300,9 @@ Recoverable
 
 .. py:data:: SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET
 
-    Specifies the path to the template for the email send password reset instructions.
+    Specifies the path to the template for the email sent with password reset instructions.
 
-    Default: ``"reset_instructions"``.
+    Default: ``"security/email/reset_instructions"``
 
     .. versionadded:: 5.9.0
 
@@ -1273,6 +1311,14 @@ Recoverable
     Sets subject for the password notice.
 
     Default: ``_("Your password has been reset")``.
+.. py:data:: SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET_NOTICE
+
+    Specifies the path to the template for the email sent on successful password reset.
+
+    Default: ``"security/email/reset_notice"``
+
+    .. versionadded:: 5.9.0
+
 
 Change-Email
 ------------
@@ -1292,7 +1338,7 @@ Change-Email
 
     Specifies the path to the template for the change email email instructions.
 
-    Default: ``"change_email_instructions"``.
+    Default: ``"security/email/change_email_instructions"``
 
     .. versionadded:: 5.9.0
 .. py:data:: SECURITY_CHANGE_EMAIL_TEMPLATE
@@ -1452,7 +1498,7 @@ Configuration related to the two-factor authentication feature.
 
     Specifies the path to the template for the email providing the code for authentication.
 
-    Default: ``"two_factor_instructions"``
+    Default: ``"security/email/two_factor_instructions"``
 
     .. versionadded:: 5.9.0
 .. py:data:: SECURITY_TWO_FACTOR_ERROR_VIEW
@@ -1540,6 +1586,14 @@ Configuration related to the two-factor authentication feature.
     Default: ``True``
 
     .. versionadded:: 5.0.0
+.. py:data:: SECURITY_TWO_FACTOR_RESCUE_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the email sent to admin account
+    in the case a user can't access any two-factor method.
+
+    Default: ``"security/email/two_factor_rescue"``
+
+    .. versionadded:: 5.9.0
 
 Unified Signin
 --------------
@@ -1622,7 +1676,7 @@ Unified Signin
 
     Specifies the path to the template for the email providing the code for authentication.
 
-    Default: ``"us_instructions"``
+    Default: ``"security/email/us_instructions"``
 
     .. versionadded:: 5.9.0
 .. py:data:: SECURITY_US_ENABLED_METHODS
@@ -1721,6 +1775,14 @@ Username-Recovery
    Specifies the path to the template for the username recovery page.
 
    Default: ``"security/recover_username.html"``.
+.. py:data:: SECURITY_USERNAME_RECOVERY_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the email sent to recover
+    a username.
+
+    Default: ``"security/email/username_recovery"``
+
+    .. versionadded:: 5.9.0
 
 Change Username
 -----------------
@@ -1769,6 +1831,15 @@ Change Username
 
    Default: ``"security/change_username.html"``
 
+.. py:data:: SECURITY_CHANGE_USERNAME_EMAIL_TEMPLATE
+
+    Specifies the path to the template for the email sent confirming
+    a username change.
+
+    Default: ``"security/email/change_username_notice"``
+
+    .. versionadded:: 5.9.0
+
 Additional relevant configuration variables:
 
     * :py:data:`SECURITY_FRESHNESS` - Used to protect /change-username.
@@ -1796,6 +1867,15 @@ This feature is DEPRECATED as of 5.0.0. Please use unified signin feature instea
     passwordless logins.
 
     Default:``"security/send_login.html"``.
+
+.. py:data:: SECURITY_EMAIL_TEMPLATE_PASSWORDLESS
+
+    Specifies the path to the template for the email sent providing the
+    link to sign in.
+
+    Default: ``"security/email/login_instructions"``
+
+    .. versionadded:: 5.9.0
 
 .. py:data:: SECURITY_EMAIL_SUBJECT_PASSWORDLESS
 
@@ -2287,11 +2367,21 @@ The list of all views templates:
 
 The list of all email templates:
 
-* :py:data:`SECURITY_CHANGE_EMAIL_EMAIL_TEMPLATE` ``"change_email_instructions"``
-* :py:data:`SECURITY_EMAIL_TEMPLATE_CONFIRM` ``"confirmation_instructions"``
-* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET` ``"reset_instructions"``
-* :py:data:`SECURITY_TWO_FACTOR_EMAIL_TEMPLATE` ``"two_factor_instructions"``
-* :py:data:`SECURITY_US_EMAIL_TEMPLATE` ``"us_instructions"``
+* :py:data:`SECURITY_CHANGE_EMAIL_EMAIL_TEMPLATE` ``"security/email/change_email_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_CHANGE_NOTICE` ``"security/email/change_notice"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_CONFIRM` ``"security/email/confirmation_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET` ``"security/email/reset_instructions"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORD_RESET_NOTICE` ``"security/email/reset_notice"``
+* :py:data:`SECURITY_EMAIL_TEMPLATE_PASSWORDLESS` ``"security/email/login_instructions"``
+* :py:data:`SECURITY_REGISTER_EMAIL_TEMPLATE` ``"security/email/welcome"``
+* :py:data:`SECURITY_REGISTER_EMAIL_EXISTING_USERNAME_TEMPLATE` ``"security/email/welcome_existing_username"``
+* :py:data:`SECURITY_REGISTER_EMAIL_EXISTING_TEMPLATE` ``"security/email/welcome_existing"``
+* :py:data:`SECURITY_TWO_FACTOR_EMAIL_TEMPLATE` ``"security/email/two_factor_instructions"``
+* :py:data:`SECURITY_TWO_FACTOR_RESCUE_EMAIL_TEMPLATE` ``"security/email/two_factor_rescue"``
+* :py:data:`SECURITY_US_EMAIL_TEMPLATE` ``"security/email/us_instructions"``
+* :py:data:`SECURITY_CHANGE_USERNAME_EMAIL_TEMPLATE` ``"security/email/change_username_notice"``
+* :py:data:`SECURITY_USERNAME_RECOVERY_EMAIL_TEMPLATE` ``"security/email/username_recovery"``
+
 
 Messages
 -------------

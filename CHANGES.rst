@@ -19,7 +19,8 @@ Features & Improvements
 - (:issue:`1237`) Add support for CSRF on logout
 - (:pr:`1241`) Convert all _WITHIN configuration variable to use timedelta
 - (:issue:`1153`) Enable localization of %(within)s variables using humanize
-- (:pr:`xx`) Add link expiration to confirmation and reset password email templates
+- (:pr:`1249`) Add link expiration to confirmation and reset password email templates.
+- (:issue:`536` Add template path configuration variables for all email templates.
 
 Fixes
 +++++
@@ -49,6 +50,9 @@ Backwards Compatibility Concerns
 - All _WITHIN configuration variables now take a timedelta instead of the
   home-grown ``<#> <period>``. The old form is still accepted, with a deprecation
   warning, and converted at flask-security app init time into a timedelta.
+- With the addition of email template path configuration variables, the
+  :py:meth:`flask_security.send_mail` method's ``template`` parameter now requires a
+  complete template path (relative to the application or blueprint root).
 
 Notes
 +++++
