@@ -364,7 +364,7 @@ def test_signin_pwd_json(app, client, get_message):
 @pytest.mark.registerable()
 @pytest.mark.settings(
     password_required=False,
-    us_email_template="us_instructions_test",
+    us_email_template="security/email/us_instructions_test",
     email_html=False,
 )
 def test_us_passwordless(app, client, get_message, outbox):
@@ -411,7 +411,7 @@ def test_us_passwordless(app, client, get_message, outbox):
 @pytest.mark.confirmable()
 @pytest.mark.settings(
     password_required=False,
-    us_email_template="us_instructions_test",
+    us_email_template="security/email/us_instructions_test",
     email_html=False,
 )
 def test_us_passwordless_confirm(app, client, get_message, outbox):
@@ -452,7 +452,7 @@ def test_us_passwordless_confirm(app, client, get_message, outbox):
 @pytest.mark.confirmable()
 @pytest.mark.settings(
     password_required=False,
-    us_email_template="us_instructions_test",
+    us_email_template="security/email/us_instructions_test",
     email_html=False,
 )
 def test_us_passwordless_confirm_json(app, client, get_message, outbox):
@@ -785,7 +785,9 @@ def test_setup(app, clients, get_message, signals):
     assert get_message("US_SETUP_SUCCESSFUL") in response.data
 
 
-@pytest.mark.settings(us_email_template="us_instructions_test", email_html=False)
+@pytest.mark.settings(
+    us_email_template="security/email/us_instructions_test", email_html=False
+)
 def test_setup_email(app, client, get_message, outbox):
     # setup with email - make sure magic link isn't sent and code is.
     # N.B. this is using the test us_instructions template
@@ -893,7 +895,7 @@ def test_setup_json(app, client_nc, get_message):
 @pytest.mark.settings(
     us_enabled_methods=["email", "sms"],
     user_identity_attributes=UIA_EMAIL_PHONE,
-    us_email_template="us_instructions_test",
+    us_email_template="security/email/us_instructions_test",
     email_html=False,
 )
 def test_setup_json_no_session(app, client_nc, get_message, outbox):
@@ -1414,7 +1416,7 @@ def test_can_add_password(app, client, get_message):
 @pytest.mark.changeable()
 @pytest.mark.settings(
     password_required=False,
-    us_email_template="us_instructions_test",
+    us_email_template="security/email/us_instructions_test",
     email_html=False,
 )
 def test_change_empty_password(app, client, outbox):

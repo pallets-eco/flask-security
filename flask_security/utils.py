@@ -926,7 +926,7 @@ def send_mail(subject, recipient, template, **context):
 
     :param subject: Email subject
     :param recipient: Email recipient
-    :param template: The name of the email template
+    :param template: The path/name of the email template
     :param context: The context to render the template with
 
     This formats the email and passes it off to :class:`.MailUtil` to actually send the
@@ -938,11 +938,10 @@ def send_mail(subject, recipient, template, **context):
 
     body = None
     html = None
-    template_path = f"security/email/{template}"
     if config_value("EMAIL_PLAINTEXT"):
-        body = _security.render_template(f"{template_path}.txt", **context)
+        body = _security.render_template(f"{template}.txt", **context)
     if config_value("EMAIL_HTML"):
-        html = _security.render_template(f"{template_path}.html", **context)
+        html = _security.render_template(f"{template}.html", **context)
 
     subject = localize_callback(subject)
 

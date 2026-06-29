@@ -30,7 +30,7 @@ from tests.test_utils import authenticate, capture_reset_password_requests, logo
     verify_template="custom_security/verify.html",
     username_recovery_template="custom_security/recover_username.html",
     change_username_template="custom_security/change_username.html",
-    email_template_password_reset="reset_instructions_test",
+    email_template_password_reset="security/email/reset_instructions_test",
     email_html=False,
 )
 def test_context_processors(client, app, outbox):

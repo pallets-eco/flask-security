@@ -140,7 +140,8 @@ def test_confirmable_flag(app, clients, get_message):
 
 @pytest.mark.registerable()
 @pytest.mark.settings(
-    email_template_confirm="confirmation_instructions_test", email_html=False
+    email_template_confirm="security/email/confirmation_instructions_test",
+    email_html=False,
 )
 def test_confirmation_template(app, client, get_message, outbox):
     # Check contents of email template - this uses a test template

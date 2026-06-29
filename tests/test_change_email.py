@@ -139,7 +139,7 @@ def test_expired_token(client, get_message):
 
 @pytest.mark.settings(
     change_email_within=timedelta(minutes=90),
-    change_email_email_template="change_email_instructions_test",
+    change_email_email_template="security/email/change_email_instructions_test",
     email_html=False,
 )
 def test_template(app, client, get_message, outbox):
@@ -168,7 +168,8 @@ def test_template(app, client, get_message, outbox):
 
 
 @pytest.mark.settings(
-    change_email_email_template="change_email_instructions_test", email_html=False
+    change_email_email_template="security/email/change_email_instructions_test",
+    email_html=False,
 )
 @pytest.mark.parametrize("humanizer", ["fr_FR"], indirect=["humanizer"])
 def test_template_fr(app, client, get_message, outbox, humanizer):

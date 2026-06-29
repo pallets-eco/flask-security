@@ -136,4 +136,4 @@ def _send_username_changed_notice(user):
     """
     if cv("SEND_USERNAME_CHANGE_EMAIL"):
         subject = cv("EMAIL_SUBJECT_USERNAME_CHANGE_NOTICE")
-        send_mail(subject, user.email, "change_username_notice", user=user)
+        send_mail(subject, user.email, cv("CHANGE_USERNAME_EMAIL_TEMPLATE"), user=user)

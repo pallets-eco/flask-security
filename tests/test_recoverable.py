@@ -238,7 +238,7 @@ def test_recoverable_json(app, client, get_message, outbox):
 
 @pytest.mark.registerable()
 @pytest.mark.settings(
-    email_template_password_reset="reset_instructions_test",
+    email_template_password_reset="security/email/reset_instructions_test",
     email_html=False,
     reset_password_within=timedelta(minutes=45),
 )

@@ -88,7 +88,7 @@ def test_my_mail_util(app, sqlalchemy_datastore):
         def send_mail(
             self, template, subject, recipient, sender, body, html, user, **kwargs
         ):
-            assert template == "reset_instructions"
+            assert template == "security/email/reset_instructions"
             assert subject == app.config["SECURITY_EMAIL_SUBJECT_PASSWORD_RESET"]
             assert recipient == "matt@lp.com"
             assert user.email == "matt@lp.com"
@@ -554,7 +554,9 @@ def test_no_email_sender(app, sqlalchemy_datastore, outbox):
 
     with app.app_context():
         user = TestUser("matt@lp.com")
-        send_mail("Test Default Sender", user.email, "welcome", user=user)
+        send_mail(
+            "Test Default Sender", user.email, "security/email/welcome", user=user
+        )
         assert 1 == len(outbox)
         assert "test@testme.com" == outbox[0].sender
 
@@ -576,7 +578,7 @@ def test_sender_tuple(app, sqlalchemy_datastore, outbox):
 
     with app.app_context():
         user = TestUser("matt@lp.com")
-        send_mail("Test Tuple Sender", user.email, "welcome", user=user)
+        send_mail("Test Tuple Sender", user.email, "security/email/welcome", user=user)
         assert 1 == len(outbox)
         assert outbox[0].sender == "Test User <test@testme.com>"
 
@@ -597,7 +599,9 @@ def test_send_mail_context(app, sqlalchemy_datastore, outbox):
 
     with app.app_context():
         user = TestUser("matt@lp.com")
-        send_mail("Test Default Sender", user.email, "welcome", user=user)
+        send_mail(
+            "Test Default Sender", user.email, "security/email/welcome", user=user
+        )
         assert 1 == len(outbox)
         assert "test@testme.com" == outbox[0].sender
         matcher = re.match(

@@ -5,7 +5,7 @@ flask_security.changeable
 Flask-Security change password module
 
 :copyright: (c) 2012 by Matt Wright.
-:copyright: (c) 2019-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2019-2026 by J. Christopher Wagner (jwag).
 :author: Eskil Heyn Olsen
 :license: MIT, see LICENSE for more details.
 """
@@ -32,7 +32,9 @@ def send_password_changed_notice(user):
     """
     if cv("SEND_PASSWORD_CHANGE_EMAIL"):
         subject = cv("EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE")
-        send_mail(subject, user.email, "change_notice", user=user)
+        send_mail(
+            subject, user.email, cv("EMAIL_TEMPLATE_PASSWORD_CHANGE_NOTICE"), user=user
+        )
 
 
 def change_user_password(
