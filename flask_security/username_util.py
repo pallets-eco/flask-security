@@ -56,17 +56,17 @@ class UsernameUtil:
 
     def normalize(self, username: str) -> str:
         """
-        Given an input username - return a clean (using bleach) and normalized
+        Given an input username - return a clean (using nh3) and normalized
         (using Python's unicodedata.normalize()) version.
         Must be called in app context and uses
         :py:data:`SECURITY_USERNAME_NORMALIZE_FORM` config variable.
         """
-        import bleach
+        import nh3
 
         if not username:
             return ""
 
-        username = bleach.clean(username.strip(), strip=True)
+        username = nh3.clean(username.strip(), tags=set())
         if not username:
             return ""
         cf = cv("USERNAME_NORMALIZE_FORM")
@@ -87,11 +87,11 @@ class UsernameUtil:
         It is important that None be returned if data is an empty string since
         otherwise DBs will complain since the field is unique/nullable.
         """
-        import bleach
+        import nh3
 
         if not username:
             return None, None
-        uclean = bleach.clean(username.strip(), strip=True)
+        uclean = nh3.clean(username.strip(), tags=set())
         if uclean != username:
             return get_message("USERNAME_ILLEGAL_CHARACTERS")[0], None
 
