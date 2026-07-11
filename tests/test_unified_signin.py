@@ -37,6 +37,7 @@ from tests.test_utils import (
     reset_fresh,
     reset_fresh_auth_token,
     setup_tf_sms,
+    get_form_input,
 )
 from tests.test_webauthn import HackWebauthnUtil, reg_2_keys
 
@@ -2482,3 +2483,12 @@ def test_override_user_locked_gr(app, client, get_message):
         "GENERIC_AUTHN_FAILED"
     )
     assert "identity" not in response.json["response"]["field_errors"]
+
+
+@pytest.mark.settings(default_remember_me=True)
+def test_remember_login_form(app, client):
+    # ensure form has the checkbox set if default set.
+    response = client.get("/us-signin")
+    assert response.status_code == 200
+    r = get_form_input(response, "remember")
+    assert "checked" in r

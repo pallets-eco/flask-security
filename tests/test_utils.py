@@ -44,12 +44,15 @@ def authenticate(
     password="password",
     endpoint=None,
     csrf=False,
+    remember=False,
     **kwargs,
 ):
-    data = dict(email=email, password=password, remember="y")
+    data = dict(email=email, password=password)
     if csrf:
         response = client.get(endpoint or "/login")
         data["csrf_token"] = get_form_input_value(response, "csrf_token")
+    if remember:
+        data["remember"] = "y"
     return client.post(endpoint or "/login", data=data, **kwargs)
 
 

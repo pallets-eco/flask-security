@@ -357,11 +357,12 @@ These configuration keys are used globally across all features.
 
     .. danger::
         Make sure your mapper methods guard against malicious user input. For example,
-        if you allow ``username`` as an identity method you could use `bleach`_::
+        if you allow ``username`` as an identity method you could use `nh3`_::
 
             def uia_username_mapper(identity):
-                # we allow pretty much anything - but we bleach it.
-                return bleach.clean(identity, strip=True)
+                # we allow pretty much anything - but we sanitize it.
+                # tags=set() strips all HTML tags rather than allowing nh3's defaults.
+                return nh3.clean(identity, tags=set())
 
     Default::
 
@@ -383,7 +384,7 @@ These configuration keys are used globally across all features.
     .. versionchanged:: 4.0.0
         Changed from list to list of dict.
 
-.. _bleach: https://pypi.org/project/bleach/
+.. _nh3: https://pypi.org/project/nh3/
 
 .. py:data:: SECURITY_USER_IDENTITY_MAPPINGS
 
@@ -987,8 +988,8 @@ Registerable
 
     Validation and normalization is encapsulated in :class:`.UsernameUtil`.
     Note that the default validation restricts username input to be unicode
-    letters and numbers. It also uses ``bleach`` to scrub any risky input. Be
-    sure your application requirements includes `bleach`_.
+    letters and numbers. It also uses ``nh3`` to scrub any risky input. Be
+    sure your application requirements includes `nh3`_.
 
     Default: ``False``
 

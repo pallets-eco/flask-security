@@ -1992,7 +1992,7 @@ class Security:
             self._check_modules("webauthn", "WEBAUTHN")
 
         if cv("USERNAME_ENABLE", app=app) and self._username_util_cls == UsernameUtil:
-            self._check_modules("bleach", "USERNAME_ENABLE")
+            self._check_modules("nh3", "USERNAME_ENABLE")
 
         # Register so other packages can reference our translations.
         app.jinja_env.globals["_fsdomain"] = self.i18n_domain.gettext

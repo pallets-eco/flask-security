@@ -26,12 +26,14 @@ Fixes
 +++++
 - (:issue:`1212`) Newly introduced :py:meth:`.UserMixin.is_locked` logic is inverted.
 - (:pr:`1234`) Fix for GHSA-f66q-9rf6-8795 - WebAuthn reauthentication freshness bypass. (tonghuaroot)
+- (:issue:`1244`) Fix login form remember me checkbox.
 
 
 Docs and Chores
 +++++++++++++++
 - (:issue:`1208`) Remove support for Pony ORM
 - (:pr:`1240`) Remove deprecated get_token_status() and convert uses to check_and_get_token_status()
+- (:pr:`1252`) Replace ``bleach`` (deprecated/unmaintained) with ``nh3`` for username sanitization (tkfoss)
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -53,6 +55,9 @@ Backwards Compatibility Concerns
 - With the addition of email template path configuration variables, the
   :py:meth:`flask_security.send_mail` method's ``template`` parameter now requires a
   complete template path (relative to the application or blueprint root).
+- Username sanitization now uses ``nh3`` instead of ``bleach``. If you enabled
+  :py:data:`SECURITY_USERNAME_ENABLE` you must now install ``nh3`` (included in the
+  ``common`` extra) rather than ``bleach``.
 
 Notes
 +++++

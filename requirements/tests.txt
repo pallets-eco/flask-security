@@ -6,7 +6,6 @@ Flask-SQLAlchemy-Lite
 argon2-cffi
 authlib
 bcrypt
-bleach
 cbor2
 coverage
 cryptography
@@ -16,6 +15,7 @@ humanize
 mongoengine
 mongomock
 msgcheck
+nh3
 peewee
 phonenumberslite
 pydocstyle

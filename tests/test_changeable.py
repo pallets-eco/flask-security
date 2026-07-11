@@ -207,7 +207,7 @@ def test_change_invalidates_session(app, client):
 
 def test_change_updates_remember(app, client):
     # Test that on change password - remember cookie updated
-    authenticate(client)
+    authenticate(client, remember=True)
 
     response = client.post(
         "/change",
