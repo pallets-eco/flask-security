@@ -1019,10 +1019,12 @@ def test_session_loads_identity(app, client):
 
 
 def test_remember_token(client):
-    response = authenticate(client, follow_redirects=False)
+    response = authenticate(client, follow_redirects=False, remember=True)
     client.delete_cookie("session")
-    response = client.get("/profile")
-    assert b"profile" in response.data
+    assert not client.get_cookie("session")
+    assert client.get_cookie("remember_token")
+    response = client.get("/profile", follow_redirects=True)
+    assert b"Profile Page" in response.data
 
 
 def test_request_loader_does_not_fail_with_invalid_token(client):

@@ -223,7 +223,10 @@ class WebAuthnRegisterResponseForm(Form):
 
 class WebAuthnSigninForm(Form, NextFormMixin):
     identity = StringField(get_form_field_label("identity"))
-    remember = BooleanField(get_form_field_label("remember_me"))
+    remember = BooleanField(
+        get_form_field_label("remember_me"),
+        default=lambda: cv("DEFAULT_REMEMBER_ME", app=current_app),
+    )
     submit = SubmitField(label=get_form_field_xlate(_("Start")), id="wan_signin")
 
     user: UserMixin | None = None
@@ -232,7 +235,6 @@ class WebAuthnSigninForm(Form, NextFormMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.remember.default = cv("DEFAULT_REMEMBER_ME")
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):

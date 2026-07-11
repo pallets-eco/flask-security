@@ -255,11 +255,13 @@ class UnifiedSigninForm(_UnifiedPassCodeForm, NextFormMixin):
         get_form_field_label("identity"),
         validators=[RequiredLocalize()],
     )
-    remember = BooleanField(get_form_field_label("remember_me"))
+    remember = BooleanField(
+        get_form_field_label("remember_me"),
+        default=lambda: cv("DEFAULT_REMEMBER_ME", app=current_app),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.remember.default = cv("DEFAULT_REMEMBER_ME")
         self.requires_confirmation = False
 
     def validate(self, **kwargs: t.Any) -> bool:

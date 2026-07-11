@@ -26,13 +26,14 @@ Fixes
 +++++
 - (:issue:`1212`) Newly introduced :py:meth:`.UserMixin.is_locked` logic is inverted.
 - (:pr:`1234`) Fix for GHSA-f66q-9rf6-8795 - WebAuthn reauthentication freshness bypass. (tonghuaroot)
+- (:issue:`1244`) Fix login form remember me checkbox.
 
 
 Docs and Chores
 +++++++++++++++
 - (:issue:`1208`) Remove support for Pony ORM
 - (:pr:`1240`) Remove deprecated get_token_status() and convert uses to check_and_get_token_status()
-- Replace ``bleach`` (deprecated/unmaintained) with ``nh3`` for username sanitization
+- (:pr:`1252`) Replace ``bleach`` (deprecated/unmaintained) with ``nh3`` for username sanitization (tkfoss)
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
