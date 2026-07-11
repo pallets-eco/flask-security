@@ -533,14 +533,16 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
 
     # username is added dynamically based on USERNAME_ENABLED.
     username: t.ClassVar[Field]
-    remember = BooleanField(get_form_field_label("remember_me"))
+    remember = BooleanField(
+        get_form_field_label("remember_me"),
+        default=lambda: cv("DEFAULT_REMEMBER_ME", app=current_app),
+    )
     submit = SubmitField(get_form_field_label("login"))
 
     def __init__(self, *args: t.Any, **kwargs: t.Any):
         super().__init__(*args, **kwargs)
         if request and not self.next.data:
             self.next.data = request.args.get("next", "")
-        self.remember.default = cv("DEFAULT_REMEMBER_ME")
         if _security.recoverable and not self.password.description:
             html = Markup(
                 f'<a href="{url_for_security("forgot_password")}">'

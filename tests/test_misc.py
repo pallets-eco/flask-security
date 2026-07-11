@@ -1694,3 +1694,12 @@ def test_td_format_humanize_fr(app, humanizer):
     assert "1 jour, 2 heures et 40 secondes" == td_format(
         timedelta(hours=26, seconds=40)
     )
+
+
+@pytest.mark.settings(default_remember_me=True)
+def test_remember_login_form(app, client):
+    # ensure form has the checkbox set if default set.
+    response = client.get("/login")
+    assert response.status_code == 200
+    r = get_form_input(response, "remember")
+    assert "checked" in r
