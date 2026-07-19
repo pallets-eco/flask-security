@@ -21,6 +21,7 @@ Features & Improvements
 - (:issue:`1153`) Enable localization of %(within)s variables using humanize
 - (:pr:`1249`) Add link expiration to confirmation and reset password email templates.
 - (:issue:`536` Add template path configuration variables for all email templates.
+- (:issue:`1254`) Webauthn/passkey name input value is now sanitized and normalized.
 
 Fixes
 +++++
@@ -58,10 +59,16 @@ Backwards Compatibility Concerns
 - Username sanitization now uses ``nh3`` instead of ``bleach``. If you enabled
   :py:data:`SECURITY_USERNAME_ENABLE` you must now install ``nh3`` (included in the
   ``common`` extra) rather than ``bleach``.
+- Webauthn names are now sanitized, validated for certain allowable characters
+  and normalized. It is possible that some existing names would now be
+  considered illegal and won't match (so can't be deleted via API). The allowed
+  character categories can be set with :py:data:`SECURITY_WAN_NAME_ALLOWED_CHARS`.
+  The module ``nh3`` is used to sanitize input - the application must have that
+  package installed.
 
 Notes
 +++++
-- The refresh token features requires a new DB model - FsRefreshTracker which must
+- The refresh token feature requires a new DB model - FsRefreshTracker - which must
   be added by the application. This model has been added to the `fsqla` and `sqla`
   all-inclusive models and their respective versions have been bumped.
 

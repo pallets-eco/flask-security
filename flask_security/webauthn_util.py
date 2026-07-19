@@ -4,7 +4,7 @@ flask_security.webauthn_util
 
 Utility class providing methods controlling various aspects of webauthn.
 
-:copyright: (c) 2020-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2020-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 """
@@ -15,6 +15,8 @@ import secrets
 import typing as t
 
 from flask import current_app, request
+
+from .utils import config_value as cv, input_svn, get_message
 
 try:
     # noinspection PyUnresolvedReferences
@@ -156,3 +158,26 @@ class WebauthnUtil:
         if current_app.config.get("SECURITY_WAN_ALLOW_AS_MULTI_FACTOR"):
             return UserVerificationRequirement.PREFERRED
         return UserVerificationRequirement.PREFERRED
+
+    def name_svn(self, value: str) -> tuple[str | None, str | None]:
+        """
+        Sanitize, validate, and normalize form input
+
+        Return value is a tuple (msg, clean_value). msg will be None if
+        properly validated.
+
+        For webauthn names, allow letters, numbers, and some punctuation.
+        """
+        clean_input = input_svn(
+            value, cv("WAN_NAME_ALLOWED_CHARS"), cv("INPUT_NORMALIZE_FORM")
+        )
+        if clean_input is None:
+            return get_message("INVALID_INPUT")[0], None
+        if len(clean_input) > cv("WAN_NAME_MAX_LENGTH"):
+            return (
+                get_message("INVALID_INPUT_LENGTH", length=cv("WAN_NAME_MAX_LENGTH"))[
+                    0
+                ],
+                None,
+            )
+        return None, clean_input

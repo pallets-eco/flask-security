@@ -31,7 +31,7 @@ repos:
           - flake8-bugbear
           - flake8-implicit-str-concat
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.36.4
+    rev: v1.40.10
     hooks:
       - id: djlint-jinja
         files: "\\.html"

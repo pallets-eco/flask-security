@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import abc
 import base64
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from functools import partial
 import hashlib
@@ -105,7 +106,7 @@ if get_quart_status():  # pragma: no cover
 
 else:
 
-    def view_commit(response=None):
+    def view_commit(response=None):  # type: ignore[misc]
         _datastore.commit()
         return response
 
@@ -1495,3 +1496,32 @@ def handle_already_auth(form, payload=None):
             return base_render_json(form, additional=payload)
     else:
         return redirect(get_url(config_value("POST_LOGIN_VIEW")))
+
+
+def input_svn(
+    value: str,
+    allowed_categories: list[str],
+    normalize_form: t.Literal["NFC", "NFD", "NFKC", "NFKD"] | None,
+) -> str | None:
+    """
+    Used to sanitize, validate, and normalize (user/form) input
+
+    allowed_categories: list of allowed categories (using unicodedata.category()).
+
+    normalize_form: input to unicodedata.normalize() (or None)
+
+    Returns None if error (illegal characters)
+
+    .. versionadded:: 5.9.0
+    """
+    import nh3
+
+    sanitized = nh3.clean(value.strip(), tags=set())
+    if sanitized != value.strip():
+        return None
+    cats = [unicodedata.category(c)[0] for c in sanitized]
+    if any([cat not in allowed_categories for cat in cats]):
+        return None
+    if normalize_form:
+        return unicodedata.normalize(normalize_form, sanitized)
+    return sanitized

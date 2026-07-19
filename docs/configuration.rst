@@ -66,11 +66,20 @@ These configuration keys are used globally across all features.
     results in a redirect.
 
     Default: ``True``.
+.. py:data:: SECURITY_INPUT_NORMALIZE_FORM
+
+    Forms that take unstructured strings (e.g. username, webauthn name)
+    are sanitized (using nh3), validated for specific unicode categories
+    and optionally normalized using Python unicodedata.normalize() method
+
+    Default: ``"NFKD"``
+
+    .. versionadded:: 5.9.0
 .. py:data:: SECURITY_I18N_DOMAIN
 
     Specifies the name for domain used for translations.
 
-    Default: ``"flask_security"``.
+    Default: ``"flask_security"``
 .. py:data:: SECURITY_I18N_DIRNAME
 
     Specifies the directory containing the ``MO`` files used for translations.
@@ -2055,6 +2064,23 @@ WebAuthn
 
     Default: ``["first", "secondary"]``
 
+.. py:data:: SECURITY_WAN_NAME_ALLOWED_CHARS
+
+    Define which unicode categories are used to validate webauthn/passkey
+    names.
+
+    Default: ``["L", "N", "Pc", "Pd", "Zs"]``
+
+    .. versionadded:: 5.9.0
+
+.. py:data:: SECURITY_WAN_NAME_MAX_LENGTH
+
+    Define maximum length of the webauthn/passkey name. This should correspond
+    to the DB model.
+
+    Default: ``64``
+
+    .. versionadded:: 5.9.0
 
 Additional relevant configuration variables:
 
@@ -2418,6 +2444,8 @@ The default messages and error levels can be found in ``core.py``.
 * ``SECURITY_MSG_INVALID_CONFIRMATION_TOKEN``
 * ``SECURITY_MSG_INVALID_EMAIL_ADDRESS``
 * ``SECURITY_MSG_INVALID_LOGIN_TOKEN``
+* ``SECURITY_MSG_INVALID_INPUT``
+* ``SECURITY_MSG_INVALID_INPUT_LENGTH``
 * ``SECURITY_MSG_INVALID_PASSWORD``
 * ``SECURITY_MSG_INVALID_PASSWORD_CODE``
 * ``SECURITY_MSG_INVALID_RECOVERY_CODE``
