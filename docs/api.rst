@@ -122,6 +122,8 @@ Packaged Models
 
 Utils
 -----
+.. autofunction:: flask_security.input_svn
+
 .. autofunction:: flask_security.lookup_identity
 
 .. autofunction:: flask_security.login_user

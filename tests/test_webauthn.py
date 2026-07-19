@@ -1879,3 +1879,57 @@ def test_remember_login_form(app, client):
     assert response.status_code == 200
     r = get_form_input(response, "remember")
     assert "checked" in r
+
+
+def test_name_clean(app, client, get_message):
+    # Ensure name is sanitized, normalized, checked for length
+    authenticate(client)
+    name = "hi <script>doing evil</script>"
+    response = client.post("wan-register", json=dict(name=name, usage="secondary"))
+    assert response.status_code == 400
+    assert (
+        get_message("INVALID_INPUT")
+        == response.json["response"]["field_errors"]["name"][0].encode()
+    )
+    name = "hi there?"
+    response = client.post("wan-register", json=dict(name=name, usage="secondary"))
+    assert response.status_code == 400
+    assert (
+        get_message("INVALID_INPUT")
+        == response.json["response"]["field_errors"]["name"][0].encode()
+    )
+
+    name = "howlongcanIbebeforeyoucomplainIsupposereallyreallylongandlongerreally"
+    response = client.post("wan-register", json=dict(name=name, usage="secondary"))
+    assert response.status_code == 400
+    assert (
+        get_message("INVALID_INPUT_LENGTH", length=64)
+        == response.json["response"]["field_errors"]["name"][0].encode()
+    )
+
+    # ensure delete also sanitizes
+    name = "hi <script>doing evil</script>"
+    response = client.post("/wan-delete", json=dict(name=name))
+    assert response.status_code == 400
+    assert (
+        get_message("INVALID_INPUT")
+        == response.json["response"]["field_errors"]["name"][0].encode()
+    )
+
+
+def test_name_normalize(app, client, get_message):
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    name = "Imnumber\N{ROMAN NUMERAL ONE}"
+
+    authenticate(client)
+    register_options, response_url = _register_start_json(client, name=name)
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    response = client.get("/wan-register", headers=headers)
+    active_creds = response.json["response"]["registered_credentials"]
+    assert active_creds[0]["name"] == "ImnumberI"
+
+    alt_name = "Imnumber\N{LATIN CAPITAL LETTER I}"
+    response = client.post("/wan-delete", json=dict(name=alt_name))
+    assert response.status_code == 200

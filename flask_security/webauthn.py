@@ -139,14 +139,19 @@ class WebAuthnRegisterForm(Form):
         validate_choice=True,
     )
     submit = SubmitField(label=get_form_field_label("submit"), id="wan_register")
+    clean_name: str | None
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
         assert isinstance(self.name.errors, list)
-        inuse = any([self.name.data == cred.name for cred in current_user.webauthn])
-        if inuse:
-            msg = get_message("WEBAUTHN_NAME_INUSE", name=self.name.data)[0]
+        assert self.name.data
+        msg, self.clean_name = _security.webauthn_util.name_svn(self.name.data)
+        if msg:
+            self.name.errors.append(msg)
+            return False
+        if any([self.clean_name == cred.name for cred in current_user.webauthn]):
+            msg = get_message("WEBAUTHN_NAME_INUSE", name=self.clean_name)[0]
             self.name.errors.append(msg)
             return False
         if not cv("WAN_ALLOW_AS_FIRST_FACTOR"):
@@ -377,12 +382,18 @@ class WebAuthnDeleteForm(Form):
         id="delete-name",
     )
     submit = SubmitField(label=get_form_field_label("delete"))
+    clean_name: str | None
 
     def validate(self, **kwargs: t.Any) -> bool:
         if not super().validate(**kwargs):
             return False
         assert isinstance(self.name.errors, list)
-        if not any([self.name.data == cred.name for cred in current_user.webauthn]):
+        assert self.name.data
+        msg, self.clean_name = _security.webauthn_util.name_svn(self.name.data)
+        if msg:
+            self.name.errors.append(msg)
+            return False
+        if not any([self.clean_name == cred.name for cred in current_user.webauthn]):
             self.name.errors.append(
                 get_message("WEBAUTHN_NAME_NOT_FOUND", name=self.name.data)[0]
             )
@@ -461,7 +472,7 @@ def webauthn_register() -> ResponseValue:
             )
         state = {
             "challenge": challenge,
-            "name": form.name.data,
+            "name": form.clean_name,
             "usage": form.usage.data,
             "user_verification": uv,
         }
@@ -791,7 +802,7 @@ def webauthn_delete() -> ResponseValue:
 
     if form.validate_on_submit():
         # validate made sure form.name.data exists.
-        cred = [c for c in current_user.webauthn if c.name == form.name.data][0]
+        cred = [c for c in current_user.webauthn if c.name == form.clean_name][0]
         after_this_request(view_commit)
 
         wan_deleted.send(
@@ -803,7 +814,7 @@ def webauthn_delete() -> ResponseValue:
         _datastore.delete_webauthn(cred)
         if _security._want_json(request):
             return base_render_json(form)
-        msg, c = get_message("WEBAUTHN_CREDENTIAL_DELETED", name=form.name.data)
+        msg, c = get_message("WEBAUTHN_CREDENTIAL_DELETED", name=form.clean_name)
         do_flash(msg, c)
 
     if _security._want_json(request):

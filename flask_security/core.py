@@ -141,6 +141,7 @@ _default_config: dict[str, t.Any] = {
     "SUBDOMAIN": None,
     "FLASH_MESSAGES": True,
     "RETURN_GENERIC_RESPONSES": False,
+    "INPUT_NORMALIZE_FORM": "NFKD",
     "USE_REGISTER_V2": True,
     "I18N_DOMAIN": "flask_security",
     "I18N_DIRNAME": "builtin",
@@ -427,6 +428,8 @@ _default_config: dict[str, t.Any] = {
     "WAN_ALLOW_AS_MULTI_FACTOR": True,
     "WAN_ALLOW_USER_HINTS": True,
     "WAN_ALLOW_AS_VERIFY": ["first", "secondary"],
+    "WAN_NAME_ALLOWED_CHARS": ["L", "N", "Pc", "Pd", "Zs"],
+    "WAN_NAME_MAX_LENGTH": 64,
     "ZXCVBN_MINIMUM_SCORE": 3,
 }
 
@@ -530,6 +533,14 @@ _default_messages = {
     "EMAIL_NOT_PROVIDED": (_("Email not provided"), "error"),
     "INVALID_EMAIL_ADDRESS": (_("Invalid email address"), "error"),
     "INVALID_CODE": (_("Invalid code"), "error"),
+    "INVALID_INPUT": (
+        _("Value entered is not valid for the field"),
+        "error",
+    ),
+    "INVALID_INPUT_LENGTH": (
+        _("Value entered must be less than %(length) characters"),
+        "error",
+    ),
     "PASSWORD_NOT_PROVIDED": (_("Password not provided"), "error"),
     "PASSWORD_INVALID_LENGTH": (
         _("Password must be at least %(length)s characters"),
@@ -1990,6 +2001,7 @@ class Security:
 
         if cv("WEBAUTHN", app=app):
             self._check_modules("webauthn", "WEBAUTHN")
+            self._check_modules("nh3", "WEBAUTHN")
 
         if cv("USERNAME_ENABLE", app=app) and self._username_util_cls == UsernameUtil:
             self._check_modules("nh3", "USERNAME_ENABLE")
