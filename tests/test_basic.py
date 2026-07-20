@@ -689,6 +689,15 @@ def test_invalid_json_auth(client):
     assert b'"code": 400' in response.data
 
 
+def test_non_string_json_password_auth(client):
+    # A JSON body can set password to a non-string (e.g. a dict) - used to crash.
+    data = dict(email="matt@lp.com", password={"not": "a string"})
+    response = client.post(
+        "/login?include_auth_token", content_type="application/json", json=data
+    )
+    assert b'"code": 400' in response.data
+
+
 def test_token_auth_via_querystring_valid_token(client):
     response = json_authenticate(client)
     token = response.json["response"]["user"]["authentication_token"]

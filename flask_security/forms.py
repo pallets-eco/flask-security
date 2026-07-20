@@ -561,6 +561,12 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
             return False
 
         assert self.password.data is not None  # validator password_required
+        if not isinstance(self.password.data, str):
+            # e.g. a JSON body can set this to a dict/list/number - DataRequired()
+            # only checks truthiness, and passing that on crashes hash_password()/
+            # normalize() below instead of failing validation.
+            self.password.errors.append(get_message("INVALID_PASSWORD")[0])
+            return False
         # Stay clear of accessing 'username' unless we added that field.
         # Lots of applications have added their own.
         # To make subclassing easier - if self.ifield has been set we assume
