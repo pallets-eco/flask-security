@@ -765,6 +765,7 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
     password = PasswordField(
         get_form_field_label("password"),
         render_kw={"autocomplete": "new-password"},
+        validators=[IsString()],
     )
 
     def __init__(self, *args, **kwargs):
