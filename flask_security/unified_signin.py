@@ -167,6 +167,7 @@ class _UnifiedPassCodeForm(Form):
             "placeholder": get_form_field_xlate(_("Code or Password")),
             "autocomplete": "off",
         },
+        validators=[IsString()]
     )
     submit = SubmitField(get_form_field_label("submit"))
 
@@ -325,7 +326,7 @@ class UnifiedSigninSetupForm(Form):
         option_widget=CheckboxInput(),
         validate_choice=False,
     )
-    phone = TelField(get_form_field_label("phone"))
+    phone = TelField(get_form_field_label("phone"), validators=[IsString()])
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):

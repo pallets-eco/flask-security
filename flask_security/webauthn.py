@@ -228,7 +228,7 @@ class WebAuthnRegisterResponseForm(Form):
 
 
 class WebAuthnSigninForm(Form, NextFormMixin):
-    identity = StringField(get_form_field_label("identity"))
+    identity = StringField(get_form_field_label("identity"), validators=[IsString()])
     remember = BooleanField(
         get_form_field_label("remember_me"),
         default=lambda: cv("DEFAULT_REMEMBER_ME", app=current_app),

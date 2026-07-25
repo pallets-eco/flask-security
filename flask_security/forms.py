@@ -1036,7 +1036,7 @@ class TwoFactorSetupForm(Form):
         ],
         validate_choice=False,
     )
-    phone = TelField(get_form_field_label("phone"))
+    phone = TelField(get_form_field_label("phone"), validators=[IsString()])
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args: t.Any, **kwargs: t.Any):
