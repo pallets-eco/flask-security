@@ -148,6 +148,17 @@ class LengthLocalize(ValidatorMixin, Length):
     pass
 
 
+class IsString(ValidatorMixin):
+    def __init__(self, *args, **kwargs):
+        if "message" not in kwargs:
+            kwargs["message"] = "API_ERROR"
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, form, field):
+        if not isinstance(field.data, str):
+            raise StopValidation(get_message(self._original_message)[0])
+
+
 class EmailValidation:
     """Simple interface to email_validator.
     N.B. Side-effect - if valid email, the field.data is set to the normalized value.
