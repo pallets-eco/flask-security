@@ -39,6 +39,7 @@ from .forms import (
     get_form_field_label,
     get_form_field_xlate,
     build_form_from_request,
+    IsString,
 )
 from .proxies import _security, _datastore
 from .signals import refresh_tracker_revoked, refresh_tracker_created
@@ -198,7 +199,7 @@ class RefreshTokenForm(Form):
 
     refresh_token = StringField(
         get_form_field_xlate(_("Refresh Token")),
-        validators=[RequiredLocalize()],
+        validators=[IsString(), RequiredLocalize()],
     )
     submit = SubmitField(label=get_form_field_label("submit"))
 

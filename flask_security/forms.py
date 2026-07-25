@@ -155,7 +155,8 @@ class IsString(ValidatorMixin):
         super().__init__(*args, **kwargs)
 
     def __call__(self, form, field):
-        if not isinstance(field.data, str):
+        # Skip None so this can be combined with Optional().
+        if field.data is not None and not isinstance(field.data, str):
             raise StopValidation(get_message(self._original_message)[0])
 
 
@@ -328,7 +329,7 @@ class UserEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=True), valid_user_email],
+        validators=[IsString(), email_required, EmailValidation(verify=True), valid_user_email],
     )
 
 
@@ -336,7 +337,7 @@ class UniqueEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=True), unique_user_email],
+        validators=[IsString(), email_required, EmailValidation(verify=True), unique_user_email],
     )
 
 
@@ -344,7 +345,7 @@ class PasswordFormMixin:
     password = PasswordField(
         get_form_field_label("password"),
         render_kw={"autocomplete": "current-password"},
-        validators=[password_required],
+        validators=[IsString(), password_required],
     )
 
 
@@ -352,7 +353,7 @@ class NewPasswordFormMixin:
     password = PasswordField(
         get_form_field_label("password"),
         render_kw={"autocomplete": "new-password"},
-        validators=[password_required],
+        validators=[IsString(), password_required],
     )
 
 
@@ -361,6 +362,7 @@ class PasswordConfirmFormMixin:
         get_form_field_label("retype_password"),
         render_kw={"autocomplete": "new-password"},
         validators=[
+            IsString(),
             EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
         ],
@@ -385,13 +387,14 @@ class CodeFormMixin:
             "type": "text",
             "pattern": "[0-9]*",
         },
-        validators=[RequiredLocalize()],
+        validators=[IsString(), RequiredLocalize()],
     )
 
 
 def build_username_field(app):
     if cv("USERNAME_REQUIRED", app=app):
         validators = [
+            IsString(),
             RequiredLocalize(message="USERNAME_NOT_PROVIDED"),
             username_validator,
             unique_username,
@@ -490,7 +493,7 @@ class PasswordlessLoginForm(Form):
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=False), valid_user_email],
+        validators=[IsString(), email_required, EmailValidation(verify=False), valid_user_email],
     )
 
     submit = SubmitField(get_form_field_label("send_login_link"))
@@ -539,7 +542,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=False)],
+        validators=[IsString(), email_required, EmailValidation(verify=False)],
     )
 
     # username is added dynamically based on USERNAME_ENABLED.
@@ -653,7 +656,7 @@ def build_login_form(app, fcls):
         fcls.username = StringField(
             get_form_field_label("username"),
             render_kw={"autocomplete": "username"},
-            validators=[username_validator],
+            validators=[IsString(), username_validator],
         )
         if hasattr(fcls, "email") and fcls.email:
             # Make field Optional()
@@ -662,7 +665,7 @@ def build_login_form(app, fcls):
             fcls.email = EmailField(
                 get_form_field_label("email"),
                 render_kw={"autocomplete": "email"},
-                validators=[Optional(), EmailValidation(verify=False)],
+                validators=[IsString(), Optional(), EmailValidation(verify=False)],
             )
 
 
@@ -676,7 +679,7 @@ class LogoutForm(Form):
 
     refresh_token = HiddenField(
         get_form_field_xlate(_("Refresh Token")),
-        validators=[Optional()],
+        validators=[IsString(), Optional()],
     )
     submit = SubmitField(label=get_form_field_label("submit"))
 
@@ -801,6 +804,7 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
     password_confirm = PasswordField(
         get_form_field_label("retype_password"),
         validators=[
+            IsString(),
             EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
             Optional(),
         ],
@@ -922,12 +926,13 @@ def build_register_form(app, fcls):
         fcls.password = PasswordField(
             label=get_form_field_label("password"),
             render_kw={"autocomplete": "new-password"},
-            validators=[Optional()],
+            validators=[IsString(), Optional()],
         )
         fcls.password_confirm = PasswordField(
             get_form_field_label("retype_password"),
             render_kw={"autocomplete": "new-password"},
             validators=[
+                IsString(),
                 EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
             ],
         )
@@ -969,13 +974,14 @@ class ChangePasswordForm(Form):
     new_password = PasswordField(
         get_form_field_label("new_password"),
         render_kw={"autocomplete": "new-password"},
-        validators=[password_required],
+        validators=[IsString(), password_required],
     )
 
     new_password_confirm = PasswordField(
         get_form_field_label("retype_password"),
         render_kw={"autocomplete": "new-password"},
         validators=[
+            IsString(),
             EqualToLocalize("new_password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
         ],
