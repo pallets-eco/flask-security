@@ -160,6 +160,19 @@ class IsString(ValidatorMixin):
             raise StopValidation(get_message(self._original_message)[0])
 
 
+# OTP/2FA code fields accept int, so these fields should use this validator instead of IsString()
+class IsStringOrInt(ValidatorMixin):
+    def __init__(self, *args, **kwargs):
+        if "message" not in kwargs:
+            kwargs["message"] = "API_ERROR"
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, form, field):
+        # Skip None so this can be combined with Optional().
+        if field.data is not None and not isinstance(field.data, (str, int)):
+            raise StopValidation(get_message(self._original_message)[0])
+
+
 class EmailValidation:
     """Simple interface to email_validator.
     N.B. Side-effect - if valid email, the field.data is set to the normalized value.
@@ -387,7 +400,7 @@ class CodeFormMixin:
             "type": "text",
             "pattern": "[0-9]*",
         },
-        validators=[IsString(), RequiredLocalize()],
+        validators=[IsStringOrInt(), RequiredLocalize()],
     )
 
 

@@ -64,6 +64,7 @@ from .forms import (
     get_form_field_label,
     get_form_field_xlate,
     IsString,
+    IsStringOrInt,
 )
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
@@ -167,7 +168,7 @@ class _UnifiedPassCodeForm(Form):
             "placeholder": get_form_field_xlate(_("Code or Password")),
             "autocomplete": "off",
         },
-        validators=[IsString()]
+        validators=[IsStringOrInt()]
     )
     submit = SubmitField(get_form_field_label("submit"))
 
@@ -395,7 +396,7 @@ class UnifiedSigninSetupValidateForm(Form):
             "type": "text",
             "pattern": "[0-9]*",
         },
-        validators=[IsString(), RequiredLocalize()],
+        validators=[IsStringOrInt(), RequiredLocalize()],
     )
     submit = SubmitField(get_form_field_label("submitcode"), id="submit-code")
 
