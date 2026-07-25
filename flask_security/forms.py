@@ -782,11 +782,15 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
         # For unified signin there are many other ways to authenticate
         assert isinstance(self.password.errors, list)
         if cv("PASSWORD_REQUIRED"):
-            if not self.password.data or not self.password.data.strip():
+            if (
+                not self.password.data
+                or not isinstance(self.password.data, str)
+                or not self.password.data.strip()
+            ):
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
                 failed = True
 
-        if self.password.data:
+        if self.password.data and isinstance(self.password.data, str):
             # We do explicit validation here for passwords
             # (rather than write a validator class) for 2 reasons:
             # 1) We want to control which fields are passed -
@@ -903,7 +907,7 @@ class RegisterFormV2(
             failed = True
 
         assert isinstance(self.password.errors, list)
-        if self.password.data:
+        if self.password.data and isinstance(self.password.data, str):
             # We do explicit validation here for passwords
             # (rather than write a validator class) for 2 reasons:
             # 1) We want to control which fields are passed -
