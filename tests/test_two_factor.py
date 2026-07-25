@@ -957,6 +957,26 @@ def test_opt_in_nc(app, client_nc, get_message, signals):
     assert response.json["response"]["tf_phone_number"] == "+442083661177"
 
 
+def test_opt_in_nc_non_string_code(app, client_nc):
+    """
+    Test tf-setup with dict code.
+    It should be rejected cleanly by IsStringOrInt validator to prevent passlib crash.
+    """
+    response = json_authenticate(client_nc, "jill@lp.com")
+    token = response.json["response"]["user"]["authentication_token"]
+    headers = {"Authentication-Token": token, "Accept": "application/json"}
+
+    SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="+442083661177")
+    response = client_nc.post("/tf-setup", json=data, headers=headers)
+    state_token = response.json["response"]["tf_state_token"]
+
+    response = client_nc.post(
+        f"/tf-setup/{state_token}", json=dict(code={"not": "a code"}), headers=headers
+    )
+    assert response.status_code == 400
+
+
 @pytest.mark.settings(token_max_age=timedelta(days=4))
 def test_opt_in_nc_expired(app, client_nc, get_message):
     """
