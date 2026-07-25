@@ -960,7 +960,8 @@ def test_opt_in_nc(app, client_nc, get_message, signals):
 def test_opt_in_nc_non_string_code(app, client_nc):
     """
     Test tf-setup with dict code.
-    It should be rejected cleanly by the IsStringOrInt validator to prevent a passlib crash.
+    It should be rejected cleanly by the IsStringOrInt validator to prevent
+    a passlib crash.
     """
     response = json_authenticate(client_nc, "jill@lp.com")
     token = response.json["response"]["user"]["authentication_token"]
