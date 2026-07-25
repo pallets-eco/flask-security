@@ -160,7 +160,8 @@ class IsString(ValidatorMixin):
             raise StopValidation(get_message(self._original_message)[0])
 
 
-# OTP/2FA code fields accept int, so these fields should use this validator instead of IsString()
+# OTP/2FA code fields accept int,so these fields should use this validator
+# instead of IsString()
 class IsStringOrInt(ValidatorMixin):
     def __init__(self, *args, **kwargs):
         if "message" not in kwargs:
@@ -342,7 +343,12 @@ class UserEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[IsString(), email_required, EmailValidation(verify=True), valid_user_email],
+        validators=[
+            IsString(),
+            email_required,
+            EmailValidation(verify=True),
+            valid_user_email,
+        ],
     )
 
 
@@ -350,7 +356,12 @@ class UniqueEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[IsString(), email_required, EmailValidation(verify=True), unique_user_email],
+        validators=[
+            IsString(),
+            email_required,
+            EmailValidation(verify=True),
+            unique_user_email,
+        ],
     )
 
 
@@ -506,7 +517,12 @@ class PasswordlessLoginForm(Form):
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[IsString(), email_required, EmailValidation(verify=False), valid_user_email],
+        validators=[
+            IsString(),
+            email_required,
+            EmailValidation(verify=False),
+            valid_user_email,
+        ],
     )
 
     submit = SubmitField(get_form_field_label("send_login_link"))

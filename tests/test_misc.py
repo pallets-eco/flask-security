@@ -678,9 +678,10 @@ def test_isstring_xlation(app, client):
         "/login", json=dict(email={"not": "a string"}, password="password")
     )
     assert response.status_code == 400
-    assert "Ungültige Eingabe für die angeforderte Ressource" in response.json[
-        "response"
-    ]["errors"][0]
+    assert (
+        "Ungültige Eingabe für die angeforderte Ressource"
+        in response.json["response"]["errors"][0]
+    )
 
 
 @pytest.mark.babel()

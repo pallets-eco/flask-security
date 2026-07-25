@@ -168,7 +168,7 @@ class _UnifiedPassCodeForm(Form):
             "placeholder": get_form_field_xlate(_("Code or Password")),
             "autocomplete": "off",
         },
-        validators=[IsStringOrInt()]
+        validators=[IsStringOrInt()],
     )
     submit = SubmitField(get_form_field_label("submit"))
 
