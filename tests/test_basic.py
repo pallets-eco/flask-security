@@ -208,6 +208,30 @@ def test_redirect_allow_subdomains(app, client, get_message):
 
 
 @pytest.mark.settings(
+    redirect_base_domain="myfrontend.org", redirect_allowed_subdomains=[]
+)
+def test_redirect_allow_base_domain(app, client, get_message):
+    app.config["SERVER_NAME"] = "myflaskapp.org"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://nope.myfrontend.org", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+    response = client.post("/login?next=http://myfrontend.org/imin", data=data)
+    assert response.location == "http://myfrontend.org/imin"
+
+
+@pytest.mark.settings(
+    redirect_base_domain="myapp.org:8080", redirect_allowed_subdomains=[]
+)
+def test_redirect_allow_other_ports(app, client, get_message):
+    app.config["SERVER_NAME"] = "myapp.org"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://nope.myapp.org:8080", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+    response = client.post("/login?next=http://myapp.org:8080/imin", data=data)
+    assert response.location == "http://myapp.org:8080/imin"
+
+
+@pytest.mark.settings(
     post_login_view="http://blog.bigidea.org/post_login",
     redirect_base_domain="bigidea.org",
     redirect_allowed_subdomains=["my.photo", "blog"],
