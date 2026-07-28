@@ -253,6 +253,7 @@ These configuration keys are used globally across all features.
 
     A list of subdomains. Each will be prepended to
     ``SECURITY_REDIRECT_BASE_DOMAIN`` and checked against the requested redirect.
+    If the list includes '.', the base domain itself will be checked against the redirect.
 
     Default: ``[]``
 

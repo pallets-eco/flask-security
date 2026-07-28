@@ -208,7 +208,7 @@ def test_redirect_allow_subdomains(app, client, get_message):
 
 
 @pytest.mark.settings(
-    redirect_base_domain="myfrontend.org", redirect_allowed_subdomains=[]
+    redirect_base_domain="myfrontend.org", redirect_allowed_subdomains=["."]
 )
 def test_redirect_allow_base_domain(app, client, get_message):
     app.config["SERVER_NAME"] = "myflaskapp.org"
@@ -220,7 +220,17 @@ def test_redirect_allow_base_domain(app, client, get_message):
 
 
 @pytest.mark.settings(
-    redirect_base_domain="myapp.org:8080", redirect_allowed_subdomains=[]
+    redirect_base_domain="myfrontend.org", redirect_allowed_subdomains=[]
+)
+def test_redirect_disallow_base_domain_without_dot(app, client, get_message):
+    app.config["SERVER_NAME"] = "myflaskapp.org"
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login?next=http://myfrontend.org/imin", data=data)
+    assert get_message("INVALID_REDIRECT") in response.data
+
+
+@pytest.mark.settings(
+    redirect_base_domain="myapp.org:8080", redirect_allowed_subdomains=["."]
 )
 def test_redirect_allow_other_ports(app, client, get_message):
     app.config["SERVER_NAME"] = "myapp.org"
