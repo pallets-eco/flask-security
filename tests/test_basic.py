@@ -689,6 +689,13 @@ def test_invalid_json_auth(client):
     assert b'"code": 400' in response.data
 
 
+def test_isstring_non_string_email(client):
+    response = client.post(
+        "/login", json=dict(email={"not": "a string"}, password="password")
+    )
+    assert response.status_code == 400
+
+
 def test_token_auth_via_querystring_valid_token(client):
     response = json_authenticate(client)
     token = response.json["response"]["user"]["authentication_token"]

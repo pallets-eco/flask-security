@@ -148,6 +148,32 @@ class LengthLocalize(ValidatorMixin, Length):
     pass
 
 
+class IsString(ValidatorMixin):
+    def __init__(self, *args, **kwargs):
+        if "message" not in kwargs:
+            kwargs["message"] = "API_ERROR"
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, form, field):
+        # Skip None so this can be combined with Optional().
+        if field.data is not None and not isinstance(field.data, str):
+            raise StopValidation(get_message(self._original_message)[0])
+
+
+# OTP/2FA code fields accept int,so these fields should use this validator
+# instead of IsString()
+class IsStringOrInt(ValidatorMixin):
+    def __init__(self, *args, **kwargs):
+        if "message" not in kwargs:
+            kwargs["message"] = "API_ERROR"
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, form, field):
+        # Skip None so this can be combined with Optional().
+        if field.data is not None and not isinstance(field.data, (str, int)):
+            raise StopValidation(get_message(self._original_message)[0])
+
+
 class EmailValidation:
     """Simple interface to email_validator.
     N.B. Side-effect - if valid email, the field.data is set to the normalized value.
@@ -317,7 +343,12 @@ class UserEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=True), valid_user_email],
+        validators=[
+            IsString(),
+            email_required,
+            EmailValidation(verify=True),
+            valid_user_email,
+        ],
     )
 
 
@@ -325,7 +356,12 @@ class UniqueEmailFormMixin:
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=True), unique_user_email],
+        validators=[
+            IsString(),
+            email_required,
+            EmailValidation(verify=True),
+            unique_user_email,
+        ],
     )
 
 
@@ -333,7 +369,7 @@ class PasswordFormMixin:
     password = PasswordField(
         get_form_field_label("password"),
         render_kw={"autocomplete": "current-password"},
-        validators=[password_required],
+        validators=[IsString(), password_required],
     )
 
 
@@ -341,7 +377,7 @@ class NewPasswordFormMixin:
     password = PasswordField(
         get_form_field_label("password"),
         render_kw={"autocomplete": "new-password"},
-        validators=[password_required],
+        validators=[IsString(), password_required],
     )
 
 
@@ -350,6 +386,7 @@ class PasswordConfirmFormMixin:
         get_form_field_label("retype_password"),
         render_kw={"autocomplete": "new-password"},
         validators=[
+            IsString(),
             EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
         ],
@@ -374,13 +411,14 @@ class CodeFormMixin:
             "type": "text",
             "pattern": "[0-9]*",
         },
-        validators=[RequiredLocalize()],
+        validators=[IsStringOrInt(), RequiredLocalize()],
     )
 
 
 def build_username_field(app):
     if cv("USERNAME_REQUIRED", app=app):
         validators = [
+            IsString(),
             RequiredLocalize(message="USERNAME_NOT_PROVIDED"),
             username_validator,
             unique_username,
@@ -479,7 +517,12 @@ class PasswordlessLoginForm(Form):
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=False), valid_user_email],
+        validators=[
+            IsString(),
+            email_required,
+            EmailValidation(verify=False),
+            valid_user_email,
+        ],
     )
 
     submit = SubmitField(get_form_field_label("send_login_link"))
@@ -528,7 +571,7 @@ class LoginForm(Form, PasswordFormMixin, NextFormMixin):
     email = EmailField(
         get_form_field_label("email"),
         render_kw={"autocomplete": "email"},
-        validators=[email_required, EmailValidation(verify=False)],
+        validators=[IsString(), email_required, EmailValidation(verify=False)],
     )
 
     # username is added dynamically based on USERNAME_ENABLED.
@@ -642,7 +685,7 @@ def build_login_form(app, fcls):
         fcls.username = StringField(
             get_form_field_label("username"),
             render_kw={"autocomplete": "username"},
-            validators=[username_validator],
+            validators=[IsString(), username_validator],
         )
         if hasattr(fcls, "email") and fcls.email:
             # Make field Optional()
@@ -651,7 +694,7 @@ def build_login_form(app, fcls):
             fcls.email = EmailField(
                 get_form_field_label("email"),
                 render_kw={"autocomplete": "email"},
-                validators=[Optional(), EmailValidation(verify=False)],
+                validators=[IsString(), Optional(), EmailValidation(verify=False)],
             )
 
 
@@ -665,7 +708,7 @@ class LogoutForm(Form):
 
     refresh_token = HiddenField(
         get_form_field_xlate(_("Refresh Token")),
-        validators=[Optional()],
+        validators=[IsString(), Optional()],
     )
     submit = SubmitField(label=get_form_field_label("submit"))
 
@@ -738,6 +781,7 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
     password = PasswordField(
         get_form_field_label("password"),
         render_kw={"autocomplete": "new-password"},
+        validators=[IsString()],
     )
 
     def __init__(self, *args, **kwargs):
@@ -754,28 +798,38 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
         # For unified signin there are many other ways to authenticate
         assert isinstance(self.password.errors, list)
         if cv("PASSWORD_REQUIRED"):
-            if not self.password.data or not self.password.data.strip():
+            if (
+                not self.password.data
+                or not isinstance(self.password.data, str)
+                or not self.password.data.strip()
+            ):
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
                 failed = True
 
         if self.password.data:
-            # We do explicit validation here for passwords
-            # (rather than write a validator class) for 2 reasons:
-            # 1) We want to control which fields are passed -
-            #    sometimes that's current_user
-            #    other times it's the registration fields.
-            # 2) We want to be able to return multiple error messages.
-            rfields = {}
-            for k, v in self.data.items():
-                if hasattr(_datastore.user_model, k):
-                    rfields[k] = v
-            del rfields["password"]
-            pbad, self.password.data = _security.password_util.validate(
-                self.password.data, True, **rfields
-            )
-            if pbad:
-                self.password.errors.extend(pbad)
-                failed = True
+            if not isinstance(self.password.data, str):
+                # types-WTForms declares StringField.data type is str | None. But it can
+                # actually be a dict when request body is JSON. mypy therefore
+                # mis-identifies this as unreachable.
+                failed = True  # type: ignore[unreachable]
+            else:
+                # We do explicit validation here for passwords
+                # (rather than write a validator class) for 2 reasons:
+                # 1) We want to control which fields are passed -
+                #    sometimes that's current_user
+                #    other times it's the registration fields.
+                # 2) We want to be able to return multiple error messages.
+                rfields = {}
+                for k, v in self.data.items():
+                    if hasattr(_datastore.user_model, k):
+                        rfields[k] = v
+                del rfields["password"]
+                pbad, self.password.data = _security.password_util.validate(
+                    self.password.data, True, **rfields
+                )
+                if pbad:
+                    self.password.errors.extend(pbad)
+                    failed = True
         return not failed
 
 
@@ -790,6 +844,7 @@ class RegisterForm(ConfirmRegisterForm, NextFormMixin):
     password_confirm = PasswordField(
         get_form_field_label("retype_password"),
         validators=[
+            IsString(),
             EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
             Optional(),
         ],
@@ -875,23 +930,29 @@ class RegisterFormV2(
 
         assert isinstance(self.password.errors, list)
         if self.password.data:
-            # We do explicit validation here for passwords
-            # (rather than write a validator class) for 2 reasons:
-            # 1) We want to control which fields are passed -
-            #    sometimes that's current_user
-            #    other times it's the registration fields.
-            # 2) We want to be able to return multiple error messages.
-            rfields = {}
-            for k, v in self.data.items():
-                if hasattr(_datastore.user_model, k):
-                    rfields[k] = v
-            del rfields["password"]
-            pbad, self.password.data = _security.password_util.validate(
-                self.password.data, True, **rfields
-            )
-            if pbad:
-                self.password.errors.extend(pbad)
-                failed = True
+            if not isinstance(self.password.data, str):
+                # types-WTForms declares StringField.data type is str | None. But it can
+                # actually be a dict when request body is JSON. mypy therefore
+                # mis-identifies this as unreachable.
+                failed = True  # type: ignore[unreachable]
+            else:
+                # We do explicit validation here for passwords
+                # (rather than write a validator class) for 2 reasons:
+                # 1) We want to control which fields are passed -
+                #    sometimes that's current_user
+                #    other times it's the registration fields.
+                # 2) We want to be able to return multiple error messages.
+                rfields = {}
+                for k, v in self.data.items():
+                    if hasattr(_datastore.user_model, k):
+                        rfields[k] = v
+                del rfields["password"]
+                pbad, self.password.data = _security.password_util.validate(
+                    self.password.data, True, **rfields
+                )
+                if pbad:
+                    self.password.errors.extend(pbad)
+                    failed = True
         return not failed
 
     def __init__(self, *args, **kwargs):
@@ -911,12 +972,13 @@ def build_register_form(app, fcls):
         fcls.password = PasswordField(
             label=get_form_field_label("password"),
             render_kw={"autocomplete": "new-password"},
-            validators=[Optional()],
+            validators=[IsString(), Optional()],
         )
         fcls.password_confirm = PasswordField(
             get_form_field_label("retype_password"),
             render_kw={"autocomplete": "new-password"},
             validators=[
+                IsString(),
                 EqualToLocalize("password", message="RETYPE_PASSWORD_MISMATCH"),
             ],
         )
@@ -958,13 +1020,14 @@ class ChangePasswordForm(Form):
     new_password = PasswordField(
         get_form_field_label("new_password"),
         render_kw={"autocomplete": "new-password"},
-        validators=[password_required],
+        validators=[IsString(), password_required],
     )
 
     new_password_confirm = PasswordField(
         get_form_field_label("retype_password"),
         render_kw={"autocomplete": "new-password"},
         validators=[
+            IsString(),
             EqualToLocalize("new_password", message="RETYPE_PASSWORD_MISMATCH"),
             password_required,
         ],
@@ -1019,7 +1082,7 @@ class TwoFactorSetupForm(Form):
         ],
         validate_choice=False,
     )
-    phone = TelField(get_form_field_label("phone"))
+    phone = TelField(get_form_field_label("phone"), validators=[IsString()])
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args: t.Any, **kwargs: t.Any):

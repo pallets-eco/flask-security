@@ -669,6 +669,22 @@ def test_myxlation_complete(app, sqlalchemy_datastore, pytestconfig):
 
 
 @pytest.mark.babel()
+@pytest.mark.app_settings(babel_default_locale="de_DE")
+def test_isstring_xlation(app, client):
+    # Test that IsString's error message is properly localized.
+    assert check_xlation(app, "de_DE"), "You must run python setup.py compile_catalog"
+
+    response = client.post(
+        "/login", json=dict(email={"not": "a string"}, password="password")
+    )
+    assert response.status_code == 400
+    assert (
+        "Ungültige Eingabe für die angeforderte Ressource"
+        in response.json["response"]["errors"][0]
+    )
+
+
+@pytest.mark.babel()
 @pytest.mark.app_settings(babel_default_locale="fr_FR")
 def test_form_labels(app, sqlalchemy_datastore):
     app.security = Security()
