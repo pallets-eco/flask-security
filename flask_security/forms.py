@@ -808,7 +808,10 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
 
         if self.password.data:
             if not isinstance(self.password.data, str):
-                failed = True
+                # types-WTForms declares StringField.data type is str | None. But it can
+                # actually be a dict when request body is JSON. mypy therefore
+                # mis-identifies this as unreachable.
+                failed = True  # type: ignore[unreachable]
             else:
                 # We do explicit validation here for passwords
                 # (rather than write a validator class) for 2 reasons:
@@ -928,7 +931,10 @@ class RegisterFormV2(
         assert isinstance(self.password.errors, list)
         if self.password.data:
             if not isinstance(self.password.data, str):
-                failed = True
+                # types-WTForms declares StringField.data type is str | None. But it can
+                # actually be a dict when request body is JSON. mypy therefore
+                # mis-identifies this as unreachable.
+                failed = True  # type: ignore[unreachable]
             else:
                 # We do explicit validation here for passwords
                 # (rather than write a validator class) for 2 reasons:
