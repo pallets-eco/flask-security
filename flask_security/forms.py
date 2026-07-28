@@ -806,24 +806,27 @@ class ConfirmRegisterForm(Form, RegisterFormMixin, UniqueEmailFormMixin):
                 self.password.errors.append(get_message("PASSWORD_NOT_PROVIDED")[0])
                 failed = True
 
-        if self.password.data and isinstance(self.password.data, str):
-            # We do explicit validation here for passwords
-            # (rather than write a validator class) for 2 reasons:
-            # 1) We want to control which fields are passed -
-            #    sometimes that's current_user
-            #    other times it's the registration fields.
-            # 2) We want to be able to return multiple error messages.
-            rfields = {}
-            for k, v in self.data.items():
-                if hasattr(_datastore.user_model, k):
-                    rfields[k] = v
-            del rfields["password"]
-            pbad, self.password.data = _security.password_util.validate(
-                self.password.data, True, **rfields
-            )
-            if pbad:
-                self.password.errors.extend(pbad)
+        if self.password.data:
+            if not isinstance(self.password.data, str):
                 failed = True
+            else:
+                # We do explicit validation here for passwords
+                # (rather than write a validator class) for 2 reasons:
+                # 1) We want to control which fields are passed -
+                #    sometimes that's current_user
+                #    other times it's the registration fields.
+                # 2) We want to be able to return multiple error messages.
+                rfields = {}
+                for k, v in self.data.items():
+                    if hasattr(_datastore.user_model, k):
+                        rfields[k] = v
+                del rfields["password"]
+                pbad, self.password.data = _security.password_util.validate(
+                    self.password.data, True, **rfields
+                )
+                if pbad:
+                    self.password.errors.extend(pbad)
+                    failed = True
         return not failed
 
 
@@ -923,24 +926,27 @@ class RegisterFormV2(
             failed = True
 
         assert isinstance(self.password.errors, list)
-        if self.password.data and isinstance(self.password.data, str):
-            # We do explicit validation here for passwords
-            # (rather than write a validator class) for 2 reasons:
-            # 1) We want to control which fields are passed -
-            #    sometimes that's current_user
-            #    other times it's the registration fields.
-            # 2) We want to be able to return multiple error messages.
-            rfields = {}
-            for k, v in self.data.items():
-                if hasattr(_datastore.user_model, k):
-                    rfields[k] = v
-            del rfields["password"]
-            pbad, self.password.data = _security.password_util.validate(
-                self.password.data, True, **rfields
-            )
-            if pbad:
-                self.password.errors.extend(pbad)
+        if self.password.data:
+            if not isinstance(self.password.data, str):
                 failed = True
+            else:
+                # We do explicit validation here for passwords
+                # (rather than write a validator class) for 2 reasons:
+                # 1) We want to control which fields are passed -
+                #    sometimes that's current_user
+                #    other times it's the registration fields.
+                # 2) We want to be able to return multiple error messages.
+                rfields = {}
+                for k, v in self.data.items():
+                    if hasattr(_datastore.user_model, k):
+                        rfields[k] = v
+                del rfields["password"]
+                pbad, self.password.data = _security.password_util.validate(
+                    self.password.data, True, **rfields
+                )
+                if pbad:
+                    self.password.errors.extend(pbad)
+                    failed = True
         return not failed
 
     def __init__(self, *args, **kwargs):
