@@ -84,6 +84,7 @@ from .forms import (
     get_form_field_label,
     get_form_field_xlate,
     _setup_methods_xlate,
+    IsString,
 )
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
@@ -124,7 +125,7 @@ else:
 class WebAuthnRegisterForm(Form):
     name = StringField(
         get_form_field_xlate(_("Nickname")),
-        validators=[RequiredLocalize(message="WEBAUTHN_NAME_REQUIRED")],
+        validators=[IsString(), RequiredLocalize(message="WEBAUTHN_NAME_REQUIRED")],
     )
     usage = RadioField(
         get_form_field_xlate(_("Usage")),
@@ -227,7 +228,7 @@ class WebAuthnRegisterResponseForm(Form):
 
 
 class WebAuthnSigninForm(Form, NextFormMixin):
-    identity = StringField(get_form_field_label("identity"))
+    identity = StringField(get_form_field_label("identity"), validators=[IsString()])
     remember = BooleanField(
         get_form_field_label("remember_me"),
         default=lambda: cv("DEFAULT_REMEMBER_ME", app=current_app),
@@ -378,7 +379,7 @@ class WebAuthnDeleteForm(Form):
     # element.
     name = StringField(
         get_form_field_xlate(_("Nickname")),
-        validators=[RequiredLocalize(message="WEBAUTHN_NAME_REQUIRED")],
+        validators=[IsString(), RequiredLocalize(message="WEBAUTHN_NAME_REQUIRED")],
         id="delete-name",
     )
     submit = SubmitField(label=get_form_field_label("delete"))

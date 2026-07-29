@@ -63,6 +63,8 @@ from .forms import (
     generic_message,
     get_form_field_label,
     get_form_field_xlate,
+    IsString,
+    IsStringOrInt,
 )
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
@@ -166,6 +168,7 @@ class _UnifiedPassCodeForm(Form):
             "placeholder": get_form_field_xlate(_("Code or Password")),
             "autocomplete": "off",
         },
+        validators=[IsStringOrInt()],
     )
     submit = SubmitField(get_form_field_label("submit"))
 
@@ -175,7 +178,7 @@ class _UnifiedPassCodeForm(Form):
             ("email", get_form_field_xlate(_("Via email"))),
             ("sms", get_form_field_xlate(_("Via SMS"))),
         ],
-        validators=[validators.Optional()],
+        validators=[IsString(), validators.Optional()],
     )
     submit_send_code = SubmitField(get_form_field_label("sendcode"))
 
@@ -253,7 +256,7 @@ class UnifiedSigninForm(_UnifiedPassCodeForm, NextFormMixin):
 
     identity = StringField(
         get_form_field_label("identity"),
-        validators=[RequiredLocalize()],
+        validators=[IsString(), RequiredLocalize()],
     )
     remember = BooleanField(
         get_form_field_label("remember_me"),
@@ -324,7 +327,7 @@ class UnifiedSigninSetupForm(Form):
         option_widget=CheckboxInput(),
         validate_choice=False,
     )
-    phone = TelField(get_form_field_label("phone"))
+    phone = TelField(get_form_field_label("phone"), validators=[IsString()])
     submit = SubmitField(get_form_field_label("submit"))
 
     def __init__(self, *args, **kwargs):
@@ -393,7 +396,7 @@ class UnifiedSigninSetupValidateForm(Form):
             "type": "text",
             "pattern": "[0-9]*",
         },
-        validators=[RequiredLocalize()],
+        validators=[IsStringOrInt(), RequiredLocalize()],
     )
     submit = SubmitField(get_form_field_label("submitcode"), id="submit-code")
 

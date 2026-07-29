@@ -25,6 +25,7 @@ from .forms import (
     RequiredLocalize,
     StringField,
     SubmitField,
+    IsString,
 )
 from .proxies import _datastore, _security
 from .tf_plugin import tf_check_state, tf_illegal_state
@@ -158,7 +159,7 @@ class MfRecoveryForm(Form):
 
     code = StringField(
         get_form_field_xlate(_("Recovery Code")),
-        validators=[RequiredLocalize()],
+        validators=[IsString(), RequiredLocalize()],
     )
     submit = SubmitField(get_form_field_label("submitcode"))
 

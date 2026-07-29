@@ -224,6 +224,17 @@ def test_required_password(client, get_message):
     assert get_message("CONFIRM_REGISTRATION", email="trp@lp.com") in response.data
 
 
+def test_register_non_string_password(client):
+    # ConfirmRegisterForm and RegisterFormV2 have special validation code for
+    # OWASP (user enumeration). So they should have a separate test case from
+    # general IsString tests.
+    response = client.post(
+        "/register",
+        json=dict(email="newuser@lp.com", password={"not": "a string"}),
+    )
+    assert response.status_code == 400
+
+
 @pytest.mark.settings(use_register_v2=False)
 def test_required_password_confirm(client, get_message):
     response = client.post(
