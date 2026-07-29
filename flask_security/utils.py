@@ -728,7 +728,7 @@ def validate_redirect_url(url: str) -> bool:
         base_domain = config_value("REDIRECT_BASE_DOMAIN")
         if base_domain:
             allowable = [
-                f"{sub}.{base_domain}"
+                base_domain if sub == "." else f"{sub}.{base_domain}"
                 for sub in config_value("REDIRECT_ALLOWED_SUBDOMAINS")
             ]
             return url_next.netloc in allowable

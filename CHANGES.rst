@@ -22,6 +22,7 @@ Features & Improvements
 - (:pr:`1249`) Add link expiration to confirmation and reset password email templates.
 - (:issue:`536` Add template path configuration variables for all email templates.
 - (:issue:`1254`) Webauthn/passkey name input value is now sanitized and normalized.
+- (:pr:`1259`) Allow redirects to exactly :py:data:`SECURITY_REDIRECT_BASE_DOMAIN` by adding '.' to :py:data:`SECURITY_REDIRECT_ALLOWED_SUBDOMAINS`.
 
 Fixes
 +++++
