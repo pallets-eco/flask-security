@@ -57,7 +57,7 @@ low = [
     "Flask-WTF==1.1.2",
     "peewee==3.17.9",
     "argon2_cffi==21.3.0",
-    "authlib==1.2.0",
+    "authlib==1.6.12",
     "babel==2.16.0",
     "bcrypt==4.0.1",
     "nh3==0.2.15",
