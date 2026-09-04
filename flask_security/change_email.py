@@ -4,7 +4,7 @@ flask_security.change_email
 
 Flask-Security Change Email module
 
-:copyright: (c) 2024-2024 by J. Christopher Wagner (jwag).
+:copyright: (c) 2024-2026 by J. Christopher Wagner (jwag).
 :license: MIT, see LICENSE for more details.
 
 Allow user to change their email address.
@@ -37,7 +37,7 @@ from .signals import change_email_instructions_sent, change_email_confirmed
 from .utils import (
     base_render_json,
     check_and_get_token_status,
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     get_message,
     get_url,
@@ -45,8 +45,8 @@ from .utils import (
     send_mail,
     url_for_security,
     verify_hash,
-    view_commit,
-    td_format,
+    _view_commit,
+    _td_format,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -128,7 +128,7 @@ def change_email_confirm(token):
         if expired:
             m, c = get_message(
                 "CHANGE_EMAIL_EXPIRED",
-                within=td_format(cv("CHANGE_EMAIL_WITHIN")),
+                within=_td_format(cv("CHANGE_EMAIL_WITHIN")),
             )
         else:
             m, c = get_message("API_ERROR")
@@ -140,7 +140,7 @@ def change_email_confirm(token):
         )
 
     _update_user_email(user, new_email)
-    after_this_request(view_commit)
+    after_this_request(_view_commit)
     m, c = get_message("CHANGE_EMAIL_CONFIRMED")
     if cv("REDIRECT_BEHAVIOR") == "spa":
         return redirect(
@@ -186,7 +186,7 @@ def _send_instructions(user, new_email):
         user=user,
         link=link,
         token=token,
-        within=td_format(cv("CHANGE_EMAIL_WITHIN")),
+        within=_td_format(cv("CHANGE_EMAIL_WITHIN")),
     )
 
     change_email_instructions_sent.send(

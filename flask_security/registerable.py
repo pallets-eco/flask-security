@@ -21,7 +21,7 @@ from .proxies import _security, _datastore
 from .recoverable import generate_reset_link
 from .signals import user_registered, user_not_registered
 from .utils import (
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     get_message,
     hash_password,
@@ -183,6 +183,7 @@ def register_existing(
             existing_username=True,
             form_data=form.to_dict(only_user=False),
         )
+        assert form.email.data
         if cv("SEND_REGISTER_EMAIL"):
             send_mail(
                 cv("EMAIL_SUBJECT_REGISTER"),

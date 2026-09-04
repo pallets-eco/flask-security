@@ -63,7 +63,7 @@ from flask_security.forms import (
 from flask_security import auth_required, roles_required
 from flask_security.utils import (
     base_render_json,
-    encode_string,
+    _encode_string,
     json_error_response,
     get_request_attr,
     hash_data,
@@ -71,8 +71,8 @@ from flask_security.utils import (
     uia_email_mapper,
     uia_phone_mapper,
     verify_hash,
-    get_post_action_redirect,
-    td_format,
+    _get_post_action_redirect,
+    _td_format,
 )
 from flask_security.core import _get_serializer
 
@@ -331,7 +331,7 @@ def test_change_hash_type(app, sqlalchemy_datastore):
 @pytest.mark.settings(hashing_schemes=["hex_md5"], deprecated_hashing_schemes=[])
 @pytest.mark.parametrize("data", ["hellö", b"hello"])
 def test_legacy_hash(in_app_context, data):
-    legacy_hash = hashlib.md5(encode_string(data)).hexdigest()
+    legacy_hash = hashlib.md5(_encode_string(data)).hexdigest()
     new_hash = hash_data(data)
     assert legacy_hash == new_hash
 
@@ -348,7 +348,7 @@ def test_verify_hash(in_app_context):
     assert verify_hash(data, "hellö") is True
     assert verify_hash(data, "hello") is False
 
-    legacy_data = hashlib.md5(encode_string("hellö")).hexdigest()
+    legacy_data = hashlib.md5(_encode_string("hellö")).hexdigest()
     assert verify_hash(legacy_data, "hellö") is True
     assert verify_hash(legacy_data, "hello") is False
 
@@ -1446,7 +1446,7 @@ def test_get_post_action_redirect(app, client):
     # test parts of get_post_action_redirect that are hard to get to via the client
     # e.g. port
     with app.test_request_context(base_url="https://lp.com:8080/"):
-        r = get_post_action_redirect(
+        r = _get_post_action_redirect(
             "SECURITY_POST_LOGIN_VIEW", dict(next="https://lp.com:8080/myredirect")
         )
         assert r == "https://lp.com:8080/myredirect"
@@ -1593,11 +1593,11 @@ def test_login_required(app, client, get_message):
 
 
 def test_simplify_url():
-    from flask_security.utils import simplify_url
+    from flask_security.utils import _simplify_url
 
-    s = simplify_url("https://localhost/profile", "https://localhost/login")
+    s = _simplify_url("https://localhost/profile", "https://localhost/login")
     assert s == "/login"
-    s = simplify_url("https:/myhost/profile", "https://localhost/login")
+    s = _simplify_url("https:/myhost/profile", "https://localhost/login")
     assert s == "https://localhost/login"
 
 
@@ -1686,22 +1686,24 @@ def test_td_format(app, monkeypatch):
     import sys
 
     monkeypatch.setitem(sys.modules, "humanize", None)
-    assert "4 seconds" == td_format(timedelta(seconds=4))
-    assert "1 day" == td_format(timedelta(days=1))
-    assert "1 day and 30 minutes" == td_format(timedelta(days=1, minutes=30))
-    assert "1 day, 2 hours, 40 seconds" == td_format(timedelta(hours=26, seconds=40))
+    assert "4 seconds" == _td_format(timedelta(seconds=4))
+    assert "1 day" == _td_format(timedelta(days=1))
+    assert "1 day and 30 minutes" == _td_format(timedelta(days=1, minutes=30))
+    assert "1 day, 2 hours, 40 seconds" == _td_format(timedelta(hours=26, seconds=40))
 
 
 def test_td_format_humanize(app):
     pytest.importorskip("humanize")
-    assert "1 day, 2 hours and 40 seconds" == td_format(timedelta(hours=26, seconds=40))
+    assert "1 day, 2 hours and 40 seconds" == _td_format(
+        timedelta(hours=26, seconds=40)
+    )
 
 
 @pytest.mark.parametrize("humanizer", ["fr_FR"], indirect=["humanizer"])
 def test_td_format_humanize_fr(app, humanizer):
     # humanize has built in localization
     # app responsible for setting it up.
-    assert "1 jour, 2 heures et 40 secondes" == td_format(
+    assert "1 jour, 2 heures et 40 secondes" == _td_format(
         timedelta(hours=26, seconds=40)
     )
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import typing as t
 
-from .utils import config_value, get_message
+from .utils import _config_value, get_message
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask
@@ -50,7 +50,7 @@ class PhoneUtil:
 
         try:
             z = phonenumbers.parse(
-                input_data, region=config_value("PHONE_REGION_DEFAULT")
+                input_data, region=_config_value("PHONE_REGION_DEFAULT")
             )
             if phonenumbers.is_valid_number(z):
                 return None
@@ -67,7 +67,7 @@ class PhoneUtil:
 
         try:
             z = phonenumbers.parse(
-                input_data, region=config_value("PHONE_REGION_DEFAULT")
+                input_data, region=_config_value("PHONE_REGION_DEFAULT")
             )
             if phonenumbers.is_valid_number(z):
                 return phonenumbers.format_number(

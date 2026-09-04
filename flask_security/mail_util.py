@@ -18,7 +18,7 @@ import typing as t
 import email_validator
 from flask import current_app
 
-from .utils import config_value, get_message
+from .utils import _config_value, get_message
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask
@@ -59,9 +59,9 @@ class MailUtil:
         self,
         template: str,
         subject: str,
-        recipient: str,
-        sender: str | tuple,
-        body: str,
+        recipient: str | tuple[str, str],
+        sender: str | tuple[str, str],
+        body: str | None,
         html: str | None,
         **kwargs: t.Any,
     ) -> None:
@@ -136,7 +136,7 @@ class MailUtil:
 
         This defaults to NOT checking for deliverability (i.e. DNS checks).
         """
-        validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
+        validator_args = _config_value("EMAIL_VALIDATOR_ARGS") or {}
         validator_args["check_deliverability"] = False
         try:
             valid = email_validator.validate_email(email, **validator_args)
@@ -158,7 +158,7 @@ class MailUtil:
         EmailValidationException is thrown on invalid email.
         """
 
-        validator_args = config_value("EMAIL_VALIDATOR_ARGS") or {}
+        validator_args = _config_value("EMAIL_VALIDATOR_ARGS") or {}
         try:
             valid = email_validator.validate_email(email, **validator_args)
             return valid.normalized

@@ -29,7 +29,7 @@
       {{ wan_signin_response_form.hidden_tag() }}
       <div id="wan-errors"></div>
     </form>
-    <script {{ script_nonce() }} type="text/javascript">
+    <script {{ script_nonce() }}>
       handleSignin('{{ credential_options|safe }}')
         .then((result) => {
           if (result.credential) {

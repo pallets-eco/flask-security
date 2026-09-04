@@ -598,6 +598,10 @@ def test_verify_spa(app, sqlalchemy_datastore, get_message):
         "email=matt%40lp.com&identity=matt%40lp.com"
     )
 
+    response = client.get("/verify", headers=headers)
+    assert response.json["response"]["oauth_enabled"]
+    assert response.json["response"]["oauth_providers"] == ["github"]
+
 
 @pytest.mark.settings(
     oauth_enable=True, redirect_behavior="spa", verify_error_view="/verify-error"

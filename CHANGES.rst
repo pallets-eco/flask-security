@@ -58,6 +58,7 @@ Docs and Chores
 - (:pr:`1252`) Replace ``bleach`` (deprecated/unmaintained) with ``nh3`` for username sanitization (tkfoss)
 - (:pr:`1273`) Improve translation tests to not use real french translations
 - (:pr:`1275`) Update Spanish and Catalan translations. (arielvb)
+- (:pr:`xx`) Improve (from 54% to 74% pyright --verifytypes)
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

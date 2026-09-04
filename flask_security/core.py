@@ -22,7 +22,6 @@ import warnings
 
 from flask import current_app, g, session
 from flask_login import AnonymousUserMixin, LoginManager
-from flask_login import UserMixin as BaseUserMixin
 from flask_login import current_user
 from flask_principal import Identity, Principal, RoleNeed, UserNeed, identity_loaded
 from itsdangerous import URLSafeTimedSerializer, URLSafeSerializer
@@ -94,13 +93,13 @@ from .webauthn_util import WebauthnUtil
 from .username_util import UsernameUtil
 from .totp import Totp
 from .utils import _
-from .utils import config_value as cv
+from .utils import _config_value as cv
 from .utils import (
-    FsPermNeed,
-    add_cache_control,
-    csrf_cookie_handler,
-    default_render_template,
-    default_want_json,
+    _FsPermNeed,
+    _add_cache_control,
+    _csrf_cookie_handler,
+    _default_render_template,
+    _default_want_json,
     get_identity_attribute,
     get_identity_attributes,
     get_message,
@@ -120,10 +119,46 @@ if t.TYPE_CHECKING:  # pragma: no cover
     import flask
     from flask import Request
     from flask.typing import ResponseValue
-    import flask_login.mixins
     from authlib.integrations.flask_client import OAuth
     from .datastore import UserDatastore
 
+    # flask_login isn't typed yet
+    class BaseUserMixin:
+        # __hash__ = object.__hash__
+
+        @property
+        def is_active(self) -> bool:
+            return True
+
+        @property
+        def is_authenticated(self) -> bool:
+            return self.is_active
+
+        @property
+        def is_anonymous(self) -> bool:
+            return False
+
+        def get_id(self) -> str: ...
+
+        def __eq__(self, other: object) -> bool:
+            """
+            Checks the equality of two `UserMixin` objects using `get_id`.
+            """
+            if isinstance(other, UserMixin):
+                return self.get_id() == other.get_id()
+            return NotImplemented
+
+        def __ne__(self, other: object) -> bool:
+            """
+            Checks the inequality of two `UserMixin` objects using `get_id`.
+            """
+            equal = self.__eq__(other)
+            if equal is NotImplemented:
+                return NotImplemented
+            return not equal
+
+else:
+    from flask_login import UserMixin as BaseUserMixin
 
 # List of authentication mechanisms supported.
 AUTHN_MECHANISMS = ("basic", "session", "token")
@@ -814,7 +849,7 @@ def _on_identity_loaded(sender, identity):
         for role in getattr(current_user, "roles", []):
             identity.provides.add(RoleNeed(role.name))
             for fsperm in role.get_permissions():
-                identity.provides.add(FsPermNeed(fsperm))
+                identity.provides.add(_FsPermNeed(fsperm))
 
     identity.user = current_user
 
@@ -903,18 +938,22 @@ class RoleMixin:
         permissions: list[str] | None
         update_datetime: datetime
 
-        def __init__(self, **kwargs): ...
+        def __init__(self, **kwargs: t.Any): ...
 
-    def __eq__(self, other):
-        return self.name == other or self.name == getattr(other, "name", None)
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, RoleMixin) or isinstance(other, str):
+            return self.name == other or self.name == getattr(other, "name", None)
+        return NotImplemented  # pragma: no cover
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, RoleMixin) or isinstance(other, str):
+            return not self.__eq__(other)
+        return NotImplemented  # pragma: no cover
 
-    def __hash__(self):
-        return hash(self.name)
+    def __hash__(self) -> int:
+        return hash(self.name)  # pragma: no cover
 
-    def get_permissions(self) -> set:
+    def get_permissions(self) -> set[str]:
         """
         Return set of permissions associated with role.
 
@@ -1282,7 +1321,7 @@ class WebAuthnMixin:
         lastuse_datetime: datetime
         usage: str
 
-        def __init__(self, **kwargs): ...
+        def __init__(self, **kwargs: t.Any): ...
 
     def get_user_mapping(self) -> dict[str, t.Any]:
         """
@@ -1307,7 +1346,7 @@ class RefreshTrackerMixin:
         revoked_at: datetime | None
         last_used_at: datetime
 
-        def __init__(self, **kwargs): ...
+        def __init__(self, **kwargs: t.Any): ...
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -1489,7 +1528,7 @@ class Security:
         mail_util_cls: t.Type[MailUtil] = MailUtil,
         password_util_cls: t.Type[PasswordUtil] = PasswordUtil,
         phone_util_cls: t.Type[PhoneUtil] = PhoneUtil,
-        render_template: t.Callable[..., str] = default_render_template,
+        render_template: t.Callable[..., str] = _default_render_template,
         totp_cls: t.Type[Totp] = Totp,
         username_recovery_form: t.Type[UsernameRecoveryForm] = UsernameRecoveryForm,
         username_util_cls: t.Type[UsernameUtil] = UsernameUtil,
@@ -1522,7 +1561,7 @@ class Security:
 
         # Forms - we create a list from constructor.
         # BC - in init_app we will allow override of class.
-        self.forms = {
+        self.forms: dict[str, FormInfo] = {
             "login_form": FormInfo(cls=login_form),
             "logout_form": FormInfo(cls=logout_form),
             "verify_form": FormInfo(cls=verify_form),
@@ -1567,7 +1606,7 @@ class Security:
             [dict[str, t.Any], int, dict[str, str] | None, UserMixin | None],
             ResponseValue,
         ] = default_render_json
-        self._want_json: t.Callable[[Request], bool] = default_want_json
+        self._want_json: t.Callable[[Request], bool] = _default_want_json
 
         # Type attributes that we don't initialize until init_app time.
         self.remember_token_serializer: URLSafeTimedSerializer
@@ -1593,7 +1632,7 @@ class Security:
             naive_utcnow  # can be changed in init_app()
         )
 
-        self.login_manager: flask_login.LoginManager
+        self.login_manager: LoginManager
         self._mail_util: MailUtil
         self._phone_util: PhoneUtil
         self._password_util: PasswordUtil
@@ -1930,7 +1969,7 @@ class Security:
             if self.oauthglue:
                 self.oauthglue._create_blueprint(app, bp)
             if cv("CACHE_CONTROL", app=app):
-                bp.after_request(add_cache_control)
+                bp.after_request(_add_cache_control)
             app.register_blueprint(bp)
             app.context_processor(_context_processor)
 
@@ -2091,7 +2130,7 @@ class Security:
                 if ch not in app.config["WTF_CSRF_HEADERS"]:
                     app.config["WTF_CSRF_HEADERS"].append(ch)
         if cv("CSRF_COOKIE_NAME", app=app):
-            app.after_request(csrf_cookie_handler)
+            app.after_request(_csrf_cookie_handler)
 
     def set_form_info(self, name: str, form_info: FormInfo) -> None:
         """Set form instantiation info.

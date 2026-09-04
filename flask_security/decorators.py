@@ -25,8 +25,8 @@ from werkzeug.local import LocalProxy
 from .proxies import _security, DecoratedView
 from .signals import user_unauthenticated
 from .utils import (
-    FsPermNeed,
-    config_value as cv,
+    _FsPermNeed,
+    _config_value as cv,
     do_flash,
     get_message,
     get_url,
@@ -35,7 +35,7 @@ from .utils import (
     check_and_update_authn_fresh,
     json_error_response,
     set_request_attr,
-    simplify_url,
+    _simplify_url,
     get_request_attr,
     url_for_security,
 )
@@ -79,7 +79,7 @@ def default_unauthn_handler(mechanisms=None, headers=None):
     do_flash(m, c)
     # Simplify the original URL to be relative (if possible) and set as 'next' parameter
     login_url = url_for_security("login", _external=True)
-    next_url = simplify_url(login_url, request.url)
+    next_url = _simplify_url(login_url, request.url)
     redirect_url = url_for_security("login", next=next_url)
     return redirect(redirect_url)
 
@@ -113,7 +113,7 @@ def default_reauthn_handler(within, grace):
     do_flash(m, c)
     # Simplify the original URL to be relative (if possible) and set as 'next' parameter
     view_url = url_for_security(view, _external=True)
-    next_url = simplify_url(view_url, request.url)
+    next_url = _simplify_url(view_url, request.url)
     redirect_url = url_for_security(view, next=next_url)
     return redirect(redirect_url)
 
@@ -562,7 +562,7 @@ def permissions_required(*fsperms: str) -> DecoratedView:
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
-            perms = [Permission(FsPermNeed(fsperm)) for fsperm in fsperms]
+            perms = [Permission(_FsPermNeed(fsperm)) for fsperm in fsperms]
             for perm in perms:
                 if not perm.can():
                     return _security._unauthz_handler(
@@ -598,7 +598,7 @@ def permissions_accepted(*fsperms: str) -> DecoratedView:
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
-            perm = Permission(*(FsPermNeed(fsperm) for fsperm in fsperms))
+            perm = Permission(*(_FsPermNeed(fsperm) for fsperm in fsperms))
             if perm.can():
                 return current_app.ensure_sync(fn)(*args, **kwargs)
             return _security._unauthz_handler(

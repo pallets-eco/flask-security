@@ -32,10 +32,10 @@ from .tf_plugin import tf_check_state, tf_illegal_state
 from .utils import (
     _,
     base_render_json,
-    config_value as cv,
+    _config_value as cv,
     get_message,
-    get_post_login_redirect,
-    view_commit,
+    _get_post_login_redirect,
+    _view_commit,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -202,7 +202,7 @@ def mf_recovery_codes() -> ResponseValue:
     if form.validate_on_submit():
         # generate new codes
         codes = _security.mf_recovery_codes_util.create_recovery_codes(current_user)
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         if _security._want_json(request):
             payload = dict(recovery_codes=codes)
             return base_render_json(form, include_user=False, additional=payload)
@@ -232,7 +232,7 @@ def mf_recovery_codes() -> ResponseValue:
 
 @anonymous_user_required
 @unauth_csrf()
-def mf_recovery():
+def mf_recovery() -> ResponseValue:
     """View for entering a recovery code.
 
     User must have already provided valid username/password.
@@ -246,14 +246,15 @@ def mf_recovery():
 
     if form.validate_on_submit():
         # Valid code - we want these to be one time - so remove it from list
+        assert form.code.data
         _security.mf_recovery_codes_util.delete_recovery_code(form.user, form.code.data)
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
 
         # In the recovery case - don't set/offer validity token.
         _security.two_factor_plugins.tf_complete(form.user, True)
 
         if not _security._want_json(request):
-            return redirect(get_post_login_redirect())
+            return redirect(_get_post_login_redirect())
         else:
             return base_render_json(form)
 

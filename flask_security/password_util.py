@@ -15,7 +15,7 @@ import typing as t
 import unicodedata
 
 from .utils import (
-    config_value,
+    _config_value,
     password_length_validator,
     password_breached_validator,
     password_complexity_validator,
@@ -49,7 +49,7 @@ class PasswordUtil:
         Must be called in app context and uses
         :py:data:`SECURITY_PASSWORD_NORMALIZE_FORM` config variable.
         """
-        cf = config_value("PASSWORD_NORMALIZE_FORM")
+        cf = _config_value("PASSWORD_NORMALIZE_FORM")
         if cf:
             return unicodedata.normalize(cf, password)
         return password

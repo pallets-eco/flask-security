@@ -40,7 +40,7 @@
       {{ render_field(wan_signin_response_form.credential) }}
       <div id="wan-errors"></div>
     </form>
-    <script {{ script_nonce() }} type="text/javascript">
+    <script {{ script_nonce() }}>
       handleSignin('{{ credential_options|safe }}')
         .then((result) => {
           if (result.error_msg) {

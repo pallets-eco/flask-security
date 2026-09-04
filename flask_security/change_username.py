@@ -44,12 +44,12 @@ from .quart_compat import get_quart_status
 from .signals import username_changed
 from .utils import (
     base_render_json,
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     get_message,
     get_url,
     send_mail,
-    view_commit,
+    _view_commit,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -93,7 +93,7 @@ def change_username() -> ResponseValue:
     if form.validate_on_submit():
         # simple - just change username
         form.user = current_user
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         update_username(form.user, form.username.data)
         if _security._want_json(request):
             return base_render_json(form)

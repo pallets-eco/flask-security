@@ -42,13 +42,13 @@ from .proxies import _security
 from .utils import (
     _,
     _datastore,
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     get_identity_attribute,
     get_message,
     hash_password,
     localize_callback,
-    suppress_form_csrf,
+    _suppress_form_csrf,
     url_for_security,
     validate_redirect_url,
     verify_password,
@@ -1193,6 +1193,8 @@ class TwoFactorRescueForm(Form):
     )
     submit: SubmitField = SubmitField(_get_form_field_label("submit"), id="rescue")
 
+    user: UserMixin | None = None  # set by view
+
 
 class UsernameRecoveryForm(ForgotPasswordForm):
     """The username recovery form"""
@@ -1214,7 +1216,7 @@ def _build_form_from_request(form_name: str, **kwargs: dict[str, t.Any]) -> Form
     if request.content_length:
         form_data = MultiDict(request.get_json()) if request.is_json else request.form
     return _build_form(
-        form_name, formdata=form_data, meta=suppress_form_csrf(), **kwargs
+        form_name, formdata=form_data, meta=_suppress_form_csrf(), **kwargs
     )
 
 

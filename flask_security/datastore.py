@@ -18,7 +18,7 @@ import uuid
 from copy import copy
 
 from .core import UserMixin, RoleMixin, WebAuthnMixin, RefreshTrackerMixin
-from .utils import config_value as cv
+from .utils import _config_value as cv
 
 if t.TYPE_CHECKING:  # pragma: no cover
     import flask_sqlalchemy

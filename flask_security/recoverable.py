@@ -18,12 +18,12 @@ from .signals import (
 )
 from .utils import (
     check_and_get_token_status,
-    config_value as cv,
+    _config_value as cv,
     hash_data,
     hash_password,
     send_mail,
     url_for_security,
-    td_format,
+    _td_format,
 )
 
 
@@ -47,7 +47,7 @@ def send_reset_password_instructions(user):
             user=user,
             reset_link=reset_link,
             reset_token=token,
-            within=td_format(cv("RESET_PASSWORD_WITHIN")),
+            within=_td_format(cv("RESET_PASSWORD_WITHIN")),
         )
 
     reset_password_instructions_sent.send(

@@ -63,6 +63,7 @@ from .forms import (
     _build_form_from_request,
     _build_form,
     form_errors_munge,
+    PasswordlessLoginForm,
     ResetPasswordForm,
     SendConfirmationForm,
     TwoFactorVerifyCodeForm,
@@ -108,29 +109,29 @@ from .utils import (
     base_render_json,
     check_and_update_authn_fresh,
     check_and_get_token_status,
-    config_value as cv,
-    confirm_redirect,
+    _config_value as cv,
+    _confirm_redirect,
     do_flash,
     get_identity_attributes,
     get_message,
-    get_post_login_redirect,
-    get_post_logout_redirect,
-    get_post_register_redirect,
-    get_post_verify_redirect,
+    _get_post_login_redirect,
+    _get_post_logout_redirect,
+    _get_post_register_redirect,
+    _get_post_verify_redirect,
     get_request_attr,
     get_url,
-    handle_already_auth,
+    _handle_already_auth,
     hash_password,
     is_user_authenticated,
     localize_callback,
     login_user,
     logout_user,
-    propagate_next,
+    _propagate_next,
     send_mail,
-    slash_url_suffix,
-    td_format,
+    _slash_url_suffix,
+    _td_format,
     url_for_security,
-    view_commit,
+    _view_commit,
     allowed_auth_token,
     set_request_attr,
 )
@@ -151,7 +152,7 @@ else:
     from flask import make_response, redirect
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask.typing import ResponseValue
+    from flask.typing import ResponseReturnValue, ResponseValue
     from flask_security import UserMixin
 
 
@@ -175,12 +176,12 @@ def _ctx(endpoint):
 
 
 @unauth_csrf()
-def login() -> ResponseValue:
+def login() -> ResponseReturnValue:
     """View function for login view"""
     form = t.cast(LoginForm, _build_form_from_request("login_form"))
 
     if is_user_authenticated(current_user):
-        return handle_already_auth(
+        return _handle_already_auth(
             form, payload={"identity_attributes": get_identity_attributes()}
         )
 
@@ -195,12 +196,12 @@ def login() -> ResponseValue:
             form.user,
             remember_me,
             "password",
-            next_loc=propagate_next(request.url, form),
+            next_loc=_propagate_next(request.url, form),
         )
         if response:
             return response
         # two factor not required - login user
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         login_user(form.user, remember=remember_me, authn_via=["password"])
 
         if _security._want_json(request):
@@ -209,7 +210,7 @@ def login() -> ResponseValue:
                 include_auth_token=allowed_auth_token(form.user),
                 additional=dict(tf_required=False),
             )
-        return redirect(get_post_login_redirect())
+        return redirect(_get_post_login_redirect())
 
     if request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
         # Validation failed - make sure PII error messages are generic
@@ -232,7 +233,7 @@ def login() -> ResponseValue:
         }
         return base_render_json(form, additional=payload)
 
-    if rurl := confirm_redirect(form, "email"):
+    if rurl := _confirm_redirect(form, "email"):
         return rurl
 
     return _security.render_template(
@@ -244,7 +245,7 @@ def login() -> ResponseValue:
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def verify():
+def verify() -> ResponseReturnValue:
     """View function which handles a reauthentication request."""
     form = t.cast(
         VerifyForm, _build_form_from_request("verify_form", user=current_user)
@@ -252,7 +253,7 @@ def verify():
 
     if form.validate_on_submit():
         # form may have called verify_and_update_password()
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
 
         # verified - so set freshness time.
         session["fs_paa"] = time.time()
@@ -262,16 +263,18 @@ def verify():
                 form, include_auth_token=allowed_auth_token(form.user)
             )
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
-        return redirect(get_post_verify_redirect())
+        return redirect(_get_post_verify_redirect())
 
     webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
     if _security._want_json(request):
+        provider_names: list[str] = []
+        if cv("OAUTH_ENABLE"):
+            assert _security.oauthglue is not None
+            provider_names = _security.oauthglue.provider_names
         payload = {
             "has_webauthn_verify_credential": webauthn_available,
             "oauth_enabled": cv("OAUTH_ENABLE"),
-            "oauth_providers": (
-                _security.oauthglue.provider_names if cv("OAUTH_ENABLE") else []
-            ),
+            "oauth_providers": provider_names,
         }
         return base_render_json(form, additional=payload)
 
@@ -284,7 +287,7 @@ def verify():
     )
 
 
-def logout() -> ResponseValue:
+def logout() -> ResponseReturnValue:
     """View function which handles a logout request.
     As part of the refresh_token feature, logout now has a form defined
     which a client can pass a refresh token that will be revoked as part of logout
@@ -343,12 +346,12 @@ def logout() -> ResponseValue:
     if request.method == "POST" and _security._want_json(request):
         return _security._render_json({}, 200, None, None)
 
-    return redirect(get_post_logout_redirect())
+    return redirect(_get_post_logout_redirect())
 
 
 @anonymous_user_required
 @unauth_csrf()
-def register() -> ResponseValue:
+def register() -> ResponseReturnValue:
     """View function which handles a registration request."""
 
     if (_security.confirmable or request.is_json) and _security.forms[
@@ -360,7 +363,7 @@ def register() -> ResponseValue:
     form = _build_form_from_request(form_name)
 
     if form.validate_on_submit():
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         user = register_user(form)
         form.user = user
 
@@ -370,7 +373,10 @@ def register() -> ResponseValue:
         # signin - we adhere to historic behavior.
         if not _security.confirmable or cv("LOGIN_WITHOUT_CONFIRMATION"):
             response = _security.two_factor_plugins.tf_enter(
-                form.user, False, "register", next_loc=propagate_next(request.url, form)
+                form.user,
+                False,
+                "register",
+                next_loc=_propagate_next(request.url, form),
             )
             if response:
                 return response
@@ -384,7 +390,7 @@ def register() -> ResponseValue:
                 )
 
         if not _security._want_json(request):
-            return redirect(get_post_register_redirect())
+            return redirect(_get_post_register_redirect())
 
         return base_render_json(form)
 
@@ -395,7 +401,7 @@ def register() -> ResponseValue:
             if _security._want_json(request):
                 return base_render_json(form)
 
-            return redirect(get_post_register_redirect())
+            return redirect(_get_post_register_redirect())
 
     if _security._want_json(request):
         return base_render_json(form)
@@ -408,12 +414,15 @@ def register() -> ResponseValue:
 
 
 @unauth_csrf()
-def send_login():
+def send_login() -> ResponseReturnValue:
     """View function that sends login instructions for passwordless login"""
-    form = _build_form_from_request("passwordless_login_form")
+    form = t.cast(
+        PasswordlessLoginForm, _build_form_from_request("passwordless_login_form")
+    )
 
     if form.validate_on_submit():
         send_login_instructions(form.user)
+        assert form.user
         if not _security._want_json(request):
             do_flash(*get_message("LOGIN_EMAIL_SENT", email=form.user.email))
 
@@ -426,7 +435,7 @@ def send_login():
 
 
 @anonymous_user_required
-def token_login(token):
+def token_login(token: str) -> ResponseReturnValue:
     """View function that handles passwordless login via a token
     Like reset-password and confirm - this is usually a GET via an email
     so from the request we can't differentiate form-based apps from non.
@@ -443,7 +452,7 @@ def token_login(token):
     if expired:
         send_login_instructions(user)
         m, c = get_message(
-            "LOGIN_EXPIRED", email=user.email, within=td_format(cv("LOGIN_WITHIN"))
+            "LOGIN_EXPIRED", email=user.email, within=_td_format(cv("LOGIN_WITHIN"))
         )
         if cv("REDIRECT_BEHAVIOR") == "spa":
             return redirect(
@@ -456,7 +465,7 @@ def token_login(token):
         return redirect(url_for_security("login"))
 
     login_user(user, authn_via=["token"])
-    after_this_request(view_commit)
+    after_this_request(_view_commit)
     if cv("REDIRECT_BEHAVIOR") == "spa":
         return redirect(
             get_url(cv("POST_LOGIN_VIEW"), qparams=user.get_redirect_qparams())
@@ -464,11 +473,11 @@ def token_login(token):
 
     do_flash(*get_message("PASSWORDLESS_LOGIN_SUCCESSFUL"))
 
-    return redirect(get_post_login_redirect())
+    return redirect(_get_post_login_redirect())
 
 
 @unauth_csrf()
-def send_confirmation():
+def send_confirmation() -> ResponseReturnValue:
     """View function which sends confirmation instructions (/confirm)."""
     form = t.cast(
         SendConfirmationForm, _build_form_from_request("send_confirmation_form")
@@ -481,7 +490,7 @@ def send_confirmation():
 
     elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
         # Here on GET or failed validate
-        rinfo = dict(email=dict())
+        rinfo: dict[str, dict[str, str]] = dict(email=dict())
         form_errors_munge(form, rinfo)  # by suppressing errors JSON should return 200
         # Check for other errors - for default form - there aren't additional fields
         # but applications might add some (e.g. recaptcha)
@@ -501,7 +510,7 @@ def send_confirmation():
     )
 
 
-def confirm_email(token: str) -> ResponseValue:
+def confirm_email(token: str) -> ResponseReturnValue:
     """
     View function which handles an email confirmation request.
     This is always a GET from an email - so for 'spa' must always redirect.
@@ -513,7 +522,7 @@ def confirm_email(token: str) -> ResponseValue:
         if expired:
             m, c = get_message(
                 "CONFIRMATION_EXPIRED",
-                within=td_format(cv("CONFIRM_EMAIL_WITHIN")),
+                within=_td_format(cv("CONFIRM_EMAIL_WITHIN")),
             )
         else:
             m, c = get_message("INVALID_CONFIRMATION_TOKEN")
@@ -543,7 +552,7 @@ def confirm_email(token: str) -> ResponseValue:
         )
 
     confirm_user(user)
-    after_this_request(view_commit)
+    after_this_request(_view_commit)
     m, c = get_message("EMAIL_CONFIRMED")
 
     # ? The only case where user is logged in already would be if
@@ -557,7 +566,7 @@ def confirm_email(token: str) -> ResponseValue:
             # get the email.
             # Note also this goes against OWASP recommendations.
             response = _security.two_factor_plugins.tf_enter(
-                user, False, "confirm", next_loc=propagate_next(request.url, None)
+                user, False, "confirm", next_loc=_propagate_next(request.url, None)
             )
             if response:
                 do_flash(m, c)
@@ -581,7 +590,7 @@ def confirm_email(token: str) -> ResponseValue:
 
 
 @unauth_csrf()
-def forgot_password():
+def forgot_password() -> ResponseReturnValue:
     """View function that handles a forgotten password request (/reset).
     This is allowed for either anonymous or authenticated users. The rationale is that
     often users stay logged in for a long time and might have forgotten their password
@@ -596,7 +605,7 @@ def forgot_password():
 
     elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
         # Here on failed validate (POST) and want generic responses
-        rinfo = dict(email=dict())
+        rinfo: dict[str, dict[str, str]] = dict(email=dict())
         form_errors_munge(form, rinfo)  # by suppressing errors JSON should return 200
         # Check for other errors - for default form - there aren't additional fields
         # but applications might add some (e.g. recaptcha)
@@ -611,7 +620,7 @@ def forgot_password():
         # Never include user info since this is an anonymous endpoint.
         return base_render_json(form, include_user=False)
 
-    if rurl := confirm_redirect(form, "email"):
+    if rurl := _confirm_redirect(form, "email"):
         return rurl
 
     if is_user_authenticated(current_user):
@@ -624,7 +633,7 @@ def forgot_password():
 
 
 @unauth_csrf()
-def reset_password(token):
+def reset_password(token: str) -> ResponseReturnValue:
     """View function that handles a reset password request (/reset/<token>).
 
     This endpoint can be called either when authenticated or anonymous
@@ -650,7 +659,7 @@ def reset_password(token):
             if expired:
                 m, c = get_message(
                     "PASSWORD_RESET_EXPIRED",
-                    within=td_format(cv("RESET_PASSWORD_WITHIN")),
+                    within=_td_format(cv("RESET_PASSWORD_WITHIN")),
                 )
             else:
                 m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
@@ -682,7 +691,7 @@ def reset_password(token):
     if not form.user or invalid or expired:
         if expired:
             m, c = get_message(
-                "PASSWORD_RESET_EXPIRED", within=td_format(cv("RESET_PASSWORD_WITHIN"))
+                "PASSWORD_RESET_EXPIRED", within=_td_format(cv("RESET_PASSWORD_WITHIN"))
             )
         else:
             m, c = get_message("INVALID_RESET_PASSWORD_TOKEN")
@@ -695,12 +704,12 @@ def reset_password(token):
             return redirect(url_for_security("forgot_password"))
 
     if form.validate_on_submit():
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         update_password(form.user, form.password.data)
         if cv("AUTO_LOGIN_AFTER_RESET"):
             # backwards compat - really shouldn't do this according to OWASP
             response = _security.two_factor_plugins.tf_enter(
-                form.user, False, "reset", next_loc=propagate_next(request.url, None)
+                form.user, False, "reset", next_loc=_propagate_next(request.url, None)
             )
             if response:
                 return response
@@ -739,7 +748,7 @@ def reset_password(token):
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def change_password():
+def change_password() -> ResponseReturnValue:
     """View function which handles a change password request."""
     form = t.cast(ChangePasswordForm, _build_form_from_request("change_password_form"))
 
@@ -757,7 +766,7 @@ def change_password():
             )
 
     if form.validate_on_submit():
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         change_user_password(current_user._get_current_object(), form.new_password.data)
         if _security._want_json(request):
             form.user = current_user
@@ -785,7 +794,7 @@ def change_password():
 
 
 @unauth_csrf()
-def two_factor_setup():
+def two_factor_setup() -> ResponseReturnValue:
     """View function for two-factor setup.
 
     This is used both for GET to fetch forms and POST to actually set configuration
@@ -847,7 +856,7 @@ def two_factor_setup():
         pm = form.setup.data
         if pm == "disable":
             tf_disable(user)
-            after_this_request(view_commit)
+            after_this_request(_view_commit)
             if not _security._want_json(request):
                 do_flash(*get_message("TWO_FACTOR_DISABLED"))
                 return redirect(get_url(cv("TWO_FACTOR_POST_SETUP_VIEW")))
@@ -879,7 +888,7 @@ def two_factor_setup():
             #  TODO dont save here - wait until complete
             user.tf_phone_number = phone
             _datastore.put(user)
-            after_this_request(view_commit)
+            after_this_request(_view_commit)
 
         if (
             pm == "email" or pm == "sms"
@@ -967,7 +976,7 @@ def two_factor_setup():
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def two_factor_setup_validate(token: str) -> ResponseValue:
+def two_factor_setup_validate(token: str) -> ResponseReturnValue:
     """
     Validate new setup.
     The token is the state variable that is signed and timed
@@ -986,7 +995,7 @@ def two_factor_setup_validate(token: str) -> ResponseValue:
         m, c = get_message("API_ERROR")
     if expired:
         m, c = get_message(
-            "TWO_FACTOR_SETUP_EXPIRED", within=td_format(cv("TWO_FACTOR_SETUP_WITHIN"))
+            "TWO_FACTOR_SETUP_EXPIRED", within=_td_format(cv("TWO_FACTOR_SETUP_WITHIN"))
         )
     if invalid or expired:
         tf_clean_session()  # until we completely remove session based setup/state
@@ -1006,7 +1015,7 @@ def two_factor_setup_validate(token: str) -> ResponseValue:
 
     if form.validate_on_submit():
         tf_clean_session()  # until we completely remove session based setup/state
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         _datastore.tf_set(current_user, method, totp_secret, phone)
         # TODO: should validity cookie be removed? extended? left alone?
         # Currently - leave it alone - meaning cookie still set.
@@ -1041,7 +1050,7 @@ def two_factor_setup_validate(token: str) -> ResponseValue:
 
 
 @unauth_csrf()
-def two_factor_token_validation():
+def two_factor_token_validation() -> ResponseReturnValue:
     """View function for two-factor token validation
 
     Two cases:
@@ -1096,13 +1105,14 @@ def two_factor_token_validation():
 
     form.primary_method = pm
     form.tf_totp_secret = totp_secret
+    assert form.user
     if form.validate_on_submit():
         # Success - finish process based on 'changing' and clear all session variables
         completion_message, token = _complete_two_factor_process(
             form.user, pm, totp_secret, changing
         )
 
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         if token:
             after_this_request(partial(tf_set_validity_token_cookie, token=token))
 
@@ -1111,7 +1121,7 @@ def two_factor_token_validation():
             if changing:
                 return redirect(get_url(cv("TWO_FACTOR_POST_SETUP_VIEW")))
             else:
-                return redirect(get_post_login_redirect())
+                return redirect(_get_post_login_redirect())
 
         else:
             return base_render_json(
@@ -1152,7 +1162,7 @@ def two_factor_token_validation():
 
 @anonymous_user_required
 @unauth_csrf()
-def two_factor_rescue():
+def two_factor_rescue() -> ResponseReturnValue:
     """Function that handles a situation where user can't
     enter his two-factor validation code
 
@@ -1181,6 +1191,7 @@ def two_factor_rescue():
             )
             if msg:
                 rproblem = ""
+                assert isinstance(form.help_setup.errors, list)
                 form.help_setup.errors.append(msg)
                 if _security._want_json(request):
                     return base_render_json(
@@ -1223,7 +1234,7 @@ def two_factor_rescue():
 
 @anonymous_user_required
 @unauth_csrf()
-def recover_username():
+def recover_username() -> ResponseReturnValue:
     """View function for username recovery"""
 
     form = t.cast(
@@ -1240,7 +1251,7 @@ def recover_username():
 
         return redirect(url_for_security("login"))
     elif request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
-        rinfo = dict(email=dict())
+        rinfo: dict[str, dict[str, str]] = dict(email=dict())
         form_errors_munge(form, rinfo)
         if not form.errors:
             if not _security._want_json(request):
@@ -1249,7 +1260,7 @@ def recover_username():
     if _security._want_json(request):
         return base_render_json(form, include_user=False)
 
-    if rurl := confirm_redirect(form, "email"):
+    if rurl := _confirm_redirect(form, "email"):
         return rurl
 
     return _security.render_template(
@@ -1283,7 +1294,7 @@ def _create_blueprint(app, state, import_name):
     if state.passwordless:
         bp.route(login_url, methods=["GET", "POST"], endpoint="login")(send_login)
         bp.route(
-            login_url + slash_url_suffix(login_url, "<token>"),
+            login_url + _slash_url_suffix(login_url, "<token>"),
             endpoint="token_login",
         )(token_login)
     elif cv("US_SIGNIN_REPLACES_LOGIN", app=app):
@@ -1315,7 +1326,7 @@ def _create_blueprint(app, state, import_name):
 
         bp.route(us_setup_url, methods=["GET", "POST"], endpoint="us_setup")(us_setup)
         bp.route(
-            us_setup_url + slash_url_suffix(us_setup_url, "<token>"),
+            us_setup_url + _slash_url_suffix(us_setup_url, "<token>"),
             methods=["POST"],
             endpoint="us_setup_validate",
         )(us_setup_validate)
@@ -1345,7 +1356,7 @@ def _create_blueprint(app, state, import_name):
             endpoint="two_factor_setup",
         )(two_factor_setup)
         bp.route(
-            two_factor_setup_url + slash_url_suffix(two_factor_setup_url, "<token>"),
+            two_factor_setup_url + _slash_url_suffix(two_factor_setup_url, "<token>"),
             methods=["POST"],
             endpoint="two_factor_setup_validate",
         )(two_factor_setup_validate)
@@ -1371,7 +1382,7 @@ def _create_blueprint(app, state, import_name):
             forgot_password
         )
         bp.route(
-            reset_url + slash_url_suffix(reset_url, "<token>"),
+            reset_url + _slash_url_suffix(reset_url, "<token>"),
             methods=["GET", "POST"],
             endpoint="reset_password",
         )(reset_password)
@@ -1399,7 +1410,7 @@ def _create_blueprint(app, state, import_name):
             endpoint="change_email",
         )(change_email)
         bp.route(
-            change_email_url + slash_url_suffix(change_email_url, "<token>"),
+            change_email_url + _slash_url_suffix(change_email_url, "<token>"),
             methods=["GET"],
             endpoint="change_email_confirm",
         )(change_email_confirm)
@@ -1417,7 +1428,7 @@ def _create_blueprint(app, state, import_name):
             send_confirmation
         )
         bp.route(
-            confirm_url + slash_url_suffix(confirm_url, "<token>"),
+            confirm_url + _slash_url_suffix(confirm_url, "<token>"),
             methods=["GET", "POST"],
             endpoint="confirm_email",
         )(confirm_email)
@@ -1447,7 +1458,7 @@ def _create_blueprint(app, state, import_name):
             endpoint="wan_register",
         )(webauthn_register)
         bp.route(
-            wan_register_url + slash_url_suffix(wan_register_url, "<token>"),
+            wan_register_url + _slash_url_suffix(wan_register_url, "<token>"),
             methods=["POST"],
             endpoint="wan_register_response",
         )(webauthn_register_response)
@@ -1456,7 +1467,7 @@ def _create_blueprint(app, state, import_name):
             webauthn_signin
         )
         bp.route(
-            wan_signin_url + slash_url_suffix(wan_signin_url, "<token>"),
+            wan_signin_url + _slash_url_suffix(wan_signin_url, "<token>"),
             methods=["POST"],
             endpoint="wan_signin_response",
         )(webauthn_signin_response)
@@ -1470,7 +1481,7 @@ def _create_blueprint(app, state, import_name):
                 webauthn_verify
             )
             bp.route(
-                wan_verify_url + slash_url_suffix(wan_verify_url, "<token>"),
+                wan_verify_url + _slash_url_suffix(wan_verify_url, "<token>"),
                 methods=["POST"],
                 endpoint="wan_verify_response",
             )(webauthn_verify_response)
