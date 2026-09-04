@@ -1,16 +1,16 @@
 # Italian (Italy) translations for Flask-Security.
-# Copyright (C) 2025 THE AUTHORS
+# Copyright (C) 2026 THE AUTHORS
 # This file is distributed under the same license as the Flask-Security
 # project.
-# Giorgio Stampa <giorgio.stampa@sanofi.com>, 2025.
+# Giorgio Stampa <22690890+gissimo@users.noreply.github.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Flask-Security 5.7.1\n"
+"Project-Id-Version: Flask-Security 5.9.0\n"
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2026-08-19 14:21-0700\n"
-"PO-Revision-Date: 2026-04-07 18:21+0200\n"
-"Last-Translator: Giorgio Stampa <giorgio.stampa@sanofi.com>\n"
+"PO-Revision-Date: 2026-08-29 14:14+0200\n"
+"Last-Translator: Giorgio Stampa <22690890+gissimo@users.noreply.github.com>\n"
 "Language: it_IT\n"
 "Language-Team: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -97,7 +97,7 @@ msgstr "Non hai il permesso per visualizzare questa risorsa."
 
 #: flask_security/core.py:456
 msgid "You must sign in to view this resource."
-msgstr "È necessario accedere per accedere a questa risorsa."
+msgstr "È necessario accedere per visualizzare questa risorsa."
 
 #: flask_security/core.py:460
 msgid "You must reauthenticate to access this endpoint"
@@ -170,7 +170,7 @@ msgstr "Codice di ripristino non valido"
 
 #: flask_security/core.py:501
 msgid "No recovery codes generated yet"
-msgstr "Non sono ancora stati generati codici di recupero"
+msgstr "Non sono ancora stati generati codici di ripristino"
 
 #: flask_security/core.py:503
 #, python-format
@@ -206,13 +206,13 @@ msgid ""
 "You did not login within %(within)s. New instructions to login have been "
 "sent to %(email)s."
 msgstr ""
-"Non hai effettuato l'accesso entro %(within)s. Nuove istruzioni per il "
-"login sono state inviate a %(email)s."
+"Non hai effettuato l'accesso entro %(within)s. Nuove istruzioni per "
+"l'accesso sono state inviate a %(email)s."
 
 #: flask_security/core.py:528
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
-msgstr "Le istruzioni per accedere sono state inviate a %(email)s."
+msgstr "Le istruzioni per l'accesso sono state inviate a %(email)s."
 
 #: flask_security/core.py:531
 msgid "Invalid login token."
@@ -236,12 +236,12 @@ msgstr "Codice non valido"
 
 #: flask_security/core.py:537
 msgid "Value entered is not valid for the field"
-msgstr ""
+msgstr "Il valore inserito non è valido per il campo"
 
 #: flask_security/core.py:541
 #, python-format
 msgid "Value entered must be less than %(length) characters"
-msgstr ""
+msgstr "Il valore inserito deve essere composto da meno di %(length) caratteri"
 
 #: flask_security/core.py:544
 msgid "Password not provided"
@@ -317,16 +317,16 @@ msgstr "Hai cambiato la tua password."
 
 #: flask_security/core.py:580
 msgid "Please log in to access this page."
-msgstr "Devi effettuare l'accesso per accedere a questa pagina."
+msgstr "Devi effettuare l'accesso per visualizzare questa pagina."
 
 #: flask_security/core.py:581
 msgid "Please reauthenticate to access this page."
-msgstr "Devi autenticarti nuovamente per accedere a questa pagina."
+msgstr "Devi riautenticarti per accedere a questa pagina."
 
 #: flask_security/core.py:582
 #, python-format
 msgid "Refresh token is invalid (%(reason)s)"
-msgstr ""
+msgstr "Il token di aggiornamento non è valido (%(reason)s)"
 
 #: flask_security/core.py:583
 msgid "Reauthentication successful"
@@ -391,7 +391,7 @@ msgstr "Devi specificare un'identità valida per accedere"
 #: flask_security/core.py:620
 #, python-format
 msgid "Use this code to sign in: %(code)s"
-msgstr "Utilizza questo codice per accedere: %(code)s"
+msgstr "Usa questo codice per accedere: %(code)s"
 
 #: flask_security/core.py:621
 msgid "You successfully changed your username"
@@ -445,6 +445,8 @@ msgid ""
 "Passkey nicknames can contain only letters, numbers, and limited "
 "punctuation."
 msgstr ""
+"I nomi delle passkey possono contenere solo lettere, numeri e una "
+"punteggiatura limitata."
 
 #: flask_security/core.py:662
 #, python-format
@@ -475,7 +477,7 @@ msgstr "Impossibile verificare la passkey: %(cause)s."
 
 #: flask_security/core.py:686
 msgid "Passkey not registered for this use (first or secondary)"
-msgstr "Passkey non registrata per questo uso (primaria o secondaria)"
+msgstr "Passkey non registrata per questo uso (primario o secondario)"
 
 #: flask_security/core.py:690
 msgid "Credential user handle didn't match"
@@ -503,7 +505,7 @@ msgstr ""
 
 #: flask_security/core.py:709
 msgid "If registered, your username will be sent to your email."
-msgstr "Se registrato, il nome utente verrà inviato al tuo indirizzo e-mail."
+msgstr "Se registrato, il nome utente verrà inviato al tuo indirizzo email."
 
 #: flask_security/forms.py:63
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
@@ -571,7 +573,7 @@ msgstr "Numero di telefono"
 
 #: flask_security/forms.py:78
 msgid "Recover Password"
-msgstr "Recupera password"
+msgstr "Recupera la password"
 
 #: flask_security/forms.py:79 flask_security/templates/security/_menu.html:72
 msgid "Recover Username"
@@ -663,7 +665,7 @@ msgstr "nessuno"
 
 #: flask_security/forms.py:710 flask_security/tokens.py:201
 msgid "Refresh Token"
-msgstr ""
+msgstr "Token di aggiornamento"
 
 #: flask_security/forms.py:1075 flask_security/unified_signin.py:176
 msgid "Available Methods"
@@ -707,7 +709,7 @@ msgstr "Invia codice tramite email"
 
 #: flask_security/twofactor.py:155
 msgid "Use previously downloaded recovery code"
-msgstr "Utilizza codice di ripristino scaricato in precedenza"
+msgstr "Usa codice di ripristino scaricato in precedenza"
 
 #: flask_security/unified_signin.py:168
 msgid "Code or Password"
@@ -747,7 +749,7 @@ msgstr "Utilizzare come fattore di autenticazione secondario"
 
 #: flask_security/webauthn.py:236
 msgid "Start"
-msgstr "Inizio"
+msgstr "Inizia"
 
 #: flask_security/templates/security/_menu.html:5
 msgid "Menu"
@@ -826,7 +828,7 @@ msgstr "Accedi con una passkey"
 #: flask_security/templates/security/login_user.html:33
 #: flask_security/templates/security/us_signin.html:35
 msgid "Use Social Login to Sign In"
-msgstr "Usare accesso social per accedere"
+msgstr "Usa l'accesso social per accedere"
 
 #: flask_security/templates/security/login_user.html:37
 #: flask_security/templates/security/us_signin.html:39
@@ -834,12 +836,12 @@ msgstr "Usare accesso social per accedere"
 #: flask_security/templates/security/verify.html:28
 #, python-format
 msgid "Continue with %(provider)s"
-msgstr "Continuare con %(provider)s"
+msgstr "Continua con %(provider)s"
 
 #: flask_security/templates/security/logout_user.html:1
 #: flask_security/templates/security/logout_user.html:7
 msgid "Confirm Sign Out"
-msgstr ""
+msgstr "Conferma disconnessione"
 
 #: flask_security/templates/security/mf_recovery.html:1
 #: flask_security/templates/security/mf_recovery.html:7
@@ -937,7 +939,7 @@ msgstr "Si possono impostare qui."
 
 #: flask_security/templates/security/two_factor_setup.html:89
 msgid "Passkeys"
-msgstr "Passkeys"
+msgstr "Passkey"
 
 #: flask_security/templates/security/two_factor_setup.html:91
 #: flask_security/templates/security/us_setup.html:89
@@ -965,7 +967,7 @@ msgstr "Ci è stata inviata un'email per reimpostare l'account dell'applicazione
 #: flask_security/templates/security/us_setup.html:24
 #: flask_security/templates/security/us_setup.html:30
 msgid "Setup Unified Sign In"
-msgstr "Configurazione dell'accesso unificato"
+msgstr "Imposta accesso unificato"
 
 #: flask_security/templates/security/us_setup.html:64
 msgid "Passwordless QRCode"
@@ -990,7 +992,7 @@ msgstr "Richiedere l'invio del codice monouso"
 #: flask_security/templates/security/verify.html:7
 #: flask_security/templates/security/wan_verify.html:9
 msgid "Reauthenticate"
-msgstr "Autenticati nuovamente"
+msgstr "Riautenticati"
 
 #: flask_security/templates/security/us_verify.html:18
 msgid "Code has been sent"
@@ -999,12 +1001,12 @@ msgstr "Il codice è stato inviato"
 #: flask_security/templates/security/us_verify.html:26
 #: flask_security/templates/security/verify.html:15
 msgid "Use a Passkey to Reauthenticate"
-msgstr "Utilizzare una passkey per autenticarsi nuovamente"
+msgstr "Usa una passkey per riautenticarti"
 
 #: flask_security/templates/security/us_verify.html:35
 #: flask_security/templates/security/verify.html:24
 msgid "Use Social Login to Reauthenticate"
-msgstr "Usare accesso social per riautenticarsi"
+msgstr "Usa l'accesso social per riautenticarti"
 
 #: flask_security/templates/security/wan_register.html:4
 #: flask_security/templates/security/wan_register.html:16
@@ -1017,7 +1019,7 @@ msgstr "Inizia col fornire un nome univoco per la tua nuova passkey:"
 
 #: flask_security/templates/security/wan_register.html:54
 msgid "Currently registered passkeys:"
-msgstr "Passkeys attualmente registrate:"
+msgstr "Passkey attualmente registrate:"
 
 #: flask_security/templates/security/wan_register.html:55
 #, python-format
@@ -1026,7 +1028,7 @@ msgid ""
 "Device Type: \"%s\" Backed up? \"%s\" Last used on: %s"
 msgstr ""
 "Nome: \"%s\" Utilizzo: \"%s\" Trasporti: \"%s\" Rilevabile: \"%s\" Tipo "
-"di dispositivo: \"%s\" Backup? \"%s\" Ultimo utilizzo il: %s"
+"di dispositivo: \"%s\" Con backup? \"%s\" Ultimo utilizzo il: %s"
 
 #: flask_security/templates/security/wan_register.html:66
 msgid "Delete an Existing Passkey"
@@ -1034,19 +1036,19 @@ msgstr "Elimina una passkey esistente"
 
 #: flask_security/templates/security/wan_signin.html:4
 msgid "Sign In With A Passkey"
-msgstr "Accedi utilizzando una passkey"
+msgstr "Accedi con una passkey"
 
 #: flask_security/templates/security/wan_signin.html:17
 msgid "Sign In With a Passkey"
-msgstr "Accedi utilizzando una passkey"
+msgstr "Accedi con una passkey"
 
 #: flask_security/templates/security/wan_signin.html:19
 msgid "Use a Passkey as a Second Factor"
-msgstr "Utilizza una passkey come secondo fattore"
+msgstr "Usa una passkey come secondo fattore"
 
 #: flask_security/templates/security/wan_verify.html:21
 msgid "Reauthenticate Using a Passkey"
-msgstr "Autenticati nuovamente utilizzando una passkey"
+msgstr "Riautenticati utilizzando una passkey"
 
 #: flask_security/templates/security/email/change_email_instructions.html:9
 #, python-format
@@ -1063,7 +1065,7 @@ msgstr ""
 #: flask_security/templates/security/email/reset_instructions.txt:10
 #, python-format
 msgid "This link will expire in %(within)s."
-msgstr "Questo link scadrá entro %(within)s."
+msgstr "Questo link scadrà entro %(within)s."
 
 #: flask_security/templates/security/email/change_email_instructions.html:11
 #: flask_security/templates/security/email/change_email_instructions.txt:11
@@ -1137,16 +1139,18 @@ msgstr "Accedi adesso"
 #, python-format
 msgid "Use <a href=\"%(reset_link)s\">this link</a> to reset your password."
 msgstr ""
+"Usa <a href=\"%(reset_link)s\">questo link</a> per reimpostare la tua "
+"password."
 
 #: flask_security/templates/security/email/reset_instructions.txt:9
 #, python-format
 msgid "Use %(reset_link)s to reset your password."
-msgstr ""
+msgstr "Usa %(reset_link)s per reimpostare la tua password."
 
 #: flask_security/templates/security/email/reset_notice.html:1
 #: flask_security/templates/security/email/reset_notice.txt:1
 msgid "Your password has been reset."
-msgstr ""
+msgstr "La tua password è stata reimpostata."
 
 #: flask_security/templates/security/email/two_factor_instructions.html:1
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
@@ -1166,7 +1170,7 @@ msgstr "Puoi accedere al tuo account utilizzando il seguente codice: %(token)s"
 #: flask_security/templates/security/email/two_factor_instructions.txt:5
 #, python-format
 msgid "This code will expire in %(within)s."
-msgstr ""
+msgstr "Questo codice scadrà entro %(within)s."
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
@@ -1177,7 +1181,7 @@ msgstr "impossibile accedere all'account email"
 #: flask_security/templates/security/email/us_instructions.txt:11
 #, python-format
 msgid "You can sign in to your account using the following code: %(code)s"
-msgstr ""
+msgstr "Puoi accedere al tuo account utilizzando il seguente codice: %(code)s"
 
 #: flask_security/templates/security/email/us_instructions.html:13
 #, python-format
@@ -1188,7 +1192,7 @@ msgstr "Oppure puoi usare questo link: <a href=\"%(login_link)s\">Accedi</a>"
 #: flask_security/templates/security/email/us_instructions.txt:15
 #, python-format
 msgid "This code/link will expire in %(within)s."
-msgstr ""
+msgstr "Questo codice/link scadrà entro %(within)s."
 
 #: flask_security/templates/security/email/us_instructions.txt:13
 #, python-format
@@ -1257,7 +1261,7 @@ msgid ""
 "You have not confirmed your email address yet - use <a "
 "href=\"%(confirmation_link)s\">this link</a> to do so now."
 msgstr ""
-"Non hai ancora confermato il tuo indirizzo e-mail - usa <a "
+"Non hai ancora confermato il tuo indirizzo email - usa <a "
 "href=\"%(confirmation_link)s\">questo link</a> per farlo adesso."
 
 #: flask_security/templates/security/email/welcome_existing.txt:21
@@ -1278,7 +1282,7 @@ msgid ""
 "You have not confirmed your email address yet - use this link: "
 "%(confirmation_link)s to do so now."
 msgstr ""
-"Non hai ancora confermato il tuo indirizzo e-mail - usa questo link: "
+"Non hai ancora confermato il tuo indirizzo email - usa questo link: "
 "%(confirmation_link)s per farlo adesso."
 
 #: flask_security/templates/security/email/welcome_existing_username.html:13
@@ -1297,21 +1301,3 @@ msgid "Please restart the registration process with a different username."
 msgstr ""
 "Per favore riavvia il processo di registrazione con un nome utente "
 "diverso."
-
-#~ msgid "Username contains illegal characters"
-#~ msgstr "Il nome utente contiene caratteri non ammessi"
-
-#~ msgid "Sign out"
-#~ msgstr "Esci"
-
-#~ msgid "Click here to reset your password"
-#~ msgstr "Clicca qui per reimpostare la password"
-
-#~ msgid "Click the link below to reset your password:"
-#~ msgstr "Clicca sul link sottostante per reimpostare la password:"
-
-#~ msgid "You can sign in to your account using the following code: %(token)s"
-#~ msgstr "Puoi accedere al tuo account utilizzando il seguente codice: %(token)s"
-
-#~ msgid "You can sign in to your account using the following code: %(token)s."
-#~ msgstr "Puoi accedere al tuo account utilizzando il seguente codice: %(token)s."
