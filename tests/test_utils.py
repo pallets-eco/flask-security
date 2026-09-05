@@ -287,6 +287,7 @@ def create_users(app, ds, count=None):
         totp_secret = None
         if app.config.get("SECURITY_TWO_FACTOR", None) and u[6]:
             totp_secret = app.security._totp_factory.generate_totp_secret()
+        phone_number = "650-277-7098" if u[6] == "sms" else None
         user = ds.create_user(
             email=u[0],
             username=u[1],
@@ -295,6 +296,7 @@ def create_users(app, ds, count=None):
             security_number=u[5],
             tf_primary_method=u[6],
             tf_totp_secret=totp_secret,
+            tf_phone_number=phone_number,
         )
         ds.commit()
         for role in roles:

@@ -37,18 +37,18 @@ from .oauth_provider import (
 )
 from .proxies import _security
 from .utils import (
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     login_user,
     get_identity_attribute,
     get_message,
-    get_post_action_redirect,
+    _get_post_action_redirect,
     get_url,
     is_user_authenticated,
     json_error_response,
-    slash_url_suffix,
+    _slash_url_suffix,
     url_for_security,
-    view_commit,
+    _view_commit,
 )
 
 if t.TYPE_CHECKING:  # pragma: no cover
@@ -138,7 +138,7 @@ def oauthresponse(name: str) -> ResponseValue:
         return oauth_provider.oauth_response_failure("LOGIN_ERROR_VIEW", e)
     form_error: list[str] = []
     if user and user.is_active and not user.is_locked(form_error):
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         next_loc = session.pop("fs_oauth_next", None)
         response = _security.two_factor_plugins.tf_enter(
             user, False, "oauth", next_loc=next_loc
@@ -152,7 +152,7 @@ def oauthresponse(name: str) -> ResponseValue:
                 cv("POST_OAUTH_LOGIN_VIEW"), qparams=user.get_redirect_qparams()
             )
         else:
-            redirect_url = get_post_action_redirect(
+            redirect_url = _get_post_action_redirect(
                 "SECURITY_POST_LOGIN_VIEW", dict(next=next_loc)
             )
         return redirect(redirect_url)
@@ -217,7 +217,7 @@ def oauth_verify_response(name: str) -> ResponseValue:
             )
         else:
             do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
-            redirect_url = get_post_action_redirect(
+            redirect_url = _get_post_action_redirect(
                 "SECURITY_POST_VERIFY_VIEW", dict(next=next_loc)
             )
         return redirect(redirect_url)
@@ -269,12 +269,12 @@ class OAuthGlue:
         start_url = cv("OAUTH_START_URL", app=app)
         response_url = cv("OAUTH_RESPONSE_URL", app=app)
         bp.route(
-            start_url + slash_url_suffix(start_url, "<name>"),
+            start_url + _slash_url_suffix(start_url, "<name>"),
             methods=["POST"],
             endpoint="oauthstart",
         )(oauthstart)
         bp.route(
-            response_url + slash_url_suffix(response_url, "<name>"),
+            response_url + _slash_url_suffix(response_url, "<name>"),
             methods=["GET"],
             endpoint="oauthresponse",
         )(oauthresponse)
@@ -282,13 +282,13 @@ class OAuthGlue:
         if cv("FRESHNESS", app=app).total_seconds() >= 0:
             verify_start_url = cv("OAUTH_VERIFY_START_URL", app=app)
             bp.route(
-                verify_start_url + slash_url_suffix(verify_start_url, "<name>"),
+                verify_start_url + _slash_url_suffix(verify_start_url, "<name>"),
                 methods=["POST"],
                 endpoint="oauth_verify_start",
             )(oauth_verify_start)
             verify_response_url = cv("OAUTH_VERIFY_RESPONSE_URL", app=app)
             bp.route(
-                verify_response_url + slash_url_suffix(verify_response_url, "<name>"),
+                verify_response_url + _slash_url_suffix(verify_response_url, "<name>"),
                 methods=["GET"],
                 endpoint="oauth_verify_response",
             )(oauth_verify_response)

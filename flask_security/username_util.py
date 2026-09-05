@@ -14,7 +14,7 @@ from __future__ import annotations
 import typing as t
 
 from .utils import (
-    config_value as cv,
+    _config_value as cv,
     get_message,
     input_svn,
 )

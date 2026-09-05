@@ -14,7 +14,7 @@ from flask import current_app as app
 from .proxies import _security, _datastore
 from .signals import login_instructions_sent
 from .utils import (
-    config_value as cv,
+    _config_value as cv,
     send_mail,
     url_for_security,
     check_and_get_token_status,

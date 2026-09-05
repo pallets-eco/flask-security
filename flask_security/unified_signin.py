@@ -74,32 +74,32 @@ from .utils import (
     SmsSenderFactory,
     base_render_json,
     check_and_get_token_status,
-    config_value as cv,
-    confirm_redirect,
+    _config_value as cv,
+    _confirm_redirect,
     do_flash,
     get_identity_attributes,
-    get_post_login_redirect,
-    get_post_verify_redirect,
+    _get_post_login_redirect,
+    _get_post_verify_redirect,
     get_message,
     get_url,
-    handle_already_auth,
+    _handle_already_auth,
     is_user_authenticated,
     localize_callback,
     login_user,
     lookup_identity,
-    propagate_next,
+    _propagate_next,
     send_mail,
     url_for_security,
-    view_commit,
+    _view_commit,
     allowed_auth_token,
-    td_format,
+    _td_format,
 )
 from .tf_plugin import tf_verify_validity_token
 from .twofactor import tf_clean_session
 from .webauthn import has_webauthn
 
 if t.TYPE_CHECKING:  # pragma: no cover
-    from flask.typing import ResponseValue
+    from flask.typing import ResponseReturnValue
     from flask_security import UserMixin
 
 if get_quart_status():  # pragma: no cover
@@ -445,7 +445,7 @@ def _send_code_helper(form, send_magic_link):
 
 @anonymous_user_required
 @unauth_csrf()
-def us_signin_send_code() -> ResponseValue:
+def us_signin_send_code() -> ResponseReturnValue:
     """
     Send code view. POST only.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -501,7 +501,7 @@ def us_signin_send_code() -> ResponseValue:
         }
         return base_render_json(form, include_user=False, additional=payload)
 
-    if rurl := confirm_redirect(form, "email"):
+    if rurl := _confirm_redirect(form, "email"):
         return rurl
 
     return _security.render_template(
@@ -515,7 +515,7 @@ def us_signin_send_code() -> ResponseValue:
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def us_verify_send_code() -> ResponseValue:
+def us_verify_send_code() -> ResponseReturnValue:
     """
     Send code during verify. POST only.
     """
@@ -563,7 +563,7 @@ def us_verify_send_code() -> ResponseValue:
 
 
 @unauth_csrf()
-def us_signin() -> ResponseValue:
+def us_signin() -> ResponseReturnValue:
     """
     Unified sign in view.
     This takes an identity (as configured in USER_IDENTITY_ATTRIBUTES)
@@ -580,7 +580,7 @@ def us_signin() -> ResponseValue:
     }
 
     if is_user_authenticated(current_user):
-        return handle_already_auth(form, payload=payload)
+        return _handle_already_auth(form, payload=payload)
 
     # Clean out any potential old session info - in case of previous
     # aborted 2FA attempt.
@@ -595,11 +595,11 @@ def us_signin() -> ResponseValue:
                 form.user,
                 remember_me,
                 form.authn_via,
-                next_loc=propagate_next(request.url, form),
+                next_loc=_propagate_next(request.url, form),
             )
             if response:
                 return response
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         login_user(form.user, remember=remember_me, authn_via=[form.authn_via])
 
         if _security._want_json(request):
@@ -609,7 +609,7 @@ def us_signin() -> ResponseValue:
                 additional=dict(tf_required=False),
             )
 
-        return redirect(get_post_login_redirect())
+        return redirect(_get_post_login_redirect())
 
     # Here on GET or failed POST validate
     if request.method == "POST" and cv("RETURN_GENERIC_RESPONSES"):
@@ -630,7 +630,7 @@ def us_signin() -> ResponseValue:
     # On error - wipe code
     form.passcode.data = None
 
-    if rurl := confirm_redirect(form, "email"):
+    if rurl := _confirm_redirect(form, "email"):
         return rurl
 
     return _security.render_template(
@@ -644,7 +644,7 @@ def us_signin() -> ResponseValue:
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def us_verify() -> ResponseValue:
+def us_verify() -> ResponseReturnValue:
     """
     Re-authenticate to reset freshness time.
     This is likely the result of a reauthn_handler redirect, which
@@ -667,7 +667,7 @@ def us_verify() -> ResponseValue:
             )
 
         do_flash(*get_message("REAUTHENTICATION_SUCCESSFUL"))
-        return redirect(get_post_verify_redirect())
+        return redirect(_get_post_verify_redirect())
 
     # Here on GET or failed POST validate
     webauthn_available = has_webauthn(current_user, cv("WAN_ALLOW_AS_VERIFY"))
@@ -699,7 +699,7 @@ def us_verify() -> ResponseValue:
 
 
 @anonymous_user_required
-def us_verify_link() -> ResponseValue:
+def us_verify_link() -> ResponseReturnValue:
     """
     Used to verify a magic email link. GET only
     Since this is just a URL - be careful not to disclose info like
@@ -766,13 +766,13 @@ def us_verify_link() -> ResponseValue:
                     )
                 )
             response = _security.two_factor_plugins.tf_enter(
-                user, False, "email", next_loc=propagate_next(request.url, None)
+                user, False, "email", next_loc=_propagate_next(request.url, None)
             )
             if response:
                 return response
 
     login_user(user, authn_via=["email"])
-    after_this_request(view_commit)
+    after_this_request(_view_commit)
     if cv("REDIRECT_BEHAVIOR") == "spa":
         # We do NOT send the authentication token here since the only way to
         # send it would be via a query param and that isn't secure. (logging and
@@ -784,7 +784,7 @@ def us_verify_link() -> ResponseValue:
         )
 
     do_flash(*get_message("PASSWORDLESS_LOGIN_SUCCESSFUL"))
-    return redirect(get_post_login_redirect())
+    return redirect(_get_post_login_redirect())
 
 
 @auth_required(
@@ -792,7 +792,7 @@ def us_verify_link() -> ResponseValue:
     within=lambda: cv("FRESHNESS"),
     grace=lambda: cv("FRESHNESS_GRACE_PERIOD"),
 )
-def us_setup() -> ResponseValue:
+def us_setup() -> ResponseReturnValue:
     """
     Change unified sign in methods.
     We want to verify the new method - so don't store anything yet in DB
@@ -830,7 +830,7 @@ def us_setup() -> ResponseValue:
         add_method = form.chosen_method.data
 
         if delete_method:
-            after_this_request(view_commit)
+            after_this_request(_view_commit)
             for m in delete_method:
                 _datastore.us_reset(current_user, m)
             active_methods = _compute_active_methods(current_user)
@@ -977,7 +977,7 @@ def us_setup() -> ResponseValue:
 
 
 @auth_required(lambda: cv("API_ENABLED_METHODS"))
-def us_setup_validate(token: str) -> ResponseValue:
+def us_setup_validate(token: str) -> ResponseReturnValue:
     """
     Validate new setup.
     The token is the state variable that is signed and timed
@@ -994,7 +994,7 @@ def us_setup_validate(token: str) -> ResponseValue:
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:
-        m, c = get_message("US_SETUP_EXPIRED", within=td_format(cv("US_SETUP_WITHIN")))
+        m, c = get_message("US_SETUP_EXPIRED", within=_td_format(cv("US_SETUP_WITHIN")))
     if invalid or expired:
         if _security._want_json(request):
             form.form_errors.append(m)
@@ -1006,7 +1006,7 @@ def us_setup_validate(token: str) -> ResponseValue:
     form.user = current_user
 
     if form.validate_on_submit():
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         method = state["chosen_method"]
         phone = state["phone_number"] if method == "sms" else None
         _datastore.us_set(current_user, method, state["totp_secret"], phone)
@@ -1080,11 +1080,12 @@ def us_send_security_token(
             token=code,  # deprecated
             login_token=code,
             login_link=login_link,
-            within=td_format(timedelta(seconds=cv("US_TOKEN_VALIDITY"))),
+            within=_td_format(timedelta(seconds=cv("US_TOKEN_VALIDITY"))),
         )
     elif method == "sms":
         m, c = get_message("USE_CODE", code=code)
         from_number = cv("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
+        assert phone_number
         to_number = phone_number
         sms_sender = SmsSenderFactory.createSender(cv("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=m)

@@ -19,7 +19,7 @@ from flask_login import COOKIE_NAME as REMEMBER_COOKIE_NAME
 
 from .proxies import _datastore
 from .signals import password_changed
-from .utils import config_value as cv, hash_password, login_user, send_mail
+from .utils import _config_value as cv, hash_password, login_user, send_mail
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask_security import UserMixin

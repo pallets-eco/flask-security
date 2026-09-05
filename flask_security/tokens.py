@@ -44,9 +44,9 @@ from .forms import (
 from .proxies import _security, _datastore
 from .signals import refresh_tracker_revoked, refresh_tracker_created
 from .utils import (
-    config_value as cv,
+    _config_value as cv,
     _,
-    view_commit,
+    _view_commit,
     get_message,
     base_render_json,
 )
@@ -75,12 +75,12 @@ def response_tokens(user: UserMixin, payload: dict[str, t.Any]) -> None:
         # hasn't been initialized. Since we are in a request context
         # we can do that here.
         _datastore.set_token_uniquifier(user)
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         token = user.get_auth_token()
     payload["user"]["authentication_token"] = token
 
     if _security.refresh_token:
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         refresh_tracker, refresh_token = new_refresh_tracker(user, name="default")
         if cv("REFRESH_TOKEN_COOKIE_NAME"):
             after_this_request(partial(set_refresh_token_cookie, token=refresh_token))
@@ -181,7 +181,7 @@ def _revoke_refresh_tracker(
     user: UserMixin | None,
 ) -> None:
     """Helper function for views"""
-    after_this_request(view_commit)
+    after_this_request(_view_commit)
     _datastore.revoke_refresh_tracker(refresh_tracker)
     refresh_tracker_revoked.send(
         current_app._get_current_object(),  # type: ignore
@@ -254,7 +254,7 @@ def refresh() -> ResponseValue:
     if form.validate_on_submit():
         assert form.user
         assert form.refresh_tracker
-        after_this_request(view_commit)
+        after_this_request(_view_commit)
         _datastore.exchange_refresh_tracker(form.refresh_tracker)
         payload = dict()
         payload["user"] = form.user.get_security_payload()

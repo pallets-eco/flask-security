@@ -19,7 +19,7 @@ from contextlib import ExitStack
 from importlib.resources import files, as_file
 
 from flask import current_app
-from .utils import config_value as cv
+from .utils import _config_value as cv
 
 
 def has_babel_ext():

@@ -26,7 +26,7 @@ import typing as t
 from flask import redirect
 
 from .utils import (
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     get_message,
     get_url,

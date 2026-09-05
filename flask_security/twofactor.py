@@ -27,14 +27,14 @@ from .utils import (
     _,
     SmsSenderFactory,
     base_render_json,
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     get_message,
     localize_callback,
     json_error_response,
     send_mail,
     url_for_security,
-    td_format,
+    _td_format,
 )
 from .signals import (
     tf_code_confirmed,
@@ -77,11 +77,12 @@ def tf_send_security_token(
             user=user,
             token=token_to_be_sent,
             username=user.calc_username(),
-            within=td_format(timedelta(seconds=cv("TWO_FACTOR_MAIL_VALIDITY"))),
+            within=_td_format(timedelta(seconds=cv("TWO_FACTOR_MAIL_VALIDITY"))),
         )
     elif method == "sms":
         m, c = get_message("USE_CODE", code=token_to_be_sent)
         from_number = cv("SMS_SERVICE_CONFIG")["PHONE_NUMBER"]
+        assert phone_number
         to_number = phone_number
         sms_sender = SmsSenderFactory.createSender(cv("SMS_SERVICE"))
         sms_sender.send_sms(from_number=from_number, to_number=to_number, msg=m)

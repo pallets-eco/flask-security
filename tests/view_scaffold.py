@@ -71,9 +71,9 @@ class FlashMailUtil(MailUtil):
         self,
         template: str,
         subject: str,
-        recipient: str,
-        sender: str | tuple,
-        body: str,
+        recipient: str | tuple[str, str],
+        sender: str | tuple[str, str],
+        body: str | None,
         html: str | None,
         **kwargs: t.Any,
     ) -> None:

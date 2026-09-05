@@ -30,12 +30,12 @@ from .utils import (
     _,
     base_render_json,
     check_and_get_token_status,
-    config_value as cv,
+    _config_value as cv,
     do_flash,
     get_message,
     get_url,
     login_user,
-    propagate_next,
+    _propagate_next,
     simple_render_json,
     url_for_security,
 )
@@ -86,7 +86,7 @@ def tf_select() -> ResponseValue:
         if tf_impl:
             json_payload = {"tf_required": True}
             response = tf_impl.tf_login(
-                user, json_payload, next_loc=propagate_next(request.url, None)
+                user, json_payload, next_loc=_propagate_next(request.url, None)
             )
         if not response:  # pragma no cover
             # This really can't happen unless between the time the started logging in

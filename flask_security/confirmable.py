@@ -15,13 +15,13 @@ from flask import current_app
 from .proxies import _security, _datastore
 from .signals import confirm_instructions_sent, user_confirmed
 from .utils import (
-    config_value as cv,
+    _config_value as cv,
     hash_data,
     send_mail,
     url_for_security,
     check_and_get_token_status,
     verify_hash,
-    td_format,
+    _td_format,
 )
 
 
@@ -45,7 +45,7 @@ def send_confirmation_instructions(user):
         user=user,
         confirmation_link=confirmation_link,
         confirmation_token=token,
-        within=td_format(cv("CONFIRM_EMAIL_WITHIN")),
+        within=_td_format(cv("CONFIRM_EMAIL_WITHIN")),
     )
 
     confirm_instructions_sent.send(

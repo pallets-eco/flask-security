@@ -16,7 +16,7 @@ import typing as t
 
 from flask import current_app, request
 
-from .utils import config_value as cv, input_svn, get_message
+from .utils import _config_value as cv, input_svn, get_message
 
 try:
     # noinspection PyUnresolvedReferences
