@@ -46,6 +46,57 @@ babel = ["babel>=2.17.0", "flask_babel>=4.0.0", "humanize>=4.12.0"]
 fsqla = ["flask_sqlalchemy>=3.1.1", "sqlalchemy>=2.0.41"]
 common = ["argon2_cffi>=25.1.0", "bcrypt>=4.2.1", "flask_mail>=0.10.0", "nh3>=0.2.15"]
 mfa = ["cryptography>=45.0.7", "qrcode>=7.4.2", "phonenumberslite>=8.13.11", "webauthn>=2.6.0"]
+
+[dependency-groups]
+tests = [
+    "Flask-Babel",
+    "Babel",
+    "Flask-Mail",
+    "Flask-SQLAlchemy",
+    "Flask-SQLAlchemy-Lite",
+    "argon2-cffi",
+    "authlib",
+    "bcrypt",
+    "cbor2",
+    "coverage",
+    "cryptography",
+    "djlint",
+    "freezegun",
+    "humanize",
+    "mongoengine",
+    "mongomock",
+    "msgcheck",
+    "nh3",
+    "peewee",
+    "phonenumberslite",
+    "pydocstyle",
+    "pytest-cache",
+    "pytest-cov",
+    "pytest",
+    "qrcode",
+    # authlib requires requests
+    "requests",
+    "sqlalchemy",
+    "sqlalchemy-utils",
+    "webauthn",
+    "zxcvbn",
+]
+dev = [
+    "flit",
+    "check-wheel-contents",
+    "psycopg2-binary",
+    "pymysql",
+    "pre-commit",
+    "tox",
+    # for dev - might not install Flask-Security - list those dependencies here
+    "flask",
+    "flask-wtf",
+    "flask-login",
+    "flask-principal",
+    "markupsafe",
+    "libpass",
+    "email_validator",
+]
 low = [
     # Lowest supported versions
     "Flask==3.1.1",
@@ -78,6 +129,22 @@ low = [
     "werkzeug==3.1.3",
     "zxcvbn==4.4.28"
 ]
+docs = [
+    "Pallets-Sphinx-Themes",
+    "Sphinx",
+    "sphinx-issues",
+    "packaging",
+    "Flask-SQLAlchemy",
+    "sqlalchemy",
+    "sqlalchemy-utils",
+]
+
+typing = [
+    "basedpyright",
+    "types-requests",
+    "mypy",
+]
+
 [build-system]
 requires = ["flit_core >=3.8,<4"]
 build-backend = "flit_core.buildapi"
@@ -104,7 +171,6 @@ include = [
     "tox.ini",
     "docs/",
     "examples/",
-    "requirements",
     "tests/",
 ]
 exclude = ["docs/_build/"]

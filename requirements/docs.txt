@@ -1,7 +1,0 @@
-Pallets-Sphinx-Themes
-Sphinx
-sphinx-issues
-packaging
-Flask-SQLAlchemy
-sqlalchemy
-sqlalchemy-utils

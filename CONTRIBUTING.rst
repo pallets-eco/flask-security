@@ -57,7 +57,7 @@ these steps:
 
   #. Install the requirements::
 
-        $ pip install -r requirements/dev.txt
+        $ pip install pip install --group dev --group docs --group tests -U
 
   #. Install pre-commit hooks::
 
@@ -75,7 +75,7 @@ these steps:
 
   #. When done, verify unit tests, syntax etc. all pass::
 
-        $ pip install -r requirements/tests.txt
+        $ pip install --group dev --group docs --group tests
         $ pip install -e .
         $ sphinx-build docs docs/_build/html
         $ tox -e compile_catalog
