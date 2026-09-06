@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
+          key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }} }}
       - name: run tests
         run: |
           pip install tox
@@ -129,7 +129,7 @@ jobs:
           uses: actions/cache@v6
           with:
             path: ~/.cache/pip
-            key: pip-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
+            key: pip-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }} }}
         - name: Postgres
           run: |
             pip install tox
