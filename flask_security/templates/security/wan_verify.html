@@ -6,8 +6,8 @@
   skip_login_menu - True
   Any other context provided by the "wan_verify" context processer.
 #}
-{% set title = title|default(_fsdomain("Reauthenticate")) %}
 {% extends "security/base.html" %}
+{% set title = title|default(_fsdomain("Reauthenticate")) %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, prop_next, script_nonce %}
 
 {% block head_scripts %}

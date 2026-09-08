@@ -1,5 +1,5 @@
-{% set title = title|default(_fsdomain('Reauthenticate')) %}
 {% extends "security/base.html" %}
+{% set title = title|default(_fsdomain('Reauthenticate')) %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, prop_next, render_csrf %}
 
 {% block content %}

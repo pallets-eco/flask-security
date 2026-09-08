@@ -1,8 +1,8 @@
 {#
   This template receives the following pieces of context in addition to the form:
 #}
-{% set title = title|default(_fsdomain("Setup a New Passkey")) %}
 {% extends "security/base.html" %}
+{% set title = title|default(_fsdomain("Setup a New Passkey")) %}
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_csrf, script_nonce %}
 
 {% block head_scripts %}
