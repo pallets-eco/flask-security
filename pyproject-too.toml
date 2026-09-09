@@ -7,7 +7,7 @@ keywords = ["flask security"]
 license = { file = "LICENSE.txt" }
 maintainers = [{ name = "Chris Wagner", email = "jwag.wagner+github@gmail.com"}]
 authors = [{ name = "Matt Wright"}, { name = "Chris Wagner", email = "jwag.wagner+github@gmail.com"}]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 urls.Documentation = "https://flask-security.readthedocs.io"
 urls.Homepage = "https://github.com/pallets-eco/flask-security"
 urls.Source = "https://github.com/pallets-eco/flask-security"

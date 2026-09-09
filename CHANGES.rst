@@ -60,7 +60,7 @@ Docs and Chores
 - (:pr:`1275`) Update Spanish and Catalan translations. (arielvb)
 - (:pr:`1283`) Improve (from 54% to 74%) pyright --verifytypes
 - (:pr:`1284`) Change dependencies to dependency-groups
-- (:pr:`xx`) Remove dependabot
+- (:pr:`1286`) Remove dependabot
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
