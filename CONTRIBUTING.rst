@@ -142,6 +142,28 @@ Unit tests are critical since Flask-Security is a piece of middleware. They also
 help other contributors understand any subtleties in the code and edge conditions that
 need to be handled.
 
+Pre-Release Checklist
+---------------------
+To prepare for a release:
+
+  - Update translations as outlined above
+  - Update pre-commit and actions: ``tox run -m update``
+  - Bump version in __init__.py and tox.ini
+  - Ensure CHANGES.rst has all the changes and acknowledgments
+
+Release Process
+----------------
+
+  - Update CHANGES with release date
+  - commit and push and create PR - make sure succeeds - a SINGLE COMMIT only
+  - Create release tag: ``git tag -a -m’Release 5.5.2’ 5.5.2``
+  - ``git push origin 5.5.2``
+  - Ensure publish action succeeds (both Flask-Security and Flask-Security-Too)
+  - update draft release on github
+  - approve/publish(both) - verify works - THIS WILL PUBLISH TO PYPI
+  - commit PR - use merge-commit
+  - Publish Release on github console (leave fs-too in draft)
+
 Datastore
 +++++++++
 By default the unit tests use an in-memory sqlite DB to test datastores (except for

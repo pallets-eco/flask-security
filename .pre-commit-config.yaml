@@ -4,7 +4,7 @@ default_language_version:
     python: python3.12
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
     -   id: trailing-whitespace
     -   id: debug-statements
@@ -15,23 +15,23 @@ repos:
     -   id: check-merge-conflict
     -   id: fix-byte-order-marker
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.21.2
+    rev: 75992aaa40730136014f34227e0135f63fc951b4  # frozen: v3.21.2
     hooks:
     -   id: pyupgrade
         args: [--py310-plus]
 -   repo: https://github.com/psf/black
-    rev: 26.5.1
+    rev: 87928e6d6761a4a6d22250e1fee5601b3998086e  # frozen: 26.5.1
     hooks:
     -   id: black
 -   repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
+    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f  # frozen: 7.3.0
     hooks:
       - id: flake8
         additional_dependencies:
           - flake8-bugbear
           - flake8-implicit-str-concat
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.46.0
+    rev: 152599a9c13abe14c25b8bdf023c8306975ddc3f  # frozen: v1.46.1
     hooks:
       - id: djlint-jinja
         files: "\\.html"

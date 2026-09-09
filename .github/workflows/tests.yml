@@ -23,8 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: '3.10', tox: 'py310-release'}
-          - {python: '3.10', tox: 'py310-low'}
           - {python: '3.11', tox: 'py311-release'}
           - {python: '3.11', tox: 'py311-low'}
           - {python: '3.12', tox: 'py312-release' }
