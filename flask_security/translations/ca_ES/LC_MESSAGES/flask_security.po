@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flask-Security 3.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2026-08-21 12:03+0200\n"
+"POT-Creation-Date: 2026-09-24 09:44-0700\n"
 "PO-Revision-Date: 2026-08-21 12:02+0200\n"
 "Last-Translator: Ariel von Barnekow <avbarnekow@gmail.com>\n"
 "Language: ca_ES\n"
@@ -20,67 +20,67 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: flask_security/core.py:258
+#: flask_security/core.py:292
 msgid "Confirm your new email address"
 msgstr "Confirma la teva nova adreça de correu electrònic"
 
-#: flask_security/core.py:329
+#: flask_security/core.py:363
 msgid "Login Required"
 msgstr "Cal iniciar la sessió"
 
-#: flask_security/core.py:330
+#: flask_security/core.py:364
 msgid "Welcome"
 msgstr "Benvingut/da"
 
-#: flask_security/core.py:331
+#: flask_security/core.py:365
 msgid "Please confirm your email"
 msgstr "Si us plau, confirmeu el vostre correu electrònic"
 
-#: flask_security/core.py:332
+#: flask_security/core.py:366
 msgid "Login instructions"
 msgstr "Instruccions d'inici de la sessió"
 
-#: flask_security/core.py:333
+#: flask_security/core.py:367
 msgid "Your password has been reset"
 msgstr "S'ha restablit la teva contrasenya"
 
-#: flask_security/core.py:334
+#: flask_security/core.py:368
 msgid "Your password has been changed"
 msgstr "S'ha canviat la teva contrasenya"
 
-#: flask_security/core.py:335
+#: flask_security/core.py:369
 msgid "Password reset instructions"
 msgstr "Instruccions de recuperació de la contrasenya"
 
-#: flask_security/core.py:336
+#: flask_security/core.py:370
 msgid "Your username has been changed"
 msgstr "El teu nom d'usuari ha estat canviat"
 
-#: flask_security/core.py:337
+#: flask_security/core.py:371
 msgid "Your requested username"
 msgstr "El nom d'usuari que has sol·licitat"
 
-#: flask_security/core.py:340
+#: flask_security/core.py:374
 msgid "Two-Factor Login"
 msgstr "Inici de sessió amb doble factor d'autenticació"
 
-#: flask_security/core.py:341
+#: flask_security/core.py:375
 msgid "Two-Factor Rescue"
 msgstr "Recuperació de doble factor"
 
-#: flask_security/core.py:389
+#: flask_security/core.py:423
 msgid "Verification Code"
 msgstr "Codi de verificació"
 
-#: flask_security/core.py:438
+#: flask_security/core.py:472
 msgid "Input not appropriate for requested API"
 msgstr "Dades d'entrada no apropiades per l'API demanada"
 
-#: flask_security/core.py:440
+#: flask_security/core.py:474
 msgid "Authentication failed - identity or password/passcode invalid"
 msgstr "Autenticació fallida - identitat o contrasenya/codi d'accés invàlid"
 
-#: flask_security/core.py:445
+#: flask_security/core.py:479
 msgid ""
 "If that email address is in our system, you will receive an email "
 "describing how to reset your password."
@@ -88,23 +88,23 @@ msgstr ""
 "Si aquesta adreça de correu electrònic és al nostre sistema, rebràs un "
 "correu electrònic que descriu com restablir la teva contrasenya."
 
-#: flask_security/core.py:451
+#: flask_security/core.py:485
 msgid "If that identity is in our system, you were sent a code."
 msgstr "Si aquesta identitat és al nostre sistema, se t'ha enviat un codi."
 
-#: flask_security/core.py:454
+#: flask_security/core.py:488
 msgid "You do not have permission to view this resource."
 msgstr "No tens permís d'accés per a consultar aquest recurs."
 
-#: flask_security/core.py:456
+#: flask_security/core.py:490
 msgid "You must sign in to view this resource."
 msgstr "Has d'iniciar sessió per veure aquest recurs."
 
-#: flask_security/core.py:460
+#: flask_security/core.py:494
 msgid "You must reauthenticate to access this endpoint"
 msgstr "Has de tornar a autenticar-te per accedir a aquest punt final"
 
-#: flask_security/core.py:465
+#: flask_security/core.py:499
 #, python-format
 msgid ""
 "Thank you. To confirm your email address %(email)s, please click on the "
@@ -113,24 +113,24 @@ msgstr ""
 "Gràcies. Per confirmar la teva adreça de correu electrònic %(email)s, fes"
 " clic al enllaç del correu electrònic que acabem d'enviar-te."
 
-#: flask_security/core.py:471
+#: flask_security/core.py:505
 msgid "Thank you. Your email has been confirmed."
 msgstr "Moltes gràcies. S'ha confirmat el teu correu electrònic."
 
-#: flask_security/core.py:472
+#: flask_security/core.py:506
 msgid "Your email has already been confirmed."
 msgstr "El teu correu electrònic ja s'havia confirmat."
 
-#: flask_security/core.py:473
+#: flask_security/core.py:507
 msgid "Invalid confirmation token."
 msgstr "Token de confirmació no vàlid."
 
-#: flask_security/core.py:475
+#: flask_security/core.py:509
 #, python-format
 msgid "%(email)s is already associated with an account."
 msgstr "%(email)s ja es associat amb un compte."
 
-#: flask_security/core.py:480
+#: flask_security/core.py:514
 #, python-format
 msgid ""
 "Identity attribute '%(attr)s' with value '%(value)s' is already "
@@ -139,12 +139,12 @@ msgstr ""
 "L'atribut d'identitat '%(attr)s' amb valor '%(value)s' ja està associat a"
 " un compte."
 
-#: flask_security/core.py:486
+#: flask_security/core.py:520
 #, python-format
 msgid "Identity %(id)s not registered"
 msgstr "Identitat %(id)s no registrada"
 
-#: flask_security/core.py:491
+#: flask_security/core.py:525
 #, python-format
 msgid ""
 "An error occurred while communicating with the OAuth provider: "
@@ -153,57 +153,57 @@ msgstr ""
 "S'ha produït un error en comunicar-se amb el proveïdor OAuth: "
 "(%(exerror)s - %(exdesc)s). Si us plau, torneu-ho a provar."
 
-#: flask_security/core.py:497
+#: flask_security/core.py:531
 msgid "Password does not match"
 msgstr "La contrasenya no coincideix"
 
-#: flask_security/core.py:498
+#: flask_security/core.py:532
 msgid "Passwords do not match"
 msgstr "Les contrasenyes no coincideixen"
 
-#: flask_security/core.py:499
+#: flask_security/core.py:533
 msgid "Redirections outside the domain are forbidden"
 msgstr "Les redireccions a llocs web externes s'han prohibit"
 
-#: flask_security/core.py:500
+#: flask_security/core.py:534
 msgid "Recovery code invalid"
 msgstr "Codi de recuperació invàlid"
 
-#: flask_security/core.py:501
+#: flask_security/core.py:535
 msgid "No recovery codes generated yet"
 msgstr "Encara no s'han generat codis de recuperació"
 
-#: flask_security/core.py:503
+#: flask_security/core.py:537
 #, python-format
 msgid "Instructions to reset your password have been sent to %(email)s."
 msgstr ""
 "Les instruccions per restablir la teva contrasenya s'han enviat a "
 "%(email)s."
 
-#: flask_security/core.py:507
+#: flask_security/core.py:541
 #, python-format
 msgid "You did not reset your password within %(within)s. "
 msgstr "No has restablert la teva contrasenya dins de %(within)s. "
 
-#: flask_security/core.py:510
+#: flask_security/core.py:544
 msgid "Invalid reset password token."
 msgstr "El token per restablir la contrasenya no és vàlid."
 
-#: flask_security/core.py:511
+#: flask_security/core.py:545
 msgid "Email requires confirmation."
 msgstr "El correu electrònic requereix d'una confirmació."
 
-#: flask_security/core.py:513
+#: flask_security/core.py:547
 #, python-format
 msgid "Confirmation instructions have been sent to %(email)s."
 msgstr "Les instruccions de confirmació s'han enviat a %(email)s."
 
-#: flask_security/core.py:517
+#: flask_security/core.py:551
 #, python-format
 msgid "You did not confirm your email within %(within)s. "
 msgstr "No has confirmat el teu correu electrònic dins de %(within)s. "
 
-#: flask_security/core.py:522
+#: flask_security/core.py:556
 #, python-format
 msgid ""
 "You did not login within %(within)s. New instructions to login have been "
@@ -212,87 +212,87 @@ msgstr ""
 "No vas iniciar la sessió abans de %(within)s. S'han enviat noves "
 "instruccions a %(email)s."
 
-#: flask_security/core.py:528
+#: flask_security/core.py:562
 #, python-format
 msgid "Instructions to login have been sent to %(email)s."
 msgstr "S'han enviat instruccions per l'inici de sessió a %(email)s."
 
-#: flask_security/core.py:531
+#: flask_security/core.py:565
 msgid "Invalid login token."
 msgstr "Token de d'inici de sessió no vàlid."
 
-#: flask_security/core.py:532
+#: flask_security/core.py:566
 msgid "Account is disabled."
 msgstr "El compte està desactivat."
 
-#: flask_security/core.py:533
+#: flask_security/core.py:567
 msgid "Email not provided"
 msgstr "No s'ha inclòs el correu electrònic"
 
-#: flask_security/core.py:534
+#: flask_security/core.py:568
 msgid "Invalid email address"
 msgstr "Adreça de correu electrònic no vàlida"
 
-#: flask_security/core.py:535 flask_security/core.py:590
+#: flask_security/core.py:569 flask_security/core.py:624
 msgid "Invalid code"
 msgstr "Codi invàlid"
 
-#: flask_security/core.py:537
+#: flask_security/core.py:571
 msgid "Value entered is not valid for the field"
 msgstr "El valor introduït no és vàlid per al camp"
 
-#: flask_security/core.py:541
+#: flask_security/core.py:575
 #, python-format
 msgid "Value entered must be less than %(length) characters"
 msgstr "El valor introduït ha de ser inferior a %(length) caràcters"
 
-#: flask_security/core.py:544
+#: flask_security/core.py:578
 msgid "Password not provided"
 msgstr "No s'ha inclòs la contrasenya"
 
-#: flask_security/core.py:546
+#: flask_security/core.py:580
 #, python-format
 msgid "Password must be at least %(length)s characters"
 msgstr "La contrasenya ha de tenir al menys %(length)s caràcters"
 
-#: flask_security/core.py:549
+#: flask_security/core.py:583
 msgid "Password not complex enough"
 msgstr "La contrasenya no és prou complexa"
 
-#: flask_security/core.py:550
+#: flask_security/core.py:584
 msgid "Password on breached list"
 msgstr "La contrasenya està a la llista de contrasenyes compromeses"
 
-#: flask_security/core.py:552
+#: flask_security/core.py:586
 msgid "Failed to contact breached passwords site"
 msgstr "No s'ha pogut contactar amb la web de filtracions de contrasenyes"
 
-#: flask_security/core.py:555
+#: flask_security/core.py:589
 msgid "Phone number not valid e.g. missing country code"
 msgstr "Número de telèfon no vàlid, per exemple, falta el codi de país"
 
-#: flask_security/core.py:556
+#: flask_security/core.py:590
 msgid "Specified user does not exist"
 msgstr "L'usuari no existeix"
 
-#: flask_security/core.py:557
+#: flask_security/core.py:591
 msgid "Invalid password"
 msgstr "Contrasenya no vàlida"
 
-#: flask_security/core.py:558
+#: flask_security/core.py:592
 msgid "Password or code submitted is not valid"
 msgstr "La contrasenya o el codi enviat no és vàlid"
 
-#: flask_security/core.py:559
+#: flask_security/core.py:593
 msgid "You have successfully logged in."
 msgstr "La sessió s'ha iniciat amb èxit."
 
-#: flask_security/core.py:560 flask_security/templates/security/_menu.html:21
+#: flask_security/core.py:594 flask_security/templates/security/_menu.html:21
 #: flask_security/templates/security/_menu.html:67
 msgid "Forgot password?"
 msgstr "Has oblidat la teva contrasenya?"
 
-#: flask_security/core.py:563
+#: flask_security/core.py:597
 msgid ""
 "You successfully reset your password and you have been logged in "
 "automatically."
@@ -300,7 +300,7 @@ msgstr ""
 "Has restablert la teva contrasenya amb èxit i s'ha iniciat la sessió "
 "automàticament."
 
-#: flask_security/core.py:570
+#: flask_security/core.py:604
 msgid ""
 "You successfully reset your password. Please authenticate using your new "
 "password."
@@ -308,97 +308,97 @@ msgstr ""
 "Has restablert la teva contrasenya amb èxit. Si us plau, autentica't amb "
 "la teva nova contrasenya."
 
-#: flask_security/core.py:576
+#: flask_security/core.py:610
 msgid "Your new password must be different than your previous password."
 msgstr "La nova contrasenya ha de ser diferent de l'anterior."
 
-#: flask_security/core.py:579
+#: flask_security/core.py:613
 msgid "You successfully changed your password."
 msgstr "La teva contrasenya s'ha modificat amb èxit."
 
-#: flask_security/core.py:580
+#: flask_security/core.py:614
 msgid "Please log in to access this page."
 msgstr "Has d'iniciar sessió per tal d'accedir a aquesta pàgina."
 
-#: flask_security/core.py:581
+#: flask_security/core.py:615
 msgid "Please reauthenticate to access this page."
 msgstr "Has d'iniciar una nova sessió per tal d'accedir a aquesta pàgina."
 
-#: flask_security/core.py:582
+#: flask_security/core.py:616
 #, python-format
 msgid "Refresh token is invalid (%(reason)s)"
 msgstr "El token de refresc és invàlid (%(reason)s)"
 
-#: flask_security/core.py:583
+#: flask_security/core.py:617
 msgid "Reauthentication successful"
 msgstr "Reautenticació exitosa"
 
-#: flask_security/core.py:585
+#: flask_security/core.py:619
 msgid "You can only access this endpoint when not logged in."
 msgstr "Només pots accedir a aquest punt final quan no estàs connectat."
 
-#: flask_security/core.py:588
+#: flask_security/core.py:622
 msgid "Code has been sent."
 msgstr "S'ha enviat el codi."
 
-#: flask_security/core.py:589
+#: flask_security/core.py:623
 msgid "Failed to send code. Please try again later"
 msgstr "No s'ha pogut enviar el codi. Si us plau, torna a intentar-ho més tard"
 
-#: flask_security/core.py:591
+#: flask_security/core.py:625
 msgid "Your code has been confirmed"
 msgstr "El teu codi ha estat confirmat"
 
-#: flask_security/core.py:593
+#: flask_security/core.py:627
 msgid "You successfully changed your two-factor method."
 msgstr "Has canviat el teu mètode de doble factor amb èxit."
 
-#: flask_security/core.py:597
+#: flask_security/core.py:631
 msgid "You currently do not have permissions to access this page"
 msgstr "Actualment no tens permisos per accedir a aquesta pàgina"
 
-#: flask_security/core.py:600
+#: flask_security/core.py:634
 msgid "Marked method is not valid"
 msgstr "El mètode marcat no és vàlid"
 
-#: flask_security/core.py:602
+#: flask_security/core.py:636
 msgid "You successfully disabled two-factor authorization."
 msgstr "Has desactivat l'autenticació de doble factor amb èxit."
 
-#: flask_security/core.py:606 flask_security/core.py:615
+#: flask_security/core.py:640 flask_security/core.py:649
 #, python-format
 msgid "Setup must be completed within %(within)s. Please start over."
 msgstr ""
 "La configuració s'ha de completar dins de %(within)s. Si us plau, torna a"
 " començar."
 
-#: flask_security/core.py:610
+#: flask_security/core.py:644
 #, python-format
 msgid "Currently active sign in options: %(method_list)s."
 msgstr "Opcions d'inici de sessió actualment actives: %(method_list)s."
 
-#: flask_security/core.py:613
+#: flask_security/core.py:647
 msgid "Requested method is not valid"
 msgstr "El mètode sol·licitat no és vàlid"
 
-#: flask_security/core.py:618
+#: flask_security/core.py:652
 msgid "Unified sign in setup successful"
 msgstr "Configuració d'inici de sessió unificat exitosa"
 
-#: flask_security/core.py:619
+#: flask_security/core.py:653
 msgid "You must specify a valid identity to sign in"
 msgstr "Heu de especificar una identitat vàlida per iniciar sessió"
 
-#: flask_security/core.py:620
+#: flask_security/core.py:654
 #, python-format
 msgid "Use this code to sign in: %(code)s"
 msgstr "Utilitza aquest codi per iniciar sessió: %(code)s"
 
-#: flask_security/core.py:621
+#: flask_security/core.py:655
 msgid "You successfully changed your username"
 msgstr "Has canviat el teu nom d'usuari amb èxit"
 
-#: flask_security/core.py:624
+#: flask_security/core.py:658
 #, python-format
 msgid ""
 "Username must be at least %(min)d characters and less than %(max)d "
@@ -407,41 +407,41 @@ msgstr ""
 "El nom d'usuari ha de tenir almenys %(min)d caràcters i menys de %(max)d "
 "caràcters"
 
-#: flask_security/core.py:630
+#: flask_security/core.py:664
 msgid "Username can contain only letters and numbers"
 msgstr "El nom d'usuari només pot contenir lletres i números"
 
-#: flask_security/core.py:633
+#: flask_security/core.py:667
 msgid "Username not provided"
 msgstr "Nom d'usuari no proporcionat"
 
-#: flask_security/core.py:635
+#: flask_security/core.py:669
 #, python-format
 msgid "%(username)s is already associated with an account."
 msgstr "%(username)s ja està associat amb un compte."
 
-#: flask_security/core.py:639
+#: flask_security/core.py:673
 #, python-format
 msgid "Passkey operations must be completed within %(within)s. Please start over."
 msgstr ""
 "Les operacions de la clau d'accés s'han de completar dins de %(within)s. "
 "Si us plau, torna a començar."
 
-#: flask_security/core.py:643
+#: flask_security/core.py:677
 msgid "Nickname for new passkey is required."
 msgstr "Es requereix un sobrenom per a la nova clau d'accés."
 
-#: flask_security/core.py:647
+#: flask_security/core.py:681
 #, python-format
 msgid "%(name)s is already associated with a passkey."
 msgstr "%(name)s ja està associat amb una clau d'accés."
 
-#: flask_security/core.py:651
+#: flask_security/core.py:685
 #, python-format
 msgid "%(name)s not registered with current user."
 msgstr "%(name)s no està registrat amb l'usuari actual."
 
-#: flask_security/core.py:656
+#: flask_security/core.py:690
 msgid ""
 "Passkey nicknames can contain only letters, numbers, and limited "
 "punctuation."
@@ -449,53 +449,53 @@ msgstr ""
 "Els sobrenoms de la clau d'accés només poden contenir lletres, números i "
 "puntuació limitada."
 
-#: flask_security/core.py:662
+#: flask_security/core.py:696
 #, python-format
 msgid "Successfully deleted the passkey with name: %(name)s"
 msgstr "S'ha eliminat la clau d'accés amb nom: %(name)s"
 
-#: flask_security/core.py:666
+#: flask_security/core.py:700
 #, python-format
 msgid "Successfully added the passkey with name: %(name)s"
 msgstr "S'ha afegit la clau d'accés amb nom: %(name)s"
 
-#: flask_security/core.py:670
+#: flask_security/core.py:704
 msgid "Passkey already registered."
 msgstr "Clau d'accés ja registrada."
 
-#: flask_security/core.py:674
+#: flask_security/core.py:708
 msgid "Unregistered passkey."
 msgstr "Clau d'accés no registrada."
 
-#: flask_security/core.py:678
+#: flask_security/core.py:712
 msgid "Passkey doesn't belong to any user."
 msgstr "La clau d'accés no pertany a cap usuari."
 
-#: flask_security/core.py:682
+#: flask_security/core.py:716
 #, python-format
 msgid "Could not verify passkey: %(cause)s."
 msgstr "No s'ha pogut verificar la clau d'accés: %(cause)s."
 
-#: flask_security/core.py:686
+#: flask_security/core.py:720
 msgid "Passkey not registered for this use (first or secondary)"
 msgstr "Clau d'accés no registrada per a aquest ús (primera o secundària)"
 
-#: flask_security/core.py:690
+#: flask_security/core.py:724
 msgid "Credential user handle didn't match"
 msgstr "El controlador d'usuari de les credencials no coincideix"
 
-#: flask_security/core.py:694
+#: flask_security/core.py:728
 #, python-format
 msgid "Confirmation must be completed within %(within)s. Please start over."
 msgstr ""
 "La confirmació s'ha de completar dins de %(within)s. Si us plau, torna a "
 "començar."
 
-#: flask_security/core.py:698
+#: flask_security/core.py:732
 msgid "Change of email address confirmed"
 msgstr "Canvi d'adreça de correu electrònic confirmat"
 
-#: flask_security/core.py:703
+#: flask_security/core.py:737
 #, python-format
 msgid ""
 "Instructions to confirm your new email address have been sent to "
@@ -504,213 +504,213 @@ msgstr ""
 "Les instruccions per confirmar la teva nova adreça de correu electrònic "
 "s'han enviat a %(email)s."
 
-#: flask_security/core.py:709
+#: flask_security/core.py:743
 msgid "If registered, your username will be sent to your email."
 msgstr ""
 "Si estàs registrat, el teu nom d'usuari s'enviarà al teu correu "
 "electrònic."
 
-#: flask_security/forms.py:63
+#: flask_security/forms.py:70
 msgid "Set up using an authenticator app (e.g. google, lastpass, authy)"
 msgstr ""
 "Configura mitjançant una aplicació d'autenticació (per exemple: Google, "
 "LastPass, Authy)"
 
-#: flask_security/forms.py:65
+#: flask_security/forms.py:72
 msgid "Change Method"
 msgstr "Canviar el mètode"
 
-#: flask_security/forms.py:66 flask_security/templates/security/_menu.html:16
-#: flask_security/templates/security/change_password.html:1
+#: flask_security/forms.py:73 flask_security/templates/security/_menu.html:16
+#: flask_security/templates/security/change_password.html:2
 #: flask_security/templates/security/change_password.html:7
 msgid "Change Password"
 msgstr "Canvi de contrasenya"
 
-#: flask_security/forms.py:67
+#: flask_security/forms.py:74
 msgid "Authentication Code"
 msgstr "Codi d'autenticació"
 
-#: flask_security/forms.py:68
+#: flask_security/forms.py:75
 msgid "Delete"
 msgstr "Suprimeix"
 
-#: flask_security/forms.py:69
+#: flask_security/forms.py:76
 msgid "Email Address"
 msgstr "Correu electrònic"
 
-#: flask_security/forms.py:70
+#: flask_security/forms.py:77
 msgid "Set up using email"
 msgstr "Configura mitjançant correu electrònic"
 
-#: flask_security/forms.py:71
+#: flask_security/forms.py:78
 msgid "Error(s)"
 msgstr "Error(s)"
 
-#: flask_security/forms.py:72
+#: flask_security/forms.py:79
 msgid "Identity"
 msgstr "Identitat"
 
-#: flask_security/forms.py:73 flask_security/templates/security/_menu.html:52
-#: flask_security/templates/security/login_user.html:1
+#: flask_security/forms.py:80 flask_security/templates/security/_menu.html:52
+#: flask_security/templates/security/login_user.html:2
 #: flask_security/templates/security/login_user.html:7
-#: flask_security/templates/security/send_login.html:1
+#: flask_security/templates/security/send_login.html:2
 #: flask_security/templates/security/send_login.html:7
 msgid "Login"
 msgstr "Iniciar sessió"
 
-#: flask_security/forms.py:74
+#: flask_security/forms.py:81
 msgid "New Password"
 msgstr "Nova contrasenya"
 
-#: flask_security/forms.py:75
+#: flask_security/forms.py:82
 msgid "Passcode"
 msgstr "Codi d'accés"
 
-#: flask_security/forms.py:76
+#: flask_security/forms.py:83
 msgid "Password"
 msgstr "Contrasenya"
 
-#: flask_security/forms.py:77
+#: flask_security/forms.py:84
 msgid "Phone Number"
 msgstr "Número de telèfon"
 
-#: flask_security/forms.py:78
+#: flask_security/forms.py:85
 msgid "Recover Password"
 msgstr "Restablir la contrasenya"
 
-#: flask_security/forms.py:79 flask_security/templates/security/_menu.html:72
+#: flask_security/forms.py:86 flask_security/templates/security/_menu.html:72
 msgid "Recover Username"
 msgstr "Recupera el nom d'usuari"
 
-#: flask_security/forms.py:80 flask_security/templates/security/_menu.html:62
-#: flask_security/templates/security/register_user.html:1
+#: flask_security/forms.py:87 flask_security/templates/security/_menu.html:62
+#: flask_security/templates/security/register_user.html:2
 #: flask_security/templates/security/register_user.html:7
 msgid "Register"
 msgstr "Registrar-se"
 
-#: flask_security/forms.py:81
+#: flask_security/forms.py:88
 msgid "Remember Me"
 msgstr "Recorda'm"
 
-#: flask_security/forms.py:82
+#: flask_security/forms.py:89
 msgid "Reset Password"
 msgstr "Restablir la contrasenya"
 
-#: flask_security/forms.py:83
+#: flask_security/forms.py:90
 msgid "Retype Password"
 msgstr "Escriu la contrasenya una altra vegada"
 
-#: flask_security/forms.py:84
+#: flask_security/forms.py:91
 msgid "Resend Confirmation Instructions"
 msgstr "Reenviar les instruccions de confirmació"
 
-#: flask_security/forms.py:85
+#: flask_security/forms.py:92
 msgid "Send Login Link"
 msgstr "Enviar l'enllaç d'inici de sessió"
 
-#: flask_security/forms.py:86
+#: flask_security/forms.py:93
 msgid "Send Code"
 msgstr "Envia codi"
 
-#: flask_security/forms.py:87
-#: flask_security/templates/security/us_signin.html:1
+#: flask_security/forms.py:94
+#: flask_security/templates/security/us_signin.html:2
 #: flask_security/templates/security/us_signin.html:7
 msgid "Sign In"
 msgstr "Inicia la sessió"
 
-#: flask_security/forms.py:88
+#: flask_security/forms.py:95
 msgid "Set up using SMS"
 msgstr "Configura mitjançant SMS"
 
-#: flask_security/forms.py:89
+#: flask_security/forms.py:96
 msgid "Submit"
 msgstr "Envia"
 
-#: flask_security/forms.py:90
+#: flask_security/forms.py:97
 msgid "Submit Code"
 msgstr "Envia el codi"
 
-#: flask_security/forms.py:91
+#: flask_security/forms.py:98
 msgid "Username"
 msgstr "Nom d’usuari"
 
-#: flask_security/forms.py:92
+#: flask_security/forms.py:99
 msgid "Verify Password"
 msgstr "Verifica la contrasenya"
 
-#: flask_security/forms.py:97
+#: flask_security/forms.py:104
 msgid "Google Authenticator"
 msgstr "Google Authenticator"
 
-#: flask_security/forms.py:98
+#: flask_security/forms.py:105
 msgid "authenticator"
 msgstr "autenticador"
 
-#: flask_security/forms.py:99 flask_security/forms.py:100
+#: flask_security/forms.py:106 flask_security/forms.py:107
 msgid "email"
 msgstr "correu electrònic"
 
-#: flask_security/forms.py:101
+#: flask_security/forms.py:108
 msgid "SMS"
 msgstr "SMS"
 
-#: flask_security/forms.py:102
+#: flask_security/forms.py:109
 msgid "password"
 msgstr "contrasenya"
 
-#: flask_security/forms.py:103
+#: flask_security/forms.py:110
 msgid "passkey"
 msgstr "clau d'accés"
 
-#: flask_security/forms.py:104
+#: flask_security/forms.py:111
 msgid "none"
 msgstr "cap"
 
-#: flask_security/forms.py:710 flask_security/tokens.py:201
+#: flask_security/forms.py:725 flask_security/tokens.py:201
 msgid "Refresh Token"
 msgstr "Token de refresc"
 
-#: flask_security/forms.py:1075 flask_security/unified_signin.py:176
+#: flask_security/forms.py:1089 flask_security/unified_signin.py:176
 msgid "Available Methods"
 msgstr "Mètodes disponibles"
 
-#: flask_security/forms.py:1077
+#: flask_security/forms.py:1091
 msgid "Disable two-factor authentication"
 msgstr "Desactiva l'autenticació de doble factor"
 
-#: flask_security/forms.py:1173
+#: flask_security/forms.py:1189
 msgid "Trouble Accessing Your Account?/Lost Mobile Device?"
 msgstr "Tens problemes per accedir al teu compte? / Dispositiu mòbil perdut?"
 
-#: flask_security/forms.py:1175
+#: flask_security/forms.py:1191
 msgid "Contact Administrator"
 msgstr "Contacta amb l'administrador"
 
-#: flask_security/recovery_codes.py:143
+#: flask_security/recovery_codes.py:144
 msgid "Show Recovery Codes"
 msgstr "Mostra els codis de recuperació"
 
-#: flask_security/recovery_codes.py:145
+#: flask_security/recovery_codes.py:147
 msgid "Generate New Recovery Codes"
 msgstr "Genera nous codis de recuperació"
 
-#: flask_security/recovery_codes.py:161
+#: flask_security/recovery_codes.py:163
 msgid "Recovery Code"
 msgstr "Codi de recuperació"
 
-#: flask_security/tf_plugin.py:51
+#: flask_security/tf_plugin.py:52
 msgid "Available Second Factor Methods:"
 msgstr "Mètodes disponibles per al doble factor d'autenticació:"
 
-#: flask_security/tf_plugin.py:52
+#: flask_security/tf_plugin.py:54
 msgid "Select"
 msgstr "Selecciona"
 
-#: flask_security/twofactor.py:142
+#: flask_security/twofactor.py:147
 msgid "Send code via email"
 msgstr "Envia el codi per correu electrònic"
 
-#: flask_security/twofactor.py:155
+#: flask_security/twofactor.py:160
 msgid "Use previously downloaded recovery code"
 msgstr "Utilitza el codi de recuperació descarregat anteriorment"
 
@@ -734,7 +734,7 @@ msgstr "Configura una opció d'inici de sessió addicional"
 msgid "Delete active sign in option"
 msgstr "Elimina l'opció d'inici de sessió activa"
 
-#: flask_security/webauthn.py:127 flask_security/webauthn.py:381
+#: flask_security/webauthn.py:127 flask_security/webauthn.py:387
 msgid "Nickname"
 msgstr "Sobrenom"
 
@@ -750,7 +750,7 @@ msgstr "Utilitza com a primer factor d'autenticació"
 msgid "Use as a secondary authentication factor"
 msgstr "Utilitza com a segon factor d'autenticació"
 
-#: flask_security/webauthn.py:236
+#: flask_security/webauthn.py:241
 msgid "Start"
 msgstr "Comença"
 
@@ -763,13 +763,13 @@ msgid "Change Registered Email"
 msgstr "Canvi del correu electrònic registrat"
 
 #: flask_security/templates/security/_menu.html:31
-#: flask_security/templates/security/change_username.html:1
+#: flask_security/templates/security/change_username.html:2
 #: flask_security/templates/security/change_username.html:7
 msgid "Change Username"
 msgstr "Canvi del nom d'usuari"
 
 #: flask_security/templates/security/_menu.html:36
-#: flask_security/templates/security/two_factor_setup.html:21
+#: flask_security/templates/security/two_factor_setup.html:22
 msgid "Two-Factor Setup"
 msgstr "Configuració de doble factor"
 
@@ -789,7 +789,7 @@ msgstr "Inici de sessió unificat"
 msgid "Confirm account"
 msgstr "Confirmació de compte"
 
-#: flask_security/templates/security/change_email.html:1
+#: flask_security/templates/security/change_email.html:2
 #: flask_security/templates/security/change_email.html:7
 msgid "Change Email"
 msgstr "Canvi de correu electrònic"
@@ -811,7 +811,7 @@ msgstr "Actualment no tens una contrasenya - això n'afegirà una."
 msgid "Current username is: %(username)s"
 msgstr "El nom d'usuari actual és: %(username)s"
 
-#: flask_security/templates/security/forgot_password.html:1
+#: flask_security/templates/security/forgot_password.html:2
 #: flask_security/templates/security/forgot_password.html:7
 msgid "Send password reset instructions"
 msgstr "Enviar instruccions per restablir la contrasenya"
@@ -843,17 +843,17 @@ msgstr "Utilitza el registre social per iniciar sessió"
 msgid "Continue with %(provider)s"
 msgstr "Continua amb %(provider)s"
 
-#: flask_security/templates/security/logout_user.html:1
+#: flask_security/templates/security/logout_user.html:2
 #: flask_security/templates/security/logout_user.html:7
 msgid "Confirm Sign Out"
 msgstr "Confirma la desconnexió"
 
-#: flask_security/templates/security/mf_recovery.html:1
+#: flask_security/templates/security/mf_recovery.html:2
 #: flask_security/templates/security/mf_recovery.html:7
 msgid "Enter Recovery Code"
 msgstr "Introdueix el codi de recuperació"
 
-#: flask_security/templates/security/mf_recovery_codes.html:1
+#: flask_security/templates/security/mf_recovery_codes.html:2
 #: flask_security/templates/security/mf_recovery_codes.html:7
 #: flask_security/templates/security/two_factor_setup.html:81
 #: flask_security/templates/security/wan_register.html:76
@@ -872,22 +872,22 @@ msgstr ""
 msgid "Generate new Recovery Codes"
 msgstr "Genera nous codis de recuperació"
 
-#: flask_security/templates/security/recover_username.html:1
+#: flask_security/templates/security/recover_username.html:2
 #: flask_security/templates/security/recover_username.html:7
 msgid "Username Recovery"
 msgstr "Recuperació d'usuari"
 
-#: flask_security/templates/security/reset_password.html:1
+#: flask_security/templates/security/reset_password.html:2
 #: flask_security/templates/security/reset_password.html:7
 msgid "Reset password"
 msgstr "Restablir la contrasenya"
 
-#: flask_security/templates/security/send_confirmation.html:1
+#: flask_security/templates/security/send_confirmation.html:2
 #: flask_security/templates/security/send_confirmation.html:7
 msgid "Resend confirmation instructions"
 msgstr "Reenviar instruccions de confirmació"
 
-#: flask_security/templates/security/two_factor_select.html:1
+#: flask_security/templates/security/two_factor_select.html:2
 #: flask_security/templates/security/two_factor_select.html:7
 msgid "Select Two-Factor Method"
 msgstr "Selecciona el mètode de doble factor"
@@ -951,7 +951,7 @@ msgstr "Claus d'accés"
 msgid "This application supports passkeys."
 msgstr "Aquesta aplicació admet claus d'accés."
 
-#: flask_security/templates/security/two_factor_verify_code.html:1
+#: flask_security/templates/security/two_factor_verify_code.html:2
 #: flask_security/templates/security/two_factor_verify_code.html:7
 msgid "Two-Factor Authentication"
 msgstr "Doble factor d'autenticació"
@@ -971,7 +971,7 @@ msgstr "El codi d'autenticació s'ha enviat a la teva adreça de correu electrò
 msgid "An email was sent to us in order to reset your application account"
 msgstr "S'ha enviat un correu electrònic per restablir el teu compte d'aplicació"
 
-#: flask_security/templates/security/us_setup.html:24
+#: flask_security/templates/security/us_setup.html:25
 #: flask_security/templates/security/us_setup.html:30
 msgid "Setup Unified Sign In"
 msgstr "Configuració de l'inici de sessió unificat"
@@ -993,11 +993,11 @@ msgstr "Introdueix el codi aquí per completar la configuració"
 msgid "Request one-time code be sent"
 msgstr "Sol·licita que s'enviï un codi d'un sol ús"
 
-#: flask_security/templates/security/us_verify.html:1
+#: flask_security/templates/security/us_verify.html:2
 #: flask_security/templates/security/us_verify.html:7
-#: flask_security/templates/security/verify.html:1
+#: flask_security/templates/security/verify.html:2
 #: flask_security/templates/security/verify.html:7
-#: flask_security/templates/security/wan_verify.html:9
+#: flask_security/templates/security/wan_verify.html:10
 msgid "Reauthenticate"
 msgstr "Tornat a identificar"
 
@@ -1015,7 +1015,7 @@ msgstr "Utilitza una clau d'accés per reautenticar"
 msgid "Use Social Login to Reauthenticate"
 msgstr "Utilitza el registre social per tornar a autenticar-vos"
 
-#: flask_security/templates/security/wan_register.html:4
+#: flask_security/templates/security/wan_register.html:5
 #: flask_security/templates/security/wan_register.html:16
 msgid "Setup a New Passkey"
 msgstr "Configura una nova clau d'accés"
@@ -1041,7 +1041,7 @@ msgstr ""
 msgid "Delete an Existing Passkey"
 msgstr "Elimina una clau d'accés existent"
 
-#: flask_security/templates/security/wan_signin.html:4
+#: flask_security/templates/security/wan_signin.html:5
 msgid "Sign In With A Passkey"
 msgstr "Inicia la sessió amb una clau d'accés"
 

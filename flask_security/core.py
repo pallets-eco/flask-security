@@ -26,7 +26,6 @@ from flask_login import current_user
 from flask_principal import Identity, Principal, RoleNeed, UserNeed, identity_loaded
 from itsdangerous import URLSafeTimedSerializer, URLSafeSerializer
 from passlib.context import CryptContext
-from werkzeug.datastructures import ImmutableList
 from werkzeug.local import LocalProxy
 
 from .babel import FsDomain
@@ -1353,7 +1352,7 @@ class AnonymousUser(AnonymousUserMixin):
     """AnonymousUser definition"""
 
     def __init__(self):
-        self.roles = ImmutableList()
+        self.roles = list()
 
     def has_role(self, *args):
         """Returns `False`"""
