@@ -35,6 +35,7 @@ from tests.test_utils import (
     logout,
     populate_data,
     verify_token,
+    get_existing_session,
 )
 
 
@@ -1066,6 +1067,23 @@ def test_remember_token(client):
     assert client.get_cookie("remember_token")
     response = client.get("/profile", follow_redirects=True)
     assert b"Profile Page" in response.data
+
+
+def test_remember_fresh(client):
+    # authenticating via remember cookie shouldn't be considered fresh
+    response = authenticate(client, follow_redirects=False, remember=True)
+    client.delete_cookie("session")
+    assert not client.get_cookie("session")
+    assert client.get_cookie("remember_token")
+
+    # this should magically log us in
+    response = client.get("/profile", follow_redirects=True)
+    assert b"Profile Page" in response.data
+
+    sess = get_existing_session(client)
+    assert sess
+    response = client.get("/fresh", headers={"Content-Type": "application/json"})
+    assert response.json["response"]["reauth_required"]
 
 
 def test_request_loader_does_not_fail_with_invalid_token(client):
