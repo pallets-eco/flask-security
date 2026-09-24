@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.9.0
 -------------
 
-Released TBD
+Released September 24, 2026
 
 This release adds support for refresh tokens (finally!). In addition there are
 several configuration changes that try to align Flask-Security with latest
@@ -61,6 +61,7 @@ Docs and Chores
 - (:pr:`1283`) Improve (from 54% to 74%) pyright --verifytypes
 - (:pr:`1284`) Change dependencies to dependency-groups
 - (:pr:`1286`) Remove dependabot
+- (:pr:`1287`) Drop support for Python 3.10
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

@@ -201,12 +201,12 @@ These configuration keys are used globally across all features.
     - :py:data:`SECURITY_POST_OAUTH_VERIFY_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
     - :py:data:`SECURITY_VERIFY_ERROR_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
     - :py:data:`SECURITY_LOGIN_ERROR_VIEW`
-    - :py:data:`SECURITY_CONFIRM_ERROR_VIEW`
-    - :py:data:`SECURITY_POST_CHANGE_EMAIL_VIEW`
-    - :py:data:`SECURITY_CHANGE_EMAIL_ERROR_VIEW`
-    - :py:data:`SECURITY_POST_CONFIRM_VIEW`
-    - :py:data:`SECURITY_RESET_ERROR_VIEW`
-    - :py:data:`SECURITY_RESET_VIEW`
+    - :py:data:`SECURITY_CONFIRM_ERROR_VIEW` (if :py:data:`SECURITY_CONFIRMABLE` is True)
+    - :py:data:`SECURITY_POST_CHANGE_EMAIL_VIEW` (if :py:data:`SECURITY_CHANGE_EMAIL` is True)
+    - :py:data:`SECURITY_CHANGE_EMAIL_ERROR_VIEW` (if :py:data:`SECURITY_CHANGE_EMAIL` is True)
+    - :py:data:`SECURITY_POST_CONFIRM_VIEW` (if :py:data:`SECURITY_CONFIRMABLE` is True)
+    - :py:data:`SECURITY_RESET_ERROR_VIEW` (if :py:data:`SECURITY_RECOVERABLE` is True)
+    - :py:data:`SECURITY_RESET_VIEW` (if :py:data:`SECURITY_RECOVERABLE` is True)
 
 
     Default: ``None`` which is existing html-style form redirects.
@@ -261,6 +261,9 @@ These configuration keys are used globally across all features.
     Default: ``[]``
 
     .. versionadded:: 5.5.0
+
+    .. versionchanged:: 5.9.0
+        Add support for using '.' to signify checking against the base domain value itself.
 
 
 .. note::
