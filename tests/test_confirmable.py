@@ -15,9 +15,13 @@ from freezegun import freeze_time
 from wtforms.fields import StringField
 from wtforms.validators import Length
 
-from flask_security.core import Security, UserMixin
-from flask_security.signals import confirm_instructions_sent, user_confirmed
-from flask_security.forms import SendConfirmationForm
+from flask_security import (
+    Security,
+    SendConfirmationForm,
+    UserMixin,
+    confirm_instructions_sent,
+    user_confirmed,
+)
 
 from tests.test_utils import (
     authenticate,
