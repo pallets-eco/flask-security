@@ -18,10 +18,6 @@ from .change_email import ChangeEmailForm as ChangeEmailForm
 from .change_username import ChangeUsernameForm as ChangeUsernameForm
 from .core import (
     Security as Security,
-    RefreshTrackerMixin as RefreshTrackerMixin,
-    RoleMixin as RoleMixin,
-    UserMixin as UserMixin,
-    WebAuthnMixin as WebAuthnMixin,
     FormInfo as FormInfo,
     current_user as current_user,
 )
@@ -69,6 +65,12 @@ from .forms import (
 from .mail_util import (
     MailUtil as MailUtil,
     EmailValidateException as EmailValidateException,
+)
+from .model_mixins import (
+    RefreshTrackerMixin as RefreshTrackerMixin,
+    RoleMixin as RoleMixin,
+    UserMixin as UserMixin,
+    WebAuthnMixin as WebAuthnMixin,
 )
 from .oauth_glue import OAuthGlue as OAuthGlue
 from .oauth_provider import FsOAuthProvider as FsOAuthProvider

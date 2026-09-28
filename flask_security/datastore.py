@@ -17,7 +17,7 @@ import typing as t
 import uuid
 from copy import copy
 
-from .core import UserMixin, RoleMixin, WebAuthnMixin, RefreshTrackerMixin
+from .model_mixins import UserMixin, RoleMixin, WebAuthnMixin, RefreshTrackerMixin
 from .utils import _config_value as cv
 
 if t.TYPE_CHECKING:  # pragma: no cover

@@ -29,9 +29,11 @@ from tests.test_utils import (
     populate_data,
 )
 
-from flask_security.core import Security, UserMixin
-from flask_security.forms import ForgotPasswordForm, LoginForm
-from flask_security.signals import (
+from flask_security import (
+    Security,
+    UserMixin,
+    ForgotPasswordForm,
+    LoginForm,
     password_reset,
     reset_password_instructions_sent,
 )

@@ -53,7 +53,7 @@ from .utils import (
 
 if t.TYPE_CHECKING:  # pragma: no cover
     from flask.typing import ResponseValue
-    from .core import UserMixin, RefreshTrackerMixin
+    from .model_mixins import UserMixin, RefreshTrackerMixin
 
 
 class RefreshTokenErrors(Enum):
