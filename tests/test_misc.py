@@ -1382,6 +1382,7 @@ def test_open_redirect(app, client, get_message):
         (r"\/github.com", "%5C/github.com"),
         ("//github.com", ""),
         ("\t//github.com", "%09//github.com"),
+        ("////github.com", ""),
     ]
     for nextloc in ["form", "query"]:
         for i, o in test_urls:

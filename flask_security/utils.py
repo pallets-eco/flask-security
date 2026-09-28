@@ -714,6 +714,11 @@ def validate_redirect_url(url: str) -> bool:
 
     if url is None or url.strip() == "":
         return False
+    if url.startswith("////"):
+        # arrgg - urlsplit will return an empty netloc, and urlunsplit will add
+        # the '//' back - creating a URL like "////evil.com" - which browsers will
+        # happily follow to evil.com.
+        return False
     url_next = urlsplit(url)
     url_base = urlsplit(request.host_url)
     if (url_next.netloc or url_next.scheme) and url_next.netloc != url_base.netloc:
@@ -746,8 +751,6 @@ def _get_post_action_redirect(
     sent to Flask::redirect() - and we need to be sure that it can't be
     interpreted as a user-input external URL - that would mean we would
     have an 'open-redirect' vulnerability.
-
-    Allowing an absolute redirect is a security issue - a so-called open-redirect.
 
     The complexity here is that urlsplit() does pretty well, but browsers even today
     May 2021 are very lenient in what they accept as URLs - for example:
