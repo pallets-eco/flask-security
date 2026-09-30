@@ -3,6 +3,16 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.8.3
+-------------
+
+Released September 30, 2026
+
+Fixes
++++++
+- (:pr:`1296`) Fix open-redirect GHSA-ccgp-pv8r-95wm
+
+
 Version 5.8.2
 -------------
 
