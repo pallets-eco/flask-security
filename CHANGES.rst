@@ -6,11 +6,11 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.9.1
 -------------
 
-Released September xx, 2026
+Released September 30, 2026
 
 Fixes
 +++++
--(:pr:`xs`) Fix for open-redirect GHSA-ccgp-pv8r-95wm
+-(:pr:`1293`) Fix for open-redirect GHSA-ccgp-pv8r-95wm
 
 Version 5.9.0
 -------------
