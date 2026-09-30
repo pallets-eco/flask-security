@@ -1372,7 +1372,7 @@ def test_post_security_with_application_root_and_views(app, sqlalchemy_datastore
 def test_open_redirect(app, client, get_message):
     """
     Test various possible URLs that urlsplit() shows as relative but
-    many browsers will interpret as absolute - and thus have a
+    many browsers will interpret as absolute - and thus have an
     open-redirect vulnerability.
     """
     test_urls = [
@@ -1382,6 +1382,16 @@ def test_open_redirect(app, client, get_message):
         (r"\/github.com", "%5C/github.com"),
         ("//github.com", ""),
         ("\t//github.com", "%09//github.com"),
+        ("////github.com", ""),
+        ("myhttp://github.com", False),
+        ("http:////github.com", False),
+        (r"\\\localhost", False),
+        (r"\\\\localhost", False),
+        (r"https://localhost\%40evil.com/", False),
+        ("https://localhost%5c%40evil.com/", False),
+        (r"https://localhost\@evil.com/", False),
+        (r"https://localhost@evil.com/", False),
+        (r"https://localhost:localhost@evil.com/", False),
     ]
     for nextloc in ["form", "query"]:
         for i, o in test_urls:
