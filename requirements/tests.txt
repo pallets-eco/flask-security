@@ -24,7 +24,7 @@ pytest
 qrcode
 # authlib requires requests
 requests
-sqlalchemy
+sqlalchemy<2.1
 sqlalchemy-utils
 webauthn
 zxcvbn
