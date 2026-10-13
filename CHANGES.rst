@@ -3,6 +3,25 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.x.x
+-------------
+
+Released TBD
+
+Features & Improvements
++++++++++++++++++++++++
+- (:issue:`1153`) Localize %(within)s variables using Babel (and the current locale)
+  if the application has initialized Flask-Babel. Applications no longer need to
+  install and configure humanize to have these localized.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+- If the application has initialized Flask-Babel, timedelta values in messages
+  and email templates (e.g. %(within)s) are now formatted using Babel rather than
+  humanize - even if humanize is installed. This can result in slightly different
+  text (e.g. "1 day, 2 hours, and 40 seconds" versus "1 day, 2 hours and 40 seconds")
+  and for some locales the number and unit are separated by a no-break space.
+
 Version 5.9.1
 -------------
 

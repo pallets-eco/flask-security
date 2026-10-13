@@ -356,15 +356,35 @@ Be aware that Flask-Security will validate and normalize email input using the
 `email_validator <https://pypi.org/project/email-validator/>`_ package.
 The normalized form is stored in the DB.
 
-Using Humanize
-++++++++++++++
+Localizing Time Periods
++++++++++++++++++++++++
 
 Some Flask-Security configuration variables (e.g. all the _WITHIN ones) are defined using
-timedelta. These variables are used in various error messages and email templates. In order to
-localize those portions of the message, Flask-Security uses humanize.precisedelta if
-`humanize <https://humanize.readthedocs.io/>`_ is
-installed - otherwise it uses an internal utility that always returns English.
-It is up to the application to properly configure humanize (via a call to humanize.i18n.activate(<locale>).
+timedelta. These variables are used in various error messages and email templates.
+Flask-Security formats those portions of the message as follows:
+
+- If the application has initialized `Flask-Babel <https://python-babel.github.io/flask-babel/>`_
+  the time period is localized using Babel and the current locale (so this honors
+  the application's locale selector as well as ``flask_babel.force_locale()``).
+  No additional configuration is required.
+- Otherwise, if `humanize <https://humanize.readthedocs.io/>`_ is installed,
+  humanize.precisedelta is used. It is up to the application to properly configure
+  humanize (via a call to humanize.i18n.activate(<locale>).
+- Otherwise an internal utility that always returns English is used.
+
+.. note::
+    Simply installing humanize does not localize anything - it returns English
+    until the application activates a locale. Its locale is independent of
+    Flask-Babel's (it doesn't follow the locale selector or ``force_locale()``) and
+    is stored per thread, so the application must activate (and reset) it on each
+    request. It also raises ``FileNotFoundError`` for locales it doesn't ship.
+    This is why Babel is preferred when it is available.
+
+If Flask-Babel has been initialized but the current locale doesn't have translations for
+all the required units, Flask-Security falls back to humanize/the internal utility.
+
+.. versionchanged:: 5.x.x
+    Use Babel (if initialized) to localize time periods.
 
 Overriding Messages
 ++++++++++++++++++++
