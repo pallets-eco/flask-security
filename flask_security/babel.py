@@ -84,15 +84,13 @@ try:
         (value, unit) tuples (e.g. ``[(1, "day"), (30, "minute")]``) using the
         current locale.
 
-        Returns None if the babel extension hasn't been initialized, there is no
-        current locale, or the locale doesn't have all the required unit patterns -
-        the caller should fall back to another formatter.
+        Returns None if the babel extension hasn't been initialized or the current
+        locale doesn't have all the required unit patterns - the caller should
+        fall back to another formatter.
         """
         if not has_babel_ext():
             return None
         locale = get_locale()
-        if not locale:
-            return None
         strings = []
         for value, unit in parts or [(0, "second")]:
             unit = f"duration-{unit}"
