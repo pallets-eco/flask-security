@@ -31,6 +31,7 @@ try:
     from flask_babel import Domain, get_locale
     from babel.support import LazyProxy
     from babel.lists import format_list
+    from babel.units import format_unit
 
     class FsDomain(Domain):
         def __init__(self, app):
@@ -78,6 +79,28 @@ try:
             ll = get_locale()
             return format_list(lst, locale=get_locale(), **kwargs)
 
+    def format_td_parts(parts):
+        """Localize a timedelta that has been broken down into a list of
+        (value, unit) tuples (e.g. ``[(1, "day"), (30, "minute")]``) using the
+        current locale.
+
+        Returns None if the babel extension hasn't been initialized or the current
+        locale doesn't have all the required unit patterns - the caller should
+        fall back to another formatter.
+        """
+        if not has_babel_ext():
+            return None
+        locale = get_locale()
+        strings = []
+        for value, unit in parts:
+            unit = f"duration-{unit}"
+            formatted = format_unit(value, unit, length="long", locale=locale)
+            if unit in formatted:
+                # Babel falls back to the unit identifier if locale has no pattern
+                return None
+            strings.append(formatted)
+        return format_list(strings, locale=locale)
+
     def is_lazy_string(obj):
         """Checks if the given object is a lazy string."""
         return isinstance(obj, LazyProxy)
@@ -106,6 +129,9 @@ except ImportError:  # pragma: no cover
             # This is a Babel method
             if not has_babel_ext():
                 return ", ".join(lst)
+
+    def format_td_parts(parts):
+        return None
 
     def is_lazy_string(obj):
         return False

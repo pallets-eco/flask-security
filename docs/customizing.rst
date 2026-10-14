@@ -356,15 +356,15 @@ Be aware that Flask-Security will validate and normalize email input using the
 `email_validator <https://pypi.org/project/email-validator/>`_ package.
 The normalized form is stored in the DB.
 
-Using Humanize
-++++++++++++++
+Localizing Time Periods
++++++++++++++++++++++++
 
 Some Flask-Security configuration variables (e.g. all the _WITHIN ones) are defined using
 timedelta. These variables are used in various error messages and email templates. In order to
-localize those portions of the message, Flask-Security uses humanize.precisedelta if
-`humanize <https://humanize.readthedocs.io/>`_ is
-installed - otherwise it uses an internal utility that always returns English.
-It is up to the application to properly configure humanize (via a call to humanize.i18n.activate(<locale>).
+localize those portions of the message, Flask-Security uses Babel and the current locale if the
+application has initialized Flask-Babel (no additional configuration is required) - otherwise it
+uses an internal utility that always returns English.
+The internal utility is also used if the current locale doesn't have translations for all the required units.
 
 Overriding Messages
 ++++++++++++++++++++

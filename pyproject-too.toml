@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-babel = ["babel>=2.17.0", "flask_babel>=4.0.0", "humanize>=4.12.0"]
+babel = ["babel>=2.17.0", "flask_babel>=4.0.0"]
 fsqla = ["flask_sqlalchemy>=3.1.1", "sqlalchemy>=2.0.41"]
 common = ["argon2_cffi>=25.1.0", "bcrypt>=4.3.0", "flask_mail>=0.10.0", "nh3>=0.2.15"]
 mfa = ["cryptography>=46.0.7", "qrcode>=8.2", "phonenumberslite>=8.13.11", "webauthn>=2.8.0"]
@@ -62,7 +62,6 @@ tests = [
     "cryptography",
     "djlint",
     "freezegun",
-    "humanize",
     "mongoengine",
     "mongomock",
     "msgcheck",
@@ -113,7 +112,6 @@ low = [
     "bcrypt==4.3.0",
     "nh3==0.2.15",
     "freezegun",
-    "humanize",
     "jinja2==3.1.2",
     "itsdangerous==2.2.0",
     "markupsafe==2.1.2",

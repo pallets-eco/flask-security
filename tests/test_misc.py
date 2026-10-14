@@ -1690,32 +1690,72 @@ def test_null_user_id(app, client, get_message):
     assert not is_authenticated(client, get_message)
 
 
-def test_td_format(app, monkeypatch):
-    # Test our internal timedelta formatter - we encourage using humanize but don't
-    # want to require that dependency.
-    import sys
-
-    monkeypatch.setitem(sys.modules, "humanize", None)
+def test_td_format(app):
+    # Test our internal timedelta formatter - used when the app hasn't
+    # initialized Flask-Babel.
     assert "4 seconds" == _td_format(timedelta(seconds=4))
+    assert "1 second" == _td_format(timedelta(seconds=1))
+    assert "0 seconds" == _td_format(timedelta(seconds=0))
+    assert "0 seconds" == _td_format(timedelta(milliseconds=500))
     assert "1 day" == _td_format(timedelta(days=1))
     assert "1 day and 30 minutes" == _td_format(timedelta(days=1, minutes=30))
     assert "1 day, 2 hours, 40 seconds" == _td_format(timedelta(hours=26, seconds=40))
 
 
-def test_td_format_humanize(app):
-    pytest.importorskip("humanize")
-    assert "1 day, 2 hours and 40 seconds" == _td_format(
-        timedelta(hours=26, seconds=40)
-    )
+def _td_format_sp(td):
+    # CLDR uses a no-break space between the number and the unit for some
+    # locale/unit combinations - normalize to make testing simpler.
+    return _td_format(td).replace("\xa0", " ")
 
 
-@pytest.mark.parametrize("humanizer", ["fr_FR"], indirect=["humanizer"])
-def test_td_format_humanize_fr(app, humanizer):
-    # humanize has built in localization
-    # app responsible for setting it up.
-    assert "1 jour, 2 heures et 40 secondes" == _td_format(
-        timedelta(hours=26, seconds=40)
-    )
+@pytest.mark.babel(babel_default_locale="fr_FR")
+def test_td_format_babel(app):
+    # If the app has initialized babel - use it (and the current locale).
+    with app.test_request_context():
+        assert "4 secondes" == _td_format_sp(timedelta(seconds=4))
+        assert "1 jour" == _td_format_sp(timedelta(days=1))
+        assert "1 jour et 30 minutes" == _td_format_sp(timedelta(days=1, minutes=30))
+        assert "1 jour, 2 heures et 40 secondes" == _td_format_sp(
+            timedelta(hours=26, seconds=40)
+        )
+        assert "1 an et 2 mois" == _td_format_sp(timedelta(days=365 + 60))
+        assert "0 seconde" == _td_format_sp(timedelta(seconds=0))
+
+
+@pytest.mark.babel()
+def test_td_format_babel_en(app):
+    with app.test_request_context():
+        assert "1 day and 30 minutes" == _td_format_sp(timedelta(days=1, minutes=30))
+        assert "1 day, 2 hours, and 40 seconds" == _td_format_sp(
+            timedelta(hours=26, seconds=40)
+        )
+
+
+@pytest.mark.babel()
+def test_td_format_babel_force_locale(app):
+    # Make sure we track the current locale - not just the default.
+    from flask_babel import force_locale
+
+    with app.test_request_context():
+        with force_locale("es"):
+            assert "1 día y 2 horas" == _td_format_sp(timedelta(hours=26))
+        assert "1 day and 2 hours" == _td_format_sp(timedelta(hours=26))
+
+
+@pytest.mark.babel(babel_default_locale="cic_US")
+def test_td_format_babel_incomplete_locale(app):
+    # Not all locales have all unit patterns - fall back rather
+    # than return a partially localized string.
+    with app.test_request_context():
+        assert "1 day, 2 hours, 40 seconds" == _td_format(
+            timedelta(hours=26, seconds=40)
+        )
+
+
+@pytest.mark.babel(babel_default_locale="fr_FR")
+def test_td_format_babel_no_context(app):
+    # No app context - so can't tell if babel is initialized - fall back.
+    assert "1 day and 30 minutes" == _td_format(timedelta(days=1, minutes=30))
 
 
 @pytest.mark.settings(default_remember_me=True)

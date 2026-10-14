@@ -3,6 +3,22 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.x.x
+-------------
+
+Released TBD
+
+Features & Improvements
++++++++++++++++++++++++
+- (:issue:`1153`) Localize %(within)s variables using Babel instead of humanize.
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+- Support for ``humanize`` has been removed and it is no longer included in the
+  ``babel`` extra. Applications that use it directly must now install it themselves.
+- %(within)s variables are now localized using Babel if the application has
+  initialized Flask-Babel, otherwise they are always in English.
+
 Version 5.9.1
 -------------
 
