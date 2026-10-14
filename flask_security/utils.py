@@ -914,9 +914,7 @@ def _config_value(key, app=None, default=None, strict=True):
 def _td_format(td: timedelta) -> str:
     """Formats a timedelta object to a string.
     If the application has initialized Flask-Babel, the result is localized
-    using the current locale. Otherwise use humanize.precisedelta if available,
-    and failing that this simplistic version of what humanize provides
-    (English only).
+    using the current locale. Otherwise use a simplistic formatter (English only).
     """
     periods = [
         ("year", 60 * 60 * 24 * 365),
@@ -933,24 +931,21 @@ def _td_format(td: timedelta) -> str:
         if seconds >= period_seconds:
             period_value, seconds = divmod(seconds, period_seconds)
             parts.append((period_value, period_name))
+    if not parts:
+        parts = [(0, "second")]
 
     from .babel import format_td_parts
 
     if (localized := format_td_parts(parts)) is not None:
         return localized
 
-    try:
-        import humanize
-
-        return humanize.precisedelta(td)
-    except ImportError:
-        strings = []
-        for period_value, period_name in parts:
-            has_s = "s" if period_value > 1 else ""
-            strings.append(f"{period_value} {period_name}{has_s}")
-        if len(strings) == 2:
-            return " and ".join(strings)
-        return ", ".join(strings)
+    strings = []
+    for period_value, period_name in parts:
+        has_s = "s" if period_value != 1 else ""
+        strings.append(f"{period_value} {period_name}{has_s}")
+    if len(strings) == 2:
+        return " and ".join(strings)
+    return ", ".join(strings)
 
 
 def send_mail(

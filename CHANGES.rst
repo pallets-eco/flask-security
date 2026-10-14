@@ -10,17 +10,14 @@ Released TBD
 
 Features & Improvements
 +++++++++++++++++++++++
-- (:issue:`1153`) Localize %(within)s variables using Babel (and the current locale)
-  if the application has initialized Flask-Babel. Applications no longer need to
-  install and configure humanize to have these localized.
+- (:issue:`1153`) Localize %(within)s variables using Babel instead of humanize.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
-- If the application has initialized Flask-Babel, timedelta values in messages
-  and email templates (e.g. %(within)s) are now formatted using Babel rather than
-  humanize - even if humanize is installed. This can result in slightly different
-  text (e.g. "1 day, 2 hours, and 40 seconds" versus "1 day, 2 hours and 40 seconds")
-  and for some locales the number and unit are separated by a no-break space.
+- Support for ``humanize`` has been removed and it is no longer included in the
+  ``babel`` extra. Applications that use it directly must now install it themselves.
+- %(within)s variables are now localized using Babel if the application has
+  initialized Flask-Babel, otherwise they are always in English.
 
 Version 5.9.1
 -------------

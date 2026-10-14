@@ -92,7 +92,7 @@ try:
             return None
         locale = get_locale()
         strings = []
-        for value, unit in parts or [(0, "second")]:
+        for value, unit in parts:
             unit = f"duration-{unit}"
             formatted = format_unit(value, unit, length="long", locale=locale)
             if unit in formatted:
