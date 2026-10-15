@@ -171,16 +171,16 @@ def test_template(app, client, get_message, outbox):
     change_email_email_template="security/email/change_email_instructions_test",
     email_html=False,
 )
-@pytest.mark.parametrize("humanizer", ["fr_FR"], indirect=["humanizer"])
-def test_template_fr(app, client, get_message, outbox, humanizer):
-    # Check contents of email template - with humanize xlation of within
+@pytest.mark.babel(babel_default_locale="fr_FR")
+def test_template_fr(app, client, get_message, outbox):
+    # Check contents of email template - with babel xlation of within
     authenticate(client, email="matt@lp.com")
     with capture_change_email_requests():
         client.post("/change-email", data=dict(email="matt2@lp.com"))
         # check email
         assert outbox[0].recipients[0] == "matt2@lp.com"
         matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
-        assert matcher[4].split(":")[1] == "2 heures"
+        assert matcher[4].split(":")[1].replace("\xa0", " ") == "2 heures"
 
 
 @pytest.mark.settings(return_generic_responses=True)

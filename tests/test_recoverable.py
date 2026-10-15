@@ -308,6 +308,24 @@ def test_login_form_description(app, sqlalchemy_datastore):
         assert login_form.password.description == expected
 
 
+@pytest.mark.babel(babel_default_locale="fr_FR")
+@pytest.mark.settings(
+    email_template_password_reset="security/email/reset_instructions_test",
+    email_html=False,
+    reset_password_within=timedelta(hours=26),
+)
+def test_recoverable_template_babel(app, client, outbox):
+    # 'within' should be localized using the current babel locale - without
+    # the application having to configure anything additional.
+    with capture_reset_password_requests():
+        client.post("/reset", data=dict(email="joe@lp.com"), follow_redirects=True)
+        assert len(outbox) == 1
+        matcher = re.findall(r"\w+:.*", outbox[0].body, re.IGNORECASE)
+        # CLDR uses no-break space between number and unit
+        within = matcher[5].split(":")[1].replace("\xa0", " ")
+        assert within == "1 jour et 2 heures"
+
+
 @pytest.mark.settings(reset_password_within=timedelta(hours=4))
 def test_expired_reset_token(client, get_message):
     # Note that we need relatively new-ish date since session cookies also expire.
