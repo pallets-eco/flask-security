@@ -1055,6 +1055,9 @@ Registerable
 
     Define which unicode categories are used to validate usernames.
 
+    Each entry is matched as a prefix of the character's category, so it may be
+    a major category (e.g. ``"L"``) or a full category (e.g. ``"Pd"``).
+
     Default: ``["L", "N"]``
 
     .. versionadded:: 5.9.0
@@ -2079,6 +2082,9 @@ WebAuthn/Passkeys
 
     Define which unicode categories are used to validate webauthn/passkey
     names.
+
+    Each entry is matched as a prefix of the character's category, so it may be
+    a major category (e.g. ``"L"``) or a full category (e.g. ``"Pd"``).
 
     Default: ``["L", "N", "Pc", "Pd", "Zs"]``
 

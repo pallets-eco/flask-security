@@ -1526,7 +1526,9 @@ def input_svn(
     """
     Used to sanitize, validate, and normalize (user/form) input
 
-    allowed_categories: list of allowed categories (input to unicodedata.category()).
+    allowed_categories: list of allowed unicode categories. Acceptable values are
+    either a major category (e.g. "L") or a full category (e.g. "Pd"). Matched
+    as a prefix of unicodedata.category().
 
     normalize_form: input to unicodedata.normalize().
 
@@ -1543,8 +1545,8 @@ def input_svn(
     if sanitized != value.strip():
         return "illegal", None
     if allowed_categories:
-        cats = [unicodedata.category(c)[0] for c in sanitized]
-        if any([cat not in allowed_categories for cat in cats]):
+        allowed = tuple(allowed_categories)
+        if not all(unicodedata.category(c).startswith(allowed) for c in sanitized):
             return "unallowed", None
     if normalize_form:
         return "ok", unicodedata.normalize(normalize_form, sanitized)

@@ -73,6 +73,7 @@ from flask_security.utils import (
     verify_hash,
     _get_post_action_redirect,
     _td_format,
+    input_svn,
 )
 from flask_security.core import _get_serializer
 
@@ -1765,3 +1766,22 @@ def test_remember_login_form(app, client):
     assert response.status_code == 200
     r = get_form_input(response, "remember")
     assert "checked" in r
+
+
+@pytest.mark.parametrize(
+    "value, allowed, reason",
+    [
+        # default WAN_NAME_ALLOWED_CHARS - full categories must match (issue #1299)
+        ("Edge on Windows - my_laptop", ["L", "N", "Pc", "Pd", "Zs"], "ok"),
+        ("hi there?", ["L", "N", "Pc", "Pd", "Zs"], "unallowed"),
+        # major categories still match every sub-category
+        ("Hello123", ["L", "N"], "ok"),
+        ("Hello there", ["L", "N"], "unallowed"),
+        # a full category doesn't allow its siblings
+        ("a-b", ["L", "Pc"], "unallowed"),
+        # no list - anything allowed
+        ("a-b?", None, "ok"),
+    ],
+)
+def test_input_svn_categories(value, allowed, reason):
+    assert input_svn(value, allowed, None)[0] == reason
