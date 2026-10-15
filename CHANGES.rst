@@ -12,6 +12,11 @@ Features & Improvements
 +++++++++++++++++++++++
 - (:issue:`1153`) Localize %(within)s variables using Babel instead of humanize.
 
+Fixes
++++++
+- (:issue:`1299`) Fix passkey names with spaces, hyphens or underscores being rejected
+  on register and delete.
+
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
 - Support for ``humanize`` has been removed and it is no longer included in the
