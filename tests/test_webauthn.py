@@ -702,6 +702,25 @@ def test_delete_json(app, clients, get_message):
     assert response.status_code == 200
 
 
+def test_name_spaces_dashes(app, clients):
+    # Default WAN_NAME_ALLOWED_CHARS allows spaces, hyphens and underscores -
+    # for both register and delete.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    name = "Edge on Windows - my_laptop"
+
+    authenticate(clients)
+    register_options, response_url = _register_start_json(clients, name=name)
+    response = clients.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    response = clients.get("/wan-register", headers=headers)
+    active_creds = response.json["response"]["registered_credentials"]
+    assert active_creds[0]["name"] == name
+
+    response = clients.post("/wan-delete", json=dict(name=name))
+    assert response.status_code == 200
+
+
 def test_disabled_account(app, client, get_message):
     # With USER_HINTS enabled, should get 200 on initial signin POST, but
     # not receive a list of registered credentials.
