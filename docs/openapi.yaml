@@ -260,7 +260,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /verify:
     get:
-      summary: GET verify/reauthentication form
+      summary: GET verify/reauthentication form/information.
       description: >
         If an endpoint is protected with @auth_required() with a freshness declaration
         this endpoint will be called to request an already signed in user to reauthenticate.
@@ -271,7 +271,7 @@ paths:
             text/html:
               schema:
                 type: string
-                description: render_template(SECURITY_VERIFY_TEMPLATE)
+                description: Verify form/template
                 example: render_template(SECURITY_VERIFY_TEMPLATE)
             application/json:
               schema:
@@ -279,7 +279,7 @@ paths:
                 properties:
                   has_webauthn_verify_credential:
                     type: boolean
-                    description: <
+                    description: >
                       True if caller has a registered WebAuthn Key which has a `usage` that
                       is allowed by the SECURITY_WAN_ALLOW_AS_VERIFY configuration setting.
                   oauth_enabled:
@@ -465,7 +465,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /change-email:
     get:
-      summary: GET change email form
+      summary: GET change email form.
       responses:
         200:
           description: change email form
@@ -473,7 +473,7 @@ paths:
             text/html:
               schema:
                 type: string
-                description: render_template(SECURITY_CHANGE_EMAIL_TEMPLATE)
+                description: change email form/template
                 example: render_template(SECURITY_CHANGE_EMAIL_TEMPLATE)
             application/json:
               schema:
@@ -504,11 +504,11 @@ paths:
           content:
             text/html:
               schema:
-                description: |
-                  Change email form (errors or not).
-                  If no errors then a confirmation instructions (with link) has been sent to the
-                  requested (new) email.
                 type: string
+                description: >
+                  Change email form (errors or not).
+                  If no errors then confirmation instructions (with link) have been sent to the
+                  requested (new) email.
                 example: render_template(SECURITY_CHANGE_EMAIL_TEMPLATE) with error values
             application/json:
               schema:
@@ -563,7 +563,7 @@ paths:
 
   /change-username:
     get:
-      summary: GET change username form
+      summary: GET change username form/information.
       responses:
         200:
           description: change username form
@@ -571,7 +571,7 @@ paths:
             text/html:
               schema:
                 type: string
-                description: render_template(SECURITY_CHANGE_USERNAME_TEMPLATE)
+                description: change username form/template
                 example: render_template(SECURITY_CHANGE_USERNAME_TEMPLATE)
             application/json:
               schema:
@@ -1294,35 +1294,42 @@ paths:
 
   /tf-setup:
     get:
-      summary: GET Two-factor authentication setup form/information
+      summary: GET Two-Factor authentication setup form/information
       responses:
         200:
-          description: Setup form
+          description: Setup form/information
           content:
             text/html:
               schema:
                 type: string
-                description: render_template(SECURITY_TWO_FACTOR_SETUP_TEMPLATE)
+                description: Two-Factor setup form
                 example: render_template(SECURITY_TWO_FACTOR_SETUP_TEMPLATE)
             application/json:
               schema:
-                type: object
-                properties:
-                  tf_required:
-                    type: string
-                    description: Config setting SECURITY_TWO_FACTOR_REQUIRED.
-                  tf_primary_method:
-                    type: string
-                    description: Current (if any) setup method (deprecated).
-                  tf_method:
-                    type: string
-                    description: Current (if any) setup method.
-                  tf_available_methods:
-                    type: string
-                    description: Config setting SECURITY_TWO_FACTOR_ENABLED_METHODS. If SECURITY_TWO_FACTOR_REQUIRED is false then 'disable' will be part of the set.
-                  tf_phone_number:
-                    type: string
-                    description: Currently configured (if any) phone number.
+                allOf:
+                  - $ref: "#/components/schemas/DefaultJsonResponseNoUser"
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          tf_required:
+                            type: string
+                            description: Config setting SECURITY_TWO_FACTOR_REQUIRED.
+                          tf_primary_method:
+                            type: string
+                            description: Current (if any) setup method (deprecated).
+                          tf_method:
+                            type: string
+                            description: Current (if any) setup method.
+                          tf_available_methods:
+                            type: array
+                            items:
+                              type: string
+                            description: Config setting SECURITY_TWO_FACTOR_ENABLED_METHODS. If SECURITY_TWO_FACTOR_REQUIRED is false then 'disable' will be part of the set.
+                          tf_phone_number:
+                            type: string
+                            description: Currently configured (if any) phone number.
     post:
       summary: Two-Factor setup.
       description: >
@@ -1426,7 +1433,7 @@ paths:
                 $ref: "#/components/schemas/DefaultJsonErrorResponse"
   /tf-validate:
     get:
-      summary: GET current two-factor validate code form
+      summary: GET Two-Factor validate code form/information
       responses:
         200:
           description: Code validation
@@ -1436,8 +1443,22 @@ paths:
                 description: >
                   If this is a normal, already setup method, then render_template(SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE) is returned.
                 type: string
+            application/json:
+              schema:
+                description: >
+                  If this is a normal, already setup method, user information is returned as well as possible recovery options.
+                allOf:
+                  - $ref: "#/components/schemas/DefaultJsonResponse"
+                  - type: object
+                    properties:
+                      response:
+                        type: object
+                        properties:
+                          recovery_options:
+                            type: object
+
     post:
-      summary: Send two-factor code.
+      summary: Send Two-Factor code.
       parameters:
         - $ref: "#/components/parameters/include_auth_token"
       requestBody:
@@ -1650,7 +1671,7 @@ paths:
             text/html:
               schema:
                 type: string
-                description: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
+                description: Multi-factor recovery code form
                 example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
             application/json:
               schema:
@@ -1663,12 +1684,12 @@ paths:
                         properties:
                           recovery_codes:
                             type: array
-                            description: A list of codes
+                            description: A list of codes if `show_codes` parameter is True
                             items:
                               type: string
 
     post:
-      summary: Generate a new set of one-time recovery codes
+      summary: Generate a new set of one-time recovery codes.
       responses:
         200:
           description: New one-time codes generated.
@@ -1689,7 +1710,7 @@ paths:
                               type: string
             text/html:
               schema:
-                description: New codes generated - render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
+                description: New codes generated included in Multi-factor recovery code form
                 type: string
                 example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_CODES_TEMPLATE)
         400:
@@ -1708,12 +1729,11 @@ paths:
         device.
       responses:
         200:
-          description: Multi-factor recovery form
+          description: Multi-factor recovery form/template
           content:
             text/html:
               schema:
                 type: string
-                description: render_template(SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE)
                 example: render_template(SECURITY_MULTI_FACTOR_RECOVERY_TEMPLATE)
             application/json:
               schema:
