@@ -3,19 +3,21 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
-Version 5.x.x
+Version 5.9.2
 -------------
 
-Released TBD
+Released October 21, 2026
 
 Features & Improvements
 +++++++++++++++++++++++
-- (:issue:`1153`) Localize %(within)s variables using Babel instead of humanize.
+- (:issue:`1153`) Localize %(within)s variables using Babel instead of humanize. (gissimo)
+- (:pr:`1307`) Add CI support for Python 3.15
 
 Fixes
 +++++
 - (:issue:`1299`) Fix passkey names with spaces, hyphens or underscores being rejected
-  on register and delete.
+  on register and delete. (jonnerd154)
+- (:pr:`1306`) Fix for latest Rapidoc (11) - used for openapi spec.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
@@ -23,6 +25,7 @@ Backwards Compatibility Concerns
   ``babel`` extra. Applications that use it directly must now install it themselves.
 - %(within)s variables are now localized using Babel if the application has
   initialized Flask-Babel, otherwise they are always in English.
+
 
 Version 5.9.1
 -------------
@@ -56,7 +59,7 @@ Features & Improvements
 - (:issue:`1228`) The ``tf_validity`` cookie name is now configurable via :py:data:`SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME`
 - (:issue:`1237`) Add support for CSRF on logout (default ``False``)
 - (:pr:`1241`) Convert all _WITHIN configuration variables to use timedelta
-- (:issue:`1153`) Enable localization of %(within)s variables using humanize
+- (:issue:`1153`) Enable localization of %(within)s variables using humanize - BACKED OUT in 5.9.2
 - (:pr:`1249`) Add link expiration to confirmation and reset password email templates.
 - (:issue:`536` Add template path configuration variables for all email templates.
 - (:issue:`1254`) Webauthn/passkey name input value is now sanitized and normalized. A new utility method
