@@ -6,6 +6,7 @@
 # Erich Seifert <dev@erichseifert.de>, 2017.
 # Pascua Theus <pascua@identeco.de>, 2021-2022
 # Stephan Wurm <stephan.wurm@a-eberle.de>, 2025
+# Pascua Theus <pascua@identeco.de>, 2026
 #
 msgid ""
 msgstr ""
@@ -13,7 +14,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: jwag956@github.com\n"
 "POT-Creation-Date: 2026-09-24 09:44-0700\n"
 "PO-Revision-Date: 2022-04-05 13:50+0200\n"
-"Last-Translator: Stephan Wurm <stephan.wurm@a-eberle.de>\n"
+"Last-Translator: Pascua Theus <pascua@identeco.de>\n"
 "Language: de_DE\n"
 "Language-Team: de_DE <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -156,6 +157,8 @@ msgid ""
 "An error occurred while communicating with the OAuth provider: "
 "(%(exerror)s - %(exdesc)s). Please try again."
 msgstr ""
+"Bei der Kommunikation mit dem OAuth-Anbieter ist ein Fehler aufgetreten: "
+"(%(exerror)s - %(exdesc)s). Bitte versuchen Sie es erneut."
 
 #: flask_security/core.py:531
 msgid "Password does not match"
@@ -245,7 +248,7 @@ msgstr "Ungültiger Code"
 
 #: flask_security/core.py:571
 msgid "Value entered is not valid for the field"
-msgstr ""
+msgstr "Der eingegebene Wert ist für dieses Feld ungültig"
 
 #: flask_security/core.py:575
 #, python-format
@@ -333,7 +336,7 @@ msgstr "Bitte neu anmelden, um auf diese Seite zuzugreifen."
 #: flask_security/core.py:616
 #, python-format
 msgid "Refresh token is invalid (%(reason)s)"
-msgstr ""
+msgstr "Refresh-Token ist ungültig (%(reason)s)"
 
 #: flask_security/core.py:617
 msgid "Reauthentication successful"
@@ -454,6 +457,8 @@ msgid ""
 "Passkey nicknames can contain only letters, numbers, and limited "
 "punctuation."
 msgstr ""
+"Passkey-Bezeichner dürfen nur Buchstaben, Ziffern und einige Satzzeichen "
+"enthalten."
 
 #: flask_security/core.py:696
 #, python-format
@@ -646,7 +651,7 @@ msgstr "Password bestätigen"
 
 #: flask_security/forms.py:104
 msgid "Google Authenticator"
-msgstr ""
+msgstr "Google Authenticator"
 
 #: flask_security/forms.py:105
 msgid "authenticator"
@@ -658,7 +663,7 @@ msgstr "E-Mail"
 
 #: flask_security/forms.py:108
 msgid "SMS"
-msgstr ""
+msgstr "SMS"
 
 #: flask_security/forms.py:109
 msgid "password"
@@ -674,7 +679,7 @@ msgstr "keine"
 
 #: flask_security/forms.py:725 flask_security/tokens.py:201
 msgid "Refresh Token"
-msgstr ""
+msgstr "Refresh-Token"
 
 #: flask_security/forms.py:1089 flask_security/unified_signin.py:176
 msgid "Available Methods"
@@ -839,7 +844,7 @@ msgstr "Mit einem Passkey anmelden"
 #: flask_security/templates/security/login_user.html:33
 #: flask_security/templates/security/us_signin.html:35
 msgid "Use Social Login to Sign In"
-msgstr ""
+msgstr "Verwende Social Login zum Anmelden"
 
 #: flask_security/templates/security/login_user.html:37
 #: flask_security/templates/security/us_signin.html:39
@@ -847,12 +852,12 @@ msgstr ""
 #: flask_security/templates/security/verify.html:28
 #, python-format
 msgid "Continue with %(provider)s"
-msgstr ""
+msgstr "Weiter mit %(provider)s"
 
 #: flask_security/templates/security/logout_user.html:2
 #: flask_security/templates/security/logout_user.html:7
 msgid "Confirm Sign Out"
-msgstr ""
+msgstr "Abmeldung bestätigen"
 
 #: flask_security/templates/security/mf_recovery.html:2
 #: flask_security/templates/security/mf_recovery.html:7
@@ -1023,7 +1028,7 @@ msgstr "Mit einem Passkey neu anmelden"
 #: flask_security/templates/security/us_verify.html:35
 #: flask_security/templates/security/verify.html:24
 msgid "Use Social Login to Reauthenticate"
-msgstr ""
+msgstr "Verwende Social Login zur Neuanmeldung"
 
 #: flask_security/templates/security/wan_register.html:5
 #: flask_security/templates/security/wan_register.html:16
@@ -1156,16 +1161,18 @@ msgstr "Jetzt anmelden"
 #, python-format
 msgid "Use <a href=\"%(reset_link)s\">this link</a> to reset your password."
 msgstr ""
+"Verwenden Sie <a href=\"%(reset_link)s\">diesen Link</a>, um Ihr Passwort"
+" zurückzusetzen."
 
 #: flask_security/templates/security/email/reset_instructions.txt:9
 #, python-format
 msgid "Use %(reset_link)s to reset your password."
-msgstr ""
+msgstr "Verwenden Sie %(reset_link)s, um Ihr Passwort zurückzusetzen."
 
 #: flask_security/templates/security/email/reset_notice.html:1
 #: flask_security/templates/security/email/reset_notice.txt:1
 msgid "Your password has been reset."
-msgstr ""
+msgstr "Ihr Passwort wurde zurückgesetzt."
 
 #: flask_security/templates/security/email/two_factor_instructions.html:1
 #: flask_security/templates/security/email/two_factor_instructions.txt:1
@@ -1187,7 +1194,7 @@ msgstr ""
 #: flask_security/templates/security/email/two_factor_instructions.txt:5
 #, python-format
 msgid "This code will expire in %(within)s."
-msgstr ""
+msgstr "Dieses Einmalpasswort läuft in %(within)s ab."
 
 #: flask_security/templates/security/email/two_factor_rescue.html:1
 #: flask_security/templates/security/email/two_factor_rescue.txt:1
@@ -1199,6 +1206,8 @@ msgstr "kann E-Mail-Konto nicht erreichen"
 #, python-format
 msgid "You can sign in to your account using the following code: %(code)s"
 msgstr ""
+"Sie können sich mit dem folgenden Einmalpasswort an Ihrem Account "
+"anmelden: %(code)s"
 
 #: flask_security/templates/security/email/us_instructions.html:13
 #, python-format
@@ -1209,7 +1218,7 @@ msgstr "Oder verwenden Sie folgenden Link: <a href=\"%(login_link)s\">Anmelden</
 #: flask_security/templates/security/email/us_instructions.txt:15
 #, python-format
 msgid "This code/link will expire in %(within)s."
-msgstr ""
+msgstr "Dieses Einmalpasswort bzw. dieser Link läuft in %(within)s ab."
 
 #: flask_security/templates/security/email/us_instructions.txt:13
 #, python-format
