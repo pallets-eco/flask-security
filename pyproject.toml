@@ -75,7 +75,7 @@ tests = [
     "qrcode",
     # authlib requires requests
     "requests",
-    "sqlalchemy<2.1",
+    "sqlalchemy",
     "sqlalchemy-utils",
     "webauthn",
     "zxcvbn",
