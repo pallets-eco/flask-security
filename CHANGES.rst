@@ -3,19 +3,31 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
-Version 5.x.x
+Version 5.9.3
 -------------
 
 Released TBD
 
+Fixes
++++++
+- (:pr:`xx`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
+  bypass single-use commitment.
+
+Version 5.9.2
+-------------
+
+Released October 21, 2026
+
 Features & Improvements
 +++++++++++++++++++++++
-- (:issue:`1153`) Localize %(within)s variables using Babel instead of humanize.
+- (:issue:`1153`) Localize %(within)s variables using Babel instead of humanize. (gissimo)
+- (:pr:`1307`) Add CI support for Python 3.15
 
 Fixes
 +++++
 - (:issue:`1299`) Fix passkey names with spaces, hyphens or underscores being rejected
-  on register and delete.
+  on register and delete. (jonnerd154)
+- (:pr:`1306`) Fix for latest Rapidoc (11) - used for openapi spec.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++
