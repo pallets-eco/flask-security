@@ -730,28 +730,30 @@ class UserDatastore:
         """Create a new refresh token tracker object in DB
         .. versionadded:: 5.9.0
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def find_refresh_tracker(self, refresh_family: str) -> RefreshTrackerMixin | None:
         """Returns a refresh tracker matching the id.
 
         .. versionadded:: 5.9.0
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
-    def exchange_refresh_tracker(self, refresh_tracker: RefreshTrackerMixin) -> None:
+    def exchange_refresh_tracker(
+        self, refresh_tracker: RefreshTrackerMixin
+    ) -> tuple[bool, RefreshTrackerMixin | None]:
         """
-        Bump the generation #. Expiration Time is NOT changed
+        Bump the generation #. Expiration Time is NOT changed.
+        This must be an atomic operation - if generation #'s don't match the
+        tracker shouldn't be updated and we return False.
+        We also return an updated refresh tracker (since some implementations
+        bypass the ORM layer - so callers should use the newly returned tracker).
 
         :param refresh_tracker: The refresh tracker to exchange.
 
         .. versionadded:: 5.9.0
         """
-        from .proxies import _security
-
-        refresh_tracker.gen += 1
-        refresh_tracker.last_used_at = _security.datetime_factory()
-        self.put(refresh_tracker)
+        raise NotImplementedError  # pragma: no cover
 
     def revoke_refresh_tracker(self, refresh_tracker: RefreshTrackerMixin) -> None:
         """Mark tracker as revoked.
@@ -919,15 +921,88 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
     def find_refresh_tracker(self, refresh_family: str) -> RefreshTrackerMixin | None:
         from sqlalchemy import select
 
-        if not self.refresh_tracker_model:  # pragma: no cover
+        rtm = self.refresh_tracker_model
+        if not rtm:  # pragma: no cover
             raise NotImplementedError
 
         return self.db.session.scalar(
-            select(self.refresh_tracker_model).where(
-                self.refresh_tracker_model.refresh_family
-                == refresh_family  # type: ignore
-            )
+            select(rtm).where(rtm.refresh_family == refresh_family)  # type: ignore
         )
+
+    def exchange_refresh_tracker(
+        self, refresh_tracker: RefreshTrackerMixin
+    ) -> tuple[bool, RefreshTrackerMixin | None]:
+        from sqlalchemy import update
+        from sqlalchemy.exc import OperationalError
+        from .proxies import _security
+
+        rtm = self.refresh_tracker_model
+        if not rtm:  # pragma: no cover
+            raise NotImplementedError
+
+        session = self.db.session
+        """
+        Things to consider:
+        - For some isolation levels (e.g. SERIALIZABLE/REPEATABLE READ) the DBAPI will
+          throw an exception which SQLAlchemy will throws as OperationalError.
+          This will cause all further commands to be ignored and the transaction to be
+          aborted.
+        - Ensuring the revoke completes successfully is important.
+        - According to Claude - these DBAPI errors can surface at commit time as well
+
+        Alternative approach would be to create/use a new session. This is slightly
+        more awkward due to our 3 different supported interfaces to SQLAlchemy.
+        """
+        try:
+            res = session.execute(
+                update(rtm)
+                .where(
+                    rtm.refresh_family
+                    == refresh_tracker.refresh_family,  # type: ignore[arg-type]
+                    rtm.gen == refresh_tracker.gen,  # type: ignore[arg-type]
+                )
+                .values(
+                    gen=refresh_tracker.gen + 1,
+                    last_used_at=_security.datetime_factory(),
+                )
+                .execution_options(synchronize_session=False, populate_existing=True)
+            )
+            # If we won commit now else revoke
+            if res.rowcount == 1:
+                self.commit()
+                return True, refresh_tracker
+            else:
+                refresh_tracker.revoked_at = _security.datetime_factory()
+                self.put(refresh_tracker)
+                self.commit()
+                return False, refresh_tracker
+        except OperationalError as e:  # pragma: no cover
+            # psycopg3 (sqlstate), psycopg2 (pgcode)
+            # pymysql/mariadb - sqlstate (HY000) and
+            #  e.orig.args[0] == 1020 (serialization failure) 1213 (deadlock)
+            if not e.orig:  # pragma: no cover
+                raise
+            mysql_cas = False
+            if getattr(e.orig, "sqlstate", None) in ["HY000"]:
+                if hasattr(e.orig, "args") and len(e.orig.args) > 0:
+                    mysql_cas = e.orig.args[0] in [1020, 1213]
+            postgres_cas = False
+            if getattr(e.orig, "sqlstate", getattr(e.orig, "pgcode", None)) in [
+                "40001",
+                "40P01",
+            ]:
+                postgres_cas = True
+            if not mysql_cas and not postgres_cas:
+                raise
+            session.rollback()
+            if not (
+                upd_tracker := self.find_refresh_tracker(refresh_tracker.refresh_family)
+            ):
+                return False, None
+            upd_tracker.revoked_at = _security.datetime_factory()
+            self.put(upd_tracker)
+            self.commit()
+            return False, upd_tracker
 
 
 class SQLAlchemySessionUserDatastore(SQLAlchemyUserDatastore, SQLAlchemyDatastore):
@@ -1054,7 +1129,7 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         return self.role_model.objects(name=role).first()
 
     def find_webauthn(self, credential_id: bytes) -> WebAuthnMixin | None:
-        if not self.webauthn_model:
+        if not self.webauthn_model:  # pragma: no cover
             raise NotImplementedError
 
         obj = self.webauthn_model.objects(  # type: ignore
@@ -1107,7 +1182,9 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
     ) -> RefreshTrackerMixin:
         from .proxies import _security
 
-        if not hasattr(self, "refresh_tracker_model") or not self.refresh_tracker_model:
+        if (
+            not hasattr(self, "refresh_tracker_model") or not self.refresh_tracker_model
+        ):  # pragma: no cover
             raise NotImplementedError
 
         refresh_tracker = self.refresh_tracker_model(
@@ -1131,6 +1208,25 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
             refresh_family=refresh_family
         ).first()
         return obj
+
+    def exchange_refresh_tracker(
+        self, refresh_tracker: RefreshTrackerMixin
+    ) -> tuple[bool, RefreshTrackerMixin | None]:
+        from .proxies import _security
+
+        if not self.refresh_tracker_model:  # pragma: no cover
+            raise NotImplementedError
+
+        won = self.refresh_tracker_model.objects(  # type: ignore[attr-defined]
+            refresh_family=refresh_tracker.refresh_family, gen=refresh_tracker.gen
+        ).update_one(inc__gen=1, last_used_at=_security.datetime_factory())
+        self.commit()
+        self.reload(refresh_tracker)
+        if not won:
+            refresh_tracker.revoked_at = _security.datetime_factory()
+            self.put(refresh_tracker)
+            self.commit()
+        return won, refresh_tracker
 
 
 class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
@@ -1238,7 +1334,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
             return False
 
     def find_webauthn(self, credential_id):
-        if not self.webauthn_model:
+        if not self.webauthn_model:  # pragma: no cover
             raise NotImplementedError
         try:
             return self.webauthn_model.filter(credential_id=credential_id).get()
@@ -1261,7 +1357,9 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
     ) -> None:
         from .proxies import _security
 
-        if not hasattr(self, "webauthn_model") or not self.webauthn_model:
+        if (
+            not hasattr(self, "webauthn_model") or not self.webauthn_model
+        ):  # pragma: no cover
             raise NotImplementedError
         webauthn = self.webauthn_model(
             user=user,
@@ -1288,7 +1386,9 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
     ) -> RefreshTrackerMixin:
         from .proxies import _security
 
-        if not hasattr(self, "refresh_tracker_model") or not self.refresh_tracker_model:
+        if (
+            not hasattr(self, "refresh_tracker_model") or not self.refresh_tracker_model
+        ):  # pragma: no cover
             raise NotImplementedError
 
         refresh_tracker = self.refresh_tracker_model(
@@ -1306,7 +1406,7 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
         return refresh_tracker
 
     def find_refresh_tracker(self, refresh_family: str) -> RefreshTrackerMixin | None:
-        if not self.refresh_tracker_model:
+        if not self.refresh_tracker_model:  # pragma: no cover
             raise NotImplementedError
         try:
             return self.refresh_tracker_model.filter(  # type: ignore[attr-defined]
@@ -1314,3 +1414,39 @@ class PeeweeUserDatastore(PeeweeDatastore, UserDatastore):
             ).get()
         except self.refresh_tracker_model.DoesNotExist:  # type: ignore[attr-defined]
             return None
+
+    def exchange_refresh_tracker(
+        self, refresh_tracker: RefreshTrackerMixin
+    ) -> tuple[bool, RefreshTrackerMixin | None]:
+        from .proxies import _security
+
+        if not self.refresh_tracker_model:  # pragma: no cover
+            raise NotImplementedError
+
+        rtm = self.refresh_tracker_model
+
+        won = (
+            rtm.update(  # type: ignore[attr-defined]
+                gen=refresh_tracker.gen + 1, last_used_at=_security.datetime_factory()
+            )
+            .where(
+                rtm.refresh_family == refresh_tracker.refresh_family,
+                rtm.gen == refresh_tracker.gen,
+            )
+            .execute()
+            == 1
+        )
+        self.commit()
+        if not (  # pragma: no cover
+            upd_tracker := self.find_refresh_tracker(
+                refresh_family=refresh_tracker.refresh_family
+            )
+        ):
+            return False, None
+
+        if not won:
+            upd_tracker.revoked_at = _security.datetime_factory()
+            self.put(upd_tracker)
+            self.commit()
+
+        return won, upd_tracker

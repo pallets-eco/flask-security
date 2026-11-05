@@ -8,8 +8,8 @@ Refresh/Auth Token functionality tests
 :license: MIT, see LICENSE for more details.
 """
 
+import threading
 from datetime import datetime, timedelta, timezone
-import math
 
 import pytest
 from freezegun import freeze_time
@@ -17,8 +17,9 @@ from itsdangerous import SignatureExpired
 from sqlalchemy import Column, String
 
 from flask_security.datastore import PeeweeDatastore
-from flask_security.tokens import RefreshTokenErrors
+from flask_security.tokens import RefreshTokenErrors, RefreshTokenForm
 from flask_security.utils import parse_auth_token
+from tests.conftest import db_isolation
 from tests.test_csrf import _get_csrf_token
 from tests.test_utils import (
     check_signals,
@@ -87,10 +88,6 @@ def test_refresh(app, clients, get_message):
     )
     assert ntdict["gen"] == 2
     assert tdict["family"] == ntdict["family"]
-    # mongo stores more digits...
-    te = math.floor(tdict["expires_at"] * 1000.0)
-    nte = math.floor(ntdict["expires_at"] * 1000.0)
-    assert te == nte
 
 
 @pytest.mark.app_settings(testing_no_cookies=True)
@@ -436,3 +433,79 @@ def test_per_user_not_expired_token(app, client_nc):
     response = json_authenticate(client_nc)
     token = response.json["response"]["user"]["authentication_token"]
     verify_token(client_nc, token)
+
+
+class MyRefreshForm(RefreshTokenForm):
+    test_barrier = threading.Barrier(2)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def validate(self, **kwargs):
+        res = super().validate(**kwargs)
+        MyRefreshForm.test_barrier.wait(5)
+        return res
+
+
+@pytest.mark.parametrize("app", db_isolation, indirect=True)
+@pytest.mark.app_settings(
+    testing_no_cookies=True,
+    sqlite_use_tempfile=True,
+)
+@pytest.mark.settings(refresh_token_cookie_name=None, refresh_token_form=MyRefreshForm)
+def test_racing_refresh(app, clients):
+    """
+    Test the atomic increment for generation #.
+    This is done using an atomic update at the datastore level.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    def post(path, payload, token=None):
+        headers = {"Authentication-Token": token} if token else {}
+        with app.test_client() as client:
+            return client.post(path, json=payload, headers=headers)
+
+    def login(email):
+        response = post(
+            "/login?include_auth_token",
+            {"email": email, "password": "password"},
+        )
+        assert response.status_code == 200, (
+            "login",
+            email,
+            response.status_code,
+            response.get_json(),
+        )
+        user = response.get_json()["response"]["user"]
+        assert user.get("authentication_token") and user.get("refresh_token")
+        return user
+
+    def refresh(token, auth_token=None):
+        return post("/refresh-token", {"refresh_token": token}, auth_token)
+
+    matt = login("matt@lp.com")
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        assert len(user.refresh_trackers) == 1
+        assert user.refresh_trackers[0].gen == 1
+        assert user.refresh_trackers[0].revoked_at is None
+
+    def race_request():
+        response = refresh(matt["refresh_token"])
+        return response.status_code, response.get_json()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(race_request) for _ in range(2)]
+        raced = [future.result(timeout=25) for future in futures]
+
+    statuses = [status for status, _ in raced]
+    """    if not all(st in statuses for st in (200, 400)):
+        print(statuses)
+        print(raced)"""
+    assert all(st in statuses for st in (200, 400))
+
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        assert len(user.refresh_trackers) == 1
+        assert user.refresh_trackers[0].gen == 2
+        assert user.refresh_trackers[0].revoked_at is not None

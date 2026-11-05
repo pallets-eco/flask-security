@@ -120,6 +120,16 @@ Each time a new authentication_token is requested (via the .refresh_token endpoi
 number of the refresh tracker entry is incremented, and a new refresh token is generated and returned.
 This effectively makes refresh tokens single use.
 
+.. warning::
+    To support single use of a refresh token, Flask-Security performs an atomic update
+    of the generation # (this is dependent on the underlying datastore). For many
+    datastores this is outside of the higher level ORM constructs. If the update races
+    then best practice security is to revoke the tracker immediately. That might require
+    rolling back the existing transaction, and does warrant commiting the revoked tracker
+    immediately. This behavior is very different than all other interactions Flask-Security
+    has with the datastore (which is start a session/transaction at request start, and commit
+    after the view exits).
+
 The ``.logout`` endpoint takes a ``refresh_token`` as an optional item - if supplied - that refresh token
 and the associated tracker will be revoked - this should be the best practice for any application. If the
 refresh token is being managed via a cookie, the cookie will be deleted.

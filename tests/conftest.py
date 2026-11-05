@@ -61,8 +61,16 @@ from tests.test_utils import convert_bool_option, populate_data
 
 # enable testing both register form options
 v2_param = [
-    pytest.param(dict(use_register_v2=True), id="use_register_v2-True"),
-    pytest.param(dict(use_register_v2=False), id="use_register_v2-False"),
+    pytest.param(dict(security_use_register_v2=True), id="use_register_v2-True"),
+    pytest.param(dict(security_use_register_v2=False), id="use_register_v2-False"),
+]
+
+db_isolation = [
+    pytest.param(
+        dict(sqlalchemy_engine_options=dict(isolation_level="SERIALIZABLE")),
+        id="SERIALIZABLE",
+    ),
+    pytest.param(dict(sqlalchemy_engine_options=dict()), id="DEFAULT"),
 ]
 
 
@@ -177,10 +185,10 @@ def app(request, pytestconfig):
     if flask_async_test is not None:
         pytest.importorskip("asgiref")  # from flask[async]
 
-    # allow parameterized tests to set security config variables
+    # allow parameterized tests to set config variables
     if hasattr(request, "param") and isinstance(request.param, Mapping):
         for key, value in request.param.items():
-            app.config["SECURITY_" + key.upper()] = value
+            app.config[key.upper()] = value
 
     # Override config settings as requested for this test
     settings = marker_getter("settings")
@@ -195,7 +203,7 @@ def app(request, pytestconfig):
     # allow pytest command line to override everything
     if request.config.option.setting:
         for s in request.config.option.setting:
-            key, value = s.split("=")
+            key, value = s.split("=", maxsplit=1)
             app.config[key.upper()] = convert_bool_option(value)
 
     app.mail = Mail(app)  # type: ignore
@@ -511,6 +519,7 @@ def mongoengine_setup(app, tmpdir, realmongodburl):
             User.drop_collection()
             Role.drop_collection()
             WebAuthn.drop_collection()
+            FsRefreshTracker.drop_collection()
             db.drop_database(db_name)
             disconnect_all()
 
@@ -537,7 +546,8 @@ def sqlalchemy_setup(app, tmpdir, realdburl):
         db_url, db_info = _setup_realdb(realdburl)
         app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     else:
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        db_url, db_info = _setup_sqlite_local(app, tmpdir)
+        app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 
     # In Flask-SQLAlchemy >= 3.0.0 queries are no longer logged automatically,
     # even in debug or testing mode.
@@ -586,12 +596,12 @@ def sqlalchemy_setup(app, tmpdir, realdburl):
 
     def tear_down():
         with app.app_context():
+            db.drop_all()
+            db.engine.dispose()  # make sure Flask-SQLAlchemy connections are closed
             if realdburl:
-                db.drop_all()
-                db.engine.dispose()  # make sure Flask-SQLAlchemy connections are closed
                 _teardown_realdb(db_info)
-            engine = db.engine
-            engine.dispose()
+            else:
+                _teardown_sqlite_local(db_info)
 
     return (
         SQLAlchemyUserDatastore(db, User, Role, WebAuthn, FsRefreshTracker),
@@ -656,10 +666,13 @@ def fsqlalite_setup(
     if realdburl:
         db_url, db_info = _setup_realdb(realdburl)
     else:
-        db_url = "sqlite:///:memory:"
+        db_url, db_info = _setup_sqlite_local(app, tmpdir)
+    engine_options = app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {})
+    engine_options.setdefault("pool_pre_ping", True)
+    engine_options.setdefault("url", db_url)
     app.config |= {
         "SQLALCHEMY_ENGINES": {
-            "default": {"url": db_url, "pool_pre_ping": True},
+            "default": engine_options,
         },
     }
     db = SQLAlchemy(app)
@@ -703,6 +716,8 @@ def fsqlalite_setup(
             engine.dispose()
             if realdburl:
                 _teardown_realdb(db_info)
+            else:
+                _teardown_sqlite_local(db_info)
 
     return (
         FSQLALiteUserDatastore(
@@ -749,7 +764,7 @@ def sqlalchemy_session_setup(app, tmpdir, realdburl, **engine_kwargs):
         db_url, db_info = _setup_realdb(realdburl)
         engine = db_info["engine"]
     else:
-        db_url = "sqlite:///:memory:"
+        db_url, db_info = _setup_sqlite_local(app, tmpdir)
         engine = create_engine(db_url, **engine_kwargs)
 
     db_session = scoped_session(
@@ -815,6 +830,8 @@ def sqlalchemy_session_setup(app, tmpdir, realdburl, **engine_kwargs):
             engine.dispose()
             if realdburl:
                 _teardown_realdb(db_info)
+            else:
+                _teardown_sqlite_local(db_info)
 
     return (
         SQLAlchemySessionUserDatastore(
@@ -849,17 +866,22 @@ def peewee_setup(app, tmpdir, realdburl):
         engine_mapper = {
             "postgresql": "peewee.PostgresqlDatabase",
             "mysql": "peewee.MySQLDatabase",
+            "sqlite": "peewee.SqliteDatabase",
         }
         db_url, db_info = _setup_realdb(realdburl)
         pieces = urlsplit(db_url)
         db_config = {
             "name": pieces.path[1:],
             "engine": engine_mapper[pieces.scheme.split("+")[0]],
-            "user": pieces.username,
-            "password": pieces.password,
-            "host": pieces.hostname,
-            "port": pieces.port,
         }
+        if pieces.username:
+            db_config["user"] = pieces.username
+        if pieces.password:
+            db_config["password"] = pieces.password
+        if pieces.hostname:
+            db_config["host"] = pieces.hostname
+        if pieces.port:
+            db_config["port"] = pieces.port
     else:
         f, path = tempfile.mkstemp(
             prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)
@@ -1169,7 +1191,7 @@ def realdburl(request):
     compared to sqlite
     To use postgres you need to of course run a postgres instance on localhost
     then pass in an extra arg to pytest:
-    --realdburl postgresql://<user>@localhost/
+    --realdburl postgresql+psycopg2://<user>@localhost/
     For mysql same - just download and add a root password.
     --realdburl "mysql+pymysql://root:<password>@localhost/"
     """
@@ -1209,3 +1231,22 @@ def _teardown_realdb(db_info):
     from sqlalchemy_utils import drop_database
 
     drop_database(db_info["engine"].url)
+
+
+def _setup_sqlite_local(app, tmpdir):
+    db_info = dict()
+    if app.config.get("SQLITE_USE_TEMPFILE", False):
+        # Some tests really don't work with in-memory
+        db_info["f"], db_info["path"] = tempfile.mkstemp(
+            prefix="flask-security-test-db", suffix=".db", dir=str(tmpdir)
+        )
+        db_url = f"sqlite:///{db_info['path']}"
+    else:
+        db_url = "sqlite:///:memory:"
+    return db_url, db_info
+
+
+def _teardown_sqlite_local(db_info):
+    if db_info.get("path", None):
+        os.close(db_info["f"])
+        os.remove(db_info["path"])
