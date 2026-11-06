@@ -322,7 +322,7 @@ Depending on configuration, there are 3 places CSRF tokens can be checked (in or
 CSRF: Single-Page-Applications and AJAX/XHR
 ++++++++++++++++++++++++++++++++++++++++++++
 If you are thinking about using authentication tokens in your browser-based UI - read
-`this article <https://stormpath.com/blog/where-to-store-your-jwts-cookies-vs-html5-web-storage>`_
+`this article <https://frontegg.com/blog/jwt-authentication>`_ (See Section 5 - Watch Out for XSS and CSRF Attacks)
 on how and where to store authentication tokens. While the
 article is talking about JWT it applies to Flask-Security tokens as well.
 
