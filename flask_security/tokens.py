@@ -255,17 +255,33 @@ def refresh() -> ResponseValue:
         assert form.user
         assert form.refresh_tracker
         after_this_request(_view_commit)
-        _datastore.exchange_refresh_tracker(form.refresh_tracker)
-        payload = dict()
-        payload["user"] = form.user.get_security_payload()
-        payload["user"]["authentication_token"] = form.user.get_auth_token()
 
-        refresh_token = get_refresh_token(form.refresh_tracker, form.user)
-        if cv("REFRESH_TOKEN_COOKIE_NAME"):
-            after_this_request(partial(set_refresh_token_cookie, token=refresh_token))
-        else:
-            payload["user"]["refresh_token"] = refresh_token
-        return _security._render_json(payload, 200, None, form.user)
+        # this does an atomic generation increment - so could fail if
+        # 2 threads are racing
+        won_race, form.refresh_tracker = _datastore.exchange_refresh_tracker(
+            form.refresh_tracker
+        )
+        if won_race:
+            payload = dict()
+            payload["user"] = form.user.get_security_payload()
+            payload["user"]["authentication_token"] = form.user.get_auth_token()
+
+            assert form.refresh_tracker
+            refresh_token = get_refresh_token(form.refresh_tracker, form.user)
+            if cv("REFRESH_TOKEN_COOKIE_NAME"):
+                after_this_request(
+                    partial(set_refresh_token_cookie, token=refresh_token)
+                )
+            else:
+                payload["user"]["refresh_token"] = refresh_token
+            return _security._render_json(payload, 200, None, form.user)
+        # race - exchange_refresh_tracker has already revoked.
+        form.refresh_errors = RefreshTokenErrors.GEN_MISMATCH
+        assert isinstance(form.refresh_token.errors, list)
+        form.refresh_token.errors.append(
+            get_message("REFRESH_TOKEN_INVALID", reason=form.refresh_errors.name)[0]
+        )
+        return base_render_json(form, include_user=False)
 
     # Failed validation - if it was a GEN_MISMATCH this could be a hack and we should
     # invalidate/revoke the entire token family.
