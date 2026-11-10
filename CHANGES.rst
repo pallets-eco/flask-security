@@ -3,6 +3,16 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.9.3
+-------------
+
+Released TBD
+
+Fixes
++++++
+- (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
+  bypass single-use commitment.
+
 Version 5.9.2
 -------------
 
