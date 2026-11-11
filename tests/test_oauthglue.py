@@ -594,7 +594,7 @@ def test_verify_spa(app, sqlalchemy_datastore, get_message):
     # this is what github would call
     response = client.get("/login/oauth-verify-response/github", follow_redirects=False)
     assert (
-        response.location == "//myui.com:8090/post_oauth_verify?"
+        response.headers["Location"] == "//myui.com:8090/post_oauth_verify?"
         "email=matt%40lp.com&identity=matt%40lp.com"
     )
 
