@@ -1406,7 +1406,7 @@ def test_open_redirect(app, client, get_message):
                 )
             if response.status_code in [302, 303]:
                 # this means it passed form validation but should have been quoted
-                assert check_location(app, response.location, o)
+                assert check_location(app, response.headers["Location"], o)
             elif response.status_code == 200:
                 # should have failed form validation
                 assert get_message("INVALID_REDIRECT") in response.data

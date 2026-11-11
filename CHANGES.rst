@@ -10,8 +10,12 @@ Released TBD
 
 Fixes
 +++++
-- (:pr:`xx`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
+- (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
+
+Docs and Chores
++++++++++++++++
+- (:pr:`xx`) Fix support for latest main branch of Werkzeug/Flask
 
 Version 5.9.2
 -------------
@@ -67,7 +71,7 @@ Features & Improvements
 - (:issue:`1228`) The ``tf_validity`` cookie name is now configurable via :py:data:`SECURITY_TWO_FACTOR_VALIDITY_COOKIE_NAME`
 - (:issue:`1237`) Add support for CSRF on logout (default ``False``)
 - (:pr:`1241`) Convert all _WITHIN configuration variables to use timedelta
-- (:issue:`1153`) Enable localization of %(within)s variables using humanize
+- (:issue:`1153`) Enable localization of %(within)s variables using humanize. *Backed out in 5.9.2*
 - (:pr:`1249`) Add link expiration to confirmation and reset password email templates.
 - (:issue:`536` Add template path configuration variables for all email templates.
 - (:issue:`1254`) Webauthn/passkey name input value is now sanitized and normalized. A new utility method

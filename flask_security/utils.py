@@ -47,7 +47,7 @@ from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
 
-from .quart_compat import best, get_quart_status
+from .quart_compat import get_quart_status
 from .proxies import _security, _datastore, _pwd_context, _hashing_context
 from .signals import user_authenticated
 
@@ -1266,13 +1266,7 @@ def _default_want_json(req):
     """
     if req.is_json:
         return True
-    # TODO should this handle json sub-types?
-    accept_mimetypes = req.accept_mimetypes
-    if not hasattr(req.accept_mimetypes, "best"):  # pragma: no cover
-        # Alright. we don't have the best property, lets add it ourselves.
-        # This is for quart compatibility
-        accept_mimetypes.best = best
-    if accept_mimetypes.best == "application/json":
+    if req.accept_mimetypes and req.accept_mimetypes.best == "application/json":
         return True
     return False
 
