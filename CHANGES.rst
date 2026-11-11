@@ -13,6 +13,10 @@ Fixes
 - (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
 
+Docs and Chores
++++++++++++++++
+- (:pr:`1315`) Fix support for latest main branch of Werkzeug/Flask
+
 Version 5.9.2
 -------------
 
