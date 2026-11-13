@@ -19,16 +19,6 @@ else:
     is_quart = False
 
 
-@property  # type: ignore
-def best(self):  # pragma: no cover
-    options = sorted(
-        self.options,
-        key=lambda option: (option.value != "*", option.quality, option.value),
-        reverse=True,
-    )
-    return options[0].value
-
-
 def get_quart_status():
     """
     Tests if we are using Quart Patched Flask or Vanilla Flask.
