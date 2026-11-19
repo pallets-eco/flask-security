@@ -1807,3 +1807,49 @@ def test_override_tf_required_admin(app, client, get_message):
     response = client.post("/login", json=data)
     assert response.status_code == 200
     assert response.json["response"]["tf_required"]
+
+
+def test_cross_user(app, client, get_message):
+    """
+    Test GHSA-xmfm-chhh-ch9j Identity binding with state based setup.
+    jill is the attacker - getting a 2FA setup token
+    We use that token with matt to show that we can control his second factor
+    """
+    response = authenticate(client, "jill@lp.com")
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(setup="sms", phone="+442083661177")
+    response = client.post("/tf-setup", json=data)
+    assert response.status_code == 200
+    state_token = response.json["response"]["tf_state_token"]
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+    client.post("/logout")
+
+    # sign in as matt
+    authenticate(client, "matt@lp.com")
+
+    # finish up tf-setup with jill's token!
+    response = client.post(f"/tf-setup/{state_token}", json=dict(code=code))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
+
+    """
+    Without fix
+    assert response.status_code == 200
+    client.post("/logout")
+
+    data = dict(email="matt@lp.com", password="password")
+    response = client.post("/login", json=data)
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+    assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_primary_method"] == "sms"
+
+    # jill knows the code!
+    response = client.post("/tf-validate", json=dict(code=code))
+    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
+    """

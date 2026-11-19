@@ -1952,3 +1952,27 @@ def test_name_normalize(app, client, get_message):
     alt_name = "Imnumber\N{LATIN CAPITAL LETTER I}"
     response = client.post("/wan-delete", json=dict(name=alt_name))
     assert response.status_code == 200
+
+
+def test_cross_user(app, client, get_message):
+    """
+    Test GHSA-xmfm-chhh-ch9j Identity binding with state based setup.
+    jill is the attacker - getting a 2FA setup token
+    We use that token with matt to show that we can control his second factor
+    """
+    response = authenticate(client, "jill@lp.com")
+
+    register_options, response_url = _register_start_json(client, usage="first")
+    assert register_options["rp"]["name"] == "My Flask App"
+    assert register_options["user"]["name"] == "jill@lp.com"
+    client.post("/logout")
+
+    # sign in as matt
+    authenticate(client, "matt@lp.com")
+
+    # finish up register with Jill's token!
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )

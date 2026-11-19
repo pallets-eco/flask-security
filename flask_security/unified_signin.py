@@ -83,6 +83,7 @@ from .utils import (
     get_message,
     get_url,
     _handle_already_auth,
+    hash_data,
     is_user_authenticated,
     localize_callback,
     login_user,
@@ -873,6 +874,7 @@ def us_setup() -> ResponseReturnValue:
                 assert form.phone.data is not None
                 phone_number = _security.phone_util.get_canonical_form(form.phone.data)
             state = {
+                "uid": hash_data(str(current_user.fs_uniquifier)),
                 "totp_secret": totp,
                 "chosen_method": add_method,
                 "phone_number": phone_number,
@@ -991,9 +993,12 @@ def us_setup_validate(token: str) -> ResponseReturnValue:
     expired, invalid, state = check_and_get_token_status(
         token, "us_setup", cv("US_SETUP_WITHIN")
     )
+    # verify token is bound to current user GHSA-xmfm-chhh-ch9j
+    if state and hash_data(str(current_user.fs_uniquifier)) != state.get("uid", None):
+        invalid = True
     if invalid:
         m, c = get_message("API_ERROR")
-    if expired:
+    elif expired:
         m, c = get_message("US_SETUP_EXPIRED", within=_td_format(cv("US_SETUP_WITHIN")))
     if invalid or expired:
         if _security._want_json(request):
