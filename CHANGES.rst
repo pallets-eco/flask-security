@@ -6,13 +6,13 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.9.3
 -------------
 
-Released TBD
+Released November 19, 2026
 
 Fixes
 +++++
 - (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
-- (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+- (:pr:`1318`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
   webauthn register and unified signin setup.
 
 Docs and Chores
