@@ -12,10 +12,17 @@ Fixes
 +++++
 - (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
+- (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+  webauthn register and unified signin setup.
 
 Docs and Chores
 +++++++++++++++
 - (:pr:`1315`) Fix support for latest main branch of Werkzeug/Flask
+
+Notes
++++++
+Outstanding state tokens will not be accepted - this shouldn't be a big issue
+since they all have fairly short lifetimes.
 
 Version 5.9.2
 -------------
