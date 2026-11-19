@@ -3,6 +3,22 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.7.2
+-------------
+
+Released TBD
+
+Fixes
++++++
+- (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+  webauthn register and unified signin setup.
+- (:pr:`1296`) Fix open-redirect GHSA-ccgp-pv8r-95wm
+
+Notes
++++++
+Outstanding state tokens will not be accepted - this shouldn't be a big issue
+since they all have fairly short lifetimes.
+
 Version 5.7.1
 -------------
 
@@ -473,7 +489,7 @@ Backwards Compatibility Concerns
 
 - To align with the W3C WebAuthn Level2 and 3 spec - transports are now part of the registration response.
   This has been changed BOTH in the server code (using webauthn data structures) as well as the sample
-  javascript code. If an application has their own javascript front end code - it might need to be changed.
+  JavaScript code. If an application has their own JavaScript front end code - it might need to be changed.
 - The tf_validity feature :py:data:`SECURITY_TWO_FACTOR_ALWAYS_VALIDATE` used to set a cookie if the request was
   form based, and return the token as part of a JSON response. Now, this feature is ONLY cookie based and the token
   is no longer returned as part of any response.
