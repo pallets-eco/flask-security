@@ -6,11 +6,11 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.8.4
 -------------
 
-Released TBD
+Released November 19, 2026
 
 Fixes
 +++++
-- (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+- (:pr:`1320`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
   webauthn register and unified signin setup.
 
 Notes
