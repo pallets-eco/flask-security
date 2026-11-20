@@ -99,6 +99,7 @@ from .utils import (
     get_post_verify_redirect,
     get_url,
     get_within_delta,
+    hash_data,
     login_user,
     lookup_identity,
     propagate_next,
@@ -454,6 +455,7 @@ def webauthn_register() -> ResponseValue:
                 == UserVerificationRequirement.REQUIRED
             )
         state = {
+            "uid": hash_data(str(current_user.fs_uniquifier)),
             "challenge": challenge,
             "name": form.name.data,
             "usage": form.usage.data,
@@ -525,6 +527,9 @@ def webauthn_register_response(token: str) -> ResponseValue:
     expired, invalid, state = check_and_get_token_status(
         token, "wan", get_within_delta("WAN_REGISTER_WITHIN")
     )
+    # verify token is bound to current user GHSA-xmfm-chhh-ch9j
+    if state and hash_data(str(current_user.fs_uniquifier)) != state.get("uid", None):
+        invalid = True
     if invalid:
         m, c = get_message("API_ERROR")
     if expired:

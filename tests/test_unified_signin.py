@@ -2376,3 +2376,31 @@ def test_us_setup_authenticator_sms(app, client, get_message):
     assert len(chosen_methods_choices) == 2
     assert chosen_methods_choices[0][0] == "authenticator"
     assert chosen_methods_choices[1][0] == "sms"
+
+
+def test_cross_user(app, client, get_message):
+    """
+    Test GHSA-xmfm-chhh-ch9j Identity binding with state based setup.
+    jill is the attacker - getting a 2FA setup token
+    We use that token with matt to show that we can control his second factor
+    """
+    response = authenticate(client, "jill@lp.com")
+
+    sms_sender = SmsSenderFactory.createSender("test")
+    data = dict(chosen_method="sms", phone="650-555-1212")
+    response = client.post("/us-setup", json=data)
+    assert response.status_code == 200
+    state_token = response.json["response"]["state"]
+    assert sms_sender.get_count() == 1
+    code = sms_sender.messages[0].split()[-1]
+    client.post("/logout")
+
+    # sign in as matt
+    authenticate(client, "matt@lp.com")
+
+    # finish up tf-setup with jill's token!
+    response = client.post(f"/us-setup/{state_token}", json=dict(passcode=code))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "API_ERROR"
+    )
