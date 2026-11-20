@@ -117,6 +117,7 @@ from .utils import (
     get_within_delta,
     get_url,
     handle_already_auth,
+    hash_data,
     hash_password,
     is_user_authenticated,
     localize_callback,
@@ -794,6 +795,7 @@ def two_factor_setup():
         state_token = None
         if changing:
             state = {
+                "uid": hash_data(str(user.fs_uniquifier)),
                 "totp_secret": totp,
                 "method": pm,
                 "phone": phone,
@@ -912,9 +914,12 @@ def two_factor_setup_validate(token: str) -> ResponseValue:
     expired, invalid, state = check_and_get_token_status(
         token, "tf_setup", get_within_delta("TWO_FACTOR_SETUP_WITHIN")
     )
+    # verify token is bound to current user GHSA-xmfm-chhh-ch9j
+    if state and hash_data(str(current_user.fs_uniquifier)) != state.get("uid", None):
+        invalid = True
     if invalid:
         m, c = get_message("API_ERROR")
-    if expired:
+    elif expired:
         m, c = get_message(
             "TWO_FACTOR_SETUP_EXPIRED", within=cv("TWO_FACTOR_SETUP_WITHIN")
         )

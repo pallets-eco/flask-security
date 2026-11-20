@@ -3,6 +3,21 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
+Version 5.8.4
+-------------
+
+Released TBD
+
+Fixes
++++++
+- (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+  webauthn register and unified signin setup.
+
+Notes
++++++
+Outstanding state tokens will not be accepted - this shouldn't be a big issue
+since they all have fairly short lifetimes.
+
 Version 5.8.3
 -------------
 
