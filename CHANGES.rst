@@ -12,7 +12,6 @@ Fixes
 +++++
 - (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
   webauthn register and unified signin setup.
-- (:pr:`1296`) Fix open-redirect GHSA-ccgp-pv8r-95wm
 
 Notes
 +++++
