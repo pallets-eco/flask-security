@@ -14,6 +14,7 @@ Fixes
   webauthn register and unified signin setup.
 - (:issue:`1222`) Possible open-redirect with ALLOW_SUBDOMAIN option.
 - (:pr:`xx`) Fix open-redirect GHSA-ccgp-pv8r-95wm
+- (:pr:`xx`) Fix GHSA-f66q-9rf6-8795 - webauthn /verify could be satisfied by any user on the system
 
 Notes
 +++++
