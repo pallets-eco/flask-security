@@ -1169,7 +1169,7 @@ def test_verify_fresh(app, client, get_message):
     assert b"Fresh Only" in response.data
 
 
-def test_verify_fresh_json(app, client, get_message, signals):
+def test_verify_fresh_json(app, client, get_message):
     # Hit a fresh-required endpoint and walk through verify
     authenticate(client)
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
