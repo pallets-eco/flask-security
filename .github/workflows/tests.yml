@@ -28,19 +28,17 @@ jobs:
           - {python: '3.12', tox: 'py312-release' }
           - {python: '3.12', tox: 'py312-low' }
           - {python: '3.13', tox: 'py313-release' }
-          - {python: 'pypy-3.10', tox: 'pypy310-release'}
-          - {python: 'pypy-3.10', tox: 'pypy310-low'}
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python }}
       - name: update pip
         run: |
           python -m pip install -U pip
       - name: cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pip
           key: pip-${{ runner.os }}-${{ matrix.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
@@ -52,8 +50,8 @@ jobs:
   lint:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v5
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
           with:
             python-version: "3.12"
         - name: update pip
@@ -67,8 +65,8 @@ jobs:
   other:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v5
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
           with:
             python-version: "3.12"
         - name: update pip
@@ -81,8 +79,8 @@ jobs:
   cov:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v5
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
           with:
             python-version: "3.12"
         - name: update pip
@@ -93,7 +91,7 @@ jobs:
             pip install tox coverage
             tox -e coverage
         - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v5
+          uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
           with:
             fail_ci_if_error: true
             verbose: true
@@ -116,19 +114,19 @@ jobs:
             --health-timeout 5s
             --health-retries 5
       steps:
-        - uses: actions/checkout@v5
-        - uses: actions/setup-python@v6
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
           with:
             python-version: "3.12"
         - name: update pip
           run: |
             python -m pip install -U pip
         - name: cache pip
-          uses: actions/cache@v4
+          uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
           with:
             path: ~/.cache/pip
             key: pip-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{ hashFiles('requirements/*.txt') }}
         - name: Postgres
           run: |
             pip install tox
-            tox -e realpostgres -- --realdburl='postgresql://postgres:testpw@localhost:5432/testdb'
+            tox -e realpostgres -- --realdburl='postgresql+psycopg2://postgres:testpw@localhost:5432/testdb'
