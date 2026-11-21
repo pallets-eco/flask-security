@@ -6,15 +6,15 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.7.2
 -------------
 
-Released TBD
+Released November 21, 2026
 
 Fixes
 +++++
-- (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+- (:pr:`1325`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
   webauthn register and unified signin setup.
 - (:issue:`1222`) Possible open-redirect with ALLOW_SUBDOMAIN option.
-- (:pr:`xx`) Fix open-redirect GHSA-ccgp-pv8r-95wm
-- (:pr:`xx`) Fix GHSA-f66q-9rf6-8795 - webauthn /verify could be satisfied by any user on the system
+- (:pr:`1327`) Fix open-redirect GHSA-ccgp-pv8r-95wm
+- (:pr:`1328`) Fix GHSA-f66q-9rf6-8795 - webauthn /verify could be satisfied by any user on the system
 
 Notes
 +++++
