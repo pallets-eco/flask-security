@@ -1976,3 +1976,119 @@ def test_cross_user(app, client, get_message):
     assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
         "API_ERROR"
     )
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_deleted_on_last_secondary_wan_delete(app, clients, get_message):
+    # Deleting the last secondary WebAuthn credential (with no other MFA active)
+    # deletes recovery codes, while deleting a primary credential or one of
+    # multiple secondary credentials preserves them.
+    client = clients
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    authenticate(client)
+
+    # Register one primary ("first") and two secondary WebAuthn credentials
+    _, response_url = _register_start_json(client, name="first1", usage="first")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA_UV)))
+    assert response.status_code == 200
+
+    _, response_url = _register_start_json(client, name="sec1", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    _, response_url = _register_start_json(client, name="sec2", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA2)))
+    assert response.status_code == 200
+
+    # Generate recovery codes
+    response = client.post("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    # Deleting primary ("first") credential must NOT delete recovery codes
+    response = client.post("/wan-delete", json=dict(name="first1"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == codes
+
+    # Deleting one of two secondary credentials must NOT delete recovery codes
+    response = client.post("/wan-delete", json=dict(name="sec1"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == codes
+
+    # Deleting the last secondary credential MUST delete recovery codes
+    response = client.post("/wan-delete", json=dict(name="sec2"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == []
+
+    # Re-register a secondary key and verify old recovery codes are rejected
+    _, response_url = _register_start_json(client, name="sec3", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/login", json=dict(email="matt@lp.com", password="password")
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    response = client.post("/mf-recovery", json=dict(code=codes[0]))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_RECOVERY_CODE"
+    )
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_kept_while_other_mfa_active(app, client, get_message):
+    # Recovery codes are kept when one MFA method is disabled if another MFA
+    # method remains active, and deleted once the final MFA method is removed.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    authenticate(client)
+
+    # Enable both code-based 2FA (sms) and WebAuthn secondary MFA
+    setup_tf_sms(client)
+    _, response_url = _register_start_json(client, name="sec1", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    # Disable code-based 2FA: WebAuthn secondary is still active -> codes preserved
+    response = client.post("/tf-setup", json=dict(setup="disable"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == codes
+
+    # Now remove WebAuthn secondary -> no MFA left -> codes deleted
+    response = client.post("/wan-delete", json=dict(name="sec1"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == []
+
+    # Test reverse order: delete WebAuthn secondary first, then disable 2FA
+    setup_tf_sms(client)
+    _, response_url = _register_start_json(client, name="sec2", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA2)))
+    assert response.status_code == 200
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    codes2 = response.json["response"]["recovery_codes"]
+    assert len(codes2) == 5
+
+    response = client.post("/wan-delete", json=dict(name="sec2"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == codes2
+
+    response = client.post("/tf-setup", json=dict(setup="disable"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == []
