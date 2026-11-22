@@ -41,8 +41,8 @@ class Datastore:
         raise NotImplementedError
 
     def reload(self, model):
-        # Some ORMs (mongoengine) don't update in-memory objects if referenced fields
-        # are deleted/modified. Code must reload() explicitly
+        # Some ORMs (mongoengine, sqlalchemy) don't update in-memory objects if
+        # referenced fields are deleted/modified. Code must reload() explicitly.
         pass
 
 
@@ -96,6 +96,10 @@ class SQLAlchemyDatastore(Datastore):
 
     def delete(self, model):
         self.db.session.delete(model)
+
+    def reload(self, model):
+        self.db.session.flush()
+        self.db.session.refresh(model)
 
 
 class MongoEngineDatastore(Datastore):

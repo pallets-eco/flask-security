@@ -826,6 +826,13 @@ def webauthn_delete() -> ResponseReturnValue:
             name=cred.name,
         )
         _datastore.delete_webauthn(cred)
+        _datastore.reload(current_user)
+        if (
+            cv("MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE")
+            and not _security.two_factor_plugins.get_setup_tf_methods(current_user)
+            and _datastore.mf_get_recovery_codes(current_user)
+        ):
+            _datastore.mf_set_recovery_codes(current_user, None)
         if _security._want_json(request):
             return base_render_json(form)
         msg, c = get_message("WEBAUTHN_CREDENTIAL_DELETED", name=form.clean_name)
