@@ -10,6 +10,8 @@ Released TBD
 
 Fixes
 +++++
+- (:issue:`1317`) Delete any recovery codes when a user disables MFA (controlled by
+  :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE`).
 - (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
 - (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,

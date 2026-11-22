@@ -2166,6 +2166,16 @@ Recovery Codes
 
     .. versionadded:: 5.1.0
 
+.. py:data:: SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE
+
+    If ``True``, any existing recovery codes will be deleted when a user disables
+    their last active multi-factor authentication method (two-factor authentication
+    or secondary WebAuthn credential).
+
+    Default: ``True``
+
+    .. versionadded:: 5.9.3
+
 Additional relevant configuration variables:
 
     * :py:data:`SECURITY_FRESHNESS` - Used to protect /mf-recovery-codes.

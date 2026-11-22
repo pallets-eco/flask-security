@@ -335,3 +335,100 @@ def test_rc_json_encrypted_multi(app, client, get_message):
     assert response.json["response"]["tf_required"]
     response = client.post("/mf-recovery", json=dict(code=matt_codes[0]))
     assert response.status_code == 200
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_deleted_on_tf_disable(app, clients, get_message):
+    # Disabling 2FA when no other MFA is configured deletes recovery codes so
+    # old codes cannot be reused if MFA is later re-enabled.
+    client = clients
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    tf_authenticate(app, client)
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    # Disable 2FA
+    response = client.post("/tf-setup", json=dict(setup="disable"))
+    assert response.status_code == 200
+
+    # Recovery codes should be deleted
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    assert response.json["response"]["recovery_codes"] == []
+
+    # Re-enable 2FA and verify old recovery codes no longer work
+    setup_tf_sms(client)
+    logout(client)
+
+    response = client.post("/login", json=dict(email="gal@lp.com", password="password"))
+    assert response.json["response"]["tf_required"]
+
+    response = client.get("/tf-rescue", headers=headers)
+    assert "recovery_code" not in response.json["response"]["recovery_options"]
+
+    response = client.post("/mf-recovery", json=dict(code=codes[0]))
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "INVALID_RECOVERY_CODE"
+    )
+
+    with app.app_context():
+        user = app.security.datastore.find_user(email="gal@lp.com")
+        assert app.security.datastore.mf_get_recovery_codes(user) == []
+
+
+@pytest.mark.settings(multi_factor_recovery_codes=True)
+def test_rc_deleted_on_tf_disable_form(app, client, get_message):
+    # Form-based 2FA disable also deletes recovery codes.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    tf_authenticate(app, client)
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    assert len(response.json["response"]["recovery_codes"]) == 5
+
+    response = client.post(
+        "/tf-setup", data=dict(setup="disable"), follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert get_message("TWO_FACTOR_DISABLED") in response.data
+
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == []
+
+
+@pytest.mark.settings(
+    multi_factor_recovery_codes=True,
+    multi_factor_recovery_codes_delete_on_disable=False,
+)
+def test_rc_kept_on_tf_disable_when_configured(app, client, get_message):
+    # When SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE is False,
+    # disabling 2FA preserves existing recovery codes.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    tf_authenticate(app, client)
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    # Disable 2FA
+    response = client.post("/tf-setup", json=dict(setup="disable"))
+    assert response.status_code == 200
+
+    # Recovery codes should be preserved
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    assert response.json["response"]["recovery_codes"] == codes
+
+    # Re-enable 2FA and verify existing recovery codes still work
+    setup_tf_sms(client)
+    logout(client)
+
+    response = client.post("/login", json=dict(email="gal@lp.com", password="password"))
+    assert response.json["response"]["tf_required"]
+
+    response = client.post("/mf-recovery", json=dict(code=codes[0]))
+    assert response.status_code == 200
