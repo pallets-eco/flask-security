@@ -278,6 +278,7 @@ _default_config: dict[str, t.Any] = {
     "MULTI_FACTOR_RECOVERY_TEMPLATE": "security/mf_recovery.html",
     "MULTI_FACTOR_RECOVERY_CODES_KEYS": None,
     "MULTI_FACTOR_RECOVERY_CODE_TTL": None,
+    "MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE": True,
     "OAUTH_ENABLE": False,
     "OAUTH_BUILTIN_PROVIDERS": ["github", "google"],
     "OAUTH_START_URL": "/login/oauthstart",

@@ -2092,3 +2092,44 @@ def test_rc_kept_while_other_mfa_active(app, client, get_message):
     assert response.status_code == 200
     response = client.get("/mf-recovery-codes", headers=headers)
     assert response.json["response"]["recovery_codes"] == []
+
+
+@pytest.mark.settings(
+    multi_factor_recovery_codes=True,
+    multi_factor_recovery_codes_delete_on_disable=False,
+)
+def test_rc_kept_on_wan_delete_when_configured(app, client, get_message):
+    # When SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE is False,
+    # deleting the last secondary WebAuthn credential preserves recovery codes.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    authenticate(client)
+
+    _, response_url = _register_start_json(client, name="sec1", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+
+    response = client.post("/mf-recovery-codes", headers=headers)
+    assert response.status_code == 200
+    codes = response.json["response"]["recovery_codes"]
+    assert len(codes) == 5
+
+    # Delete the last secondary credential -> codes must be preserved
+    response = client.post("/wan-delete", json=dict(name="sec1"))
+    assert response.status_code == 200
+    response = client.get("/mf-recovery-codes", headers=headers)
+    assert response.json["response"]["recovery_codes"] == codes
+
+    # Re-register a secondary key and verify existing recovery codes still work
+    _, response_url = _register_start_json(client, name="sec2", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA2)))
+    assert response.status_code == 200
+    logout(client)
+
+    response = client.post(
+        "/login", json=dict(email="matt@lp.com", password="password")
+    )
+    assert response.status_code == 200
+    assert response.json["response"]["tf_required"]
+
+    response = client.post("/mf-recovery", json=dict(code=codes[0]))
+    assert response.status_code == 200

@@ -825,25 +825,13 @@ def webauthn_delete() -> ResponseReturnValue:
             user=current_user,
             name=cred.name,
         )
-        is_secondary = _is_cred_usable(cred, "secondary")
-        has_other_secondary = is_secondary and any(
-            c.credential_id != cred.credential_id and _is_cred_usable(c, "secondary")
-            for c in current_user.webauthn
-        )
         _datastore.delete_webauthn(cred)
+        _datastore.reload(current_user)
         if (
-            is_secondary
-            and not has_other_secondary
-            and hasattr(current_user, "mf_recovery_codes")
+            cv("MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE")
+            and not _security.two_factor_plugins.get_setup_tf_methods(current_user)
             and _datastore.mf_get_recovery_codes(current_user)
-            and not any(
-                m != "webauthn"
-                for m, _ in _security.two_factor_plugins.get_setup_tf_methods(
-                    current_user
-                )
-            )
         ):
-            _datastore.reload(current_user)
             _datastore.mf_set_recovery_codes(current_user, None)
         if _security._want_json(request):
             return base_render_json(form)

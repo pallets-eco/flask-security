@@ -166,15 +166,16 @@ def _set_rescue_options(form: TwoFactorRescueForm, user: UserMixin) -> dict[str,
 def tf_disable(user: UserMixin) -> None:
     """Disable two factor for user.
 
-    If the user has no other active MFA methods, any generated recovery codes
-    are also deleted.
+    If :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE` is
+    ``True`` and the user has no other active MFA methods, any generated
+    recovery codes are also deleted.
     """
     tf_clean_session()
     _datastore.tf_reset(user)
     if (
-        hasattr(user, "mf_recovery_codes")
-        and _datastore.mf_get_recovery_codes(user)
+        cv("MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE")
         and not _security.two_factor_plugins.get_setup_tf_methods(user)
+        and _datastore.mf_get_recovery_codes(user)
     ):
         _datastore.mf_set_recovery_codes(user, None)
     tf_disabled.send(
