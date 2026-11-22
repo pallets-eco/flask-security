@@ -6,7 +6,7 @@ Here you can see the full list of changes between each Flask-Security release.
 Version 5.9.3
 -------------
 
-Released TBD
+Released November 19, 2026
 
 Fixes
 +++++
@@ -14,12 +14,12 @@ Fixes
   :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE`).
 - (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
-- (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+- (:pr:`1318`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
   webauthn register and unified signin setup.
 
 Docs and Chores
 +++++++++++++++
-- (:pr:`xx`) Fix support for latest main branch of Werkzeug/Flask
+- (:pr:`1315`) Fix support for latest main branch of Werkzeug/Flask
 
 Notes
 +++++
@@ -163,6 +163,30 @@ Notes
   be added by the application. This model has been added to the `fsqla` and `sqla`
   all-inclusive models and their respective versions have been bumped.
 
+Version 5.8.4
+-------------
+
+Released November 19, 2026
+
+Fixes
++++++
+- (:pr:`1320`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+  webauthn register and unified signin setup.
+
+Notes
++++++
+Outstanding state tokens will not be accepted - this shouldn't be a big issue
+since they all have fairly short lifetimes.
+
+Version 5.8.3
+-------------
+
+Released September 30, 2026
+
+Fixes
++++++
+- (:pr:`1296`) Fix open-redirect GHSA-ccgp-pv8r-95wm
+
 Version 5.8.2
 -------------
 
@@ -221,6 +245,24 @@ Docs and Chores
 - (:pr:`1196`) Update arabic translations (samialfattani)
 - (:pr:`1199`) Update it_IT translations (gissimo)
 - (:pr:`1185`) Change external facing terminology from 'Social OAuth' to 'Social Login'.
+
+Version 5.7.2
+-------------
+
+Released November 21, 2026
+
+Fixes
++++++
+- (:pr:`1325`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
+  webauthn register and unified signin setup.
+- (:issue:`1222`) Possible open-redirect with ALLOW_SUBDOMAIN option.
+- (:pr:`1327`) Fix open-redirect GHSA-ccgp-pv8r-95wm
+- (:pr:`1328`) Fix GHSA-f66q-9rf6-8795 - webauthn /verify could be satisfied by any user on the system
+
+Notes
++++++
+Outstanding state tokens will not be accepted - this shouldn't be a big issue
+since they all have fairly short lifetimes.
 
 Version 5.7.1
 -------------
