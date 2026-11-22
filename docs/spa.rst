@@ -53,6 +53,7 @@ An example configuration:
     SECURITY_RESET_ERROR_VIEW = "/reset-password-error"
     SECURITY_LOGIN_ERROR_VIEW = "/login-error"
     SECURITY_POST_OAUTH_LOGIN_VIEW = "/post-oauth-login"
+    SECURITY_POST_OAUTH_TWO_FACTOR_VIEW = "/post-oauth-two-factor"
     SECURITY_POST_OAUTH_VERIFY_VIEW = "/post-oauth-verify"
     SECURITY_VERIFY_ERROR_VIEW = "/verify-error"
     SECURITY_REDIRECT_BEHAVIOR = "spa"

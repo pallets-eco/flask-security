@@ -10,6 +10,8 @@ Released TBD
 
 Fixes
 +++++
+- (:issue:`894`) Support two-factor authentication and WebAuthn MFA with Social Login
+  (OAuth) in SPA mode via :py:data:`SECURITY_POST_OAUTH_TWO_FACTOR_VIEW`.
 - (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
 - (:pr:`xx`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,

@@ -89,7 +89,7 @@ from .forms import (
 from .proxies import _security, _datastore
 from .quart_compat import get_quart_status
 from .signals import wan_registered, wan_deleted
-from .tf_plugin import TfPluginBase, tf_set_validity_token_cookie
+from .tf_plugin import TfPluginBase, _tf_spa_redirect, tf_set_validity_token_cookie
 from .utils import (
     _,
     base_render_json,
@@ -780,18 +780,18 @@ def webauthn_signin_response(token: str) -> ResponseReturnValue:
             # login user
             login_user(form.user, remember=remember_me, authn_via=["webauthn"])
 
-        goto_url = _get_post_login_redirect()
         if _security._want_json(request):
             # Tell caller where we would go if forms based - they can use it or
             # not.
-            json_payload["post_login_url"] = goto_url
+            if cv("REDIRECT_BEHAVIOR") != "spa":
+                json_payload["post_login_url"] = _get_post_login_redirect()
             json_payload["tf_required"] = False
             return base_render_json(
                 form,
                 include_auth_token=allowed_auth_token(form.user),
                 additional=json_payload,
             )
-        return redirect(goto_url)
+        return redirect(_get_post_login_redirect())
 
     # Here on validate error
     if _security._want_json(request):
@@ -1006,15 +1006,21 @@ class WebAuthnTfPlugin(TfPluginBase):
         return []
 
     def tf_login(
-        self, user: UserMixin, json_payload: dict[str, t.Any], next_loc: str | None
+        self,
+        user: UserMixin,
+        json_payload: dict[str, t.Any],
+        next_loc: str | None,
+        spa_redirect_view: str | None = None,
     ) -> ResponseValue:
         session["tf_state"] = "ready"
+        json_payload["tf_signin_url"] = url_for_security("wan_signin")
+        json_payload["tf_state"] = "ready"
+        json_payload["tf_method"] = "webauthn"
+        if spa_redirect_view:
+            return _tf_spa_redirect(user, json_payload, spa_redirect_view)
         if not _security._want_json(request):
             values = dict(next=next_loc) if next_loc else dict()
             return redirect(url_for_security("wan_signin", **values))
 
         # JSON response
-        json_payload["tf_signin_url"] = url_for_security("wan_signin")
-        json_payload["tf_state"] = "ready"
-        json_payload["tf_method"] = "webauthn"
         return simple_render_json(additional=json_payload)
