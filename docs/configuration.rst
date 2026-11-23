@@ -2239,7 +2239,7 @@ Social Login (OAuth)
 
     Default: ``None``.
 
-    .. versionadded:: 5.9.3
+    .. versionadded:: 5.10.0
 
 .. py:data:: SECURITY_OAUTH_VERIFY_START_URL
 
