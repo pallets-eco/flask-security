@@ -267,7 +267,7 @@ the User record (since we need to look up the ``User`` based on a WebAuthn ``cre
             @declared_attr
             def webauthn(cls):
                 return relationship(
-                    "WebAuthn", back_populates="user", cascade="all, delete"
+                    "WebAuthn", back_populates="user", cascade="all, delete, delete-orphan"
                 )
 
 **For mongoengine**:
@@ -352,7 +352,7 @@ The User record needs to have a list of refresh trackers.
             @declared_attr
             def refresh_trackers(cls):
                 return relationship(
-                    "FsRefreshTracker", cascade="all, delete"
+                    "FsRefreshTracker", cascade="all, delete, delete-orphan"
                 )
 
 **For mongoengine**:

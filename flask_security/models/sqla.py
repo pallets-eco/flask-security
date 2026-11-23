@@ -151,7 +151,7 @@ class FsUserMixin(UserMixin):
         @declared_attr
         def webauthn(cls):
             return relationship(
-                "WebAuthn", back_populates="user", cascade="all, delete"
+                "WebAuthn", back_populates="user", cascade="all, delete, delete-orphan"
             )
 
     except ImportError:  # pragma: no cover

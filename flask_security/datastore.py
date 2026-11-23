@@ -688,9 +688,12 @@ class UserDatastore:
         """
         raise NotImplementedError
 
-    def delete_webauthn(self, webauthn: WebAuthnMixin) -> None:
+    def delete_webauthn(self, user: UserMixin, webauthn: WebAuthnMixin) -> None:
         """
         .. versionadded:: 5.0.0
+
+        .. versionchanged:: 5.10.0
+           Added user argument and datastore specific implementations.
         """
         self.delete(webauthn)
 
@@ -895,6 +898,12 @@ class SQLAlchemyUserDatastore(SQLAlchemyDatastore, UserDatastore):
         )
         user.webauthn.append(webauthn)
         self.put(webauthn)
+        self.put(user)
+
+    def delete_webauthn(self, user: UserMixin, webauthn: WebAuthnMixin) -> None:
+        # in-memory user model will have webauthn removed AND with delete-orphan will
+        # have webauthn row deleted once committed.
+        user.webauthn.remove(webauthn)
         self.put(user)
 
     def create_refresh_tracker(
@@ -1176,6 +1185,14 @@ class MongoEngineUserDatastore(MongoEngineDatastore, UserDatastore):
         user.webauthn.append(webauthn)
         self.put(webauthn)  # type: ignore
         self.put(user)  # type: ignore
+
+    def delete_webauthn(self, user: UserMixin, webauthn: WebAuthnMixin) -> None:
+        # in-memory user model will have webauthn removed AND with delete-orphan will
+        # have webauthn row deleted.
+        # user.webauthn.remove(webauthn)
+        self.delete(webauthn)
+        self.reload(user)
+        self.put(user)
 
     def create_refresh_tracker(
         self,
