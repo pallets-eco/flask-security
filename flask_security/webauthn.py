@@ -825,8 +825,7 @@ def webauthn_delete() -> ResponseReturnValue:
             user=current_user,
             name=cred.name,
         )
-        _datastore.delete_webauthn(cred)
-        _datastore.reload(current_user)
+        _datastore.delete_webauthn(current_user, cred)
         if (
             cv("MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE")
             and not _security.two_factor_plugins.get_setup_tf_methods(current_user)

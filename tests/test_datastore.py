@@ -517,7 +517,7 @@ def test_webauthn(app, datastore):
         assert len(user.webauthn) == 1
         assert user.webauthn[0].name == "cred1"
 
-        datastore.delete_webauthn(user.webauthn[0])
+        datastore.delete_webauthn(user, user.webauthn[0])
         datastore.commit()
         user = datastore.find_user(email="matt@lp.com")
         assert len(user.webauthn) == 0

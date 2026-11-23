@@ -51,7 +51,7 @@ class FsUserMixin(FsUserMixinV1):
     # List of Refresh Token trackers
     @declared_attr
     def refresh_trackers(cls):
-        return relationship("FsRefreshTracker", cascade="all, delete")
+        return relationship("FsRefreshTracker", cascade="all, delete, delete-orphan")
 
 
 class FsWebAuthnMixin(FsWebauthnMixinV1):
