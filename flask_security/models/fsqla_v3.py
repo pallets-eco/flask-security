@@ -55,7 +55,7 @@ class FsUserMixin(FsUserMixinV2):
         @declared_attr
         def webauthn(cls):
             return FsModels.db.relationship(
-                "WebAuthn", backref="users", cascade="all, delete"
+                "WebAuthn", backref="users", cascade="all, delete, delete-orphan"
             )
 
     except ImportError:

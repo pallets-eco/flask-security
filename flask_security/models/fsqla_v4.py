@@ -47,7 +47,9 @@ class FsUserMixin(FsUserMixinV3):
 
     @declared_attr
     def refresh_trackers(cls):
-        return FsModels.db.relationship("FsRefreshTracker", cascade="all, delete")
+        return FsModels.db.relationship(
+            "FsRefreshTracker", cascade="all, delete, delete-orphan"
+        )
 
 
 class FsRefreshTrackerMixin(RefreshTrackerMixin):

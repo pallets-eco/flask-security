@@ -3,10 +3,15 @@ Flask-Security Changelog
 
 Here you can see the full list of changes between each Flask-Security release.
 
-Version 5.9.3
--------------
+Version xxx
+-----------
 
-Released November 19, 2026
+Released TBD
+
+Features & Improvements
++++++++++++++++++++++++
+- (:pr:`xx`) Change SQLAlchemy model options to improve keeping the in-memory
+  objects up to date.
 
 Fixes
 +++++
@@ -14,6 +19,21 @@ Fixes
   (OAuth) in SPA mode via :py:data:`SECURITY_POST_OAUTH_TWO_FACTOR_VIEW`.
 - (:issue:`1317`) Delete any recovery codes when a user disables MFA (controlled by
   :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE`).
+
+Backwards Compatibility Concerns
++++++++++++++++++++++++++++++++++
+- The SQLAlchemy User model's `webauthn` and `refresh_trackers` columns must have:
+  cascade="all, delete, delete-orphan". The 'delete-orphan' option is new and must be
+  added.
+
+
+Version 5.9.3
+-------------
+
+Released November 19, 2026
+
+Fixes
++++++
 - (:pr:`1312`) Fix for GHSA-vm9m-262m-x92p - Concurrent refresh token requests
   bypass single-use commitment.
 - (:pr:`1318`) Fix for GHSA-xmfm-chhh-ch9j - Missing identity binding in two-factor setup,
