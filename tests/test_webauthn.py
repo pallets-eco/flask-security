@@ -761,6 +761,48 @@ def test_disabled_account(app, client, get_message):
     )
 
 
+def test_disabled_account_no_login(app, client, get_message):
+    # https://github.com/pallets-eco/flask-security/issues/1335
+    # A disabled account must not be logged in even when a valid credential
+    # is provided: no authentication signal, no remember token, no login count.
+    authenticate(client)
+    register_options, response_url = _register_start_json(
+        client, name="testr3", usage="first"
+    )
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client)
+
+    auths = []
+
+    @user_authenticated.connect_via(app)
+    def authned(myapp, user, **extra_args):
+        auths.append(user.email)
+
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        login_count = user.login_count
+        app.security.datastore.deactivate_user(user)
+        app.security.datastore.commit()
+
+    app.config["SECURITY_WAN_ALLOW_USER_HINTS"] = False
+    signin_options, response_url = _signin_start(client, "matt@lp.com")
+    response = client.post(
+        response_url,
+        json=dict(credential=json.dumps(SIGNIN_DATA1), remember=True),
+    )
+    assert response.status_code == 400
+    assert response.json["response"]["errors"][0].encode("utf-8") == get_message(
+        "DISABLED_ACCOUNT"
+    )
+    assert auths == []
+    assert not client.get_cookie("remember_token")
+
+    with app.test_request_context("/"):
+        user = app.security.datastore.find_user(email="matt@lp.com")
+        assert user.login_count == login_count
+
+
 def _locked(self, form_error):
     if self.email == "gal@lp.com":
         from flask import request
