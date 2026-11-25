@@ -1743,6 +1743,7 @@ def test_td_format_babel_force_locale(app):
         assert "1 day and 2 hours" == _td_format_sp(timedelta(hours=26))
 
 
+@pytest.mark.skip("CLDR47 added unit pattersn for cic_US!")
 @pytest.mark.babel(babel_default_locale="cic_US")
 def test_td_format_babel_incomplete_locale(app):
     # Not all locales have all unit patterns - fall back rather
