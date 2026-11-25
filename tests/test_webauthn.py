@@ -761,6 +761,7 @@ def test_disabled_account(app, client, get_message):
     )
 
 
+@pytest.mark.settings(wan_allow_user_hints=False)
 def test_disabled_account_no_login(app, client, get_message):
     # https://github.com/pallets-eco/flask-security/issues/1335
     # A disabled account must not be logged in even when a valid credential
@@ -785,7 +786,6 @@ def test_disabled_account_no_login(app, client, get_message):
         app.security.datastore.deactivate_user(user)
         app.security.datastore.commit()
 
-    app.config["SECURITY_WAN_ALLOW_USER_HINTS"] = False
     signin_options, response_url = _signin_start(client, "matt@lp.com")
     response = client.post(
         response_url,
