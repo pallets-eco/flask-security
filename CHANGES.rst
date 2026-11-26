@@ -19,6 +19,7 @@ Fixes
   (OAuth) in SPA mode via :py:data:`SECURITY_POST_OAUTH_TWO_FACTOR_VIEW`.
 - (:issue:`1317`) Delete any recovery codes when a user disables MFA (controlled by
   :py:data:`SECURITY_MULTI_FACTOR_RECOVERY_CODES_DELETE_ON_DISABLE`).
+- (:pr:`11334`) Replace libpass with passlib.
 
 Backwards Compatibility Concerns
 +++++++++++++++++++++++++++++++++

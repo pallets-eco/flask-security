@@ -37,7 +37,7 @@ dependencies = [
     "Flask-WTF>=1.1.2",
     "email-validator>=2.3.0",
     "markupsafe>=2.1.0",
-    "libpass>=1.9.3",
+    "passlib>=1.9.5",
     "wtforms>=3.2.1",  # for form-level errors
 ]
 
@@ -93,7 +93,7 @@ dev = [
     "flask-login",
     "flask-principal",
     "markupsafe",
-    "libpass",
+    "passlib",
     "email_validator",
 ]
 low = [
