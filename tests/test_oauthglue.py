@@ -793,40 +793,6 @@ def test_tf_spa_send_error(app, sqlalchemy_datastore, get_message):
     assert not session_data or "tf_state" not in session_data
 
 
-@pytest.mark.two_factor()
-@pytest.mark.settings(
-    oauth_enable=True,
-    redirect_host="myui.com:8090",
-    redirect_behavior="spa",
-    login_error_view="/login-error",
-    post_oauth_login_view="/post-login",
-)
-def test_tf_spa_no_view_fallback(app, sqlalchemy_datastore, get_message):
-    # If POST_OAUTH_TWO_FACTOR_VIEW is not configured in SPA mode, redirect to
-    # LOGIN_ERROR_VIEW with tf_required=1 without leaking 2FA session state.
-    init_app_with_options(
-        app,
-        sqlalchemy_datastore,
-        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
-    )
-    client = app.test_client()
-    oauth_app = app.security.oauthglue.oauth_app
-    oauth_app.github.set_identity("gal@lp.com")  # gal already has SMS 2FA
-
-    response = client.get("/login/oauthresponse/github", follow_redirects=False)
-    assert response.status_code in [302, 303]
-    split = urlsplit(response.location)
-    assert split.netloc == "myui.com:8090"
-    assert split.path == "/login-error"
-    qparams = dict(parse_qsl(split.query))
-    assert qparams["tf_required"] == "1"
-    assert qparams["email"] == "gal@lp.com"
-    assert qparams["identity"] == "gal@lp.com"
-    assert not is_authenticated(client, get_message)
-    session_data = get_session(response)
-    assert not session_data or "tf_user_id" not in session_data
-
-
 @pytest.mark.webauthn()
 @pytest.mark.two_factor()
 @pytest.mark.settings(

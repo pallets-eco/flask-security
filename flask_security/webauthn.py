@@ -1016,14 +1016,14 @@ class WebAuthnTfPlugin(TfPluginBase):
         user: UserMixin,
         json_payload: dict[str, t.Any],
         next_loc: str | None,
-        spa_redirect_view: str | None = None,
+        redirect_view: str | None = None,
     ) -> ResponseValue:
         session["tf_state"] = "ready"
         json_payload["tf_signin_url"] = url_for_security("wan_signin")
         json_payload["tf_state"] = "ready"
         json_payload["tf_method"] = "webauthn"
-        if spa_redirect_view:
-            return _tf_spa_redirect(user, json_payload, spa_redirect_view)
+        if redirect_view:
+            return _tf_spa_redirect(user, json_payload, redirect_view)
         if not _security._want_json(request):
             values = dict(next=next_loc) if next_loc else dict()
             return redirect(url_for_security("wan_signin", **values))

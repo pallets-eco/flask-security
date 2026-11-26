@@ -2234,8 +2234,6 @@ Social Login (OAuth)
     ``email``, and the two-factor state fields corresponding to the JSON login
     response (such as ``tf_state``, ``tf_method``, ``tf_primary_method``,
     ``tf_signin_url``, or ``tf_select=1`` and comma-separated ``tf_setup_methods``).
-    If not configured, the user is redirected to :py:data:`SECURITY_LOGIN_ERROR_VIEW`
-    with ``tf_required=1``.
 
     Default: ``None``.
 

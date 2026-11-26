@@ -216,7 +216,7 @@ class CodeTfPlugin(TfPluginBase):
         user: UserMixin,
         json_payload: dict[str, t.Any],
         next_loc: str | None,
-        spa_redirect_view: str | None = None,
+        redirect_view: str | None = None,
     ) -> ResponseValue:
         """Helper for two-factor authentication login
 
@@ -233,8 +233,8 @@ class CodeTfPlugin(TfPluginBase):
         if not is_tf_setup(user):
             session["tf_state"] = "setup_from_login"
             json_payload["tf_state"] = "setup_from_login"
-            if spa_redirect_view:
-                return _tf_spa_redirect(user, json_payload, spa_redirect_view)
+            if redirect_view:
+                return _tf_spa_redirect(user, json_payload, redirect_view)
             if not _security._want_json(request):
                 return redirect(url_for_security("two_factor_setup"))
 
@@ -253,7 +253,7 @@ class CodeTfPlugin(TfPluginBase):
                 )
                 if msg:
                     # send code didn't work
-                    if spa_redirect_view:
+                    if redirect_view:
                         tf_clean_session()
                         return redirect(
                             get_url(cv("LOGIN_ERROR_VIEW"), qparams={"error": msg})
@@ -267,8 +267,8 @@ class CodeTfPlugin(TfPluginBase):
                         payload = json_error_response(errors=msg)
                         return _security._render_json(payload, 500, None, None)
 
-            if spa_redirect_view:
-                return _tf_spa_redirect(user, json_payload, spa_redirect_view)
+            if redirect_view:
+                return _tf_spa_redirect(user, json_payload, redirect_view)
             if not _security._want_json(request):
                 values = dict(next=next_loc) if next_loc else dict()
                 return redirect(
