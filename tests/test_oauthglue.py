@@ -8,6 +8,7 @@ OAuth glue tests - oauthglue is a very thin shim between FS and authlib
 :license: MIT, see LICENSE for more details.
 """
 
+import json
 import pytest
 import urllib.parse
 from urllib.parse import parse_qsl, urlsplit
@@ -651,3 +652,238 @@ def test_verify_spa_exc(app, sqlalchemy_datastore, get_message):
         exdesc="CSRF Warning! State not equal in request and response.",
     )
     assert qparams["error"] == msg.decode()
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    oauth_enable=True,
+    redirect_host="myui.com:8090",
+    redirect_behavior="spa",
+    login_error_view="/login-error",
+    post_oauth_login_view="/post-login",
+    post_oauth_two_factor_view="/post-oauth-tf",
+)
+def test_tf_spa_code(app, sqlalchemy_datastore, get_message):
+    # OAuth + 2FA in SPA mode redirects to POST_OAUTH_TWO_FACTOR_VIEW with 2FA
+    # state in query params (for both browser HTML and JSON Accept headers),
+    # and the SPA completes login via /tf-validate.
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
+    )
+    client = app.test_client()
+    json_authenticate(client)
+    sms_sender = setup_tf_sms(client)
+    logout(client, headers=headers)
+
+    # Browser redirect callback (Accept: text/html)
+    response = client.post("/login/oauthstart/github", follow_redirects=False)
+    redirect_url = urllib.parse.urlsplit(urllib.parse.unquote(response.location))
+    local_redirect = urllib.parse.parse_qs(redirect_url.query)["redirect_uri"][0]
+
+    response = client.get(
+        local_redirect, headers={"Accept": "text/html"}, follow_redirects=False
+    )
+    assert response.status_code in [302, 303]
+    split = urlsplit(response.location)
+    assert split.netloc == "myui.com:8090"
+    assert split.path == "/post-oauth-tf"
+    qparams = dict(parse_qsl(split.query))
+    assert qparams["tf_required"] == "1"
+    assert qparams["tf_state"] == "ready"
+    assert qparams["tf_primary_method"] == "sms"
+    assert qparams["tf_method"] == "sms"
+    assert qparams["email"] == "matt@lp.com"
+    assert qparams["identity"] == "matt@lp.com"
+
+    # Not authenticated until second factor completes
+    assert not is_authenticated(client, get_message)
+
+    # Complete 2FA via SPA JSON endpoint
+    code = sms_sender.messages[-1].split()[-1]
+    response = client.post("/tf-validate", json=dict(code=code), headers=headers)
+    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
+
+    # Even with Accept: application/json, oauthresponse MUST still redirect
+    logout(client, headers=headers)
+    response = client.get(
+        "/login/oauthresponse/github", headers=headers, follow_redirects=False
+    )
+    assert response.status_code in [302, 303]
+    split = urlsplit(response.location)
+    assert split.netloc == "myui.com:8090"
+    assert split.path == "/post-oauth-tf"
+    qparams = dict(parse_qsl(split.query))
+    assert qparams["tf_required"] == "1"
+    assert qparams["tf_state"] == "ready"
+    assert qparams["tf_method"] == "sms"
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    oauth_enable=True,
+    two_factor_required=True,
+    redirect_host="myui.com:8090",
+    redirect_behavior="spa",
+    login_error_view="/login-error",
+    post_oauth_login_view="/post-login",
+    post_oauth_two_factor_view="/post-oauth-tf",
+)
+def test_tf_spa_setup_from_login(app, sqlalchemy_datastore, get_message):
+    # When TWO_FACTOR_REQUIRED is True and the user has not set up 2FA yet,
+    # OAuth in SPA mode redirects with tf_state=setup_from_login and allows
+    # completing setup via /tf-setup + /tf-validate.
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
+    )
+    client = app.test_client()
+
+    response = client.get("/login/oauthresponse/github", follow_redirects=False)
+    assert response.status_code in [302, 303]
+    split = urlsplit(response.location)
+    assert split.netloc == "myui.com:8090"
+    assert split.path == "/post-oauth-tf"
+    qparams = dict(parse_qsl(split.query))
+    assert qparams["tf_required"] == "1"
+    assert qparams["tf_state"] == "setup_from_login"
+    assert qparams["email"] == "matt@lp.com"
+    assert qparams["identity"] == "matt@lp.com"
+
+    # Complete initial 2FA setup via SPA JSON endpoints
+    setup_tf_sms(client)
+    assert is_authenticated(client, get_message)
+
+
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    oauth_enable=True,
+    sms_service="bad",
+    redirect_host="myui.com:8090",
+    redirect_behavior="spa",
+    login_error_view="/login-error",
+    post_oauth_login_view="/post-login",
+    post_oauth_two_factor_view="/post-oauth-tf",
+)
+def test_tf_spa_send_error(app, sqlalchemy_datastore, get_message):
+    # If sending the 2FA code fails during SPA OAuth callback, redirect to
+    # LOGIN_ERROR_VIEW with the error message and clean up 2FA session state.
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{"security_args": {"oauth": MockAuthlibFlaskClient()}},
+    )
+    client = app.test_client()
+    oauth_app = app.security.oauthglue.oauth_app
+    oauth_app.github.set_identity("gal@lp.com")  # gal already has SMS 2FA
+
+    response = client.get("/login/oauthresponse/github", follow_redirects=False)
+    assert response.status_code in [302, 303]
+    split = urlsplit(response.location)
+    assert split.netloc == "myui.com:8090"
+    assert split.path == "/login-error"
+    qparams = dict(parse_qsl(split.query))
+    assert qparams["error"] == get_message("FAILED_TO_SEND_CODE").decode()
+    session_data = get_session(response)
+    assert not session_data or "tf_user_id" not in session_data
+    assert not session_data or "tf_state" not in session_data
+
+
+@pytest.mark.webauthn()
+@pytest.mark.two_factor()
+@pytest.mark.settings(
+    oauth_enable=True,
+    webauthn=True,
+    redirect_host="myui.com:8090",
+    redirect_behavior="spa",
+    login_error_view="/login-error",
+    post_oauth_login_view="/post-login",
+    post_oauth_two_factor_view="/post-oauth-tf",
+)
+def test_tf_spa_webauthn_and_select(app, sqlalchemy_datastore, get_message):
+    # Verify OAuth + SPA with WebAuthn secondary MFA alone and with multiple
+    # MFA methods (tf_select).
+    from tests.test_webauthn import (
+        HackWebauthnUtil,
+        REG_DATA1,
+        SIGNIN_DATA1,
+        _register_start_json,
+    )
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    init_app_with_options(
+        app,
+        sqlalchemy_datastore,
+        **{
+            "security_args": {
+                "oauth": MockAuthlibFlaskClient(),
+                "webauthn_util_cls": HackWebauthnUtil,
+            }
+        },
+    )
+    client = app.test_client()
+    json_authenticate(client)
+
+    # Register a secondary WebAuthn credential
+    _, response_url = _register_start_json(client, name="sec1", usage="secondary")
+    response = client.post(response_url, json=dict(credential=json.dumps(REG_DATA1)))
+    assert response.status_code == 200
+    logout(client, headers=headers)
+
+    # 1. Single WebAuthn secondary MFA
+    response = client.get("/login/oauthresponse/github", follow_redirects=False)
+    assert response.status_code in [302, 303]
+    split = urlsplit(response.location)
+    assert split.netloc == "myui.com:8090"
+    assert split.path == "/post-oauth-tf"
+    qparams = dict(parse_qsl(split.query))
+    assert qparams["tf_required"] == "1"
+    assert qparams["tf_state"] == "ready"
+    assert qparams["tf_method"] == "webauthn"
+    assert qparams["tf_signin_url"] == "/wan-signin"
+    assert qparams["email"] == "matt@lp.com"
+    assert qparams["identity"] == "matt@lp.com"
+
+    # Complete WebAuthn second factor via SPA JSON endpoints
+    response = client.post("/wan-signin", json=dict(), headers=headers)
+    assert response.status_code == 200
+    assert response.json["response"]["is_secondary"]
+    wan_state = response.json["response"]["wan_state"]
+    response = client.post(
+        f"/wan-signin/{wan_state}",
+        json=dict(credential=json.dumps(SIGNIN_DATA1)),
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert is_authenticated(client, get_message)
+
+    # 2. Add SMS 2FA so multiple MFA methods are configured -> tf_select
+    sms_sender = setup_tf_sms(client)
+    logout(client, headers=headers)
+
+    response = client.get("/login/oauthresponse/github", follow_redirects=False)
+    assert response.status_code in [302, 303]
+    split = urlsplit(response.location)
+    assert split.netloc == "myui.com:8090"
+    assert split.path == "/post-oauth-tf"
+    qparams = dict(parse_qsl(split.query))
+    assert qparams["tf_required"] == "1"
+    assert qparams["tf_select"] == "1"
+    assert set(qparams["tf_setup_methods"].split(",")) == {"sms", "webauthn"}
+    assert qparams["email"] == "matt@lp.com"
+    assert qparams["identity"] == "matt@lp.com"
+
+    # Complete selection + SMS 2FA via SPA JSON endpoints
+    response = client.post("/tf-select", json=dict(which="sms"), headers=headers)
+    assert response.status_code == 200
+    assert response.json["response"]["tf_state"] == "ready"
+    assert response.json["response"]["tf_method"] == "sms"
+
+    code = sms_sender.messages[-1].split()[-1]
+    response = client.post("/tf-validate", json=dict(code=code), headers=headers)
+    assert response.status_code == 200
+    assert is_authenticated(client, get_message)

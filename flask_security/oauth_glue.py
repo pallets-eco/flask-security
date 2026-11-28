@@ -140,8 +140,17 @@ def oauthresponse(name: str) -> ResponseValue:
     if user and user.is_active and not user.is_locked(form_error):
         after_this_request(_view_commit)
         next_loc = session.pop("fs_oauth_next", None)
+        redirect_view = (
+            cv("POST_OAUTH_TWO_FACTOR_VIEW")
+            if cv("REDIRECT_BEHAVIOR") == "spa"
+            else None
+        )
         response = _security.two_factor_plugins.tf_enter(
-            user, False, "oauth", next_loc=next_loc
+            user,
+            False,
+            "oauth",
+            next_loc=next_loc,
+            redirect_view=redirect_view,
         )
         if response:
             return response

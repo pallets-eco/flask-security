@@ -198,6 +198,7 @@ These configuration keys are used globally across all features.
     When this is enabled, the following must also be defined:
 
     - :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
+    - :py:data:`SECURITY_POST_OAUTH_TWO_FACTOR_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` and two-factor/WebAuthn MFA are enabled)
     - :py:data:`SECURITY_POST_OAUTH_VERIFY_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
     - :py:data:`SECURITY_VERIFY_ERROR_VIEW`  (if :py:data:`SECURITY_OAUTH_ENABLE` is True)
     - :py:data:`SECURITY_LOGIN_ERROR_VIEW`
@@ -2223,6 +2224,21 @@ Social Login (OAuth)
 
     .. versionadded:: 5.4.0
 
+.. py:data:: SECURITY_POST_OAUTH_TWO_FACTOR_VIEW
+
+    Specifies the view/URL to redirect to when a user authenticates via social login
+    (OAuth) and requires a second factor (two-factor authentication or secondary
+    WebAuthn credential).
+    This is only valid if :py:data:`SECURITY_REDIRECT_BEHAVIOR` == ``"spa"``.
+    Query params in the redirect will contain ``tf_required=1``, ``identity``,
+    ``email``, and the two-factor state fields corresponding to the JSON login
+    response (such as ``tf_state``, ``tf_method``, ``tf_primary_method``,
+    ``tf_signin_url``, or ``tf_select=1`` and comma-separated ``tf_setup_methods``).
+
+    Default: ``None``.
+
+    .. versionadded:: 5.10.0
+
 .. py:data:: SECURITY_OAUTH_VERIFY_START_URL
 
     Endpoint for starting an OAuth reauthentication/verify operation.
@@ -2373,6 +2389,7 @@ A list of all URLs and Views:
 * :py:data:`SECURITY_POST_RESET_VIEW`
 * :py:data:`SECURITY_POST_CHANGE_VIEW`
 * :py:data:`SECURITY_POST_OAUTH_LOGIN_VIEW`
+* :py:data:`SECURITY_POST_OAUTH_TWO_FACTOR_VIEW`
 * :py:data:`SECURITY_POST_OAUTH_VERIFY_VIEW`
 * :py:data:`SECURITY_UNAUTHORIZED_VIEW`
 * :py:data:`SECURITY_RESET_VIEW`

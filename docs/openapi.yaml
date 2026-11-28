@@ -2184,6 +2184,8 @@ paths:
               description: |
                 On spa-success: SECURITY_POST_OAUTH_LOGIN_VIEW?identity={identity}&email={email}
 
+                On spa-two-factor-required: SECURITY_POST_OAUTH_TWO_FACTOR_VIEW?tf_required=1&tf_state={state}&identity={identity}&email={email}
+
                 On spa-oauth-error: SECURITY_LOGIN_ERROR_VIEW?error={msg}
 
                 On spa-unknown-user: SECURITY_LOGIN_ERROR_VIEW?error={msg}

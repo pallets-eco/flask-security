@@ -107,6 +107,25 @@ def tf_select() -> ResponseValue:
     )
 
 
+def _tf_spa_redirect(
+    user: UserMixin,
+    json_payload: dict[str, t.Any],
+    redirect_view: str,
+) -> ResponseValue:
+    """Redirect an SPA client to the configured two-factor view with state in
+    query parameters.
+    """
+    qparams: dict[str, str] = {}
+    for k, v in json_payload.items():
+        if isinstance(v, bool):
+            qparams[k] = str(int(v))
+        elif isinstance(v, list):
+            qparams[k] = ",".join(str(item) for item in v)
+        else:
+            qparams[k] = str(v)
+    return redirect(get_url(redirect_view, qparams=user.get_redirect_qparams(qparams)))
+
+
 class TfPluginBase:  # pragma no cover
     def __init__(self, app: flask.Flask):
         pass
@@ -123,7 +142,11 @@ class TfPluginBase:  # pragma no cover
         raise NotImplementedError
 
     def tf_login(
-        self, user: UserMixin, json_payload: dict[str, t.Any], next_loc: str | None
+        self,
+        user: UserMixin,
+        json_payload: dict[str, t.Any],
+        next_loc: str | None,
+        redirect_view: str | None = None,
     ) -> ResponseValue:
         """
         Called from first/primary authenticated views if the user successfully
@@ -131,6 +154,8 @@ class TfPluginBase:  # pragma no cover
         This method returns the necessary information for the user UI to continue.
         For forms, this is usually a redirect to a secondary sign in form. For JSON
         it is just a payload that describes what the user has to do next.
+        When ``redirect_view`` is provided, redirects to that SPA view with
+        the state encoded in query parameters.
         """
         raise NotImplementedError
 
@@ -195,12 +220,18 @@ class TfPlugin:
         remember_me: bool | None,
         primary_authn_via: str,
         next_loc: str | None,
+        redirect_view: str | None = None,
     ) -> ResponseValue | None:
         """Check if two-factor is required and if so, start the process.
         Must be called in a request context.
         remember_me controls 2 cookies - the remember_me cookie and the tf_validity
         cookie. We use the session to hold the fact that the user requested 'remember'
         across the second factor.
+
+        When ``redirect_view`` is provided (for GET callback views such as OAuth
+        when :py:data:`SECURITY_REDIRECT_BEHAVIOR` is ``"spa"``), returns a
+        redirect to ``redirect_view`` with the two-factor state in query
+        parameters.
         """
         json_payload: dict[str, t.Any]
         if _security.support_mfa:
@@ -224,7 +255,9 @@ class TfPlugin:
                 # as part of initial login.
                 if len(tf_setup_methods) == 0:
                     # only initial two-factor implementation supports this
-                    return self._tf_impls["code"].tf_login(user, json_payload, next_loc)
+                    return self._tf_impls["code"].tf_login(
+                        user, json_payload, next_loc, redirect_view=redirect_view
+                    )
                 elif len(tf_setup_methods) == 1:
                     # method_to_impl can't return None here since we just
                     # got the methods up above.
@@ -232,12 +265,11 @@ class TfPlugin:
                         TfPluginBase,
                         self.method_to_impl(user, tf_setup_methods_keys[0]),
                     )
-                    return impl.tf_login(user, json_payload, next_loc)
+                    return impl.tf_login(
+                        user, json_payload, next_loc, redirect_view=redirect_view
+                    )
                 else:
                     session["tf_select"] = True
-                    if not _security._want_json(request):
-                        values = dict(next=next_loc) if next_loc else dict()
-                        return redirect(url_for_security("tf_select", **values))
                     # Let's force app to go through tf-select just in case we want
                     # to do further validation... However, provide the choices
                     # so they can just do a POST
@@ -247,6 +279,11 @@ class TfPlugin:
                             "tf_setup_methods": tf_setup_methods_keys,
                         }
                     )
+                    if redirect_view:
+                        return _tf_spa_redirect(user, json_payload, redirect_view)
+                    if not _security._want_json(request):
+                        values = dict(next=next_loc) if next_loc else dict()
+                        return redirect(url_for_security("tf_select", **values))
                     return simple_render_json(json_payload)
         return None
 

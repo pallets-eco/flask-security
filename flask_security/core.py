@@ -194,6 +194,7 @@ _default_config: dict[str, t.Any] = {
     "LOGIN_ERROR_VIEW": None,  # spa
     "POST_OAUTH_LOGIN_VIEW": None,  # spa
     "POST_OAUTH_VERIFY_VIEW": None,  # spa
+    "POST_OAUTH_TWO_FACTOR_VIEW": None,  # spa
     "CONFIRM_ERROR_VIEW": None,  # spa
     "POST_CONFIRM_VIEW": None,  # spa
     "RESET_VIEW": None,  # spa
